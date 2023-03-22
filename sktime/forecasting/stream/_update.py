@@ -101,7 +101,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self : reference to self
         """
         # we need to remember the time we last fit, to compare to it in _update
-        self.last_fit_cutoff_ = self.cutoff
+        self.last_fit_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
         estimator.fit(y=y, fh=fh, X=X)
         return self
@@ -141,7 +141,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self : reference to self
         """
         estimator = self._get_delegate()
-        time_since_last_fit = self.cutoff - self.last_fit_cutoff_
+        time_since_last_fit = self.cutoff[0] - self.last_fit_cutoff_
         refit_interval = self.refit_interval
         refit_window_size = self.refit_window_size
         refit_window_lag = self.refit_window_lag
@@ -155,14 +155,14 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         if isinstance(time_since_last_fit, pd.Timedelta):
             if isinstance(refit_window_lag, int):
                 lag = min(refit_window_lag, len(_y))
-                refit_window_lag = self.cutoff - _y.index[-lag]
+                refit_window_lag = self.cutoff[0] - _y.index[-lag]
             if isinstance(refit_window_size, int):
                 _y_lag = get_window(_y, lag=refit_window_lag)
                 window_size = min(refit_window_size, len(_y_lag))
                 refit_window_size = _y_lag.index[-window_size]
             if isinstance(refit_interval, int):
                 index = min(refit_interval, len(_y))
-                refit_interval = self.cutoff - _y.index[-index]
+                refit_interval = self.cutoff[0] - _y.index[-index]
         # case distinction based on whether the refit_interval period has elapsed
         #   if yes: call fit, on the specified window sub-set of all observed data
         if time_since_last_fit >= refit_interval and update_params:
@@ -180,7 +180,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
             estimator.fit(y=y_win, X=X_win, fh=fh, update_params=update_params)
 
             # remember that we just fitted the estimator
-            self.last_fit_cutoff_ = self.cutoff
+            self.last_fit_cutoff_ = self.cutoff[0]
         else:
             # if no: call update as usual
             estimator.update(y=y, X=X, update_params=update_params)
@@ -282,7 +282,7 @@ class UpdateEvery(_DelegatedForecaster):
         self : reference to self
         """
         # we need to remember the time we last fit, to compare to it in _update
-        self.last_update_cutoff_ = self.cutoff
+        self.last_update_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
         estimator.fit(y=y, fh=fh, X=X)
         return self
@@ -322,7 +322,7 @@ class UpdateEvery(_DelegatedForecaster):
         self : reference to self
         """
         estimator = self._get_delegate()
-        time_since_last_update = self.cutoff - self.last_update_cutoff_
+        time_since_last_update = self.cutoff[0] - self.last_update_cutoff_
         update_interval = self.update_interval
 
         _y = self._y
@@ -333,7 +333,7 @@ class UpdateEvery(_DelegatedForecaster):
         if isinstance(time_since_last_update, pd.Timedelta):
             if isinstance(update_interval, int):
                 index = min(update_interval, len(_y))
-                update_interval = self.cutoff - _y.index[-index]
+                update_interval = self.cutoff[0] - _y.index[-index]
         # case distinction based on whether the update_interval period has elapsed
         # (None update_interval means infinite update_interval)
         #   if yes: call inner update with update_params=True, aka "true" update
@@ -341,7 +341,7 @@ class UpdateEvery(_DelegatedForecaster):
             estimator.update(y=y, X=X, update_params=update_params)
 
             # remember that we just updated the estimator
-            self.last_update_cutoff_ = self.cutoff
+            self.last_update_cutoff_ = self.cutoff[0]
         else:
             # if no: call update, but with update_params=False
             estimator.update(y=y, X=X, update_params=False)

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for the power transformers."""
 
 __author__ = ["Ryan Kuhns"]
 __all__ = []
 
 import pytest
 
-from sktime.utils._testing.series import _make_series
 from sktime.transformations.series.exponent import ExponentTransformer, SqrtTransformer
+from sktime.utils._testing.series import _make_series
 
 power_transformers = [ExponentTransformer, SqrtTransformer]
 

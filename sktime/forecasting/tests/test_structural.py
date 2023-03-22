@@ -7,7 +7,9 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
 
-from sktime.datasets import load_airline
+from sktime.datasets import load_airline, load_longley
+from sktime.forecasting.model_evaluation import evaluate
+from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -304,3 +306,24 @@ def test_prediction_intervals_exog(alpha, coverage, level_sample_data_split):
         intervals_np = intervals_df.to_numpy().flatten()
         assert intervals_df.shape == (fh_length, 2)
         assert intervals_np[0] < intervals_np[1]
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_evaluate_exog():
+    """Test evaluate works when exogenous regressors are present."""
+    y, X = load_longley()
+    forecaster = UnobservedComponents(level="local linear trend")
+    cv = SlidingWindowSplitter(fh=[1, 2, 3], window_length=4, step_length=1)
+    results = evaluate(
+        forecaster=forecaster,
+        y=y,
+        X=X,
+        cv=cv,
+        strategy="refit",
+        return_data=True,
+        error_score="raise",
+    )
+    assert results.shape == (10, 8)

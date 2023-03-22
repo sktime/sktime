@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 """DrCIF test code."""
+import pytest
+
 from sktime.classification.interval_based import DrCIF
 from sktime.datasets import load_unit_test
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_contracted_drcif():
     """Test of contracted DrCIF on unit test data."""
     # load unit test data

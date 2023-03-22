@@ -348,4 +348,4 @@ This concludes how to create string identifiers for ``.ts``  format. To learn mo
 .. _issue: https://github.com/alan-turing-institute/sktime/issues
 .. _tsregression: http://tseregression.org/
 .. _timeseriesclassification.com: http://www.timeseriesclassification.com/index.php
-.. _tutorials: https://www.sktime.org/en/stable/tutorials.html
+.. _tutorials: https://www.sktime.net/en/stable/tutorials.html

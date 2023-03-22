@@ -132,6 +132,34 @@ def test_evaluate_common_configs(
     np.testing.assert_array_equal(actual, expected)
 
 
+@pytest.mark.parametrize("return_data", [True, False])
+def test_scoring_list(return_data):
+    y = make_forecasting_problem(n_timepoints=30, index_type="int")
+    forecaster = NaiveForecaster()
+    cv = SlidingWindowSplitter(fh=[1, 2, 3], initial_window=15, step_length=5)
+
+    out = evaluate(
+        forecaster=forecaster,
+        y=y,
+        cv=cv,
+        scoring=[
+            MeanAbsolutePercentageError(symmetric=True),
+            MeanAbsoluteScaledError(),
+        ],
+        return_data=return_data,
+    )
+    assert "test_MeanAbsolutePercentageError" in out.columns
+    assert "test_MeanAbsoluteScaledError" in out.columns
+    if return_data:
+        assert "y_pred" in out.columns
+        assert "y_train" in out.columns
+        assert "y_test" in out.columns
+    else:
+        assert "y_pred" not in out.columns
+        assert "y_train" not in out.columns
+        assert "y_test" not in out.columns
+
+
 def test_evaluate_initial_window():
     """Test evaluate initial window."""
     initial_window = 20

@@ -4,6 +4,8 @@
 __author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["CNNRegressor"]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.networks.cnn import CNNNetwork
@@ -90,7 +92,13 @@ class CNNRegressor(BaseDeepRegressor):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
-        self._network = CNNNetwork()
+        self._network = CNNNetwork(
+            kernel_size=self.kernel_size,
+            avg_pool_size=self.avg_pool_size,
+            n_conv_layers=self.n_conv_layers,
+            activation=self.activation,
+            random_state=self.random_state,
+        )
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -156,9 +164,6 @@ class CNNRegressor(BaseDeepRegressor):
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
-
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
@@ -174,7 +179,7 @@ class CNNRegressor(BaseDeepRegressor):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
@@ -200,6 +205,8 @@ class CNNRegressor(BaseDeepRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         param1 = {
             "n_epochs": 10,
             "batch_size": 4,
@@ -212,5 +219,16 @@ class CNNRegressor(BaseDeepRegressor):
             "kernel_size": 2,
             "n_conv_layers": 1,
         }
+        test_params = [param1, param2]
 
-        return [param1, param2]
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import LambdaCallback
+
+            test_params.append(
+                {
+                    "n_epochs": 2,
+                    "callbacks": [LambdaCallback()],
+                }
+            )
+
+        return test_params

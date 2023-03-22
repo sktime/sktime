@@ -4,17 +4,19 @@
 This module has meta-transformations that is build using the pre-existing
 transformations as building blocks.
 """
+
+__author__ = ["mloning", "sajaysurya", "fkiraly"]
+__all__ = ["ColumnTransformer", "ColumnConcatenator"]
+
+from warnings import warn
+
 import numpy as np
 import pandas as pd
-from scipy import sparse
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.panel import check_X
-
-__author__ = ["mloning", "sajaysurya", "fkiraly"]
-__all__ = ["ColumnTransformer", "ColumnConcatenator"]
 
 
 class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
@@ -106,6 +108,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         of the individual transformations and the `sparse_threshold` keyword.
     """
 
+    _tags = {"python_dependencies": "scipy"}
+
     def __init__(
         self,
         transformers,
@@ -115,6 +119,17 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         transformer_weights=None,
         preserve_dataframe=True,
     ):
+
+        warn(
+            "ColumnTransformer is not fully compliant with the sktime interface "
+            "and will be replaced by sktime.transformations.ColumnEnsembleTransformer "
+            "in a future version. Deprecation horizon and instructions will "
+            "be added to this message, once ColumnEnsembleTransformer can replace "
+            "key parameters of ColumnTransformer. If not using parameters remainder, "
+            "sparse_threshold, n_jobs, transformer_weights, or preserve_dataframe, "
+            "ColumnTransformer can simply be replaced by ColumnEnsembleTransformer."
+        )
+
         super(ColumnTransformer, self).__init__(
             transformers=transformers,
             remainder=remainder,
@@ -136,6 +151,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         types = set(type(X) for X in Xs)
 
         if self.sparse_output_:
+            from scipy import sparse
+
             return sparse.hstack(Xs).tocsr()
         if self.preserve_dataframe and (pd.Series in types or pd.DataFrame in types):
             vars = [y for x in self.transformers for y in x[2]]
@@ -215,8 +232,37 @@ class ColumnConcatenator(BaseTransformer):
     """Concatenate multivariate series to a long univariate series.
 
     Transformer that concatenates multivariate time series/panel data
-    into long univariate time series/panel
-        data by simply concatenating times series in time.
+    into single univariate time series/panel data by concatenating
+    each individual series on top of each other from left to right.
+
+    Uses pandas method stack() to do the concatenating
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.compose import ColumnConcatenator # noqa: E501
+    >>> import numpy as np
+    >>> data = np.array([[1, 2, 3],
+    ...                  [4, 5, 6],
+    ...                  [7, 8, 9]])
+    >>> concatenator = ColumnConcatenator()
+    >>> concatenator.fit_transform(data)
+    array([[1.],
+           [4.],
+           [7.],
+           [2.],
+           [5.],
+           [8.],
+           [3.],
+           [6.],
+           [9.]])
+
+    Another example with panel data.
+
+    >>> from sktime.utils._testing.panel import _make_panel
+    >>> panel_data = _make_panel(n_columns = 2,
+    ...                          n_instances = 2,
+    ...                          n_timepoints = 3)
+    >>> panel_data = concatenator.fit_transform(panel_data)
     """
 
     _tags = {
