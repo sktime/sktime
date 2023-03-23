@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Implements Baxter-King bandpass filter transformation.
+Interface to Hodrick-Prescott filter from `statsmodels`.
 
 Please see the original library
 (https://github.com/statsmodels/statsmodels/blob/main/statsmodels/tsa/filters/hp_filter.py)
+Interfaces `hp_filter` from `statsmodels.tsa.filters`.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -11,7 +12,6 @@ __author__ = ["klam-data", "pyyim", "mgorlin", "ken_maeda"]
 __all__ = ["HPFilter"]
 
 
-import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
@@ -22,8 +22,8 @@ _check_soft_dependencies("statsmodels", severity="warning")
 
 class HPFilter(BaseTransformer):
     """Filter a times series using the Hodrick-Prescott filter.
-    This is a wrapper around statsmodels' hpfilter function
-    (see 'sm.tsa.filters.bk_filter.hpfilter').
+    This is a wrapper around the `hpfilter` function from `statsmodels`.
+    (see `statsmodels.tsa.filters.hp_filter.hpfilter`).
 
     Parameters
     ----------
@@ -97,23 +97,10 @@ class HPFilter(BaseTransformer):
         -------
         transformed cyclical version of X
         """
-        from scipy import sparse
-        from scipy.sparse.linalg import spsolve
-        from statsmodels.tools.validation import PandasWrapper, array_like
+        from statsmodels.tsa.filters.hp_filter import hpfilter
 
-        pw = PandasWrapper(X)
-        X = array_like(X, 'x', ndim=1)
-        nobs = len(X)
-        I = sparse.eye(nobs, nobs)  # noqa:E741
-        offsets = np.array([0, 1, 2])
-        data = np.repeat([[1.], [-2.], [1.]], nobs, axis=1)
-        K = sparse.dia_matrix((data, offsets), shape=(nobs - 2, nobs))
-
-        use_umfpack = True
-        trend = spsolve(I+self.lamb*K.T.dot(K), X, use_umfpack=use_umfpack)
-
-        cycle = X - trend
-        return pw.wrap(cycle, append='cycle')
+        kwargs = {"lamb": self.lamb}
+        return hpfilter(X, **kwargs)[0]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

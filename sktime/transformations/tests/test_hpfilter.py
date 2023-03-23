@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for BKfilter wrapper annotation estimator."""
+"""Tests for HPfilter wrapper annotation estimator."""
 
 __author__ = ["klam-data", "pyyim", "ken-maeda"]
 
@@ -15,7 +15,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
     reason="skip test if required soft dependency for statsmodels.api not available",
 )
 def test_HPFilter_wrapper():
-    """Verify that the wrapped BKFilter estimator agrees with statsmodel."""
+    """Verify that the wrapped HPFilter estimator agrees with statsmodel."""
     # moved all potential soft dependency import inside the test:
     import statsmodels.api as sm
 
