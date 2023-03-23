@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """sktime window forecaster base class."""
 
-__author__ = ["@mloning", "@big-o", "fkiraly"]
+__author__ = ["mloning", "big-o", "fkiraly"]
 __all__ = ["_BaseWindowForecaster"]
 
 import numpy as np
