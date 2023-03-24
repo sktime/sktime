@@ -31,6 +31,8 @@ class MrSQM(_DelegatedClassifier):
         number of representations produced by sax transformation.
     nsfa                : int, default=0
         number of representations produced by sfa transformation.
+        WARNING: setting this to 1 or larger will break estimator persistence (save),
+        known bug, see https://github.com/mlgig/mrsqm/issues/7
     custom_config       : dict, default=None
         customized parameters for the symbolic transformation.
     random_state        : int, default=None.
