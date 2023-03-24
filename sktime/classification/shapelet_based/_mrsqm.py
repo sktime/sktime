@@ -81,6 +81,24 @@ class MrSQM(_DelegatedClassifier):
         kwargs = self.get_params(deep=False)
         self.estimator_ = MrSQMClassifier(**kwargs)
 
+    # temporary workaround - delegate is not sktime interface compliant,
+    # does not implement get_fitted_params
+    # see https://github.com/mlgig/mrsqm/issues/7
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        return {}
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -105,12 +123,15 @@ class MrSQM(_DelegatedClassifier):
         """
         params1 = {}
 
+        # known problem: nsfa > 0 causes estimator to be non-pickleable
+        # see https://github.com/mlgig/mrsqm/issues/7
+        # fix this problem once the pickling issue is resolved
         params2 = {
             "strat": "SR",
             "features_per_rep": 200,
             "selection_per_rep": 1000,
             "nsax": 2,
-            "nsfa": 1,
+            "nsfa": 0,
             "sfa_norm": False,
         }
 
