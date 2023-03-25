@@ -122,9 +122,20 @@ def test_check_positive(scitype, mtype, fixture_index):
     # todo: possibly remove this once all checks are defined
     check_is_defined = (mtype, scitype) in check_dict.keys()
 
-    # check fixtures that exist against checks that exist
+    # check fixtures that exist against checks that exist, when full metadata is queried
     if fixture is not None and check_is_defined:
         check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=True)
+        if not check_result[0]:
+            msg = (
+                f"check_is_mtype returns False on scitype {scitype}, mtype {mtype} "
+                f"fixture {fixture_index}, message: "
+            )
+            msg = msg + check_result[1]
+        assert check_result[0], msg
+
+    # check fixtures that exist against checks that exist, when no metadata is queried
+    if fixture is not None and check_is_defined:
+        check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=[])
         if not check_result[0]:
             msg = (
                 f"check_is_mtype returns False on scitype {scitype}, mtype {mtype} "
@@ -159,7 +170,15 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
     # if the examples have no metadata to them, don't test
     metadata_provided = expected_metadata is not None
 
-    # check fixtures that exist against checks that exist
+    # metadata keys to ignore
+    # is_equal_index is not fully supported yet in inference
+    EXCLUDE_KEYS = ["is_equal_index"]
+
+    expected_metadata = expected_metadata.copy()
+    subset_keys = set(expected_metadata.keys()).difference(EXCLUDE_KEYS)
+    expected_metadata = {key: expected_metadata[key] for key in subset_keys}
+
+    # check fixtures that exist against checks that exist, full metadata query
     if fixture is not None and check_is_defined and metadata_provided:
         check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=True)
         metadata = check_result[2]
@@ -171,17 +190,38 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
             del metadata["scitype"]
 
         # currently we do not check this field in metadata inference
-        if "is_equal_index" in expected_metadata:
-            expected_metadata = expected_metadata.copy()
-            del expected_metadata["is_equal_index"]
 
         msg = (
             f"check_is_mtype returns wrong metadata on scitype {scitype}, "
-            f"mtype {mtype}, fixture {fixture_index}. "
+            f"mtype {mtype}, fixture {fixture_index}, when quering full metadata. "
             f"returned: {metadata}; expected: {expected_metadata}"
         )
 
         assert metadata == expected_metadata, msg
+
+    # check fixtures that exist against checks that exist
+    if fixture is not None and check_is_defined and metadata_provided:
+        for metadata_key in subset_keys:
+            check_result = check_is_mtype(
+                fixture, mtype, scitype, return_metadata=[metadata_key]
+            )
+            metadata = check_result[2]
+
+            # remove mtype & scitype key if exists, since comparison is on scitype level
+            if "mtype" in metadata:
+                del metadata["mtype"]
+            if "scitype" in metadata:
+                del metadata["scitype"]
+
+            msg = (
+                f"check_is_mtype returns wrong metadata on scitype {scitype}, "
+                f"mtype {mtype}, fixture {fixture_index}, when quering "
+                f"metadata for metadata key {metadata_key}. "
+                f"returned: {metadata[metadata_key]}; "
+                f"expected: {expected_metadata[metadata_key]}"
+            )
+
+            assert metadata[metadata_key] == expected_metadata[metadata_key], msg
 
 
 def test_check_negative(scitype, mtype):
