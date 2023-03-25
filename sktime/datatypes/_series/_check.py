@@ -17,6 +17,7 @@ obj - object to check
 return_metadata - bool, optional, default=False
     if False, returns only "valid" return
     if True, returns all three return objects
+    if str, list of str, metadata return dict is subset to keys in return_metadata
 var_name: str, optional, default="obj" - name of input in error messages
 
 Returns
