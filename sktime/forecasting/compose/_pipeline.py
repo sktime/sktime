@@ -1482,7 +1482,7 @@ class ForecastX(BaseForecaster):
                 Note: no covariance forecasts are returned between different variables.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_var(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_var(fh=fh, X=X, cov=cov)
         return y_pred
 
     # todo: does not work properly for multivariate or hierarchical
@@ -1517,7 +1517,7 @@ class ForecastX(BaseForecaster):
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X, marginal=marginal)
         return y_pred
 
     @classmethod
