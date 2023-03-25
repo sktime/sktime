@@ -170,7 +170,7 @@ def check_is_mtype(
 
         res = check_dict[key](obj, return_metadata=return_metadata, var_name=var_name)
 
-        if return_metadata:
+        if not isinstance(return_metadata, bool) or return_metadata:
             check_passed = res[0]
         else:
             check_passed = res
@@ -179,7 +179,7 @@ def check_is_mtype(
             found_mtype.append(m)
             found_scitype.append(scitype_of_m)
             final_result = res
-        elif return_metadata:
+        elif not isinstance(return_metadata, bool) or return_metadata:
             msg.append(res[1])
 
     # there are three options on the result of check_is_mtype:
@@ -190,7 +190,7 @@ def check_is_mtype(
         )
     # b. one mtype is found - then return that mtype
     elif len(found_mtype) == 1:
-        if return_metadata:
+        if not isinstance(return_metadata, bool) or return_metadata:
             # add the mtype return to the metadata
             final_result[2]["mtype"] = found_mtype[0]
             final_result[2]["scitype"] = found_scitype[0]
@@ -418,7 +418,7 @@ def check_is_scitype(
             final_result = res
             found_mtype.append(key[0])
             found_scitype.append(key[1])
-        elif return_metadata:
+        elif not isinstance(return_metadata, bool) or return_metadata:
             msg[key[0]] = res[1]
 
     # there are three options on the result of check_is_mtype:
@@ -429,7 +429,7 @@ def check_is_scitype(
         )
     # b. one mtype is found - then return that mtype
     elif len(found_mtype) == 1:
-        if return_metadata:
+        if not isinstance(return_metadata, bool) or return_metadata:
             # add the mtype return to the metadata
             final_result[2]["mtype"] = found_mtype[0]
             # add the scitype return to the metadata

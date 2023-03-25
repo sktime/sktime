@@ -7,7 +7,7 @@ __author__ = ["fkiraly"]
 
 def _ret(valid, msg, metadata, return_metadata):
     """Return switch for checker functions."""
-    if return_metadata:
+    if not isinstance(return_metadata, bool) or return_metadata:
         return valid, msg, metadata
     else:
         return valid
