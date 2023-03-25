@@ -98,6 +98,7 @@ example_dict_metadata[("Panel", 0)] = {
     "is_one_panel": True,
     "is_equally_spaced": True,
     "is_equal_length": True,
+    "is_equal_index": True,
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
@@ -169,6 +170,7 @@ example_dict_metadata[("Panel", 1)] = {
     "is_one_panel": True,
     "is_equally_spaced": True,
     "is_equal_length": True,
+    "is_equal_index": True,
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
@@ -233,7 +235,36 @@ example_dict_metadata[("Panel", 2)] = {
     "is_one_panel": True,
     "is_equally_spaced": True,
     "is_equal_length": True,
+    "is_equal_index": True,
     "is_empty": False,
     "has_nans": False,
     "n_instances": 1,
+}
+
+###
+# example 3: univariate, equally sampled, lossy,
+# targets #4299 pd-multiindex panel incorrect is_equally_spaced
+
+X_instances = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+X_timepoints = pd.to_datetime([0, 1, 2, 4, 5, 6, 9, 10, 11], unit="s")
+X_multiindex = pd.MultiIndex.from_arrays(
+    [X_instances, X_timepoints], names=["instances", "timepoints"]
+)
+
+X = pd.DataFrame(index=X_multiindex, data=list(range(0, 9)), columns=["var_0"])
+
+example_dict[("pd-multiindex", "Panel", 3)] = X
+example_dict_lossy[("pd-multiindex", "Panel", 3)] = False
+
+example_dict_metadata[("Panel", 3)] = {
+    "is_univariate": True,
+    "is_one_series": False,
+    "n_panels": 1,
+    "is_one_panel": True,
+    "is_equally_spaced": True,
+    "is_equal_length": True,
+    "is_equal_index": False,
+    "is_empty": False,
+    "has_nans": False,
+    "n_instances": 3,
 }

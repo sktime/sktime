@@ -43,6 +43,9 @@ def get_time_index(X):
         # nested_univ
         elif isinstance(X, pd.DataFrame) and isinstance(X.iloc[0, 0], pd.DataFrame):
             return _get_index(X.iloc[0, 0])
+        # nested_univ
+        elif isinstance(X, pd.DataFrame) and isinstance(X.iloc[0, 0], pd.Series):
+            return _get_index(X.iloc[0, 0])
         # pd.Series or pd.DataFrame
         else:
             return X.index

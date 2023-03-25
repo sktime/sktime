@@ -36,6 +36,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     """
 
     _tags = {
+        "reserved_params": ["multioutput", "score_average"],
         "scitype:y_pred": "pred_quantiles",
         "lower_is_better": True,
     }
@@ -242,6 +243,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
                     np.vstack((y_true[:i, :], y_true[i + 1 :, :])),  # noqa
                     np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),  # noqa
                     multioutput,
+                    **kwargs,
                 )
             return out_series
         except RecursionError:
