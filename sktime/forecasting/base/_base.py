@@ -1347,7 +1347,7 @@ class BaseForecaster(BaseEstimator):
                 y,
                 scitype=ALLOWED_SCITYPES,
                 return_metadata=y_metadata_required,
-                var_name="y"
+                var_name="y",
             )
             msg = (
                 "y must be in an sktime compatible format, "

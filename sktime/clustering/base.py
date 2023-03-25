@@ -372,7 +372,10 @@ class BaseClusterer(BaseEstimator):
         X = self._initial_conversion(X)
 
         X_metadata_required = [
-            "n_instances", "has_nans", "is_univariate", "is_equal_length"
+            "n_instances",
+            "has_nans",
+            "is_univariate",
+            "is_equal_length",
         ]
         X_valid, _, X_metadata = check_is_scitype(
             X, scitype="Panel", return_metadata=X_metadata_required
