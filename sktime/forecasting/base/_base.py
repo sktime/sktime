@@ -55,7 +55,7 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,

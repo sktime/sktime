@@ -355,6 +355,12 @@ ESTIMATOR_TAG_REGISTER = [
         "python dependencies of estimator as str or list of str",
     ),
     (
+        "requires_cython",
+        "estimator",
+        "bool",
+        "whether the estimator reqires a C compiler present such as libomp, gcc",
+    ),
+    (
         "remember_data",
         ["forecaster", "transformer"],
         "bool",
@@ -371,6 +377,24 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         ("list", "str"),
         "parameters reserved by the base class and present in all child estimators",
+    ),
+    (
+        "capabilities:exact",
+        "distribution",
+        ("list", "str"),
+        "methods provided by the distribution that return numerically exact results",
+    ),
+    (
+        "capabilities:approx",
+        "distribution",
+        ("list", "str"),
+        "methods provided by the distribution that return approximate results",
+    ),
+    (
+        "distr:measuretype",
+        "distribution",
+        ("str", ["continuous", "discrete", "mixed"]),
+        "class the distribution measure belongs to - abs.continuous, discrete, mixed",
     ),
 ]
 

@@ -713,6 +713,7 @@ def dtw_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import dtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> dtw_distance(x_1d, y_1d)

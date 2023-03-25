@@ -66,6 +66,10 @@ from sktime.utils.validation._dependencies import (
 # default is False, can be set to True by pytest --matrixdesign True flag
 MATRIXDESIGN = False
 
+# whether to test only estimators that require cython, C compiler such as gcc
+# default is False, can be set to True by pytest --only_cython_estimators True flag
+CYTHON_ESTIMATORS = False
+
 
 def subsample_by_version_os(x):
     """Subsample objects by operating system and python version.
@@ -198,10 +202,16 @@ class BaseFixtureGenerator:
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
+        if CYTHON_ESTIMATORS:
+            filter_tags = {"requires_cython": True}
+        else:
+            filter_tags = None
+
         est_list = all_estimators(
             estimator_types=getattr(self, "estimator_type_filter", None),
             return_names=False,
             exclude_estimators=EXCLUDE_ESTIMATORS,
+            filter_tags=filter_tags,
         )
         # subsample estimators by OS & python version
         # this ensures that only a 1/3 of estimators are tested for a given combination
@@ -1103,11 +1113,12 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                     joblib.Memory,
                 ]
 
-            param_value = params[param.name]
-            if isinstance(param_value, np.ndarray):
-                np.testing.assert_array_equal(param_value, param.default)
-            else:
-                if bool(
+            reserved_params = estimator_class.get_class_tag("reserved_params", [])
+            if param.name not in reserved_params:
+                param_value = params[param.name]
+                if isinstance(param_value, np.ndarray):
+                    np.testing.assert_array_equal(param_value, param.default)
+                elif bool(
                     isinstance(param_value, numbers.Real) and np.isnan(param_value)
                 ):
                     # Allows to set default parameters to np.nan

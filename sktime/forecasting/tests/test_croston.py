@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Test Croston's Method against the R package."""
+"""Tests for Croston estimator."""
 import numpy as np
 import pytest
 
@@ -16,7 +16,7 @@ from sktime.forecasting.croston import Croston
     ],
 )
 def test_Croston_against_r_implementation(smoothing, fh, r_forecast):
-    """Test Croston's Method against the R package.
+    """Test Croston estimator against the R package implementing the same algorithm.
 
     Testing forecasted values estimated by the R package of the Croston's method
     against the Croston method in sktime.
@@ -29,7 +29,7 @@ def test_Croston_against_r_implementation(smoothing, fh, r_forecast):
         forecast <- croston(y,h = 10)
     Output:
         0.8688921
-    """
+    """  # noqa: E501
     y = load_PBS_dataset()
     forecaster = Croston(smoothing)
     forecaster.fit(y)

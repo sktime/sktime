@@ -2,7 +2,7 @@
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
 __author__ = [
-    "Jack Russon",
+    "jnrusson1",
 ]
 
 import math
