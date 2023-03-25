@@ -1342,7 +1342,13 @@ class BaseForecaster(BaseEstimator):
 
         # checking y
         if y is not None:
-            y_metadata_required = ["is_univariate"]
+            # request only required metadata from checks
+            y_metadata_required = []
+            if self.get_tag("scitype:y") != "both":
+                y_metadata_required += ["is_univariate"]
+            if not self.get_tag("handles-missing-data"):
+                y_metadata_required += ["has_nans"]
+
             y_valid, _, y_metadata = check_is_scitype(
                 y,
                 scitype=ALLOWED_SCITYPES,
@@ -1392,8 +1398,16 @@ class BaseForecaster(BaseEstimator):
 
         # checking X
         if X is not None:
+            # request only required metadata from checks
+            X_metadata_required = []
+            if not self.get_tag("handles-missing-data"):
+                X_metadata_required += ["has_nans"]
+
             X_valid, _, X_metadata = check_is_scitype(
-                X, scitype=ALLOWED_SCITYPES, return_metadata=[], var_name="X"
+                X,
+                scitype=ALLOWED_SCITYPES,
+                return_metadata=X_metadata_required,
+                var_name="X",
             )
 
             msg = (
