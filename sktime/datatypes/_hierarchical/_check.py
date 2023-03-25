@@ -68,13 +68,6 @@ def _list_all_equal(obj):
 check_dict = dict()
 
 
-def _ret(valid, msg, metadata, return_metadata):
-    if return_metadata:
-        return valid, msg, metadata
-    else:
-        return valid
-
-
 def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
 
     ret = check_pdmultiindex_panel(
