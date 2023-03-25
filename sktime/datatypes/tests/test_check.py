@@ -9,7 +9,7 @@ from sktime.datatypes._check import (
     AMBIGUOUS_MTYPES,
     check_dict,
     check_is_mtype,
-    check_is_scitype
+    check_is_scitype,
 )
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._check import scitype as infer_scitype
@@ -373,9 +373,9 @@ def test_mtype_infer(scitype, mtype, fixture_index):
             fixture, scitype=scitype, exclude_mtypes=[], return_metadata=[]
         )
         inferred_mtype = scitype_res[2]["mtype"]
-        assert mtype == inferred_mtype, (
-            f"mtype {mtype} not correctly identified for fixture {fixture_index}"
-        )
+        assert (
+            mtype == inferred_mtype
+        ), f"mtype {mtype} not correctly identified for fixture {fixture_index}"
 
 
 # exclude these scitypes in inference of scitype test
