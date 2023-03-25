@@ -352,7 +352,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_predict_interval(
         self, estimator_instance, n_columns, index_type, fh_int_oos, coverage
     ):
-        """Check prediction intervals returned by predict.
+        """Check prediction intervals returned by predict_interval.
 
         Arguments
         ---------
@@ -365,9 +365,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         Raises
         ------
         AssertionError - if Forecaster test instance has "capability:pred_int"
-                and pred. int are not returned correctly when asking predict for them
+                and pred. int are not returned correctly when calling predict_interval
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
-                and no NotImplementedError is raised when asking predict for pred.int
+                and no NotImplementedError is raised when calling predict_interval
         """
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         estimator_instance.fit(y_train, fh=fh_int_oos)
@@ -421,7 +421,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
     def test_predict_quantiles(self, estimator_instance, n_columns, fh_int_oos, alpha):
-        """Check prediction quantiles returned by predict.
+        """Check prediction quantiles returned by predict_quantiles.
 
         Arguments
         ---------
@@ -432,17 +432,67 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         Raises
         ------
         AssertionError - if Forecaster test instance has "capability:pred_int"
-                and pred. int are not returned correctly when asking predict for them
+                and pred. int are not returned correctly when calling predict_quantiles
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
-                and no NotImplementedError is raised when asking predict for pred.int
+                and no NotImplementedError is raised when calling predict_quantiles
         """
         y_train = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_train, fh=fh_int_oos)
-        try:
+        if estimator_instance.get_tag("capability:pred_int"):
             quantiles = estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
             self._check_predict_quantiles(quantiles, y_train, fh_int_oos, alpha)
-        except NotImplementedError:
-            pass
+        else:
+            with pytest.raises(NotImplementedError, match="quantile predictions"):
+                estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
+
+    def _check_predict_proba(self, pred_dist, y_train, fh_int):
+        from sktime.proba.base import BaseDistribution
+
+        assert isinstance(pred_dist, BaseDistribution)
+        pred_cols = pred_dist.columns
+        pred_index = pred_dist.index
+
+        # check time index
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(pred_index, cutoff, fh_int)
+
+        # check columns
+        if isinstance(y_train, pd.Series):
+            assert (pred_cols == pd.Index([0])).all()
+        else:
+            assert (pred_cols == y_train.columns).all()
+
+    # todo 0.18.0 or 0.19.0: remove legacy_interface parameter below
+    @pytest.mark.parametrize(
+        "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
+    )
+    def test_predict_proba(self, estimator_instance, n_columns, fh_int_oos):
+        """Check predictive distribution returned by predict_proba.
+
+        Arguments
+        ---------
+        Forecaster: BaseEstimator class descendant, forecaster to test
+        fh: ForecastingHorizon, fh at which to test prediction
+
+        Raises
+        ------
+        AssertionError - if Forecaster test instance has "capability:pred_int"
+                and pred. int are not returned correctly when calling predict_proba
+        AssertionError - if Forecaster test instance does not have "capability:pred_int"
+                and no NotImplementedError is raised when calling predict_proba
+        """
+        y_train = _make_series(n_columns=n_columns)
+        estimator_instance.fit(y_train, fh=fh_int_oos)
+
+        if estimator_instance.get_tag("capability:pred_int"):
+            try:
+                pred_dist = estimator_instance.predict_proba(legacy_interface=False)
+                self._check_predict_proba(pred_dist, y_train, fh_int_oos)
+            except NotImplementedError:
+                pass
+        else:
+            with pytest.raises(NotImplementedError, match="probabilistic predictions"):
+                estimator_instance.predict_proba(legacy_interface=False)
 
     def test_pred_int_tag(self, estimator_instance):
         """Checks whether the capability:pred_int tag is correctly set.
