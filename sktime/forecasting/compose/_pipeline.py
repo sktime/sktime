@@ -1558,7 +1558,7 @@ class ForecastX(BaseForecaster):
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
         # example with probabilistic capability
-        if _check_soft_dependencies("statsmodels"):
+        if _check_soft_dependencies("statsmodels", severity="none"):
             from sktime.forecasting.arima import ARIMA
 
             fy_proba = ARIMA()
