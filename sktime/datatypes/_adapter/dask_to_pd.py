@@ -16,7 +16,8 @@ index is replaced by a string index where tuples are replaced with str coerced e
 """
 import pandas as pd
 
-from sktime.datatypes._common import _req, _ret as ret
+from sktime.datatypes._common import _req
+from sktime.datatypes._common import _ret as ret
 
 
 def _is_mi_col(x):

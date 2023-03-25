@@ -249,7 +249,10 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
     requires_series_grps = [
-        "n_instances", "is_one_series", "is_equal_length", "is_equally_spaced"
+        "n_instances",
+        "is_one_series",
+        "is_equal_length",
+        "is_equally_spaced",
     ]
     if _req(requires_series_grps, return_metadata):
         series_groups = obj.groupby(level=list(range(index.nlevels - 1)), sort=False)

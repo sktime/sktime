@@ -40,7 +40,8 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._common import _req, _ret as ret
+from sktime.datatypes._common import _req
+from sktime.datatypes._common import _ret as ret
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types
 
