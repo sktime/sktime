@@ -8,7 +8,7 @@ Interfaces `hp_filter` from `statsmodels.tsa.filters`.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["klam-data", "pyyim", "mgorlin", "ken_maeda"]
+__author__ = ["ken_maeda"]
 __all__ = ["HPFilter"]
 
 
@@ -22,6 +22,7 @@ _check_soft_dependencies("statsmodels", severity="warning")
 
 class HPFilter(BaseTransformer):
     """Filter a times series using the Hodrick-Prescott filter.
+
     This is a wrapper around the `hpfilter` function from `statsmodels`.
     (see `statsmodels.tsa.filters.hp_filter.hpfilter`).
 
@@ -34,6 +35,7 @@ class HPFilter(BaseTransformer):
         suggested for quarterly data. Ravn and Uhlig suggest using a value
         of 6.25 (1600/4**4) for annual data and 129600 (1600*3**4) for monthly
         data.
+
     Notes
     -----
     The HP filter removes a smooth trend
@@ -44,6 +46,7 @@ class HPFilter(BaseTransformer):
     Ravn, M.O and H. Uhlig. 2002. "Notes On Adjusted the Hodrick-Prescott
         Filter for the Frequency of Observations." `The Review of Economics and
         Statistics`, 84(2), 371-80.
+
     Examples
     --------
     >>> from sktime.transformations.series.hpfilter import HPFilter # doctest: +SKIP
@@ -88,7 +91,9 @@ class HPFilter(BaseTransformer):
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
+
         private _transform containing core logic, called from transform
+
         Parameters
         ----------
         X : array_like, A 1d array
@@ -105,12 +110,14 @@ class HPFilter(BaseTransformer):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
         Parameters
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
             There are currently no reserved values for transformers.
+
         Returns
         -------
         params : dict or list of dict, default = {}
@@ -119,5 +126,6 @@ class HPFilter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"lamb": 1600}
-        return params
+        params1 = {"lamb": 1600}
+        params2 = {}
+        return [params1, params2]

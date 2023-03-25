@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for HPfilter wrapper annotation estimator."""
 
-__author__ = ["klam-data", "pyyim", "ken-maeda"]
+__author__ = ["ken-maeda"]
 
 import pandas as pd
 import pytest
@@ -17,6 +17,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 def test_HPFilter_wrapper():
     """Verify that the wrapped HPFilter estimator agrees with statsmodel."""
     # moved all potential soft dependency import inside the test:
+
     import statsmodels.api as sm
 
     from sktime.transformations.series.hpfilter import HPFilter as _HPFilter
