@@ -174,9 +174,10 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
     # is_equal_index is not fully supported yet in inference
     EXCLUDE_KEYS = ["is_equal_index"]
 
-    expected_metadata = expected_metadata.copy()
-    subset_keys = set(expected_metadata.keys()).difference(EXCLUDE_KEYS)
-    expected_metadata = {key: expected_metadata[key] for key in subset_keys}
+    if metadata_provided:
+        expected_metadata = expected_metadata.copy()
+        subset_keys = set(expected_metadata.keys()).difference(EXCLUDE_KEYS)
+        expected_metadata = {key: expected_metadata[key] for key in subset_keys}
 
     # check fixtures that exist against checks that exist, full metadata query
     if fixture is not None and check_is_defined and metadata_provided:
