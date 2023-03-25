@@ -81,6 +81,10 @@ all_extras = [
     "seasonal",
 ]
 
+cython_extras = [
+    "mrsqm; python_version < '3.11'",
+]
+
 dev = [
     "backoff",
     "httpx",

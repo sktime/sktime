@@ -355,6 +355,12 @@ ESTIMATOR_TAG_REGISTER = [
         "python dependencies of estimator as str or list of str",
     ),
     (
+        "requires_cython",
+        "estimator",
+        "bool",
+        "whether the estimator reqires a C compiler present such as libomp, gcc",
+    ),
+    (
         "remember_data",
         ["forecaster", "transformer"],
         "bool",
