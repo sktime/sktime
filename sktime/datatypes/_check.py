@@ -110,9 +110,10 @@ def check_is_mtype(
     scitype: str, optional, scitype to check obj as; default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
         valid mtype strings are in datatypes.SCITYPE_REGISTER (1st column)
-    return_metadata - bool, optional, default=False
+    return_metadata - bool, str, or list of str, optional, default=False
         if False, returns only "valid" return
         if True, returns all three return objects
+        if str, list of str, metadata return dict is subset to keys in return_metadata
     var_name: str, optional, default="obj" - name of input in error messages
 
     Returns
@@ -120,9 +121,9 @@ def check_is_mtype(
     valid: bool - whether obj is a valid object of mtype/scitype
     msg: str or list of str - error messages if object is not valid, otherwise None
             str if mtype is str; list of len(mtype) with message per mtype if list
-            returned only if return_metadata is True
+            returned only if return_metadata is True or str, list of str
     metadata: dict - metadata about obj if valid, otherwise None
-            returned only if return_metadata is True
+            returned only if return_metadata is True or str, list of str
         Keys populated depend on (assumed, otherwise identified) scitype of obj.
         Always returned:
             "mtype": str, mtype of obj (assumed or inferred)
@@ -241,7 +242,7 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
         obj=obj_long_name_for_avoiding_linter_clash,
         mtype=mtype,
         scitype=scitype,
-        return_metadata=True,
+        return_metadata=[],
         var_name=var_name,
     )
 
@@ -306,7 +307,7 @@ def mtype(
             obj,
             mtype=m_plus_scitype[0],
             scitype=m_plus_scitype[1],
-            return_metadata=True,
+            return_metadata=[],
         )
         if valid:
             mtypes_positive += [m_plus_scitype[0]]
@@ -349,6 +350,7 @@ def check_is_scitype(
     return_metadata - bool, optional, default=False
         if False, returns only "valid" return
         if True, returns all three return objects
+        if str, list of str, metadata return dict is subset to keys in return_metadata
     var_name: str, optional, default="obj" - name of input in error messages
     exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
         which mtypes to ignore in inferring mtype, default = ambiguous ones
