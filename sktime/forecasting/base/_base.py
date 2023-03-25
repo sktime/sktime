@@ -1342,11 +1342,11 @@ class BaseForecaster(BaseEstimator):
 
         # checking y
         if y is not None:
-            y_metadata_keys = ["is_univariate"]
+            y_metadata_required = ["is_univariate"]
             y_valid, _, y_metadata = check_is_scitype(
                 y,
                 scitype=ALLOWED_SCITYPES,
-                return_metadata=y_metadata_keys,
+                return_metadata=y_metadata_required,
                 var_name="y"
             )
             msg = (
