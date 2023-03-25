@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from sktime.forecasting.croston import Croston
-from sktime.datasets import load_PBS_dataset
-import pytest
+"""Test Croston's Method against the R package."""
 import numpy as np
+import pytest
 
-# test the Croston's Method against the R package
+from sktime.datasets import load_PBS_dataset
+from sktime.forecasting.croston import Croston
 
 
 @pytest.mark.parametrize(
@@ -16,7 +16,8 @@ import numpy as np
     ],
 )
 def test_Croston_against_r_implementation(smoothing, fh, r_forecast):
-    """
+    """Test Croston's Method against the R package.
+
     Testing forecasted values estimated by the R package of the Croston's method
     against the Croston method in sktime.
     R code to generate the hardcoded value for fh=10:
