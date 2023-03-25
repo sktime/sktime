@@ -40,18 +40,14 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
+from sktime.datatypes._common import _req, _ret as ret
+
 check_dict = dict()
 
 
 def check_pred_quantiles_proba(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
-
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
 
     # check if the input is a dataframe
     if not isinstance(obj, pd.DataFrame):
@@ -60,7 +56,8 @@ def check_pred_quantiles_proba(obj, return_metadata=False, var_name="obj"):
 
     # we now know obj is a pd.DataFrame
     index = obj.index
-    metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
 
     # check that column indices are unique
     if not len(set(obj.columns)) == len(obj.columns):
@@ -100,8 +97,9 @@ def check_pred_quantiles_proba(obj, return_metadata=False, var_name="obj"):
         return ret(False, msg, None, return_metadata)
 
     # compute more metadata, only if needed
-    if return_metadata:
+    if _req("has_nans", return_metadata):
         metadata["has_nans"] = obj.isna().values.any()
+    if _req("is_univariate", return_metadata):
         metadata["is_univariate"] = len(colidx.get_level_values(0).unique()) == 1
 
     return ret(True, None, metadata, return_metadata)
@@ -114,12 +112,6 @@ def check_pred_interval_proba(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
-
     # check if the input is a dataframe
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} should be a pd.DataFrame"
@@ -127,7 +119,8 @@ def check_pred_interval_proba(obj, return_metadata=False, var_name="obj"):
 
     # we now know obj is a pd.DataFrame
     index = obj.index
-    metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
 
     # check that column indices are unique
     if not len(set(obj.columns)) == len(obj.columns):
@@ -171,8 +164,9 @@ def check_pred_interval_proba(obj, return_metadata=False, var_name="obj"):
         return ret(False, msg, None, return_metadata)
 
     # compute more metadata, only if needed
-    if return_metadata:
+    if _req("has_nans", return_metadata):
         metadata["has_nans"] = obj.isna().values.any()
+    if _req("is_univariate", return_metadata):
         metadata["is_univariate"] = len(colidx.get_level_values(0).unique()) == 1
 
     return ret(True, None, metadata, return_metadata)
