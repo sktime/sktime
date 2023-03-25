@@ -29,6 +29,7 @@ from typing import List, Union
 import numpy as np
 
 from sktime.datatypes._alignment import check_dict_Alignment
+from sktime.datatypes._common import _ret
 from sktime.datatypes._hierarchical import check_dict_Hierarchical
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._proba import check_dict_Proba
@@ -55,13 +56,6 @@ def _check_scitype_valid(scitype: str = None):
 
     if scitype is not None and scitype not in valid_scitypes:
         raise TypeError(scitype + " is not a supported scitype")
-
-
-def _ret(valid, msg, metadata, return_metadata):
-    if return_metadata:
-        return valid, msg, metadata
-    else:
-        return valid
 
 
 def _coerce_list_of_str(obj, var_name="obj"):
