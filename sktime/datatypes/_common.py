@@ -5,9 +5,14 @@
 __author__ = ["fkiraly"]
 
 
+def _metadata_requested(return_metadata):
+    """Return whether some metadata has been requested."""
+    return not isinstance(return_metadata, bool) or return_metadata
+
+
 def _ret(valid, msg, metadata, return_metadata):
     """Return switch for checker functions."""
-    if not isinstance(return_metadata, bool) or return_metadata:
+    if _metadata_requested(return_metadata):
         return valid, msg, metadata
     else:
         return valid
