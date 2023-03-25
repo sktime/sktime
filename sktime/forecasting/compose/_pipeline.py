@@ -1412,7 +1412,7 @@ class ForecastX(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X, coverage=coverage)
         return y_pred
 
     def _predict_quantiles(self, fh, X, alpha):
