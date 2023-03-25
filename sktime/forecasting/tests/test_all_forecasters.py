@@ -318,7 +318,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         _assert_correct_columns(y_pred, y_train)
 
-    def _check_pred_intervals(self, pred_ints, y_train, fh, coverage):
+    def _check_predict_intervals(self, pred_ints, y_train, fh, coverage):
         """Check expected interval prediction output."""
         # check expected type
         valid, msg, _ = check_is_mtype(
