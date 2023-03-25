@@ -63,6 +63,15 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         "capability:multithreading": False,
     }
 
+    # convenience constant to control which metadata of input data
+    # are regularly retrieved in input checks
+    METADATA_REQ_IN_CHECKS = [
+        "n_instances",
+        "has_nans",
+        "is_univariate",
+        "is_equal_length",
+    ]
+
     def __init__(self):
         self.classes_ = []
         self.n_classes_ = 0
