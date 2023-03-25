@@ -384,15 +384,23 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        X : Series or Panel, any supported mtype
-            Data to fit transform to, of python type as follows:
-                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                    nested pd.DataFrame, or pd.DataFrame in long/wide format
-                subject to sktime mtype format specifications, for further details see
-                    examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, default=None
+        X : time series in sktime compatible data container format
+            Data to fit transform to, of sktime type as follows:
+            Series: interpreted as single time series
+                pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                if np.ndarray, of shape (n_timepoints) or (n_variables, n_timepoints)
+            Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                pd.DataFrame in long/wide format, or 3D np.ndarray
+                if pd.DataFrame with 2-level MultiIndex, index is (instance, time)
+                if 3D np.ndarray, of shape (n_instances, n_variables, n_timepoints)
+            Hierarchical: pd.DataFrame with 3- or more-level MultiIndex
+                highest (rightmost) level  of MultiIndex is time
+            for more details on sktime mtype format specifications,
+            and additional valid type specifications, refer to
+                examples/AA_datatypes_and_datasets.ipynb
+        y : optional, time series in sktime compatible data format, default=None
             Additional data, e.g., labels for transformation
+            some transformers require this, see class docstring for details
 
         Returns
         -------
@@ -451,15 +459,23 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        X : Series or Panel, any supported mtype
-            Data to be transformed, of python type as follows:
-                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                    nested pd.DataFrame, or pd.DataFrame in long/wide format
-                subject to sktime mtype format specifications, for further details see
-                    examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, default=None
+        X : time series in sktime compatible data container format
+            Data to fit transform to, of sktime type as follows:
+            Series: interpreted as single time series
+                pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                if np.ndarray, of shape (n_timepoints) or (n_variables, n_timepoints)
+            Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                pd.DataFrame in long/wide format, or 3D np.ndarray
+                if pd.DataFrame with 2-level MultiIndex, index is (instance, time)
+                if 3D np.ndarray, of shape (n_instances, n_variables, n_timepoints)
+            Hierarchical: pd.DataFrame with 3- or more-level MultiIndex
+                highest (rightmost) level  of MultiIndex is time
+            for more details on sktime mtype format specifications,
+            and additional valid type specifications, refer to
+                examples/AA_datatypes_and_datasets.ipynb
+        y : optional, time series in sktime compatible data format, default=None
             Additional data, e.g., labels for transformation
+            some transformers require this, see class docstring for details
 
         Returns
         -------
@@ -552,15 +568,23 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        X : Series or Panel, any supported mtype
-            Data to be transformed, of python type as follows:
-                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                    nested pd.DataFrame, or pd.DataFrame in long/wide format
-                subject to sktime mtype format specifications, for further details see
-                    examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, default=None
+        X : time series in sktime compatible data container format
+            Data to transform, of sktime type as follows:
+            Series: interpreted as single time series
+                pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                if np.ndarray, of shape (n_timepoints) or (n_variables, n_timepoints)
+            Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                pd.DataFrame in long/wide format, or 3D np.ndarray
+                if pd.DataFrame with 2-level MultiIndex, index is (instance, time)
+                if 3D np.ndarray, of shape (n_instances, n_variables, n_timepoints)
+            Hierarchical: pd.DataFrame with 3- or more-level MultiIndex
+                highest (rightmost) level  of MultiIndex is time
+            for more details on sktime mtype format specifications,
+            and additional valid type specifications, refer to
+                examples/AA_datatypes_and_datasets.ipynb
+        y : optional, time series in sktime compatible data format, default=None
             Additional data, e.g., labels for transformation
+            some transformers require this, see class docstring for details
 
         Returns
         -------
@@ -612,15 +636,23 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        X : Series or Panel, any supported mtype
-            Data to be inverse transformed, of python type as follows:
-                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                    nested pd.DataFrame, or pd.DataFrame in long/wide format
-                subject to sktime mtype format specifications, for further details see
-                    examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, default=None
+        X : time series in sktime compatible data container format
+            Data to inverse transform, of sktime type as follows:
+            Series: interpreted as single time series
+                pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                if np.ndarray, of shape (n_timepoints) or (n_variables, n_timepoints)
+            Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                pd.DataFrame in long/wide format, or 3D np.ndarray
+                if pd.DataFrame with 2-level MultiIndex, index is (instance, time)
+                if 3D np.ndarray, of shape (n_instances, n_variables, n_timepoints)
+            Hierarchical: pd.DataFrame with 3- or more-level MultiIndex
+                highest (rightmost) level  of MultiIndex is time
+            for more details on sktime mtype format specifications,
+            and additional valid type specifications, refer to
+                examples/AA_datatypes_and_datasets.ipynb
+        y : optional, time series in sktime compatible data format, default=None
             Additional data, e.g., labels for transformation
+            some transformers require this, see class docstring for details
 
         Returns
         -------
@@ -670,18 +702,23 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        X : Series or Panel, any supported mtype
-            Data to fit transform to, of python type as follows:
-                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                    nested pd.DataFrame, or pd.DataFrame in long/wide format
-                subject to sktime mtype format specifications, for further details see
-                    examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, default=None
+        X : time series in sktime compatible data container format
+            Data to update transform with, of sktime type as follows:
+            Series: interpreted as single time series
+                pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                if np.ndarray, of shape (n_timepoints) or (n_variables, n_timepoints)
+            Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                pd.DataFrame in long/wide format, or 3D np.ndarray
+                if pd.DataFrame with 2-level MultiIndex, index is (instance, time)
+                if 3D np.ndarray, of shape (n_instances, n_variables, n_timepoints)
+            Hierarchical: pd.DataFrame with 3- or more-level MultiIndex
+                highest (rightmost) level  of MultiIndex is time
+            for more details on sktime mtype format specifications,
+            and additional valid type specifications, refer to
+                examples/AA_datatypes_and_datasets.ipynb
+        y : optional, time series in sktime compatible data format, default=None
             Additional data, e.g., labels for transformation
-        update_params : bool, default=True
-            whether the model is updated. Yes if true, if false, simply skips call.
-            argument exists for compatibility with forecasting module.
+            some transformers require this, see class docstring for details
 
         Returns
         -------
