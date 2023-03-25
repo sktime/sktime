@@ -1342,8 +1342,12 @@ class BaseForecaster(BaseEstimator):
 
         # checking y
         if y is not None:
+            y_metadata_keys = ["is_univariate"]
             y_valid, _, y_metadata = check_is_scitype(
-                y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
+                y,
+                scitype=ALLOWED_SCITYPES,
+                return_metadata=y_metadata_keys,
+                var_name="y"
             )
             msg = (
                 "y must be in an sktime compatible format, "
@@ -1389,7 +1393,7 @@ class BaseForecaster(BaseEstimator):
         # checking X
         if X is not None:
             X_valid, _, X_metadata = check_is_scitype(
-                X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+                X, scitype=ALLOWED_SCITYPES, return_metadata=[], var_name="X"
             )
 
             msg = (
