@@ -142,6 +142,8 @@ class SeasonalityACF(BaseParamFitter):
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
             candidate_sp = range(2, nlags + 1)
+        elif isinstance(candidate_sp, int):
+            candidate_sp = [candidate_sp]
 
         fft = self.fft
         missing = self.missing
@@ -197,8 +199,9 @@ class SeasonalityACF(BaseParamFitter):
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
+        params3 = {"candidate_sp": 12}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class SeasonalityACFqstat(BaseParamFitter):
@@ -332,6 +335,8 @@ class SeasonalityACFqstat(BaseParamFitter):
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
             candidate_sp = range(2, nlags + 1)
+        elif isinstance(candidate_sp, int):
+            candidate_sp = [candidate_sp]
 
         fft = self.fft
         missing = self.missing
@@ -405,8 +410,9 @@ class SeasonalityACFqstat(BaseParamFitter):
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
+        params3 = {"candidate_sp": 12}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class SeasonalityPeriodogram(BaseParamFitter):

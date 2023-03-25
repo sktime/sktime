@@ -40,7 +40,7 @@ from sktime.performance_metrics.forecasting._functions import (
     relative_loss,
 )
 
-__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns", "fkiraly"]
+__author__ = ["mloning", "tch", "RNKuhns", "fkiraly"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",

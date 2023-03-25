@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformers raise time series to user provided exponent."""
 
-__author__ = ["Ryan Kuhns"]
+__author__ = ["RNKuhns"]
 __all__ = ["ExponentTransformer", "SqrtTransformer"]
 
 from warnings import warn
