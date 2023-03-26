@@ -22,6 +22,7 @@ from sklearn.linear_model import LinearRegression
 from sktime.datasets import load_airline, load_longley
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
+from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -34,8 +35,15 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,
 )
+from sktime.performance_metrics.forecasting.probabilistic import (
+    CRPS,
+    EmpiricalCoverage,
+    LogLoss,
+    PinballLoss,
+)
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.series import _make_series
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
@@ -233,7 +241,7 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
         if error_score == 1000:
             assert results["test_MeanAbsolutePercentageError"].max() == 1000
     if error_score == "raise":
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             evaluate(
                 forecaster=forecaster,
                 y=y,
@@ -246,7 +254,7 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
 
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_hierarchical(backend):
-    """Check that adding exogenous data produces different results."""
+    """Check that evaluate works with hierarchical data."""
     # skip test for dask backend if dask is not installed
     if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
         return None
@@ -272,3 +280,34 @@ def test_evaluate_hierarchical(backend):
 
     scoring_name = f"test_{scoring.name}"
     assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])
+
+
+PROBA_METRICS = [CRPS, EmpiricalCoverage, LogLoss, PinballLoss]
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("n_columns", [1, 2])
+@pytest.mark.parametrize("metric", PROBA_METRICS)
+def test_evaluate_probabilistic(n_columns, metric):
+    """Check that evaluate works with interval, quantile, and distribution forecasts."""
+    y = _make_series(n_columns=n_columns)
+
+    forecaster = AutoETS()
+    cv = SlidingWindowSplitter()
+    scoring = metric()
+    try:
+        out = evaluate(
+            forecaster,
+            cv,
+            y,
+            X=None,
+            scoring=scoring,
+            error_score="raise",
+        )
+        scoring_name = f"test_{scoring.name}"
+        assert scoring_name in out.columns
+    except NotImplementedError:
+        pass

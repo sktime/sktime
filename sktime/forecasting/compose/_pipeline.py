@@ -1417,7 +1417,7 @@ class ForecastX(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X, coverage=coverage)
         return y_pred
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -1447,7 +1447,7 @@ class ForecastX(BaseForecaster):
                 at quantile probability in second col index, for the row index.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -1487,7 +1487,7 @@ class ForecastX(BaseForecaster):
                 Note: no covariance forecasts are returned between different variables.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_var(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_var(fh=fh, X=X, cov=cov)
         return y_pred
 
     # todo: does not work properly for multivariate or hierarchical
@@ -1525,7 +1525,7 @@ class ForecastX(BaseForecaster):
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict_proba(
-            fh=fh, X=X, legacy_interface=legacy_interface
+            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
         )
         return y_pred
 
