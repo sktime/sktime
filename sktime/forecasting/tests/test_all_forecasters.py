@@ -343,7 +343,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 [y_train.columns, [coverage], ["lower", "upper"]]
             )
         found = pred_ints.columns.to_flat_index()
-        assert all(expected == found)
+        msg = (
+            "columns of returned prediction interval DataFrame do not"
+            f"match up with expected columns. Expected: {expected},"
+            f"found: {found}"
+        )
+        assert all(expected == found), msg
 
     @pytest.mark.parametrize("index_type", [None, "range"])
     @pytest.mark.parametrize(
@@ -409,7 +414,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             # multiply variables with all alpha values
             expected = pd.MultiIndex.from_product([y_train.columns, [alpha]])
         found = pred_quantiles.columns.to_flat_index()
-        assert all(expected == found)
+        msg = (
+            "columns of returned quantile prediction DataFrame do not"
+            f"match up with expected columns. Expected: {expected},"
+            f"found: {found}"
+        )
+        assert all(expected == found), msg
 
         if isinstance(alpha, list):
             # sorts the columns that correspond to alpha values
