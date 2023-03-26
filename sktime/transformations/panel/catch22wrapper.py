@@ -14,9 +14,6 @@ from joblib import Parallel, delayed
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel import catch22
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("pycatch22", severity="warning")
 
 
 class Catch22Wrapper(BaseTransformer):

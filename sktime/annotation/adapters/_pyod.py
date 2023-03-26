@@ -13,8 +13,6 @@ __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
 import pandas as pd
 
-_check_soft_dependencies("pyod", severity="warning")
-
 
 class PyODAnnotator(BaseSeriesAnnotator):
     """Transformer that applies outlier detector from pyOD.

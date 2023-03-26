@@ -18,8 +18,6 @@ from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.tapnet import TapNetNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies(severity="warning")
-
 
 class TapNetClassifier(BaseDeepClassifier):
     """Time series attentional prototype network (TapNet), as described in [1]_.

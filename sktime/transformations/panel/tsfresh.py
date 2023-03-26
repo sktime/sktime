@@ -10,9 +10,6 @@ from warnings import warn
 from sktime.datatypes._panel._convert import from_nested_to_long
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tsfresh", severity="warning")
 
 
 class _TSFreshFeatureExtractor(BaseTransformer):
