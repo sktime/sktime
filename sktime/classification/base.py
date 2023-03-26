@@ -65,6 +65,7 @@ class BaseClassifier(BaseEstimator, ABC):
         "capability:multithreading": False,
         "capability:predict_proba": False,
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "requires_cython": False,  # whether C compiler is required in env, e.g., gcc
     }
 
     def __init__(self):

@@ -362,8 +362,9 @@ class MockForecaster(BaseForecaster):
         pred_quantiles = pd.DataFrame(index=fh_index, columns=col_index)
 
         for col, a in col_index:
+            multiple = a if self.prediction_constant > 0 else (1 - a)
             pred_quantiles[col, a] = pd.Series(
-                self.prediction_constant * 2 * a, index=fh_index
+                self.prediction_constant * 2 * multiple, index=fh_index
             )
 
         return pred_quantiles

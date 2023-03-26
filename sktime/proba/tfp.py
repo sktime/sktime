@@ -27,7 +27,7 @@ class TFNormal(_BaseTFDistribution):
     -------
     >>> from sktime.proba.tfp import TFNormal  # doctest: +SKIP
 
-    >>> n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)  # doctest: +SKIP
+    >>> n = TFNormal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)  # doctest: +SKIP
     """
 
     _tags = {

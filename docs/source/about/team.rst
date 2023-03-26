@@ -22,8 +22,6 @@ subject to `widening of governance model <https://github.com/sktime/community-or
      - :user:`jonathanbechtel`
    * - Franz Király
      - :user:`fkiraly`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
    * - Sagar Mishra
      - :user:`achieveordie`
    * - Kiril Ralinovski
@@ -78,8 +76,6 @@ Core Developers
      - :user:`lovkush-a`
    * - Mirae Parker
      - :user:`miraep8`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
    * - Sagar Mishra
      - :user:`achieveordie`
    * - Stanislav Khrapov
@@ -111,6 +107,8 @@ Former Core Developers
      - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
    * - Leonidas Tsaprounis
      - :user:`ltsaprounis`
    * - Łukasz Mentel

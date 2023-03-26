@@ -766,8 +766,6 @@ class ProximityStump(BaseClassifier):
         "X_inner_mtype": "nested_univ",  # input in nested dataframe
     }
 
-    __author__ = "George Oastler (linkedin.com/goastler; github.com/goastler)"
-
     def __init__(
         self,
         random_state=None,
