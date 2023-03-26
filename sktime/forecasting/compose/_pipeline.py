@@ -186,6 +186,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                     y = pd.concat(yt, axis=1)
                     flipcols = [n - 1] + list(range(n - 1))
                     y.columns = y.columns.reorder_levels(flipcols)
+                    y = y.loc[:, idx]
                 else:
                     raise ValueError('mode arg must be None or "proba"')
         return y
