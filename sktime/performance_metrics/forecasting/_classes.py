@@ -16,6 +16,12 @@ from sklearn.utils import check_array
 
 from sktime.datatypes import VectorizedDF, check_is_scitype, convert_to
 from sktime.performance_metrics.base import BaseMetric
+from sktime.performance_metrics.forecasting._coerce import (
+    _coerce_to_1d_numpy,
+    _coerce_to_df,
+    _coerce_to_scalar,
+    _coerce_to_series,
+)
 from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_absolute_error,
     geometric_mean_relative_absolute_error,
@@ -65,41 +71,6 @@ __all__ = [
     "MeanLinexError",
     "RelativeLoss",
 ]
-
-
-def _coerce_to_scalar(obj):
-    """Coerce obj to scalar, from polymorphic input scalar or pandas."""
-    if isinstance(obj, pd.DataFrame):
-        assert len(obj) == 1
-        assert len(obj.columns) == 1
-        return obj.iloc[0, 0]
-    if isinstance(obj, pd.Series):
-        assert len(obj) == 1
-        return obj.iloc[0]
-    return obj
-
-
-def _coerce_to_df(obj):
-    """Coerce to pd.DataFrame, from polymorphic input scalar or pandas."""
-    return pd.DataFrame(obj)
-
-
-def _coerce_to_series(obj):
-    """Coerce to pd.Series, from polymorphic input scalar or pandas."""
-    if isinstance(obj, pd.DataFrame):
-        assert len(obj.columns) == 1
-        return obj.iloc[:, 0]
-    elif isinstance(obj, pd.Series):
-        return obj
-    else:
-        return pd.Series(obj)
-
-
-def _coerce_to_1d_numpy(obj):
-    """Coerce to 1D np.ndarray, from pd.DataFrame or pd.Series."""
-    if isinstance(obj, (pd.DataFrame, pd.Series)):
-        obj = obj.values
-    return obj.flatten()
 
 
 def _is_uniform_average(multilevel):
