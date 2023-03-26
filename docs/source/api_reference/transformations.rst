@@ -325,6 +325,14 @@ Detrending
 Filtering and denoising
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.transformations.series.filter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Filter
+
 .. currentmodule:: sktime.transformations.series.bkfilter
 
 .. autosummary::
@@ -333,13 +341,13 @@ Filtering and denoising
 
     BKFilter
 
-.. currentmodule:: sktime.transformations.series.filter
+.. currentmodule:: sktime.transformations.series.hpfilter
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    Filter
+    HPFilter
 
 .. currentmodule:: sktime.transformations.series.kalman_filter
 
