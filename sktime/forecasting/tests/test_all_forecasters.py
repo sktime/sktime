@@ -517,7 +517,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.update_predict_single(
             y_test, update_params=update_params
         )
-        cutoff = get_cutoff(y_train, return_index=True)
+        cutoff = get_cutoff(y_test, return_index=True)
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh_int_oos)
         _assert_correct_columns(y_pred, y_train)
 
