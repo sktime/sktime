@@ -535,10 +535,10 @@ class _BaseTFDistribution(BaseDistribution):
         and `MultiIndex` that is product of `RangeIndex(n_samples)` and `self.index`
         """
         if n_samples is None:
-            np_spl = self.distr.sample()
+            np_spl = self.distr.sample().numpy()
             return pd.DataFrame(np_spl, index=self.index, columns=self.columns)
         else:
-            np_spl = np.array(self.distr.sample(n_samples))
+            np_spl = self.distr.sample(n_samples).numpy()
             np_spl = np_spl.reshape(-1, np_spl.shape[-1])
             mi = _prod_multiindex(range(n_samples), self.index)
             df_spl = pd.DataFrame(np_spl, index=mi, columns=self.columns)
