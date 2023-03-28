@@ -241,7 +241,7 @@ def test_get_cutoff_inferred_freq():
 
     past_data = pd.DataFrame(
         {
-            "time_identifier": pandas.to_datetime(
+            "time_identifier": pd.to_datetime(
                 [
                     "2024-01-01",
                     "2024-01-02",
