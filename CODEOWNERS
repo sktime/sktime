@@ -35,6 +35,8 @@ sktime/classification/shapelet_based/_stc.py @ABostrom @MatthewMiddlehurst @Tony
 sktime/classification/sklearn/_continuous_interval_tree.py @MatthewMiddlehurst
 sktime/classification/sklearn/_rotation_forest.py @MatthewMiddlehurst
 
+sktime/clustering/utils/plotting/_plot_partitions.py @Aylr
+
 sktime/transformations/panel/dictionary_based/_paa.py @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/dictionary_based/_sax.py @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/dictionary_based/_sfa.py @patrickzib @MatthewMiddlehurst
