@@ -26,19 +26,21 @@ class CFFilter(BaseTransformer):
 
     Parameters
     ----------
-    low : float
+    low : float, optional, default = 6.0
         Minimum period of oscillations. Features below low periodicity
-        are filtered out. Default is 6 for quarterly data,
-        giving a 1.5 year periodicity.
+        are filtered out. For quarterly data, the default of 6 gives
+        1.5 years periodicity.
 
-    high : float
+    high : float, optional, default = 32.0
         Maximum period of oscillations. Features above high periodicity
-        are filtered out. Default is 32 for quarterly data,
-        giving an 8 year periodicity.
+        are filtered out. For quarterly data, the default of 32 gives
+        8 year periodicity.
 
-    drift : bool
-        Whether or not to remove a trend from the data.
-        The trend is estimated as np.arange(nobs)*(x[-1] -x[0])/(len(x)-1).
+    drift : bool, optional, default =
+        Whether or not to substract a trend from the data.
+        The trend is estimated as np.arange(nobs)*(X[-1] -X[0])/(len(X)-1).
+        > nobs : number of observations for X
+        > X : argument of CFFilter._transform()
 
     Examples
     --------
@@ -79,7 +81,7 @@ class CFFilter(BaseTransformer):
     def __init__(
         self,
         low=6,
-        high=24,
+        high=32,
         drift=True,
     ):
         self.low = low
@@ -125,6 +127,6 @@ class CFFilter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {"low": 6, "high": 24, "drift": True}
+        params1 = {"low": 8, "high": 26, "drift": True}
         params2 = {}
         return [params1, params2]
