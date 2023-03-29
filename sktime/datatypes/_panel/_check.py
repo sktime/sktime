@@ -36,7 +36,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "n_instances": int, number of instances in the panel
 """
 
-__author__ = ["fkiraly", "tonybagnall"]
+__author__ = ["fkiraly", "TonyBagnall"]
 
 __all__ = ["check_dict"]
 
@@ -241,7 +241,8 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
 
         metadata["is_univariate"] = len(obj.columns) < 2
         metadata["is_equally_spaced"] = all(
-            _index_equally_spaced(group.index.levels[-1]) for _, group in series_groups
+            _index_equally_spaced(group.index.get_level_values(-1))
+            for _, group in series_groups
         )
         metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
         metadata["n_panels"] = n_panels

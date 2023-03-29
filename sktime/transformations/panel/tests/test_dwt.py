@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+"""DWT (Discrete Wavelet Transform) test code."""
+
+import math
+
 import numpy as np
 import pandas as pd
 import pytest
-import math
+
 from sktime.transformations.panel.dwt import DWTTransformer
 from sktime.utils._testing.panel import _make_nested_from_array
 
@@ -12,6 +16,7 @@ from sktime.utils._testing.panel import _make_nested_from_array
 # correct input is meant to be a positive integer of 0 or more.
 @pytest.mark.parametrize("bad_num_levels", ["str", 1.2, -1.2, -1, {}])
 def test_bad_input_args(bad_num_levels):
+    """Test that exception is raised for bad num levels."""
     X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
 
     if not isinstance(bad_num_levels, int):
@@ -22,9 +27,8 @@ def test_bad_input_args(bad_num_levels):
             DWTTransformer(num_levels=bad_num_levels).fit(X).transform(X)
 
 
-# Check the transformer has changed the data correctly.
 def test_output_of_transformer():
-
+    """Test that the transformer has changed the data correctly."""
     X = _make_nested_from_array(
         np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_instances=1, n_columns=1
     )
@@ -62,9 +66,8 @@ def test_output_of_transformer():
     # assert check_if_dataframes_are_equal(res,orig)
 
 
-# This is to test that if num_levels = 0 then no change occurs.
 def test_no_levels_does_no_change():
-
+    """Test that if num_levels = 0 then no change occurs."""
     X = _make_nested_from_array(
         np.array([1, 2, 3, 4, 5, 56]), n_instances=1, n_columns=1
     )
@@ -75,7 +78,7 @@ def test_no_levels_does_no_change():
 
 @pytest.mark.parametrize("num_levels,corr_series_length", [(2, 12), (3, 11), (4, 12)])
 def test_output_dimensions(num_levels, corr_series_length):
-
+    """Test output dimensions."""
     X = _make_nested_from_array(np.ones(13), n_instances=10, n_columns=1)
 
     d = DWTTransformer(num_levels=num_levels).fit(X)
@@ -91,9 +94,8 @@ def test_output_dimensions(num_levels, corr_series_length):
     assert num_cols == 1
 
 
-# This is to check that DWT produces the same result along each dimension
 def test_dwt_performs_correcly_along_each_dim():
-
+    """Test that DWT produces the same result along each dimension."""
     X = _make_nested_from_array(
         np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), n_instances=1, n_columns=2
     )
@@ -131,7 +133,7 @@ def test_dwt_performs_correcly_along_each_dim():
 
 
 def convert_list_to_dataframe(list_to_convert):
-    # Convert this into a panda's data frame
+    """Convert a Python list to a Pandas dataframe."""
     df = pd.DataFrame()
     for i in range(len(list_to_convert)):
         inst = list_to_convert[i]
@@ -143,9 +145,7 @@ def convert_list_to_dataframe(list_to_convert):
 
 
 def check_if_dataframes_are_equal(df1, df2):
-    """
-    for some reason, this is how you check that two dataframes are equal.
-    """
+    """Check that pandas DataFrames are equal."""
     from pandas.testing import assert_frame_equal
 
     try:

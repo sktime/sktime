@@ -27,7 +27,7 @@ Learning on Temporal Data
     Data Mining and Knowledge Discovery, 2020.
 """
 
-__author__ = ["Tony Bagnall"]
+__author__ = ["TonyBagnall"]
 
 """ 128 UCR univariatetime series classification problems [1]"""
 univariate = [

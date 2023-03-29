@@ -32,7 +32,10 @@ SCITYPE_MTYPE_PAIRS = [
 
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_time_index(scitype, mtype):
-    """Tests that conversions for scitype agree with from/to example fixtures.
+    """Tests that get_time_index returns the expected output.
+
+    Note: this is tested only for fixtures with equal time index across instances,
+    as get_time_index assumes that.
 
     Parameters
     ----------
@@ -41,7 +44,7 @@ def test_get_time_index(scitype, mtype):
 
     Raises
     ------
-    AssertionError if get_cutoff does not return a length 1 pandas.index
+    AssertionError if get_time_index does not return the expected return
         for any fixture example of given scitype, mtype
     """
     # get_time_index currently does not work for df-list type, skip
@@ -49,10 +52,15 @@ def test_get_time_index(scitype, mtype):
         return None
 
     # retrieve example fixture
-    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)
+    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_metadata=True)
 
-    for fixture in fixtures.values():
+    for fixture_tuple in fixtures.values():
+        fixture = fixture_tuple[0]
+        fixture_metadata = fixture_tuple[2]
+
         if fixture is None:
+            continue
+        if not fixture_metadata.get("is_equal_index", True):
             continue
 
         idx = get_time_index(fixture)
@@ -96,9 +104,14 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
         for any fixture example of given scitype, mtype
     """
     # retrieve example fixture
-    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)
+    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_metadata=True)
 
-    for fixture in fixtures.values():
+    for fixture_tuple in fixtures.values():
+        fixture = fixture_tuple[0]
+        fixture_metadata = fixture_tuple[2]
+        fixture_equally_spaced = fixture_metadata.get("is_equally_spaced", True)
+        fixture_equal_index = fixture_metadata.get("is_equal_index", True)
+
         if fixture is None:
             continue
 
@@ -126,7 +139,9 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
         if return_index:
             assert len(cutoff) == 1
             if isinstance(cutoff_val, (pd.Period, pd.Timestamp)):
-                assert hasattr(cutoff, "freq") and cutoff.freq is not None
+                assert hasattr(cutoff, "freq")
+                if fixture_equally_spaced and fixture_equal_index:
+                    assert cutoff.freq is not None
 
         if isinstance(fixture, np.ndarray):
             if reverse_order:

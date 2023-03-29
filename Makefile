@@ -30,6 +30,13 @@ test: ## Run unit tests
 	cp setup.cfg ${TEST_DIR}
 	python -m pytest
 
+test_check_suite: ## run only estimator contract tests in TestAll classes
+	-rm -rf ${TEST_DIR}
+	mkdir -p ${TEST_DIR}
+	cp .coveragerc ${TEST_DIR}
+	cp setup.cfg ${TEST_DIR}
+	python -m pytest -k 'TestAll' $(PYTESTOPTIONS)
+
 test_softdeps: ## Run unit tests to check soft dependency handling in estimators
 	-rm -rf ${TEST_DIR}
 	mkdir -p ${TEST_DIR}
@@ -84,3 +91,7 @@ nb: clean
 	rm -rf .venv || true
 	python3 -m venv .venv
 	. .venv/bin/activate && python -m pip install .[all_extras,binder] && ./build_tools/run_examples.sh
+
+dockertest:
+	docker build -t sktime -f build_tools/docker/$(PYTHON_VERSION).dockerfile .
+	docker run -it --name sktime sktime bash -c "make test"

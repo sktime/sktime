@@ -5,6 +5,8 @@
 __author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
+from warnings import warn
+
 import pandas as pd
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -69,6 +71,24 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         TypeError if there is not exactly one forecaster in `estimators`
         TypeError if not allow_postproc and forecaster is not last estimator
         """
+        self_name = type(self).__name__
+        if not isinstance(estimators, list):
+            msg = (
+                f"steps in {self_name} must be list of estimators, "
+                f"or (string, estimator) pairs, "
+                f"the two can be mixed; but, found steps of type {type(estimators)}"
+            )
+            raise TypeError(msg)
+
+        if len(estimators) == 1:
+            msg = (
+                f"in {self_name}, found steps of length 1, "
+                f"this will result in the same behaviour "
+                f"as not wrapping the single step in a pipeline. "
+                f"Consider not wrapping steps in {self_name} as it is redundant."
+            )
+            warn(msg)
+
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)
 
@@ -78,7 +98,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         scitypes = self._get_pipeline_scitypes(estimator_tuples)
         if not set(scitypes).issubset(["forecaster", "transformer"]):
             raise TypeError(
-                f"estimators passed to {type(self).__name__} "
+                f"estimators passed to {self_name} "
                 f"must be either transformer or forecaster"
             )
         if scitypes.count("forecaster") != 1:
@@ -91,7 +111,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
             TypeError(
-                f"in {type(self).__name__}, last estimator must be a forecaster, "
+                f"in {self_name}, last estimator must be a forecaster, "
                 f"but found a transformer"
             )
 
@@ -601,7 +621,9 @@ class ForecastingPipeline(_Pipeline):
         X = self._transform(X=X)
         return self.forecaster_.predict_var(fh=fh, X=X, cov=cov)
 
-    def _predict_proba(self, fh, X, marginal=True):
+    # todo 0.18.0 change legacy_interface default to False
+    # todo 0.19.0 remove legacy_interface arg and logic
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -631,7 +653,9 @@ class ForecastingPipeline(_Pipeline):
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         X = self._transform(X=X)
-        return self.forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
+        return self.forecaster_.predict_proba(
+            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
+        )
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -1392,7 +1416,7 @@ class ForecastX(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X, coverage=coverage)
         return y_pred
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -1422,7 +1446,7 @@ class ForecastX(BaseForecaster):
                 at quantile probability in second col index, for the row index.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -1462,12 +1486,14 @@ class ForecastX(BaseForecaster):
                 Note: no covariance forecasts are returned between different variables.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_var(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_var(fh=fh, X=X, cov=cov)
         return y_pred
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    def _predict_proba(self, fh, X, marginal=True):
+    # todo 0.18.0 change legacy_interface default to False
+    # todo 0.19.0 remove legacy_interface arg and logic
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -1497,7 +1523,9 @@ class ForecastX(BaseForecaster):
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_proba(
+            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
+        )
         return y_pred
 
     @classmethod

@@ -245,7 +245,8 @@ class Catch22(BaseTransformer):
             warnings.warn(
                 "``n_jobs`` default was changed to 1 from -1 in version 0.14.0. "
                 "In version 0.16.0 a value of -1 will use all CPU cores instead of the "
-                "current 1 CPU core."
+                "current 1 CPU core.",
+                stacklevel=2,
             )
 
         c22_list = Parallel(n_jobs=threads_to_use)(
@@ -472,7 +473,8 @@ class Catch22(BaseTransformer):
             warnings.warn(
                 "``n_jobs`` default was changed to 1 from -1 in version 0.13.4. "
                 "In version 0.15 a value of -1 will use all CPU cores instead of the "
-                "current 1 CPU core."
+                "current 1 CPU core.",
+                stacklevel=2,
             )
 
         c22_list = Parallel(n_jobs=threads_to_use)(

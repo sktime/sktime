@@ -754,13 +754,16 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
-        dists = np.zeros((X.shape[0], self.n_classes_))
+        dists = None
 
         # Call predict proba on each classifier, multiply the probabilities by the
         # classifiers weight then add them to the current HC2 probabilities
         for clf_name, clf in self.classifiers_:
             y_proba = clf.predict_proba(X=X)
-            dists += y_proba * self.weights_[clf_name]
+            if dists is None:
+                dists = y_proba * self.weights_[clf_name]
+            else:
+                dists += y_proba * self.weights_[clf_name]
 
         # Make each instances probability array sum to 1 and return
         y_proba = dists / dists.sum(axis=1, keepdims=True)

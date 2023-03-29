@@ -57,6 +57,7 @@ Pipeline building
 
     TransformerPipeline
     FeatureUnion
+    ColumnEnsembleTransformer
     ColumnwiseTransformer
     FitInTransform
     MultiplexTransformer
@@ -64,6 +65,7 @@ Pipeline building
     InvertTransform
     Id
     YtoX
+    TransformIf
 
 .. currentmodule:: sktime.transformations.panel.compose
 
@@ -323,6 +325,14 @@ Detrending
 Filtering and denoising
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.transformations.series.filter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Filter
+
 .. currentmodule:: sktime.transformations.series.bkfilter
 
 .. autosummary::
@@ -331,13 +341,13 @@ Filtering and denoising
 
     BKFilter
 
-.. currentmodule:: sktime.transformations.series.filter
+.. currentmodule:: sktime.transformations.series.hpfilter
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    Filter
+    HPFilter
 
 .. currentmodule:: sktime.transformations.series.kalman_filter
 
@@ -356,8 +366,8 @@ Filtering and denoising
 
     ThetaLinesTransformer
 
-Differencing and slope
-~~~~~~~~~~~~~~~~~~~~~~
+Differencing, slope, kinematics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.difference
 
@@ -374,6 +384,14 @@ Differencing and slope
     :template: class.rst
 
     SlopeTransformer
+
+.. currentmodule:: sktime.transformations.series.kinematic
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KinematicFeatures
 
 Binning and segmentation
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -440,6 +458,14 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     FourierFeatures
+
+.. currentmodule:: sktime.transformations.series.fourier
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FourierTransform
 
 Auto-correlation series
 ~~~~~~~~~~~~~~~~~~~~~~~
