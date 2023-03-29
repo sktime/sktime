@@ -259,7 +259,6 @@ class VECM(_StatsModelsAdapter):
             else self._y.columns.values
         )
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
-        # pred_int = pd.DataFrame(index=int_idx)
 
         for c in coverage:
             alpha = 1 - c
@@ -273,8 +272,7 @@ class VECM(_StatsModelsAdapter):
             for v_idx in range(len(var_names)):
                 values.append(y_lower[0][v_idx])
                 values.append(y_upper[0][v_idx])
-                # pred_int.loc[(var_names[v_idx], c, "lower"), :] = (y_lower[0][v_idx])
-                # pred_int.loc[(var_names[v_idx], c, "upper"), :] = (y_upper[0][v_idx])
+
         pred_int = pd.DataFrame(
             [values], index=fh.to_absolute(self.cutoff), columns=int_idx
         )
