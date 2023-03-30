@@ -149,7 +149,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         # y is passed always
         # X is passed if param_est fit has at least two arguments
         # fh is passed if any remaining argument is fh
-        inner_params = list(signature(param_est).parameters.keys())
+        inner_params = list(signature(param_est.fit).parameters.keys())
         fit_kwargs = {}
         if len(inner_params) > 1:
             fit_kwargs[inner_params[1]] = X
