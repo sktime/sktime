@@ -276,12 +276,9 @@ def get_cutoff(
         if not return_index:
             return idx[ix]
         res = idx[[ix]]
-        if hasattr(idx, "freq"):
-            if idx.freq is None:
-                res.freq = pd.infer_freq(idx)
-            else:
-                if res.freq != idx.freq:
-                    res.freq = idx.freq
+        if hasattr(idx, "freq") and idx.freq is not None:
+            if res.freq != idx.freq:
+                res.freq = idx.freq
         return res
 
     if isinstance(obj, pd.Series):
