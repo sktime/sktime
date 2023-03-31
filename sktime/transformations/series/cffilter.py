@@ -36,11 +36,13 @@ class CFFilter(BaseTransformer):
         are filtered out. For quarterly data, the default of 32 gives
         8 year periodicity.
 
-    drift : bool, optional, default =
+    drift : bool, optional, default = True
         Whether or not to substract a trend from the data.
-        The trend is estimated as np.arange(nobs)*(X[-1] -X[0])/(len(X)-1).
-        > nobs : number of observations for X
+        The trend is estimated as np.arange(nobs)*(x[-1] -x[0])/(len(x)-1).
         > X : argument of CFFilter._transform()
+        > x : If X is 1d, X=x. If 2d, x is assumed to be in columns.
+        > nobs : len(x)
+
 
     Examples
     --------
@@ -127,6 +129,6 @@ class CFFilter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {"low": 8, "high": 26, "drift": True}
+        params1 = {"low": 8, "high": 26, "drift": False}
         params2 = {}
         return [params1, params2]
