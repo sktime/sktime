@@ -259,8 +259,8 @@ class VECM(_StatsModelsAdapter):
             else self._y.columns.values
         )
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
-        # pred_int = pd.DataFrame(index=int_idx)
 
+        all_values = []  # will store predicted intervals for each coverage value
         for c in coverage:
             alpha = 1 - c
             _, y_lower, y_upper = self._fitted_forecaster.predict(
@@ -273,10 +273,11 @@ class VECM(_StatsModelsAdapter):
             for v_idx in range(len(var_names)):
                 values.append(y_lower[0][v_idx])
                 values.append(y_upper[0][v_idx])
-                # pred_int.loc[(var_names[v_idx], c, "lower"), :] = (y_lower[0][v_idx])
-                # pred_int.loc[(var_names[v_idx], c, "upper"), :] = (y_upper[0][v_idx])
+
+            all_values.extend(values)
+
         pred_int = pd.DataFrame(
-            [values], index=fh.to_absolute(self.cutoff), columns=int_idx
+            [all_values], index=fh.to_absolute(self.cutoff), columns=int_idx
         )
 
         return pred_int
