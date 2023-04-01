@@ -9,6 +9,11 @@ seasonality, and utilities for plugging the estimated parameters into other esti
 For example, seasonality estimators can be combined with any seasonal forecaster
 to an auto-seasonality version.
 
+All parameter estimators in ``sktime`` can be listed using the
+``sktime.registry.all_estimators`` utility,
+using ``estimator_types="param_est"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
+
 .. automodule:: sktime.param_est
     :no-members:
     :no-inherited-members:
