@@ -60,7 +60,7 @@ class IxToX(BaseTransformer):
     >>>
     >>> X = load_airline()
     >>> t = IxToX()
-    >>> t.fit_transform(X)
+    >>> Xt = t.fit_transform(X)
     """
 
     _tags = {
