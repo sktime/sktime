@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Use index or hierarchy values as exogeneous features transformer."""
+"""Use index or hierarchy values as features transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -11,7 +11,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class IxToX(BaseTransformer):
-    """Create exogeneous features based on time index or hierarchy values.
+    """Create features based on time index or hierarchy values.
 
     Returns index of `X` in `transform` as transformed features.
     By default, time features only.
