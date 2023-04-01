@@ -123,7 +123,7 @@ class IxToX(BaseTransformer):
         X_ix_in_df.index = X.index
 
         if coerce_to_type == "auto":
-            cd = {col : X_ix_in_df.dtypes[col] for col in X_ix_in_df.columns}
+            cd = {col: X_ix_in_df.dtypes[col] for col in X_ix_in_df.columns}
             coerce1 = {d: "int64" for d in cd if is_date_like(cd[d])}
             coerce2 = {d: "float64" for d in cd if is_date_like(cd[d])}
             X_ix_in_df = X_ix_in_df.astype(coerce1)
