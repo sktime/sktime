@@ -28,5 +28,7 @@ def test_deps_info():
     for key in DEFAULT_DEPS_TO_SHOW:
         key_is_available = _check_soft_dependencies(key, severity="none")
         assert (deps_info_default[key] is None) != key_is_available
+        if key_is_available:
+            assert _check_soft_dependencies(f"{key}=={deps_info_default[key]}")
         deps_single_key = _get_deps_info([key])
         assert set(deps_single_key.keys()) == {key}
