@@ -40,7 +40,6 @@ class CFFilter(BaseTransformer):
         > x : If X is 1d, X=x. If 2d, x is assumed to be in columns.
         > nobs : len(x)
 
-
     Examples
     --------
     >>> from sktime.transformations.series.cffilter import CFFilter # doctest: +SKIP
