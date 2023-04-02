@@ -35,30 +35,43 @@ def _get_sys_info():
     return dict(blob)
 
 
-def _get_deps_info():
+# dependencies to print versions of, by default
+DEFAULT_DEPS_TO_SHOW = [
+    "pip",
+    "sktime",
+    "sklearn",
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "joblib",
+    "statsmodels",
+    "numba",
+    "pmdarima",
+    "tsfresh",
+    "tensorflow",
+    "tensorflow_probability",
+]
+
+
+def _get_deps_info(deps=None):
     """
     Overview of the installed version of main dependencies.
+
+    Parameters
+    ----------
+    deps : optional, list of strings with import names
+        if None, behaves as deps = ["sktime"]
 
     Returns
     -------
     deps_info: dict
-        version information on relevant Python libraries
+        version information on libraries in `deps`
+        keys are import names, values are PEP 440 version strings
+        of the import as present in the current python environment
     """
-    deps = [
-        "pip",
-        "setuptools",
-        "sklearn",
-        "sktime",
-        "statsmodels",
-        "numpy",
-        "scipy",
-        "pandas",
-        "matplotlib",
-        "joblib",
-        "numba",
-        "pmdarima",
-        "tsfresh",
-    ]
+    if deps is None:
+        deps = ["sktime"]
 
     def get_version(module):
         return module.__version__
@@ -82,7 +95,7 @@ def _get_deps_info():
 def show_versions():
     """Print useful debugging information."""
     sys_info = _get_sys_info()
-    deps_info = _get_deps_info()
+    deps_info = _get_deps_info(deps=DEFAULT_DEPS_TO_SHOW)
 
     print("\nSystem:")  # noqa: T001, T201
     for k, stat in sys_info.items():
