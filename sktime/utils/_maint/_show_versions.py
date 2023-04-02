@@ -101,11 +101,11 @@ def show_versions():
     * python executable location
     * OS version
     * list of import name and version number for selected python dependencies
-      dependencies as in the DEFAULT_DEPS_TO_SHOW variable
 
     Developer note:
     Python version/executable and OS version are from `_get_sys_info`
     Package versions are retrieved by `_get_deps_info`
+    Selected dependencies are as in the DEFAULT_DEPS_TO_SHOW variable
     """
     sys_info = _get_sys_info()
     deps_info = _get_deps_info(deps=DEFAULT_DEPS_TO_SHOW)
