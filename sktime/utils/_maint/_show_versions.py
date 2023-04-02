@@ -93,7 +93,7 @@ def _get_deps_info(deps=None):
 
 
 def show_versions():
-    """Print python version, OS version, sktime versions, selected dependency versions.
+    """Print python version, OS version, sktime version, selected dependency versions.
 
     Pretty prints:
 
