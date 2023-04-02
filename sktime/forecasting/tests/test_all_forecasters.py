@@ -318,29 +318,37 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         _assert_correct_columns(y_pred, y_train)
 
-    def _check_pred_ints(
-        self, pred_ints: pd.DataFrame, y_train: pd.Series, y_pred: pd.Series, fh_int
-    ):
-        # make iterable
-        if isinstance(pred_ints, pd.DataFrame):
-            pred_ints = [pred_ints]
+    def _check_predict_intervals(self, pred_ints, y_train, fh, coverage):
+        """Check expected interval prediction output."""
+        # check expected type
+        valid, msg, _ = check_is_mtype(
+            pred_ints, mtype="pred_interval", scitype="Proba", return_metadata=True
+        )  # type: ignore
+        assert valid, msg
 
-        for pred_int in pred_ints:
-            # check column naming convention
-            assert list(pred_int.columns) == ["lower", "upper"]
+        # check index (also checks forecasting horizon is more than one element)
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(pred_ints.index, cutoff, fh)
 
-            # check time index
-            cutoff = get_cutoff(y_train, return_index=True)
-            _assert_correct_pred_time_index(pred_int.index, cutoff, fh_int)
-            # check values
-            assert np.all(pred_int["upper"] >= pred_int["lower"])
-
-            # check if errors are weakly monotonically increasing
-            # pred_errors = y_pred - pred_int["lower"]
-            # # assert pred_errors.is_mononotic_increasing
-            # assert np.all(
-            #     pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4)
-            # )
+        # check columns
+        # Forecasters where name of variables do not exist
+        # In this cases y_train is series - the upper level in dataframe == 'Coverage'
+        if isinstance(y_train, pd.Series):
+            expected = pd.MultiIndex.from_product(
+                [["Coverage"], [coverage], ["lower", "upper"]]
+            )
+        else:
+            # multiply variables with all alpha values
+            expected = pd.MultiIndex.from_product(
+                [y_train.columns, [coverage], ["lower", "upper"]]
+            )
+        found = pred_ints.columns.to_flat_index()
+        msg = (
+            "columns of returned prediction interval DataFrame do not"
+            f"match up with expected columns. Expected: {expected},"
+            f"found: {found}"
+        )
+        assert all(expected == found), msg
 
     @pytest.mark.parametrize("index_type", [None, "range"])
     @pytest.mark.parametrize(
@@ -376,23 +384,28 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             pred_ints = estimator_instance.predict_interval(
                 fh_int_oos, coverage=coverage
             )
-            valid, msg, _ = check_is_mtype(
-                pred_ints, mtype="pred_interval", scitype="Proba", return_metadata=True
-            )  # type: ignore
-            assert valid, msg
+            self._check_predict_intervals(pred_ints, y_train, fh_int_oos, coverage)
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
                 estimator_instance.predict_interval(fh_int_oos, coverage=coverage)
 
-    def _check_predict_quantiles(
-        self, pred_quantiles: pd.DataFrame, y_train: pd.Series, fh, alpha
-    ):
-        # check if the input is a dataframe
-        assert isinstance(pred_quantiles, pd.DataFrame)
-        # check time index (also checks forecasting horizon is more than one element)
+    def _check_predict_quantiles(self, pred_quantiles, y_train, fh, alpha):
+        """Check expected quantile prediction output."""
+        # check expected type
+        valid, msg, _ = check_is_mtype(
+            pred_quantiles,
+            mtype="pred_quantiles",
+            scitype="Proba",
+            return_metadata=True,
+        )  # type: ignore
+        assert valid, msg
+
+        # check index (also checks forecasting horizon is more than one element)
         cutoff = get_cutoff(y_train, return_index=True)
         _assert_correct_pred_time_index(pred_quantiles.index, cutoff, fh)
+
+        # check columns
         # Forecasters where name of variables do not exist
         # In this cases y_train is series - the upper level in dataframe == 'Quantiles'
         if isinstance(y_train, pd.Series):
@@ -401,7 +414,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             # multiply variables with all alpha values
             expected = pd.MultiIndex.from_product([y_train.columns, [alpha]])
         found = pred_quantiles.columns.to_flat_index()
-        assert all(expected == found)
+        msg = (
+            "columns of returned quantile prediction DataFrame do not"
+            f"match up with expected columns. Expected: {expected},"
+            f"found: {found}"
+        )
+        assert all(expected == found), msg
 
         if isinstance(alpha, list):
             # sorts the columns that correspond to alpha values

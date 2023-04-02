@@ -14,6 +14,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
 
 
@@ -185,6 +186,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                     y = pd.concat(yt, axis=1)
                     flipcols = [n - 1] + list(range(n - 1))
                     y.columns = y.columns.reorder_levels(flipcols)
+                    y = y.loc[:, idx]
                 else:
                     raise ValueError('mode arg must be None or "proba"')
         return y
@@ -1549,13 +1551,24 @@ class ForecastX(BaseForecaster):
         """
         from sktime.forecasting.compose import DirectTabularRegressionForecaster
         from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.naive import NaiveForecaster
 
         fx = DirectReductionForecaster.create_test_instance()
         fy = DirectTabularRegressionForecaster.create_test_instance()
 
-        params = {"forecaster_X": fx, "forecaster_y": fy}
+        params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
-        return params
+        # example with probabilistic capability
+        if _check_soft_dependencies("statsmodels", severity="none"):
+            from sktime.forecasting.arima import ARIMA
+
+            fy_proba = ARIMA()
+        else:
+            fy_proba = NaiveForecaster()
+
+        params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
+
+        return [params1, params2]
 
 
 class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
