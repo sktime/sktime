@@ -73,9 +73,24 @@ __all__ = [
 ]
 
 
-def _is_uniform_average(multilevel):
-    """Check if multilevel is one of strings uniform_average, uniform_average_time."""
-    return multilevel in ["uniform_average", "uniform_average_time"]
+def _is_average(multilevel_or_multioutput):
+    """Check if multilevel is one of the inputs that lead to averaging.
+
+    True if `multilevel_or_multioutput`
+    is one of the strings `"uniform_average"`, `"uniform_average_time"`
+
+    False if `multilevel_or_multioutput`
+    is the string `"raw_values"`
+
+    True otherwise
+    """
+    if isinstance(multilevel_or_multioutput, str):
+        if multilevel_or_multioutput in ["uniform_average", "uniform_average_time"]:
+            return True
+        if multilevel_or_multioutput in ["raw_values"]:
+            return False
+    else:
+        return True
 
 
 class BaseForecastingErrorMetric(BaseMetric):
@@ -202,11 +217,11 @@ class BaseForecastingErrorMetric(BaseMetric):
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
 
-        if _is_uniform_average(multilevel) and multioutput == "raw_values":
+        if _is_average(multilevel) and not _is_average(multioutput):
             out_df = _coerce_to_1d_numpy(out_df)
-        if _is_uniform_average(multilevel) and multioutput == "uniform_average":
+        if _is_average(multilevel) and _is_average(multioutput):
             out_df = _coerce_to_scalar(out_df)
-        if multilevel == "raw_values":
+        if not _is_average(multilevel):
             out_df = _coerce_to_df(out_df)
 
         return out_df
