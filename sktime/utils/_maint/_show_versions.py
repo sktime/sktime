@@ -93,7 +93,20 @@ def _get_deps_info(deps=None):
 
 
 def show_versions():
-    """Print useful debugging information."""
+    """Print useful debugging information.
+
+    Pretty prints:
+
+    * python version of environment
+    * python executable location
+    * OS version
+    * list of import name and version number for selected python dependencies
+      dependencies as in the DEFAULT_DEPS_TO_SHOW variable
+
+    Developer note:
+    Python version/executable and OS version are from `_get_sys_info`
+    Package versions are retrieved by `_get_deps_info`
+    """
     sys_info = _get_sys_info()
     deps_info = _get_deps_info(deps=DEFAULT_DEPS_TO_SHOW)
 
