@@ -15,8 +15,6 @@ from numpy.fft import rfft
 from sktime.transformations.base import BaseTransformer
 
 
-# TODO: Change the default value of `keep_original_columns` from True to False
-# and remove the warning in v0.17.0
 class FourierFeatures(BaseTransformer):
     r"""Fourier Features for time series seasonality.
 
