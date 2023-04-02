@@ -8,12 +8,9 @@ Please see the original library
 """
 
 from sktime.annotation.hmm_learn import BaseHMMLearn
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["miraep8"]
 __all__ = ["GaussianHMM"]
-
-_check_soft_dependencies("hmmlearn.hmm", severity="warning")
 
 
 class GaussianHMM(BaseHMMLearn):

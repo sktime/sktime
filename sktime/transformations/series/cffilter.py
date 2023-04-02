@@ -13,9 +13,6 @@ __all__ = ["CFFilter"]
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("statsmodels", severity="warning")
 
 
 class CFFilter(BaseTransformer):
@@ -42,7 +39,6 @@ class CFFilter(BaseTransformer):
         > X : argument of CFFilter._transform()
         > x : If X is 1d, X=x. If 2d, x is assumed to be in columns.
         > nobs : len(x)
-
 
     Examples
     --------
