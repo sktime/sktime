@@ -745,6 +745,12 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
             # computations of time deltas
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
+        if is_timestamp or isinstance(cutoff, pd.Period):
+            cutoff = pd.PeriodIndex([cutoff])
+
+        if isinstance(cutoff, pd.Index):
+            cutoff = cutoff[[0] * len(relative)]
+
         absolute = cutoff + relative
 
         if is_timestamp:
