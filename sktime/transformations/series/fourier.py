@@ -15,8 +15,6 @@ from numpy.fft import rfft
 from sktime.transformations.base import BaseTransformer
 
 
-# TODO: Change the default value of `keep_original_columns` from True to False
-# and remove the warning in v0.17.0
 class FourierFeatures(BaseTransformer):
     r"""Fourier Features for time series seasonality.
 
@@ -53,7 +51,7 @@ class FourierFeatures(BaseTransformer):
         Specifies the frequency of the index of your data. The string should
         match a pandas offset alias:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
-    keep_original_columns :  boolean, optional, default=True
+    keep_original_columns : boolean, optional, default=False
         Keep original columns in X passed to `.transform()`
 
     References
@@ -115,21 +113,12 @@ class FourierFeatures(BaseTransformer):
         sp_list: List[Union[int, float]],
         fourier_terms_list: List[int],
         freq: Optional[str] = None,
-        keep_original_columns: Optional[bool] = True,
+        keep_original_columns: Optional[bool] = False,
     ):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list
         self.freq = freq
         self.keep_original_columns = keep_original_columns
-
-        warnings.warn(
-            "Currently the default value of `keep_original_columns\n"
-            " is `True`. In future releases this will be changed \n"
-            " to `False`. To keep the current behaviour explicitly \n"
-            " set `keep_original_columns=True`.",
-            FutureWarning,
-            stacklevel=2,
-        )
 
         if len(self.sp_list) != len(self.fourier_terms_list):
             raise ValueError(
