@@ -20,7 +20,7 @@ Version 0.17.0 - 2023-04-03
 Highlights
 ~~~~~~~~~~
 
-* Full support for python 3.11 and ``pandas`` 2
+* Full support for python 3.11
 * reworked probabilistic forecasting & new metrics (``LogLoss``, ``CRPS``), integration with tuning (:pr:`4190`, :pr:`4276`, :pr:`4290`, :pr:`4367`) :user:`fkiraly`
 * conditional transformer ``TransformIf``, e.g., deseasonalize after seasonality test (:pr:`4248`) :user:`fkiraly`
 * new transformer interfaces: Christiano-Fitzgerald and Hodrick-Prescott filter (``statsmodels``), Fourier transform (:pr:`4342`, :pr:`4402`) :user:`ken-maeda`, :user:`blazingbhavneek`
@@ -182,7 +182,6 @@ Maintenance
 * [MNT] isolating ``scipy`` imports, part 1 (:pr:`4005`) :user:`fkiraly`
 * [MNT] Remove restrictions on branch for workflow that autodetect and updates ``CONTRIBUTORS.md`` (:pr:`4323`) :user:`achieveordie`
 * [MNT] carry out forgotten deprecation for ``ContractableBOSS`` ``typed_dict`` parameter (:pr:`4331`) :user:`fkiraly`
-* [MNT] ``pandas`` 2 compatibility check (:pr:`4356`) :user:`fkiraly`
 * [MNT] except forecasters failing proba prediction tests (previously masked by buggy tests) (:pr:`4364`) :user:`fkiraly`
 * [MNT] split up ``transformations.compose`` into submodules (:pr:`4368`) :user:`fkiraly`
 * [MNT] replace emergency ``dash`` bound by exclusion of failing version 2.9.0 (:pr:`4415`) :user:`fkiraly`
