@@ -27,7 +27,7 @@ assert set(ABSOLUTE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
 
 def is_integer_index(x) -> bool:
     """Check that the input is an integer pd.Index."""
-    return isinstance(x, pd.Index) and x.is_integer()
+    return isinstance(x, pd.Index) and pd.api.types.is_integer_dtype(x)
 
 
 def is_in_valid_index_types(x) -> bool:
