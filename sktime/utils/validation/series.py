@@ -18,7 +18,13 @@ import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
-VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)
+VALID_INDEX_TYPES = (
+    pd.RangeIndex,
+    pd.PeriodIndex,
+    pd.DatetimeIndex,
+    pd.TimedeltaIndex,
+    pd.Index,
+)
 RELATIVE_INDEX_TYPES = (pd.RangeIndex, pd.TimedeltaIndex)
 ABSOLUTE_INDEX_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
 assert set(RELATIVE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
