@@ -21,6 +21,7 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import (
     VALID_INDEX_TYPES,
     is_in_valid_absolute_index_types,
@@ -687,23 +688,33 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        # TODO: Replace when we upgrade our lower pandas bound
-        #  to a version where this is fixed
-        # Compute relative values
-        # The following line circumvents the bug in pandas
+        # TODO: 0.18.0:
+        # Check at every minor release whether lower pandas bound >=0.15.0
+        # if yes, can remove the workaround in the "else" condition and the check
+        #
+        # context:
+        # there is a bug in pandas
+        # that requires a workaround when computing index diff below
+        # bug report: https://github.com/pandas-dev/pandas/issues/45999
+        # fix, present from 1.5.0 on: https://github.com/pandas-dev/pandas/pull/46006
+        #
+        # example with bug and workaround:
         # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
         # periods - periods[0]
         # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
         # [v - periods[0] for v in periods]
         # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
-        # TODO: 0.17.0: Check if this comment below can be removed,
-        # so check if pandas has released the fix to PyPI:
-        # This bug was reported: https://github.com/pandas-dev/pandas/issues/45999
-        # and fixed: https://github.com/pandas-dev/pandas/pull/46006
-        # Most likely it will be released with pandas 1.5
-        # Once the bug is fixed the line should simply be:
-        # relative = absolute - cutoff
-        relative = pd.Index([date - cutoff for date in absolute])
+        #
+        # Below checks pandas version
+        # "if" branch has code that is expected to work
+        # "else" has the workaround for versions strictly lower than pandas 1.5.0
+        pandas_version_with_bugfix = _check_soft_dependencies(
+            "pandas>=1.5.0", severity="none"
+        )
+        if pandas_version_with_bugfix:
+            relative = absolute - cutoff
+        else:
+            relative = pd.Index([date - cutoff for date in absolute])
 
         # Coerce durations (time deltas) into integer values for given frequency
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):

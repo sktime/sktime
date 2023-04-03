@@ -52,7 +52,7 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 | :woman_technologist: **Usage Questions**          | [GitHub Discussions] · [Stack Overflow] |
 | :speech_balloon: **General Discussion**        | [GitHub Discussions] |
 | :factory: **Contribution & Development** | contributors channel · [Discord] |
-| :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 4pm UTC, dev/meet-ups channel |
+| :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 3pm UTC, dev/meet-ups channel |
 
 [github issue tracker]: https://github.com/sktime/sktime/issues
 [github discussions]: https://github.com/sktime/sktime/discussions
@@ -73,13 +73,15 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 
 | Module | Status | Links |
 |---|---|---|
-| **[Forecasting]** | stable | [Tutorial](https://www.sktime.net/en/latest/examples/01_forecasting.html) · [API Reference](https://www.sktime.net/en/latest/api_reference.html#sktime-forecasting-time-series-forecasting) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/forecasting.py)  |
-| **[Time Series Classification]** | stable | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/02_classification.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference.html#sktime-classification-time-series-classification) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/classification.py) |
-| **[Time Series Regression]** | stable | [API Reference](https://www.sktime.net/en/latest/api_reference.html#sktime-classification-time-series-regression) |
-| **[Transformations]** | stable | [API Reference](https://www.sktime.net/en/latest/api_reference.html#sktime-transformations-time-series-transformers) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/transformer.py)  |
-| **[Time Series Clustering]** | maturing | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/clustering.py) |
-| **[Time Series Distances/Kernels]** | experimental | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/dist_kern_panel.py) |
+| **[Forecasting]** | stable | [Tutorial](https://www.sktime.net/en/latest/examples/01_forecasting.html) · [API Reference](https://www.sktime.net/en/latest/api_reference/forecasting.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/forecasting.py)  |
+| **[Time Series Classification]** | stable | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/02_classification.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference/classification.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/classification.py) |
+| **[Time Series Regression]** | stable | [API Reference](https://www.sktime.net/en/latest/api_reference/regression.html) |
+| **[Transformations]** | stable | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/03_transformers.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference/transformations.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/transformer.py)  |
+| **[Parameter fitting]** | maturing | [API Reference](https://www.sktime.net/en/latest/api_reference/param_est.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/transformer.py)  |
+| **[Time Series Clustering]** | maturing | [API Reference](https://www.sktime.net/en/latest/api_reference/clustering.html) ·  [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/clustering.py) |
+| **[Time Series Distances/Kernels]** | maturing | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/03_transformers.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference/dists_kernels.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/dist_kern_panel.py) |
 | **[Annotation]** | experimental | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/annotation.py) |
+| **[Distributions and simulation]** | experimental |  |
 
 [forecasting]: https://github.com/sktime/sktime/tree/main/sktime/forecasting
 [time series classification]: https://github.com/sktime/sktime/tree/main/sktime/classification
@@ -88,6 +90,8 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [annotation]: https://github.com/sktime/sktime/tree/main/sktime/annotation
 [time series distances/kernels]: https://github.com/sktime/sktime/tree/main/sktime/dists_kernels
 [transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
+[distributions and simulation]: https://github.com/sktime/sktime/tree/main/sktime/proba
+[parameter fitting]: https://github.com/sktime/sktime/tree/main/sktime/param_est
 
 
 ## :hourglass_flowing_sand: Install sktime
