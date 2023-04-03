@@ -333,15 +333,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # check columns
         # Forecasters where name of variables do not exist
         # In this cases y_train is series - the upper level in dataframe == 'Coverage'
-        if isinstance(y_train, pd.Series):
-            expected = pd.MultiIndex.from_product(
-                [["Coverage"], [coverage], ["lower", "upper"]]
-            )
-        else:
-            # multiply variables with all alpha values
-            expected = pd.MultiIndex.from_product(
-                [y_train.columns, [coverage], ["lower", "upper"]]
-            )
+        expected_columns = (
+            ["Coverage"] if isinstance(y_train, pd.Series) else y_train.columns
+        )
+        expected_coverages = [coverage] if isinstance(coverage, float) else coverage
+        expected = pd.MultiIndex.from_product(
+            [expected_columns, expected_coverages, ["lower", "upper"]]
+        )
+
         found = pred_ints.columns.to_flat_index()
         msg = (
             "columns of returned prediction interval DataFrame do not"
@@ -408,11 +407,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # check columns
         # Forecasters where name of variables do not exist
         # In this cases y_train is series - the upper level in dataframe == 'Quantiles'
-        if isinstance(y_train, pd.Series):
-            expected = pd.MultiIndex.from_product([["Quantiles"], [alpha]])
-        else:
-            # multiply variables with all alpha values
-            expected = pd.MultiIndex.from_product([y_train.columns, [alpha]])
+        expected_columns = (
+            ["Quantiles"] if isinstance(y_train, pd.Series) else y_train.columns
+        )
+        expected_quantiles = [alpha] if isinstance(alpha, float) else alpha
+        expected = pd.MultiIndex.from_product([expected_columns, expected_quantiles])
+
         found = pred_quantiles.columns.to_flat_index()
         msg = (
             "columns of returned quantile prediction DataFrame do not"
