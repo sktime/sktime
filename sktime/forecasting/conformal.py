@@ -214,6 +214,7 @@ class ConformalIntervals(BaseForecaster):
         """
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
+        fh_absolute_idx = fh_absolute.to_pandas()
 
         if self.fh_early_:
             residuals_matrix = self.residuals_matrix_
@@ -229,7 +230,7 @@ class ConformalIntervals(BaseForecaster):
         ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
 
         cols = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
-        pred_int = pd.DataFrame(index=fh_absolute, columns=cols)
+        pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
         for fh_ind, offset in zip(fh_absolute, fh_relative):
             resids = np.diagonal(residuals_matrix, offset=offset)
             resids = resids[~np.isnan(resids)]
