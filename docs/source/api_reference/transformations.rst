@@ -341,6 +341,14 @@ Filtering and denoising
 
     BKFilter
 
+.. currentmodule:: sktime.transformations.series.cffilter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CFFilter
+
 .. currentmodule:: sktime.transformations.series.hpfilter
 
 .. autosummary::

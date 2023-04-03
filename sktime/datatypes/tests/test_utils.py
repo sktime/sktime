@@ -232,6 +232,36 @@ def test_get_cutoff_wrong_input(bad_inputs):
         get_cutoff(bad_inputs, check_input=True)
 
 
+def test_get_cutoff_inferred_freq():
+    """Tests that get_cutoff infers the freq in a case where it is not directly set.
+
+    Ensures that the bug in #4405 does not occur, combined with the forecaster contract.
+    """
+    np.random.seed(seed=0)
+
+    past_data = pd.DataFrame(
+        {
+            "time_identifier": pd.to_datetime(
+                [
+                    "2024-01-01",
+                    "2024-01-02",
+                    "2024-01-03",
+                    "2024-01-04",
+                    "2024-01-05",
+                    "2024-01-06",
+                    "2024-01-07",
+                    "2024-01-08",
+                ],
+                format="%Y-%m-%d",
+            ),
+            "series_data": np.random.random(size=8),
+        }
+    )
+    past_data = past_data.set_index(["time_identifier"])
+    cutoff = get_cutoff(past_data, return_index=True)
+    assert cutoff.freq == "D"
+
+
 @pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_window_output_type(scitype, mtype, window_length, lag):

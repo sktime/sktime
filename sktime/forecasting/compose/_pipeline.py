@@ -1226,6 +1226,18 @@ class ForecastX(BaseForecaster):
     >>> pipe = pipe.fit(y, X=X, fh=fh)  # doctest: +SKIP
     >>> # this now works without X from the future of y!
     >>> y_pred = pipe.predict(fh=fh)  # doctest: +SKIP
+
+    to forecast only some columns, use the `columns` arg,
+    and pass known columns to `predict`:
+    >>> columns = ["ARMED", "POP"]
+    >>> pipe = ForecastX(  # doctest: +SKIP
+    ...     forecaster_X=VAR(),
+    ...     forecaster_y=SARIMAX(),
+    ...     columns=columns,
+    ... )
+    >>> pipe = pipe.fit(y_train, X=X_train, fh=fh)  # doctest: +SKIP
+    >>> # dropping ["ARMED", "POP"] = columns where we expect not to have future values
+    >>> y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))  # doctest: +SKIP
     """
 
     _tags = {

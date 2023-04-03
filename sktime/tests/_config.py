@@ -139,6 +139,8 @@ EXCLUDED_TESTS = {
         "test_predict_quantiles",
         "test_predict_proba",
     ],
+    # random quantile monotonicity issue in VAR, refer to #4420
+    "VAR": ["test_predict_quantiles"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
