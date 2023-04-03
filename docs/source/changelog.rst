@@ -274,6 +274,11 @@ Testing framework
 * [BUG] Fix ``MockForecaster._predict_quantiles`` to ensure monotonicity of quantiles (:pr:`4397`) :user:`yarnabrina`
 * [BUG] prevent discovery of abstract ``TimeSeriesLloyds`` by contract tests (:pr:`4225`) :user:`fkiraly`
 
+Utilities
+^^^^^^^^^
+
+* [BUG] fix ``show_versions`` and add tests (:pr:`4421`) :user:`fkiraly`
+
 Contributors
 ~~~~~~~~~~~~
 
