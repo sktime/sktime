@@ -202,6 +202,7 @@ Maintenance
 * [MNT] Fix linting issues in ``performance_metrics`` module (:pr:`4320`) :user:`SamiAlavi`
 * [MNT] Fix linting issues in ``utils`` module (:pr:`4322`) :user:`SamiAlavi`
 * [MNT] replace author names by GitHub ID in author fields (:pr:`4340`) :user:`SamiAlavi`
+* [MNT] 0.17.0 deprecation & change actions (:pr:`4424`) :user:`fkiraly`
 
 Documentation
 ~~~~~~~~~~~~~
