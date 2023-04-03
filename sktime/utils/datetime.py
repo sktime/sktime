@@ -173,7 +173,7 @@ def _infer_freq_from_index(index: pd.Index) -> Optional[str]:
         return index.freqstr
     else:
         try:
-            return pd.infer_freq(index, warn=False)
+            return pd.infer_freq(index)
         except (TypeError, ValueError):
             return None
 
