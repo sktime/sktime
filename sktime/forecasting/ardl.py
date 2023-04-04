@@ -278,7 +278,8 @@ class ARDL(_StatsModelsAdapter):
                 inner_order = 0
                 warnings.warn(
                     "X is none but the order for the exogenous variables was"
-                    " specified. Order was thus set to 0"
+                    " specified. Order was thus set to 0",
+                    stacklevel=2,
                 )
         else:
             if not isinstance(X, pd.DataFrame):
@@ -286,7 +287,8 @@ class ARDL(_StatsModelsAdapter):
                 inner_auto_ardl = False
                 warnings.warn(
                     "X is none but auto_ardl was set to True. auto_ardl was"
-                    " thus set to False with order=0"
+                    " thus set to False with order=0",
+                    stacklevel=2,
                 )
         return inner_order, inner_auto_ardl
 
@@ -415,6 +417,7 @@ class ARDL(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos
         )
+        y_pred.name = self._y.name
         return y_pred.loc[valid_indices]
 
     def _update(self, y, X=None, update_params=True):
@@ -452,7 +455,7 @@ class ARDL(_StatsModelsAdapter):
         -------
         self : reference to self
         """
-        warnings.warn("Defaulting to `update_params=True`")
+        warnings.warn("Defaulting to `update_params=True`", stacklevel=2)
         update_params = True
         if update_params:
             # default to re-fitting if update is not implemented
@@ -460,7 +463,8 @@ class ARDL(_StatsModelsAdapter):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called with update_params=True."
+                f"`update` is called with update_params=True.",
+                stacklevel=2,
             )
             # we need to overwrite the mtype last seen, since the _y
             #    may have been converted
@@ -479,7 +483,8 @@ class ARDL(_StatsModelsAdapter):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will update all component cutoffs each time"
-                f" `update` is called with update_params=False."
+                f" `update` is called with update_params=False.",
+                stacklevel=2,
             )
             comp_forecasters = self._components(base_class=BaseForecaster)
             for comp in comp_forecasters.values():

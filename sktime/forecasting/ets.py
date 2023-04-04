@@ -252,7 +252,8 @@ class AutoETS(_StatsModelsAdapter):
                 else:
                     warnings.warn(
                         "Warning: time series is not strictly positive, "
-                        "multiplicative components are ommitted"
+                        "multiplicative components are ommitted",
+                        stacklevel=2,
                     )
                     error_range = ["add"]
 
@@ -412,6 +413,7 @@ class AutoETS(_StatsModelsAdapter):
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
+        y_pred.name = self._y.name
         return y_pred.loc[valid_indices]
 
     def _predict_interval(self, fh, X=None, coverage=None):
@@ -450,9 +452,10 @@ class AutoETS(_StatsModelsAdapter):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
-        start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(
             start=start, end=end, random_state=self.random_state
         )

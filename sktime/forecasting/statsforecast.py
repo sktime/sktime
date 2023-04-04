@@ -9,9 +9,6 @@ __all__ = ["StatsForecastAutoARIMA"]
 from typing import Dict, Optional
 
 from sktime.forecasting.base.adapters._statsforecast import _StatsForecastAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("statsforecast", severity="warning")
 
 
 class StatsForecastAutoARIMA(_StatsForecastAdapter):

@@ -6,8 +6,6 @@ __author__ = ["James-Large", "Withington", "AurumnPegasus"]
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies(severity="warning")
-
 
 class MLPNetwork(BaseDeepNetwork):
     """Establish the network structure for a MLP.

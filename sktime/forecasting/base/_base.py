@@ -39,6 +39,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
+from inspect import signature
 from itertools import product
 from warnings import warn
 
@@ -55,7 +56,7 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,
@@ -711,7 +712,9 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
-    def predict_proba(self, fh=None, X=None, marginal=True):
+    # todo 0.18.0: switch legacy_interface default to False
+    # todo 0.19.0: remove any legacy_interface logic
+    def predict_proba(self, fh=None, X=None, marginal=True, legacy_interface=None):
         """Compute/return fully probabilistic forecasts.
 
         Note: currently only implemented for Series (non-panel, non-hierarchical) y.
@@ -737,9 +740,24 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
+        legacy_interface : bool or None, optional, default=None
+            whether legacy interface is used, deprecation parameter
+            default will change to False in 0.18.0
+            parameter will be removed in 0.19.0
+            True: always returns tfp Distribution object
+            False: always returns sktime BaseDistribution object
+            None: returns tfp Distribution if tensorflow_probability is in the env
+                otherwise returns sktime BaseDistribution
 
         Returns
         -------
+        If legacy_interface=False, or None and tensorflow_probability is not in the env
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+
+        If legacy_interface=True, or None and tensorflow_probability is in the env
         pred_dist : tfp Distribution object
             if marginal=True:
                 batch shape is 1D and same length as fh
@@ -764,13 +782,6 @@ class BaseForecaster(BaseEstimator):
             raise NotImplementedError(
                 "automated vectorization for predict_proba is not implemented"
             )
-
-        msg = (
-            "tensorflow-probability must be installed for fully probabilistic forecasts"
-            "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
-        )
-        _check_dl_dependencies(msg)
-
         self.check_is_fitted()
         # input checks
         fh = self._check_fh(fh)
@@ -778,7 +789,24 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
+        # pass legacy_interface arg on only if inner function has it
+        inner_params = signature(self._predict_proba).parameters.keys()
+        if "legacy_interface" in inner_params:
+            pred_dist = self._predict_proba(
+                fh=fh, X=X_inner, marginal=marginal, legacy_interface=legacy_interface
+            )
+        else:
+            pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
+            msg = (
+                f"warning: {type(self)} implements _predict_proba, but "
+                "has no legacy_interface parameter. This likely means that the class "
+                "is custom built. Please note that from 0.19.0 on, "
+                "_predict_proba will be expected to return an sktime BaseDistribution. "
+                "We will try to catch this via coercion from 0.18.0, if a "
+                "tensorflow distribution is returned, but to minimize risk, "
+                "we recommend to move to sktime BaseDistribution. "
+            )
+            warn(msg)
 
         return pred_dist
 
@@ -1342,8 +1370,18 @@ class BaseForecaster(BaseEstimator):
 
         # checking y
         if y is not None:
+            # request only required metadata from checks
+            y_metadata_required = []
+            if self.get_tag("scitype:y") != "both":
+                y_metadata_required += ["is_univariate"]
+            if not self.get_tag("handles-missing-data"):
+                y_metadata_required += ["has_nans"]
+
             y_valid, _, y_metadata = check_is_scitype(
-                y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
+                y,
+                scitype=ALLOWED_SCITYPES,
+                return_metadata=y_metadata_required,
+                var_name="y",
             )
             msg = (
                 "y must be in an sktime compatible format, "
@@ -1388,8 +1426,16 @@ class BaseForecaster(BaseEstimator):
 
         # checking X
         if X is not None:
+            # request only required metadata from checks
+            X_metadata_required = []
+            if not self.get_tag("handles-missing-data"):
+                X_metadata_required += ["has_nans"]
+
             X_valid, _, X_metadata = check_is_scitype(
-                X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+                X,
+                scitype=ALLOWED_SCITYPES,
+                return_metadata=X_metadata_required,
+                var_name="X",
             )
 
             msg = (
@@ -1751,7 +1797,12 @@ class BaseForecaster(BaseEstimator):
             self._yvec = y
 
             if methodname == "fit":
-                forecasters_ = y.vectorize_est(self, method="clone")
+                forecasters_ = y.vectorize_est(
+                    self,
+                    method="clone",
+                    rowname_default="forecasters",
+                    colname_default="forecasters",
+                )
             else:
                 forecasters_ = self.forecasters_
 
@@ -2175,7 +2226,7 @@ class BaseForecaster(BaseEstimator):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    def _predict_proba(self, fh, X, marginal=True):
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -2189,9 +2240,24 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series to predict from.
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
+        legacy_interface : bool or None, optional, default=None
+            whether legacy interface is used, deprecation parameter
+            default will change to False in 0.18.0
+            parameter will be removed in 0.19.0
+            True: always returns tfp Distribution object
+            False: always returns sktime BaseDistribution object
+            None: returns tfp Distribution if tensorflow_probability is in the env
+                otherwise returns sktime BaseDistribution
 
         Returns
         -------
+        If legacy_interface=False, or None and tensorflow_probability is not in the env
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+
+        If legacy_interface=True, or None and tensorflow_probability is in the env
         pred_dist : tfp Distribution object
             if marginal=True:
                 batch shape is 1D and same length as fh
@@ -2204,8 +2270,6 @@ class BaseForecaster(BaseEstimator):
                 i-th (event dim 1) distribution is forecast for i-th entry of fh
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
-        import tensorflow_probability as tfp
-
         # default behaviour is implemented if one of the following three is implemented
         implements_interval = self._has_implementation_of("_predict_interval")
         implements_quantiles = self._has_implementation_of("_predict_quantiles")
@@ -2230,8 +2294,22 @@ class BaseForecaster(BaseEstimator):
         pred_mean = convert_to(pred_mean, to_type=df_types)
         # pred_mean and pred_var now have the same format
 
-        d = tfp.distributions.Normal
-        pred_dist = d(loc=pred_mean, scale=pred_std)
+        if legacy_interface is None:
+            legacy_interface = _check_dl_dependencies(severity="none")
+        if legacy_interface:
+            import tensorflow_probability as tfp
+
+            d = tfp.distributions.Normal
+            pred_dist = d(loc=pred_mean, scale=pred_std)
+
+        else:
+            from sktime.proba.normal import Normal
+
+            index = pred_mean.index
+            columns = pred_mean.columns
+            pred_dist = Normal(
+                mu=pred_mean, sigma=pred_std, index=index, columns=columns
+            )
 
         return pred_dist
 

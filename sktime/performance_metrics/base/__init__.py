@@ -4,7 +4,7 @@
 
 """Base class for defining performance metrics."""
 
-__author__ = ["Ryan Kuhns"]
+__author__ = ["RNKuhns"]
 __all__ = ["BaseMetric"]
 
 from sktime.performance_metrics.base._base import BaseMetric

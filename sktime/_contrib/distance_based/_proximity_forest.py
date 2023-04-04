@@ -10,8 +10,8 @@ Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
 """
 
 # linkedin.com/goastler; github.com/goastler
-# github.com/moradisten
-__author__ = ["gastler", "Morad A. Azaz"]
+# github.com/moradabaz
+__author__ = ["gastler", "moradabaz"]
 __all__ = ["ProximityForest", "_CachedTransformer", "ProximityStump", "ProximityTree"]
 
 from logging import exception

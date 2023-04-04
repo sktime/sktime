@@ -615,15 +615,15 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
+    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
     >>> clf = WeightedEnsembleClassifier(
     ...     [DummyClassifier(), RocketClassifier(num_kernels=100)],
     ...     weights=2,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     WeightedEnsembleClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -754,13 +754,16 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
-        dists = np.zeros((X.shape[0], self.n_classes_))
+        dists = None
 
         # Call predict proba on each classifier, multiply the probabilities by the
         # classifiers weight then add them to the current HC2 probabilities
         for clf_name, clf in self.classifiers_:
             y_proba = clf.predict_proba(X=X)
-            dists += y_proba * self.weights_[clf_name]
+            if dists is None:
+                dists = y_proba * self.weights_[clf_name]
+            else:
+                dists += y_proba * self.weights_[clf_name]
 
         # Make each instances probability array sum to 1 and return
         y_proba = dists / dists.sum(axis=1, keepdims=True)
@@ -789,23 +792,33 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-        from sktime.classification.kernel_based import RocketClassifier
+        from sktime.classification.dummy import DummyClassifier
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params1 = {
-            "classifiers": [
-                KNeighborsTimeSeriesClassifier.create_test_instance(),
-                RocketClassifier.create_test_instance(),
-            ],
-            "weights": [42, 1],
-        }
+        params0 = {"classifiers": [DummyClassifier()]}
 
-        params2 = {
-            "classifiers": [
-                KNeighborsTimeSeriesClassifier.create_test_instance(),
-                RocketClassifier.create_test_instance(),
-            ],
-            "weights": 2,
-            "cv": 3,
-        }
-        return [params1, params2]
+        if _check_soft_dependencies("numba", severity="none"):
+            from sktime.classification.distance_based import (
+                KNeighborsTimeSeriesClassifier,
+            )
+            from sktime.classification.kernel_based import RocketClassifier
+
+            params1 = {
+                "classifiers": [
+                    KNeighborsTimeSeriesClassifier.create_test_instance(),
+                    RocketClassifier.create_test_instance(),
+                ],
+                "weights": [42, 1],
+            }
+
+            params2 = {
+                "classifiers": [
+                    KNeighborsTimeSeriesClassifier.create_test_instance(),
+                    RocketClassifier.create_test_instance(),
+                ],
+                "weights": 2,
+                "cv": 3,
+            }
+            return [params0, params1, params2]
+        else:
+            return params0

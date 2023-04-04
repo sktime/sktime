@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
-__author__ = ["James-Large, Withington, TonyBagnall"]
+__author__ = ["James-Large", "Withington", "TonyBagnall"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class CNNNetwork(BaseDeepNetwork):

@@ -112,11 +112,11 @@ class MUSE(BaseClassifier):
     >>> from sktime.classification.dictionary_based import MUSE
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = MUSE(window_inc=4, use_first_order_differences=False)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = MUSE(window_inc=4, use_first_order_differences=False) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     MUSE(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -124,6 +124,7 @@ class MUSE(BaseClassifier):
         "capability:multithreading": True,
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -200,7 +201,8 @@ class MUSE(BaseClassifier):
         if self.n_dims == 1:
             warnings.warn(
                 "MUSE Warning: Input series is univariate; MUSE is designed for"
-                + " multivariate series. It is recommended WEASEL is used instead."
+                + " multivariate series. It is recommended WEASEL is used instead.",
+                stacklevel=2,
             )
 
         if self.variance and self.anova:

@@ -32,12 +32,14 @@ EXCLUDE_ESTIMATORS = [
     "TapNetClassifier",
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
+    "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
 ]
 
 
 EXCLUDED_TESTS = {
     # issue when predicting residuals, see #3479
-    "SquaringResiduals": ["test_predict_residuals"],
+    # known issue with prediction intervals that needs fixing, tracked in #4181
+    "SquaringResiduals": ["test_predict_residuals", "test_predict_interval"],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
@@ -122,10 +124,23 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
-    "SAX": "test_fit_transform_output",  # SAX returns strange output format
+    # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
-    "Prophet": ":test_hierarchical_with_exogeneous",
-    # Prophet does not support datetime indices, see #2475 for the known issue
+    "SAX": "test_fit_transform_output",
+    # known bug in BaggingForecaster, returns wrong index, #4363
+    "BaggingForecaster": [
+        "test_predict_interval",
+        "test_predict_quantiles",
+        "test_predict_proba",
+    ],
+    # known bug in DynamicFactor, returns wrong index, #4362
+    "DynamicFactor": [
+        "test_predict_interval",
+        "test_predict_quantiles",
+        "test_predict_proba",
+    ],
+    # random quantile monotonicity issue in VAR, refer to #4420
+    "VAR": ["test_predict_quantiles"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
