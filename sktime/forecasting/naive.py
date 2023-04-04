@@ -681,7 +681,7 @@ class NaiveVariance(BaseForecaster):
             pred_quantiles[("Quantiles", a)] = y_pred + error
 
         fh_absolute = fh.to_absolute(self.cutoff)
-        pred_quantiles.index = fh_absolute
+        pred_quantiles.index = fh_absolute.to_pandas()
 
         return pred_quantiles
 
