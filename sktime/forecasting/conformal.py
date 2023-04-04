@@ -86,6 +86,36 @@ class ConformalIntervals(BaseForecaster):
     >>> conformal_forecaster.fit(y, fh=[1,2,3])
     ConformalIntervals(...)
     >>> pred_int = conformal_forecaster.predict_interval()
+
+    recommended use of ConformalIntervals together with ForecastingGridSearch
+    is by 1. first running grid search, 2. then ConformalIntervals on the tuned params
+    otherwise, nested sliding windows will cause high compute requirement
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.conformal import ConformalIntervals
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.param_est.plugin import PluginParamsForecaster
+    >>> # part 1 = grid search
+    >>> cv = ExpandingWindowSplitter(fh=[1,2,3])
+    >>> forecaster = NaiveForecaster()
+    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
+    >>> gscv = ForecastingGridSearchCV(
+    ...     forecaster=forecaster,
+    ...     param_grid=param_grid,
+    ...     cv=cv,
+    ... )
+    >>> # part 2 = plug in results of grid search into conformal intervals estimator
+    >>> conformal_with_fallback = ConformalIntervals(NaiveForecaster())
+    >>> gscv_with_conformal = PluginParamsForecaster(
+    ...     gscv,
+    ...     conformal_with_fallback,
+    ...     params={"best_forecaster": "forecaster"},
+    ... )
+    >>> y = load_airline()
+    >>> gscv_with_conformal.fit(y, fh=[1, 2, 3])
+    PluginParamsForecaster(...)
+    >>> y_pred_quantiles = gscv_with_conformal.predict_quantiles()
     """
 
     _tags = {
@@ -254,7 +284,7 @@ class ConformalIntervals(BaseForecaster):
 
         y_pred = self.predict(fh=fh, X=X)
         y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
-        y_pred.index = fh_absolute
+        y_pred.index = fh_absolute_idx
 
         for col in cols:
             if self.method in ABS_RESIDUAL_BASED:
