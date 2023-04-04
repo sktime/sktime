@@ -690,6 +690,8 @@ class SummaryTransformer(BaseTransformer):
             if "mad" in summary_function:
                 mad_value = (X - X.mean()).abs().mean()
                 mad_value = type(X)(mad_value)
+                if isinstance(X, pd.DataFrame):
+                    mad_value = mad_value.T
                 mad_value.index = ["mad"]
                 non_mad = set(summary_function).difference(["mad"])
                 non_mad = list(non_mad)
