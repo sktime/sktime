@@ -784,11 +784,11 @@ def _check_cutoff(cutoff, index):
         raise ValueError("`cutoff` must be given, but found none.")
 
     if isinstance(index, pd.PeriodIndex):
-        assert isinstance(cutoff, pd.Period)
+        assert isinstance(cutoff, (pd.Period, pd.PeriodIndex))
         assert index.freqstr == cutoff.freqstr
 
     if isinstance(index, pd.DatetimeIndex):
-        assert isinstance(cutoff, pd.Timestamp)
+        assert isinstance(cutoff, (pd.Timestamp, pd.DatetimeIndex))
 
 
 def _coerce_to_period(x, freq=None):
@@ -809,35 +809,24 @@ def _coerce_to_period(x, freq=None):
     index : pd.Period or pd.PeriodIndex
         Index or index element coerced to period based format.
     """
-    if isinstance(x, pd.Timestamp) and freq is None:
-        freq = x.freq
-        raise ValueError(
-            "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
-        )
-    try:
+    if isinstance(x, pd.DatetimeIndex):
         return x.to_period(freq)
-    except (ValueError, AttributeError) as e:
-        msg = str(e)
-        if "Invalid frequency" in msg or "_period_dtype_code" in msg:
-            raise ValueError(
-                "Invalid frequency. Please select a frequency that can "
-                "be converted to a regular `pd.PeriodIndex`. For other "
-                "frequencies, basic arithmetic operation to compute "
-                "durations currently do not work reliably."
-            )
-        else:
-            raise
+    else:
+        return x
 
 
 def _index_range(relative, cutoff):
     """Return Index Range relative to cutoff."""
     _check_cutoff(cutoff, relative)
-    is_timestamp = isinstance(cutoff, pd.Timestamp)
+    is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
     if is_timestamp:
         # coerce to pd.Period for reliable arithmetic operations and
         # computations of time deltas
         cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
+
+    if isinstance(cutoff, pd.Index):
+        cutoff = cutoff[[0] * len(relative)]
 
     absolute = cutoff + relative
 
