@@ -809,10 +809,24 @@ def _coerce_to_period(x, freq=None):
     index : pd.Period or pd.PeriodIndex
         Index or index element coerced to period based format.
     """
-    if isinstance(x, pd.DatetimeIndex):
+    if isinstance(x, pd.Timestamp) and freq is None:
+        freq = x.freq
+        raise ValueError(
+            "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
+        )
+    try:
         return x.to_period(freq)
-    else:
-        return x
+    except (ValueError, AttributeError) as e:
+        msg = str(e)
+        if "Invalid frequency" in msg or "_period_dtype_code" in msg:
+            raise ValueError(
+                "Invalid frequency. Please select a frequency that can "
+                "be converted to a regular `pd.PeriodIndex`. For other "
+                "frequencies, basic arithmetic operation to compute "
+                "durations currently do not work reliably."
+            )
+        else:
+            raise
 
 
 def _index_range(relative, cutoff):
@@ -823,7 +837,7 @@ def _index_range(relative, cutoff):
     if is_timestamp:
         # coerce to pd.Period for reliable arithmetic operations and
         # computations of time deltas
-        cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
+        cutoff = cutoff.to_period(cutoff.freqstr)
 
     if isinstance(cutoff, pd.Index):
         cutoff = cutoff[[0] * len(relative)]
