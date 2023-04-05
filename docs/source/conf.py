@@ -199,13 +199,8 @@ html_theme_options = {
         },
         {
             "name": "LinkedIn",
-            "url": "https://www.linkedin.com/company/sktime/",
+            "url": "https://www.linkedin.com/company/scikit-time/",
             "icon": "fab fa-linkedin",
-        },
-        {
-            "name": "Twitter",
-            "url": "https://twitter.com/sktime_toolbox",
-            "icon": "fab fa-twitter",
         },
     ],
     "favicons": [

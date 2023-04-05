@@ -701,7 +701,7 @@ class SummaryTransformer(BaseTransformer):
                 summary_value = X.agg(non_mad)
                 if "mad" in summary_function:
                     summary_value = pd.concat([summary_value, mad_value])
-                    summary_value = summary_value.loc[summary_function]
+                    summary_value = summary_value.loc[list(summary_function)]
             else:
                 summary_value = mad_value
 
