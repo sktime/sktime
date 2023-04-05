@@ -6,6 +6,8 @@
 __all__ = ["SARIMAX"]
 __author__ = ["TNTran92"]
 
+import pandas as pd
+
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -194,3 +196,53 @@ class SARIMAX(_StatsModelsAdapter):
         https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_structural_harvey_jaeger.html
         """
         return self._fitted_forecaster.summary()
+
+    def _predict_interval(self, fh, X=None, coverage=0.95):
+        """Compute/return prediction interval forecasts.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and default _predict_quantiles
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        coverage : float or list of float, optional (default=0.95)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+
+        prediction_results = self._fitted_forecaster.get_prediction(
+            start=start, end=end, exog=X
+        )
+
+        pred_int = pd.DataFrame()
+        for c in coverage:
+            pred_statsmodels = prediction_results.conf_int(alpha=(1 - c))
+            pred_statsmodels.columns = ["lower", "upper"]
+            pred_int[(c, "lower")] = pred_statsmodels["lower"].loc[valid_indices]
+            pred_int[(c, "upper")] = pred_statsmodels["upper"].loc[valid_indices]
+
+        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
+        pred_int.columns = index
+
+        return pred_int
