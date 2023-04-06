@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests the SARIMAX model."""
-__author__ = ["TNTran92"]
+__author__ = ["TNTran92", "yarnabrina"]
 
 import pytest
 from numpy.testing import assert_allclose

@@ -4,7 +4,7 @@
 """Implements SARIMAX."""
 
 __all__ = ["SARIMAX"]
-__author__ = ["TNTran92"]
+__author__ = ["TNTran92", "yarnabrina"]
 
 import pandas as pd
 
