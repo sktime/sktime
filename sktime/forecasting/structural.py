@@ -372,7 +372,6 @@ class UnobservedComponents(_StatsModelsAdapter):
             start=start, end=end, exog=X
         )
         cols = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
-        pred_int.columns = cols
         pred_int = pd.DataFrame(index=valid_indices, columns=cols)
         for c in coverage:
             alpha = 1 - c
