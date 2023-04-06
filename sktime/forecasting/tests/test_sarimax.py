@@ -40,7 +40,6 @@ def test_SARIMAX_single_interval_against_statsmodels():
 
     Notes
     -----
-
     * Predict confidence intervals using underlying estimator and the wrapper.
     * Predicts for a single coverage.
     * Uses a non-default value of 97.5% to test inputs are actually being respected.
@@ -69,7 +68,6 @@ def test_SARIMAX_single_intervals_against_statsmodels():
 
     Notes
     -----
-
     * Predict confidence intervals using underlying estimator and the wrapper.
     * Predicts for multiple coverage values, viz. 70% and 80%.
     """
