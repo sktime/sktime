@@ -321,7 +321,7 @@ class TimeSince(BaseTransformer):
 
 
 def _get_period_diff_as_int(x: pd.PeriodIndex, y: pd.PeriodIndex) -> pd.Index:
-    return x.astype(int) - y.astype(int)
+    return x.astype("int64") - y.astype("int64")
 
 
 def _remove_digits_from_str(x: str) -> str:
