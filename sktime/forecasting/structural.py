@@ -371,18 +371,19 @@ class UnobservedComponents(_StatsModelsAdapter):
         prediction_results = self._fitted_forecaster.get_prediction(
             start=start, end=end, exog=X
         )
-        pred_int = pd.DataFrame()
+        cols = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
+        pred_int.columns = cols
+        pred_int = pd.DataFrame(index=valid_indices, columns=cols)
         for c in coverage:
             alpha = 1 - c
             pred_statsmodels = prediction_results.summary_frame(alpha=alpha)
-            pred_int[(c, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
+            pred_int[("Coverage", c, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
                 valid_indices
             ]
-            pred_int[(c, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
+            pred_int[("Coverage", c, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
                 valid_indices
             ]
-        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
-        pred_int.columns = index
+
         return pred_int
 
     def summary(self):
