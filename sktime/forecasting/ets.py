@@ -465,10 +465,10 @@ class AutoETS(_StatsModelsAdapter):
         for c in coverage:
             alpha = 1 - c
             pred_statsmodels = prediction_results.summary_frame(alpha=alpha)
-            pred_int[("Coverage", c, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
+            pred_int[("Coverage", c, "lower")] = pred_statsmodels["lower"].loc[
                 valid_indices
             ]
-            pred_int[("Coverage", c, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
+            pred_int[("Coverage", c, "upper")] = pred_statsmodels["upper"].loc[
                 valid_indices
             ]
 
