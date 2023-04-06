@@ -317,7 +317,7 @@ class SquaringResiduals(BaseForecaster):
         for a, error in zip(alpha, errors):
             pred_quantiles[("Quantiles", a)] = y_pred + error
 
-        pred_quantiles.index = fh_abs
+        pred_quantiles.index = fh_abs.to_pandas()
 
         return pred_quantiles
 
@@ -354,7 +354,7 @@ class SquaringResiduals(BaseForecaster):
             pred_var.at[el] = self._res_forecasters[el].predict(fh=el)[0]
         if self.strategy == "square":
             pred_var = pred_var**0.5
-        pred_var.index = fh_abs
+        pred_var.index = fh_abs.to_pandas()
         return pred_var
 
     @classmethod
