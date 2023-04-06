@@ -151,6 +151,32 @@ class _TbatsAdapter(BaseForecaster):
         """
         return self._tbats_forecast(fh)
 
+    def _get_y_pred(self, y_in_sample, y_out_sample):
+        """Combine in- & out-sample prediction, slices given fh.
+
+        Parameters
+        ----------
+        y_in_sample : pd.Series
+            In-sample prediction
+        y_out_sample : pd.Series
+            Out-sample prediction
+
+        Returns
+        -------
+        pd.Series
+            y_pred, sliced by fh
+        """
+        y_pred = pd.concat([y_in_sample, y_out_sample], ignore_index=True).rename(
+            "y_pred"
+        )
+        y_pred = pd.DataFrame(y_pred)
+        # Workaround for slicing with negative index
+        y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
+        y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
+        y_pred.index = self.fh.to_absolute(self.cutoff).to_pandas()
+        y_pred = y_pred["y_pred"].rename(None)
+        return y_pred
+
     def _tbats_forecast(self, fh):
         """TBATS forecast without confidence interval.
 
