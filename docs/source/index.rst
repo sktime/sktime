@@ -22,7 +22,7 @@ We have experimental support for time series annotation.
 
 Features:
 
-* API for machine learning with time series, for the purpose of specifying, fitting, applying and validating machine learning models
+* API for time series machine learning, for model specification, fitting, application, and validation.
 * Interactive user experience with scikit-learn like syntax conventions
 
 Technical specification:
