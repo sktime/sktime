@@ -5,6 +5,8 @@ __author__ = ["KatieBuc"]
 
 import warnings
 
+import pandas as pd
+
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -352,8 +354,9 @@ class VARMAX(_StatsModelsAdapter):
         y_pred : np.ndarray
             Returns series of predicted values.
         """
-        full_idx = fh.to_absolute_int(self._y.index[0], self.cutoff)
-        start, end = full_idx[[0, -1]]
+        abs_idx = fh.to_absolute_int(self._y.index[0], self.cutoff)
+        start, end = abs_idx[[0, -1]]
+        full_range = pd.RangeIndex(start=start, stop=end + 1)
 
         y_pred = self._fitted_forecaster.predict(
             start=start,
@@ -364,9 +367,11 @@ class VARMAX(_StatsModelsAdapter):
             exog=X,
         )
 
-        y_pred.index = full_idx
+        y_pred.index = full_range
+        y_pred = y_pred.loc[abs_idx.to_pandas()]
+        y_pred.index = fh.to_absolute(self.cutoff).to_pandas()
 
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
