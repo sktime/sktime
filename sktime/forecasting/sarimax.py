@@ -235,14 +235,20 @@ class SARIMAX(_StatsModelsAdapter):
             start=start, end=end, exog=X
         )
 
-        pred_int = pd.DataFrame()
+        columns = pd.MultiIndex.from_product(
+            [["Coverage"], coverage, ["lower", "upper"]]
+        )
+        pred_int = pd.DataFrame(index=valid_indices, columns=columns)
+
         for c in coverage:
             pred_statsmodels = prediction_results.conf_int(alpha=(1 - c))
             pred_statsmodels.columns = ["lower", "upper"]
-            pred_int[(c, "lower")] = pred_statsmodels["lower"].loc[valid_indices]
-            pred_int[(c, "upper")] = pred_statsmodels["upper"].loc[valid_indices]
 
-        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
-        pred_int.columns = index
+            pred_int[("Coverage", c, "lower")] = pred_statsmodels.loc[
+                valid_indices, "lower"
+            ]
+            pred_int[("Coverage", c, "upper")] = pred_statsmodels.loc[
+                valid_indices, "upper"
+            ]
 
         return pred_int
