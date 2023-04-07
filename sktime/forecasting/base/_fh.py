@@ -225,8 +225,7 @@ class ForecastingHorizon:
 
         Absolute ForecastingHorizon with a pandas Index
     >>> ForecastingHorizon(y_test.index, is_relative=False) # doctest: +SKIP
-    >>> # ForecastingHorizon(['1960-07', '1960-08', '1960-09', '1960-10',
-    ... # '1960-11', '1960-12'], dtype='period[M]', name='Period', is_relative=False)
+    >>> # ForecastingHorizon(['1960-07', ..., '1960-12'], is_relative=False)
 
         Converting
     >>> # set cutoff (last time point of training data)
@@ -241,8 +240,7 @@ class ForecastingHorizon:
     >>> # to_absolute
     >>> fh = ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
     >>> fh = fh.to_absolute(cutoff=cutoff) # doctest: +SKIP
-    >>> # ForecastingHorizon(['1960-07', '1960-08', '1960-09', '1960-10',
-    ... # '1960-11', '1960-12'], dtype='period[M]', is_relative=False)
+    >>> # ForecastingHorizon(['1960-07', ..., '1960-12'], is_relative=False)
 
         Automatically casted ForecastingHorizon from list when calling predict()
     >>> forecaster = NaiveForecaster(strategy="drift")
