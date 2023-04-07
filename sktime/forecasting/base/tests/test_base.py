@@ -14,17 +14,19 @@ from pandas.testing import assert_series_equal
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.theta import ThetaForecaster
+from sktime.forecasting.var import VAR
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
@@ -73,7 +75,7 @@ def test_vectorization_series_to_panel(mtype):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
@@ -126,7 +128,7 @@ PROBA_DF_METHODS = ["predict_interval", "predict_quantiles", "predict_var"]
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -162,7 +164,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -198,7 +200,7 @@ def test_vectorization_series_to_hier_proba(method, mtype):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -219,7 +221,7 @@ def test_vectorization_preserves_row_index_names(method):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
@@ -275,14 +277,12 @@ def test_vectorization_multivariate(mtype, exogeneous):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps([ThetaForecaster, VAR], severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_dynamic_tags_reset_properly():
     """Test that dynamic tags are being reset properly."""
     from sktime.forecasting.compose import MultiplexForecaster
-    from sktime.forecasting.theta import ThetaForecaster
-    from sktime.forecasting.var import VAR
 
     # this forecaster will have the scitype:y tag set to "univariate"
     f = MultiplexForecaster([("foo", ThetaForecaster()), ("var", VAR())])
@@ -295,14 +295,13 @@ def test_dynamic_tags_reset_properly():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ThetaForecaster, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_predict_residuals():
     """Test that predict_residuals has no side-effect."""
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.model_selection import temporal_train_test_split
-    from sktime.forecasting.theta import ThetaForecaster
 
     y = _make_series(n_columns=1)
     y_train, y_test = temporal_train_test_split(y)
@@ -318,7 +317,7 @@ def test_predict_residuals():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("nullable_type", ["Int64", "Float64", "boolean"])
