@@ -364,7 +364,7 @@ class VARMAX(_StatsModelsAdapter):
             exog=X,
         )
 
-        y_pred.index = full_idx
+        y_pred.index = full_idx.to_pandas()
 
         return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
