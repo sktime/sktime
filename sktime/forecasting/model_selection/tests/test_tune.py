@@ -171,7 +171,7 @@ def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_soft_dependencies("pmdarima", severity="none"),
     reason="skip test if required soft dependency for hmmlearn not available",
 )
 @pytest.mark.parametrize("scoring", TEST_METRICS_PROBA)
