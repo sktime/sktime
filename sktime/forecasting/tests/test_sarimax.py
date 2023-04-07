@@ -63,7 +63,7 @@ def test_SARIMAX_single_interval_against_statsmodels():
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
 )
-def test_SARIMAX_single_intervals_against_statsmodels():
+def test_SARIMAX_multiple_intervals_against_statsmodels():
     """Compares Sktime's and Statsmodel's SARIMAX.
 
     Notes
