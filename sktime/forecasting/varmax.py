@@ -5,8 +5,6 @@ __author__ = ["KatieBuc"]
 
 import warnings
 
-from pandas.api.types import is_integer_dtype
-
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -354,7 +352,8 @@ class VARMAX(_StatsModelsAdapter):
         y_pred : np.ndarray
             Returns series of predicted values.
         """
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        full_idx = fh.to_absolute_int(self._y.index[0], self.cutoff)
+        start, end = full_idx[[0, -1]]
 
         y_pred = self._fitted_forecaster.predict(
             start=start,
@@ -365,14 +364,7 @@ class VARMAX(_StatsModelsAdapter):
             exog=X,
         )
 
-        # statsmodel returns zero-based index when index is of type int with the
-        # following warning
-        # ValueWarning: No supported index is available. Prediction results will be
-        # given with an integer index beginning at `start`...
-        # but only when out-of-sample forecasting, i.e. when forecasting horizon is
-        # greater than zero
-        if is_integer_dtype(self._y.index) & any(fh.to_relative(self.cutoff) > 0):
-            y_pred.index = y_pred.index + self._y.index[0]
+        y_pred.index = full_idx
 
         return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
