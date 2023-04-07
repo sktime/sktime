@@ -202,7 +202,7 @@ class _ProphetAdapter(BaseForecaster):
         y_pred.columns = self._y.columns
 
         if self.y_index_was_int_ or self.y_index_was_period_:
-            y_pred.index = self.fh.to_absolute(cutoff=self.cutoff)
+            y_pred.index = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
 
         return y_pred
 
@@ -276,7 +276,7 @@ class _ProphetAdapter(BaseForecaster):
             pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
 
         if self.y_index_was_int_ or self.y_index_was_period_:
-            pred_int.index = self.fh.to_absolute(cutoff=self.cutoff)
+            pred_int.index = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
 
         return pred_int
 
