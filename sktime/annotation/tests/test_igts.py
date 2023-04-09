@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from sktime.annotation.igts import InformationGainSegmentation, entropy, get_IGTS
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.fixture
@@ -27,6 +28,10 @@ def test_igts_identity():
     assert id_change_points == [0, 4]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("attrs", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_igts_get_candidates():
     """Test get_candidates function."""
     IGTS = get_IGTS()
@@ -34,6 +39,10 @@ def test_igts_get_candidates():
     assert candidates == [2, 8]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("attrs", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_IGTS_find_change_points(multivariate_mean_shift):
     """Test the IGTS core estimator."""
     IGTS = get_IGTS()
@@ -43,6 +52,10 @@ def test_IGTS_find_change_points(multivariate_mean_shift):
     assert len(pred) == 5
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("attrs", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_InformationGainSegmentation(multivariate_mean_shift):
     """Test the InformationGainSegmentation."""
     igts = InformationGainSegmentation(k_max=3, step=1)
