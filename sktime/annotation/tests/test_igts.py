@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from sktime.annotation.igts import IGTS, InformationGainSegmentation, entropy
+from sktime.annotation.igts import InformationGainSegmentation, entropy, get_IGTS
 
 
 @pytest.fixture
@@ -21,6 +21,7 @@ def test_entropy():
 
 def test_igts_identity():
     """Test identity segmentation."""
+    IGTS = get_IGTS()
     X = np.random.random(12).reshape(4, 3)
     id_change_points = IGTS().identity(X)
     assert id_change_points == [0, 4]
@@ -28,12 +29,14 @@ def test_igts_identity():
 
 def test_igts_get_candidates():
     """Test get_candidates function."""
+    IGTS = get_IGTS()
     candidates = IGTS(step=2).get_candidates(n_samples=10, change_points=[0, 4, 6])
     assert candidates == [2, 8]
 
 
 def test_IGTS_find_change_points(multivariate_mean_shift):
     """Test the IGTS core estimator."""
+    IGTS = get_IGTS()
     igts = IGTS(k_max=3, step=1)
     pred = igts.find_change_points(multivariate_mean_shift)
     assert isinstance(pred, list)
