@@ -43,6 +43,7 @@ import numpy.typing as npt
 from sklearn.utils.validation import check_random_state
 
 from sktime.base import BaseEstimator
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 logger = logging.getLogger(__name__)
 
@@ -460,6 +461,7 @@ class GreedyGaussianSegmentation(BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
 
+        _check_estimator_deps(self)
         super(GreedyGaussianSegmentation, self).__init__()
 
         self._adaptee_class = get_GGS()

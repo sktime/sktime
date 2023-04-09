@@ -26,6 +26,7 @@ import numpy.typing as npt
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
@@ -400,6 +401,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         self.k_max = k_max
         self.step = step
 
+        _check_estimator_deps(self)
         super(InformationGainSegmentation, self).__init__()
 
         self._adaptee_class = get_IGTS()
