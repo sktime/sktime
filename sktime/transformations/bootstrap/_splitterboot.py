@@ -44,9 +44,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
     See Also
     --------
     sktime.transformations.bootstrap.MovingBlockBootstrapTransformer :
-        Same as special case using SlidingWindowSplitter,
-        with different parameterization.
-        More efficiently implemented alternative for the special case.
+        Similar logic to sliding window splitter, but with random windows.
 
     Examples
     --------
