@@ -288,6 +288,8 @@ def get_IGTS():
 
             return current_change_points
 
+    return IGTS
+
 
 class SegmentationMixin:
     """Mixin with methods useful for segmentation problems."""
