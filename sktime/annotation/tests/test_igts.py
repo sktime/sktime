@@ -20,6 +20,10 @@ def test_entropy():
     assert entropy(np.ones((10, 1))) == 0.0
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("attrs", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_igts_identity():
     """Test identity segmentation."""
     IGTS = get_IGTS()

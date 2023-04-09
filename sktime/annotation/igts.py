@@ -385,10 +385,10 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     ... means=[[0.0, 1.0], [11.0, 10.0], [5.0, 3.0], [2.0, 2.0]],
     ... variances=0.5,
     ... )
-    >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
-    >>> from sktime.annotation.igts import InformationGainSegmentation
-    >>> igts = InformationGainSegmentation(k_max=3, step=2)
-    >>> y = igts.fit_predict(X_scaled)
+    >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X) # doctest: +SKIP
+    >>> from sktime.annotation.igts import InformationGainSegmentation # doctest: +SKIP
+    >>> igts = InformationGainSegmentation(k_max=3, step=2) # doctest: +SKIP
+    >>> y = igts.fit_predict(X_scaled) # doctest: +SKIP
     """
 
     _tags = {"python_dependencies": "attrs"}
