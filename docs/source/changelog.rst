@@ -23,17 +23,17 @@ Version 0.17.1 - 2023-04-11
 
 User feedback and ``pandas`` 2 compatibility issues are appreciated in :issue:`4426`.
 
-Deprecations and removals
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Dependencies
-^^^^^^^^^^^^
+Dependency changes
+~~~~~~~~~~~~~~~~~~
 
 * the version bound ``pandas<2.0.0`` will be relaxed to ``pandas<2.1.0`` in ``sktime 0.19.0``
-* option 1: to keep using ``pandas 1.X`` from ``0.19.0`` onwards, simply introduce the ``pandas<2.0.0`` bound in downstream requirements
-* option 2: to upgrade safely to ``pandas 2.X``, follow the upgrade and testing instructions below
-* neither option impacts public interfaces of ``sktime``, i.e., there are no removals, deprecations,
-  or changes of contract besides the change of ``pandas`` bound in ``sktime`` requirements
+
+  * option 1: to keep using ``pandas 1.X`` from ``0.19.0`` onwards, simply introduce the ``pandas<2.0.0`` bound in downstream requirements
+  * option 2: to upgrade safely to ``pandas 2.X``, follow the upgrade and testing instructions below
+  * neither option impacts public interfaces of ``sktime``, i.e., there are no removals, deprecations,
+    or changes of contract besides the change of ``pandas`` bound in ``sktime`` requirements
+
+* ``attrs`` changes from an implied (non-explicit) soft dependency to an explicit soft dependency (in ``all_extras``)
 
 ``pandas 2`` upgrade and testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
