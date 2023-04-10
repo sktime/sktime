@@ -204,6 +204,7 @@ class ARDL(_StatsModelsAdapter):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": "statsmodels>=0.13.0",
     }
 
     def __init__(
