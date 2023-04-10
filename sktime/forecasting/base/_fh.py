@@ -294,6 +294,10 @@ class ForecastingHorizon:
         elif hasattr(values, "freq"):
             self.freq = values.freq
         self.freq = freq
+        # developer note: this looks like a "superfluous line",
+        # because as self.freq is set in the end
+        # but this is not redundant - freq is an attribute with setter
+        # the setter checks consistency, and raises an error if non-None freqs differ.
 
         # infer self._is_relative from is_relative, and type of values
         # depending on type of values, is_relative is inferred
@@ -478,6 +482,28 @@ class ForecastingHorizon:
         """
         cutoff = self._coerce_cutoff_to_index_element(cutoff)
         return _to_absolute(fh=self, cutoff=cutoff)
+
+    def to_absolute_index(self, cutoff=None):
+        """Return absolute values of the horizon as a pandas.Index.
+
+        This is the same as the expected index when calling one of the
+        predict methods of the forecaster with
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index
+            Cutoff value is required to convert a relative forecasting
+            horizon to an absolute one (and vice versa).
+            If pd.Index, last/latest value is considered the cutoff
+
+        Returns
+        -------
+        fh : ForecastingHorizon
+            Absolute representation of forecasting horizon.
+        """
+        cutoff = self._coerce_cutoff_to_index_element(cutoff)
+        abs = _to_absolute(fh=self, cutoff=cutoff)
+        return abs.to_pandas()
 
     def to_absolute_int(self, start, cutoff=None):
         """Return absolute values as zero-based integer index starting from `start`.
