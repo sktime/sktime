@@ -31,7 +31,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
       to indicate train or test fold from the split
 
     For instance, if `split="train"`, and there is a single original series `X`,
-    the output of `transform` will have a top level )level 0) with integer index
+    the output of `transform` will have a top level (level 0) with integer index
     ranging from 0 to `splitter.get_n_splits(X)-1`.
 
     The splitter can be exhaustive and deterministic, or random.
