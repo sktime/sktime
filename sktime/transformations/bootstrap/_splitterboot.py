@@ -168,7 +168,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
             splits = [pd.concat(x, keys=["train", "test"]) for x in s]
         else:
             raise ValueError(
-                "split in SplitterBootstrapTransformer must be one of"
+                "fold in SplitterBootstrapTransformer must be one of"
                 'the strings "train", "test", or "both", '
                 f"but found {fold}"
             )
