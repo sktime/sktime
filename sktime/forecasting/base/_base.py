@@ -1624,7 +1624,7 @@ class BaseForecaster(BaseEstimator):
         cutoff : pandas compatible index element, or None
             pandas compatible index element, if cutoff has been set; None otherwise
         """
-        if self._cutoff is None:
+        if self.hasattr("_cutoff"):
             return None
         else:
             return self._cutoff
