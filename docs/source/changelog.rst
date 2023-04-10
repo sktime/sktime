@@ -14,6 +14,63 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.17.1 - 2023-04-10
+---------------------------
+
+Maintenance patch (``pandas 2``, ``attrs``). For last content update, see 0.17.0.
+
+* ``pandas 2`` compatibility patch
+* experimental support for ``pandas 2`` with testing and upgrade instructions for users
+* ``sktime`` will continue to support ``pandas 1`` versions
+
+User feedback and ``pandas 2`` compatibility issues are appreciated in :issue:`4426`.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* the version bound ``pandas<2.0.0`` will be relaxed to ``pandas<2.1.0`` in ``sktime 0.19.0``
+
+  * option 1: to keep using ``pandas 1.X`` from ``0.19.0`` onwards, simply introduce the ``pandas<2.0.0`` bound in downstream requirements
+  * option 2: to upgrade safely to ``pandas 2.X``, follow the upgrade and testing instructions below
+  * neither option impacts public interfaces of ``sktime``, i.e., there are no removals, deprecations,
+    or changes of contract besides the change of ``pandas`` bound in ``sktime`` requirements
+
+* ``attrs`` changes from an implied (non-explicit) soft dependency to an explicit soft dependency (in ``all_extras``)
+
+``pandas 2`` upgrade and testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* support for ``pandas 2`` will be introduced gradually:
+
+  * experimental support period until 0.19.0 (all 0.17.X and 0.18.X versions)
+  * full support from 0.19.0 (0.19.0, 0.19.X and onwards)
+
+* in the experimental period (0.17.1-0.18.last):
+
+  * ``sktime`` will have a dependency bound of ``pandas<2.0.0``
+  * ``sktime`` will aim to be compatible with ``pandas 2.0.X`` as well as ``pandas 1, >=1.1.0``,
+  * ``sktime`` can be run and tested with ``pandas 2.0.X`` by force-installing ``pandas 2.0.X``
+  * estimators can be tested for ``pandas 2`` compatibility via ``check_estimator`` under force-installed ``pandas 2.0.X``
+  * reports on compatibility issues are appreciated in :issue:`4426` (direct input or link from)
+
+* in the full support period (0.19.0-onwards):
+
+  * ``sktime`` requirements will allow ``pandas 2.0.X`` and extend support with ``pandas`` releases
+  * ``sktime`` will aim to be compatible with ``pandas 2`` (any version), as well as ``pandas 1, >=1.1.0``
+  * users choose their preferred ``pandas`` version by requirements on their downstream environment
+  * the bug and issue trackers should be used as normal
+
+List of PR
+~~~~~~~~~~
+
+* [MNT] address deprecation of ``"mad"`` option on ``DataFrame.agg`` and ``Series.agg`` (:pr:`4435`) :user:`fkiraly`
+* [MNT] address deprecation of automatic drop on ``DataFrame.agg`` on non-numeric columns (:pr:`4436`) :user:`fkiraly`
+* [MNT] resolve ``freq`` related deprecations and ``pandas 2`` failures in reducers (:pr:`4438`) :user:`fkiraly`
+* [MNT] except ``Prophet`` from ``test_predict_quantiles`` due to sporadic failures (:pr:`4432`) :user:`fkiraly`
+* [MNT] except ``VECM`` from ``test_predict_quantiles`` due to sporadic failures (:pr:`4442`) :user:`fkiraly`
+* [MNT] fix and sharpen soft dependency isolation logic for ``statsmodels`` and ``pmdarima`` (:pr:`4443`) :user:`fkiraly`
+* [MNT] isolating ``attrs`` imports (:pr:`4450`) :user:`fkiraly`
+
 Version 0.17.0 - 2023-04-03
 ---------------------------
 
