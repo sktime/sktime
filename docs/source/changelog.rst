@@ -14,6 +14,14 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.18.0 - 2023-04-2X
+---------------------------
+
+* [DOC] timeseers added to the related_software.rst page (:pr:`4433`) :user:`chandannaidu6`
+
+:user:`chandannaidu6`
+
+
 Version 0.17.1 - 2023-04-10
 ---------------------------
 
