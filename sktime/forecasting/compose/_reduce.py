@@ -336,7 +336,7 @@ class _Reducer(_BaseWindowForecaster):
                 cutoff_with_freq = self._cutoff
         else:
             cutoff_with_freq = self._cutoff
-        cutoff = _shift(cutoff_with_freq, by=shift)
+        cutoff = _shift(cutoff_with_freq, by=shift, return_index=True)
 
         relative_int = pd.Index(list(map(int, range(-self.window_length_ + 1, 2))))
         # relative _int will give the integer indices of the window. Also contains the
@@ -868,7 +868,7 @@ class _RecursiveReducer(_Reducer):
         if self.pooling == "global":
             fh_max = fh.to_relative(self.cutoff)[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
-            index_range = _index_range(relative, self.cutoff[0])
+            index_range = _index_range(relative, self.cutoff)
 
             y_pred = _create_fcst_df(index_range, self._y)
 
@@ -1585,7 +1585,7 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         timeframe = pd.DataFrame(target_date, columns=[time_names])
         target_frame = idx.merge(timeframe, how="cross")
         if hasattr(target_date, "freq"):
-            freq_inferred = target_date[0].freq
+            freq_inferred = target_date.freq
             mi = (
                 target_frame.groupby(instance_names, as_index=True)
                 .apply(

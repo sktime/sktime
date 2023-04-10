@@ -784,11 +784,11 @@ def _check_cutoff(cutoff, index):
         raise ValueError("`cutoff` must be given, but found none.")
 
     if isinstance(index, pd.PeriodIndex):
-        assert isinstance(cutoff, pd.Period)
+        assert isinstance(cutoff, (pd.Period, pd.PeriodIndex))
         assert index.freqstr == cutoff.freqstr
 
     if isinstance(index, pd.DatetimeIndex):
-        assert isinstance(cutoff, pd.Timestamp)
+        assert isinstance(cutoff, (pd.Timestamp, pd.DatetimeIndex))
 
 
 def _coerce_to_period(x, freq=None):
@@ -832,12 +832,15 @@ def _coerce_to_period(x, freq=None):
 def _index_range(relative, cutoff):
     """Return Index Range relative to cutoff."""
     _check_cutoff(cutoff, relative)
-    is_timestamp = isinstance(cutoff, pd.Timestamp)
+    is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
     if is_timestamp:
         # coerce to pd.Period for reliable arithmetic operations and
         # computations of time deltas
-        cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
+        cutoff = cutoff.to_period(cutoff.freqstr)
+
+    if isinstance(cutoff, pd.Index):
+        cutoff = cutoff[[0] * len(relative)]
 
     absolute = cutoff + relative
 
