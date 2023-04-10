@@ -54,6 +54,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all_extras = [
+    "attrs",
     "cloudpickle",
     "dash!=2.9.0",
     "dask",
