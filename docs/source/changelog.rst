@@ -14,14 +14,16 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
-Version 0.17.1 - 2023-04-11
+Version 0.17.1 - 2023-04-10
 ---------------------------
 
-* ``pandas`` 2 compatibility patch
-* experimental support for ``pandas`` 2 with testing and upgrade instructions for users
-* ``sktime`` will continue to support ``pandas`` 1 versions
+Maintenance patch (``pandas 2``, ``attrs``). For last content update, see 0.17.0.
 
-User feedback and ``pandas`` 2 compatibility issues are appreciated in :issue:`4426`.
+* ``pandas 2`` compatibility patch
+* experimental support for ``pandas 2`` with testing and upgrade instructions for users
+* ``sktime`` will continue to support ``pandas 1`` versions
+
+User feedback and ``pandas 2`` compatibility issues are appreciated in :issue:`4426`.
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -57,6 +59,17 @@ Dependency changes
   * ``sktime`` will aim to be compatible with ``pandas 2`` (any version), as well as ``pandas 1, >=1.1.0``
   * users choose their preferred ``pandas`` version by requirements on their downstream environment
   * the bug and issue trackers should be used as normal
+
+List of PR
+~~~~~~~~~~
+
+* [MNT] address deprecation of ``"mad"`` option on ``DataFrame.agg`` and ``Series.agg`` (:pr:`4435`) :user:`fkiraly`
+* [MNT] address deprecation of automatic drop on ``DataFrame.agg`` on non-numeric columns (:pr:`4436`) :user:`fkiraly`
+* [MNT] resolve ``freq`` related deprecations and ``pandas 2`` failures in reducers (:pr:`4438`) :user:`fkiraly`
+* [MNT] except ``Prophet`` from ``test_predict_quantiles`` due to sporadic failures (:pr:`4432`) :user:`fkiraly`
+* [MNT] except ``VECM`` from ``test_predict_quantiles`` due to sporadic failures (:pr:`4442`) :user:`fkiraly`
+* [MNT] fix and sharpen soft dependency isolation logic for ``statsmodels`` and ``pmdarima`` (:pr:`4443`) :user:`fkiraly`
+* [MNT] isolating ``attrs`` imports (:pr:`4450`) :user:`fkiraly`
 
 Version 0.17.0 - 2023-04-03
 ---------------------------
