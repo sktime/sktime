@@ -4,7 +4,9 @@
 
 __author__ = ["fkiraly"]
 
+import numpy as np
 import pandas as pd
+from sklearn.utils import check_random_state
 
 from sktime.transformations.base import BaseTransformer
 
@@ -21,7 +23,9 @@ class SplitterBootstrapTransformer(BaseTransformer):
     The output of `transform` will have additional levels:
 
     * all levels of the `transform` input
-    * an additional integer indexed top level, indicating the number of the fold
+    * an additional integer indexed top level, indicating the number of the sample
+      note: this is in general the number of the *sample* and corresponds to the
+      number of the *fold* only in the deterministic, exhaustive case
     * if `split="train"` or `split="test"`, no further levels
     * if `split="both"`, the second top level contains strings `"train"` and `"test"`
       to indicate train or test fold from the split
@@ -30,28 +34,55 @@ class SplitterBootstrapTransformer(BaseTransformer):
     the output of `transform` will have a top level )level 0) with integer index
     ranging from 0 to `splitter.get_n_splits(X)-1`.
 
+    The splitter can be exhaustive and deterministic, or random.
+    By default, exhaustive ordered samples are returned (deterministic).
+    Randomness is controlled by the following parameters:
+
+    * `shuffle` (by default off) applies random uniform shuffling to the instances
+    * `subsample` (by default off) applies sub-sampling with or without replacement
+    * `replace` (by default `False`) selects sub-sampling with or without replacement
+
+    Caution: the instance index of the `transform` output will correspond to
+    the split index only if `shuffle=False` and `subsample=None` (unless by coincidence)
+
     Parameters
     ----------
     splitter : optional, sktime splitter, BaseSplitter descendant
         default = SlidingWindowSplitter(window_length=3, step_length=1)
         The splitter used for the bootstrap splitting.
-    split : str, one of "train" (default), "test", and "both"
+    fold : str, one of "train" (default), "test", and "both"
         Determines which fold is returned as new instances in the panel.
         "train" - the training folds; "test" - the test folds;
         "both" - both training and test folds, and an additional string level with
         possible values `"train"` and `"test"` is present
+    shuffle : bool, default=False
+        whether to shuffle the order of folds uniformly at random before returning
+        if not, folds will be returned in the ordering defined by the splitter
+    subsample : optional, int or float, default = None
+        if provided, subsamples the folds returned uniformly at random
+        `int` = subsample of that size will be returned (or full sample if smaller)
+        `float`, must be between 0 and 1 = subsample of that fraction is returned
+        Note: integer 1 selects *one* series; float 1 selects number in `splitter` many
+    replace : bool, default=True; only used if `subsample=True`
+        whether sampling, if `subsample` is provided is with or without replacement
+        `True` = with replacement, `False` = without replacement
+    random_state : int, np.random.RandomState or None (default)
+        Random seed for the estimator
+        if `None`, `numpy` environment random seed is used
+        if `int`, passed to `numpy` `RandomState` as seed
+        if `RandomState`, will be used as random generator
 
     See Also
     --------
     sktime.transformations.bootstrap.MovingBlockBootstrapTransformer :
-        Similar logic to sliding window splitter, but with random windows.
+        Similar logic to sliding window splitter, with bootstrap random windows.
 
     Examples
     --------
     >>> from sktime.transformations.bootstrap import SplitterBootstrapTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = SplitterBootstrapTransformer(split="both")
+    >>> transformer = SplitterBootstrapTransformer(fold="both")
     >>> y_hat = transformer.fit_transform(y)
     """
 
@@ -68,7 +99,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
-        "univariate-only": True,  # can the transformer handle multivariate X?
+        "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": True,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
@@ -76,11 +107,25 @@ class SplitterBootstrapTransformer(BaseTransformer):
         "transform-returns-same-time-index": False,
     }
 
-    def __init__(self, splitter=None, split="train"):
+    def __init__(
+        self,
+        splitter=None,
+        fold="train",
+        shuffle=False,
+        subsample=None,
+        replace=True,
+        random_state=None,
+    ):
         self.splitter = splitter
-        self.split = split
+        self.fold = fold
+        self.shuffle = shuffle
+        self.subsample = subsample
+        self.replace = replace
+        self.random_state = random_state
 
         super(SplitterBootstrapTransformer, self).__init__()
+
+        self._rng = check_random_state(random_state)
 
         # if split == "both":
         #     self.set_tags(**{"scitype:transform-output": "Hierarchical"})
@@ -103,28 +148,46 @@ class SplitterBootstrapTransformer(BaseTransformer):
         transformed version of X
         """
         splitter = self.splitter
-        split = self.split
+        fold = self.fold
+        shuffle = self.shuffle
+        subsample = self.subsample
+        replace = self.replace
+        rng = self._rng
 
         if splitter is None:
             from sktime.forecasting.model_selection import SlidingWindowSplitter
 
             splitter = SlidingWindowSplitter(fh=[1], window_length=3, step_length=1)
 
-        if split == "train":
+        if fold == "train":
             splits = [x[0] for x in splitter.split_series(X)]
-        elif split == "test":
+        elif fold == "test":
             splits = [x[1] for x in splitter.split_series(X)]
-        elif split == "both":
+        elif fold == "both":
             s = splitter.split_series(X)
             splits = [pd.concat(x, keys=["train", "test"]) for x in s]
         else:
             raise ValueError(
                 "split in SplitterBootstrapTransformer must be one of"
                 'the strings "train", "test", or "both", '
-                f"but found {split}"
+                f"but found {fold}"
             )
 
-        return pd.concat(splits, axis=0, keys=pd.RangeIndex(len(splits)))
+        if subsample is None:
+            size = len(splits)
+        elif isinstance(subsample, float):
+            size = int(len(splits) * subsample)
+        else:
+            size = subsample
+
+        if subsample is not None or shuffle:
+            subs = rng.choice(range(len(splits)), size=size, replace=replace)
+            if not shuffle:
+                subs = np.sort(subs)
+            splits = [splits[x] for x in subs]
+
+        pd_splits = pd.concat(splits, axis=0, keys=pd.RangeIndex(len(splits)))
+        return pd_splits
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -151,7 +214,17 @@ class SplitterBootstrapTransformer(BaseTransformer):
             {},
             {
                 "splitter": ExpandingWindowSplitter(initial_window=1),
-                "split": "test",
+                "fold": "test",
+                "shuffle": True,
+                "subsample": 0.5,
+                "replace": True,
+            },
+            {
+                "splitter": ExpandingWindowSplitter(initial_window=2),
+                "fold": "train",
+                "shuffle": False,
+                "subsample": 3,
+                "replace": False,
             },
         ]
 
