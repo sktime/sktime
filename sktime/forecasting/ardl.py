@@ -204,6 +204,7 @@ class ARDL(_StatsModelsAdapter):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": "statsmodels>=0.13.0",
     }
 
     def __init__(
@@ -323,7 +324,7 @@ class ARDL(_StatsModelsAdapter):
 
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y, pd.Series) and y.index.is_integer():
+        if isinstance(y, pd.Series) and pd.api.types.is_integer_dtype(y.index):
             y, X = _coerce_int_to_range_index(y, X)
 
         # validity check of passed params

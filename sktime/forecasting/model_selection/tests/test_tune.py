@@ -35,7 +35,7 @@ from sktime.performance_metrics.forecasting import (
 from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
 from sktime.transformations.series.detrend import Detrender
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 TEST_METRICS_PROBA = [CRPS(), PinballLoss()]
@@ -171,7 +171,7 @@ def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for hmmlearn not available",
 )
 @pytest.mark.parametrize("scoring", TEST_METRICS_PROBA)

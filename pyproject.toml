@@ -1,13 +1,17 @@
 [project]
 name = "sktime"
-version = "0.16.1"
+version = "0.17.0"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
 ]
 maintainers = [
     {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
-    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
+    {name = "Franz Király"},
+    {name = "Jonathan Bechtel"},
+    {name = "Kiril Ralinovski"},
+    {name = "Marc Rovira"},
+    {name = "Sagar Mishra"},
 ]
 readme = "README.md"
 keywords = [
@@ -50,6 +54,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all_extras = [
+    "attrs",
     "cloudpickle",
     "dash!=2.9.0",
     "dask",

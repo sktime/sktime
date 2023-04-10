@@ -207,7 +207,7 @@ def test_get_cutoff_from_index(reverse_order):
     )
 
     assert isinstance(cutoff, pd.Index) and len(cutoff) == 1
-    assert cutoff.is_integer()
+    assert pd.api.types.is_integer_dtype(cutoff)
     assert idx == cutoff[0]
 
     if reverse_order:
