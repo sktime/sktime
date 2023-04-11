@@ -337,7 +337,9 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_new = pd.Series(index=expected_index, dtype="float64")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
-            return y_filled["b"]
+            y_pred = y_filled["b"]
+            y_pred.name = self._y.name
+            return y_pred
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
