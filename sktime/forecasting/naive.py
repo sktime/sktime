@@ -323,6 +323,22 @@ class NaiveForecaster(_BaseWindowForecaster):
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
+    def _predict_naive(self, fh=None, X=None):
+
+        from sktime.transformations.series.lag import Lag
+
+        strategy = self.strategy
+        sp = self.sp
+        lagger = Lag(sp)
+
+        expected_index = fh.to_absolute(self.cutoff).to_pandas()
+        if strategy == "last":
+            y_old = lagger.fit_transform(self._y)
+            y_new = pd.Series(index=expected_index, dtype="float64")
+            full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
+            y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            return y_filled["b"]
+
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
@@ -333,6 +349,12 @@ class NaiveForecaster(_BaseWindowForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
+        strategy = self.strategy
+        NEW_PREDICT = ["last"]
+
+        if strategy in NEW_PREDICT:
+            return self._predict_naive(fh=fh, X=X)
+
         y_pred = super(NaiveForecaster, self)._predict(fh=fh, X=X)
 
         # test_predict_time_index_in_sample_full[ForecastingPipeline-0-int-int-True]
