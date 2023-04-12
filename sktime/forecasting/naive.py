@@ -372,7 +372,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
-            y_pred = y_filled["b"]
+            y_pred = y_filled.loc["b"]
             y_pred.name = self._y.name
             return y_pred
 
