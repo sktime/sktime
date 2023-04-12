@@ -173,7 +173,7 @@ class _TbatsAdapter(BaseForecaster):
         # Workaround for slicing with negative index
         y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
         y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
-        y_pred.index = self.fh.to_absolute(self.cutoff).to_pandas()
+        y_pred.index = self.fh.to_absolute_index(self.cutoff)
         y_pred = y_pred["y_pred"].rename(None)
         return y_pred
 
@@ -244,7 +244,7 @@ class _TbatsAdapter(BaseForecaster):
 
             if len(fh) != len(fh_out):
                 epred_int = pd.DataFrame({"lower": nans(len_fh), "upper": nans(len_fh)})
-                epred_int.index = fh.to_absolute(self.cutoff).to_pandas()
+                epred_int.index = fh.to_absolute_index(self.cutoff)
 
                 in_pred_int = epred_int.index.isin(pred_int.index)
                 epred_int[in_pred_int] = pred_int
@@ -253,7 +253,7 @@ class _TbatsAdapter(BaseForecaster):
         else:
             y_out = nans(len_fh)
             pred_int = pd.DataFrame({"lower": nans(len_fh), "upper": nans(len_fh)})
-            pred_int.index = fh.to_absolute(self.cutoff).to_pandas()
+            pred_int.index = fh.to_absolute_index(self.cutoff)
 
         # y_pred
         y_in_sample = pd.Series(self._forecaster.y_hat)
@@ -306,7 +306,7 @@ class _TbatsAdapter(BaseForecaster):
         var_names = ["Coverage"]
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(
-            columns=int_idx, index=fh.to_absolute(cutoff).to_pandas()
+            columns=int_idx, index=fh.to_absolute_index(cutoff)
         )
 
         for c in coverage:
@@ -370,7 +370,7 @@ class _TbatsAdapter(BaseForecaster):
         pred_int = pred_int.loc[
             pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
         ]
-        pred_int.index = fh_out.to_absolute(self.cutoff).to_pandas()
+        pred_int.index = fh_out.to_absolute_index(self.cutoff)
         pred_int = pred_int.drop(columns=["idx"])
         return pred_int
 
