@@ -376,7 +376,7 @@ class VARMAX(_StatsModelsAdapter):
         ):
             y_pred.index = y_pred.index + self._y.index[0]
 
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

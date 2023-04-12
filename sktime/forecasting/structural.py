@@ -366,7 +366,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         """
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        valid_indices = fh.to_absolute_index(self.cutoff)
 
         prediction_results = self._fitted_forecaster.get_prediction(
             start=start, end=end, exog=X

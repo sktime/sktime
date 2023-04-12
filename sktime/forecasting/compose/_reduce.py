@@ -573,7 +573,7 @@ class _DirectReducer(_Reducer):
         # If we cannot generate a prediction from the available data, return nan.
 
         if self.pooling == "global":
-            fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+            fh_abs = fh.to_absolute_index(self.cutoff)
             y_pred = _create_fcst_df(fh_abs, self._y)
 
             for i, estimator in enumerate(self.estimators_):

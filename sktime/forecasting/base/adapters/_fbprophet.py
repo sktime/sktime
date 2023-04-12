@@ -142,7 +142,7 @@ class _ProphetAdapter(BaseForecaster):
             return None
         elif isinstance(X.index, pd.PeriodIndex):
             X = X.copy()
-            X = X.loc[self.fh.to_absolute(self.cutoff).to_pandas()]
+            X = X.loc[self.fh.to_absolute_index(self.cutoff)]
             X.index = X.index.to_timestamp()
         elif X.index.is_integer():
             X = X.copy()
