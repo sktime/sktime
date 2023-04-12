@@ -502,8 +502,8 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon.
         """
         cutoff = self._coerce_cutoff_to_index_element(cutoff)
-        abs = _to_absolute(fh=self, cutoff=cutoff)
-        return abs.to_pandas()
+        fh_abs = _to_absolute(fh=self, cutoff=cutoff)
+        return fh_abs.to_pandas()
 
     def to_absolute_int(self, start, cutoff=None):
         """Return absolute values as zero-based integer index starting from `start`.
@@ -531,7 +531,7 @@ class ForecastingHorizon:
             # computations of time deltas
             cutoff = _coerce_to_period(cutoff, freq=freq)
 
-        absolute = self.to_absolute(cutoff).to_pandas()
+        absolute = self.to_absolute_index(cutoff)
         if isinstance(absolute, pd.DatetimeIndex):
             # coerce to pd.Period for reliable arithmetics and computations of
             # time deltas
