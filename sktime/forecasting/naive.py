@@ -341,6 +341,15 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred.name = self._y.name
             return y_pred
 
+            # if sp > 1:
+            #     vals_old = self._y.values
+            #     nrow = len(vals_old) // sp + 1
+            #     vals_old = np.pad(vals_old, (0, nrow * sp - len(vals_old)),
+            #         constant_values=np.nan)
+            #     vals_old = np.reshape(vals_old, (nrow, sp))
+            #     index = self._y.
+            #     y_old = p
+
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
@@ -354,7 +363,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         strategy = self.strategy
         NEW_PREDICT = ["last"]
 
-        if strategy in NEW_PREDICT:
+        if strategy in NEW_PREDICT and sp == 1:
             return self._predict_naive(fh=fh, X=X)
 
         y_pred = super(NaiveForecaster, self)._predict(fh=fh, X=X)
