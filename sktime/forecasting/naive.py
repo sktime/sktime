@@ -373,10 +373,8 @@ class NaiveForecaster(_BaseWindowForecaster):
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
             y_pred = y_filled.loc["b"]
-            y_pred.name = self._y.name
-            return y_pred
 
-        if strategy == "last" and sp > 1:
+        elif strategy == "last" and sp > 1:
             anchor = self._y.index[[0]]
             y_old = self._pivot_sp(self._y, sp)
             yc = y_old.columns
@@ -392,7 +390,9 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred = self._unpivot_sp(y_pred)
             y_pred = y_pred.loc[expected_index]
             y_pred = y_pred.iloc[:, 0]
-            return y_pred
+
+        y_pred.name = self._y.name
+        return y_pred
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
