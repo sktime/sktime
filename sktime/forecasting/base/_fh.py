@@ -432,6 +432,15 @@ class ForecastingHorizon:
         """
         return self.to_pandas().to_numpy(**kwargs)
 
+    def _coerce_cutoff_to_index(self, cutoff):
+        """Coerces cutoff to pandas index, and updates self.freq with cutoff."""
+        self.freq = cutoff
+        if not isinstance(cutoff, pd.Index):
+            cutoff = pd.Index([cutoff])
+            if hasattr(cutoff, "freq"):
+                cutoff.freq = self.freq
+        return cutoff
+
     def to_relative(self, cutoff=None):
         """Return forecasting horizon values relative to a cutoff.
 
@@ -447,7 +456,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Relative representation of forecasting horizon.
         """
-        self.freq = cutoff
+        cutoff = self._coerce_cutoff_to_index(cutoff)
         return _to_relative(fh=self, cutoff=cutoff)
 
     def to_absolute(self, cutoff):
@@ -465,7 +474,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
-        self.freq = cutoff
+        cutoff = self._coerce_cutoff_to_index(cutoff)
         return _to_absolute(fh=self, cutoff=cutoff)
 
     def to_absolute_int(self, start, cutoff=None):
@@ -486,7 +495,7 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon as zero-based
             integer index.
         """
-        self.freq = cutoff
+        cutoff = self._coerce_cutoff_to_index(cutoff)
         freq = self.freq
 
         absolute = self.to_absolute(cutoff).to_pandas()
