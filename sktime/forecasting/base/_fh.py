@@ -486,8 +486,10 @@ class ForecastingHorizon:
     def to_absolute_index(self, cutoff=None):
         """Return absolute values of the horizon as a pandas.Index.
 
-        This is the same as the expected index when calling one of the
-        predict methods of the forecaster with
+        For a forecaster `f` that has `fh` being `self`,
+        the return of this method with `cutoff=f.cutoff` is the same
+        as the expected index of the return of the forecaster's predict methods,
+        e.g., `f.predict` or `f.predict_interval`
 
         Parameters
         ----------
