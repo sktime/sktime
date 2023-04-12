@@ -103,7 +103,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         y_pred : pd.Series
             Point predictions
         """
-        index = fh.to_absolute(self.cutoff)
+        index = fh.to_absolute(self.cutoff).to_pandas()
         return pd.Series(self.prediction_constant, index=index)
 
     @_method_logger
@@ -175,7 +175,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        fh_index = fh.to_absolute(self.cutoff)
+        fh_index = fh.to_absolute(self.cutoff).to_pandas()
         col_index = pd.MultiIndex.from_product([["Quantiles"], alpha])
         pred_quantiles = pd.DataFrame(columns=col_index, index=fh_index)
 
@@ -280,7 +280,7 @@ class MockForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        index = fh.to_absolute(self.cutoff)
+        index = fh.to_absolute(self.cutoff).to_pandas()
         return pd.DataFrame(
             self.prediction_constant, index=index, columns=self._y.columns
         )
@@ -358,7 +358,7 @@ class MockForecaster(BaseForecaster):
             cols = ["Quantiles"]
 
         col_index = pd.MultiIndex.from_product([cols, alpha])
-        fh_index = fh.to_absolute(self.cutoff)
+        fh_index = fh.to_absolute(self.cutoff).to_pandas()
         pred_quantiles = pd.DataFrame(index=fh_index, columns=col_index)
 
         for col, a in col_index:

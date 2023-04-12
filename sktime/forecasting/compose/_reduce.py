@@ -1681,9 +1681,9 @@ class _ReducerMixin:
             CAVEAT: sorted by index level -1, since reduction is applied by fh
         """
         if isinstance(fh, ForecastingHorizon):
-            fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+            fh_idx = pd.Index(fh.to_absolute(self.cutoff).to_pandas())
         else:
-            fh_idx = pd.Index(fh)
+            fh_idx = pd.Index(fh.to_pandas())
         y_index = self._y.index
 
         if isinstance(y_index, pd.MultiIndex):

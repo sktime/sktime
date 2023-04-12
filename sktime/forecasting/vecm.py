@@ -204,11 +204,11 @@ class VECM(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        index = fh.to_absolute(self.cutoff)
+        index = fh.to_absolute(self.cutoff).to_pandas()
         index.name = self._y.index.name
         y_pred = pd.DataFrame(
             y_pred[fh.to_indexer(self.cutoff), :],
-            index=fh.to_absolute(self.cutoff),
+            index=index,
             columns=self._y.columns,
         )
 
@@ -277,7 +277,7 @@ class VECM(_StatsModelsAdapter):
             all_values.extend(values)
 
         pred_int = pd.DataFrame(
-            [all_values], index=fh.to_absolute(self.cutoff), columns=int_idx
+            [all_values], index=fh.to_absolute(self.cutoff).to_pandas(), columns=int_idx
         )
 
         return pred_int

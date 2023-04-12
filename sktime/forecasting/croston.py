@@ -151,7 +151,7 @@ class Croston(BaseForecaster):
         # Predicting future forecasts:to_numpy()
         y_pred = np.full(len_fh, f[-1])
 
-        index = self.fh.to_absolute(self.cutoff)
+        index = self.fh.to_absolute(self.cutoff).to_pandas()
         return pd.Series(y_pred, index=index, name=self._y.name)
 
     @classmethod

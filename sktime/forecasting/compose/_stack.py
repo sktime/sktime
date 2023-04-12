@@ -165,7 +165,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y_preds = np.column_stack(self._predict_forecasters(fh=fh, X=X))
         y_pred = self.regressor_.predict(y_preds)
         # index = y_preds.index
-        index = self.fh.to_absolute(self.cutoff)
+        index = self.fh.to_absolute(self.cutoff).to_pandas()
         return pd.Series(y_pred, index=index, name=self._y.name)
 
     @classmethod

@@ -548,7 +548,7 @@ def test_split_series_hier():
         assert len(train) == 10 * n_instances
         assert isinstance(test, np.ndarray)
         assert test.ndim == 1
-        assert test.dtype == np.int64
+        assert pd.api.types.is_integer_dtype(test.dtype)
         assert len(test) == 1 * n_instances
 
     for train, test in cv.split_loc(y):
