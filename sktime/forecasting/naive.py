@@ -364,7 +364,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         strategy = self.strategy
         sp = self.sp
-        lagger = Lag(sp)
+        lagger = Lag(1)
 
         expected_index = fh.to_absolute(self.cutoff).to_pandas()
         if strategy == "last" and sp == 1:
@@ -376,14 +376,20 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred.name = self._y.name
             return y_pred
 
-        # if strategy == last and sp > 1:
-        #     vals_old = self._y.values
-        #     nrow = len(vals_old) // sp + 1
-        #     vals_old = np.pad(vals_old, (0, nrow * sp - len(vals_old)),
-        #         constant_values=np.nan)
-        #     vals_old = np.reshape(vals_old, (nrow, sp))
-        #     index = self._y.
-        #     y_old = p
+        if strategy == "last" and sp > 1:
+            anchor = self._y.index[0]
+            y_old = self._pivot_sp(self._y, sp)
+            y_old = lagger.fit_transform(y_old)
+            y_new_mask = pd.Series(index=expected_index, dtype="float64")
+            y_new = self._pivot_sp(y_new_mask, sp, anchor=anchor)
+            full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
+            y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            y_pred = y_filled["b"]
+
+            y_pred = self._unpivot_sp(y_pred, anchor=anchor)
+            y_pred = y_pred.loc[expected_index]
+            y_pred = y_pred.iloc[:, 0]
+            return y_pred
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
