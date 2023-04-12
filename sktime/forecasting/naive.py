@@ -323,6 +323,41 @@ class NaiveForecaster(_BaseWindowForecaster):
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
+    def _pivot_sp(self, df, sp, anchor=None):
+
+        if anchor is None:
+            anchor = df.index[0]
+
+        period_len = df.index[1] - df.index[0]
+        ix = (df.index - anchor) / period_len
+        ix = ix.astype("int64")
+
+        df_pivot = pd.pivot_table(
+            data=df,
+            index=ix // sp,  # Upper level
+            columns=ix % sp,  # Lower level
+        )
+        df_pivot.index = df_pivot.index * sp
+        return df_pivot
+
+    def _unpivot_sp(self, df, anchor=None):
+
+        if anchor is None:
+            anchor = pd.Index([0])
+
+        df_melt = df.melt(col_level=1)
+        df_melt = df_melt.drop(columns="variable")
+        df_melt = df_melt.dropna()
+
+        if len(anchor) == 1:
+            anchor = anchor[[0] * len(df_melt.index)]
+        if hasattr(df_melt.index, "freq") and not hasattr(anchor, "freq"):
+            if df_melt.index.freq is not None:
+                anchor = anchor * df_melt.index.freq
+
+        df_melt.index = df_melt.index + anchor
+        return df_melt
+
     def _predict_naive(self, fh=None, X=None):
 
         from sktime.transformations.series.lag import Lag
@@ -332,7 +367,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         lagger = Lag(sp)
 
         expected_index = fh.to_absolute(self.cutoff).to_pandas()
-        if strategy == "last":
+        if strategy == "last" and sp == 1:
             y_old = lagger.fit_transform(self._y)
             y_new = pd.Series(index=expected_index, dtype="float64")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
@@ -341,14 +376,14 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred.name = self._y.name
             return y_pred
 
-            # if sp > 1:
-            #     vals_old = self._y.values
-            #     nrow = len(vals_old) // sp + 1
-            #     vals_old = np.pad(vals_old, (0, nrow * sp - len(vals_old)),
-            #         constant_values=np.nan)
-            #     vals_old = np.reshape(vals_old, (nrow, sp))
-            #     index = self._y.
-            #     y_old = p
+        # if strategy == last and sp > 1:
+        #     vals_old = self._y.values
+        #     nrow = len(vals_old) // sp + 1
+        #     vals_old = np.pad(vals_old, (0, nrow * sp - len(vals_old)),
+        #         constant_values=np.nan)
+        #     vals_old = np.reshape(vals_old, (nrow, sp))
+        #     index = self._y.
+        #     y_old = p
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
