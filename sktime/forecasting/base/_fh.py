@@ -6,7 +6,6 @@
 __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
-from functools import lru_cache
 from typing import Optional, Union
 
 import numpy as np
