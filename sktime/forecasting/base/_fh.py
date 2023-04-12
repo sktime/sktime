@@ -433,14 +433,6 @@ class ForecastingHorizon:
         """
         return self.to_pandas().to_numpy(**kwargs)
 
-    def _coerce_cutoff_to_index_element(self, cutoff):
-        """Coerces cutoff to index element, and updates self.freq with cutoff."""
-        self.freq = cutoff
-        if isinstance(cutoff, pd.Index):
-            assert len(cutoff) > 0
-            cutoff = cutoff[-1]
-        return cutoff
-
     def to_relative(self, cutoff=None):
         """Return forecasting horizon values relative to a cutoff.
 
@@ -456,7 +448,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Relative representation of forecasting horizon.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
+        self.freq = cutoff
         return _to_relative(fh=self, cutoff=cutoff)
 
     def to_absolute(self, cutoff):
@@ -474,7 +466,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
+        self.freq = cutoff
         return _to_absolute(fh=self, cutoff=cutoff)
 
     def to_absolute_int(self, start, cutoff=None):
@@ -495,13 +487,8 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon as zero-based
             integer index.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
+        self.freq = cutoff
         freq = self.freq
-
-        if isinstance(cutoff, pd.Timestamp):
-            # coerce to pd.Period for reliable arithmetic operations and
-            # computations of time deltas
-            cutoff = _coerce_to_period(cutoff, freq=freq)
 
         absolute = self.to_absolute(cutoff).to_pandas()
         if isinstance(absolute, pd.DatetimeIndex):
@@ -721,11 +708,6 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         return fh._new(relative, is_relative=True, freq=fh.freq)
 
 
-# This function needs to be outside ForecastingHorizon
-# since the lru_cache decorator has known, problematic interactions
-# with object methods, see B019 error of flake8-bugbear for a detail explanation.
-# See more here: https://github.com/sktime/sktime/issues/2338
-@lru_cache(typed=True)
 def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
     """Return absolute version of forecasting horizon values.
 
@@ -747,7 +729,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
     else:
         relative = fh.to_pandas()
         _check_cutoff(cutoff, relative)
-        is_timestamp = isinstance(cutoff, pd.Timestamp)
+        is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
         if is_timestamp:
             # coerce to pd.Period for reliable arithmetic operations and
@@ -758,8 +740,8 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
             if is_timestamp or isinstance(cutoff, pd.Period):
                 cutoff = pd.PeriodIndex([cutoff])
 
-            if isinstance(cutoff, pd.Index):
-                cutoff = cutoff[[0] * len(relative)]
+        if isinstance(cutoff, pd.Index):
+            cutoff = cutoff[[0] * len(relative)]
 
         absolute = cutoff + relative
 
