@@ -363,7 +363,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         strategy = self.strategy
         NEW_PREDICT = ["last"]
 
-        if strategy in NEW_PREDICT and sp == 1:
+        if strategy in NEW_PREDICT and self.sp == 1:
             return self._predict_naive(fh=fh, X=X)
 
         y_pred = super(NaiveForecaster, self)._predict(fh=fh, X=X)
