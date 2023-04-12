@@ -372,7 +372,10 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            # subset to rows that contain elements we wanted to fill
             y_pred = y_filled.loc["b"]
+            # convert to pd.Series from pd.DataFrame
+            y_pred = y_pred.iloc[:, 0]
 
         elif strategy == "last" and sp > 1:
             anchor = self._y.index[[0]]
@@ -386,9 +389,13 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_new.columns = yc
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            # subset to rows that contain elements we wanted to fill
             y_pred = y_filled.loc["b"]
+            # reformat to wide
             y_pred = self._unpivot_sp(y_pred)
+            # subset to required indices
             y_pred = y_pred.loc[expected_index]
+            # convert to pd.Series from pd.DataFrame
             y_pred = y_pred.iloc[:, 0]
 
         y_pred.name = self._y.name
