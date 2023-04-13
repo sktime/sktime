@@ -222,7 +222,9 @@ class _PmdArimaAdapter(BaseForecaster):
                 )
                 pred_int = result[1]
                 pred_int = pd.DataFrame(
-                    pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+                    pred_int[fh_idx, :],
+                    index=fh_abs.to_pandas(),
+                    columns=["lower", "upper"],
                 )
                 pred_ints.append(pred_int)
             return result[0], pred_ints
