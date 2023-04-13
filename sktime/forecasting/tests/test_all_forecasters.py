@@ -230,6 +230,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh=fh_int)
             _assert_correct_columns(y_pred, y_train)
 
+            if estimator_instance.get_tag("capability:pred_int"):
+                y_pred_int = estimator_instance.predict_interval()
+                _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh=fh_int)
+                y_pred_q = estimator_instance.predict_quantiles()
+                _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh=fh_int)
+
             y_test = _make_series(
                 n_columns=n_columns, index_type=index_type, n_timepoints=len(y_pred)
             )
