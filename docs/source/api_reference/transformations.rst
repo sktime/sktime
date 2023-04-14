@@ -65,6 +65,7 @@ Pipeline building
     InvertTransform
     Id
     YtoX
+    IxToX
     TransformIf
 
 .. currentmodule:: sktime.transformations.panel.compose
