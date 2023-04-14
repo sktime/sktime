@@ -352,7 +352,9 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         if isinstance(df.index, pd.PeriodIndex):
             n = len(df_pivot)
-            pivot_ix = anchor.index[[0] * n] + df_pivot.index
+            # need to correct for anchor being 1970 in int conversion
+            offset = df_pivot.index * sp - anchor.index[[0] * n].astype("int64")
+            pivot_ix = anchor.index[[0] * n] + offset
         else:
             n = len(df_pivot)
             pivot_ix = anchor.index[[0] * n] + df_pivot.index * sp
@@ -377,14 +379,18 @@ class NaiveForecaster(_BaseWindowForecaster):
             a = df_melt.index.to_period(freq=self._y.index.freq)
             res = a + offset
             df_melt.index = res
+            was_datetime = True
         else:
             df_melt.index = df_melt.index + offset
+            was_datetime = False
         df_melt = df_melt.drop(columns=df_melt.columns[0])
         df_melt = df_melt.sort_index()
         df_melt = df_melt.dropna()
         # df_melt.columns = df.columns.get_level_values(0).unique()
 
-        print(df_melt)
+        if was_datetime:
+            df_melt.index = df_melt.index.to_timestamp()
+
         return df_melt
 
     def _predict_naive(self, fh=None, X=None):
