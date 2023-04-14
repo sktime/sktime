@@ -326,7 +326,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     def _pivot_sp(self, df, sp, anchor=None):
 
         if isinstance(df.index, pd.DatetimeIndex):
-            df.index = df.index.to_period()
+            df.index = df.index.to_period(freq=self._y.index.freq)
             was_datetime = True
         else:
             was_datetime = False
