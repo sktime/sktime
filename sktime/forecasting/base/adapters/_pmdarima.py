@@ -97,17 +97,22 @@ class _PmdArimaAdapter(BaseForecaster):
 
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
-            return self._predict_fixed_cutoff(fh_oos, X=X)
+            y_pred = self._predict_fixed_cutoff(fh_oos, X=X)
 
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
-            return self._predict_in_sample(fh_ins, X=X)
+            y_pred = self._predict_in_sample(fh_ins, X=X)
 
         # both in-sample and out-of-sample values
         else:
             y_ins = self._predict_in_sample(fh_ins, X=X)
             y_oos = self._predict_fixed_cutoff(fh_oos, X=X)
-            return pd.concat([y_ins, y_oos])
+            y_pred = pd.concat([y_ins, y_oos])
+
+        # ensure that name is not added nor removed
+        # otherwise this may upset conversion to pd.DataFrame
+        y_pred.name = self._y.name
+        return y_pred
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -164,7 +169,9 @@ class _PmdArimaAdapter(BaseForecaster):
         if return_pred_int:
             pred_ints = []
             for a in alpha:
-                pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
+                pred_int = pd.DataFrame(
+                    index=fh_abs.to_pandas(), columns=["lower", "upper"]
+                )
                 result = self._forecaster.predict_in_sample(
                     start=start,
                     end=end,
@@ -221,13 +228,15 @@ class _PmdArimaAdapter(BaseForecaster):
                 )
                 pred_int = result[1]
                 pred_int = pd.DataFrame(
-                    pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+                    pred_int[fh_idx, :],
+                    index=fh_abs.to_pandas(),
+                    columns=["lower", "upper"],
                 )
                 pred_ints.append(pred_int)
             return result[0], pred_ints
         else:
             result = pd.Series(result).iloc[fh_idx]
-            result.index = fh_abs
+            result.index = fh_abs.to_pandas()
             return result
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
@@ -340,7 +349,7 @@ class _PmdArimaAdapter(BaseForecaster):
             raise NotImplementedError()
 
     def _get_fitted_param_names(self):
-        # Return parameter names under `arima_res_`
+        """Return parameter names under `arima_res_`."""
         if hasattr(self._forecaster, "model_"):  # AutoARIMA
             return self._forecaster.model_.arima_res_._results.param_names
         elif hasattr(self._forecaster, "arima_res_"):  # ARIMA

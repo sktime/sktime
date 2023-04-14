@@ -42,6 +42,7 @@ if ON_READTHEDOCS:
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.autosectionlabel",
     "numpydoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
@@ -54,6 +55,11 @@ extensions = [
 
 # Recommended by sphinx_design when using the MyST Parser
 myst_enable_extensions = ["colon_fence"]
+
+# Notebook thumbnails
+nbsphinx_thumbnails = {
+    "examples/02_classification": "examples/img/tsc.png",
+}
 
 # Use bootstrap CSS from theme.
 panels_add_bootstrap_css = False
@@ -187,24 +193,14 @@ html_theme_options = {
             "icon": "fab fa-github",
         },
         {
-            "name": "Slack",
-            "url": "https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig",  # noqa: E501
-            "icon": "fab fa-slack",
-        },
-        {
             "name": "Discord",
-            "url": "https://discord.com/invite/gqSab2K",
+            "url": "https://discord.com/invite/54ACzaFsn7",
             "icon": "fab fa-discord",
         },
         {
             "name": "LinkedIn",
-            "url": "https://www.linkedin.com/company/sktime/",
+            "url": "https://www.linkedin.com/company/scikit-time/",
             "icon": "fab fa-linkedin",
-        },
-        {
-            "name": "Twitter",
-            "url": "https://twitter.com/sktime_toolbox",
-            "icon": "fab fa-twitter",
         },
     ],
     "favicons": [
@@ -219,7 +215,6 @@ html_theme_options = {
     "navbar_start": ["navbar-logo"],
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["navbar-icon-links"],
-    "announcement": "<p><a href=https://docs.google.com/forms/d/e/1FAIpQLScQkrSZfNiZiQKPuBcFMtHAlL10RBZ3QSBo-I3klUHeL7Vg0A/viewform>Sign up</a> for the sktime Fall Dev days Nov 9 - 10 2022</p>",  # noqa: E501
 }
 html_logo = "images/sktime-logo-text-horizontal.png"
 html_context = {
@@ -364,7 +359,7 @@ def _make_estimator_overview(app):
         clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
         # adds html link reference
         modname = str(
-            '<a href="https://www.sktime.org/en/latest/api_reference'
+            '<a href="https://www.sktime.net/en/latest/api_reference'
             + "/auto_generated/"
             + clean_path
             + '.html">'

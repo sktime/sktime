@@ -24,7 +24,7 @@ sktime.
         or "classifier".
 
     Forecasting
-        A learning task focused on prediction future values of a time series. For more details, see the :ref:`user_guide_forecasting`.
+        A learning task focused on prediction future values of a time series. For more details, see the :ref:`user_guide_introduction`.
 
     Time series
          Data where the :term:`variable` measurements are ordered over time or an index indicating the position of an observation in the sequence of values.

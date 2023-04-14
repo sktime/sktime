@@ -9,13 +9,10 @@ transformation, ARMA errors, Trend and Seasonal components.
 Wrapping implementation in [1]_ of method proposed in [2]_.
 """
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["BATS"]
 
 from sktime.forecasting.base.adapters import _TbatsAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tbats", severity="warning")
 
 
 class BATS(_TbatsAdapter):
@@ -131,12 +128,11 @@ class BATS(_TbatsAdapter):
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
 
-
         Returns
         -------
         params : dict or list of dict
         """
-        params = {
+        params1 = {
             "use_box_cox": False,
             "use_trend": False,
             "use_damped_trend": False,
@@ -144,4 +140,10 @@ class BATS(_TbatsAdapter):
             "use_arma_errors": False,
             "n_jobs": 1,
         }
-        return params
+
+        params2 = {
+            "use_box_cox": False,
+            "sp": [2, 12],
+        }
+
+        return [params1, params2]

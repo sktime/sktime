@@ -62,9 +62,9 @@ class AutoCorrelationTransformer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.acf import AutoCorrelationTransformer
     >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> transformer = AutoCorrelationTransformer(n_lags=12)
-    >>> y_hat = transformer.fit_transform(y)
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> transformer = AutoCorrelationTransformer(n_lags=12)  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {
@@ -143,7 +143,7 @@ class AutoCorrelationTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {"n_lags": 1}
+        return [{}, {"n_lags": 1}]
 
 
 class PartialAutoCorrelationTransformer(BaseTransformer):
@@ -194,9 +194,9 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
     >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> transformer = PartialAutoCorrelationTransformer(n_lags=12)
-    >>> y_hat = transformer.fit_transform(y)
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> transformer = PartialAutoCorrelationTransformer(n_lags=12)  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {
@@ -263,4 +263,4 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {"n_lags": 1}
+        return [{}, {"n_lags": 1}]

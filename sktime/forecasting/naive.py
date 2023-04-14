@@ -348,6 +348,8 @@ class NaiveForecaster(_BaseWindowForecaster):
                 # fill NaN with observed values
                 y_pred.loc[self._y.index[0]] = self._y[self._y.index[1]]
 
+        y_pred.name = self._y.name
+
         return y_pred
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
@@ -679,7 +681,7 @@ class NaiveVariance(BaseForecaster):
             pred_quantiles[("Quantiles", a)] = y_pred + error
 
         fh_absolute = fh.to_absolute(self.cutoff)
-        pred_quantiles.index = fh_absolute
+        pred_quantiles.index = fh_absolute.to_pandas()
 
         return pred_quantiles
 
@@ -718,6 +720,7 @@ class NaiveVariance(BaseForecaster):
 
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
+        fh_absolute_ix = fh_absolute.to_pandas()
 
         if cov:
             fh_size = len(fh)
@@ -732,8 +735,8 @@ class NaiveVariance(BaseForecaster):
                     )
             pred_var = pd.DataFrame(
                 covariance,
-                index=fh_absolute,
-                columns=fh_absolute,
+                index=fh_absolute_ix,
+                columns=fh_absolute_ix,
             )
         else:
             variance = [
@@ -742,9 +745,9 @@ class NaiveVariance(BaseForecaster):
             ]
             if hasattr(self._y, "columns"):
                 columns = self._y.columns
-                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute)
+                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute_ix)
             else:
-                pred_var = pd.DataFrame(variance, index=fh_absolute)
+                pred_var = pd.DataFrame(variance, index=fh_absolute_ix)
 
         return pred_var
 

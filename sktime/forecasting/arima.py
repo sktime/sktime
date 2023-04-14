@@ -7,9 +7,6 @@ __author__ = ["mloning", "hyang1996", "fkiraly", "ilkersigirci"]
 __all__ = ["AutoARIMA", "ARIMA"]
 
 from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("pmdarima", severity="warning")
 
 
 class AutoARIMA(_PmdArimaAdapter):
@@ -738,3 +735,25 @@ class ARIMA(_PmdArimaAdapter):
             with_intercept=self.with_intercept,
             **sarimax_kwargs,
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params1 = {"maxiter": 3}
+        params2 = {
+            "order": (1, 1, 0),
+            "seasonal_order": (1, 0, 0, 2),
+            "maxiter": 3,
+        }
+        return [params1, params2]

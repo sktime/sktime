@@ -26,10 +26,10 @@ class Catch22Classifier(_DelegatedClassifier):
     Parameters
     ----------
     outlier_norm : bool, optional, default=False
-        Normalise each series during the two outlier catch22 features, which can take a
-        while to process for large values
+        Normalise each series during the two outlier Catch22 features, which can take a
+        while to process for large values.
     replace_nans : bool, optional, default=True
-        Replace NaN or inf values from the catch22 transform with 0.
+        Replace NaN or inf values from the Catch22 transform with 0.
     estimator : sklearn classifier, optional, default=None
         An sklearn estimator to be built using the transformed data.
         Defaults to sklearn RandomForestClassifier(n_estimators=200)
@@ -71,20 +71,21 @@ class Catch22Classifier(_DelegatedClassifier):
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = Catch22Classifier(
     ...     estimator=RandomForestClassifier(n_estimators=5),
     ...     outlier_norm=True,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     Catch22Classifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "feature",
+        "python_dependencies": "numba",
     }
 
     def __init__(

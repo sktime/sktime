@@ -72,12 +72,13 @@ class SquaringResiduals(BaseForecaster):
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.forecasting.squaring_residuals import SquaringResiduals
     >>> fc = NaiveForecaster()
-    >>> var_fc = ThetaForecaster()
-    >>> y = load_macroeconomic().realgdp
+    >>> var_fc = ThetaForecaster()  # doctest: +SKIP
+    >>> y = load_macroeconomic().realgdp  # doctest: +SKIP
     >>> sqr = SquaringResiduals(forecaster=fc, residual_forecaster=var_fc)
-    >>> fh = ForecastingHorizon(values=[1, 2, 3])
-    >>> sqr = sqr.fit(y, fh=fh)
-    >>> pred_interval = sqr.predict_interval(coverage=0.95)
+    ... # doctest: +SKIP
+    >>> fh = ForecastingHorizon(values=[1, 2, 3])  # doctest: +SKIP
+    >>> sqr = sqr.fit(y, fh=fh)  # doctest: +SKIP
+    >>> pred_interval = sqr.predict_interval(coverage=0.95)  # doctest: +SKIP
     """
 
     _tags = {
@@ -172,7 +173,7 @@ class SquaringResiduals(BaseForecaster):
                 y_pred_current = []
                 y_pred_current_index = []
                 for col in y_pred.columns:
-                    fh_current_abs = fh_current.to_absolute(col)
+                    fh_current_abs = fh_current.to_absolute(col).to_pandas()
                     y_pred_current.append(y_pred.at[fh_current_abs[0], col])
                     y_pred_current_index.append(fh_current_abs[0])
                 y_pred_current = pd.Series(
@@ -224,6 +225,7 @@ class SquaringResiduals(BaseForecaster):
         """
         fh_abs = fh.to_absolute(self.cutoff)
         y_pred = self._forecaster_.predict(X=X, fh=fh_abs)
+        y_pred.name = self._y.name
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -315,7 +317,7 @@ class SquaringResiduals(BaseForecaster):
         for a, error in zip(alpha, errors):
             pred_quantiles[("Quantiles", a)] = y_pred + error
 
-        pred_quantiles.index = fh_abs
+        pred_quantiles.index = fh_abs.to_pandas()
 
         return pred_quantiles
 
@@ -346,12 +348,13 @@ class SquaringResiduals(BaseForecaster):
             warn(f"cov={cov} is not supported. Defaulting to cov=False instead.")
         fh_abs = fh.to_absolute(self.cutoff)
         fh_rel = fh.to_relative(self.cutoff)
-        pred_var = pd.Series(index=fh_rel)
+        fh_rel_index = fh_rel.to_pandas()
+        pred_var = pd.Series(index=fh_rel_index)
         for el in fh_rel:
             pred_var.at[el] = self._res_forecasters[el].predict(fh=el)[0]
         if self.strategy == "square":
             pred_var = pred_var**0.5
-        pred_var.index = fh_abs
+        pred_var.index = fh_abs.to_pandas()
         return pred_var
 
     @classmethod
@@ -375,7 +378,7 @@ class SquaringResiduals(BaseForecaster):
         """
         from sktime.forecasting.croston import Croston
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.trend import TrendForecaster
 
         params = [
             {
@@ -386,7 +389,7 @@ class SquaringResiduals(BaseForecaster):
                 "distr_kwargs": {"df": 21},
             },
             {
-                "forecaster": ThetaForecaster(),
+                "forecaster": TrendForecaster(),
                 "residual_forecaster": NaiveForecaster(),
                 "initial_window": 5,
                 "distr": "norm",

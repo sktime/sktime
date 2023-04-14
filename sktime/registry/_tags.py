@@ -205,6 +205,7 @@ ESTIMATOR_TAG_REGISTER = [
             "classifier",
             "early_classifier",
             "param_est",
+            "regressor",
             "transformer-pairwise",
             "transformer-pairwise-panel",
         ],
@@ -213,7 +214,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:unequal_length",
-        ["classifier", "early_classifier", "transformer", "transformer-pairwise-panel"],
+        [
+            "classifier",
+            "early_classifier",
+            "regressor",
+            "transformer",
+            "transformer-pairwise-panel",
+        ],
         "bool",
         "can the estimator handle unequal length time series?",
     ),
@@ -226,6 +233,7 @@ ESTIMATOR_TAG_REGISTER = [
             "classifier",
             "early_classifier",
             "param_est",
+            "regressor",
             "transformer-pairwise",
             "transformer-pairwise-panel",
         ],
@@ -347,10 +355,46 @@ ESTIMATOR_TAG_REGISTER = [
         "python dependencies of estimator as str or list of str",
     ),
     (
+        "requires_cython",
+        "estimator",
+        "bool",
+        "whether the estimator reqires a C compiler present such as libomp, gcc",
+    ),
+    (
         "remember_data",
         ["forecaster", "transformer"],
         "bool",
         "whether estimator remembers all data seen as self._X, self._y, etc",
+    ),
+    (
+        "distribution_type",
+        "estimator",
+        "str",
+        "distribution type of data as str",
+    ),
+    (
+        "reserved_params",
+        "estimator",
+        ("list", "str"),
+        "parameters reserved by the base class and present in all child estimators",
+    ),
+    (
+        "capabilities:exact",
+        "distribution",
+        ("list", "str"),
+        "methods provided by the distribution that return numerically exact results",
+    ),
+    (
+        "capabilities:approx",
+        "distribution",
+        ("list", "str"),
+        "methods provided by the distribution that return approximate results",
+    ),
+    (
+        "distr:measuretype",
+        "distribution",
+        ("str", ["continuous", "discrete", "mixed"]),
+        "class the distribution measure belongs to - abs.continuous, discrete, mixed",
     ),
 ]
 

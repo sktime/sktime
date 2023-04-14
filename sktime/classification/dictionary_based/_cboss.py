@@ -11,7 +11,6 @@ __all__ = ["ContractableBOSS", "pairwise_distances"]
 
 import math
 import time
-import warnings
 
 import numpy as np
 from sklearn.utils import check_random_state
@@ -63,15 +62,6 @@ class ContractableBOSS(BaseClassifier):
     contract_max_n_parameter_samples : int, default=np.inf
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
-    typed_dict : bool, default="deprecated"
-        Use a numba TypedDict to store word counts. May increase memory usage, but will
-        be faster for larger datasets. As the Dict cannot be pickled currently, there
-        will be some overhead converting it to a python dict with multiple threads and
-        pickling.
-
-        .. deprecated:: 0.13.3
-            ``typed_dict`` was deprecated in version 0.13.3 and will be removed in 0.15.
-
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
@@ -132,10 +122,12 @@ class ContractableBOSS(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ContractableBOSS(n_parameter_samples=10, max_ensemble_size=3)
-    >>> clf.fit(X_train, y_train)
+    >>> clf = ContractableBOSS(
+    ...     n_parameter_samples=10, max_ensemble_size=3
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     ContractableBOSS(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -143,6 +135,7 @@ class ContractableBOSS(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -153,7 +146,6 @@ class ContractableBOSS(BaseClassifier):
         min_window=10,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
-        typed_dict="deprecated",
         save_train_predictions=False,
         feature_selection="none",
         n_jobs=1,
@@ -166,7 +158,6 @@ class ContractableBOSS(BaseClassifier):
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_parameter_samples = contract_max_n_parameter_samples
-        self.typed_dict = typed_dict
         self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -214,12 +205,6 @@ class ContractableBOSS(BaseClassifier):
 
         self.estimators_ = []
         self.weights_ = []
-
-        if self.typed_dict != "deprecated":
-            warnings.warn(
-                "``typed_dict`` was deprecated in version 0.13.3 and "
-                "will be removed in 0.15."
-            )
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length_ / 4

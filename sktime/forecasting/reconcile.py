@@ -42,16 +42,16 @@ class ReconcilerForecaster(BaseForecaster):
     ----------
     forecaster : estimator
         Estimator to generate base forecasts which are then reconciled
-    method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str",
-                "bu", "td_fcst"}, default="mint_shrink"
-        The reconciliation approach applied to the forecasts based on
-            "mint_cov" - sample covariance
-            "mint_shrink" - covariance with shrinkage
-            "ols" - ordinary least squares
-            "wls_var" - weighted least squares (variance)
-            "wls_str" - weighted least squares (structural)
-            "bu" - bottom-up
-            "td_fcst" - top down based on forecast proportions
+    method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str", \
+            "bu", "td_fcst"}, default="mint_shrink"
+        The reconciliation approach applied to the forecasts based on:
+            * "mint_cov" - sample covariance
+            * "mint_shrink" - covariance with shrinkage
+            * "ols" - ordinary least squares
+            * "wls_var" - weighted least squares (variance)
+            * "wls_str" - weighted least squares (structural)
+            * "bu" - bottom-up
+            * "td_fcst" - top down based on forecast proportions
 
     See Also
     --------
@@ -64,7 +64,7 @@ class ReconcilerForecaster(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.reconcile import ReconcilerForecaster
     >>> from sktime.transformations.hierarchical.aggregate import Aggregator
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
@@ -75,7 +75,7 @@ class ReconcilerForecaster(BaseForecaster):
     ...     random_seed=123,
     ... )
     >>> y = agg.fit_transform(y)
-    >>> forecaster = ExponentialSmoothing()
+    >>> forecaster = NaiveForecaster(strategy="drift")
     >>> reconciler = ReconcilerForecaster(forecaster, method="mint_shrink")
     >>> reconciler.fit(y)
     ReconcilerForecaster(...)
@@ -206,6 +206,10 @@ class ReconcilerForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
+        if X is not None:
+            if _check_index_no_total(X):
+                X = self._add_totals(X)
+
         base_fc = self.forecaster_.predict(fh=fh, X=X)
 
         if base_fc.index.nlevels < 2:
@@ -250,16 +254,27 @@ class ReconcilerForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        # check index for no "__total", if not add totals to y
+        if _check_index_no_total(y):
+            y = self._add_totals(y)
+
+        if X is not None:
+            if _check_index_no_total(X):
+                X = self._add_totals(X)
+
         self.forecaster_.update(y, X, update_params=update_params)
 
         if y.index.nlevels < 2 or np.isin(self.method, self.TRFORM_LIST):
             return self
 
+        # update self.residuals_
         # bug in self.forecaster_.predict_residuals() for heir data
         fh_resid = ForecastingHorizon(
-            self._y.index.get_level_values(-1).unique(), is_relative=False
+            y.index.get_level_values(-1).unique(), is_relative=False
         )
-        self.residuals_ = self._y - self.forecaster_.predict(fh=fh_resid, X=self._X)
+        update_residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
+        self.residuals_ = pd.concat([self.residuals_, update_residuals], axis=0)
+        self.residuals_ = self.residuals_.sort_index()
 
         # could implement something specific here
         # for now just refit
@@ -384,9 +399,9 @@ class ReconcilerForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+        from sktime.forecasting.trend import TrendForecaster
 
-        FORECASTER = ExponentialSmoothing()
+        FORECASTER = TrendForecaster()
         params_list = [
             {
                 "forecaster": FORECASTER,

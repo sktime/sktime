@@ -17,6 +17,7 @@ obj - object to check
 return_metadata - bool, optional, default=False
     if False, returns only "valid" return
     if True, returns all three return objects
+    if str, list of str, metadata return dict is subset to keys in return_metadata
 var_name: str, optional, default="obj" - name of input in error messages
 
 Returns
@@ -40,6 +41,8 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._common import _req
+from sktime.datatypes._common import _ret as ret
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types
 
@@ -56,24 +59,21 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
-
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pandas.DataFrame, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
     # we now know obj is a pd.DataFrame
     index = obj.index
-    metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
-    metadata["is_univariate"] = len(obj.columns) < 2
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
+    if _req("is_univariate", return_metadata):
+        metadata["is_univariate"] = len(obj.columns) < 2
 
     # check that columns are unique
-    msg = f"{var_name} must have " f"unique column indices, but found {obj.columns}"
-    assert obj.columns.is_unique, msg
+    if not obj.columns.is_unique:
+        msg = f"{var_name} must have unique column indices, but found {obj.columns}"
+        return ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
     if not is_in_valid_index_types(index):
@@ -103,8 +103,9 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
-    if return_metadata:
+    if _req("is_equally_spaced", return_metadata):
         metadata["is_equally_spaced"] = _index_equally_spaced(index)
+    if _req("has_nans", return_metadata):
         metadata["has_nans"] = obj.isna().values.any()
 
     return ret(True, None, metadata, return_metadata)
@@ -117,20 +118,16 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
-
     if not isinstance(obj, pd.Series):
         msg = f"{var_name} must be a pandas.Series, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
     # we now know obj is a pd.Series
     index = obj.index
-    metadata["is_empty"] = len(index) < 1
-    metadata["is_univariate"] = True
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = len(index) < 1
+    if _req("is_univariate", return_metadata):
+        metadata["is_univariate"] = True
 
     # check that dtype is not object
     if "object" == obj.dtypes:
@@ -160,8 +157,9 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
-    if return_metadata:
+    if _req("is_equally_spaced", return_metadata):
         metadata["is_equally_spaced"] = _index_equally_spaced(index)
+    if _req("has_nans", return_metadata):
         metadata["has_nans"] = obj.isna().values.any()
 
     return ret(True, None, metadata, return_metadata)
@@ -174,33 +172,32 @@ def check_numpy_series(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
-
     if not isinstance(obj, np.ndarray):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
     if len(obj.shape) == 2:
         # we now know obj is a 2D np.ndarray
-        metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
-        metadata["is_univariate"] = obj.shape[1] < 2
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
+        if _req("is_univariate", return_metadata):
+            metadata["is_univariate"] = obj.shape[1] < 2
     elif len(obj.shape) == 1:
         # we now know obj is a 1D np.ndarray
-        metadata["is_empty"] = len(obj) < 1
-        metadata["is_univariate"] = True
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(obj) < 1
+        if _req("is_univariate", return_metadata):
+            metadata["is_univariate"] = True
     else:
         msg = f"{var_name} must be 1D or 2D numpy.ndarray, but found {len(obj.shape)}D"
         return ret(False, msg, None, return_metadata)
 
     # np.arrays are considered equally spaced by assumption
-    metadata["is_equally_spaced"] = True
+    if _req("is_equally_spaced", return_metadata):
+        metadata["is_equally_spaced"] = True
 
     # check whether there any nans; compute only if requested
-    if return_metadata:
+    if _req("has_nans", return_metadata):
         metadata["has_nans"] = pd.isnull(obj).any()
 
     return ret(True, None, metadata, return_metadata)
@@ -224,14 +221,31 @@ def _index_equally_spaced(index):
     if not is_in_valid_index_types(index):
         raise TypeError(f"index must be one of {VALID_INDEX_TYPES} or integer index")
 
-    # empty and single element indices are equally spaced
-    if len(index) < 2:
+    # empty, single and two-element indices are equally spaced
+    if len(index) < 3:
         return True
 
     # RangeIndex is always equally spaced
     if isinstance(index, pd.RangeIndex):
         return True
 
+    if isinstance(index, pd.PeriodIndex):
+        return index.is_full
+
+    # we now treat a necessary condition for being equally spaced:
+    # the first two spaces are equal. From now on, we know this.
+    if index[1] - index[0] != index[2] - index[1]:
+        return False
+
+    # another necessary condition for equally spaced:
+    # index span is number of spaces times first space
+    n = len(index)
+    if index[n - 1] - index[0] != (n - 1) * (index[1] - index[0]):
+        return False
+
+    # fallback for all other cases:
+    # in general, we need to compute all differences and check explicitly
+    # CAVEAT: this has a comparabily long runtime and high memory usage
     diffs = np.diff(index)
     all_equal = np.all(diffs == diffs[0])
 
@@ -243,11 +257,6 @@ if _check_soft_dependencies("xarray", severity="none"):
 
     def check_xrdataarray_series(obj, return_metadata=False, var_name="obj"):
         metadata = {}
-
-        def ret(valid, msg, metadata, return_metadata):
-            if return_metadata:
-                return valid, msg, metadata
-            return valid
 
         if not isinstance(obj, xr.DataArray):
             msg = f"{var_name} must be a xarray.DataArray, found {type(obj)}"
@@ -261,13 +270,16 @@ if _check_soft_dependencies("xarray", severity="none"):
         # The first dimension is the index of the time series in sktimelen
         index = obj.indexes[obj.dims[0]]
 
-        metadata["is_empty"] = len(index) < 1 or len(obj.values) < 1
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(index) < 1 or len(obj.values) < 1
         # The second dimension is the set of columns
-        metadata["is_univariate"] = len(obj.dims) == 1 or len(obj[obj.dims[1]]) < 2
+        if _req("is_univariate", return_metadata):
+            metadata["is_univariate"] = len(obj.dims) == 1 or len(obj[obj.dims[1]]) < 2
 
         # check that columns are unique
-        msg = f"{var_name} must have " f"unique column indices, but found {obj.dims}"
-        assert len(obj.dims) == len(set(obj.dims)), msg
+        if not len(obj.dims) == len(set(obj.dims)):
+            msg = f"{var_name} must have unique column indices, but found {obj.dims}"
+            return ret(False, msg, None, return_metadata)
 
         # check whether the time index is of valid type
         if not is_in_valid_index_types(index):
@@ -297,10 +309,27 @@ if _check_soft_dependencies("xarray", severity="none"):
 
         # check whether index is equally spaced or if there are any nans
         #   compute only if needed
-        if return_metadata:
+        if _req("is_equally_spaced", return_metadata):
             metadata["is_equally_spaced"] = _index_equally_spaced(index)
+        if _req("has_nans", return_metadata):
             metadata["has_nans"] = obj.isnull().values.any()
 
         return ret(True, None, metadata, return_metadata)
 
     check_dict[("xr.DataArray", "Series")] = check_xrdataarray_series
+
+
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
+
+    def check_dask_series(obj, return_metadata=False, var_name="obj"):
+
+        return check_dask_frame(
+            obj=obj,
+            return_metadata=return_metadata,
+            var_name=var_name,
+            freq_set_check=FREQ_SET_CHECK,
+            scitype="Series",
+        )
+
+    check_dict[("dask_series", "Series")] = check_dask_series

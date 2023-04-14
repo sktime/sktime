@@ -33,7 +33,6 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
-from sktime.exceptions import NotFittedError
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
@@ -213,23 +212,6 @@ class BaseParamFitter(BaseEstimator):
 
         return self
 
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        if not self.is_fitted:
-            raise NotFittedError(
-                f"parameter estimator of type {type(self).__name__} has not been "
-                "fitted yet, please call fit on data before get_fitted_params"
-            )
-        return self._get_fitted_params()
-
     def _check_X(self, X=None):
         """Check and coerce X for fit/update functions.
 
@@ -275,7 +257,7 @@ class BaseParamFitter(BaseEstimator):
 
         # checking X
         X_valid, _, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+            X, scitype=ALLOWED_SCITYPES, return_metadata=[], var_name="X"
         )
         msg = (
             "X must be in an sktime compatible format, "

@@ -31,7 +31,7 @@ The release cycle process is as follows:
 1. 1 week before release date, update the release board.
 2. for major releases or substantial features, optionally extend the release cycle
 3. feature freeze 1 day before release date. Only release managers should merge at this point.
-  The feature freeze should be announced on the core dev channel (on slack) 1 week before, and 1 day before it comes into action.
+  The feature freeze should be announced on the core dev channel 1 week before, and 1 day before it comes into action.
   Any delays and extensions to the feature freeze should also be announced.
 4. if "must have" are not merged by planned release date: either delay release date and extend freeze period, or deprioritize.
 
@@ -74,6 +74,8 @@ The release process is as follows, on high-level:
   If the install does not succeed or wheels have not been uploaded, urgent action to diagnose and remedy must be taken.
   All core developers should be urgently informed of such a situation through mail-all in the core developer channel on slack.
   In the most common case, the install instructions need to be updated.
+  If wheel upload has failed, the tag in 5. needs to be deleted and recreated.
+  The tag can be deleted using the ``git`` command ``git push --delete origin tagname`` from a local repo.
 
 ``conda`` release and release validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -86,7 +88,7 @@ The release process is as follows, on high-level:
      guidelines related to maintaining conda feedstcok packages see `conda-forge package<https://conda-forge.org/docs/maintainer/updating_pkgs.html>`_.
 
      After forking and cloning the repo, edit the ``meta.yml`` file and
-     
+
      - increment the version in the line that contains ``{% set version = "0.X.Y" %}``
      - paste the sha256 sum of the source archive from github in the ``source/sha256`` section
      - submit PR and ask for review

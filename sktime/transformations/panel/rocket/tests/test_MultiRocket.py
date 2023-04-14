@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """MultiRocket test code."""
 import numpy as np
+import pytest
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import make_pipeline
@@ -8,15 +9,20 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_gunpoint
 from sktime.transformations.panel.rocket import MultiRocket
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_multirocket_on_gunpoint():
     """Test of MultiRocket on gun point."""
     # load training data
     X_training, Y_training = load_gunpoint(split="train", return_X_y=True)
 
     # 'fit' MultiRocket -> infer data dimensions, generate random kernels
-    multirocket = MultiRocket()
+    multirocket = MultiRocket(random_state=0)
     multirocket.fit(X_training)
 
     # transform training data

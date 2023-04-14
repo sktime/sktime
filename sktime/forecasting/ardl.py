@@ -179,17 +179,18 @@ class ARDL(_StatsModelsAdapter):
     >>> from sktime.datasets import load_macroeconomic
     >>> from sktime.forecasting.ardl import ARDL
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> data = load_macroeconomic()
-    >>> oos = data.iloc[-5:, :]
-    >>> data = data.iloc[:-5, :]
-    >>> y = data.realgdp
-    >>> X = data[["realcons", "realinv"]]
-    >>> X_oos = oos[["realcons", "realinv"]]
-    >>> ardl = ARDL(lags=2, order={"realcons": 1, "realinv": 2}, trend="c")
-    >>> ardl.fit(y=y, X=X)
+    >>> data = load_macroeconomic()  # doctest: +SKIP
+    >>> oos = data.iloc[-5:, :]  # doctest: +SKIP
+    >>> data = data.iloc[:-5, :]  # doctest: +SKIP
+    >>> y = data.realgdp  # doctest: +SKIP
+    >>> X = data[["realcons", "realinv"]]  # doctest: +SKIP
+    >>> X_oos = oos[["realcons", "realinv"]]  # doctest: +SKIP
+    >>> ardl = ARDL(lags=2, order={"realcons": 1, "realinv": 2}, trend="c")\
+    # doctest: +SKIP
+    >>> ardl.fit(y=y, X=X)  # doctest: +SKIP
     ARDL(lags=2, order={'realcons': 1, 'realinv': 2})
-    >>> fh = ForecastingHorizon([1, 2, 3])
-    >>> y_pred = ardl.predict(fh=fh, X=X_oos)
+    >>> fh = ForecastingHorizon([1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = ardl.predict(fh=fh, X=X_oos)  # doctest: +SKIP
     """
 
     _tags = {
@@ -203,6 +204,7 @@ class ARDL(_StatsModelsAdapter):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": "statsmodels>=0.13.0",
     }
 
     def __init__(
@@ -277,7 +279,8 @@ class ARDL(_StatsModelsAdapter):
                 inner_order = 0
                 warnings.warn(
                     "X is none but the order for the exogenous variables was"
-                    " specified. Order was thus set to 0"
+                    " specified. Order was thus set to 0",
+                    stacklevel=2,
                 )
         else:
             if not isinstance(X, pd.DataFrame):
@@ -285,7 +288,8 @@ class ARDL(_StatsModelsAdapter):
                 inner_auto_ardl = False
                 warnings.warn(
                     "X is none but auto_ardl was set to True. auto_ardl was"
-                    " thus set to False with order=0"
+                    " thus set to False with order=0",
+                    stacklevel=2,
                 )
         return inner_order, inner_auto_ardl
 
@@ -320,7 +324,7 @@ class ARDL(_StatsModelsAdapter):
 
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y, pd.Series) and y.index.is_integer():
+        if isinstance(y, pd.Series) and pd.api.types.is_integer_dtype(y.index):
             y, X = _coerce_int_to_range_index(y, X)
 
         # validity check of passed params
@@ -414,6 +418,7 @@ class ARDL(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos
         )
+        y_pred.name = self._y.name
         return y_pred.loc[valid_indices]
 
     def _update(self, y, X=None, update_params=True):
@@ -451,7 +456,7 @@ class ARDL(_StatsModelsAdapter):
         -------
         self : reference to self
         """
-        warnings.warn("Defaulting to `update_params=True`")
+        warnings.warn("Defaulting to `update_params=True`", stacklevel=2)
         update_params = True
         if update_params:
             # default to re-fitting if update is not implemented
@@ -459,7 +464,8 @@ class ARDL(_StatsModelsAdapter):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called with update_params=True."
+                f"`update` is called with update_params=True.",
+                stacklevel=2,
             )
             # we need to overwrite the mtype last seen, since the _y
             #    may have been converted
@@ -478,7 +484,8 @@ class ARDL(_StatsModelsAdapter):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will update all component cutoffs each time"
-                f" `update` is called with update_params=False."
+                f" `update` is called with update_params=False.",
+                stacklevel=2,
             )
             comp_forecasters = self._components(base_class=BaseForecaster)
             for comp in comp_forecasters.values():
@@ -486,7 +493,7 @@ class ARDL(_StatsModelsAdapter):
 
         return self
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         State required:
@@ -496,8 +503,6 @@ class ARDL(_StatsModelsAdapter):
         -------
         fitted_params : dict
         """
-        self.check_is_fitted()
-
         from statsmodels.tsa.ardl import ARDL as _ARDL
 
         fitted_params = {}

@@ -25,11 +25,15 @@ class ScaledLogitTransformer(BaseTransformer):
     Combined with an sktime.forecasting.compose.TransformedTargetForecaster, it ensures
     that the forecast stays between the specified bounds (lower_bound, upper_bound).
 
+    Default is lower_bound = upper_bound = None, i.e., the identity transform.
+
+    The logarithm transform is obtained for lower_bound = 0, upper_bound = None.
+
     Parameters
     ----------
-    lower_bound : float
+    lower_bound : float, optional, default=None
         lower bound of inverse transform function
-    upper_bound : float
+    upper_bound : float, optional, default=None
         upper bound of inverse transform function
 
     See Also
@@ -69,19 +73,17 @@ class ScaledLogitTransformer(BaseTransformer):
         practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
         Accessed on January 24th 2022.
 
-
-
     Examples
     --------
     >>> import numpy as np
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
-    >>> from sktime.forecasting.ets import AutoETS
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> y = load_airline()
     >>> fcaster = TransformedTargetForecaster([
     ...     ("scaled_logit", ScaledLogitTransformer(0, 650)),
-    ...     ("ets", AutoETS(sp=12, auto=True))
+    ...     ("poly", PolynomialTrendForecaster(degree=2))
     ... ])
     >>> fcaster.fit(y)
     TransformedTargetForecaster(...)

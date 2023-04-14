@@ -39,6 +39,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
+from inspect import signature
 from itertools import product
 from warnings import warn
 
@@ -55,7 +56,7 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,
@@ -230,6 +231,52 @@ class BaseForecaster(BaseEstimator):
             return multiplex_self | other
         else:
             return NotImplemented
+
+    def __getitem__(self, key):
+        """Magic [...] method, return forecaster with subsetted data.
+
+        First index does subsetting of exogeneous input data.
+        Second index does subsetting of the forecast (but not of endogeneous data).
+
+        Keys must be valid inputs for `columns` in `ColumnSubset`.
+
+        Parameters
+        ----------
+        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+            keys can also be a :-slice, in which case it is considered as not passed
+
+        Returns
+        -------
+        the following composite pipeline object:
+            ColumnSubset(columns1) ** self * ColumnSubset(columns2)
+            where `columns1` is first or only item in `key`, and `columns2` is the last
+            if only one item is passed in `key`, only `columns1` is applied to input
+        """
+        from sktime.transformations.series.subset import ColumnSelect
+
+        def is_noneslice(obj):
+            res = isinstance(obj, slice)
+            res = res and obj.start is None and obj.stop is None and obj.step is None
+            return res
+
+        if isinstance(key, tuple):
+            if not len(key) == 2:
+                raise ValueError(
+                    "there should be one or two keys when calling [] or getitem, "
+                    "e.g., mytrafo[key], or mytrafo[key1, key2]"
+                )
+            columns1 = key[0]
+            columns2 = key[1]
+            if is_noneslice(columns1) and is_noneslice(columns2):
+                return self
+            elif is_noneslice(columns2):
+                return ColumnSelect(columns1) ** self
+            elif is_noneslice(columns1):
+                return self * ColumnSelect(columns2)
+            else:
+                return ColumnSelect(columns1) ** self * ColumnSelect(columns2)
+        else:
+            return ColumnSelect(key) ** self
 
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -665,7 +712,9 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
-    def predict_proba(self, fh=None, X=None, marginal=True):
+    # todo 0.18.0: switch legacy_interface default to False
+    # todo 0.19.0: remove any legacy_interface logic
+    def predict_proba(self, fh=None, X=None, marginal=True, legacy_interface=None):
         """Compute/return fully probabilistic forecasts.
 
         Note: currently only implemented for Series (non-panel, non-hierarchical) y.
@@ -691,9 +740,24 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
+        legacy_interface : bool or None, optional, default=None
+            whether legacy interface is used, deprecation parameter
+            default will change to False in 0.18.0
+            parameter will be removed in 0.19.0
+            True: always returns tfp Distribution object
+            False: always returns sktime BaseDistribution object
+            None: returns tfp Distribution if tensorflow_probability is in the env
+                otherwise returns sktime BaseDistribution
 
         Returns
         -------
+        If legacy_interface=False, or None and tensorflow_probability is not in the env
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+
+        If legacy_interface=True, or None and tensorflow_probability is in the env
         pred_dist : tfp Distribution object
             if marginal=True:
                 batch shape is 1D and same length as fh
@@ -718,13 +782,6 @@ class BaseForecaster(BaseEstimator):
             raise NotImplementedError(
                 "automated vectorization for predict_proba is not implemented"
             )
-
-        msg = (
-            "tensorflow-probability must be installed for fully probabilistic forecasts"
-            "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
-        )
-        _check_dl_dependencies(msg)
-
         self.check_is_fitted()
         # input checks
         fh = self._check_fh(fh)
@@ -732,7 +789,24 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
+        # pass legacy_interface arg on only if inner function has it
+        inner_params = signature(self._predict_proba).parameters.keys()
+        if "legacy_interface" in inner_params:
+            pred_dist = self._predict_proba(
+                fh=fh, X=X_inner, marginal=marginal, legacy_interface=legacy_interface
+            )
+        else:
+            pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
+            msg = (
+                f"warning: {type(self)} implements _predict_proba, but "
+                "has no legacy_interface parameter. This likely means that the class "
+                "is custom built. Please note that from 0.19.0 on, "
+                "_predict_proba will be expected to return an sktime BaseDistribution. "
+                "We will try to catch this via coercion from 0.18.0, if a "
+                "tensorflow distribution is returned, but to minimize risk, "
+                "we recommend to move to sktime BaseDistribution. "
+            )
+            warn(msg)
 
         return pred_dist
 
@@ -1146,22 +1220,40 @@ class BaseForecaster(BaseEstimator):
 
         return mean_absolute_percentage_error(y, self.predict(fh, X))
 
-    def get_fitted_params(self):
+    def get_fitted_params(self, deep=True):
         """Get fitted parameters.
-
-        Overrides BaseEstimator default in case of vectorization.
 
         State required:
             Requires state to be "fitted".
 
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return fitted parameters of components.
+
+            * If True, will return a dict of parameter name : value for this object,
+              including fitted parameters of fittable components
+              (= BaseEstimator-valued parameters).
+            * If False, will return a dict of parameter name : value for this object,
+              but not include fitted parameters of components.
+
         Returns
         -------
-        fitted_params : dict of fitted parameters, keys are str names of parameters
-            parameters of components are indexed as [componentname]__[paramname]
+        fitted_params : dict with str-valued keys
+            Dictionary of fitted parameters, paramname : paramvalue
+            keys-value pairs include:
+
+            * always: all fitted parameters of this object, as via `get_param_names`
+              values are fitted parameter value for that key, of this object
+            * if `deep=True`, also contains keys/value pairs of component parameters
+              parameters of components are indexed as `[componentname]__[paramname]`
+              all parameters of `componentname` appear as `paramname` with its value
+            * if `deep=True`, also contains arbitrary levels of component recursion,
+              e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super(BaseForecaster, self).get_fitted_params()
+            return super(BaseForecaster, self).get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys
@@ -1173,12 +1265,17 @@ class BaseForecaster(BaseEstimator):
         # return forecasters in the "forecasters" param
         fitted_params["forecasters"] = forecasters
 
+        def _to_str(x):
+            if isinstance(x, str):
+                x = f"'{x}'"
+            return str(x)
+
         # populate fitted_params with forecasters and their parameters
-        for ix, col in zip(forecasters.index, forecasters.columns):
+        for ix, col in product(forecasters.index, forecasters.columns):
             fcst = forecasters.loc[ix, col]
-            fcst_key = f"forecasters.loc[{ix},{col}]"
+            fcst_key = f"forecasters.loc[{_to_str(ix)},{_to_str(col)}]"
             fitted_params[fcst_key] = fcst
-            fcst_params = fcst.get_fitted_params()
+            fcst_params = fcst.get_fitted_params(deep=deep)
             for key, val in fcst_params.items():
                 fitted_params[f"{fcst_key}__{key}"] = val
 
@@ -1273,8 +1370,18 @@ class BaseForecaster(BaseEstimator):
 
         # checking y
         if y is not None:
+            # request only required metadata from checks
+            y_metadata_required = []
+            if self.get_tag("scitype:y") != "both":
+                y_metadata_required += ["is_univariate"]
+            if not self.get_tag("handles-missing-data"):
+                y_metadata_required += ["has_nans"]
+
             y_valid, _, y_metadata = check_is_scitype(
-                y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
+                y,
+                scitype=ALLOWED_SCITYPES,
+                return_metadata=y_metadata_required,
+                var_name="y",
             )
             msg = (
                 "y must be in an sktime compatible format, "
@@ -1319,8 +1426,16 @@ class BaseForecaster(BaseEstimator):
 
         # checking X
         if X is not None:
+            # request only required metadata from checks
+            X_metadata_required = []
+            if not self.get_tag("handles-missing-data"):
+                X_metadata_required += ["has_nans"]
+
             X_valid, _, X_metadata = check_is_scitype(
-                X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+                X,
+                scitype=ALLOWED_SCITYPES,
+                return_metadata=X_metadata_required,
+                var_name="X",
             )
 
             msg = (
@@ -1474,32 +1589,6 @@ class BaseForecaster(BaseEstimator):
             else:
                 self._X = update_data(self._X, X)
 
-    def _get_y_pred(self, y_in_sample, y_out_sample):
-        """Combine in- & out-sample prediction, slices given fh.
-
-        Parameters
-        ----------
-        y_in_sample : pd.Series
-            In-sample prediction
-        y_out_sample : pd.Series
-            Out-sample prediction
-
-        Returns
-        -------
-        pd.Series
-            y_pred, sliced by fh
-        """
-        y_pred = pd.concat([y_in_sample, y_out_sample], ignore_index=True).rename(
-            "y_pred"
-        )
-        y_pred = pd.DataFrame(y_pred)
-        # Workaround for slicing with negative index
-        y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
-        y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
-        y_pred.index = self.fh.to_absolute(self.cutoff)
-        y_pred = y_pred["y_pred"].rename(None)
-        return y_pred
-
     @property
     def cutoff(self):
         """Cut-off = "present time" state of forecaster.
@@ -1512,7 +1601,7 @@ class BaseForecaster(BaseEstimator):
         if self._cutoff is None:
             return None
         else:
-            return self._cutoff[0]
+            return self._cutoff
 
     def _set_cutoff(self, cutoff):
         """Set and update cutoff.
@@ -1669,64 +1758,47 @@ class BaseForecaster(BaseEstimator):
         ]
 
         # retrieve data arguments
-        y = kwargs.pop("y", None)
         X = kwargs.pop("X", None)
+        y = kwargs.get("y", None)
 
+        # add some common arguments to kwargs
+        kwargs["args_rowvec"] = {"X": X}
+        kwargs["rowname_default"] = "forecasters"
+        kwargs["colname_default"] = "forecasters"
+
+        # fit-like methods: write y to self._yvec; then run method; clone first if fit
         if methodname in FIT_METHODS:
-            # create container for clones
             self._yvec = y
 
-            row_idx, col_idx = y.get_iter_indices()
-            ys = y.as_list()
-
-            if X is None:
-                Xs = [None] * len(ys)
-            else:
-                Xs = X.as_list()
-
-            if row_idx is None:
-                row_idx = ["forecasters"]
-            if col_idx is None:
-                col_idx = ["forecasters"]
-
             if methodname == "fit":
-                self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
-            for ix in range(len(ys)):
-                i, j = y.get_iloc_indexer(ix)
-                if methodname == "fit":
-                    self.forecasters_.iloc[i].iloc[j] = self.clone()
-                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
-                method(y=ys[ix], X=Xs[i], **kwargs)
+                forecasters_ = y.vectorize_est(
+                    self,
+                    method="clone",
+                    rowname_default="forecasters",
+                    colname_default="forecasters",
+                )
+            else:
+                forecasters_ = self.forecasters_
+
+            self.forecasters_ = y.vectorize_est(
+                forecasters_, method=methodname, **kwargs
+            )
             return self
 
+        # predict-like methods: return as list, then run through reconstruct
+        # to obtain a pandas based container in one of the pandas mtype formats
         elif methodname in PREDICT_METHODS:
-            n = len(self.forecasters_.index)
-            m = len(self.forecasters_.columns)
-
-            if X is None:
-                Xs = [None] * n * m
-            elif isinstance(X, VectorizedDF):
-                Xs = X.as_list()
-            else:
-                Xs = [X]
 
             if methodname == "update_predict_single":
                 self._yvec = y
-                ys = y.as_list()
 
-            y_preds = []
-            ix = -1
-            for i, j in product(range(n), range(m)):
-                ix += 1
-                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
-
-                if methodname != "update_predict_single":
-                    y_preds += [method(X=Xs[i], **kwargs)]
-                else:
-                    y_preds += [method(y=ys[ix], X=Xs[i], **kwargs)]
+            y_preds = self._yvec.vectorize_est(
+                self.forecasters_, method=methodname, return_type="list", **kwargs
+            )
 
             # if we vectorize over columns,
             #   we need to replace top column level with variable names - part 1
+            m = len(self.forecasters_.columns)
             col_multiindex = "multiindex" if m > 1 else "none"
             y_pred = self._yvec.reconstruct(
                 y_preds, overwrite_index=True, col_multiindex=col_multiindex
@@ -1836,7 +1908,9 @@ class BaseForecaster(BaseEstimator):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called with update_params=True."
+                f"`update` is called with update_params=True. "
+                "To refit less often, use the wrappers in the "
+                "forecasting.stream module, e.g., UpdateEvery."
             )
             # we need to overwrite the mtype last seen and converter store, since the _y
             #    may have been converted
@@ -2126,7 +2200,7 @@ class BaseForecaster(BaseEstimator):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    def _predict_proba(self, fh, X, marginal=True):
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -2140,9 +2214,24 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series to predict from.
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
+        legacy_interface : bool or None, optional, default=None
+            whether legacy interface is used, deprecation parameter
+            default will change to False in 0.18.0
+            parameter will be removed in 0.19.0
+            True: always returns tfp Distribution object
+            False: always returns sktime BaseDistribution object
+            None: returns tfp Distribution if tensorflow_probability is in the env
+                otherwise returns sktime BaseDistribution
 
         Returns
         -------
+        If legacy_interface=False, or None and tensorflow_probability is not in the env
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+
+        If legacy_interface=True, or None and tensorflow_probability is in the env
         pred_dist : tfp Distribution object
             if marginal=True:
                 batch shape is 1D and same length as fh
@@ -2155,8 +2244,6 @@ class BaseForecaster(BaseEstimator):
                 i-th (event dim 1) distribution is forecast for i-th entry of fh
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
-        import tensorflow_probability as tfp
-
         # default behaviour is implemented if one of the following three is implemented
         implements_interval = self._has_implementation_of("_predict_interval")
         implements_quantiles = self._has_implementation_of("_predict_quantiles")
@@ -2181,8 +2268,22 @@ class BaseForecaster(BaseEstimator):
         pred_mean = convert_to(pred_mean, to_type=df_types)
         # pred_mean and pred_var now have the same format
 
-        d = tfp.distributions.Normal
-        pred_dist = d(loc=pred_mean, scale=pred_std)
+        if legacy_interface is None:
+            legacy_interface = _check_dl_dependencies(severity="none")
+        if legacy_interface:
+            import tensorflow_probability as tfp
+
+            d = tfp.distributions.Normal
+            pred_dist = d(loc=pred_mean, scale=pred_std)
+
+        else:
+            from sktime.proba.normal import Normal
+
+            index = pred_mean.index
+            columns = pred_mean.columns
+            pred_dist = Normal(
+                mu=pred_mean, sigma=pred_std, index=index, columns=columns
+            )
 
         return pred_dist
 
@@ -2325,6 +2426,7 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         # return series for single step ahead predictions
         y_pred = pd.concat(y_preds)
     else:
+        cutoffs = [cutoff[0] for cutoff in cutoffs]
         y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
 
     return y_pred
