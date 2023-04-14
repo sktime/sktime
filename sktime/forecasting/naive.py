@@ -325,12 +325,18 @@ class NaiveForecaster(_BaseWindowForecaster):
 
     def _pivot_sp(self, df, sp, anchor=None):
 
+        if isinstance(df.index, pd.DatetimeIndex):
+            df.index = df.index.to_period()
+            was_datetime = True
+        else:
+            was_datetime = False
+
         if anchor is None:
-            anchor = df.index[0]
+            anchor = df
 
         if not isinstance(df.index, pd.PeriodIndex):
-            period_len = df.index[1] - df.index[0]
-            ix = (df.index - anchor) / period_len
+            period_len = anchor.index[1] - anchor.index[0]
+            ix = (df.index - anchor.index[0]) / period_len
         else:
             ix = df.index
         ix = ix.astype("int64")
@@ -342,20 +348,43 @@ class NaiveForecaster(_BaseWindowForecaster):
             columns=ix % sp,  # Lower level
             dropna=False,
         )
-        ix_selector = ix % sp == 0
-        df_pivot.index = df.index[ix_selector]
+        # ix_selector = ix % sp == 0
+
+        if isinstance(df.index, pd.PeriodIndex):
+            n = len(df_pivot)
+            pivot_ix = anchor.index[[0] * n] + df_pivot.index
+        else:
+            n = len(df_pivot)
+            pivot_ix = anchor.index[[0] * n] + df_pivot.index * sp
+
+        df_pivot.index = pivot_ix
+        # df_pivot.index = df.index[ix_selector]
         # df_pivot.index = df_pivot.index * sp
+
+        if was_datetime:
+            df_pivot.index = df_pivot.index.to_timestamp()
+
+        df_pivot.columns = df_pivot.columns.droplevel(0)
+
         return df_pivot
 
     def _unpivot_sp(self, df):
 
-        df_melt = df.melt(col_level=1, ignore_index=False)
-        df_melt.index = df_melt.index + df_melt[df_melt.columns[0]]
+        df_melt = df.melt(ignore_index=False)
+
+        offset = df_melt[df_melt.columns[0]]
+        if isinstance(df_melt.index, pd.DatetimeIndex):
+            a = df_melt.index.to_period(freq=self._y.index.freq)
+            res = a + offset
+            df_melt.index = res
+        else:
+            df_melt.index = df_melt.index + offset
         df_melt = df_melt.drop(columns=df_melt.columns[0])
         df_melt = df_melt.sort_index()
         df_melt = df_melt.dropna()
-        df_melt.columns = df.columns.get_level_values(0).unique()
+        # df_melt.columns = df.columns.get_level_values(0).unique()
 
+        print(df_melt)
         return df_melt
 
     def _predict_naive(self, fh=None, X=None):
@@ -364,7 +393,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         strategy = self.strategy
         sp = self.sp
-        lagger = Lag(1)
+        lagger = Lag(1, keep_column_names=True)
 
         expected_index = fh.to_absolute(self.cutoff).to_pandas()
         if strategy == "last" and sp == 1:
@@ -378,21 +407,20 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred = y_pred.iloc[:, 0]
 
         elif strategy == "last" and sp > 1:
-            anchor = self._y.index[[0]]
+
             y_old = self._pivot_sp(self._y, sp)
-            yc = y_old.columns
-            y_old.columns = pd.RangeIndex(len(y_old.columns))
             y_old = lagger.fit_transform(y_old)
-            y_old.columns = yc
+
             y_new_mask = pd.Series(index=expected_index, dtype="float64")
-            y_new = self._pivot_sp(y_new_mask, sp, anchor=anchor)
-            y_new.columns = yc
+            y_new = self._pivot_sp(y_new_mask, sp, anchor=self._y)
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
             # subset to rows that contain elements we wanted to fill
             y_pred = y_filled.loc["b"]
             # reformat to wide
             y_pred = self._unpivot_sp(y_pred)
+            y_pred.columns = [self._y.name]
+
             # subset to required indices
             y_pred = y_pred.loc[expected_index]
             # convert to pd.Series from pd.DataFrame
