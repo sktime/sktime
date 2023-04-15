@@ -223,6 +223,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         cutoff = get_cutoff(y_train, return_index=True)
         fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
+        fh_is_oos = fh.is_all_out_of_sample(cutoff)
+
+        # if estimator cannot forecast in-sample and fh is in-sample, terminate
+        # if the tag correctly state this, we consider this fine as per contract
+        # todo: check that estimator raises error message when fitting instead
+        if not fh_is_oos and not estimator_instance.get_tag("capability:insample"):
+            return None
 
         estimator_instance.fit(y_train, fh=fh)
         y_pred = estimator_instance.predict()
