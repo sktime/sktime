@@ -17,22 +17,23 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
-    n_filters: int,
-    use_residual: boolean,
-    use_bottleneck: boolean,
-    depth: int
-    kernel_size: int, specifying the length of the 1D convolution
-     window
-    batch_size: int, the number of samples per gradient update.
-    bottleneck_size: int,
-    n_epochs: int, the number of epochs to train the model
-    callbacks: list of tf.keras.callbacks.Callback objects
-    random_state: int, seed to any needed random actions
-    verbose: boolean, whether to output extra information
-    model_name: string, the name of this model for printing and
-     file writing purposes
-    model_save_directory: string, if not None; location to save
-     the trained keras model in hdf5 format
+    n_epochs : int, default=1500
+    batch_size : int, default=64
+        the number of samples per gradient update
+    kernel_size : int, default=40
+        specifying the length of the 1D convolution window
+    n_filters : int, default=32
+    use_residual : boolean, default=True
+    use_bottleneck : boolean, default=True
+    bottleneck_size : int, default=32
+    depth : int, default=6
+    callbacks : list of tf.keras.callbacks.Callback objects
+    random_state: int, optional, default=None
+        random seed for internal random number generator
+    verbose: boolean, default=False
+        whether to print runtime information
+    loss: str, default="categorical_crossentropy"
+    metrics: optional
 
     Notes
     -----
@@ -47,14 +48,14 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self,
         n_epochs=1500,
         batch_size=64,
-        kernel_size=41 - 1,
+        kernel_size=40,
         n_filters=32,
         use_residual=True,
         use_bottleneck=True,
         bottleneck_size=32,
         depth=6,
         callbacks=None,
-        random_state=0,
+        random_state=None,
         verbose=False,
         loss="categorical_crossentropy",
         metrics=None,
