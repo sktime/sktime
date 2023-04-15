@@ -75,6 +75,7 @@ class TransformByLevel(_DelegatedTransformer):
 
         self.transformer = transformer
         self.groupby = groupby
+        self.raise_warnings = raise_warnings
 
         self.transformer_ = transformer.clone()
 
