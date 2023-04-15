@@ -8,7 +8,6 @@ __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
 from typing import Optional, Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -22,6 +21,7 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import (
     VALID_INDEX_TYPES,
     is_in_valid_absolute_index_types,
@@ -121,13 +121,15 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     else:
         valid_types = (
             "int",
-            "np.array",
+            "1D np.ndarray of type int",
+            "1D np.ndarray of type timedelta or dateoffset",
             "list",
             *[f"pd.{index_type.__name__}" for index_type in VALID_INDEX_TYPES],
         )
         raise TypeError(
             f"Invalid `fh`. The type of the passed `fh` values is not supported. "
-            f"Please use one of {valid_types}, but found: {type(values)}"
+            f"Please use one of {valid_types}, but found type {type(values)}, "
+            f"values = {values}"
         )
 
     # check values does not contain duplicates
@@ -202,6 +204,56 @@ class ForecastingHorizon:
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
         ignored unless values is without inferrable freq
+
+    Examples
+    --------
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> import numpy as np
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=6)
+
+        List as ForecastingHorizon
+    >>> ForecastingHorizon([1, 2, 3])  # doctest: +SKIP
+    >>> # ForecastingHorizon([1, 2, 3], is_relative=True)
+
+        Numpy as ForecastingHorizon
+    >>> ForecastingHorizon(np.arange(1, 7))  # doctest: +SKIP
+    >>> # ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
+
+        Absolute ForecastingHorizon with a pandas Index
+    >>> ForecastingHorizon(y_test.index, is_relative=False) # doctest: +SKIP
+    >>> # ForecastingHorizon(['1960-07', ..., '1960-12'], is_relative=False)
+
+        Converting
+    >>> # set cutoff (last time point of training data)
+    >>> cutoff = y_train.index[-1]
+    >>> cutoff
+    Period('1960-06', 'M')
+    >>> # to_relative
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> fh.to_relative(cutoff=cutoff)  # doctest: +SKIP
+    >>> # ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
+
+    >>> # to_absolute
+    >>> fh = ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
+    >>> fh = fh.to_absolute(cutoff=cutoff) # doctest: +SKIP
+    >>> # ForecastingHorizon(['1960-07', ..., '1960-12'], is_relative=False)
+
+        Automatically casted ForecastingHorizon from list when calling predict()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> forecaster.fit(y_train)
+    NaiveForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> forecaster.fh  # doctest: +SKIP
+    >>> # ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
+
+        This is identical to give an object of ForecastingHorizon
+    >>> y_pred = forecaster.predict(fh=ForecastingHorizon([1,2,3]))
+    >>> forecaster.fh  # doctest: +SKIP
+    >>> # ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
     """
 
     def __new__(
@@ -601,7 +653,7 @@ class ForecastingHorizon:
 # This function needs to be outside ForecastingHorizon
 # since the lru_cache decorator has known, problematic interactions
 # with object methods, see B019 error of flake8-bugbear for a detail explanation.
-# See more here: https://github.com/alan-turing-institute/sktime/issues/2338
+# See more here: https://github.com/sktime/sktime/issues/2338
 # We cache the results from `to_relative()` and `to_absolute()` calls to speed up
 # computations, as these are the basic methods and often required internally when
 # calling different methods.
@@ -634,23 +686,33 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        # TODO: Replace when we upgrade our lower pandas bound
-        #  to a version where this is fixed
-        # Compute relative values
-        # The following line circumvents the bug in pandas
+        # TODO: 0.18.0:
+        # Check at every minor release whether lower pandas bound >=0.15.0
+        # if yes, can remove the workaround in the "else" condition and the check
+        #
+        # context:
+        # there is a bug in pandas
+        # that requires a workaround when computing index diff below
+        # bug report: https://github.com/pandas-dev/pandas/issues/45999
+        # fix, present from 1.5.0 on: https://github.com/pandas-dev/pandas/pull/46006
+        #
+        # example with bug and workaround:
         # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
         # periods - periods[0]
         # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
         # [v - periods[0] for v in periods]
         # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
-        # TODO: 0.14.0: Check if this comment below can be removed,
-        # so check if pandas has released the fix to PyPI:
-        # This bug was reported: https://github.com/pandas-dev/pandas/issues/45999
-        # and fixed: https://github.com/pandas-dev/pandas/pull/46006
-        # Most likely it will be released with pandas 1.5
-        # Once the bug is fixed the line should simply be:
-        # relative = absolute - cutoff
-        relative = pd.Index([date - cutoff for date in absolute])
+        #
+        # Below checks pandas version
+        # "if" branch has code that is expected to work
+        # "else" has the workaround for versions strictly lower than pandas 1.5.0
+        pandas_version_with_bugfix = _check_soft_dependencies(
+            "pandas>=1.5.0", severity="none"
+        )
+        if pandas_version_with_bugfix:
+            relative = absolute - cutoff
+        else:
+            relative = pd.Index([date - cutoff for date in absolute])
 
         # Coerce durations (time deltas) into integer values for given frequency
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
@@ -662,7 +724,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
 # This function needs to be outside ForecastingHorizon
 # since the lru_cache decorator has known, problematic interactions
 # with object methods, see B019 error of flake8-bugbear for a detail explanation.
-# See more here: https://github.com/alan-turing-institute/sktime/issues/2338
+# See more here: https://github.com/sktime/sktime/issues/2338
 @lru_cache(typed=True)
 def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
     """Return absolute version of forecasting horizon values.
@@ -692,6 +754,13 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
             # computations of time deltas
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
+        if _check_soft_dependencies("pandas>=2.0.0", severity="none"):
+            if is_timestamp or isinstance(cutoff, pd.Period):
+                cutoff = pd.PeriodIndex([cutoff])
+
+            if isinstance(cutoff, pd.Index):
+                cutoff = cutoff[[0] * len(relative)]
+
         absolute = cutoff + relative
 
         if is_timestamp:
@@ -720,11 +789,11 @@ def _check_cutoff(cutoff, index):
         raise ValueError("`cutoff` must be given, but found none.")
 
     if isinstance(index, pd.PeriodIndex):
-        assert isinstance(cutoff, pd.Period)
+        assert isinstance(cutoff, (pd.Period, pd.PeriodIndex))
         assert index.freqstr == cutoff.freqstr
 
     if isinstance(index, pd.DatetimeIndex):
-        assert isinstance(cutoff, pd.Timestamp)
+        assert isinstance(cutoff, (pd.Timestamp, pd.DatetimeIndex))
 
 
 def _coerce_to_period(x, freq=None):
@@ -745,15 +814,11 @@ def _coerce_to_period(x, freq=None):
     index : pd.Period or pd.PeriodIndex
         Index or index element coerced to period based format.
     """
-    # timestamp/freq combinations are deprecated from 0.13.0
-    # warning should be replaced by exception in 0.14.0
     if isinstance(x, pd.Timestamp) and freq is None:
         freq = x.freq
-        warn(
-            "use of ForecastingHorizon methods with pd.Timestamp carrying freq "
-            "is deprecated since 0.13.0 and will raise exception from 0.14.0"
+        raise ValueError(
+            "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
-    #   raise ValueError("_coerce_to_period requires freq if x is pd.Timestamp")
     try:
         return x.to_period(freq)
     except (ValueError, AttributeError) as e:
@@ -767,3 +832,24 @@ def _coerce_to_period(x, freq=None):
             )
         else:
             raise
+
+
+def _index_range(relative, cutoff):
+    """Return Index Range relative to cutoff."""
+    _check_cutoff(cutoff, relative)
+    is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
+
+    if is_timestamp:
+        # coerce to pd.Period for reliable arithmetic operations and
+        # computations of time deltas
+        cutoff = cutoff.to_period(cutoff.freqstr)
+
+    if isinstance(cutoff, pd.Index):
+        cutoff = cutoff[[0] * len(relative)]
+
+    absolute = cutoff + relative
+
+    if is_timestamp:
+        # coerce back to DatetimeIndex after operation
+        absolute = absolute.to_timestamp(cutoff.freqstr)
+    return absolute

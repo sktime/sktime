@@ -3,14 +3,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Test grid search CV."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["test_gscv", "test_rscv"]
 
 import numpy as np
 import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
-from sktime.datasets import load_longley
+from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
@@ -32,9 +32,13 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanSquaredError,
 )
+from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
 from sktime.transformations.series.detrend import Detrender
+from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
+TEST_METRICS_PROBA = [CRPS(), PinballLoss()]
 
 
 def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
@@ -47,23 +51,18 @@ def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
     return scores
 
 
-def _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring):
-    actual = gscv.cv_results_[f"mean_test_{scoring.name}"]
+def _check_cv(forecaster, tuner, cv, param_grid, y, X, scoring):
+    actual = tuner.cv_results_[f"mean_test_{scoring.name}"]
 
     expected = _get_expected_scores(forecaster, cv, param_grid, y, X, scoring)
     np.testing.assert_array_equal(actual, expected)
 
     # Check if best parameters are selected.
-    best_idx = gscv.best_index_
+    best_idx = tuner.best_index_
     assert best_idx == actual.argmin()
 
-    best_params = gscv.best_params_
-    assert best_params == param_grid[best_idx]
-
-    # Check if best parameters are contained in best forecaster.
-    best_forecaster_params = gscv.best_forecaster_.get_params()
-    best_params = gscv.best_params_
-    assert best_params.items() <= best_forecaster_params.items()
+    fitted_params = tuner.get_fitted_params()
+    assert param_grid[best_idx].items() <= fitted_params.items()
 
 
 NAIVE = NaiveForecaster(strategy="mean")
@@ -71,17 +70,18 @@ NAIVE_GRID = {"window_length": TEST_WINDOW_LENGTHS_INT}
 PIPE = TransformedTargetForecaster(
     [
         ("transformer", Detrender(PolynomialTrendForecaster())),
-        ("forecaster", ARIMA()),
+        ("forecaster", NaiveForecaster()),
     ]
 )
 PIPE_GRID = {
     "transformer__forecaster__degree": [1, 2],
-    "forecaster__with_intercept": [True, False],
+    "forecaster__strategy": ["last", "mean"],
 }
 CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],
     SlidingWindowSplitter(fh=1, initial_window=15),
 ]
+ERROR_SCORES = [np.nan, "raise", 1000]
 
 
 @pytest.mark.parametrize(
@@ -89,26 +89,36 @@ CVs = [
 )
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("cv", CVs)
-def test_gscv(forecaster, param_grid, cv, scoring):
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+def test_gscv(forecaster, param_grid, cv, scoring, error_score):
     """Test ForecastingGridSearchCV."""
     y, X = load_longley()
     gscv = ForecastingGridSearchCV(
-        forecaster, param_grid=param_grid, cv=cv, scoring=scoring
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
     )
     gscv.fit(y, X)
 
     param_grid = ParameterGrid(param_grid)
     _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring)
 
+    fitted_params = gscv.get_fitted_params()
+    assert "best_forecaster" in fitted_params.keys()
+    assert "best_score" in fitted_params.keys()
+
 
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 )
 @pytest.mark.parametrize("scoring", TEST_METRICS)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
 @pytest.mark.parametrize("cv", CVs)
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
 @pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)
-def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
+def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
     """Test ForecastingRandomizedSearchCV.
 
     Tests that ForecastingRandomizedSearchCV successfully searches the
@@ -120,6 +130,7 @@ def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
         param_distributions=param_grid,
         cv=cv,
         scoring=scoring,
+        error_score=error_score,
         n_iter=n_iter,
         random_state=random_state,
     )
@@ -129,3 +140,62 @@ def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
         ParameterSampler(param_grid, n_iter, random_state=random_state)
     )
     _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
+
+
+@pytest.mark.parametrize(
+    "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
+)
+@pytest.mark.parametrize("scoring", TEST_METRICS)
+@pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
+    """Test ForecastingGridSearchCV."""
+    y = _make_hierarchical(
+        random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+    X = _make_hierarchical(
+        random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+
+    gscv = ForecastingGridSearchCV(
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
+    )
+    gscv.fit(y, X)
+
+    param_grid = ParameterGrid(param_grid)
+    _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring)
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
+@pytest.mark.parametrize("scoring", TEST_METRICS_PROBA)
+@pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+def test_gscv_proba(cv, scoring, error_score):
+    """Test ForecastingGridSearchCV with probabilistic metrics."""
+    y = load_airline()
+
+    forecaster = ARIMA()
+    param_grid = {"order": [(1, 0, 0), (1, 1, 0)]}
+
+    gscv = ForecastingGridSearchCV(
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
+    )
+    gscv.fit(y)
+
+    param_grid = ParameterGrid(param_grid)
+    _check_cv(forecaster, gscv, cv, param_grid, y, None, scoring)
+
+    fitted_params = gscv.get_fitted_params()
+    assert "best_forecaster" in fitted_params.keys()
+    assert "best_score" in fitted_params.keys()

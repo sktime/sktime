@@ -20,7 +20,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
         centroids to generate.
-    init_algorithm: str, defaults = 'forgy'
+    init_algorithm: str, defaults = 'random'
         Method for initializing cluster centers. Any of the following are valid:
         ['kmeans++', 'random', 'forgy']
     metric: str or Callable, defaults = 'dtw'
@@ -66,6 +66,8 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         Number of iterations run.
     """
 
+    _tags = {"python_dependencies": "numba"}
+
     def __init__(
         self,
         n_clusters: int = 8,
@@ -83,22 +85,23 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         self.averaging_method = averaging_method
         self._averaging_method = _resolve_average_callable(averaging_method)
 
+        self.average_params = average_params
+        self._average_params = average_params
+        if self.average_params is None:
+            self._average_params = {}
         if averaging_method == "dba":
             self._dba_medoids_distance_metric = "dtw"
             self._precomputed_pairwise = None
-            if (
-                average_params is not None
-                and "medoids_distance_metric" in average_params
-            ):
-                self._dba_medoids_distance_metric = average_params[
+            if "medoids_distance_metric" in self._average_params:
+                self._dba_medoids_distance_metric = self._average_params[
                     "medoids_distance_metric"
                 ]
-
-        self.average_params = average_params
-        if self.average_params is None:
-            self._average_params = {}
-        else:
-            self._average_params = average_params
+            if "averaging_distance_metric" in self._average_params:
+                average_dist = self._average_params["averaging_distance_metric"]
+                if average_dist == "ddtw":
+                    self._average_params["averaging_distance_metric"] = "dtw"
+                if average_dist == "wddtw":
+                    self._average_params["averaging_distance_metric"] = "wdtw"
 
         super(TimeSeriesKMeans, self).__init__(
             n_clusters,
@@ -191,11 +194,10 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {
+        return {
             "n_clusters": 2,
             "metric": "euclidean",
             "n_init": 1,
             "max_iter": 10,
             "random_state": 0,
         }
-        return params

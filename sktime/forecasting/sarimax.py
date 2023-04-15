@@ -4,9 +4,9 @@
 """Implements SARIMAX."""
 
 __all__ = ["SARIMAX"]
-__author__ = ["TNTran92"]
+__author__ = ["TNTran92", "yarnabrina"]
 
-from statsmodels.tsa.api import SARIMAX as _SARIMAX
+import pandas as pd
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -108,14 +108,17 @@ class SARIMAX(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.sarimax import SARIMAX
     >>> y = load_airline()
-    >>> forecaster = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
-    >>> forecaster.fit(y)
+    >>> forecaster = SARIMAX(
+    ...     order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))  # doctest: +SKIP
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
     SARIMAX(...)
-    >>> y_pred = forecaster.predict(fh=y.index)
+    >>> y_pred = forecaster.predict(fh=y.index)  # doctest: +SKIP
     """
 
     _tags = {
         "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -161,6 +164,8 @@ class SARIMAX(_StatsModelsAdapter):
         super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
+        from statsmodels.tsa.api import SARIMAX as _SARIMAX
+
         self._forecaster = _SARIMAX(
             endog=y,
             exog=X,
@@ -191,3 +196,59 @@ class SARIMAX(_StatsModelsAdapter):
         https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_structural_harvey_jaeger.html
         """
         return self._fitted_forecaster.summary()
+
+    def _predict_interval(self, fh, X=None, coverage=0.95):
+        """Compute/return prediction interval forecasts.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and default _predict_quantiles
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        coverage : float or list of float, optional (default=0.95)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+
+        prediction_results = self._fitted_forecaster.get_prediction(
+            start=start, end=end, exog=X
+        )
+
+        columns = pd.MultiIndex.from_product(
+            [["Coverage"], coverage, ["lower", "upper"]]
+        )
+        pred_int = pd.DataFrame(index=valid_indices, columns=columns)
+
+        for c in coverage:
+            pred_statsmodels = prediction_results.conf_int(alpha=(1 - c))
+            pred_statsmodels.columns = ["lower", "upper"]
+
+            pred_int[("Coverage", c, "lower")] = pred_statsmodels.loc[
+                valid_indices, "lower"
+            ]
+            pred_int[("Coverage", c, "upper")] = pred_statsmodels.loc[
+                valid_indices, "upper"
+            ]
+
+        return pred_int

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = []
 
-import pytest
 import pandas as pd
+import pytest
+
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 

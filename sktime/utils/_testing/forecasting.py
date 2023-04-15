@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = [
     "_get_expected_index_for_update_predict",
     "_generate_polynomial_series",
@@ -133,17 +133,24 @@ def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     assert isinstance(y_pred_index, pd.Index)
     fh = check_fh(fh)
     expected = fh.to_absolute(cutoff).to_pandas()
-    y_pred_index.equals(expected)
+    assert y_pred_index.equals(expected)
 
 
 def _assert_correct_columns(y_pred, y_train):
     """Check that forecast object has right column names."""
     if isinstance(y_pred, pd.DataFrame) and isinstance(y_train, pd.DataFrame):
         msg = (
-            "forecast must have same columns index as past data, "
+            "forecast pd.DataFrame must have same column index as past data, "
             f"expected {y_train.columns} but found {y_pred.columns}"
         )
         assert (y_pred.columns == y_train.columns).all(), msg
+
+    if isinstance(y_pred, pd.Series) and isinstance(y_train, pd.Series):
+        msg = (
+            "forecast pd.Series must have same name as past data, "
+            f"expected {y_train.name} but found {y_pred.name}"
+        )
+        assert y_pred.name == y_train.name, msg
 
 
 def _make_fh(cutoff, steps, fh_type, is_relative):

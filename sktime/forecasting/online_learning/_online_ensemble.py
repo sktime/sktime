@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements framework for applying online ensembling algorithms to forecasters."""
 
-__author__ = ["magittan, mloning"]
+__author__ = ["magittan", "mloning"]
 
 import numpy as np
 import pandas as pd
@@ -24,11 +24,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -1 means using all processors.
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "y_inner_mtype": ["pd.Series"],
+        "scitype:y": "univariate",
     }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
@@ -103,9 +104,10 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     def _predict(self, fh=None, X=None):
         if self.ensemble_algorithm is not None:
             self.weights = self.ensemble_algorithm.weights
-        return (pd.concat(self._predict_forecasters(fh, X), axis=1) * self.weights).sum(
-            axis=1
-        )
+        y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1) * self.weights
+        y_pred = y_pred.sum(axis=1)
+        y_pred.name = self._y.name
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

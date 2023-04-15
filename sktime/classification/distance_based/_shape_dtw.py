@@ -106,7 +106,7 @@ class ShapeDTW(BaseClassifier):
 
     Notes
     -----
-    ..[1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
+    .. [1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
 

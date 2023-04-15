@@ -11,6 +11,7 @@ __all__ = ["ProbabilityThresholdEarlyClassifier"]
 import copy
 
 import numpy as np
+from deprecated.sphinx import deprecated
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import check_random_state
@@ -21,6 +22,12 @@ from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
+# TODO: remove message in v0.16.0 and change base class
+@deprecated(
+    version="0.13.0",
+    reason="The base class of ProbabilityThresholdEarlyClassifier will be changed to BaseEarlyClassifier in v0.16.0. This will change how classification safety decisions are made and returned, see BaseEarlyClassifier or TEASER for the new interface.",  # noqa: E501
+    category=FutureWarning,
+)
 class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     """Probability Threshold Early Classifier.
 
@@ -83,7 +90,6 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "capability:early_prediction": True,
     }
 
     def __init__(
@@ -295,12 +301,14 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
+        from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params = {
-            "classification_points": [3],
-            "estimator": Catch22Classifier(
-                estimator=RandomForestClassifier(n_estimators=2)
-            ),
-        }
+        if _check_soft_dependencies("numba", severity="none"):
+            est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
+        else:
+            est = DummyClassifier()
+
+        params = {"classification_points": [3], "estimator": est}
         return params

@@ -2,7 +2,7 @@
 """Clustering averaging metrics."""
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Callable
+from typing import Callable, Dict
 
 import numpy as np
 
@@ -32,7 +32,7 @@ _AVERAGE_DICT = {"mean": mean_average, "dba": dba}
 
 def _resolve_average_callable(
     averaging_method: [str, Callable[[np.ndarray], np.ndarray]]
-) -> Callable[[np.ndarray], np.ndarray]:
+) -> Callable[[np.ndarray, Dict], np.ndarray]:
     """Resolve a string or callable to a averaging callable.
 
     Parameters

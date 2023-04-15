@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Series of checks for annotation classes."""
 
 __author__ = ["mloning"]
 __all__ = ["check_fmt", "check_labels"]
@@ -28,7 +29,7 @@ def check_labels(labels):
 
     Parameters
     ----------
-    labels : str {"indicator", "score"}
+    labels : str {"indicator", "score", "int_label"}
         Annotation labels
 
     Returns
@@ -36,6 +37,6 @@ def check_labels(labels):
     label : str
         Checked annotation label.
     """
-    valid_labels = ["indicator", "score"]
+    valid_labels = ["indicator", "score", "int_label"]
     if labels not in valid_labels:
         raise ValueError(f"`labels` must be in: {valid_labels}, but found: {labels}.")

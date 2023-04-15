@@ -13,9 +13,6 @@ __author__ = ["Martin Walter"]
 __all__ = ["TBATS"]
 
 from sktime.forecasting.base.adapters import _TbatsAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tbats", severity="warning")
 
 
 class TBATS(_TbatsAdapter):
@@ -101,16 +98,16 @@ class TBATS(_TbatsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.tbats import TBATS
     >>> y = load_airline()
-    >>> forecaster = TBATS(
+    >>> forecaster = TBATS(  # doctest: +SKIP
     ...     use_box_cox=False,
     ...     use_trend=False,
     ...     use_damped_trend=False,
     ...     sp=12,
     ...     use_arma_errors=False,
     ...     n_jobs=1)
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y)  # doctest: +SKIP
     TBATS(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """  # noqa: E501
 
     _fitted_param_names = "aic"

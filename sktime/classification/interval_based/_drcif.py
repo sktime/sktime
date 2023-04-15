@@ -17,12 +17,11 @@ from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 
-from sktime._contrib.vector_classifiers._continuous_interval_tree import (
-    ContinuousIntervalTree,
-    _drcif_feature,
-)
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
+from sktime.classification.sklearn._continuous_interval_tree import (
+    ContinuousIntervalTree,
+)
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X_y
 
@@ -131,11 +130,13 @@ class DrCIF(BaseClassifier):
     >>> from sktime.classification.interval_based import DrCIF
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = DrCIF(n_estimators=3, n_intervals=2, att_subsample_size=2)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = DrCIF(
+    ...     n_estimators=3, n_intervals=2, att_subsample_size=2
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     DrCIF(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -144,6 +145,7 @@ class DrCIF(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "interval",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -403,6 +405,10 @@ class DrCIF(BaseClassifier):
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X, method="predict_proba")
+
         n_instances, n_dims, series_length = X.shape
 
         if (
@@ -444,6 +450,10 @@ class DrCIF(BaseClassifier):
         return results
 
     def _fit_estimator(self, X, X_p, X_d, y, idx):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            _drcif_feature,
+        )
+
         c22 = Catch22(outlier_norm=True)
         T = [X, X_p, X_d]
         rs = 255 if self.random_state == 0 else self.random_state
@@ -511,7 +521,7 @@ class DrCIF(BaseClassifier):
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
-        if self.base_estimator == "CIT":
+        if isinstance(self._base_estimator, ContinuousIntervalTree):
             transformed_x = np.nan_to_num(
                 transformed_x, False, posinf=np.nan, neginf=np.nan
             )
@@ -530,6 +540,10 @@ class DrCIF(BaseClassifier):
     def _predict_proba_for_estimator(
         self, X, X_p, X_d, classifier, intervals, dims, atts
     ):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            _drcif_feature,
+        )
+
         c22 = Catch22(outlier_norm=True)
         if isinstance(self._base_estimator, ContinuousIntervalTree):
             return classifier._predict_proba_drcif(

@@ -103,7 +103,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         y_pred : pd.Series
             Point predictions
         """
-        index = fh.to_absolute(self.cutoff)
+        index = fh.to_absolute(self.cutoff).to_pandas()
         return pd.Series(self.prediction_constant, index=index)
 
     @_method_logger
@@ -175,7 +175,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        fh_index = fh.to_absolute(self.cutoff)
+        fh_index = fh.to_absolute(self.cutoff).to_pandas()
         col_index = pd.MultiIndex.from_product([["Quantiles"], alpha])
         pred_quantiles = pd.DataFrame(columns=col_index, index=fh_index)
 
@@ -280,7 +280,7 @@ class MockForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        index = fh.to_absolute(self.cutoff)
+        index = fh.to_absolute(self.cutoff).to_pandas()
         return pd.DataFrame(
             self.prediction_constant, index=index, columns=self._y.columns
         )
@@ -358,12 +358,33 @@ class MockForecaster(BaseForecaster):
             cols = ["Quantiles"]
 
         col_index = pd.MultiIndex.from_product([cols, alpha])
-        fh_index = fh.to_absolute(self.cutoff)
+        fh_index = fh.to_absolute(self.cutoff).to_pandas()
         pred_quantiles = pd.DataFrame(index=fh_index, columns=col_index)
 
         for col, a in col_index:
+            multiple = a if self.prediction_constant > 0 else (1 - a)
             pred_quantiles[col, a] = pd.Series(
-                self.prediction_constant * 2 * a, index=fh_index
+                self.prediction_constant * 2 * multiple, index=fh_index
             )
 
         return pred_quantiles
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [{"prediction_constant": 42}, {"prediction_constant": -4.2}]

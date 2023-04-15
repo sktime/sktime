@@ -7,9 +7,6 @@ __all__ = ["UnobservedComponents"]
 __author__ = ["juanitorduz"]
 
 import pandas as pd
-from statsmodels.tsa.statespace.structural import (
-    UnobservedComponents as _UnobservedComponents,
-)
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -195,10 +192,10 @@ class UnobservedComponents(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.structural import UnobservedComponents
     >>> y = load_airline()
-    >>> forecaster = UnobservedComponents(level='local linear trend')
-    >>> forecaster.fit(y)
+    >>> forecaster = UnobservedComponents(level='local linear trend')  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     UnobservedComponents(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -291,6 +288,10 @@ class UnobservedComponents(_StatsModelsAdapter):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
         """
+        from statsmodels.tsa.statespace.structural import (
+            UnobservedComponents as _UnobservedComponents,
+        )
+
         self._forecaster = _UnobservedComponents(
             endog=y,
             exog=X,
@@ -363,24 +364,25 @@ class UnobservedComponents(_StatsModelsAdapter):
         --------
         statsmodels.tsa.statespace.mlemodel.PredictionResults.summary_frame
         """
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
-        start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(
             start=start, end=end, exog=X
         )
-        pred_int = pd.DataFrame()
+        cols = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
+        pred_int = pd.DataFrame(index=valid_indices, columns=cols)
         for c in coverage:
             alpha = 1 - c
             pred_statsmodels = prediction_results.summary_frame(alpha=alpha)
-            pred_int[(c, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
+            pred_int[("Coverage", c, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
                 valid_indices
             ]
-            pred_int[(c, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
+            pred_int[("Coverage", c, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
                 valid_indices
             ]
-        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
-        pred_int.columns = index
+
         return pred_int
 
     def summary(self):
@@ -520,3 +522,23 @@ class UnobservedComponents(_StatsModelsAdapter):
             figsize=figsize,
             truncate_endog_names=truncate_endog_names,
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"level": "local level"}

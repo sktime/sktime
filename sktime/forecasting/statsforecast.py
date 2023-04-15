@@ -9,9 +9,6 @@ __all__ = ["StatsForecastAutoARIMA"]
 from typing import Dict, Optional
 
 from sktime.forecasting.base.adapters._statsforecast import _StatsForecastAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("statsforecast", severity="warning")
 
 
 class StatsForecastAutoARIMA(_StatsForecastAdapter):
@@ -155,10 +152,12 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastAutoARIMA
     >>> y = load_airline()
-    >>> forecaster = StatsForecastAutoARIMA(sp=12, d=0, max_p=2, max_q=2)
-    >>> forecaster.fit(y)
+    >>> forecaster = StatsForecastAutoARIMA(  # doctest: +SKIP
+    ...     sp=12, d=0, max_p=2, max_q=2
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     def __init__(

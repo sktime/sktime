@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = [
     "TEST_YS",
     "TEST_SPS",
@@ -27,14 +27,15 @@ import pandas as pd
 from sktime.utils._testing.series import _make_series
 
 # We here define the parameter values for unit testing.
-TEST_CUTOFFS_INT = [np.array([21, 22]), np.array([3, 7, 10])]
+TEST_CUTOFFS_INT_LIST = [[21, 22], [3, 7, 10]]
+TEST_CUTOFFS_INT_ARR = [np.array([21, 22]), np.array([3, 7, 10])]
 # The following timestamps correspond
 # to the above integers for `_make_series(all_positive=True)`
 TEST_CUTOFFS_TIMESTAMP = [
     pd.to_datetime(["2000-01-22", "2000-01-23"]),
     pd.to_datetime(["2000-01-04", "2000-01-08", "2000-01-11"]),
 ]
-TEST_CUTOFFS = [*TEST_CUTOFFS_INT, *TEST_CUTOFFS_TIMESTAMP]
+TEST_CUTOFFS = [*TEST_CUTOFFS_INT_LIST, *TEST_CUTOFFS_INT_ARR, *TEST_CUTOFFS_TIMESTAMP]
 
 TEST_WINDOW_LENGTHS_INT = [1, 5]
 TEST_WINDOW_LENGTHS_TIMEDELTA = [pd.Timedelta(1, unit="D"), pd.Timedelta(5, unit="D")]
@@ -88,7 +89,7 @@ TEST_INS_FHS_TIMEDELTA = [
 TEST_FHS_TIMEDELTA = [*TEST_OOS_FHS_TIMEDELTA, *TEST_INS_FHS_TIMEDELTA]
 
 TEST_SPS = [3, 12]
-TEST_ALPHAS = [0.05, 0.1]
+TEST_ALPHAS = [0.05, 0.1, [0.25, 0.75]]
 TEST_YS = [_make_series(all_positive=True)]
 TEST_RANDOM_SEEDS = [1, 42]
 TEST_N_ITERS = [1, 4]

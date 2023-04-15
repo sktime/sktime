@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Elastic Ensemble classifier from file."""
-__author__ = "Jason Lines"
+__author__ = ["jasonlines"]
 
 import os
 
@@ -262,6 +262,7 @@ class ElasticEnsemblePostProcess:
                     + ".csv"
                 )
                 if os.path.exists(full_path):
+                    # noqa: T201
                     print(
                         full_path
                         + " already exists and overwrite set to false, not writing Test"

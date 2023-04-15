@@ -4,7 +4,7 @@
 Configurable SFA transform for discretising time series into words.
 """
 
-__author__ = ["Matthew Middlehurst", "Patrick Schäfer"]
+__author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["SFA"]
 
 import math
@@ -14,13 +14,11 @@ import warnings
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from numba import NumbaTypeSafetyWarning, njit, types
-from numba.typed import Dict
 from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
@@ -29,7 +27,7 @@ binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
 # TODO remove imag-part from dc-component component
 
 
-class SFA(_PanelToPanelTransformer):
+class SFA(BaseTransformer):
     """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
@@ -43,51 +41,51 @@ class SFA(_PanelToPanelTransformer):
 
     Parameters
     ----------
-        word_length:         int, default = 8
-            length of word to shorten window to (using PAA)
+    word_length:         int, default = 8
+        length of word to shorten window to (using PAA)
 
-        alphabet_size:       int, default = 4
-            number of values to discretise each value to
+    alphabet_size:       int, default = 4
+        number of values to discretise each value to
 
-        window_size:         int, default = 12
-            size of window for sliding. Input series
-            length for whole series transform
+    window_size:         int, default = 12
+        size of window for sliding. Input series
+        length for whole series transform
 
-        norm:                boolean, default = False
-            mean normalise words by dropping first fourier coefficient
+    norm:                boolean, default = False
+        mean normalise words by dropping first fourier coefficient
 
-        binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
-                             default="equi-depth"
-            the binning method used to derive the breakpoints.
+    binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
+                            default="equi-depth"
+        the binning method used to derive the breakpoints.
 
-        anova:               boolean, default = False
-            If True, the Fourier coefficient selection is done via a one-way
-            ANOVA test. If False, the first Fourier coefficients are selected.
-            Only applicable if labels are given
+    anova:               boolean, default = False
+        If True, the Fourier coefficient selection is done via a one-way
+        ANOVA test. If False, the first Fourier coefficients are selected.
+        Only applicable if labels are given
 
-        bigrams:             boolean, default = False
-            whether to create bigrams of SFA words
+    bigrams:             boolean, default = False
+        whether to create bigrams of SFA words
 
-        skip_grams:          boolean, default = False
-            whether to create skip-grams of SFA words
+    skip_grams:          boolean, default = False
+        whether to create skip-grams of SFA words
 
-        remove_repeat_words: boolean, default = False
-            whether to use numerosity reduction (default False)
+    remove_repeat_words: boolean, default = False
+        whether to use numerosity reduction (default False)
 
-        levels:              int, default = 1
-            Number of spatial pyramid levels
+    levels:              int, default = 1
+        Number of spatial pyramid levels
 
-        save_words:          boolean, default = False
-            whether to save the words generated for each series (default False)
+    save_words:          boolean, default = False
+        whether to save the words generated for each series (default False)
 
-        return_pandas_data_series:          boolean, default = False
-            set to true to return Pandas Series as a result of transform.
-            setting to true reduces speed significantly but is required for
-            automatic test.
+    return_pandas_data_series:          boolean, default = False
+        set to true to return Pandas Series as a result of transform.
+        setting to true reduces speed significantly but is required for
+        automatic test.
 
-        n_jobs:              int, optional, default = 1
-            The number of jobs to run in parallel for both `transform`.
-            ``-1`` means using all processors.
+    n_jobs:              int, optional, default = 1
+        The number of jobs to run in parallel for both `transform`.
+        ``-1`` means using all processors.
 
     Attributes
     ----------
@@ -96,7 +94,6 @@ class SFA(_PanelToPanelTransformer):
     num_insts = 0
     num_atts = 0
 
-
     References
     ----------
     .. [1] Schäfer, Patrick, and Mikael Högqvist. "SFA: a symbolic fourier approximation
@@ -104,7 +101,18 @@ class SFA(_PanelToPanelTransformer):
     15th international conference on extending database technology. 2012.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
+        "requires_y": True,  # does y need to be passed in fit?
+        "python_dependencies": "numba",
+    }
 
     def __init__(
         self,
@@ -140,12 +148,13 @@ class SFA(_PanelToPanelTransformer):
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.window_size = window_size
+
+        self.norm = norm
         self.lower_bounding = lower_bounding
         self.inverse_sqrt_win_size = (
             1.0 / math.sqrt(window_size) if not lower_bounding else 1.0
         )
 
-        self.norm = norm
         self.remove_repeat_words = remove_repeat_words
 
         self.save_words = save_words
@@ -160,7 +169,8 @@ class SFA(_PanelToPanelTransformer):
         self.skip_grams = skip_grams
 
         self.return_pandas_data_series = return_pandas_data_series
-        self.use_fallback_dft = (
+        self.use_fallback_dft = use_fallback_dft
+        self._use_fallback_dft = (
             use_fallback_dft if word_length < window_size - offset else True
         )
         self.typed_dict = typed_dict
@@ -177,6 +187,9 @@ class SFA(_PanelToPanelTransformer):
         self.level_max = 0
 
         super(SFA, self).__init__()
+
+        if not return_pandas_data_series:
+            self.set_config(**{"output_conversion": "off"})
 
     def fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
@@ -241,7 +254,7 @@ class SFA(_PanelToPanelTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform data into SFA words.
 
         Parameters
@@ -253,8 +266,9 @@ class SFA(_PanelToPanelTransformer):
         -------
         List of dictionaries containing SFA words
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        from numba import NumbaTypeSafetyWarning, types
+        from numba.typed import Dict
+
         X = X.squeeze(1)
 
         with warnings.catch_warnings():
@@ -293,6 +307,13 @@ class SFA(_PanelToPanelTransformer):
         return bags
 
     def _transform_case(self, X, supplied_dft=None):
+        from numba import types
+        from numba.typed import Dict
+
+        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+            _create_word,
+        )
+
         if supplied_dft is None:
             dfts = self._mft(X)
         else:
@@ -319,7 +340,7 @@ class SFA(_PanelToPanelTransformer):
 
         for window in range(dfts.shape[0]):
             word_raw = (
-                SFA._create_word(
+                _create_word(
                     dfts[window],
                     self.word_length,
                     self.alphabet_size,
@@ -491,6 +512,10 @@ class SFA(_PanelToPanelTransformer):
         return np.sort(breakpoints, axis=1)
 
     def _binning_dft(self, series, num_windows_per_inst):
+        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+            _discrete_fourier_transform,
+        )
+
         # Splits individual time series into windows and returns the DFT for
         # each
         split = np.split(
@@ -509,14 +534,14 @@ class SFA(_PanelToPanelTransformer):
 
         for i, row in enumerate(split):
             result[i] = (
-                self._discrete_fourier_transform(
+                _discrete_fourier_transform(
                     row,
                     self.dft_length,
                     self.norm,
                     self.inverse_sqrt_win_size,
                     self.lower_bounding,
                 )
-                if self.use_fallback_dft
+                if self._use_fallback_dft
                 else self._fast_fourier_transform(row)
             )
 
@@ -557,74 +582,25 @@ class SFA(_PanelToPanelTransformer):
         dft *= self.inverse_sqrt_win_size / std
         return dft[start:]
 
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _discrete_fourier_transform(
-        series,
-        dft_length,
-        norm,
-        inverse_sqrt_win_size,
-        lower_bounding,
-        apply_normalising_factor=True,
-        cut_start_if_norm=True,
-    ):
-        """Perform a discrete fourier transform using standard O(n^2) transform.
-
-        if self.norm is True, then the first term of the DFT is ignored
-
-        Input
-        -------
-        X : The training input samples.  array-like or sparse matrix of
-        shape = [n_samps, num_atts]
-
-        Returns
-        -------
-        1D array of fourier term, real_0,imag_0, real_1, imag_1 etc, length
-        num_atts or
-        num_atts-2 if if self.norm is True
-        """
-        start = 2 if norm else 0
-        output_length = start + dft_length
-
-        if cut_start_if_norm:
-            c = int(start / 2)
-        else:
-            c = 0
-            start = 0
-
-        dft = np.zeros(output_length - start)
-        for i in range(c, int(output_length / 2)):
-            for n in range(len(series)):
-                dft[(i - c) * 2] += series[n] * math.cos(
-                    2 * math.pi * n * i / len(series)
-                )
-                dft[(i - c) * 2 + 1] += -series[n] * math.sin(
-                    2 * math.pi * n * i / len(series)
-                )
-
-        if apply_normalising_factor:
-            if lower_bounding:
-                dft[1::2] = dft[1::2] * -1  # lower bounding
-
-            std = np.std(series)
-            if std == 0:
-                std = 1
-            dft *= inverse_sqrt_win_size / std
-
-        return dft
-
     def _mft(self, series):
+        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+            _calc_incremental_mean_std,
+            _discrete_fourier_transform,
+            _get_phis,
+            _iterate_mft,
+        )
+
         start_offset = 2 if self.norm else 0
         length = self.dft_length + start_offset + self.dft_length % 2
         end = max(1, len(series) - self.window_size + 1)
 
-        phis = SFA._get_phis(self.window_size, length)
-        stds = SFA._calc_incremental_mean_std(series, end, self.window_size)
+        phis = _get_phis(self.window_size, length)
+        stds = _calc_incremental_mean_std(series, end, self.window_size)
         transformed = np.zeros((end, length))
 
         # first run with dft
-        if self.use_fallback_dft:
-            mft_data = self._discrete_fourier_transform(
+        if self._use_fallback_dft:
+            mft_data = _discrete_fourier_transform(
                 series[0 : self.window_size],
                 self.dft_length,
                 self.norm,
@@ -645,7 +621,7 @@ class SFA(_PanelToPanelTransformer):
 
         # other runs using mft
         # moved to external method to use njit
-        SFA._iterate_mft(
+        _iterate_mft(
             series,
             mft_data,
             phis,
@@ -664,32 +640,10 @@ class SFA(_PanelToPanelTransformer):
             else transformed[:, start_offset:]
         )
 
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _get_phis(window_size, length):
-        phis = np.zeros(length)
-        for i in range(int(length / 2)):
-            phis[i * 2] += math.cos(2 * math.pi * (-i) / window_size)
-            phis[i * 2 + 1] += -math.sin(2 * math.pi * (-i) / window_size)
-        return phis
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _iterate_mft(
-        series, mft_data, phis, window_size, stds, transformed, inverse_sqrt_win_size
-    ):
-        for i in range(1, len(transformed)):
-            for n in range(0, len(mft_data), 2):
-                # only compute needed indices
-                real = mft_data[n] + series[i + window_size - 1] - series[i - 1]
-                imag = mft_data[n + 1]
-                mft_data[n] = real * phis[n] - imag * phis[n + 1]
-                mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
-
-            normalising_factor = inverse_sqrt_win_size / stds[i]
-            transformed[i] = mft_data * normalising_factor
-
     def _shorten_bags(self, word_len):
+        from numba import NumbaTypeSafetyWarning, types
+        from numba.typed import Dict
+
         if self.save_words is False:
             raise ValueError(
                 "Words from transform must be saved using save_word to shorten bags."
@@ -727,6 +681,13 @@ class SFA(_PanelToPanelTransformer):
         return new_bags
 
     def _shorten_case(self, word_len, i):
+        from numba import types
+        from numba.typed import Dict
+
+        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+            _shorten_words,
+        )
+
         if self.typed_dict:
             new_bag = (
                 Dict.empty(
@@ -743,7 +704,7 @@ class SFA(_PanelToPanelTransformer):
         repeat_words = 0
 
         for window, word in enumerate(self.words[i]):
-            new_word = self._shorten_words(word, word_len)
+            new_word = _shorten_words(word, word_len)
 
             repeat_word = (
                 self._add_to_pyramid(
@@ -763,7 +724,7 @@ class SFA(_PanelToPanelTransformer):
                 if window - self.window_size >= 0:
                     bigram = self._create_bigram_words(
                         new_word,
-                        self._shorten_words(
+                        _shorten_words(
                             self.words[i][window - self.window_size], word_len
                         ),
                     )
@@ -781,7 +742,7 @@ class SFA(_PanelToPanelTransformer):
                     if window - s * self.window_size >= 0:
                         skip_gram = self._create_bigram_words(
                             new_word,
-                            self._shorten_words(
+                            _shorten_words(
                                 self.words[i][window - s * self.window_size],
                                 word_len,
                             ),
@@ -813,18 +774,23 @@ class SFA(_PanelToPanelTransformer):
         return False
 
     def _add_to_pyramid(self, bag, word, last_word, window_ind):
+        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+            _add_level,
+            _add_level_typed,
+        )
+
         if self.remove_repeat_words and word == last_word:
             return True
 
         start = 0
         for i in range(self.levels):
             if self.typed_dict:
-                new_word, num_quadrants = SFA._add_level_typed(
+                new_word, num_quadrants = _add_level_typed(
                     word, start, i, window_ind, self.window_size, self.series_length
                 )
             else:
                 new_word, num_quadrants = (
-                    SFA._add_level(
+                    _add_level(
                         word,
                         start,
                         i,
@@ -846,17 +812,6 @@ class SFA(_PanelToPanelTransformer):
 
         return False
 
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _add_level(
-        word, start, level, window_ind, window_size, series_length, level_bits
-    ):
-        num_quadrants = pow(2, level)
-        quadrant = start + int(
-            (window_ind + int(window_size / 2)) / int(series_length / num_quadrants)
-        )
-        return (word << level_bits) | quadrant, num_quadrants
-
     def _add_level_large(self, word, start, level, window_ind):
         num_quadrants = pow(2, level)
         quadrant = start + int(
@@ -864,27 +819,6 @@ class SFA(_PanelToPanelTransformer):
             / int(self.series_length / num_quadrants)
         )
         return (word << self.level_bits) | quadrant, num_quadrants
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _add_level_typed(word, start, level, window_ind, window_size, series_length):
-        num_quadrants = pow(2, level)
-        quadrant = start + int(
-            (window_ind + int(window_size / 2)) / int(series_length / num_quadrants)
-        )
-        return (word, quadrant), num_quadrants
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _create_word(dft, word_length, alphabet_size, breakpoints, letter_bits):
-        word = np.int64(0)
-        for i in range(word_length):
-            for bp in range(alphabet_size):
-                if dft[i] <= breakpoints[i][bp]:
-                    word = (word << letter_bits) | bp
-                    break
-
-        return word
 
     def _create_word_large(self, dft):
         word = 0
@@ -896,65 +830,30 @@ class SFA(_PanelToPanelTransformer):
 
         return word
 
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _calc_incremental_mean_std(series, end, window_size):
-        stds = np.zeros(end)
-        window = series[0:window_size]
-        series_sum = np.sum(window)
-        square_sum = np.sum(np.multiply(window, window))
-
-        r_window_length = 1 / window_size
-        mean = series_sum * r_window_length
-        buf = math.sqrt(square_sum * r_window_length - mean * mean)
-        stds[0] = buf if buf > 1e-8 else 1
-
-        for w in range(1, end):
-            series_sum += series[w + window_size - 1] - series[w - 1]
-            mean = series_sum * r_window_length
-            square_sum += (
-                series[w + window_size - 1] * series[w + window_size - 1]
-                - series[w - 1] * series[w - 1]
-            )
-            buf = math.sqrt(square_sum * r_window_length - mean * mean)
-            stds[w] = buf if buf > 1e-8 else 1
-
-        return stds
-
     def _create_bigram_words(self, word_raw, word):
-        return (
-            SFA._create_bigram_word(
-                word,
-                word_raw,
-                self.word_bits,
-            )
-            if self.max_bits <= 64
-            else self._create_bigram_word_large(
-                word,
-                word_raw,
-            )
+        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+            _create_bigram_word,
         )
 
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _create_bigram_word(word, other_word, word_bits):
-        return (word << word_bits) | other_word
+        return (
+            _create_bigram_word(word, word_raw, self.word_bits)
+            if self.max_bits <= 64
+            else self._create_bigram_word_large(word, word_raw)
+        )
 
     def _create_bigram_word_large(self, word, other_word):
         return (word << self.word_bits) | other_word
 
     def _shorten_words(self, word, word_len):
+        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+            _shorten_word_large,
+        )
+
         return (
             SFA._shorten_word(word, self.word_length - word_len, self.letter_bits)
             if self.word_bits <= 64
-            else self._shorten_word_large(word, self.word_length - word_len)
+            else _shorten_word_large(word, self.word_length - word_len)
         )
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _shorten_word(word, amount, letter_bits):
-        # shorten a word by set amount of letters
-        return word >> amount * letter_bits
 
     def _shorten_word_large(self, word, amount):
         # shorten a word by set amount of letters

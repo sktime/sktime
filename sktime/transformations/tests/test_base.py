@@ -13,7 +13,6 @@ Transformer scenarios cover different combinations of input data types.
 __author__ = ["fkiraly"]
 __all__ = []
 
-import sys
 from inspect import isclass
 
 import pandas as pd
@@ -38,6 +37,7 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesUnivariate,
 )
 from sktime.utils._testing.series import _make_series
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # other scenarios that might be needed later in development:
 # TransformerFitTransformPanelUnivariateWithClassY,
@@ -289,7 +289,10 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform():
     assert len(Xt) == 7
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 10), reason="tsfresh does not work on 3.10")
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tsfresh", severity="none"),
+    reason="skip test if required soft dependency tsfresh not available",
+)
 def test_series_in_primitives_out_not_supported_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -325,7 +328,10 @@ def test_series_in_primitives_out_not_supported_fit_in_transform():
     assert len(Xt) == 1
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 10), reason="tsfresh does not work on 3.10")
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tsfresh", severity="none"),
+    reason="skip test if required soft dependency tsfresh not available",
+)
 def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -624,3 +630,31 @@ def test_vectorize_reconstruct_unique_columns():
     t = Detrender.create_test_instance()
     Xt = t.fit_transform(X)
     assert set(Xt.columns) == set([0, 1])
+
+
+def test_vectorize_reconstruct_correct_hierarchy():
+    """Tests correct transform return index in hierarchical case for primitives output.
+
+    Tests that the row index is as expected if rows are vectorized over,
+    by a transform that returns Primitives.
+    The row index of transform return should be identical to the input,
+    with temporal index level removed
+
+    Raises
+    ------
+    AssertionError if output index is not as expected.
+    """
+    from sktime.transformations.series.summarize import SummaryTransformer
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    # hierarchical data with 2 variables and 2 levels
+    X = _make_hierarchical(n_columns=2)
+
+    summary_trafo = SummaryTransformer()
+
+    # this produces a pandas DataFrame with more rows and columns
+    # rows should correspond to different instances in X
+    Xt = summary_trafo.fit_transform(X)
+
+    # check that Xt.index is the same as X.index with time level dropped and made unique
+    assert (X.index.droplevel(-1).unique() == Xt.index).all()

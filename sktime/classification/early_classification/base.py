@@ -63,6 +63,15 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         "capability:multithreading": False,
     }
 
+    # convenience constant to control which metadata of input data
+    # are regularly retrieved in input checks
+    METADATA_REQ_IN_CHECKS = [
+        "n_instances",
+        "has_nans",
+        "is_univariate",
+        "is_equal_length",
+    ]
+
     def __init__(self):
         self.classes_ = []
         self.n_classes_ = 0
@@ -611,3 +620,52 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         """
         _convert_X = BaseClassifier._convert_X
         return _convert_X(self, X)
+
+    def _check_classifier_input(
+        self, X, y=None, enforce_min_instances=1, return_metadata=True
+    ):
+        """Check whether input X and y are valid formats with minimum data.
+
+        Raises a ValueError if the input is not valid.
+
+        Parameters
+        ----------
+        X : check whether conformant with any sktime Panel mtype specification
+        y : check whether a pd.Series or np.array
+        enforce_min_instances : int, optional (default=1)
+            check there are a minimum number of instances.
+        return_metadata : bool, str, or list of str
+            metadata fields to return with X_metadata, input to check_is_scitype
+
+        Returns
+        -------
+        metadata : dict with metadata for X returned by datatypes.check_is_scitype
+
+        Raises
+        ------
+        ValueError
+            If y or X is invalid input data type, or there is not enough data
+        """
+        _check_classifier_input = BaseClassifier._check_classifier_input
+        return _check_classifier_input(
+            self, X, y, enforce_min_instances, return_metadata
+        )
+
+    def _internal_convert(self, X, y=None):
+        """Convert X and y if necessary as a user convenience.
+
+        Convert X to a 3D numpy array if already a 2D and convert y into an 1D numpy
+        array if passed as a Series.
+
+        Parameters
+        ----------
+        X : an object of a supported Panel mtype, or 2D numpy.ndarray
+        y : np.ndarray or pd.Series
+
+        Returns
+        -------
+        X: an object of a supported Panel mtype, numpy3D if X was a 2D numpy.ndarray
+        y: np.ndarray
+        """
+        _internal_convert = BaseClassifier._internal_convert
+        return _internal_convert(self, X, y)

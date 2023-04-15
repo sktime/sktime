@@ -48,30 +48,12 @@ class IndexSubset(BaseTransformer):
         "fit_is_empty": False,
         "univariate-only": False,
         "capability:inverse_transform": False,
+        "remember_data": True,  # remember all data seen as _X
     }
 
     def __init__(self, index_treatment="keep"):
         self.index_treatment = index_treatment
         super(IndexSubset, self).__init__()
-
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame or pd.Series
-            Data the transformer is fitted to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        self._X = X
-        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -111,25 +93,6 @@ class IndexSubset(BaseTransformer):
             )
         return Xt
 
-    def _update(self, X, y=None):
-        """Update transformer with X and y.
-
-        private _update containing the core logic, called from update
-
-        Parameters
-        ----------
-        X : pd.DataFrame or pd.Series
-            Data the transform is fitted to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        self._X = X.combine_first(self._X)
-        return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -162,7 +125,7 @@ class ColumnSelect(BaseTransformer):
 
     Sequence of columns in `Xt=transform(X)` is as in `columns` hyper-parameter.
     Caveat: this means that `transform` may change sequence of columns,
-        even if no  columns are removed from `X` in `transform(X)`.
+        even if no columns are removed from `X` in `transform(X)`.
 
     Parameters
     ----------
@@ -192,7 +155,7 @@ class ColumnSelect(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
         "transform-returns-same-time-index": True,
         "fit_is_empty": True,
@@ -233,7 +196,7 @@ class ColumnSelect(BaseTransformer):
 
         columns = pd.Index(columns)
 
-        if integer_treatment == "col" and columns.is_integer():
+        if integer_treatment == "col" and pd.api.types.is_integer_dtype(columns):
             columns = [x for x in columns if x < len(X.columns)]
             col_idx = X.columns[columns]
             return X[col_idx]
@@ -244,10 +207,7 @@ class ColumnSelect(BaseTransformer):
         if index_treatment == "remove":
             Xt = X[col_X_and_cols]
         elif index_treatment == "keep":
-            Xt = X[col_X_and_cols]
-            X_idx_frame = type(X)(columns=columns)
-            Xt = Xt.combine_first(X_idx_frame)
-            Xt = Xt[columns]
+            Xt = X.reindex(columns=columns)
         else:
             raise ValueError(
                 f'index_treatment must be one of "remove", "keep", but found'

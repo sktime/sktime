@@ -34,7 +34,7 @@ class Arsenal(BaseClassifier):
     Overview: an ensemble of ROCKET transformers using RidgeClassifierCV base
     classifier. Weights each classifier using the accuracy from the ridge
     cross-validation. Allows for generation of probability estimates at the
-    expense of scalability compared to ROCKETClassifier.
+    expense of scalability compared to RocketClassifier.
 
     Parameters
     ----------
@@ -85,7 +85,7 @@ class Arsenal(BaseClassifier):
 
     See Also
     --------
-    ROCKETClassifier
+    RocketClassifier
 
     Notes
     -----
@@ -104,11 +104,11 @@ class Arsenal(BaseClassifier):
     >>> from sktime.classification.kernel_based import Arsenal
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test =load_unit_test(split="test", return_X_y=True)
-    >>> clf = Arsenal(num_kernels=100, n_estimators=5)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test =load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = Arsenal(num_kernels=100, n_estimators=5) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     Arsenal(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -117,6 +117,7 @@ class Arsenal(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "kernel",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -320,6 +321,10 @@ class Arsenal(BaseClassifier):
     def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
+
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X, method="predict_proba")
 
         n_instances, n_dims, series_length = X.shape
 

@@ -7,7 +7,7 @@ In particular, function `evaluate`, that performs time series
 cross-validation, is tested with various configurations for correct output.
 """
 
-__author__ = ["aiwalter", "mloning"]
+__author__ = ["aiwalter", "mloning", "fkiraly"]
 __all__ = [
     "test_evaluate_common_configs",
     "test_evaluate_initial_window",
@@ -17,9 +17,13 @@ __all__ = [
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.linear_model import LinearRegression
 
-from sktime.datasets import load_longley
-from sktime.forecasting.arima import ARIMA
+from sktime.datasets import load_airline, load_longley
+from sktime.exceptions import FitFailedWarning
+from sktime.forecasting.compose._reduce import DirectReductionForecaster
+from sktime.forecasting.ets import AutoETS
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
     ExpandingWindowSplitter,
@@ -31,7 +35,16 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,
 )
+from sktime.performance_metrics.forecasting.probabilistic import (
+    CRPS,
+    EmpiricalCoverage,
+    LogLoss,
+    PinballLoss,
+)
 from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.series import _make_series
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def _check_evaluate_output(out, cv, y, scoring):
@@ -91,14 +104,26 @@ def _check_evaluate_output(out, cv, y, scoring):
         MeanAbsoluteScaledError(),
     ],
 )
-def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, scoring):
+@pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
+def test_evaluate_common_configs(
+    CV, fh, window_length, step_length, strategy, scoring, backend
+):
     """Test evaluate common configs."""
+    # skip test for dask backend if dask is not installed
+    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
     cv = CV(fh, window_length, step_length=step_length)
 
     out = evaluate(
-        forecaster=forecaster, y=y, cv=cv, strategy=strategy, scoring=scoring
+        forecaster=forecaster,
+        y=y,
+        cv=cv,
+        strategy=strategy,
+        scoring=scoring,
+        backend=backend,
     )
     _check_evaluate_output(out, cv, y, scoring)
 
@@ -113,6 +138,34 @@ def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, s
         expected[i] = scoring(y.iloc[test], f.predict(), y_train=y.iloc[train])
 
     np.testing.assert_array_equal(actual, expected)
+
+
+@pytest.mark.parametrize("return_data", [True, False])
+def test_scoring_list(return_data):
+    y = make_forecasting_problem(n_timepoints=30, index_type="int")
+    forecaster = NaiveForecaster()
+    cv = SlidingWindowSplitter(fh=[1, 2, 3], initial_window=15, step_length=5)
+
+    out = evaluate(
+        forecaster=forecaster,
+        y=y,
+        cv=cv,
+        scoring=[
+            MeanAbsolutePercentageError(symmetric=True),
+            MeanAbsoluteScaledError(),
+        ],
+        return_data=return_data,
+    )
+    assert "test_MeanAbsolutePercentageError" in out.columns
+    assert "test_MeanAbsoluteScaledError" in out.columns
+    if return_data:
+        assert "y_pred" in out.columns
+        assert "y_train" in out.columns
+        assert "y_test" in out.columns
+    else:
+        assert "y_pred" not in out.columns
+        assert "y_train" not in out.columns
+        assert "y_test" not in out.columns
 
 
 def test_evaluate_initial_window():
@@ -141,7 +194,7 @@ def test_evaluate_initial_window():
 def test_evaluate_no_exog_against_with_exog():
     """Check that adding exogenous data produces different results."""
     y, X = load_longley()
-    forecaster = ARIMA(suppress_warnings=True)
+    forecaster = DirectReductionForecaster(LinearRegression())
     cv = SlidingWindowSplitter()
     scoring = MeanAbsolutePercentageError(symmetric=True)
 
@@ -150,3 +203,111 @@ def test_evaluate_no_exog_against_with_exog():
 
     scoring_name = f"test_{scoring.name}"
     assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
+@pytest.mark.parametrize("return_data", [True, False])
+@pytest.mark.parametrize("strategy", ["refit", "update"])
+@pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
+def test_evaluate_error_score(error_score, return_data, strategy, backend):
+    """Test evaluate to raise warnings and exceptions according to error_score value."""
+    # skip test for dask backend if dask is not installed
+    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+
+    forecaster = ExponentialSmoothing(sp=12)
+    y = load_airline()
+    # add NaN to make ExponentialSmoothing fail
+    y.iloc[1] = np.nan
+    fh = [1, 2, 3]
+    cv = ExpandingWindowSplitter(step_length=48, initial_window=12, fh=fh)
+    if error_score in [np.nan, 1000]:
+        with pytest.warns(FitFailedWarning):
+            results = evaluate(
+                forecaster=forecaster,
+                y=y,
+                cv=cv,
+                return_data=return_data,
+                error_score=error_score,
+                strategy=strategy,
+                backend=backend,
+            )
+        if isinstance(error_score, type(np.nan)):
+            assert results["test_MeanAbsolutePercentageError"].isna().sum() > 0
+        if error_score == 1000:
+            assert results["test_MeanAbsolutePercentageError"].max() == 1000
+    if error_score == "raise":
+        with pytest.raises(Exception):  # noqa: B017
+            evaluate(
+                forecaster=forecaster,
+                y=y,
+                cv=cv,
+                return_data=return_data,
+                error_score=error_score,
+                strategy=strategy,
+            )
+
+
+@pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
+def test_evaluate_hierarchical(backend):
+    """Check that evaluate works with hierarchical data."""
+    # skip test for dask backend if dask is not installed
+    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+
+    y = _make_hierarchical(
+        random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+    X = _make_hierarchical(
+        random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+    y = y.sort_index()
+    X = X.sort_index()
+
+    forecaster = DirectReductionForecaster(LinearRegression())
+    cv = SlidingWindowSplitter()
+    scoring = MeanAbsolutePercentageError(symmetric=True)
+    out_exog = evaluate(
+        forecaster, cv, y, X=X, scoring=scoring, error_score="raise", backend=backend
+    )
+    out_no_exog = evaluate(
+        forecaster, cv, y, X=None, scoring=scoring, error_score="raise", backend=backend
+    )
+
+    scoring_name = f"test_{scoring.name}"
+    assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])
+
+
+PROBA_METRICS = [CRPS, EmpiricalCoverage, LogLoss, PinballLoss]
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("n_columns", [1, 2])
+@pytest.mark.parametrize("metric", PROBA_METRICS)
+def test_evaluate_probabilistic(n_columns, metric):
+    """Check that evaluate works with interval, quantile, and distribution forecasts."""
+    y = _make_series(n_columns=n_columns)
+
+    forecaster = AutoETS()
+    cv = SlidingWindowSplitter()
+    scoring = metric()
+    try:
+        out = evaluate(
+            forecaster,
+            cv,
+            y,
+            X=None,
+            scoring=scoring,
+            error_score="raise",
+        )
+        scoring_name = f"test_{scoring.name}"
+        assert scoring_name in out.columns
+    except NotImplementedError:
+        pass

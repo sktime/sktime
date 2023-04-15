@@ -6,9 +6,6 @@ __author__ = ["mloning", "aiwalter", "fkiraly"]
 __all__ = ["BoxCoxTransformer", "LogTransformer"]
 
 import numpy as np
-from scipy import optimize, special, stats
-from scipy.special import boxcox, inv_boxcox
-from scipy.stats import boxcox_llf, distributions, variation
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
@@ -129,6 +126,7 @@ class BoxCoxTransformer(BaseTransformer):
         "fit_is_empty": False,
         "univariate-only": True,
         "capability:inverse_transform": True,
+        "python_dependencies": "scipy",
     }
 
     def __init__(self, bounds=None, method="mle", sp=None):
@@ -180,6 +178,8 @@ class BoxCoxTransformer(BaseTransformer):
         Xt : 2D np.ndarray
             transformed version of X
         """
+        from scipy.special import boxcox
+
         X_shape = X.shape
         Xt = boxcox(X.flatten(), self.lambda_)
         Xt = Xt.reshape(X_shape)
@@ -202,6 +202,8 @@ class BoxCoxTransformer(BaseTransformer):
         Xt : 2D np.ndarray
             inverse transformed version of X
         """
+        from scipy.special import inv_boxcox
+
         X_shape = X.shape
         Xt = inv_boxcox(X.flatten(), self.lambda_)
         Xt = Xt.reshape(X_shape)
@@ -211,8 +213,17 @@ class BoxCoxTransformer(BaseTransformer):
 class LogTransformer(BaseTransformer):
     """Natural logarithm transformation.
 
-    The natural log transformation can used to make data more normally
+    The Natural logarithm transformation can be used to make the data more normally
     distributed and stabilize its variance.
+
+    Transforms each data point x to log(scale *(x+offset))
+
+    Parameters
+    ----------
+    offset : float , default = 0
+             Additive constant applied to all the data.
+    scale  : float , default = 1
+             Multiplicative scaling constant applied to all the data.
 
     See Also
     --------
@@ -253,6 +264,11 @@ class LogTransformer(BaseTransformer):
         "capability:inverse_transform": True,
     }
 
+    def __init__(self, offset=0, scale=1):
+        self.offset = offset
+        self.scale = scale
+        super(LogTransformer, self).__init__()
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -270,7 +286,9 @@ class LogTransformer(BaseTransformer):
         Xt : 2D np.ndarray
             transformed version of X
         """
-        Xt = np.log(X)
+        offset = self.offset
+        scale = self.scale
+        Xt = np.log(scale * (X + offset))
         return Xt
 
     def _inverse_transform(self, X, y=None):
@@ -290,11 +308,16 @@ class LogTransformer(BaseTransformer):
         Xt : 2D np.ndarray
             inverse transformed version of X
         """
-        Xt = np.exp(X)
+        offset = self.offset
+        scale = self.scale
+        Xt = (np.exp(X) / scale) - offset
         return Xt
 
 
 def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):
+
+    from scipy import optimize
+
     # bounds is None, use simple Brent optimisation
     if bounds is None:
 
@@ -320,6 +343,9 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
     optimizer = _make_boxcox_optimizer(bounds, brack)
 
     def _pearsonr(x):
+        from scipy import stats
+        from scipy.stats import distributions
+
         osm_uniform = _calc_uniform_order_statistic_medians(len(x))
         xvals = distributions.norm.ppf(osm_uniform)
 
@@ -332,6 +358,8 @@ def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
         return optimizer(_eval_pearsonr, args=(xvals, x))
 
     def _mle(x):
+        from scipy.stats import boxcox_llf
+
         def _eval_mle(lmb, data):
             # function to minimize
             return -boxcox_llf(lmb, data)
@@ -376,6 +404,8 @@ def _guerrero(x, sp, bounds=None):
     .. [1] V.M. Guerrero, "Time-series analysis supported by Power
        Transformations ", Journal of Forecasting, vol. 12, pp. 37-48, 1993.
     """
+    from scipy.stats import variation
+
     if sp is None or not is_int(sp) or sp < 2:
         raise ValueError(
             "Guerrero method requires an integer seasonal periodicity (sp) value >= 2."
@@ -466,7 +496,9 @@ def _boxcox(x, lmbda=None, bounds=None):
         raise ValueError("Data must be positive.")
 
     if lmbda is not None:  # single transformation
-        return special.boxcox(x, lmbda)
+        from scipy.special import boxcox
+
+        return boxcox(x, lmbda)
 
     # If lmbda=None, find the lmbda that maximizes the log-likelihood function.
     lmax = _boxcox_normmax(x, bounds=bounds, method="mle")

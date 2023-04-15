@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Implements metrics for pairwise and aggregate comparison."""
 __all__ = ["PairwiseMetric", "AggregateMetric"]
-__author__ = ["Viktor Kazakov", "Markus Löning"]
+__author__ = ["viktorkaz", "mloning"]
 
 import numpy as np
 

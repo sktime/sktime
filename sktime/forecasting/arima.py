@@ -7,9 +7,6 @@ __author__ = ["mloning", "hyang1996", "fkiraly", "ilkersigirci"]
 __all__ = ["AutoARIMA", "ARIMA"]
 
 from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("pmdarima", severity="warning")
 
 
 class AutoARIMA(_PmdArimaAdapter):
@@ -208,6 +205,10 @@ class AutoARIMA(_PmdArimaAdapter):
         A dictionary of key-word arguments to be passed to the scoring metric.
     with_intercept : bool, optional (default=True)
         Whether to include an intercept term.
+    update_pdq : bool, optional (default=True)
+        whether to update pdq parameters in update
+        True: model is refit on all data seen so far, potentially updating p,d,q
+        False: model updates only ARIMA coefficients via likelihood, as in pmdarima
     Further arguments to pass to the SARIMAX constructor:
     - time_varying_regression : boolean, optional (default=False)
         Whether or not coefficients on the exogenous regressors are allowed
@@ -258,10 +259,10 @@ class AutoARIMA(_PmdArimaAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import AutoARIMA
     >>> y = load_airline()
-    >>> forecaster = AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True)
-    >>> forecaster.fit(y)
+    >>> forecaster = AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     AutoARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """  # noqa: E501
 
     _tags = {"handles-missing-data": True}
@@ -317,6 +318,7 @@ class AutoARIMA(_PmdArimaAdapter):
         scoring="mse",
         scoring_args=None,
         with_intercept=True,
+        update_pdq=True,
         time_varying_regression=False,
         enforce_stationarity=True,
         enforce_invertibility=True,
@@ -365,10 +367,13 @@ class AutoARIMA(_PmdArimaAdapter):
         self.scoring = scoring
         self.scoring_args = scoring_args
         self.with_intercept = with_intercept
+        self.update_pdq = update_pdq
         for key in self.SARIMAX_KWARGS_KEYS:
             setattr(self, key, eval(key))
 
         super(AutoARIMA, self).__init__()
+
+        self._sp = sp if sp else 1
 
     def _instantiate_model(self):
         # import inside method to avoid hard dependency
@@ -390,7 +395,7 @@ class AutoARIMA(_PmdArimaAdapter):
             max_D=self.max_D,
             max_Q=self.max_Q,
             max_order=self.max_order,
-            m=self.sp,
+            m=self._sp,
             seasonal=self.seasonal,
             stationary=self.stationary,
             information_criterion=self.information_criterion,
@@ -418,6 +423,30 @@ class AutoARIMA(_PmdArimaAdapter):
             **sarimax_kwargs,
         )
 
+    def _update(self, y, X=None, update_params=True):
+        """Update model with data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        update_pdq = self.update_pdq
+        if update_params:
+            if update_pdq:
+                self._fit(y=self._y, X=self._X)
+            else:
+                if X is not None:
+                    X = X.loc[y.index]
+                self._forecaster.update(y=y, X=X)
+        return self
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -439,7 +468,15 @@ class AutoARIMA(_PmdArimaAdapter):
             "max_q": 2,
             "seasonal": False,
         }
-        return params
+        params2 = {
+            "d": 0,
+            "suppress_warnings": True,
+            "max_p": 2,
+            "max_q": 2,
+            "seasonal": False,
+            "update_pdq": True,
+        }
+        return [params, params2]
 
 
 class ARIMA(_PmdArimaAdapter):
@@ -617,13 +654,13 @@ class ARIMA(_PmdArimaAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import ARIMA
     >>> y = load_airline()
-    >>> forecaster = ARIMA(
+    >>> forecaster = ARIMA(  # doctest: +SKIP
     ...     order=(1, 1, 0),
     ...     seasonal_order=(0, 1, 0, 12),
     ...     suppress_warnings=True)
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """  # noqa: E501
 
     _tags = {"handles-missing-data": True}
@@ -698,3 +735,25 @@ class ARIMA(_PmdArimaAdapter):
             with_intercept=self.with_intercept,
             **sarimax_kwargs,
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params1 = {"maxiter": 3}
+        params2 = {
+            "order": (1, 1, 0),
+            "seasonal_order": (1, 0, 0, 2),
+            "maxiter": 3,
+        }
+        return [params1, params2]

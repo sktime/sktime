@@ -7,9 +7,6 @@ __author__ = ["mloning"]
 __all__ = ["MatrixProfileTransformer"]
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("stumpy", severity="warning")
 
 
 class MatrixProfileTransformer(BaseTransformer):
@@ -38,8 +35,8 @@ class MatrixProfileTransformer(BaseTransformer):
     MatrixProfileTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = MatrixProfileTransformer()
-    >>> y_hat = transformer.fit_transform(y)
+    >>> transformer = MatrixProfileTransformer()  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {

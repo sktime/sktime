@@ -103,7 +103,38 @@ class _TbatsAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X):
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        Derived from example provided by core devs in TBATS repository
+        https://github.com/intive-DataScience/tbats/blob/master/examples/
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables (ignored)
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if update_params:
+            # update model state and refit parameters
+            # _fit re-runs model instantiation which triggers refit
+            self._fit(y=self._y)
+
+        else:
+            # update model state without refitting parameters
+            # out-of-box fit tbats method will not refit parameters
+            self._forecaster.fit(y=self._y)
+
+        return self
+
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -119,6 +150,32 @@ class _TbatsAdapter(BaseForecaster):
             Point predictions
         """
         return self._tbats_forecast(fh)
+
+    def _get_y_pred(self, y_in_sample, y_out_sample):
+        """Combine in- & out-sample prediction, slices given fh.
+
+        Parameters
+        ----------
+        y_in_sample : pd.Series
+            In-sample prediction
+        y_out_sample : pd.Series
+            Out-sample prediction
+
+        Returns
+        -------
+        pd.Series
+            y_pred, sliced by fh
+        """
+        y_pred = pd.concat([y_in_sample, y_out_sample], ignore_index=True).rename(
+            "y_pred"
+        )
+        y_pred = pd.DataFrame(y_pred)
+        # Workaround for slicing with negative index
+        y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
+        y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
+        y_pred.index = self.fh.to_absolute(self.cutoff).to_pandas()
+        y_pred = y_pred["y_pred"].rename(None)
+        return y_pred
 
     def _tbats_forecast(self, fh):
         """TBATS forecast without confidence interval.
@@ -187,7 +244,7 @@ class _TbatsAdapter(BaseForecaster):
 
             if len(fh) != len(fh_out):
                 epred_int = pd.DataFrame({"lower": nans(len_fh), "upper": nans(len_fh)})
-                epred_int.index = fh.to_absolute(self.cutoff)
+                epred_int.index = fh.to_absolute(self.cutoff).to_pandas()
 
                 in_pred_int = epred_int.index.isin(pred_int.index)
                 epred_int[in_pred_int] = pred_int
@@ -196,7 +253,7 @@ class _TbatsAdapter(BaseForecaster):
         else:
             y_out = nans(len_fh)
             pred_int = pd.DataFrame({"lower": nans(len_fh), "upper": nans(len_fh)})
-            pred_int.index = fh.to_absolute(self.cutoff)
+            pred_int.index = fh.to_absolute(self.cutoff).to_pandas()
 
         # y_pred
         y_in_sample = pd.Series(self._forecaster.y_hat)
@@ -248,7 +305,9 @@ class _TbatsAdapter(BaseForecaster):
         # accumulator of results
         var_names = ["Coverage"]
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
-        pred_int = pd.DataFrame(columns=int_idx, index=fh.to_absolute(cutoff))
+        pred_int = pd.DataFrame(
+            columns=int_idx, index=fh.to_absolute(cutoff).to_pandas()
+        )
 
         for c in coverage:
 
@@ -266,14 +325,13 @@ class _TbatsAdapter(BaseForecaster):
 
         return pred_int
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
         -------
         fitted_params : dict
         """
-        self.check_is_fitted()
         fitted_params = {}
         for name in self._get_fitted_param_names():
             fitted_params[name] = getattr(self._forecaster, name, None)
@@ -312,7 +370,7 @@ class _TbatsAdapter(BaseForecaster):
         pred_int = pred_int.loc[
             pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
         ]
-        pred_int.index = fh_out.to_absolute(self.cutoff)
+        pred_int.index = fh_out.to_absolute(self.cutoff).to_pandas()
         pred_int = pred_int.drop(columns=["idx"])
         return pred_int
 

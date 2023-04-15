@@ -60,6 +60,8 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         Number of iterations run.
     """
 
+    _tags = {"python_dependencies": "numba"}
+
     def __init__(
         self,
         n_clusters: int = 8,
@@ -160,14 +162,13 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {
+        return {
             "n_clusters": 2,
             "init_algorithm": "random",
             "metric": "euclidean",
             "n_init": 1,
             "max_iter": 1,
-            "tol": 1e-4,
+            "tol": 0.0001,
             "verbose": False,
             "random_state": 1,
         }
-        return params

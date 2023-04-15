@@ -33,14 +33,15 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 
 
 class BaseRegressor(BaseEstimator, ABC):
     """Abstract base class for time series regressors.
 
-    The base classifier specifies the methods and method signatures that all
-    classifiers have to implement. Attributes with a underscore suffix are set in the
+    The base regressor specifies the methods and method signatures that all
+    regressors have to implement. Attributes with a underscore suffix are set in the
     method fit.
 
     Parameters
@@ -61,19 +62,67 @@ class BaseRegressor(BaseEstimator, ABC):
         "capability:multithreading": False,
     }
 
+    # convenience constant to control which metadata of input data
+    # are regularly retrieved in input checks
+    METADATA_REQ_IN_CHECKS = [
+        "n_instances",
+        "has_nans",
+        "is_univariate",
+        "is_equal_length",
+    ]
+
     def __init__(self):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+        self._X_metadata = {}
 
         # required for compatability with some sklearn interfaces
-        # i.e. CalibratedClassifierCV
+        # i.e. CalibratedRegressorCV
         self._estimator_type = "regressor"
 
         super(BaseRegressor, self).__init__()
 
+    def __rmul__(self, other):
+        """Magic * method, return concatenated RegressorPipeline, transformers on left.
+
+        Overloaded multiplication operation for regressors. Implemented for `other`
+        being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        RegressorPipeline object, concatenation of `other` (first) with `self` (last).
+        """
+        from sktime.regression.compose import RegressorPipeline
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+
+        # behaviour is implemented only if other inherits from BaseTransformer
+        #  in that case, distinctions arise from whether self or other is a pipeline
+        #  todo: this can probably be simplified further with "zero length" pipelines
+        if isinstance(other, BaseTransformer):
+            # RegressorPipeline already has the dunder method defined
+            if isinstance(self, RegressorPipeline):
+                return other * self
+            # if other is a TransformerPipeline but self is not, first unwrap it
+            elif isinstance(other, TransformerPipeline):
+                return RegressorPipeline(regressor=self, transformers=other.steps)
+            # if neither self nor other are a pipeline, construct a RegressorPipeline
+            else:
+                return RegressorPipeline(regressor=self, transformers=[other])
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
     def fit(self, X, y):
-        """Fit time series classifier to training data.
+        """Fit time series regressor to training data.
 
         Parameters
         ----------
@@ -102,13 +151,16 @@ class BaseRegressor(BaseEstimator, ABC):
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
         X, y = _internal_convert(X, y)
-        X_metadata = _check_regressor_input(X, y)
+        X_metadata = _check_regressor_input(
+            X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
+        )
+        self._X_metadata = X_metadata
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
-        # Check this classifier can handle characteristics
+        # Check this regressor can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
-        # Convert data as dictated by the classifier tags
+        # Convert data as dictated by the regressor tags
         X = self._convert_X(X)
         multithread = self.get_tag("capability:multithreading")
         if multithread:
@@ -181,7 +233,7 @@ class BaseRegressor(BaseEstimator, ABC):
 
     @abstractmethod
     def _fit(self, X, y):
-        """Fit time series classifier to training data.
+        """Fit time series regressor to training data.
 
         Abstract method, must be implemented.
 
@@ -248,19 +300,21 @@ class BaseRegressor(BaseEstimator, ABC):
         ValueError if the capabilities in self._tags do not handle the data.
         """
         X = _internal_convert(X)
-        X_metadata = _check_regressor_input(X)
+        X_metadata = _check_regressor_input(
+            X, return_metadata=self.METADATA_REQ_IN_CHECKS
+        )
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
-        # Check this classifier can handle characteristics
+        # Check this regressor can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
-        # Convert data as dictated by the classifier tags
+        # Convert data as dictated by the regressor tags
         X = self._convert_X(X)
 
         return X
 
     def _check_capabilities(self, missing, multivariate, unequal):
-        """Check whether this classifier can handle the data characteristics.
+        """Check whether this regressor can handle the data characteristics.
 
         Parameters
         ----------
@@ -310,7 +364,7 @@ class BaseRegressor(BaseEstimator, ABC):
 
         Parameters
         ----------
-        self : this classifier
+        self : this regressor
         X : pd.DataFrame or np.ndarray. Input attribute data
 
         Returns
@@ -333,6 +387,7 @@ def _check_regressor_input(
     X,
     y=None,
     enforce_min_instances=1,
+    return_metadata=True,
 ):
     """Check whether input X and y are valid formats with minimum data.
 
@@ -344,6 +399,8 @@ def _check_regressor_input(
     y : check whether a pd.Series or np.array
     enforce_min_instances : int, optional (default=1)
         check there are a minimum number of instances.
+    return_metadata : bool, str, or list of str
+        metadata fields to return with X_metadata, input to check_is_scitype
 
     Returns
     -------
@@ -355,7 +412,9 @@ def _check_regressor_input(
         If y or X is invalid input data type, or there is not enough data
     """
     # Check X is valid input type and recover the data characteristics
-    X_valid, _, X_metadata = check_is_scitype(X, scitype="Panel", return_metadata=True)
+    X_valid, _, X_metadata = check_is_scitype(
+        X, scitype="Panel", return_metadata=return_metadata
+    )
     if not X_valid:
         raise TypeError(
             f"X is not of a supported input data type."
@@ -386,7 +445,8 @@ def _check_regressor_input(
         if isinstance(y, np.ndarray):
             if y.ndim > 1:
                 raise ValueError(
-                    f"y must be 1-dimensional but is in fact " f"{y.ndim} dimensional"
+                    f"np.ndarray y must be 1-dimensional, "
+                    f"but found {y.ndim} dimensions"
                 )
     return X_metadata
 
@@ -409,7 +469,7 @@ def _internal_convert(X, y=None):
     """
     if isinstance(X, np.ndarray):
         # Temporary fix to insist on 3D numpy. For univariate problems,
-        # most classifiers simply convert back to 2D. This squeezing should be
+        # most regressors simply convert back to 2D. This squeezing should be
         # done here, but touches a lot of files, so will get this to work first.
         if X.ndim == 2:
             X = X.reshape(X.shape[0], 1, X.shape[1])

@@ -4,7 +4,6 @@ __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["BaseClusterer"]
 
 import time
-from abc import ABC, abstractmethod
 from typing import Any, Union
 
 import numpy as np
@@ -12,6 +11,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
@@ -19,7 +19,7 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
 TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
 
 
-class BaseClusterer(BaseEstimator, ABC):
+class BaseClusterer(BaseEstimator):
     """Abstract base class for time series clusterer.
 
     Parameters
@@ -45,6 +45,44 @@ class BaseClusterer(BaseEstimator, ABC):
         self.n_clusters = n_clusters
         super(BaseClusterer, self).__init__()
         _check_estimator_deps(self)
+
+    def __rmul__(self, other):
+        """Magic * method, return concatenated ClustererPipeline, transformers on left.
+
+        Overloaded multiplication operation for clusterers. Implemented for `other`
+        being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        ClustererPipeline object, concatenation of `other` (first) with `self` (last).
+        """
+        from sktime.clustering.compose import ClustererPipeline
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+
+        # behaviour is implemented only if other inherits from BaseTransformer
+        #  in that case, distinctions arise from whether self or other is a pipeline
+        #  todo: this can probably be simplified further with "zero length" pipelines
+        if isinstance(other, BaseTransformer):
+            # ClustererPipeline already has the dunder method defined
+            if isinstance(self, ClustererPipeline):
+                return other * self
+            # if other is a TransformerPipeline but self is not, first unwrap it
+            elif isinstance(other, TransformerPipeline):
+                return ClustererPipeline(clusterer=self, transformers=other.steps)
+            # if neither self nor other are a pipeline, construct a ClustererPipeline
+            else:
+                return ClustererPipeline(clusterer=self, transformers=[other])
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
 
     def fit(self, X: TimeSeriesInstances, y=None) -> BaseEstimator:
         """Fit time series clusterer to training data.
@@ -203,19 +241,18 @@ class BaseClusterer(BaseEstimator, ABC):
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
         preds = self._predict(X)
+        n_instances = len(preds)
         n_clusters = self.n_clusters
         if n_clusters is None:
             n_clusters = max(preds) + 1
         dists = np.zeros((X.shape[0], n_clusters))
-        for i in range(X.shape[0]):
+        for i in range(n_instances):
             dists[i, preds[i]] = 1
         return dists
 
-    @abstractmethod
     def _score(self, X, y=None):
-        ...
+        raise NotImplementedError
 
-    @abstractmethod
     def _predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
 
@@ -233,9 +270,8 @@ class BaseClusterer(BaseEstimator, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
-        ...
+        raise NotImplementedError
 
-    @abstractmethod
     def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
 
@@ -251,7 +287,7 @@ class BaseClusterer(BaseEstimator, ABC):
         self:
             Fitted estimator.
         """
-        ...
+        raise NotImplementedError
 
     def _check_capabilities(self, missing: bool, multivariate: bool, unequal: bool):
         """Check the capabilities of the clusterer matches input data requirements.
@@ -306,9 +342,8 @@ class BaseClusterer(BaseEstimator, ABC):
         X: np.ndarray (at least 2d) or pd.Dataframe or List[pd.Dataframe]
             Converted X.
         """
-        if isinstance(X, np.ndarray):
-            if X.ndim == 2:
-                X = X.reshape(X.shape[0], 1, X.shape[1])
+        if isinstance(X, np.ndarray) and X.ndim == 2:
+            X = X.reshape(X.shape[0], 1, X.shape[1])
         return X
 
     def _check_clusterer_input(
@@ -336,8 +371,14 @@ class BaseClusterer(BaseEstimator, ABC):
         """
         X = self._initial_conversion(X)
 
+        X_metadata_required = [
+            "n_instances",
+            "has_nans",
+            "is_univariate",
+            "is_equal_length",
+        ]
         X_valid, _, X_metadata = check_is_scitype(
-            X, scitype="Panel", return_metadata=True
+            X, scitype="Panel", return_metadata=X_metadata_required
         )
         if not X_valid:
             raise TypeError(

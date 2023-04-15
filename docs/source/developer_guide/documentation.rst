@@ -171,9 +171,9 @@ MeanAbsoluteScaledError_
 
 .. _numpydoc: https://numpydoc.readthedocs.io/en/latest/index.html
 .. _pydocstyle: http://www.pydocstyle.org/en/stable/
-.. _BOSSEnsemble: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.BOSSEnsemble.html#sktime.classification.dictionary_based.BOSSEnsemble
-.. _ContractableBOSS: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.ContractableBOSS.html#sktime.classification.dictionary_based.ContractableBOSS
-.. _MeanAbsoluteScaledError: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.performance_metrics.forecasting.MeanAbsoluteScaledError.html
+.. _BOSSEnsemble: https://www.sktime.net/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.BOSSEnsemble.html#sktime.classification.dictionary_based.BOSSEnsemble
+.. _ContractableBOSS: https://www.sktime.net/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.ContractableBOSS.html#sktime.classification.dictionary_based.ContractableBOSS
+.. _MeanAbsoluteScaledError: https://www.sktime.net/en/latest/api_reference/auto_generated/sktime.performance_metrics.forecasting.MeanAbsoluteScaledError.html
 
 .. _sphinx: https://www.sphinx-doc.org/
 .. _readthedocs: https://readthedocs.org/projects/sktime/
@@ -182,20 +182,20 @@ Documentation Build
 -------------------
 
 We use `sphinx`_ to build our documentation and `readthedocs`_ to host it.
-You can find our latest documentation `here <https://www.sktime.org/en/latest/>`_.
+You can find our latest documentation `here <https://www.sktime.net/en/latest/>`_.
 
 The source files can be found
-in `docs/source/ <https://github.com/alan-turing-institute/sktime/tree/main/docs/source>`_.
+in `docs/source/ <https://github.com/sktime/sktime/tree/main/docs/source>`_.
 The main configuration file for sphinx is
-`conf.py <https://github.com/alan-turing-institute/sktime/blob/main/docs/source/conf.py>`__
+`conf.py <https://github.com/sktime/sktime/blob/main/docs/source/conf.py>`__
 and the main page is
-`index.rst <https://github.com/alan-turing-institute/sktime/blob/main/docs/source/index.rst>`__.
+`index.rst <https://github.com/sktime/sktime/blob/main/docs/source/index.rst>`__.
 To add new pages, you need to add a new ``.rst`` file and include it in
 the ``index.rst`` file.
 
 To build the documentation locally, you need to install a few extra
 dependencies listed in
-`pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__.
+`pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__.
 
 1. To install extra dependencies from the root directory, run:
 
