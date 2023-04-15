@@ -66,6 +66,7 @@ Pipeline building
     Id
     YtoX
     IxToX
+    TransformByLevel
     TransformIf
 
 .. currentmodule:: sktime.transformations.panel.compose
