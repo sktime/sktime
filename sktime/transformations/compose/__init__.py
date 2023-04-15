@@ -10,6 +10,7 @@ from sktime.transformations.compose._featureunion import FeatureUnion
 from sktime.transformations.compose._fitintransform import FitInTransform
 from sktime.transformations.compose._id import Id
 from sktime.transformations.compose._invert import InvertTransform
+from sktime.transformations.compose._ixtox import IxToX
 from sktime.transformations.compose._multiplex import MultiplexTransformer
 from sktime.transformations.compose._optional import OptionalPassthrough
 from sktime.transformations.compose._pipeline import TransformerPipeline
@@ -24,6 +25,7 @@ __all__ = [
     "FitInTransform",
     "Id",
     "InvertTransform",
+    "IxToX",
     "MultiplexTransformer",
     "OptionalPassthrough",
     "TransformerPipeline",
