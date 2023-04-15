@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing transformations by group."""
 
+from warnings import warn
+
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.transformations._delegate import _DelegatedTransformer
 
@@ -32,6 +34,12 @@ class TransformByLevel(_DelegatedTransformer):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
+    raise_warnings : bool, optional, default=True
+        whether to warn the user if `transformer` is instance-wise
+        in this case wrapping the `transformer` om `TransformByLevel` does not change
+        the estimator logic, compared to not wrapping it.
+        Wrapping this way can make sense in some cases of tuning,
+        in which case `warn=False` can be set to suppress the warning raised.
 
     Attributes
     ----------
@@ -58,12 +66,12 @@ class TransformByLevel(_DelegatedTransformer):
         "fit_is_empty": False,
     }
 
-    # attribute for _DelegatedTrafoer, which then delegates
+    # attribute for _DelegatedTransformer, which then delegates
     #     all non-overridden methods are same as of getattr(self, _delegate_name)
-    #     see further details in _DelegatedTrafoer docstring
+    #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
 
-    def __init__(self, transformer, groupby="local"):
+    def __init__(self, transformer, groupby="local", raise_warnings=True):
 
         self.transformer = transformer
         self.groupby = groupby
@@ -71,6 +79,14 @@ class TransformByLevel(_DelegatedTransformer):
         self.transformer_ = transformer.clone()
 
         super(TransformByLevel, self).__init__()
+
+        if raise_warnings and self.transformer_.get_tag("scitype:instancewise"):
+            warn(
+                f"instance of {type(self.transformer_)} passed to TransformByLevel "
+                "transforms by instance already, wrapping in TransformByLevel "
+                "will not change the estimator logic, compared to not wrapping it.",
+                stacklevel=2,
+            )
 
         self.clone_tags(self.transformer_)
         self.set_tags(**{"fit_is_empty": False})
