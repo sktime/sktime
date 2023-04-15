@@ -1588,6 +1588,7 @@ class ForecastX(BaseForecaster):
             fy_proba = ARIMA()
         else:
             fy_proba = NaiveForecaster()
+        fx = NaiveForecaster()
 
         params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
 
