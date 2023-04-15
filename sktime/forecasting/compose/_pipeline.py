@@ -1673,6 +1673,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "X-y-must-have-same-index": False,
     }
 
@@ -1686,7 +1687,9 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         super(Permute, self).__init__()
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
+            "capability:insample",
             "capability:pred_int",  # can the estimator produce prediction intervals?
+            "capability:pred_int:insample",
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
             "fit_is_empty",
