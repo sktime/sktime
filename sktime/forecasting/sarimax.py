@@ -204,7 +204,7 @@ class SARIMAX(_StatsModelsAdapter):
         Parameters
         ----------
         prediction_results : PredictionResults
-            results class for predictions
+            results class, as returned by ``self._fitted_forecaster.get_prediction``
         alpha : float
             level of significance
 
