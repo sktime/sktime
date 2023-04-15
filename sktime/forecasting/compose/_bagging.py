@@ -97,7 +97,9 @@ class BaggingForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "requires-fh-in-fit": False,  # like AutoETS overwritten if forecaster not None
         "enforce_index_type": None,  # like AutoETS overwritten if forecaster not None
-        "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        "capability:insample": True,  # can the estimator make in-sample predictions?
+        "capability:pred_int": True,  # can the estimator produce prediction intervals?
+        "capability:pred_int:insample": True,  # ... for in-sample horizons?
     }
 
     def __init__(

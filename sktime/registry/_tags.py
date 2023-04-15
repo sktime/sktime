@@ -200,6 +200,18 @@ ESTIMATOR_TAG_REGISTER = [
         "does the forecaster implement predict_variance?",
     ),
     (
+        "capability:insample",
+        "forecaster",
+        "bool",
+        "can the forecaster make in-sample predictions?",
+    ),
+    (
+        "capability:pred_int:insample",
+        "forecaster",
+        "bool",
+        "can the forecaster make in-sample predictions in predict_interval/quantiles?",
+    ),
+    (
         "capability:multivariate",
         [
             "classifier",

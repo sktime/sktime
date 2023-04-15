@@ -85,6 +85,7 @@ class VECM(_StatsModelsAdapter):
         "univariate-only": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
