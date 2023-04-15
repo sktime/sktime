@@ -410,6 +410,8 @@ class ForecastingPipeline(_Pipeline):
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
+            "capability:pred_int:insample",  # ... for in-sample horizons?
+            "capability:insample",  # can the estimator make in-sample predictions?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -828,6 +830,8 @@ class TransformedTargetForecaster(_Pipeline):
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
+            "capability:pred_int:insample",  # ... for in-sample horizons?
+            "capability:insample",  # can the estimator make in-sample predictions?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]

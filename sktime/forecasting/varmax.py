@@ -216,6 +216,7 @@ class VARMAX(_StatsModelsAdapter):
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:pred_int": False,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(

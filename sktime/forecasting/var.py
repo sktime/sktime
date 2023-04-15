@@ -80,6 +80,7 @@ class VAR(_StatsModelsAdapter):
         "univariate-only": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
