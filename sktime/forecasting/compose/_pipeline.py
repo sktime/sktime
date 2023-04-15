@@ -1251,6 +1251,7 @@ class ForecastX(BaseForecaster):
         "fit_is_empty": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
@@ -1274,7 +1275,13 @@ class ForecastX(BaseForecaster):
 
         super(ForecastX, self).__init__()
 
-        self.clone_tags(forecaster_y, "capability:pred_int")
+        tags_to_clone_from_forecaster_y = [
+            "capability:pred_int",
+            "capability:pred_int:insample",
+            "capability:insample",
+        ]
+
+        self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)
 
         # tag_translate_dict = {
         #    "handles-missing-data": forecaster.get_tag("handles-missing-data")
