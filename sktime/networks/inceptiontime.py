@@ -26,6 +26,8 @@ class InceptionTimeNetwork(BaseDeepNetwork):
                     ArXiv}, Year                     = {2019} }
     """
 
+    _tags = {"python_dependencies": "tensorflow"}
+
     def __init__(
         self,
         n_filters=32,
@@ -33,7 +35,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         use_bottleneck=True,
         bottleneck_size=32,
         depth=6,
-        kernel_size=41 - 1,
+        kernel_size=40,
         random_state=0,
     ):
         """Initialize Inception Time.
@@ -49,13 +51,14 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         :param random_state: int, seed to any needed random actions
         """
         _check_dl_dependencies("tensorflow", severity="error")
+        super(InceptionTimeNetwork, self).__init__()
+
         self.n_filters = n_filters
         self.use_residual = use_residual
         self.use_bottleneck = use_bottleneck
         self.depth = depth
         self.kernel_size = kernel_size
         self.bottleneck_size = bottleneck_size
-
         self.random_state = random_state
 
     def _inception_module(self, input_tensor, stride=1, activation="linear"):
