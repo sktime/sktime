@@ -50,7 +50,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         :param bottleneck_size: int,
         :param random_state: int, seed to any needed random actions
         """
-        _check_dl_dependencies("tensorflow", severity="error")
+        _check_dl_dependencies(severity="error")
         super(InceptionTimeNetwork, self).__init__()
 
         self.n_filters = n_filters
