@@ -605,7 +605,7 @@ def get_slice(obj, start=None, end=None, start_inclusive=True, end_inclusive=Fal
         elif end:
             slice_select = get_end_cond()
         elif start:
-            slice_select = get_start_cond
+            slice_select = get_start_cond()
 
         obj_subset = obj.iloc[slice_select]
         return convert_to(obj_subset, obj_in_mtype)
