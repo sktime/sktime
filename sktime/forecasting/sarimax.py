@@ -206,7 +206,7 @@ class SARIMAX(_StatsModelsAdapter):
         prediction_results : PredictionResults
             results class, as returned by ``self._fitted_forecaster.get_prediction``
         alpha : float
-            level of significance
+            one minus nominal coverage
 
         Returns
         -------
