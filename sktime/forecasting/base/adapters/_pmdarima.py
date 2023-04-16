@@ -95,9 +95,6 @@ class _PmdArimaAdapter(BaseForecaster):
 
         if X is not None:
             X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
-            print(X)
-            print(end_int)
-
             X = X.iloc[:end_int]
 
         # distinguish between in-sample and out-of-sample prediction
