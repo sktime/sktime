@@ -280,13 +280,10 @@ class DynamicFactor(_StatsModelsAdapter):
             alpha = 1 - coverage
 
             if "exog" in inspect.signature(model.__init__).parameters.keys():
-                y_pred = model.get_forecast(steps=steps, exog=X).conf_int(
-                    alpha=alpha
-                )
+                y_pred = model.get_forecast(steps=steps, exog=X).conf_int(alpha=alpha)
             else:
-                y_pred = model.get_forecast(steps=steps + 1).conf_int(
-                    alpha=alpha
-                )
+                y_pred = model.get_forecast(steps=steps).conf_int(alpha=alpha)
+
             y_pred = y_pred.iloc[ix]
 
             y_pred.rename(
