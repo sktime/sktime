@@ -126,20 +126,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
             metrics=self.metrics,
         )
 
-        # if user hasn't provided a custom ReduceLROnPlateau via init already,
-        # add the default from literature
-        if self.callbacks is None:
-            self.callbacks = []
-
-        if not any(
-            isinstance(callback, keras.callbacks.ReduceLROnPlateau)
-            for callback in self.callbacks
-        ):
-            reduce_lr = keras.callbacks.ReduceLROnPlateau(
-                monitor="loss", factor=0.5, patience=50, min_lr=0.0001
-            )
-            self.callbacks.append(reduce_lr)
-
         return model
 
     def _fit(self, X, y):
@@ -165,15 +151,36 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
         if self.verbose:
             self.model_.summary()
+
+        callbacks = self._check_callbacks(self.callbacks)
+
         self.history = self.model_.fit(
             X,
             y_onehot,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            callbacks=deepcopy(callbacks) if callbacks else [],
         )
         return self
+
+    def _check_callbacks(self, callbacks):
+        from tensorflow import keras
+
+        # if user hasn't provided a custom ReduceLROnPlateau via init already,
+        # add the default from literature
+        if callbacks is None:
+            callbacks = []
+
+        if not any(
+            isinstance(callback, keras.callbacks.ReduceLROnPlateau)
+            for callback in callbacks
+        ):
+            reduce_lr = keras.callbacks.ReduceLROnPlateau(
+                monitor="loss", factor=0.5, patience=50, min_lr=0.0001
+            )
+            callbacks = callbacks + [reduce_lr]
+        return callbacks
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
