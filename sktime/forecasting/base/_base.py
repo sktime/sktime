@@ -2055,9 +2055,8 @@ class BaseForecaster(BaseEstimator):
                 at quantile probability in second col index, for the row index.
         """
         implements_interval = self._has_implementation_of("_predict_interval")
-        implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
-        can_do_proba = implements_interval or implements_quantiles or implements_proba
+        can_do_proba = implements_interval or implements_proba
 
         if not can_do_proba:
             raise RuntimeError(
