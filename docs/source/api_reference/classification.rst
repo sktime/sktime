@@ -35,6 +35,7 @@ Deep learning
 
     CNNClassifier
     FCNClassifier
+    InceptionTimeClassifier
     MLPClassifier
     TapNetClassifier
 
