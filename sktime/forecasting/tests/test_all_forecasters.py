@@ -538,7 +538,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # The following skips this test for all subclasses of ``_StatsModelsAdapter``.
         # This weakens coverage for valid subclasses with probabilistic capability.
         # This should be addressed in future and is being tracked in issue #4482.
-        contains_interval_adapter = hasattr(f, "_extract_conf_int") and callable(getattr(f, "_extract_conf_int"))
+        contains_interval_adapter = hasattr(f, "_extract_conf_int") and callable(
+            getattr(f, "_extract_conf_int")
+        )
         implements_interval_adapter = f._has_implementation_of("_extract_conf_int")
 
         if contains_interval_adapter and not implements_interval_adapter:
