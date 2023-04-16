@@ -139,10 +139,6 @@ EXCLUDED_TESTS = {
         "test_predict_quantiles",
         "test_predict_proba",
     ],
-    # stochastic failure of quantile prediction monotonicity, refer to #4420, #4431
-    "VAR": ["test_predict_quantiles"],
-    "Prophet": ["test_predict_quantiles"],
-    "VECM": ["test_predict_quantiles"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
