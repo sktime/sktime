@@ -118,12 +118,14 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         # if user hasn't provided own metrics use accuracy
         if self.metrics is None:
-            self.metrics = ["accuracy"]
+            metrics = ["accuracy"]
+        else:
+            metrics = self.metrics
 
         model.compile(
             loss=self.loss,
             optimizer=keras.optimizers.Adam(),
-            metrics=self.metrics,
+            metrics=metrics,
         )
 
         return model
