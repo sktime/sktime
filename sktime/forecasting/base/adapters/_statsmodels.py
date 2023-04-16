@@ -174,6 +174,12 @@ class _StatsModelsAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
+        implements_interval_adapter = self._has_implementation_of("_extract_conf_int")
+        implements_quantiles = self._has_implementation_of("_predict_quantiles")
+
+        if not implements_interval_adapter and implements_quantiles:
+            return BaseForecaster._predict_interval(self, fh, X=X, coverage=coverage)
+
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
