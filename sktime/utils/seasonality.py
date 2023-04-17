@@ -115,11 +115,15 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
     return df_pivot
 
 
-def _unpivot_sp(df, freq=None, template=None):
+def _unpivot_sp(df, template=None):
 
-    if freq is None and template is not None:
-        if hasattr(template.index, "freq"):
+    if template is not None:
+        if hasattr(template, "index") and hasattr(template.index, "freq"):
             freq = template.index.freq
+        elif hasattr(template, "freq"):
+            freq = template.freq
+        else:
+            freq = template
 
     df_melt = df.melt(ignore_index=False)
 
