@@ -42,7 +42,7 @@ def test_pivot_sp(sp, index_type, n_timepoints):
     pivot_values = df_pivot.values.flatten()
     pivot_values = pivot_values[~np.isnan(pivot_values)]
     df_values = df.values.flatten()
-    assert(np.all(df_values == pivot_values))
+    assert np.all(df_values == pivot_values)
 
 
 @pytest.mark.parametrize("n_timepoints", [50, 1])
