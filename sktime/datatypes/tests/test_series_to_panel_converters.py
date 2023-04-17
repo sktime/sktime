@@ -38,7 +38,7 @@ def test_convert_numpy_panel_to_series():
 
 def test_convert_df_series_to_panel():
     """Test output format of series-to-panel for dataframe type input."""
-    X_series = _make_series(n_columns=2, return_mtype="np.ndarray")
+    X_series = _make_series(n_columns=2, return_mtype="pd.DataFrame")
 
     X_panel = convert_Series_to_Panel(X_series)
 
