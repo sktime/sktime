@@ -95,10 +95,15 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
     # ix_selector = ix % sp == 0
 
     if isinstance(df.index, pd.PeriodIndex):
+        if isinstance(anchor.index, pd.DatetimeIndex):
+            aix = anchor.index.to_period(freq=freq)
+        else:
+            aix = anchor.index
+
         n = len(df_pivot)
         # need to correct for anchor being 1970 in int conversion
-        offset = df_pivot.index * sp - anchor.index[[0] * n].astype("int64")
-        pivot_ix = anchor.index[[0] * n] + offset
+        offset = df_pivot.index * sp - aix[[0] * n].astype("int64")
+        pivot_ix = aix[[0] * n] + offset
     else:
         n = len(df_pivot)
         pivot_ix = anchor.index[[0] * n] + df_pivot.index * sp
