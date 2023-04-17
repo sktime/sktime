@@ -69,6 +69,7 @@ def autocorrelation_seasonality_test(y, sp):
 def _pivot_sp(df, sp, anchor=None, freq=None):
 
     if isinstance(df.index, pd.DatetimeIndex):
+        df = df.copy()
         df.index = df.index.to_period(freq=freq)
         was_datetime = True
     else:
@@ -114,7 +115,11 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
     return df_pivot
 
 
-def _unpivot_sp(self, df, freq=None):
+def _unpivot_sp(df, freq=None, template=None):
+
+    if freq is None and template is not None:
+        if hasattr(template.index, "freq"):
+            freq = template.index.freq
 
     df_melt = df.melt(ignore_index=False)
 
@@ -134,5 +139,8 @@ def _unpivot_sp(self, df, freq=None):
 
     if was_datetime:
         df_melt.index = df_melt.index.to_timestamp()
+
+    if template is not None:
+        df_melt.columns = template.columns
 
     return df_melt
