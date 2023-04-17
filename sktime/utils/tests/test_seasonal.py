@@ -32,7 +32,10 @@ def test_pivot_sp(sp, index_type, n_timepoints):
 
     assert len(df_pivot.columns) == min(sp, len(df))
 
-    assert len(df_pivot) == ceil(len(df) / sp)
+    if index_type != "datetime":
+        assert len(df_pivot) == ceil(len(df) / sp)
+    else:
+        assert len(df_pivot) == ceil((len(df) + 1) / sp)
 
     # compare values in pivot and plain frame,
     # check these are the same if read in left-right-then-top-down order
