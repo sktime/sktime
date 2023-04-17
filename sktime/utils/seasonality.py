@@ -104,7 +104,10 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
         anchor = df
 
     if not isinstance(df.index, pd.PeriodIndex):
-        period_len = anchor.index[1] - anchor.index[0]
+        if pd.api.types.is_integer_dtype(anchor.index) and len(anchor) <= 1:
+            period_len = 1
+        else:
+            period_len = anchor.index[1] - anchor.index[0]
         ix = (df.index - anchor.index[0]) / period_len
     else:
         ix = df.index
