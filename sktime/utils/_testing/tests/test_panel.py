@@ -70,7 +70,7 @@ def test_make_panel(n_instances, n_columns, n_timepoints, return_mtype):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 @pytest.mark.parametrize("n_classes", N_CLASSES)
-@pytest.mark.parametrize("return_numpy", [True, False])
+@pytest.mark.parametrize("return_mtype", [True, False])
 def test_make_classification_problem(
     n_instances, n_columns, n_timepoints, n_classes, return_numpy
 ):
