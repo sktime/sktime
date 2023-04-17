@@ -17,8 +17,48 @@ def _make_series(
     return_numpy=False,
     random_state=None,
     add_nan=False,
+    return_mtype=None,
 ):
-    """Generate univariate or multivariate time series."""
+    """Generate univariate or multivariate time series.
+
+    Utility for interface contact testing.
+
+    Will produce a time series in sktime compatible mtype data format, for testing.
+    Samples values i.i.d. from standard normal distribution.
+
+    Parameters
+    ----------
+    n_timepoints : int, default=50
+        number of time points in the series
+    n_columns : int, default=1
+        number of columns in the series
+    all_positive : bool, default=False
+        if True, subtracts minimum and adds 1 from values after generating the series
+        ensures all the values generated are greater equal 1
+    index_type : str, one of "period", "datetime" (default), "range", "int"
+        the index of the returned object, if a pandas object; otherwise has no effect
+        "period" - `pd.PeriodIndex`
+        "datetime" - `pd.DatetimeIndex`
+        "range" - `pd.RangeIndex`
+        "int" - `pd.Index` of `int` dtype
+    random_state : None (default), `int` or `np.random.RandomState`
+        random seed for sampling, if `None`, will use defalut `np.random` generation
+    add_nan : bool, default=False
+        whether to include nans in the series.
+        If `True`, data will contain three `np.nan` entries, at start, end and middle
+    return_mtype : str, sktime Panel mtype str, default="pd-multiindex"
+        see sktime.datatypes.MTYPE_LIST_PANEL for a full list of admissible strings
+        see sktime.datatypes.MTYPE_REGISTER for an short explanation of formats
+        see examples/AA_datatypes_and_datasets.ipynb for a full specification
+
+    Returns
+    -------
+    X : an `sktime` time series data container of mtype `return_mtype`
+        with `n_columns` variables, `n_timepoints` time points
+        index is as per `index_type` for `pandas` return objects
+        generating distribution is all values i.i.d. standard normal
+        if `all_positive=True`, subtracts minimum and adds 1
+    """
     rng = check_random_state(random_state)
     data = rng.normal(size=(n_timepoints, n_columns))
     if add_nan:
@@ -28,15 +68,15 @@ def _make_series(
         data[-1] = np.nan
     if all_positive:
         data -= np.min(data, axis=0) - 1
-    if return_numpy:
+    if return_numpy or return_mtype == "np.ndarray":
         if n_columns == 1:
             data = data.ravel()
         return data
     else:
         index = _make_index(n_timepoints, index_type)
-        if n_columns == 1:
+        if n_columns == 1 or return_mtype == "pd.Series":
             return pd.Series(data.ravel(), index)
-        else:
+        elif return_mtype is None or return_mtype == "pd.DataFrane":
             return pd.DataFrame(data, index)
 
 
