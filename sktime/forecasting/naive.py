@@ -27,6 +27,7 @@ from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
+from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
 
@@ -323,76 +324,6 @@ class NaiveForecaster(_BaseWindowForecaster):
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
-    def _pivot_sp(self, df, sp, anchor=None):
-
-        if isinstance(df.index, pd.DatetimeIndex):
-            df.index = df.index.to_period(freq=self._y.index.freq)
-            was_datetime = True
-        else:
-            was_datetime = False
-
-        if anchor is None:
-            anchor = df
-
-        if not isinstance(df.index, pd.PeriodIndex):
-            period_len = anchor.index[1] - anchor.index[0]
-            ix = (df.index - anchor.index[0]) / period_len
-        else:
-            ix = df.index
-        ix = ix.astype("int64")
-
-        df = pd.DataFrame(df)
-        df_pivot = pd.pivot_table(
-            data=df,
-            index=ix // sp,  # Upper level
-            columns=ix % sp,  # Lower level
-            dropna=False,
-        )
-        # ix_selector = ix % sp == 0
-
-        if isinstance(df.index, pd.PeriodIndex):
-            n = len(df_pivot)
-            # need to correct for anchor being 1970 in int conversion
-            offset = df_pivot.index * sp - anchor.index[[0] * n].astype("int64")
-            pivot_ix = anchor.index[[0] * n] + offset
-        else:
-            n = len(df_pivot)
-            pivot_ix = anchor.index[[0] * n] + df_pivot.index * sp
-
-        df_pivot.index = pivot_ix
-        # df_pivot.index = df.index[ix_selector]
-        # df_pivot.index = df_pivot.index * sp
-
-        if was_datetime:
-            df_pivot.index = df_pivot.index.to_timestamp()
-
-        df_pivot.columns = df_pivot.columns.droplevel(0)
-
-        return df_pivot
-
-    def _unpivot_sp(self, df):
-
-        df_melt = df.melt(ignore_index=False)
-
-        offset = df_melt[df_melt.columns[0]]
-        if isinstance(df_melt.index, pd.DatetimeIndex):
-            a = df_melt.index.to_period(freq=self._y.index.freq)
-            res = a + offset
-            df_melt.index = res
-            was_datetime = True
-        else:
-            df_melt.index = df_melt.index + offset
-            was_datetime = False
-        df_melt = df_melt.drop(columns=df_melt.columns[0])
-        df_melt = df_melt.sort_index()
-        df_melt = df_melt.dropna()
-        # df_melt.columns = df.columns.get_level_values(0).unique()
-
-        if was_datetime:
-            df_melt.index = df_melt.index.to_timestamp()
-
-        return df_melt
-
     def _predict_naive(self, fh=None, X=None):
 
         from sktime.transformations.series.lag import Lag
@@ -410,6 +341,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         lagger = Lag(1, keep_column_names=True, freq=freq)
 
         expected_index = fh.to_absolute(cutoff).to_pandas()
+
         if strategy == "last" and sp == 1:
             y_old = lagger.fit_transform(_y)
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
@@ -422,18 +354,17 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         elif strategy == "last" and sp > 1:
 
-            y_old = self._pivot_sp(_y, sp)
+            y_old = _pivot_sp(_y, sp)
             y_old = lagger.fit_transform(y_old)
 
             y_new_mask = pd.Series(index=expected_index, dtype="float64")
-            y_new = self._pivot_sp(y_new_mask, sp, anchor=_y)
+            y_new = _pivot_sp(y_new_mask, sp, anchor=_y)
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
             # subset to rows that contain elements we wanted to fill
             y_pred = y_filled.loc["b"]
             # reformat to wide
-            y_pred = self._unpivot_sp(y_pred)
-            y_pred.columns = [_y.name]
+            y_pred = _unpivot_sp(y_pred, template=_y)
 
             # subset to required indices
             y_pred = y_pred.loc[expected_index]
