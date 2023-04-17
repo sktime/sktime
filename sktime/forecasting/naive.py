@@ -402,7 +402,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         _y = self._y
         cutoff = self.cutoff
 
-        if hasattr(_y.index, "freq"):
+        if isinstance(_y.index, pd.DatetimeIndex) and hasattr(_y.index, "freq"):
             freq = _y.index.freq
         else:
             freq = None
