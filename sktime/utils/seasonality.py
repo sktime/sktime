@@ -192,6 +192,9 @@ def _unpivot_sp(df, template=None):
         df_melt.index = df_melt.index.to_timestamp()
 
     if template is not None:
-        df_melt.columns = template.columns
+        if hasattr(template, "columns"):
+            df_melt.columns = template.columns
+        elif hasattr(template, "name"):
+            df_melt.columns = [template.name]
 
     return df_melt
