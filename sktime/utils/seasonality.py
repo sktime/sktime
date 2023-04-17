@@ -93,15 +93,18 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
         if provided, will be used as frequency in offset calculations
         needed only of `df` is `pd.DatetimeIndex` or `pd.PeriodIndex` without `freq`
     """
+    if anchor is None:
+        anchor = df
+
+    if freq is None and hasattr(anchor.index, "freq"):
+        freq = anchor.index.freq
+
     if isinstance(df.index, pd.DatetimeIndex):
         df = df.copy()
         df.index = df.index.to_period(freq=freq)
         was_datetime = True
     else:
         was_datetime = False
-
-    if anchor is None:
-        anchor = df
 
     if not isinstance(df.index, pd.PeriodIndex):
         if pd.api.types.is_integer_dtype(anchor.index) and len(anchor) <= 1:
