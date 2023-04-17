@@ -367,7 +367,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred = _unpivot_sp(y_pred, template=_y)
 
             # subset to required indices
-            y_pred = y_pred.loc[expected_index]
+            y_pred = y_pred.reindex(expected_index)
             # convert to pd.Series from pd.DataFrame
             y_pred = y_pred.iloc[:, 0]
 
