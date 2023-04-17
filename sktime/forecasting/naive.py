@@ -399,11 +399,19 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         strategy = self.strategy
         sp = self.sp
-        lagger = Lag(1, keep_column_names=True)
+        _y = self._y
+        cutoff = self.cutoff
 
-        expected_index = fh.to_absolute(self.cutoff).to_pandas()
+        if hasattr(_y.index, "freq"):
+            freq = _y.index.freq
+        else:
+            freq = None
+
+        lagger = Lag(1, keep_column_names=True, freq=freq)
+
+        expected_index = fh.to_absolute(cutoff).to_pandas()
         if strategy == "last" and sp == 1:
-            y_old = lagger.fit_transform(self._y)
+            y_old = lagger.fit_transform(_y)
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
@@ -414,25 +422,25 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         elif strategy == "last" and sp > 1:
 
-            y_old = self._pivot_sp(self._y, sp)
+            y_old = self._pivot_sp(_y, sp)
             y_old = lagger.fit_transform(y_old)
 
             y_new_mask = pd.Series(index=expected_index, dtype="float64")
-            y_new = self._pivot_sp(y_new_mask, sp, anchor=self._y)
+            y_new = self._pivot_sp(y_new_mask, sp, anchor=_y)
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
             # subset to rows that contain elements we wanted to fill
             y_pred = y_filled.loc["b"]
             # reformat to wide
             y_pred = self._unpivot_sp(y_pred)
-            y_pred.columns = [self._y.name]
+            y_pred.columns = [_y.name]
 
             # subset to required indices
             y_pred = y_pred.loc[expected_index]
             # convert to pd.Series from pd.DataFrame
             y_pred = y_pred.iloc[:, 0]
 
-        y_pred.name = self._y.name
+        y_pred.name = _y.name
         return y_pred
 
     def _predict(self, fh=None, X=None):
