@@ -8,9 +8,6 @@ __author__ = ["fkiraly"]
 
 __all__ = ["SeasonalReducer"]
 
-from warnings import warn
-
-import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
