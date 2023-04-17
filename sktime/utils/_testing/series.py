@@ -37,10 +37,10 @@ def _make_series(
         ensures all the values generated are greater equal 1
     index_type : str, one of "period", "datetime" (default), "range", "int"
         the index of the returned object, if a pandas object; otherwise has no effect
-        "period" - `pd.PeriodIndex`
-        "datetime" - `pd.DatetimeIndex`
-        "range" - `pd.RangeIndex`
-        "int" - `pd.Index` of `int` dtype
+        "period" - `pd.PeriodIndex`, monthly (M) starting at Jan 2000 (incl)
+        "datetime" - `pd.DatetimeIndex`, daily (D) starting at Jan 1, 2000 (incl)
+        "range" - `pd.RangeIndex`, starting at 3 (incl)
+        "int" - `pd.Index` of `int` dtype, starting at 3 (incl)
     random_state : None (default), `int` or `np.random.RandomState`
         random seed for sampling, if `None`, will use defalut `np.random` generation
     add_nan : bool, default=False
