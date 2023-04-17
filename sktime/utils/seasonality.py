@@ -67,7 +67,32 @@ def autocorrelation_seasonality_test(y, sp):
 
 
 def _pivot_sp(df, sp, anchor=None, freq=None):
+    """Pivot univariate series to multivariate-by-seasonal-offset.
 
+    For an input `df: pd.DataFrame` or `pd.Series`, with regular index,
+    with one variable, outputs the following:
+    a `pd.DataFrame` where:
+
+    * row index is `anchor.index[0]` plus multiples of `sp` times periodicity of `df`,
+      index elements present are those where there is at least one index in `df`
+      at which a value is observed between output row index and subsequent index
+    * column index is 0 ... `sp - 1`
+    * the entry in row location `i`, column location `j` is the entry at
+      `df.loc[i + j * period_of_df]`, where `period_of_df` is regular period of `df`
+
+    Parameters
+    ----------
+    `df` : `pd.Series` or `pd.DataFrame` with `pandas` integer index,
+        `pd.DatetimeIndex`, or `pd.PeriodIndex`, and with one column/variable
+    `sp` : int
+        seasonality/periodicity parameter of the pivot
+    `anchor` : None, or `pd.Series` or `pd.DataFrame`
+        anchor data frame for the pivot, equal to `df` if not provided
+    `freq` : None, or `pd.Series`, `pd.DataFrame`, `pd.Index`, or `pandas` frequency
+        if None, equal to df.index.freq
+        if provided, will be used as frequency in offset calculations
+        needed only of `df` is `pd.DatetimeIndex` or `pd.PeriodIndex` without `freq`
+    """
     if isinstance(df.index, pd.DatetimeIndex):
         df = df.copy()
         df.index = df.index.to_period(freq=freq)
@@ -92,7 +117,6 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
         columns=ix % sp,  # Lower level
         dropna=False,
     )
-    # ix_selector = ix % sp == 0
 
     if isinstance(df.index, pd.PeriodIndex):
         if isinstance(anchor.index, pd.DatetimeIndex):
@@ -109,8 +133,6 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
         pivot_ix = anchor.index[[0] * n] + df_pivot.index * sp
 
     df_pivot.index = pivot_ix
-    # df_pivot.index = df.index[ix_selector]
-    # df_pivot.index = df_pivot.index * sp
 
     if was_datetime:
         df_pivot.index = df_pivot.index.to_timestamp()
@@ -121,7 +143,25 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
 
 
 def _unpivot_sp(df, template=None):
+    """Unpivot DataFrame with multivariate-by-seasonal-offset, invert _pivot_sp.
 
+    Inverse operation to `_pivot_sp`.
+
+    For a `pd.DataFrame` that is like the output of `_pivot_sp`, produces
+    a univariate `pd.DataFrame` where:
+
+    * row index consists of all combination sums of `df.index` and `df.columns`
+    * column index is `template.index` if `template` is given, otherwise `RangeIndex`
+    * the entry in row location `i + j`,
+      for `i` a row and `j` a column of `df`, is `df.loc[i][j]`
+
+    Parameters
+    ----------
+    `df` : `pd.Series` or `pd.DataFrame` with `pandas` integer index,
+        `pd.DatetimeIndex`, or `pd.PeriodIndex`, and with one column/variable
+    `template` : None, or `pd.Series` or `pd.DataFrame`
+        template data frame for the unpivot, equal to `df` if not provided
+    """
     if template is not None:
         if hasattr(template, "index") and hasattr(template.index, "freq"):
             freq = template.index.freq
@@ -144,7 +184,6 @@ def _unpivot_sp(df, template=None):
     df_melt = df_melt.drop(columns=df_melt.columns[0])
     df_melt = df_melt.sort_index()
     df_melt = df_melt.dropna()
-    # df_melt.columns = df.columns.get_level_values(0).unique()
 
     if was_datetime:
         df_melt.index = df_melt.index.to_timestamp()
