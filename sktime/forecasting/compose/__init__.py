@@ -27,6 +27,7 @@ __all__ = [
     "BaggingForecaster",
     "ForecastByLevel",
     "Permute",
+    "SeasonalReducer",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -55,4 +56,5 @@ from sktime.forecasting.compose._reduce import (
     RecursiveTimeSeriesRegressionForecaster,
     make_reduction,
 )
+from sktime.forecasting.compose._seasonal import SeasonalReducer
 from sktime.forecasting.compose._stack import StackingForecaster
