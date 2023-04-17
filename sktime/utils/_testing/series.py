@@ -46,8 +46,9 @@ def _make_series(
     add_nan : bool, default=False
         whether to include nans in the series.
         If `True`, data will contain three `np.nan` entries, at start, end and middle
-    return_mtype : str, sktime Panel mtype str, default="pd-multiindex"
-        see sktime.datatypes.MTYPE_LIST_PANEL for a full list of admissible strings
+    return_mtype : str, sktime Series mtype str
+        default="pd.DataFrame" if `n_columns>1`, and "pd.Series" if `n_columns==1`
+        see sktime.datatypes.MTYPE_LIST_SERIES for a full list of admissible strings
         see sktime.datatypes.MTYPE_REGISTER for an short explanation of formats
         see examples/AA_datatypes_and_datasets.ipynb for a full specification
 
@@ -68,16 +69,26 @@ def _make_series(
         data[-1] = np.nan
     if all_positive:
         data -= np.min(data, axis=0) - 1
+
+    # np.ndarray case
     if return_numpy or return_mtype == "np.ndarray":
         if n_columns == 1:
             data = data.ravel()
         return data
-    else:
-        index = _make_index(n_timepoints, index_type)
-        if n_columns == 1 or return_mtype == "pd.Series":
-            return pd.Series(data.ravel(), index)
-        elif return_mtype is None or return_mtype == "pd.DataFrane":
-            return pd.DataFrame(data, index)
+
+    # pd.Series, pd.DataFrame case
+    index = _make_index(n_timepoints, index_type)
+    if n_columns == 1 or return_mtype == "pd.Series":
+        return pd.Series(data.ravel(), index)
+    elif return_mtype is None or return_mtype == "pd.DataFrane":
+        return pd.DataFrame(data, index)
+
+    # all other mtypes, convert from pd.DataFrame
+    from sktime.datatypes import convert
+
+    res = pd.DataFrame(data, index)
+    res_conv = convert(res, "pd.DataFrame", return_mtype, "Series")
+    return res_conv
 
 
 def _make_index(n_timepoints, index_type=None):
