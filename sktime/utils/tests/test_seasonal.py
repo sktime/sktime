@@ -74,7 +74,7 @@ def test_unpivot_sp(sp, index_type, n_timepoints):
 
 @pytest.mark.parametrize("n_timepoints", [50, 2])
 @pytest.mark.parametrize("index_type", ["period", "datetime", "range", "int"])
-@pytest.mark.parametrize("sp", [2, 10])
+@pytest.mark.parametrize("sp", [3, 10])
 def test_pivot_sp_consistent(sp, index_type, n_timepoints):
     """Test _pivot_sp consistency between offsets."""
     df = _make_series(
@@ -87,6 +87,8 @@ def test_pivot_sp_consistent(sp, index_type, n_timepoints):
 
     df_pivot = _pivot_sp(df, sp)
     df2_pivot = _pivot_sp(df2, sp, anchor=df)
+
+    assert np.all(df_pivot.index == df2_pivot.index)
 
     df_pivot_values = df_pivot.values.flatten()
     df_pivot_values = df_pivot_values[~np.isnan(df_pivot_values)]
