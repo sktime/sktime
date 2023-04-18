@@ -323,39 +323,6 @@ class _TbatsAdapter(BaseForecaster):
         """Get names of fitted parameters."""
         return self._fitted_param_names
 
-    def _get_pred_int(self, lower, upper):
-        """Combine lower/upper bounds of pred.intervals, slice on fh.
-
-        Parameters
-        ----------
-        lower : pd.Series
-            Lower bound (can contain also in-sample bound)
-        upper : pd.Series
-            Upper bound (can contain also in-sample bound)
-
-        Returns
-        -------
-        pd.DataFrame
-            pred_int, prediction intervals (out-sample, sliced by fh)
-        """
-        pred_int = pd.DataFrame({"lower": lower, "upper": upper})
-        # Out-sample fh
-        fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
-        # If pred_int contains in-sample prediction intervals
-        if len(pred_int) > len(self._y):
-            len_out = len(pred_int) - len(self._y)
-            # Workaround for slicing with negative index
-            pred_int["idx"] = [x for x in range(-len(self._y), len_out)]
-        # If pred_int does not contain in-sample prediction intervals
-        else:
-            pred_int["idx"] = [x for x in range(len(pred_int))]
-        pred_int = pred_int.loc[
-            pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
-        ]
-        pred_int.index = fh_out.to_absolute(self.cutoff).to_pandas()
-        pred_int = pred_int.drop(columns=["idx"])
-        return pred_int
-
 
 def nans(length):
     """Return a vector of NaNs, of length `length`."""
