@@ -229,9 +229,7 @@ class _TbatsAdapter(BaseForecaster):
         fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
         steps = fh_out.to_pandas().max()
 
-        _, tbats_ci = self._forecaster.forecast(
-            steps=steps, confidence_level=conf_lev
-        )
+        _, tbats_ci = self._forecaster.forecast(steps=steps, confidence_level=conf_lev)
         out = pd.DataFrame(tbats_ci)
 
         # pred_int
