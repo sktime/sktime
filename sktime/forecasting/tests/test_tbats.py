@@ -18,7 +18,6 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
 )
 def test_tbats_long_fh():
     """Test TBATS with long fh, checks for failure condition in bug #4491."""
-    np.random.seed(42)
     LEN_HISTORY = 50
     train = pd.Series(data=np.random.randint(1, 100, LEN_HISTORY))
 
