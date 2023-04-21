@@ -142,6 +142,7 @@ jobs:
     needs: test-nosoftdeps
     runs-on: windows-2019
     strategy:
+      fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
 
@@ -183,6 +184,7 @@ jobs:
   test-unix:
     needs: test-nosoftdeps
     strategy:
+      fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
         os: [ubuntu-20.04, macOS-11]
