@@ -269,6 +269,8 @@ class DynamicFactor(_StatsModelsAdapter):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        steps = end - len(self._y) + 1
+        ix = fh.to_indexer()
 
         model = self._fitted_forecaster
 
@@ -276,16 +278,14 @@ class DynamicFactor(_StatsModelsAdapter):
         # generate the forecasts for each alpha/coverage
         for coverage in coverage_list:
 
-            alpha = -0.5 * coverage + 0.5
+            alpha = 1 - coverage
 
             if "exog" in inspect.signature(model.__init__).parameters.keys():
-                y_pred = model.get_forecast(steps=(end - start) + 1, exog=X).conf_int(
-                    alpha=alpha
-                )
+                y_pred = model.get_forecast(steps=steps, exog=X).conf_int(alpha=alpha)
             else:
-                y_pred = model.get_forecast(steps=(end - start) + 1).conf_int(
-                    alpha=alpha
-                )
+                y_pred = model.get_forecast(steps=steps).conf_int(alpha=alpha)
+
+            y_pred = y_pred.iloc[ix]
 
             y_pred.rename(
                 columns={orig_col: orig_col + f" {coverage}" for orig_col in y_pred},
@@ -333,11 +333,7 @@ class DynamicFactor(_StatsModelsAdapter):
             predictions_df_2.values, columns=pd.MultiIndex.from_tuples(final_columns)
         )
 
-        if "int" in (self._y.index[0]).__class__.__name__:  # Rather fishy solution
-            predictions_df_3.index = np.arange(
-                start + self._y.index[0], end + self._y.index[0] + 1
-            )
-            return predictions_df_3.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        predictions_df_3.index = fh.to_absolute(self.cutoff).to_pandas()
 
         return predictions_df_3
 
@@ -557,6 +553,6 @@ class DynamicFactor(_StatsModelsAdapter):
             `create_test_instance` uses the first (or only) dictionary in `params
         """
         params1 = {"k_factors": 1, "factor_order": 1}
-        params2 = {"enforce_stationarity": False, "maxiter": 25, "low_memory": True}
+        params2 = {"maxiter": 25, "low_memory": True}
 
         return [params1, params2]

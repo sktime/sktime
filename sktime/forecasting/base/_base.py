@@ -1600,7 +1600,7 @@ class BaseForecaster(BaseEstimator):
         cutoff : pandas compatible index element, or None
             pandas compatible index element, if cutoff has been set; None otherwise
         """
-        if self._cutoff is None:
+        if not hasattr(self, "_cutoff"):
             return None
         else:
             return self._cutoff
@@ -1988,10 +1988,9 @@ class BaseForecaster(BaseEstimator):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        implements_interval = self._has_implementation_of("_predict_interval")
         implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
-        can_do_proba = implements_interval or implements_quantiles or implements_proba
+        can_do_proba = implements_quantiles or implements_proba
 
         if not can_do_proba:
             raise RuntimeError(
@@ -2057,9 +2056,8 @@ class BaseForecaster(BaseEstimator):
                 at quantile probability in second col index, for the row index.
         """
         implements_interval = self._has_implementation_of("_predict_interval")
-        implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
-        can_do_proba = implements_interval or implements_quantiles or implements_proba
+        can_do_proba = implements_interval or implements_proba
 
         if not can_do_proba:
             raise RuntimeError(

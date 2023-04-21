@@ -146,9 +146,7 @@ class _StatsForecastAdapter(BaseForecaster):
         if return_pred_int:
             pred_ints = []
             for a in alpha:
-                pred_int = pd.DataFrame(
-                    index=fh_abs.to_pandas(), columns=["lower", "upper"]
-                )
+                pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
                 result = self._forecaster.predict_in_sample(level=int(100 * a))
                 pred_int.loc[fh_abs] = result.drop("mean", axis=1).values[fh_idx, :]
                 pred_ints.append(pred_int)
