@@ -130,12 +130,6 @@ EXCLUDED_TESTS = {
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAX": "test_fit_transform_output",
-    # known bug in DynamicFactor, returns wrong index, #4362
-    "DynamicFactor": [
-        "test_predict_interval",
-        "test_predict_quantiles",
-        "test_predict_proba",
-    ],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
