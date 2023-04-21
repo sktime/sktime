@@ -287,15 +287,12 @@ class ForecastingHorizon:
 
         # infer freq from values, if available
         # if not, infer from freq argument, if available
-        if hasattr(values, "index") and hasattr(values.index, "freq"):
+        if freq is not None:
+            self.freq = freq
+        elif hasattr(values, "index") and hasattr(values.index, "freq"):
             self.freq = values.index.freq
         elif hasattr(values, "freq"):
             self.freq = values.freq
-        self.freq = freq
-        # developer note: this looks like a "superfluous line",
-        # because as self.freq is set in the end
-        # but this is not redundant - freq is an attribute with setter
-        # the setter checks consistency, and raises an error if non-None freqs differ.
 
         # infer self._is_relative from is_relative, and type of values
         # depending on type of values, is_relative is inferred
