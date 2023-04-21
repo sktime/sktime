@@ -127,7 +127,7 @@ class _ProphetAdapter(BaseForecaster):
 
     def _get_prophet_fh(self):
         """Get a prophet compatible fh, in datetime, even if fh was int."""
-        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        fh = self.fh.to_absolute_index(cutoff=self.cutoff)
         if isinstance(fh, pd.PeriodIndex):
             fh = fh.to_timestamp()
         if not isinstance(fh, pd.DatetimeIndex):
@@ -202,7 +202,7 @@ class _ProphetAdapter(BaseForecaster):
         y_pred.columns = self._y.columns
 
         if self.y_index_was_int_ or self.y_index_was_period_:
-            y_pred.index = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+            y_pred.index = self.fh.to_absolute_index(cutoff=self.cutoff)
 
         return y_pred
 
@@ -276,7 +276,7 @@ class _ProphetAdapter(BaseForecaster):
             pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
 
         if self.y_index_was_int_ or self.y_index_was_period_:
-            pred_int.index = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+            pred_int.index = self.fh.to_absolute_index(cutoff=self.cutoff)
 
         return pred_int
 
