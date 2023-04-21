@@ -11,25 +11,49 @@ SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ"]
 
 
 class IndepDist(BasePairwiseTransformerPanel):
-    r"""Kernel function obtained from a distance function.
+    r"""Variable-wise aggregate of multivariate kernel or distance function.
+
+    Also known as "independent distance" if `aggfun` is the sum or mean.
 
     Formal details (for real valued objects, mixed typed rows in analogy):
-    Let :math:`d: \mathbb{R}^D \times \mathbb{R}^D\rightarrow \mathbb{R}`
-    be the pairwise function in `dist`, when applied to `D`-vectors.
-    If `dist_diag=None`, then `KernelFromDist(dist)` corresponds to the kernel function
-    :math:`k(x, y) := d(x, x)^2 + d(y, y)^2 - 0.5 \cdot d(x, y)^2`.
-    If `dist_diag` is provided,
-    and corresponds to a function :math:`f:\mathbb{R}^D \rightarrow \mathbb{R}`,
-    then `KernelFromDist(dist)` corresponds to the kernel function
-    :math:`k(x, y) := f(x, x)^2 + f(y, y)^2 - 0.5 \cdot d(x, y)^2`.
+    Let :math:`d: \mathbb{R}^n \times \mathbb{R}^n\rightarrow \mathbb{R}`
+    be the pairwise function in `dist`, when applied to univariate series of length
+    :math:`n`.
+    This class represents the pairwise function
+    :math:`d_g: \mathbb{R}^{n\times D} \times \mathbb{R}^{n\times D}\rightarrow \mathbb{R}`
+    defined as :math:`d_g(x, y) := g(d(x_1, y_1), \dots, d(x_D, y_D))`,
+    where :math:`x_i`, :math:`y_i` denote the :math:`i`-th column,
+    and :math:`x`, `:math:`y` are interpreted as multivariate time series with
+    :math:`D` variables, and where :math:`g` is a function
+    :math:`g: \mathbb{R}^D\times \mathbb{R}^D \rightarrow \mathbb{R}`,
+    representing the input `aggfun`.
 
-    It should be noted that :math:`k` is, in general, not positive semi-definite.
+    In particular, if `aggfun="sum"` (or default), then
+    :math:`g(x) = \sum_{i=1}^D x_i`, and
+    :math:`d_g(x, y) := \sum_{i=1}^D d(x_i, y_i)`,
+    which corresponds to the usual terminology "independent distance".
 
     Parameters
     ----------
     dist : pairwise transformer of BasePairwiseTransformer scitype, or
         callable np.ndarray (n_samples, nd) x (n_samples, nd) -> (n_samples x n_samples)
-    """
+    aggfun : optional, str or callable np.ndarray (m, nd, nd) -> (nd, nd)
+        aggregation function over the variables, :math:`g` above
+        "sum" = np.sum = default
+        "mean" = np.mean
+        "median" = np.median
+        "max" = np.max
+        "min" = np.min
+        when starting with a function (m) -> scalar, use np.apply_along_axis
+        to create a function (m, nd, nd) -> (nd, nd) and pass that as `aggfun`
+
+    Examples
+    --------
+    >>> from sktime.dists_kernels.indep import IndepDist
+    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>>
+    >>> dist = IndepDist(DtwDist())
+    """  # noqa: E501
 
     _tags = {
         "X_inner_mtype": SUPPORTED_MTYPES,
@@ -38,28 +62,46 @@ class IndepDist(BasePairwiseTransformerPanel):
         "capability:unequal_length": True,  # can dist handle unequal length panels?
     }
 
-    def __init__(self, dist):
+    def __init__(self, dist, aggfun=None):
 
         self.dist = dist
+        self.aggfun = aggfun
 
         super(IndepDist, self).__init__()
 
         # set property tags based on tags of components
         missing = True
-        multi = True
         unequal = True
         if isinstance(dist, BasePairwiseTransformerPanel):
             missing = missing and dist.get_tag("capability:missing_values")
-            multi = multi and dist.get_tag("capability:multivariate")
             unequal = unequal and dist.get_tag("capability:unequal_length")
 
         tag_dict = {
             "capability:missing_values": missing,
-            "capability:multivariate": multi,
             "capability:unequal_length": unequal,
         }
 
         self.set_tags(**tag_dict)
+
+        aggfun_dict = {
+            "mean": np.mean,
+            "sum": np.sum,
+            "max": np.max,
+            "min": np.min,
+            "median": np.median,
+        }
+        if aggfun is None:
+            self._aggfun = np.mean
+        elif isinstance(aggfun, str):
+            if aggfun not in aggfun_dict.keys():
+                msg = (
+                    f"error in IndepDist, aggfun must be callable or one of the "
+                    f"strings {aggfun_dict.keys()}, but found {aggfun}"
+                )
+                raise ValueError(msg)
+            self._aggfun = aggfun_dict[aggfun]
+        else:
+            self._aggfun = aggfun
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
@@ -76,12 +118,22 @@ class IndepDist(BasePairwiseTransformerPanel):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
-        from sktime.transformations.base import BaseTransformer
-
         dist = self.dist
+        aggfun = self._aggfun
 
-        distmat = dist(X, X2) ** 2
+        mats = []
+        for col in X.columns:
+            X_sub = X.loc[:, [col]]
+            if X2 is None:
+                X2_sub = None
+            else:
+                X2_sub = X2.loc[:, [col]]
+            mats += [dist.transform(X_sub, X2_sub)]
 
+        if isinstance(self.aggfun, str) or self.aggfun is None:
+            distmat = aggfun(mats, axis=0)
+        else:
+            distmat = aggfun(mats)
         return distmat
 
     @classmethod
@@ -103,14 +155,13 @@ class IndepDist(BasePairwiseTransformerPanel):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         from sktime.dists_kernels.dtw import DtwDist
-        from sktime.transformations.series.adapt import PandasTransformAdaptor
-        from sktime.transformations.series.summarize import SummaryTransformer
 
         params1 = {"dist": DtwDist()}
-        t = SummaryTransformer("mean", None)
-        # we need this since multivariate summary produces two columns
-        # if one column, has no effect; if multiple, takes means by row
-        t = PandasTransformAdaptor("mean", {"axis": 1}) * t
-        params2 = {"dist": DtwDist(), "dist_diag": t}
+        params2 = {"dist": DtwDist(), "aggfun": "median"}
+        params3 = {"dist": DtwDist(), "aggfun": _testfun}
 
-        return [params1, params2]
+        return [params1, params2, params3]
+
+
+def _testfun(x):
+    return np.mean(x, axis=0)
