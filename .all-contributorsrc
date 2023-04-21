@@ -2144,7 +2144,8 @@
       "profile": "https://github.com/yarnabrina/",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "test"
       ]
     }
   ]
