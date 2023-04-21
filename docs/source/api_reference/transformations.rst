@@ -626,8 +626,9 @@ Bootstrap transformations
     :toctree: auto_generated/
     :template: class.rst
 
-    STLBootstrapTransformer
     MovingBlockBootstrapTransformer
+    SplitterBootstrapTransformer
+    STLBootstrapTransformer
 
 Outlier detection, changepoint detection
 ----------------------------------------

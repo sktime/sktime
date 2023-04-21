@@ -262,7 +262,6 @@ class BaggingForecaster(BaseForecaster):
         """
         # X is ignored
         y_pred = self.forecaster_.predict(fh=fh, X=None)
-
         return _calculate_data_quantiles(y_pred, alpha)
 
     def _update(self, y, X=None, update_params=True):
@@ -338,8 +337,7 @@ def _calculate_data_quantiles(df: pd.DataFrame, alpha: List[float]) -> pd.DataFr
     index = pd.MultiIndex.from_product([["Quantiles"], alpha])
     pred_quantiles = pd.DataFrame(columns=index)
     for a in alpha:
-        pred_quantiles[("Quantiles", a)] = (
-            df.groupby(level=-1, as_index=True).quantile(a).squeeze()
-        )
+        quant_a = df.groupby(level=-1, as_index=True).quantile(a)
+        pred_quantiles[[("Quantiles", a)]] = quant_a
 
     return pred_quantiles

@@ -159,8 +159,8 @@ def _check_freq(obj):
     """
     if isinstance(obj, pd.offsets.BaseOffset):
         return obj
-    elif hasattr(obj, "_cutoff"):
-        return _check_freq(obj._cutoff)
+    elif hasattr(obj, "cutoff"):
+        return _check_freq(obj.cutoff)
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
