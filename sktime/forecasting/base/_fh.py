@@ -287,11 +287,12 @@ class ForecastingHorizon:
 
         # infer freq from values, if available
         # if not, infer from freq argument, if available
-        if hasattr(values, "index") and hasattr(values.index, "freq"):
+        if freq is not None:
+            self.freq = freq
+        elif hasattr(values, "index") and hasattr(values.index, "freq"):
             self.freq = values.index.freq
         elif hasattr(values, "freq"):
             self.freq = values.freq
-        self.freq = freq
 
         # infer self._is_relative from is_relative, and type of values
         # depending on type of values, is_relative is inferred

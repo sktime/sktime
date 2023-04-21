@@ -130,10 +130,6 @@ EXCLUDED_TESTS = {
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAX": "test_fit_transform_output",
-    # stochastic failure of quantile prediction monotonicity, refer to #4420, #4431
-    "VAR": ["test_predict_quantiles"],
-    "Prophet": ["test_predict_quantiles"],
-    "VECM": ["test_predict_quantiles"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
