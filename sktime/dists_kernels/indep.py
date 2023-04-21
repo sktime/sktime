@@ -13,7 +13,11 @@ SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ"]
 class IndepDist(BasePairwiseTransformerPanel):
     r"""Variable-wise aggregate of multivariate kernel or distance function.
 
-    Also known as "independent distance" if `aggfun` is the sum or mean.
+    A common baseline method to turn a univariate time series distance or kernel
+    into a multivariate time series distance or kernel.
+
+    Also sometimes known as "independent distance" in the special case where `aggfun`
+    is the sum or mean and the pairwise transformer is a time series distance.
 
     Formal details (for real valued objects, mixed typed rows in analogy):
     Let :math:`d: \mathbb{R}^n \times \mathbb{R}^n\rightarrow \mathbb{R}`
