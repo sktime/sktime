@@ -478,8 +478,6 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         X_valid = check_res[0]
         metadata = check_res[2]
 
-        X_scitype = metadata["scitype"]
-
         if not X_valid:
             msg = (
                 "X and X2 must be in an sktime compatible format, "
@@ -489,6 +487,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
                 " See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
             raise TypeError(msg)
+
+        X_scitype = metadata["scitype"]
 
         # if the input is a single series, convert it to a Panel
         if X_scitype == "Series":
