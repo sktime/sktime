@@ -80,6 +80,7 @@ class VAR(_StatsModelsAdapter):
         "univariate-only": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
@@ -182,11 +183,11 @@ class VAR(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        index = fh.to_absolute(self.cutoff)
+        index = fh.to_absolute(self.cutoff).to_pandas()
         index.name = self._y.index.name
         y_pred = pd.DataFrame(
             y_pred[fh.to_indexer(self.cutoff), :],
-            index=fh.to_absolute(self.cutoff),
+            index=index,
             columns=self._y.columns,
         )
         return y_pred
@@ -299,8 +300,9 @@ class VAR(_StatsModelsAdapter):
             columns=pd.MultiIndex.from_tuples(final_columns),
         )
 
-        final_df.index = fh.to_absolute(self.cutoff)
-        final_df.index.name = self._y.index.name
+        index = fh.to_absolute(self.cutoff).to_pandas()
+        index.name = self._y.index.name
+        final_df.index = index
 
         return final_df
 

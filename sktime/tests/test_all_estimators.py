@@ -13,7 +13,6 @@ import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
-from warnings import warn
 
 import joblib
 import numpy as np
@@ -65,6 +64,10 @@ from sktime.utils.validation._dependencies import (
 # whether to subsample estimators per os/version partition matrix design
 # default is False, can be set to True by pytest --matrixdesign True flag
 MATRIXDESIGN = False
+
+# whether to test only estimators that require cython, C compiler such as gcc
+# default is False, can be set to True by pytest --only_cython_estimators True flag
+CYTHON_ESTIMATORS = False
 
 
 def subsample_by_version_os(x):
@@ -198,10 +201,16 @@ class BaseFixtureGenerator:
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
+        if CYTHON_ESTIMATORS:
+            filter_tags = {"requires_cython": True}
+        else:
+            filter_tags = None
+
         est_list = all_estimators(
             estimator_types=getattr(self, "estimator_type_filter", None),
             return_names=False,
             exclude_estimators=EXCLUDE_ESTIMATORS,
+            filter_tags=filter_tags,
         )
         # subsample estimators by OS & python version
         # this ensures that only a 1/3 of estimators are tested for a given combination
@@ -406,26 +415,14 @@ class BaseFixtureGenerator:
 class QuickTester:
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
-    # todo 0.17.0:
-    # * remove the return_exceptions arg
-    # * move the raise_exceptions arg to 2nd place
-    # * change its default to False, from None
-    # * update the docstring - remove return_exceptions
-    # * update the docstring - move raise_exceptions block to 2nd place
-    # * update the docstring - remove deprecation references
-    # * update the docstring - condition in return block, refer only to raise_exceptions
-    # * update the docstring - condition in raises block, refer only to raise_exceptions
-    # * remove the code block for input handling
-    # * remove import of warn
     def run_tests(
         self,
         estimator,
-        return_exceptions=None,
+        raise_exceptions=False,
         tests_to_run=None,
         fixtures_to_run=None,
         tests_to_exclude=None,
         fixtures_to_exclude=None,
-        raise_exceptions=None,
     ):
         """Run all tests on one single estimator.
 
@@ -441,13 +438,12 @@ class QuickTester:
         Parameters
         ----------
         estimator : estimator class or estimator instance
-        return_exceptions : bool, optional, default=True
-            whether to return exceptions/failures, or raise them
-                if True: returns exceptions in returned `results` dict
-                if False: raises exceptions as they occur
-            deprecated in 0.15.1, and will be replaced by `raise_exceptions` in 0.17.0.
-            Overridden to `False` if `raise_exceptions=True`.
-            For safe deprecation, use `raise_exceptions` instead of `return_exceptions`.
+        raise_exceptions : bool, optional, default=False
+            whether to return exceptions/failures in the results dict, or raise them
+
+            * if False: returns exceptions in returned `results` dict
+            * if True: raises exceptions as they occur
+
         tests_to_run : str or list of str, names of tests to run. default = all tests
             sub-sets tests that are run to the tests given here.
         fixtures_to_run : str or list of str, pytest test-fixture combination codes.
@@ -461,26 +457,19 @@ class QuickTester:
         fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
             removes test-fixture combinations that should not be run.
             This is done after subsetting via fixtures_to_run.
-        raise_exceptions : bool, optional, default=False
-            whether to return exceptions/failures in the results dict, or raise them
-                if False: returns exceptions in returned `results` dict
-                if True: raises exceptions as they occur
-            Overrides `return_exceptions` if used as a keyword argument.
-            both `raise_exceptions=True` and `return_exceptions=True`.
-            Will move to replace `return_exceptions` as 2nd arg in 0.17.0.
 
         Returns
         -------
         results : dict of results of the tests in self
             keys are test/fixture strings, identical as in pytest, e.g., test[fixture]
             entries are the string "PASSED" if the test passed,
-                or the exception raised if the test did not pass
+            or the exception raised if the test did not pass
             returned only if all tests pass,
-            or both return_exceptions=True and raise_exceptions=False
+            or raise_exceptions=False
 
         Raises
         ------
-        if return_exceptions=False, or raise_exceptions=True,
+        if raise_exceptions=True,
         raises any exception produced by the tests directly
 
         Examples
@@ -497,22 +486,6 @@ class QuickTester:
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
         """
-        # todo 0.17.0: remove this code block
-        if return_exceptions is None and raise_exceptions is None:
-            raise_exceptions = False
-
-        if return_exceptions is not None and raise_exceptions is None:
-            warn(
-                "The return_exceptions argument of check_estimator has been deprecated "
-                "since 0.15.1, and will be replaced by raise_exceptions in 0.17.0. "
-                "For safe deprecation: use raise_exceptions argument instead of "
-                "return_exceptions when using keywords. Avoid positional use, instead "
-                "ensure to use keywords. When not using keywords, the "
-                "default behaviour will not change."
-            )
-            raise_exceptions = not return_exceptions
-        # end block to remove
-
         tests_to_run = self._check_None_str_or_list_of_str(
             tests_to_run, var_name="tests_to_run"
         )

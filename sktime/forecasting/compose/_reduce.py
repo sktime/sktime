@@ -199,6 +199,7 @@ class _Reducer(_BaseWindowForecaster):
     _tags = {
         "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
         "handles-missing-data": True,
+        "capability:insample": False,
     }
 
     def __init__(
@@ -336,7 +337,7 @@ class _Reducer(_BaseWindowForecaster):
                 cutoff_with_freq = self._cutoff
         else:
             cutoff_with_freq = self._cutoff
-        cutoff = _shift(cutoff_with_freq, by=shift)
+        cutoff = _shift(cutoff_with_freq, by=shift, return_index=True)
 
         relative_int = pd.Index(list(map(int, range(-self.window_length_ + 1, 2))))
         # relative _int will give the integer indices of the window. Also contains the
@@ -868,7 +869,7 @@ class _RecursiveReducer(_Reducer):
         if self.pooling == "global":
             fh_max = fh.to_relative(self.cutoff)[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
-            index_range = _index_range(relative, self.cutoff[0])
+            index_range = _index_range(relative, self.cutoff)
 
             y_pred = _create_fcst_df(index_range, self._y)
 
@@ -1585,7 +1586,7 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         timeframe = pd.DataFrame(target_date, columns=[time_names])
         target_frame = idx.merge(timeframe, how="cross")
         if hasattr(target_date, "freq"):
-            freq_inferred = target_date[0].freq
+            freq_inferred = target_date.freq
             mi = (
                 target_frame.groupby(instance_names, as_index=True)
                 .apply(
@@ -1681,9 +1682,9 @@ class _ReducerMixin:
             CAVEAT: sorted by index level -1, since reduction is applied by fh
         """
         if isinstance(fh, ForecastingHorizon):
-            fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+            fh_idx = pd.Index(fh.to_absolute(self.cutoff).to_pandas())
         else:
-            fh_idx = pd.Index(fh)
+            fh_idx = pd.Index(fh.to_pandas())
         y_index = self._y.index
 
         if isinstance(y_index, pd.MultiIndex):

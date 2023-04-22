@@ -85,6 +85,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator

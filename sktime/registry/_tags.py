@@ -200,6 +200,25 @@ ESTIMATOR_TAG_REGISTER = [
         "does the forecaster implement predict_variance?",
     ),
     (
+        "capability:insample",
+        "forecaster",
+        "bool",
+        "can the forecaster make in-sample predictions?",
+    ),
+    (
+        "capability:pred_int:insample",
+        "forecaster",
+        "bool",
+        "can the forecaster make in-sample predictions in predict_interval/quantiles?",
+        "capability:predict_proba",
+    ),
+    (
+        "classifier",
+        "bool",
+        "does the classifier implement a non-default predict_proba, "
+        "i.e., not just 0/1 probabilities obtained from predict?",
+    ),
+    (
         "capability:multivariate",
         [
             "classifier",
@@ -353,6 +372,12 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         ("list", "str"),
         "python dependencies of estimator as str or list of str",
+    ),
+    (
+        "requires_cython",
+        "estimator",
+        "bool",
+        "whether the estimator reqires a C compiler present such as libomp, gcc",
     ),
     (
         "remember_data",
