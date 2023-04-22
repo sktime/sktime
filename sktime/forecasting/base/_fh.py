@@ -698,7 +698,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         if pandas_version_with_bugfix:
             relative = absolute - cutoff
         else:
-            relative = pd.Index([date - cutoff for date in absolute])
+            relative = pd.Index([date - cutoff[0] for date in absolute])
 
         # Coerce durations (time deltas) into integer values for given frequency
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
