@@ -132,7 +132,7 @@ def make_forecasting_problem(
 def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     assert isinstance(y_pred_index, pd.Index)
     fh = check_fh(fh)
-    expected = fh.to_absolute(cutoff).to_pandas()
+    expected = fh.to_absolute_index(cutoff)
     assert y_pred_index.equals(expected)
 
 

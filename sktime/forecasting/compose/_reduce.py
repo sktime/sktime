@@ -574,7 +574,7 @@ class _DirectReducer(_Reducer):
         # If we cannot generate a prediction from the available data, return nan.
 
         if self.pooling == "global":
-            fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+            fh_abs = fh.to_absolute_index(self.cutoff)
             y_pred = _create_fcst_df(fh_abs, self._y)
 
             for i, estimator in enumerate(self.estimators_):
@@ -1682,7 +1682,7 @@ class _ReducerMixin:
             CAVEAT: sorted by index level -1, since reduction is applied by fh
         """
         if isinstance(fh, ForecastingHorizon):
-            fh_idx = pd.Index(fh.to_absolute(self.cutoff).to_pandas())
+            fh_idx = pd.Index(fh.to_absolute_index(self.cutoff))
         else:
             fh_idx = pd.Index(fh.to_pandas())
         y_index = self._y.index

@@ -174,7 +174,7 @@ class SquaringResiduals(BaseForecaster):
                 y_pred_current = []
                 y_pred_current_index = []
                 for col in y_pred.columns:
-                    fh_current_abs = fh_current.to_absolute(col).to_pandas()
+                    fh_current_abs = fh_current.to_absolute_index(col)
                     y_pred_current.append(y_pred.at[fh_current_abs[0], col])
                     y_pred_current_index.append(fh_current_abs[0])
                 y_pred_current = pd.Series(
