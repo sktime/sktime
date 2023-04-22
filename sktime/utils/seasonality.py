@@ -66,7 +66,7 @@ def autocorrelation_seasonality_test(y, sp):
         return np.abs(coef) > limit
 
 
-def _pivot_sp(df, sp, anchor=None, freq=None):
+def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     """Pivot univariate series to multivariate-by-seasonal-offset.
 
     For an input `df: pd.DataFrame` or `pd.Series`, with regular index,
@@ -80,19 +80,32 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
     * the entry in row location `i`, column location `j` is the entry at
       `df.loc[i + j * period_of_df]`, where `period_of_df` is regular period of `df`
 
+    if `anchor_end` is `"end"`, the above is modified so that row index starts
+    counting down from `anchor.index[-1]` rather than counting up from `anchor.index[0]`
+
     Parameters
     ----------
-    `df` : `pd.Series` or `pd.DataFrame` with `pandas` integer index,
+    df : `pd.Series` or `pd.DataFrame` with `pandas` integer index,
         `pd.DatetimeIndex`, or `pd.PeriodIndex`, and with one column/variable
-    `sp` : int
+    sp : int
         seasonality/periodicity parameter of the pivot
-    `anchor` : None, or `pd.Series` or `pd.DataFrame`
+    anchor : None, or `pd.Series` or `pd.DataFrame`
         anchor data frame for the pivot, equal to `df` if not provided
-    `freq` : None, or `pd.Series`, `pd.DataFrame`, `pd.Index`, or `pandas` frequency
+    freq : None, or `pd.Series`, `pd.DataFrame`, `pd.Index`, or `pandas` frequency
         if None, equal to df.index.freq
         if provided, will be used as frequency in offset calculations
         needed only of `df` is `pd.DatetimeIndex` or `pd.PeriodIndex` without `freq`
+    anchor_side : str, one of "start" and "end"
+        determines the end where the resulting DataFrame is anchored
+        "start" - anchored at top left entry, guaranteed non-nan
+        "end" - anchored at bottom right entry, guaranteed non-nan
     """
+    if anchor_side not in ["start", "end"]:
+        raise ValueError(
+            f'in _pivot_sp, anchor_side must be one of the strings "start", "end", but'
+            f'found {anchor_side}'
+        )
+
     if anchor is None:
         anchor = df
 
@@ -106,15 +119,29 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
     else:
         was_datetime = False
 
+    if isinstance(anchor.index, pd.DatetimeIndex):
+        aix = anchor.index.to_period(freq=freq)
+    else:
+        aix = anchor.index
+    aix_int = aix.astype("int64")
+
     if not isinstance(df.index, pd.PeriodIndex):
         if pd.api.types.is_integer_dtype(anchor.index) and len(anchor) <= 1:
             period_len = 1
         else:
             period_len = anchor.index[1] - anchor.index[0]
-        ix = (df.index - anchor.index[0]) / period_len
+        if anchor_side == "start":
+            ix = (df.index - anchor.index[0]) / period_len
+        else:
+            ix = (df.index - anchor.index[-1]) / period_len - 1
+        ix = ix.astype("int64")
     else:
         ix = df.index
-    ix = ix.astype("int64")
+        ix = ix.astype("int64")
+        if anchor_side == "start":
+            ix = ix - aix_int[0]
+        else:
+            ix = ix - aix_int[-1] - 1
 
     df = pd.DataFrame(df)
     df_pivot = pd.pivot_table(
@@ -124,19 +151,11 @@ def _pivot_sp(df, sp, anchor=None, freq=None):
         dropna=False,
     )
 
-    if isinstance(df.index, pd.PeriodIndex):
-        if isinstance(anchor.index, pd.DatetimeIndex):
-            aix = anchor.index.to_period(freq=freq)
-        else:
-            aix = anchor.index
-
-        n = len(df_pivot)
-        # need to correct for anchor being 1970 in int conversion
-        offset = df_pivot.index * sp - aix[[0] * n].astype("int64")
-        pivot_ix = aix[[0] * n] + offset
+    n = len(df_pivot)
+    if anchor_side == "start":
+        pivot_ix = aix[[0] * n] + df_pivot.index * sp
     else:
-        n = len(df_pivot)
-        pivot_ix = anchor.index[[0] * n] + df_pivot.index * sp
+        pivot_ix = aix[[-1] * n] + df_pivot.index * sp + 1
 
     df_pivot.index = pivot_ix
 
