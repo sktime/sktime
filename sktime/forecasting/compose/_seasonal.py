@@ -92,28 +92,28 @@ class SeasonalReducer(BaseForecaster):
         f = self.forecaster_
         sp = self.sp
 
-        y_pivot = _pivot_sp(y, sp=sp)
+        y_pivot = _pivot_sp(y, sp=sp, anchor_side="end")
 
         if X is not None:
-            X_pivot = _pivot_sp(X, sp=sp, anchor=y)
+            X_pivot = _pivot_sp(X, sp=sp, anchor=y, anchor_side="end")
         else:
             X_pivot = None
 
         fh_ix = fh.to_absolute(self.cutoff).to_pandas()
         fh_df = pd.DataFrame(index=fh_ix, columns=y.columns)
-        fh_df_pivot = _pivot_sp(fh_df, sp=sp, anchor=y)
+        fh_df_pivot = _pivot_sp(fh_df, sp=sp, anchor=y, anchor_side="end")
         fh_pivot = ForecastingHorizon(fh_df_pivot.index, is_relative=False)
 
         if not f.get_tag("handles-missing-data"):
-            y_pivot = y_pivot.fillna(method="bfill").fillna(method="ffill")
+            y_pivot = y_pivot.fillna(method="bfill")
             if X is not None:
-                X_pivot = X_pivot.fillna(method="bfill").fillna(method="ffill")
+                X_pivot = X_pivot.fillna(method="bfill")
 
         f.fit(y=y_pivot, X=X_pivot, fh=fh_pivot)
 
         return self
 
-    def _predict_method(self, fh, X=None, method="_predict", **kwargs):
+    def _predict_method(self, fh, X=None, method="predict", **kwargs):
         """Template for predict-like methods, called from there."""
         f = self.forecaster_
         sp = self.sp
@@ -159,7 +159,7 @@ class SeasonalReducer(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        return self._predict_method(fh=fh, X=X, method="_predict")
+        return self._predict_method(fh=fh, X=X, method="predict")
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
@@ -194,7 +194,7 @@ class SeasonalReducer(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        return self._predict_method(fh=fh, X=X, alpha=alpha, method="_predict_interval")
+        return self._predict_method(fh=fh, X=X, alpha=alpha, method="predict_quantiles")
 
     def _predict_interval(self, fh, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
@@ -235,7 +235,7 @@ class SeasonalReducer(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         return self._predict_method(
-            fh=fh, X=X, coverage=coverage, method="_predict_quantiles"
+            fh=fh, X=X, coverage=coverage, method="predict_interval"
         )
 
     def _predict_var(self, fh, X=None, cov=False):
@@ -275,7 +275,7 @@ class SeasonalReducer(BaseForecaster):
                     covariance between time index in row and col.
                 Note: no covariance forecasts are returned between different variables.
         """
-        return self._predict_method(fh=fh, X=X, cov=cov, method="_predict_var")
+        return self._predict_method(fh=fh, X=X, cov=cov, method="predict_var")
 
     # todo 0.19.0 - remove legacy_interface
     def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
@@ -311,7 +311,7 @@ class SeasonalReducer(BaseForecaster):
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         kwargs = {"marginal": marginal, "legacy_interface": legacy_interface}
-        return self._predict_method(fh=fh, X=X, method="_predict_proba", **kwargs)
+        return self._predict_method(fh=fh, X=X, method="predict_proba", **kwargs)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
