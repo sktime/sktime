@@ -103,7 +103,7 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     if anchor_side not in ["start", "end"]:
         raise ValueError(
             f'in _pivot_sp, anchor_side must be one of the strings "start", "end", but'
-            f'found {anchor_side}'
+            f"found {anchor_side}"
         )
 
     if anchor is None:
