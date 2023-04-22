@@ -326,16 +326,18 @@ def test_nullable_dtypes(nullable_type):
     dtype = nullable_type
 
     X = pd.DataFrame()
-    X["ints"] = pd.Series([1, 0] * 20, dtype=dtype)
-    X.index = pd.date_range("1/1/21", periods=40)
+    X["ints"] = pd.Series([1, 0] * 40, dtype=dtype)
+    X.index = pd.date_range("1/1/21", periods=80)
+    X_train = X.iloc[0:40]
+    X_test = X.iloc[40:80]
     y = pd.Series([1, 0] * 20, dtype=dtype)
     y.index = pd.date_range("1/1/21", periods=40)
 
     f = ARIMA()
 
-    fh = list(range(1, len(X) + 1))
-    f.fit(X=X, y=y, fh=fh)
-    y_pred = f.predict(X=X)
+    fh = list(range(1, len(X_test) + 1))
+    f.fit(X=X_train, y=y, fh=fh)
+    y_pred = f.predict(X=X_test)
     assert isinstance(y_pred, pd.Series)
     assert len(y_pred) == 40
     assert y_pred.dtype == "float64"
