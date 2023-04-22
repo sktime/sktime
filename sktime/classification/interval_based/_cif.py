@@ -120,6 +120,7 @@ class CanonicalIntervalForest(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "interval",
         "python_dependencies": "numba",
     }

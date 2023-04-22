@@ -65,6 +65,7 @@ class DummyClassifier(BaseClassifier):
         "capability:missing_values": True,
         "capability:unequal_length": True,
         "capability:multivariate": True,
+        "capability:predict_proba": True,
     }
 
     VALID_STRATEGIES = ["most_frequent", "prior", "stratified", "uniform", "constant"]
