@@ -347,6 +347,11 @@ class UnobservedComponents(_StatsModelsAdapter):
         -------
         pd.DataFrame
             confidence intervals at each timestep
+
+            The dataframe must have at least two columns ``lower`` and ``upper``, and
+            the row indices must be integers relative to ``self.cutoff``. Order of
+            columns do not matter, and row indices must be a superset of relative
+            integer horizon of ``fh``.
         """
         conf_int = prediction_results.conf_int(alpha=alpha)
         conf_int.columns = ["lower", "upper"]

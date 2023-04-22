@@ -138,6 +138,11 @@ class _StatsModelsAdapter(BaseForecaster):
         -------
         pd.DataFrame
             confidence intervals at each timestep
+
+            The dataframe must have at least two columns ``lower`` and ``upper``, and
+            the row indices must be integers relative to ``self.cutoff``. Order of
+            columns do not matter, and row indices must be a superset of relative
+            integer horizon of ``fh``.
         """
         del prediction_results, alpha  # tools like ``vulture`` may complain as unused
 
