@@ -78,7 +78,7 @@ def _make_series(
 
     # pd.Series, pd.DataFrame case
     index = _make_index(n_timepoints, index_type)
-    if n_columns == 1 or return_mtype == "pd.Series":
+    if n_columns == 1 and return_mtype is None or return_mtype == "pd.Series":
         return pd.Series(data.ravel(), index)
     elif return_mtype is None or return_mtype == "pd.DataFrane":
         return pd.DataFrame(data, index)

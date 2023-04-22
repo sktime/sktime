@@ -91,7 +91,9 @@ class BaseForecaster(BaseEstimator):
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
+        "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
@@ -1986,10 +1988,9 @@ class BaseForecaster(BaseEstimator):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        implements_interval = self._has_implementation_of("_predict_interval")
         implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
-        can_do_proba = implements_interval or implements_quantiles or implements_proba
+        can_do_proba = implements_quantiles or implements_proba
 
         if not can_do_proba:
             raise RuntimeError(
@@ -2055,9 +2056,8 @@ class BaseForecaster(BaseEstimator):
                 at quantile probability in second col index, for the row index.
         """
         implements_interval = self._has_implementation_of("_predict_interval")
-        implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
-        can_do_proba = implements_interval or implements_quantiles or implements_proba
+        can_do_proba = implements_interval or implements_proba
 
         if not can_do_proba:
             raise RuntimeError(
