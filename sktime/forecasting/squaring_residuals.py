@@ -91,6 +91,7 @@ class SquaringResiduals(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
+        "capability:pred_int:insample": True,
         "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
