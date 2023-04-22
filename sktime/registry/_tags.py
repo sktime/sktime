@@ -210,9 +210,9 @@ ESTIMATOR_TAG_REGISTER = [
         "forecaster",
         "bool",
         "can the forecaster make in-sample predictions in predict_interval/quantiles?",
-        "capability:predict_proba",
     ),
     (
+        "capability:predict_proba",
         "classifier",
         "bool",
         "does the classifier implement a non-default predict_proba, "
