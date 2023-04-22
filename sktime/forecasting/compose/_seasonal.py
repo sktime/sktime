@@ -35,6 +35,7 @@ class SeasonalReducer(BaseForecaster):
     >>> y = load_airline()
     >>> f = SeasonalReducer(TrendForecaster(), sp=2)
     >>> f.fit(y, fh=[1, 2, 3])
+    SeasonalReducer(...)
     >>> y_pred = f.predict()
     """
 
