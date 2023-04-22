@@ -133,6 +133,7 @@ class DynamicFactor(_StatsModelsAdapter):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
+        "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
     }
@@ -266,11 +267,10 @@ class DynamicFactor(_StatsModelsAdapter):
             coverage_list = [coverage]
         else:
             coverage_list = coverage
-        # statsmodels requires zero-based indexing starting at the
-        # beginning of the training series when passing integers
+
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         steps = end - len(self._y) + 1
-        ix = fh.to_indexer()
+        ix = fh.to_indexer(self.cutoff)
 
         model = self._fitted_forecaster
 
