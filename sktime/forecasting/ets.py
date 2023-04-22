@@ -172,6 +172,7 @@ class AutoETS(_StatsModelsAdapter):
     _tags = {
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
     }

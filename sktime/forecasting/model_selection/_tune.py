@@ -28,6 +28,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
@@ -62,6 +63,8 @@ class BaseGridSearch(_DelegatedForecaster):
         tags_to_clone = [
             "requires-fh-in-fit",
             "capability:pred_int",
+            "capability:pred_int:insample",
+            "capability:insample",
             "scitype:y",
             "ignores-exogeneous-X",
             "handles-missing-data",

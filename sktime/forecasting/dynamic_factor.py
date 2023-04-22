@@ -135,6 +135,7 @@ class DynamicFactor(_StatsModelsAdapter):
         "enforce_index_type": None,
         "capability:insample": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
