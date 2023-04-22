@@ -200,6 +200,13 @@ ESTIMATOR_TAG_REGISTER = [
         "does the forecaster implement predict_variance?",
     ),
     (
+        "capability:predict_proba",
+        "classifier",
+        "bool",
+        "does the classifier implement a non-default predict_proba, "
+        "i.e., not just 0/1 probabilities obtained from predict?",
+    ),
+    (
         "capability:multivariate",
         [
             "classifier",
