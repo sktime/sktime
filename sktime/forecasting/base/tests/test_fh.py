@@ -24,6 +24,7 @@ from sktime.forecasting.base._fh import (
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
     INDEX_TYPE_LOOKUP,
     TEST_FHS,
@@ -31,7 +32,7 @@ from sktime.forecasting.tests._config import (
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.utils._testing.forecasting import _make_fh, make_forecasting_problem
-from sktime.utils._testing.series import _make_index
+from sktime.utils._testing.series import _make_index, _make_series
 from sktime.utils.datetime import (
     _coerce_duration_to_int,
     _get_duration,
@@ -596,3 +597,18 @@ def test_extract_freq_from_cutoff(freq: str) -> None:
 def test_extract_freq_from_cutoff_with_wrong_input(x) -> None:
     """Test extract frequency from cutoff with wrong input."""
     assert _extract_freq_from_cutoff(x) is None
+
+
+def test_regular_spaced_fh_of_different_periodicity():
+    """Test for failure condition from bug #4462.
+
+    Due to pandas frequency inference logic, a specific case of constructing
+    `ForecastingHorizon` could upset the constructor:
+    passing a regular `DatetimeIndex` with frequency different from the `freq` argument,
+    which would be triggered in some `to_absolute` conversions.
+    """
+    y = _make_series(n_columns=1)
+
+    naive = NaiveForecaster()
+    naive.fit(y)
+    naive.predict([1, 3, 5])
