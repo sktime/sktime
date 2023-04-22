@@ -107,7 +107,7 @@ class SeasonalReducer(BaseForecaster):
         if not f.get_tag("handles-missing-data"):
             y_pivot = y_pivot.fillna(method="bfill")
             if X is not None:
-                X_pivot = X_pivot.fillna(method="bfill")
+                X_pivot = X_pivot.fillna(method="bfill").fillna(method="ffill")
 
         f.fit(y=y_pivot, X=X_pivot, fh=fh_pivot)
 
