@@ -107,6 +107,7 @@ class TimeSeriesSVC(BaseClassifier):
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
         "classifier_type": "kernel",
     }
