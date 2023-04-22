@@ -389,7 +389,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         pred_quantiles = pd.DataFrame(
             errors + y_pred.values.reshape(len(y_pred), 1),
             columns=pd.MultiIndex.from_product([["Quantiles"], alpha]),
-            index=fh.to_absolute(self.cutoff).to_pandas(),
+            index=fh.to_absolute_index(self.cutoff),
         )
 
         return pred_quantiles
@@ -504,7 +504,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         marginal_se = se_res * partial_se_formulas[self.strategy](fh_periods)
         marginal_vars = marginal_se**2
 
-        fh_idx = fh.to_absolute(self.cutoff).to_pandas()
+        fh_idx = fh.to_absolute_index(self.cutoff)
         if cov:
             fh_size = len(fh)
             cov_matrix = np.fill_diagonal(
