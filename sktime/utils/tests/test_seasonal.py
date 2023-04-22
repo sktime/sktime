@@ -11,10 +11,11 @@ from sktime.utils._testing.series import _make_series
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 
 
-@pytest.mark.parametrize("n_timepoints", [50, 1])
+@pytest.mark.parametrize("n_timepoints", [49, 1])
 @pytest.mark.parametrize("index_type", ["period", "datetime", "range", "int"])
 @pytest.mark.parametrize("sp", [2, 10])
-def test_pivot_sp(sp, index_type, n_timepoints):
+@pytest.mark.parametrize("anchor_side", ["start", "end"])
+def test_pivot_sp(sp, index_type, n_timepoints, anchor_side):
     """Test _pivot_sp contract."""
     df = _make_series(
         n_timepoints=n_timepoints,
@@ -23,19 +24,16 @@ def test_pivot_sp(sp, index_type, n_timepoints):
         return_mtype="pd.DataFrame",
     )
 
-    df_pivot = _pivot_sp(df, sp)
+    df_pivot = _pivot_sp(df, sp, anchor_side=anchor_side)
 
     if index_type != "range":
         assert isinstance(df_pivot.index, type(df.index))
     else:
         pd.api.types.is_integer_dtype(df_pivot.index)
 
+    # ensure expected size of the resulting DataFrame
     assert len(df_pivot.columns) == min(sp, len(df))
-
-    if index_type != "datetime":
-        assert len(df_pivot) == ceil(len(df) / sp)
-    else:
-        assert len(df_pivot) == ceil((len(df) + 1) / sp)
+    assert len(df_pivot) == ceil(len(df) / sp)
 
     # compare values in pivot and plain frame,
     # check these are the same if read in left-right-then-top-down order
@@ -44,11 +42,23 @@ def test_pivot_sp(sp, index_type, n_timepoints):
     df_values = df.values.flatten()
     assert np.all(df_values == pivot_values)
 
+    # if anchor_side is "start", top left should be non-nan and bottom right nan
+    # if anchor_side is "end", top left should be nan and bottom right non-nan
+    # only if there is more than one timepoint, otherwise the result will be 1-element
+    if n_timepoints > 1:
+        if anchor_side == "start":
+            assert not np.isnan(df_pivot.iloc[0, 0])
+            assert np.isnan(df_pivot.iloc[-1, -1])
+        else:
+            assert np.isnan(df_pivot.iloc[0, 0])
+            assert not np.isnan(df_pivot.iloc[-1, -1])
 
-@pytest.mark.parametrize("n_timepoints", [50, 1])
+
+@pytest.mark.parametrize("n_timepoints", [49, 1])
 @pytest.mark.parametrize("index_type", ["period", "datetime", "range", "int"])
 @pytest.mark.parametrize("sp", [2, 10])
-def test_unpivot_sp(sp, index_type, n_timepoints):
+@pytest.mark.parametrize("anchor_side", ["start", "end"])
+def test_unpivot_sp(sp, index_type, n_timepoints, anchor_side):
     """Test _unpivot_sp contract."""
     df = _make_series(
         n_timepoints=n_timepoints,
@@ -58,7 +68,7 @@ def test_unpivot_sp(sp, index_type, n_timepoints):
     )
     df.columns = ["foo"]
 
-    df_pivot = _pivot_sp(df, sp)
+    df_pivot = _pivot_sp(df, sp, anchor_side=anchor_side)
 
     df_unpivot = _unpivot_sp(df=df_pivot, template=df)
 
@@ -75,7 +85,8 @@ def test_unpivot_sp(sp, index_type, n_timepoints):
 @pytest.mark.parametrize("n_timepoints", [50, 2])
 @pytest.mark.parametrize("index_type", ["period", "datetime", "range", "int"])
 @pytest.mark.parametrize("sp", [3, 10])
-def test_pivot_sp_consistent(sp, index_type, n_timepoints):
+@pytest.mark.parametrize("anchor_side", ["start", "end"])
+def test_pivot_sp_consistent(sp, index_type, n_timepoints, anchor_side):
     """Test _pivot_sp consistency between offsets."""
     df = _make_series(
         n_timepoints=n_timepoints,
@@ -85,8 +96,8 @@ def test_pivot_sp_consistent(sp, index_type, n_timepoints):
     )
     df2 = df.iloc[1:]
 
-    df_pivot = _pivot_sp(df, sp)
-    df2_pivot = _pivot_sp(df2, sp, anchor=df)
+    df_pivot = _pivot_sp(df, sp, anchor_side=anchor_side)
+    df2_pivot = _pivot_sp(df2, sp, anchor=df, anchor_side=anchor_side)
 
     assert np.all(df_pivot.index == df2_pivot.index)
 
