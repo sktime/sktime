@@ -11,7 +11,6 @@ __all__ = ["SeasonalReducer"]
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 
 
@@ -338,7 +337,8 @@ class SeasonalReducer(BaseForecaster):
 
         params1 = {"forecaster": TrendForecaster(), "sp": 3}
         params2 = {
-            "forecaster": DirectReductionForecaster.create_test_instance(), "sp": 2
+            "forecaster": DirectReductionForecaster.create_test_instance(),
+            "sp": 2,
         }
 
         return [params1, params2]
