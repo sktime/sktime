@@ -438,8 +438,6 @@ class ForecastingHorizon:
         self.freq = cutoff
         if not isinstance(cutoff, pd.Index):
             cutoff = pd.Index([cutoff])
-            if hasattr(cutoff, "freq"):
-                cutoff.freq = self.freq
         return cutoff
 
     def to_relative(self, cutoff=None):
