@@ -354,11 +354,11 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         elif strategy == "last" and sp > 1:
 
-            y_old = _pivot_sp(_y, sp)
+            y_old = _pivot_sp(_y, sp, anchor_side="end")
             y_old = lagger.fit_transform(y_old)
 
             y_new_mask = pd.Series(index=expected_index, dtype="float64")
-            y_new = _pivot_sp(y_new_mask, sp, anchor=_y)
+            y_new = _pivot_sp(y_new_mask, sp, anchor=_y, anchor_side="end")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
             # subset to rows that contain elements we wanted to fill
