@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for using tbats forecasters in sktime framework."""
 
-__author__ = ["mloning", "aiwalter", "k1m190r"]
+__author__ = ["mloning", "aiwalter", "k1m190r", "fkiraly"]
 __all__ = ["_TbatsAdapter"]
 
 import numpy as np
@@ -178,7 +178,7 @@ class _TbatsAdapter(BaseForecaster):
         return y_pred
 
     def _tbats_forecast(self, fh):
-        """TBATS forecast without confidence interval.
+        """TBATS point forecast adapter function.
 
         Parameters
         ----------
@@ -208,8 +208,8 @@ class _TbatsAdapter(BaseForecaster):
 
         return y_pred
 
-    def _tbats_forecast_with_interval(self, fh, conf_lev):
-        """TBATS forecast with confidence interval.
+    def _tbats_forecast_interval(self, fh, conf_lev):
+        """TBATS prediction interval forecast adapter function.
 
         Parameters
         ----------
@@ -226,42 +226,22 @@ class _TbatsAdapter(BaseForecaster):
             Prediction intervals
         """
         fh = fh.to_relative(cutoff=self.cutoff)
-        len_fh = len(fh)
+        fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
+        steps = fh_out.to_pandas().max()
 
-        if not fh.is_all_in_sample(cutoff=self.cutoff):
-            fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
-            steps = fh_out.to_pandas().max()
-            _, tbats_ci = self._forecaster.forecast(
-                steps=steps, confidence_level=conf_lev
-            )
-            out = pd.DataFrame(tbats_ci)
-            y_out = out["mean"]  # aka tbats y_hat out of sample
+        _, tbats_ci = self._forecaster.forecast(steps=steps, confidence_level=conf_lev)
+        out = pd.DataFrame(tbats_ci)
 
-            # pred_int
-            lower = pd.Series(out["lower_bound"])
-            upper = pd.Series(out["upper_bound"])
-            pred_int = self._get_pred_int(lower=lower, upper=upper)
+        # pred_int
+        lower = pd.Series(out["lower_bound"])
+        upper = pd.Series(out["upper_bound"])
+        pred_int_oos = pd.DataFrame({"lower": lower, "upper": upper})
+        pred_int_oos = pred_int_oos.iloc[fh_out.to_indexer()]
+        pred_int_oos.index = fh_out.to_absolute_index(self.cutoff)
+        full_ix = fh.to_absolute_index(self.cutoff)
+        pred_int = pred_int_oos.reindex(full_ix)
 
-            if len(fh) != len(fh_out):
-                epred_int = pd.DataFrame({"lower": nans(len_fh), "upper": nans(len_fh)})
-                epred_int.index = fh.to_absolute_index(self.cutoff)
-
-                in_pred_int = epred_int.index.isin(pred_int.index)
-                epred_int[in_pred_int] = pred_int
-                pred_int = epred_int
-
-        else:
-            y_out = nans(len_fh)
-            pred_int = pd.DataFrame({"lower": nans(len_fh), "upper": nans(len_fh)})
-            pred_int.index = fh.to_absolute_index(self.cutoff)
-
-        # y_pred
-        y_in_sample = pd.Series(self._forecaster.y_hat)
-        y_out_sample = pd.Series(y_out)
-        y_pred = self._get_y_pred(y_in_sample=y_in_sample, y_out_sample=y_out_sample)
-        y_pred.name = self._yname
-
-        return y_pred, pred_int
+        return pred_int
 
     def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
@@ -315,8 +295,8 @@ class _TbatsAdapter(BaseForecaster):
                 pred_int[("Coverage", 0, "upper")] = pred_int[("Coverage", 0, "lower")]
                 continue
 
-            # tbats with CI intervals
-            _, tbats_pred_int = self._tbats_forecast_with_interval(fh, c)
+            # tbats prediction intervals
+            tbats_pred_int = self._tbats_forecast_interval(fh, c)
 
             pred_int[("Coverage", c, "lower")] = tbats_pred_int["lower"]
             pred_int[("Coverage", c, "upper")] = tbats_pred_int["upper"]
@@ -338,39 +318,6 @@ class _TbatsAdapter(BaseForecaster):
     def _get_fitted_param_names(self):
         """Get names of fitted parameters."""
         return self._fitted_param_names
-
-    def _get_pred_int(self, lower, upper):
-        """Combine lower/upper bounds of pred.intervals, slice on fh.
-
-        Parameters
-        ----------
-        lower : pd.Series
-            Lower bound (can contain also in-sample bound)
-        upper : pd.Series
-            Upper bound (can contain also in-sample bound)
-
-        Returns
-        -------
-        pd.DataFrame
-            pred_int, prediction intervals (out-sample, sliced by fh)
-        """
-        pred_int = pd.DataFrame({"lower": lower, "upper": upper})
-        # Out-sample fh
-        fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
-        # If pred_int contains in-sample prediction intervals
-        if len(pred_int) > len(self._y):
-            len_out = len(pred_int) - len(self._y)
-            # Workaround for slicing with negative index
-            pred_int["idx"] = [x for x in range(-len(self._y), len_out)]
-        # If pred_int does not contain in-sample prediction intervals
-        else:
-            pred_int["idx"] = [x for x in range(len(pred_int))]
-        pred_int = pred_int.loc[
-            pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
-        ]
-        pred_int.index = fh_out.to_absolute_index(self.cutoff)
-        pred_int = pred_int.drop(columns=["idx"])
-        return pred_int
 
 
 def nans(length):
