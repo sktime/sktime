@@ -133,7 +133,9 @@ class DynamicFactor(_StatsModelsAdapter):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
+        "capability:insample": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
@@ -221,7 +223,7 @@ class DynamicFactor(_StatsModelsAdapter):
             y_pred.index = np.arange(
                 start + self._y.index[0], end + self._y.index[0] + 1
             )
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
     def _predict_interval(self, fh, X=None, coverage: [float] = None):
         """Compute/return prediction quantiles for a forecast.
@@ -265,11 +267,10 @@ class DynamicFactor(_StatsModelsAdapter):
             coverage_list = [coverage]
         else:
             coverage_list = coverage
-        # statsmodels requires zero-based indexing starting at the
-        # beginning of the training series when passing integers
+
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         steps = end - len(self._y) + 1
-        ix = fh.to_indexer()
+        ix = fh.to_indexer(self.cutoff)
 
         model = self._fitted_forecaster
 
@@ -331,8 +332,7 @@ class DynamicFactor(_StatsModelsAdapter):
         predictions_df_3 = pd.DataFrame(
             predictions_df_2.values, columns=pd.MultiIndex.from_tuples(final_columns)
         )
-
-        predictions_df_3.index = fh.to_absolute(self.cutoff).to_pandas()
+        predictions_df_3.index = fh.to_absolute_index(self.cutoff)
 
         return predictions_df_3
 

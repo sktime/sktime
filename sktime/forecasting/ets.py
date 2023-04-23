@@ -172,6 +172,7 @@ class AutoETS(_StatsModelsAdapter):
     _tags = {
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
     }
@@ -410,7 +411,7 @@ class AutoETS(_StatsModelsAdapter):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
         y_pred.name = self._y.name
