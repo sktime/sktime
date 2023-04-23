@@ -8,7 +8,7 @@ import pandas as pd
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
-__author__ = "Vincent Nicholson"
+__author__ = ["Vincent Nicholson"]
 
 
 class DWTTransformer(BaseTransformer):

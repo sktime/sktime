@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Test exponential smoothing forecasters."""
 
-__author__ = ["mloning", "@big-o"]
+__author__ = ["mloning", "big-o"]
 __all__ = ["test_set_params"]
 
 import pytest

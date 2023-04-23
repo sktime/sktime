@@ -121,7 +121,10 @@ class Evaluator:
             metrics_by_strategy_dataset, how="outer"
         )
         # aggregate over cv folds and datasets
-        metrics_by_strategy = metrics_by_strategy_dataset.groupby(
+        metrics_by_strategy_dataset_wo_ds = metrics_by_strategy_dataset.drop(
+            columns=["dataset"],
+        )
+        metrics_by_strategy = metrics_by_strategy_dataset_wo_ds.groupby(
             ["strategy"], as_index=False
         ).agg(np.mean)
         self._metrics_by_strategy = self._metrics_by_strategy.merge(

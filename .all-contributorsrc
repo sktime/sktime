@@ -1218,7 +1218,7 @@
       "login": "moradabaz",
       "name": "Morad :)",
       "avatar_url": "https://avatars.githubusercontent.com/u/29915156?v=4",
-      "profile": "https://moradisten.github.io/",
+      "profile": "https://moradabaz.github.io/",
       "contributions": [
         "code",
         "test",
@@ -2135,6 +2135,17 @@
       "contributions": [
         "code",
         "maintenance"
+      ]
+    },
+    {
+      "login": "yarnabrina",
+      "name": "Anirban Ray",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39331844?v=4",
+      "profile": "https://github.com/yarnabrina/",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
       ]
     }
   ]

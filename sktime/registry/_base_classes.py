@@ -73,6 +73,7 @@ from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.networks.base import BaseDeepNetwork
 from sktime.param_est.base import BaseParamFitter
 from sktime.performance_metrics.base import BaseMetric
+from sktime.proba.base import BaseDistribution
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.base import (
     BaseTransformer,
@@ -107,6 +108,7 @@ BASE_CLASS_REGISTER = [
         BasePairwiseTransformerPanel,
         "pairwise transformer for panel data, distance or kernel",
     ),
+    ("distribution", BaseDistribution, "pandas-like probability distribution"),
 ]
 
 

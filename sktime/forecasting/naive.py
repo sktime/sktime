@@ -389,7 +389,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         pred_quantiles = pd.DataFrame(
             errors + y_pred.values.reshape(len(y_pred), 1),
             columns=pd.MultiIndex.from_product([["Quantiles"], alpha]),
-            index=fh.to_absolute(self.cutoff).to_pandas(),
+            index=fh.to_absolute_index(self.cutoff),
         )
 
         return pred_quantiles
@@ -504,7 +504,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         marginal_se = se_res * partial_se_formulas[self.strategy](fh_periods)
         marginal_vars = marginal_se**2
 
-        fh_idx = fh.to_absolute(self.cutoff).to_pandas()
+        fh_idx = fh.to_absolute_index(self.cutoff)
         if cov:
             fh_size = len(fh)
             cov_matrix = np.fill_diagonal(
@@ -681,7 +681,7 @@ class NaiveVariance(BaseForecaster):
             pred_quantiles[("Quantiles", a)] = y_pred + error
 
         fh_absolute = fh.to_absolute(self.cutoff)
-        pred_quantiles.index = fh_absolute
+        pred_quantiles.index = fh_absolute.to_pandas()
 
         return pred_quantiles
 
@@ -720,6 +720,7 @@ class NaiveVariance(BaseForecaster):
 
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
+        fh_absolute_ix = fh_absolute.to_pandas()
 
         if cov:
             fh_size = len(fh)
@@ -734,8 +735,8 @@ class NaiveVariance(BaseForecaster):
                     )
             pred_var = pd.DataFrame(
                 covariance,
-                index=fh_absolute,
-                columns=fh_absolute,
+                index=fh_absolute_ix,
+                columns=fh_absolute_ix,
             )
         else:
             variance = [
@@ -744,9 +745,9 @@ class NaiveVariance(BaseForecaster):
             ]
             if hasattr(self._y, "columns"):
                 columns = self._y.columns
-                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute)
+                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute_ix)
             else:
-                pred_var = pd.DataFrame(variance, index=fh_absolute)
+                pred_var = pd.DataFrame(variance, index=fh_absolute_ix)
 
         return pred_var
 

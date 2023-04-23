@@ -64,6 +64,7 @@ class FreshPRINCE(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:train_estimate": True,
+        "capability:predict_proba": True,
         "classifier_type": "feature",
         "python_version": "<3.10",
         "python_dependencies": "tsfresh",

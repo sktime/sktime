@@ -16,6 +16,12 @@ from sklearn.utils import check_array
 
 from sktime.datatypes import VectorizedDF, check_is_scitype, convert_to
 from sktime.performance_metrics.base import BaseMetric
+from sktime.performance_metrics.forecasting._coerce import (
+    _coerce_to_1d_numpy,
+    _coerce_to_df,
+    _coerce_to_scalar,
+    _coerce_to_series,
+)
 from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_absolute_error,
     geometric_mean_relative_absolute_error,
@@ -40,7 +46,7 @@ from sktime.performance_metrics.forecasting._functions import (
     relative_loss,
 )
 
-__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns", "fkiraly"]
+__author__ = ["mloning", "tch", "RNKuhns", "fkiraly"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
@@ -67,28 +73,24 @@ __all__ = [
 ]
 
 
-def _coerce_to_scalar(obj):
-    """Coerce obj to scalar, from polymorphic input scalar or pandas."""
-    if isinstance(obj, pd.DataFrame):
-        assert len(obj) == 1
-        assert len(obj.columns) == 1
-        return obj.iloc[0, 0]
-    if isinstance(obj, pd.Series):
-        assert len(obj) == 1
-        return obj.iloc[0]
-    return obj
+def _is_average(multilevel_or_multioutput):
+    """Check if multilevel is one of the inputs that lead to averaging.
 
+    True if `multilevel_or_multioutput`
+    is one of the strings `"uniform_average"`, `"uniform_average_time"`
 
-def _coerce_to_df(obj):
-    """Coerce to pd.DataFrame, from polymorphic input scalar or pandas."""
-    return pd.DataFrame(obj)
+    False if `multilevel_or_multioutput`
+    is the string `"raw_values"`
 
-
-def _coerce_to_1d_numpy(obj):
-    """Coerce to 1D np.ndarray, from pd.DataFrame or pd.Series."""
-    if isinstance(obj, (pd.DataFrame, pd.Series)):
-        obj = obj.values
-    return obj.flatten()
+    True otherwise
+    """
+    if isinstance(multilevel_or_multioutput, str):
+        if multilevel_or_multioutput in ["uniform_average", "uniform_average_time"]:
+            return True
+        if multilevel_or_multioutput in ["raw_values"]:
+            return False
+    else:
+        return True
 
 
 class BaseForecastingErrorMetric(BaseMetric):
@@ -215,11 +217,11 @@ class BaseForecastingErrorMetric(BaseMetric):
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
 
-        if multilevel == "uniform_average" and multioutput == "raw_values":
+        if _is_average(multilevel) and not _is_average(multioutput):
             out_df = _coerce_to_1d_numpy(out_df)
-        if multilevel == "uniform_average" and multioutput == "uniform_average":
+        if _is_average(multilevel) and _is_average(multioutput):
             out_df = _coerce_to_scalar(out_df)
-        if multilevel == "raw_values":
+        if not _is_average(multilevel):
             out_df = _coerce_to_df(out_df)
 
         return out_df
@@ -293,6 +295,30 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return eval_result
 
+    def _evaluate_by_index_vectorized(self, y_true, y_pred, **kwargs):
+        """Vectorized version of _evaluate_by_index.
+
+        Runs _evaluate for all instances in y_true, y_pred,
+        and returns results in a hierarchical pandas.DataFrame.
+
+        Parameters
+        ----------
+        y_true : VectorizedDF
+        y_pred : VectorizedDF
+        non-time-like instances of y_true, y_pred must be identical
+        """
+        eval_result = y_true.vectorize_est(
+            estimator=self.clone().set_params(**{"multilevel": "uniform_average"}),
+            method="_evaluate_by_index",
+            varname_of_self="y_true",
+            args={**kwargs, "y_pred": y_pred},
+            colname_default=self.name,
+            return_type="list",
+        )
+
+        eval_result = y_true.reconstruct(eval_result)
+        return eval_result
+
     def evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 
@@ -326,9 +352,24 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
-        # pass to inner function
-        out_df = self._evaluate_by_index(y_true_inner, y_pred_inner, **kwargs)
+        requires_vectorization = isinstance(y_true_inner, VectorizedDF)
+        if not requires_vectorization:
+            # pass to inner function
+            out_df = self._evaluate_by_index(
+                y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+            )
+        else:
+            out_df = self._evaluate_by_index_vectorized(
+                y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+            )
 
+            if multilevel in ["uniform_average", "uniform_average_time"]:
+                out_df = out_df.groupby(level=-1).mean()
+
+        if multioutput == "raw_values":
+            out_df = _coerce_to_df(out_df)
+        else:
+            out_df = _coerce_to_series(out_df)
         return out_df
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
@@ -343,12 +384,11 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
+        y_true : time series in sktime compatible pandas based data container format
             Ground truth (correct) target values
             y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
             Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
         y_pred :time series in sktime compatible data container format
             Forecasted values to evaluate
@@ -368,16 +408,22 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput = self.multioutput
         n = y_true.shape[0]
         if multioutput == "raw_values":
-            out_series = pd.DataFrame(index=y_true.index, columns=y_true.columns)
+            out_series = pd.DataFrame(
+                index=y_true.index, columns=y_true.columns, dtype="float64"
+            )
         else:
-            out_series = pd.Series(index=y_true.index)
+            out_series = pd.Series(index=y_true.index, dtype="float64")
         try:
             x_bar = self.evaluate(y_true, y_pred, **kwargs)
             for i in range(n):
                 idx = y_true.index[i]
+                kwargs_i = kwargs.copy()
+                if "y_pred_benchmark" in kwargs.keys():
+                    kwargs_i["y_pred_benchmark"] = kwargs["y_pred_benchmark"].drop(idx)
                 pseudovalue = n * x_bar - (n - 1) * self.evaluate(
                     y_true.drop(idx),
                     y_pred.drop(idx),
+                    **kwargs_i,
                 )
                 out_series.loc[idx] = pseudovalue
             return out_series
@@ -472,6 +518,9 @@ class BaseForecastingErrorMetric(BaseMetric):
         INNER_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
         def _coerce_to_df(y, var_name="y"):
+            if isinstance(y, VectorizedDF):
+                return y.X_multiindex
+
             valid, msg, metadata = check_is_scitype(
                 y, scitype=SCITYPES, return_metadata=True, var_name=var_name
             )
@@ -1072,8 +1121,23 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         return [params1, params2]
 
 
-class MeanAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Mean absolute error (MAE).
+class MeanAbsoluteError(BaseForecastingErrorMetric):
+    r"""Mean absolute error (MAE).
+
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    `evaluate` or call returns the Mean Absolute Error,
+    :math:`\frac{1}{n}\sum_{i=1}^n |y_i - \widehat{y}_i|`.
+    (the time indices are not used)
+
+    `multioutput` and `multilevel` control averaging across variables and
+    hierarchy indices, see below.
+
+    `evaluate_by_index` returns, at a time index :math:`t_i`,
+    the abolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
+    for all time indices :math:`t_1, \dots, t_n` in the input.
 
     MAE output is non-negative floating point. The best value is 0.0.
 
@@ -1089,6 +1153,11 @@ class MeanAbsoluteError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', errors are mean-averaged across rows.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1122,7 +1191,46 @@ class MeanAbsoluteError(BaseForecastingErrorMetricFunc):
     0.85
     """
 
-    func = mean_absolute_error
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred).abs()
+
+        if multioutput == "raw_values":
+            return raw_values
+
+        if multioutput == "uniform_average":
+            return raw_values.mean(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return raw_values.dot(multioutput)
 
 
 class MedianAbsoluteError(BaseForecastingErrorMetricFunc):

@@ -86,6 +86,36 @@ class ConformalIntervals(BaseForecaster):
     >>> conformal_forecaster.fit(y, fh=[1,2,3])
     ConformalIntervals(...)
     >>> pred_int = conformal_forecaster.predict_interval()
+
+    recommended use of ConformalIntervals together with ForecastingGridSearch
+    is by 1. first running grid search, 2. then ConformalIntervals on the tuned params
+    otherwise, nested sliding windows will cause high compute requirement
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.conformal import ConformalIntervals
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.param_est.plugin import PluginParamsForecaster
+    >>> # part 1 = grid search
+    >>> cv = ExpandingWindowSplitter(fh=[1,2,3])
+    >>> forecaster = NaiveForecaster()
+    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
+    >>> gscv = ForecastingGridSearchCV(
+    ...     forecaster=forecaster,
+    ...     param_grid=param_grid,
+    ...     cv=cv,
+    ... )
+    >>> # part 2 = plug in results of grid search into conformal intervals estimator
+    >>> conformal_with_fallback = ConformalIntervals(NaiveForecaster())
+    >>> gscv_with_conformal = PluginParamsForecaster(
+    ...     gscv,
+    ...     conformal_with_fallback,
+    ...     params={"best_forecaster": "forecaster"},
+    ... )
+    >>> y = load_airline()
+    >>> gscv_with_conformal.fit(y, fh=[1, 2, 3])
+    PluginParamsForecaster(...)
+    >>> y_pred_quantiles = gscv_with_conformal.predict_quantiles()
     """
 
     _tags = {
@@ -94,6 +124,7 @@ class ConformalIntervals(BaseForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     ALLOWED_METHODS = [
@@ -214,6 +245,7 @@ class ConformalIntervals(BaseForecaster):
         """
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
+        fh_absolute_idx = fh_absolute.to_pandas()
 
         if self.fh_early_:
             residuals_matrix = self.residuals_matrix_
@@ -229,7 +261,7 @@ class ConformalIntervals(BaseForecaster):
         ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
 
         cols = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
-        pred_int = pd.DataFrame(index=fh_absolute, columns=cols)
+        pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
         for fh_ind, offset in zip(fh_absolute, fh_relative):
             resids = np.diagonal(residuals_matrix, offset=offset)
             resids = resids[~np.isnan(resids)]
@@ -253,7 +285,7 @@ class ConformalIntervals(BaseForecaster):
 
         y_pred = self.predict(fh=fh, X=X)
         y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
-        y_pred.index = fh_absolute
+        y_pred.index = fh_absolute_idx
 
         for col in cols:
             if self.method in ABS_RESIDUAL_BASED:

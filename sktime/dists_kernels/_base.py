@@ -473,7 +473,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             usually df-list, list of pd.DataFrame, unless overridden
         """
         check_res = check_is_scitype(
-            X, ["Series", "Panel"], return_metadata=True, var_name=var_name
+            X, ["Series", "Panel"], return_metadata=[], var_name=var_name
         )
         X_valid = check_res[0]
         metadata = check_res[2]

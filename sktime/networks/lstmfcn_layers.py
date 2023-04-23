@@ -2,11 +2,6 @@
 """Attention Layers used in by the LSTM-FCN Network. Ported over from sktime-dl."""
 
 
-from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
-
-
 def make_attention_lstm():
     """Return AttentionLSTM class used by the LSTM-FCN Network."""
     from tensorflow.keras import activations
