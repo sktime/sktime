@@ -226,7 +226,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         fh_is_oos = fh.is_all_out_of_sample(cutoff)
 
         # if estimator cannot forecast in-sample and fh is in-sample, terminate
-        # if the tag correctly state this, we consider this fine as per contract
+        # if the tag correctly states this, we consider this fine as per contract
         # todo: check that estimator raises error message when fitting instead
         if not fh_is_oos and not estimator_instance.get_tag("capability:insample"):
             return None
@@ -242,6 +242,19 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_test.index = y_pred.index
         y_res = estimator_instance.predict_residuals(y_test)
         _assert_correct_pred_time_index(y_res.index, cutoff, fh=fh)
+
+        # if cannot forecast in-sample probabilistically, and fh is in-sample, terminate
+        # if the tag correctly states this, we consider this fine as per contract
+        # todo: check that estimator raises error message when fitting instead
+        if not fh_is_oos:
+            if not estimator_instance.get_tag("capability:pred_int:insample"):
+                return None
+
+        if estimator_instance.get_tag("capability:pred_int"):
+            y_pred_int = estimator_instance.predict_interval()
+            _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh=fh_int)
+            y_pred_q = estimator_instance.predict_quantiles()
+            _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh=fh_int)
 
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
