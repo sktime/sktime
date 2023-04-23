@@ -62,13 +62,13 @@ class SeasonalReducer(BaseForecaster):
 
         self.forecaster_ = forecaster.clone()
 
-        tags_to_clone = {
+        tags_to_clone = [
             "ignores-exogeneous-X",
             "handles-missing-data",
             "capability:pred_int",
             "capability:insample",
             "capability:pred_int:insample",
-        }
+        ]
         self.clone_tags(forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
