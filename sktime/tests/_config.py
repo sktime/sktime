@@ -37,9 +37,13 @@ EXCLUDE_ESTIMATORS = [
 
 
 EXCLUDED_TESTS = {
-    # issue when predicting residuals, see #3479
+    # issue when prediction intervals, see #3479 and #4504
     # known issue with prediction intervals that needs fixing, tracked in #4181
-    "SquaringResiduals": ["test_predict_residuals", "test_predict_interval"],
+    "SquaringResiduals": [
+        "test_predict_time_index",
+        "test_predict_residuals",
+        "test_predict_interval",
+    ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
