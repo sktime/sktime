@@ -11,6 +11,7 @@ __all__ = ["SeasonalReducer"]
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 
 
@@ -48,7 +49,9 @@ class SeasonalReducer(BaseForecaster):
         "X-y-must-have-same-index": False,
         "enforce_index_type": None,
         "handles-missing-data": True,
+        "capability:insample": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(self, forecaster, sp):
@@ -59,6 +62,15 @@ class SeasonalReducer(BaseForecaster):
         super(SeasonalReducer, self).__init__()
 
         self.forecaster_ = forecaster.clone()
+
+        tags_to_clone = {
+            "ignores-exogeneous-X",
+            "handles-missing-data"
+            "capability:pred_int",
+            "capability:insample",
+            "capability:pred_int:insample",
+        }
+        self.clone_tags(forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -97,6 +109,7 @@ class SeasonalReducer(BaseForecaster):
 
         if X is not None:
             X_pivot = _pivot_sp(X, sp=sp, anchor=y, anchor_side="end")
+            X_pivot.columns = flatten_multiindex(X_pivot)
         else:
             X_pivot = None
 
