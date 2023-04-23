@@ -229,7 +229,9 @@ class _TbatsAdapter(BaseForecaster):
 
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             steps = fh_out.to_pandas()[-1]
-            _, tbats_ci = self._forecaster.forecast(steps=steps, confidence_level=conf_lev)
+            _, tbats_ci = self._forecaster.forecast(
+                steps=steps, confidence_level=conf_lev
+            )
             out = pd.DataFrame(tbats_ci)
             # pred_int
             lower = pd.Series(out["lower_bound"])
