@@ -64,7 +64,7 @@ class SeasonalReducer(BaseForecaster):
 
         tags_to_clone = {
             "ignores-exogeneous-X",
-            "handles-missing-data"
+            "handles-missing-data",
             "capability:pred_int",
             "capability:insample",
             "capability:pred_int:insample",
