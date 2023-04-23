@@ -11,7 +11,6 @@ __all__ = ["SeasonalReducer"]
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 
 
@@ -109,7 +108,7 @@ class SeasonalReducer(BaseForecaster):
 
         if X is not None:
             X_pivot = _pivot_sp(X, sp=sp, anchor=y, anchor_side="end")
-            X_pivot.columns = flatten_multiindex(X_pivot)
+            X_pivot.columns = pd.RangeIndex(len(X_pivot.columns))
         else:
             X_pivot = None
 
