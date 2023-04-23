@@ -194,9 +194,8 @@ class _TbatsAdapter(BaseForecaster):
 
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
-            steps = fh_out.to_pandas().max()
+            steps = fh_out.to_pandas()[-1]
             y_out = self._forecaster.forecast(steps=steps, confidence_level=None)
-
         else:
             y_out = nans(len(fh))
 
@@ -227,18 +226,21 @@ class _TbatsAdapter(BaseForecaster):
         """
         fh = fh.to_relative(cutoff=self.cutoff)
         fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
-        steps = fh_out.to_pandas().max()
 
-        _, tbats_ci = self._forecaster.forecast(steps=steps, confidence_level=conf_lev)
-        out = pd.DataFrame(tbats_ci)
+        if not fh.is_all_in_sample(cutoff=self.cutoff):
+            steps = fh_out.to_pandas()[-1]
+            _, tbats_ci = self._forecaster.forecast(steps=steps, confidence_level=conf_lev)
+            out = pd.DataFrame(tbats_ci)
+            # pred_int
+            lower = pd.Series(out["lower_bound"])
+            upper = pd.Series(out["upper_bound"])
+            pred_int_oos = pd.DataFrame({"lower": lower, "upper": upper})
+            pred_int_oos = pred_int_oos.iloc[fh_out.to_indexer()]
+            pred_int_oos.index = fh_out.to_absolute_index(self.cutoff)
+            full_ix = fh.to_absolute_index(self.cutoff)
+        else:
+            pred_int_oos = pd.DataFrame(columns=["lower", "upper"])
 
-        # pred_int
-        lower = pd.Series(out["lower_bound"])
-        upper = pd.Series(out["upper_bound"])
-        pred_int_oos = pd.DataFrame({"lower": lower, "upper": upper})
-        pred_int_oos = pred_int_oos.iloc[fh_out.to_indexer()]
-        pred_int_oos.index = fh_out.to_absolute(self.cutoff).to_pandas()
-        full_ix = fh.to_absolute(self.cutoff).to_pandas()
         pred_int = pred_int_oos.reindex(full_ix)
 
         return pred_int
