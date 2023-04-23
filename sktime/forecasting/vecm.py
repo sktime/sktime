@@ -253,7 +253,7 @@ class VECM(_StatsModelsAdapter):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         exog_fc = X.values if X is not None else None
-        fh_oos = fh.to_out_of_sample(self.cutoff)
+        fh_int = fh.to_relative(self.cutoff)
         var_names = (
             self._y.index.name
             if self._y.index.name is not None
@@ -265,7 +265,7 @@ class VECM(_StatsModelsAdapter):
         for c in coverage:
             alpha = 1 - c
             _, y_lower, y_upper = self._fitted_forecaster.predict(
-                steps=fh_oos[-1],
+                steps=fh_int[-1],
                 exog_fc=exog_fc,
                 exog_coint_fc=self.exog_coint_fc,
                 alpha=alpha,
