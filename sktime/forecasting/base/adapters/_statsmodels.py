@@ -99,7 +99,7 @@ class _StatsModelsAdapter(BaseForecaster):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        fh_abs = fh.to_absolute_index(self.cutoff)
 
         # bug fix for evaluate function as test_plus_train indices are passed
         # statsmodels exog must contain test indices only.

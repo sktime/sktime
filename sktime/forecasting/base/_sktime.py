@@ -74,7 +74,7 @@ class _BaseWindowForecaster(BaseForecaster):
         if isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             return y_pred
         else:
-            index = fh.to_absolute(self.cutoff).to_pandas()
+            index = fh.to_absolute_index(self.cutoff)
             return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(
