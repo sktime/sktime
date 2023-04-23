@@ -236,8 +236,8 @@ class _TbatsAdapter(BaseForecaster):
             upper = pd.Series(out["upper_bound"])
             pred_int_oos = pd.DataFrame({"lower": lower, "upper": upper})
             pred_int_oos = pred_int_oos.iloc[fh_out.to_indexer()]
-            pred_int_oos.index = fh_out.to_absolute(self.cutoff).to_pandas()
-            full_ix = fh.to_absolute(self.cutoff).to_pandas()
+            pred_int_oos.index = fh_out.to_absolute_index(self.cutoff)
+            full_ix = fh.to_absolute_index(self.cutoff)
         else:
             pred_int_oos = pd.DataFrame(columns=["lower", "upper"])
 
