@@ -53,13 +53,13 @@ X1_np = _make_series(
     n_columns=4,
     n_timepoints=4,
     random_state=1,
-    return_numpy=True,
+    return_mtype="np.ndarray",
 )
 X2_np = _make_series(
     n_columns=4,
     n_timepoints=5,
     random_state=2,
-    return_numpy=True,
+    return_mtype="np.ndarray",
 )
 
 
