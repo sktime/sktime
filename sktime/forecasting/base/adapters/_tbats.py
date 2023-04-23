@@ -239,10 +239,10 @@ class _TbatsAdapter(BaseForecaster):
             pred_int_oos = pd.DataFrame({"lower": lower, "upper": upper})
             pred_int_oos = pred_int_oos.iloc[fh_out.to_indexer()]
             pred_int_oos.index = fh_out.to_absolute_index(self.cutoff)
-            full_ix = fh.to_absolute_index(self.cutoff)
         else:
             pred_int_oos = pd.DataFrame(columns=["lower", "upper"])
 
+        full_ix = fh.to_absolute_index(self.cutoff)
         pred_int = pred_int_oos.reindex(full_ix)
 
         return pred_int
