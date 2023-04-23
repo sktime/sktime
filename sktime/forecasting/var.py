@@ -183,7 +183,7 @@ class VAR(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        index = fh.to_absolute(self.cutoff).to_pandas()
+        index = fh.to_absolute_index(self.cutoff)
         index.name = self._y.index.name
         y_pred = pd.DataFrame(
             y_pred[fh.to_indexer(self.cutoff), :],
@@ -300,7 +300,7 @@ class VAR(_StatsModelsAdapter):
             columns=pd.MultiIndex.from_tuples(final_columns),
         )
 
-        index = fh.to_absolute(self.cutoff).to_pandas()
+        index = fh.to_absolute_index(self.cutoff)
         index.name = self._y.index.name
         final_df.index = index
 

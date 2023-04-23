@@ -238,7 +238,7 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         mat2 = mat2.transpose()
 
         distmat = mat1 + mat2 - 2 * kernelmat
-        distmat = np.sqrt(distmat)
+        distmat = np.sqrt(np.abs(distmat))
 
         return distmat
 

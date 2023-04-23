@@ -175,7 +175,7 @@ class SquaringResiduals(BaseForecaster):
                 y_pred_current = []
                 y_pred_current_index = []
                 for col in y_pred.columns:
-                    fh_current_abs = fh_current.to_absolute(col).to_pandas()
+                    fh_current_abs = fh_current.to_absolute_index(col)
                     y_pred_current.append(y_pred.at[fh_current_abs[0], col])
                     y_pred_current_index.append(fh_current_abs[0])
                 y_pred_current = pd.Series(
@@ -351,7 +351,7 @@ class SquaringResiduals(BaseForecaster):
         fh_abs = fh.to_absolute(self.cutoff)
         fh_rel = fh.to_relative(self.cutoff)
         fh_rel_index = fh_rel.to_pandas()
-        pred_var = pd.Series(index=fh_rel_index)
+        pred_var = pd.Series(index=fh_rel_index, dtype="float64")
         for el in fh_rel:
             pred_var.at[el] = self._res_forecasters[el].predict(fh=el)[0]
         if self.strategy == "square":

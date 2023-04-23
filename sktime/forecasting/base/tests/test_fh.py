@@ -121,7 +121,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
     # check outputs
     # check relative representation
-    _assert_index_equal(fh_absolute, fh.to_absolute(cutoff).to_pandas())
+    _assert_index_equal(fh_absolute, fh.to_absolute_index(cutoff))
     assert not fh.to_absolute(cutoff).is_relative
 
     # check relative representation
