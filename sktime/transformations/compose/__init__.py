@@ -8,6 +8,7 @@ from sktime.transformations.compose._column import (
 )
 from sktime.transformations.compose._featureunion import FeatureUnion
 from sktime.transformations.compose._fitintransform import FitInTransform
+from sktime.transformations.compose._grouped import TransformByLevel
 from sktime.transformations.compose._id import Id
 from sktime.transformations.compose._invert import InvertTransform
 from sktime.transformations.compose._ixtox import IxToX
@@ -29,6 +30,7 @@ __all__ = [
     "MultiplexTransformer",
     "OptionalPassthrough",
     "TransformerPipeline",
+    "TransformByLevel",
     "TransformIf",
     "YtoX",
 ]

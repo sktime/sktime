@@ -172,6 +172,7 @@ class AutoETS(_StatsModelsAdapter):
     _tags = {
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
     }
@@ -410,69 +411,37 @@ class AutoETS(_StatsModelsAdapter):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
         y_pred.name = self._y.name
         return y_pred.loc[valid_indices]
 
-    def _predict_interval(self, fh, X=None, coverage=None):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_interval containing the core logic,
-            called from predict_interval and possibly predict_quantiles
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
+    @staticmethod
+    def _extract_conf_int(prediction_results, alpha) -> pd.DataFrame:
+        """Construct confidence interval at specified `alpha` for each timestep.
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to predict from.
-        coverage : list of float (guaranteed not None and floats in [0,1] interval)
-           nominal coverage(s) of predictive interval(s)
+        prediction_results : PredictionResults
+            results class, as returned by ``self._fitted_forecaster.get_prediction``
+        alpha : float
+            one minus nominal coverage
 
         Returns
         -------
-        pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
-                Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-                Upper/lower interval end forecasts are equivalent to
-                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        pd.DataFrame
+            confidence intervals at each timestep
+
+            The dataframe must have at least two columns ``lower`` and ``upper``, and
+            the row indices must be integers relative to ``self.cutoff``. Order of
+            columns do not matter, and row indices must be a superset of relative
+            integer horizon of ``fh``.
         """
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        conf_int = prediction_results.pred_int(alpha=alpha)
+        conf_int.columns = ["lower", "upper"]
 
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
-
-        prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end, random_state=self.random_state
-        )
-
-        cols = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
-        pred_int = pd.DataFrame(index=valid_indices, columns=cols)
-        for c in coverage:
-            pred_statsmodels = prediction_results.pred_int(1 - c)
-            pred_statsmodels.columns = ["lower", "upper"]
-            pred_int[("Coverage", c, "lower")] = pred_statsmodels["lower"].loc[
-                valid_indices
-            ]
-            pred_int[("Coverage", c, "upper")] = pred_statsmodels["upper"].loc[
-                valid_indices
-            ]
-
-        return pred_int
+        return conf_int
 
     def summary(self):
         """Get a summary of the fitted forecaster.

@@ -129,6 +129,7 @@ class BOSSEnsemble(BaseClassifier):
         "capability:train_estimate": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
+        "capability:predict_proba": True,
         "python_dependencies": "numba",
     }
 

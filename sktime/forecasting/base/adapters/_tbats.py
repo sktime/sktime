@@ -20,9 +20,9 @@ class _TbatsAdapter(BaseForecaster):
     _tags = {
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        # "capability:predict_quantiles": True,
         "python_dependencies": "tbats",
     }
 
@@ -173,7 +173,7 @@ class _TbatsAdapter(BaseForecaster):
         # Workaround for slicing with negative index
         y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
         y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
-        y_pred.index = self.fh.to_absolute(self.cutoff).to_pandas()
+        y_pred.index = self.fh.to_absolute_index(self.cutoff)
         y_pred = y_pred["y_pred"].rename(None)
         return y_pred
 
@@ -289,9 +289,7 @@ class _TbatsAdapter(BaseForecaster):
         # accumulator of results
         var_names = ["Coverage"]
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
-        pred_int = pd.DataFrame(
-            columns=int_idx, index=fh.to_absolute(cutoff).to_pandas()
-        )
+        pred_int = pd.DataFrame(columns=int_idx, index=fh.to_absolute_index(cutoff))
 
         for c in coverage:
 

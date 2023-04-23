@@ -118,7 +118,7 @@ class TrendForecaster(BaseForecaster):
             Point predictions for the forecast
         """
         # use relative fh as time index to predict
-        fh = self.fh.to_absolute(self.cutoff).to_pandas()
+        fh = self.fh.to_absolute_index(self.cutoff)
         X_sklearn = _get_X_numpy_int_from_pandas(fh)
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
         y_pred = pd.Series(y_pred_sklearn, index=fh)
@@ -266,7 +266,7 @@ class PolynomialTrendForecaster(BaseForecaster):
             Point predictions for the forecast
         """
         # use relative fh as time index to predict
-        fh = self.fh.to_absolute(self.cutoff).to_pandas()
+        fh = self.fh.to_absolute_index(self.cutoff)
         X_sklearn = _get_X_numpy_int_from_pandas(fh)
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
         y_pred = pd.Series(y_pred_sklearn, index=fh)
