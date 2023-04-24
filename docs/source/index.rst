@@ -4,33 +4,28 @@
 Welcome to sktime
 =================
 
-  A unified framework for machine learning with time series.
-
+A unified framework for machine learning with time series.
 
 Mission
 =======
 
 .. include:: about/_mission.rst
 
+Features
+========
 
-Scope
-=====
+* unified API for machine learning with time series, for model specification, fitting, application, and validation
+* supported tasks include :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`time series regression <regression_ref>`, :ref:`time series clustering <clustering_ref>`.
+* tools for composite model buildin including pipelining with transformations, ensembling, tuning and reduction
+* interactive user experience with scikit-learn like syntax conventions
 
-sktime features a unified interface for multiple time series learning tasks.
-Currently, we support :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`time series regression <regression_ref>` and :ref:`time series clustering <clustering_ref>`.
-We have experimental support for time series annotation.
-
-Features:
-
-* API for time series machine learning, for model specification, fitting, application, and validation.
-* Interactive user experience with scikit-learn like syntax conventions
-
-Technical specification:
+Technical specification
+=======================
 
 * In-memory computation of a single machine, no distributed computing
-* Medium-sized data in pandas and NumPy
+* Medium-sized data in pandas and NumPy based containers
 * Modular, principled and object-oriented API
-* Making use of interactive Python interpreter, no command-line interface or graphical user interface
+* Using interactive Python interpreter, no command-line interface or graphical user interface
 
 Contents
 ========
