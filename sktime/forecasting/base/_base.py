@@ -91,7 +91,9 @@ class BaseForecaster(BaseEstimator):
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
+        "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
