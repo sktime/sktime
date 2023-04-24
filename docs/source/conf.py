@@ -194,18 +194,13 @@ html_theme_options = {
         },
         {
             "name": "Discord",
-            "url": "https://discord.com/invite/gqSab2K",
+            "url": "https://discord.com/invite/54ACzaFsn7",
             "icon": "fab fa-discord",
         },
         {
             "name": "LinkedIn",
-            "url": "https://www.linkedin.com/company/sktime/",
+            "url": "https://www.linkedin.com/company/scikit-time/",
             "icon": "fab fa-linkedin",
-        },
-        {
-            "name": "Twitter",
-            "url": "https://twitter.com/sktime_toolbox",
-            "icon": "fab fa-twitter",
         },
     ],
     "favicons": [

@@ -122,6 +122,7 @@ class MUSE(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
         "python_dependencies": "numba",
@@ -201,7 +202,8 @@ class MUSE(BaseClassifier):
         if self.n_dims == 1:
             warnings.warn(
                 "MUSE Warning: Input series is univariate; MUSE is designed for"
-                + " multivariate series. It is recommended WEASEL is used instead."
+                + " multivariate series. It is recommended WEASEL is used instead.",
+                stacklevel=2,
             )
 
         if self.variance and self.anova:

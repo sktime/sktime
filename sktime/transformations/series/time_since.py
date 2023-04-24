@@ -130,9 +130,12 @@ class TimeSince(BaseTransformer):
         """
         time_index = _get_time_index(X)
 
-        if time_index.is_numeric():
+        if pd.api.types.is_numeric_dtype(time_index):
             if self.freq:
-                warnings.warn("Index is integer type. `freq` will be ignored.")
+                warnings.warn(
+                    "Index is integer type. `freq` will be ignored.",
+                    stacklevel=2,
+                )
             self.freq_ = None
         elif isinstance(time_index, (pd.DatetimeIndex, pd.PeriodIndex)):
             # Chooses first non None value
@@ -146,7 +149,8 @@ class TimeSince(BaseTransformer):
             ):
                 warnings.warn(
                     f"Using frequency from index: {time_index.freq}, which "
-                    f"does not match the frequency given: {self.freq}."
+                    f"does not match the frequency given: {self.freq}.",
+                    stacklevel=2,
                 )
         else:
             raise ValueError("Index must be of type int, datetime, or period.")
@@ -184,11 +188,12 @@ class TimeSince(BaseTransformer):
                     f"Period index. Check that `start` is of type "
                     f"pd.Period or a pd.Period parsable string."
                 )
-            elif time_index.is_numeric() and not isinstance(start_, (int, np.integer)):
-                raise ValueError(
-                    f"start_={start_} incompatible with a numeric index."
-                    f"Check that `start` is an integer."
-                )
+            elif pd.api.types.is_numeric_dtype(time_index):
+                if not isinstance(start_, (int, np.integer)):
+                    raise ValueError(
+                        f"start_={start_} incompatible with a numeric index."
+                        f"Check that `start` is an integer."
+                    )
 
         return self
 
@@ -271,7 +276,7 @@ class TimeSince(BaseTransformer):
                     # Compute time differences.
                     time_deltas = _get_period_diff_as_int(time_index, start_period)
 
-                elif time_index.is_numeric():
+                elif pd.api.types.is_numeric_dtype(time_index):
                     time_deltas = time_index - start_
             else:
                 time_deltas = time_index - start_
@@ -317,7 +322,7 @@ class TimeSince(BaseTransformer):
 
 
 def _get_period_diff_as_int(x: pd.PeriodIndex, y: pd.PeriodIndex) -> pd.Index:
-    return x.astype(int) - y.astype(int)
+    return x.astype("int64") - y.astype("int64")
 
 
 def _remove_digits_from_str(x: str) -> str:

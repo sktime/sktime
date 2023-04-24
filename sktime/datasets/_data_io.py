@@ -2036,11 +2036,10 @@ def _convert_tsf_to_hierarchical(
     columns = [value_column_name, "timestamp"]
     index_columns = [c for c in list(df.columns) if c not in drop_columns + columns]
     result = pd.DataFrame({c: df[c].explode() for c in columns})
-    df = (
-        df.drop(columns=columns + drop_columns)
-        .join(result)
-        .set_index(index_columns + ["timestamp"])
-    )
+    df = df.drop(columns=columns + drop_columns).join(result)
+    if df["timestamp"].dtype == "object":
+        df = df.astype({"timestamp": "int64"})
+    df = df.set_index(index_columns + ["timestamp"])
     df = df.astype({value_column_name: "float"}, errors="ignore")
 
     return df

@@ -7,13 +7,20 @@ __all__ = []
 
 import numpy as np
 import pytest
-from scipy.stats import boxcox
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("scipy", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_boxcox_against_scipy():
+    """Test boxcox transformer vs the scipy boxvox function."""
+    from scipy.stats import boxcox
+
     y = load_airline()
 
     t = BoxCoxTransformer()

@@ -28,6 +28,10 @@ Tag inspection and setter methods
     setting dynamic tags          - set_tags(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
 
+Config inspection and setter methods
+    get configs (all)             - get_config()
+    set configs                   - set_config(**config_dict: dict)
+
 Blueprinting: resetting and cloning, post-init state with same hyper-parameters
     reset estimator to post-init  - reset()
     cloneestimator (copy&reset)   - clone()
@@ -62,10 +66,12 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
 
+from sktime.base._tagmanager import _FlagManager
 from sktime.exceptions import NotFittedError
 
 
 class BaseObject(_BaseObject):
+
     """Base class for parametric objects with tags sktime.
 
     Extends skbase BaseObject with additional features.
@@ -346,7 +352,7 @@ class TagAliaserMixin:
                     )
                 else:
                     msg += ', please remove code that access or sets "{tag_name}"'
-                warnings.warn(msg, category=DeprecationWarning)
+                warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
 
 
 class BaseEstimator(BaseObject):

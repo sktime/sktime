@@ -34,6 +34,7 @@ __all__ = [
     "convert_dict",
 ]
 
+from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -55,6 +56,16 @@ def convert_identity(obj, store=None):
 # assign identity function to type conversion to self
 for tp in MTYPE_LIST_PANEL:
     convert_dict[(tp, tp, "Panel")] = convert_identity
+
+
+def convert_coerce(obj, store=None):
+    # coerces pandas nullable dtypes; does nothing if obj is not pandas
+    obj = _coerce_df_dtypes(obj)
+    return obj
+
+
+# coercing pd-multiindex nullable columns to non-nullable float
+convert_dict[("pd-multiindex", "pd-multiindex", "Panel")] = convert_coerce
 
 
 def _cell_is_series_or_array(cell):
@@ -581,12 +592,16 @@ def from_multi_index_to_3d_numpy(X):
     n_timepoints = len(X.index.get_level_values(1).unique())
     n_columns = X.shape[1]
 
-    X_3d = X.values.reshape(n_instances, n_timepoints, n_columns).swapaxes(1, 2)
+    X_coerced = _coerce_df_dtypes(X)
+    X_values = X_coerced.values
+    X_3d = X_values.reshape(n_instances, n_timepoints, n_columns).swapaxes(1, 2)
 
     return X_3d
 
 
 def from_multi_index_to_3d_numpy_adp(obj, store=None):
+
+    obj = _coerce_df_dtypes(obj)
 
     res = from_multi_index_to_3d_numpy(X=obj)
     if isinstance(store, dict):
@@ -740,6 +755,8 @@ def from_multi_index_to_nested(
 
 def from_multi_index_to_nested_adp(obj, store=None):
 
+    obj = _coerce_df_dtypes(obj)
+
     if isinstance(store, dict):
         store["index_names"] = obj.index.names
 
@@ -793,8 +810,9 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 
         # create the right MultiIndex and assign to X_mi
         idx_df = X[[c]].applymap(lambda x: x.index).explode(c)
-        idx_df = idx_df.set_index(c, append=True)
-        X_col.index = idx_df.index.set_names([instance_index, time_index])
+        index = pd.MultiIndex.from_arrays([idx_df.index, idx_df[c].values])
+        index = index.set_names([instance_index, time_index])
+        X_col.index = index
 
         X_mi[[c]] = X_col
 
@@ -960,6 +978,8 @@ convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
 
 
 def from_multiindex_to_dflist(obj, store=None):
+
+    obj = _coerce_df_dtypes(obj)
 
     instance_index = obj.index.levels[0]
 

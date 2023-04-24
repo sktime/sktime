@@ -245,7 +245,7 @@ def all_estimators(
                 # Skip missing soft dependencies
                 if "soft dependency" not in str(e):
                     raise e
-                warnings.warn(str(e), ImportWarning)
+                warnings.warn(str(e), ImportWarning, stacklevel=2)
 
     # Drop duplicates
     all_estimators = set(all_estimators)
