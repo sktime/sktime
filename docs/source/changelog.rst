@@ -16,6 +16,130 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.17.2 - 2023-04-24
 ---------------------------
 
+Highlights
+~~~~~~~~~~
+
+* the transformers and pipelines tutorial from pydata global 2022 is now available in ``sktime``, see `examples <https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples>`_(:pr:`4381`) :user:`dashapetr`
+* probabilistic prediction functionality for ``SARIMAX`` (:pr:`4439`) :user:`yarnabrina`
+* ``InceptionTime`` classifier from ``sktime-dl`` migrated (:pr:`3003`) :user:`tobiasweede`
+* ``SplitterBootstrapTransformer`` for booststrapping based on any splitter (:pr:`4455`) :user:`fkiraly`
+* ``IxToX`` transformer that creates features from time index or hierarchy label (:pr:`4416`) :user:`fkiraly`
+* many bugfixes to probabilistic forecasting interfaces - ``BaggingForecaster``, ``BATS``, ``TBATS``, ``DynamicFactor``, ``VECM``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* all forecasters (``Baseforecaster`` descendants) now have the following new tags:
+
+  * ``capability:insample``, boolean, indicating whether the classifier can make
+    in-sample forecasts.
+  * ``capability:`pred_int:insample``, boolean, indicating whether the classifier can make
+    probabilistic in-sample forecasts, e.g., prediction intervals in-sample.
+
+* all forecasters are now tested for interface conformance for interval forecasts,
+  in-sample (based on the above tags) and out-of-sample, via ``check_estimator``
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* all time series classifiers (``BaseClassifier`` descendants) now have a tag
+  ``capability:predict_proba``. This indicates whether the classifier implements a
+  non-default (non-delta-mass) probabilistic classification functionality.
+
+Enhancements
+~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] allow inclusive/exclusive bounds in ``get_slice`` (:pr:`4483`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Adds ``_predict_interval`` to ``SARIMAX`` to support ``predict_interval`` and ``predict_quantiles`` (:pr:`4439`) :user:`yarnabrina`
+* [ENH] shift ``ForecastingHorizon``-``BaseForecaster`` ``cutoff`` interface to rely on public point (:pr:`4456`) :user:`fkiraly`
+* [ENH] testing in-sample forecasting - replace try/except in ``test_predict_time_index`` by tag and tag dependent contract (:pr:`4476`) :user:`fkiraly`
+* [ENH] remove monotonicity requirement from quantile prediction contract (:pr:`4480`) :user:`fkiraly`
+* [ENH] remove superfluous implementation checks in ``_predict_interval`` and ``_predict_quantiles`` of ``BaseForecaster`` (:pr:`4481`) :user:`yarnabrina`
+* [ENH] seasonal tabulation utility (:pr:`4490`) :user:`fkiraly`, :user:`marrov`
+* [ENH] testing all forecasters ``predict_quantiles``, ``predict_interval`` in-sample (:pr:`4470`) :user:`fkiraly`
+* [ENH] performant re-implementation of ``NaiveForecaster`` - ``"last"`` strategy (:pr:`4461`) :user:`fkiraly`
+* [ENH] adds ``_predict_interval`` in ``_StatsModelsAdapter`` and inherits in other estimator to reduce code duplication (:pr:`4465`) :user:`yarnabrina`
+* [ENH] in ``ForecastingHorizon``, refactor ``to_absolute().to_pandas()`` calls to a method (:pr:`4464`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``predict_proba`` capability tag for classifiers (:pr:`4012`) :user:`fkiraly`
+* [ENH] migrate ``InceptionTime`` classifier and example (from ``sktime-dl``) (:pr:`3003`) :user:`tobiasweede`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] ``IxToX`` transformer that creates features from time index or hierarchy label (:pr:`4416`) :user:`fkiraly`
+* [ENH] ``SplitterBootstrapTransformer`` for booststrapping based on any splitter (:pr:`4455`) :user:`fkiraly`
+* [ENH] transformer compositor to apply by panel or instance (:pr:`4477`) :user:`fkiraly`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* [ENH] improved ``_make_series`` utility and docstring (:pr:`4487`) :user:`fkiraly`
+* [ENH] remove calls to ``return_numpy`` arg in ``_make_series`` (:pr:`4488`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Changed line endings of ``ElectricDevices.csv`` and ``GunPoint.csv`` from ``CRLF`` to ``LF`` (:pr:`4452`) :user:`yarnabrina`
+* [MNT] ensure all elements in test matrix complete runs (:pr:`4472`) :user:`fkiraly`
+* [MNT] add ``InceptionTimeClassifier`` and ``LSTMFCNClassifier`` as direct module export (:pr:`4484`) :user:`fkiraly`
+* [MNT] address some warnings and deprecation messages from dependencies (:pr:`4486`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Fix error in ``MiniRocket`` example code - wrong transformer (:pr:`4497`) :user:`doncarlos999`
+* [DOC] add ``InceptionTimeClassifier`` and ``LSTMFCNClassifier`` to API docs (:pr:`4484`) :user:`fkiraly`
+* [DOC] fix typo in cython interface reference, ``MySQM`` -> ``MrSQM`` (:pr:`4493`) :user:`fkiraly`
+* [DOC] move content from pydata global 2022 (transformers, pipelines tutorial) to sktime main repo (:pr:`4381`) :user:`dashapetr`
+* [DOC] improvements to description of ``sktime`` on the readthedocs landing page (:pr:`4444`) :user:`howdy07`
+
+Fixes
+~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fix ``pandas`` write error in probabilistic forecasts of ``BaggingForecaster`` (:pr:`4478`) :user:`fkiraly`
+* [BUG] fix ``predict_quantiles`` in ``_PmdArimaAdapter`` and ``_StatsForecastAdapter`` post 0.17.1 (:pr:`4469`) :user:`fkiraly`
+* [BUG] ``ForecastingHorizon`` constructor - override erroneously inferred ``freq`` attribute from regular ``DatetimeIndex`` based horizon (:pr:`4466`) :user:`fkiraly`, :user:`yarnabrina`
+* [BUG] fix broken ``DynamicFactor._predict_interval`` (:pr:`4479`) :user:`fkiraly`
+* [BUG] fix ``pmdarima`` interfaces breaking for ``X`` containing more indices than forecasting horizon (:pr:`3667`) :user:`fkiraly`, :user:`SzymonStolarski`
+* [BUG] fix ``BATS`` and ``TBATS`` ``_predict_interval`` interface (:pr:`4492`, :pr:`4505`) :user:`fkiraly``
+* [BUG] fix ``VECM._predict_interval`` interface for date-like indices (:pr:`4506`) :user:`fkiraly`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* [BUG] fix index error in nullable input test (:pr:`4474`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`dashapetr`,
+:user:`doncarlos999`,
+:user:`fkiraly`,
+:user:`howdy07`,
+:user:`marrov`,
+:user:`SzymonStolarski`,
+:user:`tobiasweede`,
+:user:`yarnabrina`
 
 
 Version 0.17.1 - 2023-04-10
