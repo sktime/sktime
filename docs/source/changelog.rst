@@ -36,7 +36,7 @@ Forecasting
 
   * ``capability:insample``, boolean, indicating whether the classifier can make
     in-sample forecasts.
-  * ``capability:`pred_int:insample``, boolean, indicating whether the classifier can make
+  * ``capability:pred_int:insample``, boolean, indicating whether the classifier can make
     probabilistic in-sample forecasts, e.g., prediction intervals in-sample.
 
 * all forecasters are now tested for interface conformance for interval forecasts,
