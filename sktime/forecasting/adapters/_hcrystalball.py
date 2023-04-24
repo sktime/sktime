@@ -155,7 +155,7 @@ class HCrystalBallAdapter(BaseForecaster):
         y_pred : pd.Series
             Point predictions for the forecast
         """
-        X_pred = _get_X_pred(X, index=fh.to_absolute(self.cutoff).to_pandas())
+        X_pred = _get_X_pred(X, index=fh.to_absolute_index(self.cutoff))
         y_pred = self.model_.predict(X=X_pred)
         return _adapt_y_pred(y_pred)
 

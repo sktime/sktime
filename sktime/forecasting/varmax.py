@@ -216,6 +216,7 @@ class VARMAX(_StatsModelsAdapter):
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:pred_int": False,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
@@ -369,7 +370,7 @@ class VARMAX(_StatsModelsAdapter):
 
         y_pred.index = full_range
         y_pred = y_pred.loc[abs_idx.to_pandas()]
-        y_pred.index = fh.to_absolute(self.cutoff).to_pandas()
+        y_pred.index = fh.to_absolute_index(self.cutoff)
 
         return y_pred
 

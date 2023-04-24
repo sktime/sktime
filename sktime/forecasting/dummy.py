@@ -145,7 +145,7 @@ class ForecastKnownValues(BaseForecaster):
         if self.fill_value is not None:
             reindex_params["fill_value"] = self.fill_value
 
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        fh_abs = fh.to_absolute_index(self.cutoff)
 
         try:
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)
