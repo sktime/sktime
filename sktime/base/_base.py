@@ -71,7 +71,6 @@ from sktime.exceptions import NotFittedError
 
 
 class BaseObject(_BaseObject):
-
     """Base class for parametric objects with tags sktime.
 
     Extends skbase BaseObject with additional features.
