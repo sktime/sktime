@@ -66,6 +66,8 @@ Core Developers
 
    * - Name
      - GitHub ID
+   * - Anirban Ray
+     - :user:`yarnabrina`
    * - Daniel Bartling
      - :user:`danbartl`
    * - Jonathan Bechtel
