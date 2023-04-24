@@ -260,7 +260,10 @@ class HMM(BaseSeriesAnnotator):
             trans_prob[:, i] = np.max(paths, axis=0)
 
         if np.any(np.isinf(trans_prob[:, -1])):
-            warnings.warn("Change parameters, the distribution doesn't work")
+            warnings.warn(
+                "Change parameters, the distribution doesn't work",
+                stacklevel=2,
+            )
 
         return trans_prob, trans_id
 

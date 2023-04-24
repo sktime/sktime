@@ -69,6 +69,7 @@ class TSFreshClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "feature",
         "python_version": "<3.10",
         "python_dependencies": "tsfresh",
@@ -157,6 +158,7 @@ class TSFreshClassifier(BaseClassifier):
                 "majority class in predictions. Setting "
                 "relevant_feature_extractor=False will keep all features.",
                 UserWarning,
+                stacklevel=2,
             )
 
             self._return_majority_class = True

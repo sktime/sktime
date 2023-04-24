@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Isolated numba imports for Rocket."""
 
-__author__ = "angus924"
+__author__ = ["angus924"]
 
 import numpy as np
 

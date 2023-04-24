@@ -4,9 +4,6 @@
 __author__ = ["jnrusson1", "solen0id"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class LSTMFCNNetwork(BaseDeepNetwork):

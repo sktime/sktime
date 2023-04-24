@@ -25,6 +25,7 @@ class _StatsForecastAdapter(BaseForecaster):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        "capability:pred_int:insample": True,
         "python_dependencies": "statsforecast",
     }
 
@@ -178,7 +179,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
-        mean = pd.Series(result["mean"].values[fh_idx], index=fh_abs)
+        mean = pd.Series(result["mean"].values[fh_idx], index=fh_abs.to_pandas())
         if return_pred_int:
             pred_ints = []
             for a in alpha:
@@ -189,12 +190,14 @@ class _StatsForecastAdapter(BaseForecaster):
                 )
                 pred_int = result.drop("mean", axis=1).values
                 pred_int = pd.DataFrame(
-                    pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+                    pred_int[fh_idx, :],
+                    index=fh_abs.to_pandas(),
+                    columns=["lower", "upper"],
                 )
                 pred_ints.append(pred_int)
             return mean, pred_ints
         else:
-            return pd.Series(mean, index=fh_abs)
+            return pd.Series(mean, index=fh_abs.to_pandas())
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction quantiles for a forecast.

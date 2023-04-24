@@ -98,4 +98,4 @@ def test_deseasonalizer_in_pipeline():
     )
     train_df = all_df["1949":"1950"]
     model.fit(train_df)
-    model.update(y=all_df["1951"])
+    model.update(y=all_df["1951":"1951"])

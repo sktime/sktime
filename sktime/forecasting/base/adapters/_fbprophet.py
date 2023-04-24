@@ -19,6 +19,7 @@ class _ProphetAdapter(BaseForecaster):
     _tags = {
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "y_inner_mtype": "pd.DataFrame",
@@ -41,7 +42,7 @@ class _ProphetAdapter(BaseForecaster):
         elif type(y.index) is pd.PeriodIndex:
             y = y.copy()
             y.index = y.index.to_timestamp()
-        elif y.index.is_integer():
+        elif pd.api.types.is_integer_dtype(y.index):
             y = self._convert_int_to_date(y)
         # else y is pd.DatetimeIndex as prophet expects, and needs no conversion
         return y
@@ -49,7 +50,7 @@ class _ProphetAdapter(BaseForecaster):
     def _remember_y_input_index_type(self, y):
         """Remember input type of y by setting attributes, for use in _fit."""
         self.y_index_was_period_ = type(y.index) is pd.PeriodIndex
-        self.y_index_was_int_ = y.index.is_integer()
+        self.y_index_was_int_ = pd.api.types.is_integer_dtype(y.index)
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -127,7 +128,7 @@ class _ProphetAdapter(BaseForecaster):
 
     def _get_prophet_fh(self):
         """Get a prophet compatible fh, in datetime, even if fh was int."""
-        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        fh = self.fh.to_absolute_index(cutoff=self.cutoff)
         if isinstance(fh, pd.PeriodIndex):
             fh = fh.to_timestamp()
         if not isinstance(fh, pd.DatetimeIndex):
@@ -142,9 +143,9 @@ class _ProphetAdapter(BaseForecaster):
             return None
         elif isinstance(X.index, pd.PeriodIndex):
             X = X.copy()
-            X = X.loc[self.fh.to_absolute(self.cutoff).to_pandas()]
+            X = X.loc[self.fh.to_absolute_index(self.cutoff)]
             X.index = X.index.to_timestamp()
-        elif X.index.is_integer():
+        elif pd.api.types.is_integer_dtype(X.index):
             X = X.copy()
             X = X.loc[self.fh.to_absolute(self.cutoff).to_numpy()]
             X.index = fh
@@ -202,7 +203,7 @@ class _ProphetAdapter(BaseForecaster):
         y_pred.columns = self._y.columns
 
         if self.y_index_was_int_ or self.y_index_was_period_:
-            y_pred.index = self.fh.to_absolute(cutoff=self.cutoff)
+            y_pred.index = self.fh.to_absolute_index(cutoff=self.cutoff)
 
         return y_pred
 
@@ -276,7 +277,7 @@ class _ProphetAdapter(BaseForecaster):
             pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
 
         if self.y_index_was_int_ or self.y_index_was_period_:
-            pred_int.index = self.fh.to_absolute(cutoff=self.cutoff)
+            pred_int.index = self.fh.to_absolute_index(cutoff=self.cutoff)
 
         return pred_int
 

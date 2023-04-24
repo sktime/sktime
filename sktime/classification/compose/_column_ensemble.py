@@ -22,6 +22,7 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": ["nested_univ", "pd-multiindex"],
     }
 

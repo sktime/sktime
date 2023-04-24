@@ -34,7 +34,7 @@ Optional implements:
     distribution forecast       - _predict_proba(self, fh, X=None)
     fitted parameter inspection - _get_fitted_params()
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 """
 # todo: write an informative docstring for the file or module, remove the above
@@ -51,11 +51,7 @@ from sktime.forecasting.base import BaseForecaster
 # todo: add any necessary imports here
 
 # todo: if any imports are sktime soft dependencies:
-#  * make sure to fill in the "python_dependencies" tag with the package import name
-#  * add a _check_soft_dependencies warning here, example:
-#
-# from sktime.utils.validation._dependencies import check_soft_dependencies
-# _check_soft_dependencies("soft_dependency_name", severity="warning")
+# make sure to fill in the "python_dependencies" tag with the package import name
 
 
 class MyForecaster(BaseForecaster):
