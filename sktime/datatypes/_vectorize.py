@@ -189,33 +189,6 @@ class VectorizedDF:
         """
         return self.iter_indices
 
-    # TODO: remove in v0.18.0
-    @deprecated(
-        version="0.16.2",
-        reason="get_iloc_indexer will be removed in v0.18.0",
-        category=FutureWarning,
-    )
-    def get_iloc_indexer(self, i: int):
-        """Get iloc row/column indexer for i-th list element.
-
-        Returns
-        -------
-        pair of int, indexes into get_iter_indices
-            1st element is iloc index for 1st element of get_iter_indices
-            2nd element is iloc index for 2nd element of get_iter_indices
-            together, indicate iloc index of self[i] within get_iter_indices index sets
-        """
-        row_ix, col_ix = self.get_iter_indices()
-        if row_ix is None and col_ix is None:
-            return (0, 0)
-        elif row_ix is None:
-            return (0, i)
-        elif col_ix is None:
-            return (i, 0)
-        else:
-            col_n = len(col_ix)
-            return (i // col_n, i % col_n)
-
     def __len__(self):
         """Return number of indices to iterate over."""
         return np.prod(self.shape)
