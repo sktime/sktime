@@ -12,7 +12,6 @@ import itertools
 
 import numpy as np
 import pandas as pd
-from deprecated.sphinx import deprecated
 
 from sktime.datatypes._check import check_is_scitype, mtype
 from sktime.datatypes._convert import convert_to
