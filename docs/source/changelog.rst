@@ -14,7 +14,40 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
-Version 0.18.0 - 2023-04-2X
+Version 0.18.0 - 2023-04-25
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numba`` is no longer a core dependency, it has changed to soft dependency
+* ``scikit-base`` is a new core dependency
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dependencies
+^^^^^^^^^^^^
+
+* ``numba`` has changed from core dependency to soft dependency in ``sktime 0.18.0``.
+  To ensure functioning of setups of ``sktime`` code dependent on ``numba`` based estimators
+  going forward, ensure to install ``numba`` in the environment explicitly,
+  or install the ``all_extras`` soft dependency set which will continue to contain ``numba``.
+  Besides this, ``numba`` dependent estimators will function identically as before.
+* ``sktime``'s base module has moved to a new core dependency, ``scikit-base``, from ``sktime 0.18.0``.
+  This will not impact functionality or imports directly from ``sktime``, or any usage.
+
+
+
+Version 0.17.2 - 2023-04-24
 ---------------------------
 
 * [DOC] timeseers added to the related_software.rst page (:pr:`4433`) :user:`chandannaidu6`
