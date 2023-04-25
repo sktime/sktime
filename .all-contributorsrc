@@ -2144,7 +2144,17 @@
       "profile": "https://github.com/yarnabrina/",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "dashapetr",
+      "name": "Darya Petrashka",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54349415?v=4",
+      "profile": "https://github.com/dashapetr",
+      "contributions": [
+        "doc"
       ]
     }
   ]

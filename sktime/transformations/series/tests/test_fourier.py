@@ -6,8 +6,7 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_index_equal
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_index_equal
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.fourier import FourierFeatures

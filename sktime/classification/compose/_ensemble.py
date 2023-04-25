@@ -629,6 +629,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:missing_values": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": [
             "pd-multiindex",
             "df-list",

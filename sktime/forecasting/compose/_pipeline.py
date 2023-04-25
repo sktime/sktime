@@ -410,6 +410,8 @@ class ForecastingPipeline(_Pipeline):
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
+            "capability:pred_int:insample",  # ... for in-sample horizons?
+            "capability:insample",  # can the estimator make in-sample predictions?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -828,6 +830,8 @@ class TransformedTargetForecaster(_Pipeline):
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
+            "capability:pred_int:insample",  # ... for in-sample horizons?
+            "capability:insample",  # can the estimator make in-sample predictions?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -1247,6 +1251,7 @@ class ForecastX(BaseForecaster):
         "fit_is_empty": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
@@ -1270,7 +1275,13 @@ class ForecastX(BaseForecaster):
 
         super(ForecastX, self).__init__()
 
-        self.clone_tags(forecaster_y, "capability:pred_int")
+        tags_to_clone_from_forecaster_y = [
+            "capability:pred_int",
+            "capability:pred_int:insample",
+            "capability:insample",
+        ]
+
+        self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)
 
         # tag_translate_dict = {
         #    "handles-missing-data": forecaster.get_tag("handles-missing-data")
@@ -1577,6 +1588,7 @@ class ForecastX(BaseForecaster):
             fy_proba = ARIMA()
         else:
             fy_proba = NaiveForecaster()
+        fx = NaiveForecaster()
 
         params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
 
@@ -1662,6 +1674,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "X-y-must-have-same-index": False,
     }
 
@@ -1675,7 +1688,9 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         super(Permute, self).__init__()
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
+            "capability:insample",
             "capability:pred_int",  # can the estimator produce prediction intervals?
+            "capability:pred_int:insample",
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
             "fit_is_empty",
