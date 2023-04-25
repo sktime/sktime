@@ -66,7 +66,6 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
 
-from sktime.base._tagmanager import _FlagManager
 from sktime.exceptions import NotFittedError
 
 
