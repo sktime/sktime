@@ -257,9 +257,8 @@ class _DelegatedForecaster(BaseForecaster):
         estimator = self._get_delegate()
         return estimator.predict_var(fh=fh, X=X, cov=cov)
 
-    # todo 0.18.0: change legacy_interface default to False
     # todo 0.19.0: remove legacy_interface arg and logic
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -273,9 +272,8 @@ class _DelegatedForecaster(BaseForecaster):
             Exogeneous time series to predict from.
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
-        legacy_interface : bool or None, optional, default=None
+        legacy_interface : bool or None, optional, default=False
             whether legacy interface is used, deprecation parameter
-            default will change to False in 0.18.0
             parameter will be removed in 0.19.0
             True: always returns tfp Distribution object
             False: always returns sktime BaseDistribution object
