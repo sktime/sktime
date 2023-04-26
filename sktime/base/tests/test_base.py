@@ -351,11 +351,16 @@ def test_set_get_config():
         calling get_fitted_params on a non-composite fittable returns the fitted param
         calling get_fitted_params on a composite returns all nested params
     """
+    # get default config dict
+    base_config = BaseObject().get_config()
+    base_keys = set(base_config.keys())
+
     obj = ConfigTester(4242)
 
     config_start = obj.get_config()
     assert isinstance(config_start, dict)
-    assert set(config_start.keys()) == set(["foo_config", "bar"])
+    expected_config_start_keys = set(["foo_config", "bar"]).union(base_keys)
+    assert set(config_start.keys()) == expected_config_start_keys
     assert config_start["foo_config"] == 42
     assert config_start["bar"] == "a"
 
@@ -365,7 +370,8 @@ def test_set_get_config():
     obj.set_config(**{"bar": "b"})
     config_end = obj.get_config()
     assert isinstance(config_end, dict)
-    assert set(config_end.keys()) == set(["foo_config", "bar", "foobar"])
+    expected_config_end_keys = set(["foo_config", "bar", "foobar"]).union(base_keys)
+    assert set(config_end.keys()) == expected_config_end_keys
     assert config_end["foo_config"] == 42
     assert config_end["bar"] == "b"
     assert config_end["foobar"] == 126
