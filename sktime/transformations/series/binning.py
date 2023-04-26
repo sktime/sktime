@@ -90,7 +90,10 @@ class TimeBinAggregate(BaseTransformer):
                 "aggfunc should be callable with" "signature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
-                warnings.warn("Save and load will not work with lambda functions")
+                warnings.warn(
+                    "Save and load will not work with lambda functions",
+                    stacklevel=2,
+                )
             self._aggfunc = self.aggfunc
 
         super(TimeBinAggregate, self).__init__()

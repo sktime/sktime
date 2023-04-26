@@ -398,7 +398,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
 
             if np.array_equal(labels, old_labels):
                 if self.verbose:
-                    print(  # noqa: T001
+                    print(  # noqa: T201
                         f"Converged at iteration {i}: strict convergence."
                     )
                 break
@@ -407,7 +407,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             cluster_centres = self._compute_new_cluster_centers(X, labels)
 
             if self.verbose is True:
-                print(f"Iteration {i}, inertia {inertia}.")  # noqa: T001
+                print(f"Iteration {i}, inertia {inertia}.")  # noqa: T201
 
         labels, inertia = self._assign_clusters(X, cluster_centres)
         centres = cluster_centres

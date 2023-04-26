@@ -2,7 +2,7 @@
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
 __author__ = [
-    "Jack Russon",
+    "jnrusson1",
 ]
 
 import math
@@ -14,13 +14,6 @@ from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,
     _check_soft_dependencies,
 )
-
-_check_soft_dependencies(
-    "keras-self-attention",
-    package_import_alias={"keras-self-attention": "keras_self_attention"},
-    severity="warning",
-)
-_check_dl_dependencies(severity="warning")
 
 
 class TapNetNetwork(BaseDeepNetwork):

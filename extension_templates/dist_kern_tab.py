@@ -19,7 +19,7 @@ How to use this:
 Mandatory implements:
     transforming    - _transform(self, X, X2=None)
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -30,11 +30,7 @@ from sktime.dists_kernels import BasePairwiseTransformer
 # todo: add any necessary imports here
 
 # todo: if any imports are sktime soft dependencies:
-#  * make sure to fill in the "python_dependencies" tag with the package import name
-#  * add a _check_soft_dependencies warning here, example:
-#
-# from sktime.utils.validation._dependencies import check_soft_dependencies
-# _check_soft_dependencies("soft_dependency_name", severity="warning")
+# make sure to fill in the "python_dependencies" tag with the package import name
 
 
 class MyTrafoPw(BasePairwiseTransformer):

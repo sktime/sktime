@@ -151,6 +151,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "dictionary",
         "python_dependencies": "numba",
     }
@@ -237,7 +238,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             warnings.warn(
                 "TemporalDictionaryEnsemble warning: n_parameter_samples <= "
                 "randomly_selected_params, ensemble member parameters will be fully "
-                "randomly selected."
+                "randomly selected.",
+                stacklevel=2,
             )
 
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
@@ -256,7 +258,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             warnings.warn(
                 f"TemporalDictionaryEnsemble warning: min_window = "
                 f"{self.min_window} is larger than max_window = {max_window}."
-                f" min_window has been set to {max_window}."
+                f" min_window has been set to {max_window}.",
+                stacklevel=2,
             )
 
         win_inc = int((max_window - self._min_window) / max_window_searches)
