@@ -238,14 +238,16 @@ def test_all_estimators_tag_filter(pred_int):
     PROBA_EXAMPLE = "ARIMA"
 
     res = all_estimators("forecaster", filter_tags={"capability:pred_int": pred_int})
-    names, _ = zip(res)
+    names, ests = zip(*res)
 
     if pred_int:
         assert PROBA_EXAMPLE in names
         assert NOPROBA_EXAMPLE not in names
+        assert [est.get_class_tag("capability:pred_int") for est in ests]
     else:
         assert PROBA_EXAMPLE not in names
         assert NOPROBA_EXAMPLE in names
+        assert [not est.get_class_tag("capability:pred_int") for est in ests]
 
 
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
