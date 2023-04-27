@@ -2101,6 +2101,12 @@ class BaseForecaster(BaseEstimator):
 
             pred_int.columns = int_idx
 
+        elif implements_proba:
+
+            # 0.19.0 - one instance of legacy_interface to remove
+            pred_proba = self.predict_proba(fh=fh, X=X, legacy_interface=False)
+            pred_int = pred_proba.quantile(alpha=alpha)
+
         return pred_int
 
     def _predict_var(self, fh=None, X=None, cov=False):
