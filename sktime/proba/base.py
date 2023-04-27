@@ -366,8 +366,8 @@ class BaseDistribution(BaseObject):
         df = pd.DataFrame(x, index=self.index, columns=self.columns)
         return df
 
-    def quantiles(self, alpha):
-        """Return entry-wise quantiles, in Proba/quantiles mtype format.
+    def quantile(self, alpha):
+        """Return entry-wise quantiles, in Proba/pred_quantiles mtype format.
 
         This method broadcasts as follows:
         for a scalar `alpha`, computes the `alpha`-quantile entry-wise,
@@ -377,7 +377,7 @@ class BaseDistribution(BaseObject):
 
         The `ppf` method also computes quantiles, but broadcasts differently, in
         `numpy` style closer to `tensorflow`.
-        In contrast, this `quantiles` method broadcasts
+        In contrast, this `quantile` method broadcasts
         as forecaster `predict_quantiles`, i.e., columns first.
 
         Parameters
@@ -405,8 +405,8 @@ class BaseDistribution(BaseObject):
 
         qres = pd.concat(qdfs, axis=1, keys=alpha)
         qres = qres.reorder_levels([1, 0], axis=1)
-        qres = qres.sort_index(axis=1)
-        return qres
+        quantiles = qres.sort_index(axis=1)
+        return quantiles
 
     def sample(self, n_samples=None):
         """Sample from the distribution.
