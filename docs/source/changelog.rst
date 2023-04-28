@@ -25,7 +25,7 @@ For last non-maintenance content update, see 0.17.2.
 Contents
 ~~~~~~~~
 
-* ``numba`` has been changed to be a soft dependency. All ``numba``based estimators
+* ``numba`` has been changed to be a soft dependency. All ``numba`` based estimators
   continue working unchanged, but require explicit ``numba`` installation.
 * the base module of ``sktime`` has been factored out to ``scikit-base``,
   the abstract base layer for ``scikit-learn`` like packages maintained by ``sktime``
