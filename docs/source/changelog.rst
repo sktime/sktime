@@ -115,7 +115,7 @@ Version 0.17.2 - 2023-04-24
 Highlights
 ~~~~~~~~~~
 
-* the transformers and pipelines tutorial from pydata global 2022 is now available in ``sktime``, see `examples <https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples>`_(:pr:`4381`) :user:`dashapetr`
+* the transformers and pipelines tutorial from pydata global 2022 is now available in ``sktime``, see `examples <https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples>`_ (:pr:`4381`) :user:`dashapetr`
 * probabilistic prediction functionality for ``SARIMAX`` (:pr:`4439`) :user:`yarnabrina`
 * ``InceptionTime`` classifier from ``sktime-dl`` migrated (:pr:`3003`) :user:`tobiasweede`
 * ``SplitterBootstrapTransformer`` for booststrapping based on any splitter (:pr:`4455`) :user:`fkiraly`
