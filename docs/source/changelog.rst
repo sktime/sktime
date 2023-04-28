@@ -29,8 +29,10 @@ Contents
   continue working unchanged, but require explicit ``numba`` installation.
 * the base module of ``sktime`` has been factored out to ``scikit-base``,
   the abstract base layer for ``scikit-learn`` like packages maintained by ``sktime``
-* ``pandas 2`` support continues in testing/experimental period, see instructions
-  for upgrading to ``pandas 2`` or remaining on ``pandas 1`` below.
+* ``pandas 2`` support continues in testing/experimental period until 0.18.last.
+  All ``sktime`` native functionality is ``pandas 2`` compatible, the transition period
+  allows testing of deployments and custom extensions.
+  See instructions below for upgrading dependenet code to ``pandas 2``, or remaining on ``pandas 1``.
 * scheduled deprecation of ``tensorflow`` based probability interface and ``VectorizedDF`` methods.
 
 Dependency changes
@@ -65,12 +67,10 @@ Data types, checks, conversions
 Forecasting
 ^^^^^^^^^^^
 
-* forecasters' ``predict_proba`` pre-0.17.0 ``tensorflow`` based return will
-  be replaced by ``BaseDistribution`` object based return.
-  This will be phased out in two minor cycles as follows.
 * forecasters' ``predict_proba`` now by default returns a ``BaseDistribution``.
-  The old ``tensorflow-probability`` based return can be obtained by setting the argument
-  ``legacy_interface=False`` in ``predict_proba``. This is useful for handling deprecation.
+  The old ``tensorflow-probability`` based return from pre-0.17.0 can still be obtained
+  by setting the argument ``legacy_interface=False`` in ``predict_proba``.
+  This is useful for handling deprecation.
 * from 0.19.0, the ``legacy_interface`` argument will be removed from ``predict_proba``,
   together with the option to return ``tensorflow-probability`` based returns.
 
@@ -99,6 +99,15 @@ Forecasting
 
 List of PR
 ~~~~~~~~~~
+
+* [MNT] 0.18.0 change action - ``numba`` as soft dependency (:pr:`3843`) :user:`fkiraly`
+* [MNT] 0.18.0 deprecation actions (:pr:`4510`) :user:`fkiraly`
+* [MNT] ensure ``predict_proba`` calls in ``mlflow`` forecasting interface explicitly call ``legacy_interface`` (:pr:`4514`) :user:`fkiraly`
+* [MNT] ``skbase`` refactor - part 1: ``BaseObject`` and package dependencies (:pr:`3151`) :user:`fkiraly`
+* [MNT] ``skbase`` refactor - part 2: ``all_estimators`` lookup (:pr:`3777`) :user:`fkiraly`
+* [ENH] ``quantile`` method for distributions, default implementation of forecaster ``predict_quantiles`` if ``predict_proba`` is present (:pr:`4513`) :user:`fkiraly`
+* [ENH] add test for ``all_estimators`` tag filter (:pr:`4512`) :user:`fkiraly`
+
 
 Version 0.17.2 - 2023-04-24
 ---------------------------
