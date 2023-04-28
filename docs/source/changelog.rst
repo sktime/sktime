@@ -14,22 +14,30 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
-Version 0.18.0 - 2023-04-25
+Version 0.18.0 - 2023-04-28
 ---------------------------
 
-Highlights
-~~~~~~~~~~
+Maintenance release - scheduled ``numba``, ``scikit-base``, ``pandas`` dependency updates,
+scheduled deprecations.
+
+For last non-maintenance content update, see 0.17.2.
+
+Contents
+~~~~~~~~
+
+* ``numba`` has been changed to be a soft dependency. All ``numba``based estimators
+  continue working unchanged, but require explicit ``numba`` installation.
+* the base module of ``sktime`` has been factored out to ``scikit-base``,
+  the abstract base layer for ``scikit-learn`` like packages maintained by ``sktime``
+* ``pandas 2`` support continues in testing/experimental period, see instructions
+  for upgrading to ``pandas 2`` or remaining on ``pandas 1`` below.
+* scheduled deprecation of ``tensorflow`` based probability interface.
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
 * ``numba`` is no longer a core dependency, it has changed to soft dependency
 * ``scikit-base`` is a new core dependency
-
-Core interface changes
-~~~~~~~~~~~~~~~~~~~~~~
-
-
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,7 +52,47 @@ Dependencies
   Besides this, ``numba`` dependent estimators will function identically as before.
 * ``sktime``'s base module has moved to a new core dependency, ``scikit-base``, from ``sktime 0.18.0``.
   This will not impact functionality or imports directly from ``sktime``, or any usage.
+* ``tensorflow-probability`` will cease to be a soft dependency from 0.19.0,
+  as the only dependency locus (forecasters' old ``predict_proba`` return type)
+  is being deprecated.
 
+Forecasting
+^^^^^^^^^^^
+
+* forecasters' ``predict_proba`` pre-0.17.0 ``tensorflow`` based return will
+  be replaced by ``BaseDistribution`` object based return.
+  This will be phased out in two minor cycles as follows.
+* forecasters' ``predict_proba`` now by default returns a ``BaseDistribution``.
+  The old ``tensorflow-probability`` based return can be obtained by setting the argument
+  ``legacy_interface=False`` in ``predict_proba``. This is useful for handling deprecation.
+* from 0.19.0, the ``legacy_interface`` argument will be removed from ``predict_proba``,
+  together with the option to return ``tensorflow-probability`` based returns.
+
+``pandas 2`` upgrade and testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* support for ``pandas 2`` is being introduced gradually:
+
+  * experimental support period until 0.19.0 (all 0.17.X and 0.18.X versions)
+  * full support from 0.19.0 (0.19.0, 0.19.X and onwards)
+
+* in the experimental period (0.17.1-0.18.last):
+
+  * ``sktime`` will have a dependency bound of ``pandas<2.0.0``
+  * ``sktime`` will aim to be compatible with ``pandas 2.0.X`` as well as ``pandas 1, >=1.1.0``,
+  * ``sktime`` can be run and tested with ``pandas 2.0.X`` by force-installing ``pandas 2.0.X``
+  * estimators can be tested for ``pandas 2`` compatibility via ``check_estimator`` under force-installed ``pandas 2.0.X``
+  * reports on compatibility issues are appreciated in :issue:`4426` (direct input or link from)
+
+* in the full support period (0.19.0-onwards):
+
+  * ``sktime`` requirements will allow ``pandas 2.0.X`` and extend support with ``pandas`` releases
+  * ``sktime`` will aim to be compatible with ``pandas 2`` (any version), as well as ``pandas 1, >=1.1.0``
+  * users choose their preferred ``pandas`` version by requirements on their downstream environment
+  * the bug and issue trackers should be used as normal
+
+List of PR
+~~~~~~~~~~
 
 Version 0.17.2 - 2023-04-24
 ---------------------------
