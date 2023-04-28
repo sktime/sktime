@@ -625,9 +625,10 @@ class ForecastingPipeline(_Pipeline):
         X = self._transform(X=X)
         return self.forecaster_.predict_var(fh=fh, X=X, cov=cov)
 
-    # todo 0.18.0 change legacy_interface default to False
+    # todo: does not work properly for multivariate or hierarchical
+    #   still need to implement this - once interface is consolidated
     # todo 0.19.0 remove legacy_interface arg and logic
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -1516,9 +1517,8 @@ class ForecastX(BaseForecaster):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    # todo 0.18.0 change legacy_interface default to False
     # todo 0.19.0 remove legacy_interface arg and logic
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba

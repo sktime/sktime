@@ -498,7 +498,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             assert (pred_cols == y_train.columns).all()
 
-    # todo 0.18.0 or 0.19.0: remove legacy_interface parameter below
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
@@ -522,13 +521,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         if estimator_instance.get_tag("capability:pred_int"):
             try:
-                pred_dist = estimator_instance.predict_proba(legacy_interface=False)
+                pred_dist = estimator_instance.predict_proba()
                 self._check_predict_proba(pred_dist, y_train, fh_int_oos)
             except NotImplementedError:
                 pass
         else:
             with pytest.raises(NotImplementedError, match="probabilistic predictions"):
-                estimator_instance.predict_proba(legacy_interface=False)
+                estimator_instance.predict_proba()
 
     def test_pred_int_tag(self, estimator_instance):
         """Checks whether the capability:pred_int tag is correctly set.
