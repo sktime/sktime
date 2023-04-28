@@ -714,9 +714,8 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
-    # todo 0.18.0: switch legacy_interface default to False
     # todo 0.19.0: remove any legacy_interface logic
-    def predict_proba(self, fh=None, X=None, marginal=True, legacy_interface=None):
+    def predict_proba(self, fh=None, X=None, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         Note: currently only implemented for Series (non-panel, non-hierarchical) y.
@@ -742,9 +741,8 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
-        legacy_interface : bool or None, optional, default=None
+        legacy_interface : bool or None, optional, default=False
             whether legacy interface is used, deprecation parameter
-            default will change to False in 0.18.0
             parameter will be removed in 0.19.0
             True: always returns tfp Distribution object
             False: always returns sktime BaseDistribution object
@@ -2206,7 +2204,7 @@ class BaseForecaster(BaseEstimator):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -2220,9 +2218,8 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series to predict from.
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
-        legacy_interface : bool or None, optional, default=None
+        legacy_interface : bool or None, optional, default=False
             whether legacy interface is used, deprecation parameter
-            default will change to False in 0.18.0
             parameter will be removed in 0.19.0
             True: always returns tfp Distribution object
             False: always returns sktime BaseDistribution object
