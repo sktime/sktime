@@ -31,7 +31,7 @@ Contents
   the abstract base layer for ``scikit-learn`` like packages maintained by ``sktime``
 * ``pandas 2`` support continues in testing/experimental period, see instructions
   for upgrading to ``pandas 2`` or remaining on ``pandas 1`` below.
-* scheduled deprecation of ``tensorflow`` based probability interface.
+* scheduled deprecation of ``tensorflow`` based probability interface and ``VectorizedDF`` methods.
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -55,6 +55,12 @@ Dependencies
 * ``tensorflow-probability`` will cease to be a soft dependency from 0.19.0,
   as the only dependency locus (forecasters' old ``predict_proba`` return type)
   is being deprecated.
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``VectorizedDF.get_iloc_indexer`` was removed.
+  Developers and users should use ``iter``, ``__iter__``, or ``get_iter_indices`` instead.
 
 Forecasting
 ^^^^^^^^^^^
