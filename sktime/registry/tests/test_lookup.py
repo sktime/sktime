@@ -231,6 +231,25 @@ def test_all_estimators_return_tags_bad_arg(return_tags):
         _ = all_estimators(return_tags=return_tags)
 
 
+@pytest.mark.parametrize("pred_int", [True, False])
+def test_all_estimators_tag_filter(pred_int):
+    """Test that tag filtering returns estimators as expected."""
+    NOPROBA_EXAMPLE = "TrendForecaster"
+    PROBA_EXAMPLE = "ARIMA"
+
+    res = all_estimators("forecaster", filter_tags={"capability:pred_int": pred_int})
+    names, ests = zip(*res)
+
+    if pred_int:
+        assert PROBA_EXAMPLE in names
+        assert NOPROBA_EXAMPLE not in names
+        assert [est.get_class_tag("capability:pred_int") for est in ests]
+    else:
+        assert PROBA_EXAMPLE not in names
+        assert NOPROBA_EXAMPLE in names
+        assert [not est.get_class_tag("capability:pred_int") for est in ests]
+
+
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
 def test_scitype_inference(estimator_scitype):
     """Check that scitype inverts _check_estimator_types."""
