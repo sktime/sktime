@@ -71,8 +71,8 @@ class DtwDist(BasePairwiseTransformerPanel):
     itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding).
-    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                    defaults = None)
+    bounding_matrix: optional, 2D np.ndarray, default=None
+        must be of size len(X) and n is len(X2) for X, X2 passed in transform
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should
@@ -100,7 +100,7 @@ class DtwDist(BasePairwiseTransformerPanel):
     >>> from sktime.dists_kernels.dtw import DtwDist
     >>>
     >>> X, _ = load_unit_test(return_type="pd-multiindex")  # doctest: +SKIP
-    >>> d = DtwDist()  # doctest: +SKIP
+    >>> d = DtwDist(weighted=True, derivative=True)  # doctest: +SKIP
     >>> distmat = d.transform(X)  # doctest: +SKIP
 
     distances are also callable, this does the same:
