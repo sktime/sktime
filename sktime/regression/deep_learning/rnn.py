@@ -90,7 +90,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         model.compile(loss=self.loss, optimizer=self.optimizer_, metrics=metrics)
         return model
 
-    def fit(self, X, y, input_checks=True):
+    def _fit(self, X, y):
         """
         Fit the regressor on the training set (X, y).
 

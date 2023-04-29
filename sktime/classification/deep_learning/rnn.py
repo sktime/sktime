@@ -94,7 +94,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         model.compile(loss=self.loss, optimizer=self.optimizer_, metrics=metrics)
         return model
 
-    def fit(self, X, y, input_checks=True):
+    def _fit(self, X, y):
         """
         Fit the regressor on the training set (X, y).
 
@@ -106,8 +106,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             n_dimensions is assumed to be 1.
         y : array-like, shape = [n_instances]
             The training data class labels.
-        input_checks : boolean
-            whether to check the X and y parameters
 
         Returns
         -------
