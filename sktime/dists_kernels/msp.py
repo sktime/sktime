@@ -40,6 +40,17 @@ class MspDist(BasePairwiseTransformerPanel):
         "zero" - entries not on the spanning tree contain zero
         "inf" - entries not on the spanning tree contain np.inf
         "max" - entries not on the spanning tree contain maximal spanning distance (sum)
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>> from sktime.dists_kernels.msp import MspDist
+    >>>
+    >>> X, _ = load_unit_test(return_type="pd-multiindex")  # doctest: +SKIP
+    >>> d = DtwDist(weighted=True, derivative=True)  # doctest: +SKIP
+    >>> mspd = MspDist(d)  # doctest: +SKIP
+    >>> distmat = mspd.transform(X)  # doctest: +SKIP
     """
 
     _tags = {
@@ -117,7 +128,7 @@ def _sum_spanning_tree(mspmat, mspadj):
     # mspadjs = symmetric adjacency matrix of msp
     mspadjs = mspadj.transpose() + mspadj
     # exppat = symmetric exponential distance matrix of msp
-    exppat = msmpat.expm1() + msmpat.transpose().expm1()
+    exppat = mspmat.expm1() + mspmat.transpose().expm1()
     exppat = exppat + mspadjs
 
     # updated matrices
@@ -130,8 +141,8 @@ def _sum_spanning_tree(mspmat, mspadj):
     cur_nb = mspadjs
     # paths = at entries in cur_nb, logarithmic sum distance
     paths = exppat
-    # res = at all entries up to k edges away, log spanning tree distance
-    res = msmpat.toarray() + msmpat.transpose().toarray()
+    # res = at all entries up to k edges away, spanning tree distance
+    res = mspmat.toarray() + mspmat.transpose().toarray()
 
     # loop, starts with k=2
     while np.any(cur_nb.toarray() > 0):
