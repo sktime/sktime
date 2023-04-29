@@ -53,6 +53,14 @@ Composition
 
     CombinedDistance
 
+.. currentmodule:: sktime.dists_kernels.indep
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    IndepDist
+
 .. currentmodule:: sktime.dists_kernels.compose_tab_to_panel
 
 .. autosummary::
