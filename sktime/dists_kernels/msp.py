@@ -3,11 +3,8 @@
 
 __author__ = ["fkiraly"]
 
-from typing import Union
-
 import numpy as np
 
-from sktime.distances import pairwise_distance
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 
@@ -91,9 +88,64 @@ class MspDist(BasePairwiseTransformerPanel):
         distmat = distmat + 1
 
         mspmat = minimum_spanning_tree(distmat)
-        mspadj = mspadh > 0
+        mspadj = mspmat > 0
+        mspadj = mspadj.astype("int")
 
         if transitive_entries == "zero":
-            mspmat = mspmat - 1
+            nz = mspmat > 0
+            resmat = mspmat - nz
+            resmat = resmat.toarray()
 
-        return distmat
+        elif transitive_entries == "sum":
+            resmat = _sum_spanning_tree(mspmat, mspadj)
+
+        elif transitive_entries in ["inf", "max"]:
+            nonmspmask = 1 - mspadj
+            if transitive_entries == "inf":
+                const = np.inf
+            else:
+                const = np.max(distmat) - 1
+
+            resmat = distmat.toarray() - 1 + nonmspmask * const
+
+        return resmat
+
+
+def _sum_spanning_tree(mspmat, mspadj):
+    # fixed matrices
+    # --------------
+    # mspadjs = symmetric adjacency matrix of msp
+    mspadjs = mspadj.transpose() + mspadj
+    # exppat = symmetric exponential distance matrix of msp
+    exppat = msmpat.expm1() + msmpat.transpose().expm1()
+    exppat = exppat + mspadjs
+
+    # updated matrices
+    # ----------------
+    # current length of span paths
+    k = 1
+    # cur_nb = 1 if vertices are k edges away, for k-th loop
+    mspadjsp = mspadjs
+    msppowk = mspadjsp
+    cur_nb = mspadjs
+    # paths = at entries in cur_nb, logarithmic sum distance
+    paths = exppat
+    # res = at all entries up to k edges away, log spanning tree distance
+    res = msmpat.toarray() + msmpat.transpose().toarray()
+
+    # loop, starts with k=2
+    while np.any(cur_nb.toarray() > 0):
+        k = k + 1
+        msppowk = msppowk * mspadjsp
+        mask = (msppowk == 1).astype("int")
+        cur_nb = msppowk.multiply(mask)
+        cur_nb.setdiag(0)
+        pathleft = paths * exppat
+        pathright = exppat * paths
+        paths = (pathleft + pathright) / 2
+        paths = paths.multiply(cur_nb)
+        expincrm1 = paths - cur_nb 
+        incr = np.log1p(expincrm1)
+        res = res + incr.toarray()
+
+    return res
