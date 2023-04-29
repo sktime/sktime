@@ -1998,7 +1998,9 @@ class BaseForecaster(BaseEstimator):
                 "This is likely a bug, please report, and/or set the flag to False."
             )
 
-        if implements_quantiles:
+        # we default to _predict_quantiles if that is implemented or _predict_proba
+        # since _predict_quantiles will default to _predict_proba if it is not
+        if implements_quantiles or implements_proba:
             alphas = []
             for c in coverage:
                 # compute quantiles corresponding to prediction interval coverage
