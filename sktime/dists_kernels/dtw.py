@@ -16,9 +16,9 @@ class DtwDist(BasePairwiseTransformerPanel):
 
     Interface to simple dynamic time warping (DTW) distance,
     and the following weighted/derivative versions:
-    WDTW - weighted dynamic tyme warping
-    DDTW - derivative dynamic time warping
-    WDDTW - weighted derivative dynamic time warping
+    WDTW - weighted dynamic tyme warping - `weighted=True, derivative=False`
+    DDTW - derivative dynamic time warping - `weighted=False, derivative=True`
+    WDDTW - weighted derivative dynamic time warping - `weighted=True, derivative=True`
 
     `sktime` interface to the efficient `numba` implementations in `sktime.distances`.
 
@@ -33,9 +33,9 @@ class DtwDist(BasePairwiseTransformerPanel):
 
     Note that the more flexible options above may be less performant.
 
-    DTW:
-    Originally proposed in [1]_, DTW computes the distance between two time series by
-    considering their alignments during the calculation. This is done by measuring
+    DTW was originally proposed in [1]_, DTW computes the distance between two
+    time series by considering their alignments during the calculation.
+    This is done by measuring
     the pointwise distance (normally using Euclidean) between all elements of the two
     time series and then using dynamic programming to find the warping path
     that minimises the total pointwise distance between realigned series.
@@ -93,6 +93,18 @@ class DtwDist(BasePairwiseTransformerPanel):
     .. [3] Young-Seon Jeong, Myong K. Jeong, Olufemi A. Omitaomu, Weighted dynamic time
     warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>>
+    >>> X, _ = load_unit_test(return_type="pd-multiindex")  # doctest: +SKIP
+    >>> d = DtwDist()  # doctest: +SKIP
+    >>> distmat = d.transform(X)  # doctest: +SKIP
+
+    distances are also callable, this does the same:
+    >>> distmat = d(X)  # doctest: +SKIP
     """
 
     _tags = {
