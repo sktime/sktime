@@ -52,10 +52,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
-        self._network = RNNNetwork(
-            batch_size=self.batch_size,
-            units=self.units,
-        )
+        self._network = RNNNetwork(random_state=random_state, units=units)
 
     def build_model(self, input_shape, **kwargs):
         """
@@ -94,7 +91,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         model.compile(loss=self.loss, optimizer=self.optimizer_, metrics=metrics)
         return model
 
-    def fit(self, X, y, input_checks=True):
+    def _fit(self, X, y):
         """
         Fit the regressor on the training set (X, y).
 
@@ -106,8 +103,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             n_dimensions is assumed to be 1.
         y : array-like, shape = [n_instances]
             The training data class labels.
-        input_checks : boolean
-            whether to check the X and y parameters
 
         Returns
         -------
