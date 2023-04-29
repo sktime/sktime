@@ -33,8 +33,6 @@ EXCLUDE_ESTIMATORS = [
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
-    "SimpleRNNRegressor",
-    "SimpleRNNClassifier",
 ]
 
 
