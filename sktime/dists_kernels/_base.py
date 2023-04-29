@@ -349,6 +349,28 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         else:
             return NotImplemented
 
+    def __getitem__(self, key):
+        """Magic [...] method, return column subsetted transformer.
+
+        Pairwise transformer (e.g., distance kernel) subsetted to the index.
+
+        Keys must be valid inputs for `columns` in `ColumnSubset`.
+
+        Parameters
+        ----------
+        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+            keys can also be a :-slice, in which case it is considered as not passed
+
+        Returns
+        -------
+        the following TransformerPipeline object:
+            ColumnSubset(columns) * self
+            where `columns` only item in `key`
+        """
+        from sktime.transformations.series.subset import ColumnSelect
+
+        return ColumnSelect(key) * self
+
     def transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
