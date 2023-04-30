@@ -118,7 +118,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         if self.verbose:
             self.model_.summary()
 
-        self.history = self.model.fit(
+        self.history = self.model_.fit(
             X,
             y,
             batch_size=self.batch_size,
