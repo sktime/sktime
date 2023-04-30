@@ -79,7 +79,7 @@ class BaggingClassifier(BaseClassifier):
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:predict_proba": True,
-        "X_inner_mtype": ["pd-multiindex", "nested_univ"]
+        "X_inner_mtype": ["pd-multiindex", "nested_univ"],
     }
 
     def __init__(
