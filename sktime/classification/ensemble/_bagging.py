@@ -32,57 +32,46 @@ class BaggingClassifier(BaseClassifier):
 
     Parameters
     ----------
-    classifiers : dict or None, default=None
-        Parameters for the ShapeletTransformClassifier module. If None, uses the
-        default parameters with a 2 hour transform contract.
-    weights : float, or iterable of float, optional, default=None
-        if float, ensemble weight for classifier i will be train score to this power
-        if iterable of float, must be equal length as classifiers
-            ensemble weight for classifier i will be weights[i]
-        if None, ensemble weights are equal (uniform average)
-    cv : None, int, or sklearn cross-validation object, optional, default=None
-        determines whether in-sample or which cross-validated predictions used in fit
-        None : predictions are in-sample, equivalent to fit(X, y).predict(X)
-        cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
-            where multiple X_train, y_train, X_test are obtained from cv folds
-            returned y is union over all test fold predictions
-            cv test folds must be non-intersecting
-        int : equivalent to cv=KFold(cv, shuffle=True, random_state=x),
-            i.e., k-fold cross-validation predictions out-of-sample
-            random_state x is taken from self if exists, otherwise x=None
-    metric : sklearn metric for computing training score, default=accuracy_score
-        only used if weights is a float
-    metric_type : str, one of "point" or "proba", default="point"
-        type of sklearn metric, point prediction ("point") or probabilistic ("proba")
-        if "point", most probable class is passed as y_pred
-        if "proba", probability of most probable class is passed as y_pred
-    random_state : int or None, default=None
-        Seed for random number generation.
+    estimator : sktime classifier, descendant of BaseClassifier
+        classifier to use in the bagging estimator
+    n_estimators : int, default=10
+        number of estimators in the sample for bagging
+    n_samples : int or float, default=1.0
+        The number of instances drawn from ``X`` in ``fit`` to train each clone
+        If int, then indicates number of instances precisely
+        If float, interpreted as a fraction, and rounded by ``ceil``
+    n_features : int or float, default=1.0
+        The number of features/variables drawn from ``X`` in ``fit`` to train each clone
+        If int, then indicates number of instances precisely
+        If float, interpreted as a fraction, and rounded by ``ceil``
+    bootstrap : boolean, default=True
+        whether samples/instances are drawn with replacement (True) or not (False)
+    bootstrap_features : boolean, default=False
+        whether features/variables are drawn with replacement (True) or not (False)
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, ``random_state`` is the seed used by the random number generator;
+        If ``RandomState`` instance, ``random_state`` is the random number generator;
+        If None, the random number generator is the ``RandomState`` instance used
+        by ``np.random``.
 
     Attributes
     ----------
-    classifiers_ : list of tuples (str, classifier) of sktime classifiers
-        clones of classifies in `classifiers` which are fitted in the ensemble
-        is always in (str, classifier) format, even if `classifiers` is just a list
-        strings not passed in `classifiers` are replaced by unique generated strings
-        i-th classifier in `classifier_` is clone of i-th in `classifier`
-    weights_ : dict with str being classifier names as in `classifiers_`
-        value at key is ensemble weights of classifier with name key
-        ensemble weights are fitted in `fit` if `weights` is a scalar
+    estimators_ : list of of sktime classifiers
+        clones of classifier in `estimator` fitted in the ensemble
 
     Examples
     --------
-    >>> from sktime.classification.dummy import DummyClassifier
+    >>> from sktime.classification.ensemble import BaggingClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
     >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
-    >>> clf = WeightedEnsembleClassifier(
-    ...     [DummyClassifier(), RocketClassifier(num_kernels=100)],
-    ...     weights=2,
+    >>> clf = BaggingClassifier(
+    ...     RocketClassifier(num_kernels=100),
+    ...     n_estimators=10,
     ... ) # doctest: +SKIP
     >>> clf.fit(X_train, y_train) # doctest: +SKIP
-    WeightedEnsembleClassifier(...)
+    BaggingClassifier(...)
     >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
@@ -112,6 +101,9 @@ class BaggingClassifier(BaseClassifier):
         self.random_state = random_state
 
         super(BaggingClassifier, self).__init__()
+
+        tags_to_clone = ["capability:multivariate", "capability:missing_values"]
+        self.clone_tags(estimator, tags_to-clone)
 
     def _fit(self, X, y):
         """Fit time series classifier to training data.
@@ -196,8 +188,19 @@ class BaggingClassifier(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        classes = pd.Index(self.classes_)
         y_probas = [est.predict_proba(X) for est in self.estimators_]
-        y_proba = np.mean(y_probas, axis=0)
+
+        est_shape = (len(y_probas[0]), len(classes))
+        y_proba_np = np.zeros((len(y_probas), est_shape[0], est_shape[1]))
+        y_proba_np = np.zeros((est_shape[0], est_shape[1], len(y_probas)))
+
+        for i, y_proba in enumerate(y_probas):
+            cls_ix = self.estimators_[i].classes_
+            ixer = classes.get_indexer_for(cls_ix)
+            y_proba_np[:, ixer, i] = y_proba
+
+        y_proba = np.mean(y_proba_np, axis=2)
 
         return y_proba
 
