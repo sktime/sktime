@@ -152,7 +152,7 @@ class BaggingClassifier(BaseClassifier):
             n_features_ = n_features
 
         self.estimators_ = []
-        for i in range(n_estimators):
+        for _i in range(n_estimators):
             esti = estimator.clone()
             row_iloc = pd.RangeIndex(n)
             row_ss = _random_ss_ix(row_iloc, size=n_samples_, replace=bootstrap)
