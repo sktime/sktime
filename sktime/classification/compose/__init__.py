@@ -16,6 +16,7 @@ from sktime.classification.compose._pipeline import (
     ClassifierPipeline,
     SklearnClassifierPipeline,
 )
+
 # 0.20.0 - remove this import
 from sktime.classification.ensemble import (
     ComposableTimeSeriesForestClassifier,
