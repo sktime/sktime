@@ -115,10 +115,10 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.input_shape = X.shape[1:]
         self.batch_size = int(max(1, min(X.shape[0] / 10, self.batch_size)))
 
-        self.model = self.build_model(self.input_shape)
+        self.model_ = self.build_model(self.input_shape)
 
         if self.verbose:
-            self.model.summary()
+            self.model_.summary()
 
         self.history = self.model.fit(
             X,
