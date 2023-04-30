@@ -4,7 +4,10 @@
 __author__ = ["fkiraly"]
 __all__ = ["BaggingClassifier"]
 
+from math import ceil
+
 import numpy as np
+import pandas as pd
 
 from sktime.classification.base import BaseClassifier
 
@@ -87,49 +90,26 @@ class BaggingClassifier(BaseClassifier):
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:predict_proba": True,
-        "X_inner_mtype": "pd-multiindex",
+        "X_inner_mtype": ["pd-multiindex", "nested_univ"]
     }
 
     def __init__(
         self,
-        classifiers,
-        weights=None,
-        cv=None,
-        metric=None,
-        metric_type="point",
+        estimator,
+        n_estimators=10,
+        n_samples=1.0,
+        n_features=1.0,
+        bootstrap=True,
+        bootstrap_features=False,
         random_state=None,
     ):
-        self.classifiers = classifiers
-        self.weights = weights
-        self.cv = cv
-        self.metric = metric
-        self.metric_type = metric_type
+        self.estimator = estimator
+        self.n_estimators = n_estimators
+        self.n_samples = n_samples
+        self.n_features = n_features
+        self.bootstrap = bootstrap
+        self.bootstrap_features = bootstrap_features
         self.random_state = random_state
-
-        # make the copies that are being fitted
-        self.classifiers_ = self._check_estimators(
-            self.classifiers, cls_type=BaseClassifier
-        )
-
-        # pass on random state
-        for _, clf in self.classifiers_:
-            params = clf.get_params()
-            if "random_state" in params and params["random_state"] is None:
-                clf.set_params(random_state=random_state)
-
-        if weights is None:
-            self.weights_ = {x[0]: 1 for x in self.classifiers_}
-        elif isinstance(weights, (float, int)):
-            self.weights_ = dict()
-        elif isinstance(weights, dict):
-            self.weights_ = {x[0]: weights[x[0]] for x in self.classifiers_}
-        else:
-            self.weights_ = {x[0]: weights[i] for i, x in enumerate(self.classifiers_)}
-
-        if metric is None:
-            self._metric = accuracy_score
-        else:
-            self._metric = metric
 
         super(BaggingClassifier, self).__init__()
 
@@ -152,21 +132,54 @@ class BaggingClassifier(BaseClassifier):
         -------
         self : Reference to self.
         """
-        # if weights are fixed, we only fit
-        if not isinstance(self.weights, (float, int)):
-            for _, classifier in self.classifiers_:
-                classifier.fit(X=X, y=y)
-        # if weights are calculated by training loss, we fit_predict and evaluate
+        estimator = self.estimator
+        n_estimators = self.n_estimators
+        n_samples = self.n_samples
+        n_features = self.n_features
+        bootstrap = self.bootstrap
+        bootstrap_ft = self.bootstrap_features
+        random_state = self.random_state
+        np.random.seed(random_state)
+
+        if isinstance(X.index, pd.MultiIndex):
+            inst_ix = X.index.droplevel(-1).unique()
         else:
-            exponent = self.weights
-            for clf_name, clf in self.classifiers_:
-                train_probs = clf.fit_predict_proba(X=X, y=y, cv=self.cv)
-                train_preds = clf.classes_[np.argmax(train_probs, axis=1)]
-                if self.metric_type == "proba":
-                    for i in range(len(train_preds)):
-                        train_preds[i] = train_probs[i, np.argmax(train_probs[i, :])]
-                metric = self._metric
-                self.weights_[clf_name] = metric(y, train_preds) ** exponent
+            inst_ix = X.index
+        col_ix = X.columns
+        n = len(inst_ix)
+        m = len(col_ix)
+
+        if isinstance(n_samples, float):
+            n_samples_ = ceil(n_samples * n)
+        else:
+            n_samples_ = n_samples
+
+        if isinstance(n_features, float):
+            n_features_ = ceil(n_features * m)
+        else:
+            n_features_ = n_features
+
+        self.estimators_ = []
+        for i in range(n_estimators):
+            esti = estimator.clone()
+            row_iloc = pd.RangeIndex(n)
+            row_ss = _random_ss_ix(row_iloc, size=n_samples_, replace=bootstrap)
+            inst_ix_i = inst_ix[row_ss]
+            col_ix_i = _random_ss_ix(col_ix, size=n_features_, replace=bootstrap_ft)
+            # if we bootstrap, we need to take care to ensure the
+            # indices end up unique
+            if not isinstance(X.index, pd.MultiIndex):
+                Xi = X.loc[inst_ix_i, col_ix_i]
+                Xi = Xi.reset_index(drop=True)
+            else:
+                Xis = [X.loc[[ix], col_ix_i].droplevel(0) for ix in inst_ix_i]
+                Xi = pd.concat(Xis, keys=pd.RangeIndex(len(inst_ix_i)))
+
+            if bootstrap_ft:
+                Xi.columns = pd.RangeIndex(len(col_ix_i))
+
+            yi = y[row_ss]
+            self.estimators_ += [esti.fit(Xi, yi)]
 
         return self
 
@@ -183,19 +196,8 @@ class BaggingClassifier(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
-        dists = None
-
-        # Call predict proba on each classifier, multiply the probabilities by the
-        # classifiers weight then add them to the current HC2 probabilities
-        for clf_name, clf in self.classifiers_:
-            y_proba = clf.predict_proba(X=X)
-            if dists is None:
-                dists = y_proba * self.weights_[clf_name]
-            else:
-                dists += y_proba * self.weights_[clf_name]
-
-        # Make each instances probability array sum to 1 and return
-        y_proba = dists / dists.sum(axis=1, keepdims=True)
+        y_probas = [est.predict_proba(X) for est in self.estimators_]
+        y_proba = np.mean(y_probas, axis=0)
 
         return y_proba
 
@@ -222,32 +224,25 @@ class BaggingClassifier(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         from sktime.classification.dummy import DummyClassifier
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params0 = {"classifiers": [DummyClassifier()]}
+        params1 = {"estimator": DummyClassifier()}
+        params2 = {
+            "estimator": DummyClassifier(),
+            "n_samples": 0.5,
+            "n_features": 0.5,
+        }
+        params3 = {
+            "estimator": DummyClassifier(),
+            "n_samples": 7,
+            "n_features": 2,
+            "bootstrap": False,
+            "bootstrap_features": True,
+        }
 
-        if _check_soft_dependencies("numba", severity="none"):
-            from sktime.classification.distance_based import (
-                KNeighborsTimeSeriesClassifier,
-            )
-            from sktime.classification.kernel_based import RocketClassifier
+        return [params1, params2, params3]
 
-            params1 = {
-                "classifiers": [
-                    KNeighborsTimeSeriesClassifier.create_test_instance(),
-                    RocketClassifier.create_test_instance(),
-                ],
-                "weights": [42, 1],
-            }
 
-            params2 = {
-                "classifiers": [
-                    KNeighborsTimeSeriesClassifier.create_test_instance(),
-                    RocketClassifier.create_test_instance(),
-                ],
-                "weights": 2,
-                "cv": 3,
-            }
-            return [params0, params1, params2]
-        else:
-            return params0
+def _random_ss_ix(ix, size, replace=True):
+    a = range(len(ix))
+    ixs = ix[np.random.choice(a, size=size, replace=replace)]
+    return ixs
