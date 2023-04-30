@@ -103,7 +103,7 @@ class BaggingClassifier(BaseClassifier):
         super(BaggingClassifier, self).__init__()
 
         tags_to_clone = ["capability:multivariate", "capability:missing_values"]
-        self.clone_tags(estimator, tags_to-clone)
+        self.clone_tags(estimator, tags_to_clone)
 
     def _fit(self, X, y):
         """Fit time series classifier to training data.
