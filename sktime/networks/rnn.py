@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Time Recurrent Neural Network (RNN) (minus the final output layer)."""
 
-__author__ = "James Large, Withington, Tony Bagnall"
+__authors__ = ["JamesLarge", "Withington", "TonyBagnall", "achieveordie"]
 
 from sktime.networks.base import BaseDeepNetwork
 
@@ -27,8 +27,10 @@ class RNNNetwork(BaseDeepNetwork):
 
         Parameters
         ----------
-        input_shape : tuple
-            The shape of the data fed into the input layer, should be (m,d)
+        input_shape : int or tuple
+            The shape of the data fed into the input layer. It should either
+            have dimensions of (m, d) or m. In case an int is passed,
+            1 is appended for d.
 
         Returns
         -------
@@ -36,11 +38,28 @@ class RNNNetwork(BaseDeepNetwork):
         """
         from tensorflow import keras
 
-        input_layer = keras.layers.Input((input_shape, 1))
+        if isinstance(input_shape, int):
+            input_layer = keras.layers.Input((input_shape, 1))
+        elif isinstance(input_shape, tuple):
+            if len(input_shape) == 2:
+                input_layer = keras.layers.Input(input_shape)
+            elif len(input_shape) == 1:
+                input_layer = keras.layers.Input((*input_shape, 1))
+            else:
+                raise ValueError(
+                    "If `input_shape` is a tuple, it must either be "
+                    f"of length 1 or 2. Found length of be {len(input_shape)}"
+                )
+        else:
+            raise TypeError(
+                "`input_shape` should either be of type int or tuple. "
+                f"But found the type to be: {type(input_shape)}"
+            )
 
-        rnn = keras.layers.SimpleRNN(
-            units=self.units, return_sequences=True, input_shape=(input_shape, 1)
-        )(input_layer)
+        rnn = keras.layers.SimpleRNN(units=self.units, return_sequences=True)(
+            input_layer
+        )
+
         dense = keras.layers.Dense(units=1)(rnn)
 
         return input_layer, dense
