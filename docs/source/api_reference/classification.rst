@@ -20,8 +20,18 @@ Composition
 
     ClassifierPipeline
     ColumnEnsembleClassifier
-    ComposableTimeSeriesForestClassifier
     SklearnClassifierPipeline
+
+Ensembles
+---------
+
+.. currentmodule:: sktime.classification.ensemble
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ComposableTimeSeriesForestClassifier
     WeightedEnsembleClassifier
 
 Deep learning

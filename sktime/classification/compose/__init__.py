@@ -12,11 +12,12 @@ __all__ = [
 ]
 
 from sktime.classification.compose._column_ensemble import ColumnEnsembleClassifier
-from sktime.classification.compose._ensemble import (
-    ComposableTimeSeriesForestClassifier,
-    WeightedEnsembleClassifier,
-)
 from sktime.classification.compose._pipeline import (
     ClassifierPipeline,
     SklearnClassifierPipeline,
+)
+# 0.20.0 - remove this import
+from sktime.classification.compose._ensemble import (
+    ComposableTimeSeriesForestClassifier,
+    WeightedEnsembleClassifier,
 )
