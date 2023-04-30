@@ -2020,9 +2020,7 @@ class BaseForecaster(BaseEstimator):
             var_names = ["Coverage"]
         # idx returned by _predict_interval should be
         #   3-level MultiIndex with variable names, coverage, lower/upper
-        int_idx = pd.MultiIndex.from_product(
-            [var_names, coverage, ["lower", "upper"]]
-        )
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
 
         pred_int.columns = int_idx
 
