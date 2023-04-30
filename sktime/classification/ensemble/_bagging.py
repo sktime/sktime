@@ -13,22 +13,16 @@ from sktime.classification.base import BaseClassifier
 
 
 class BaggingClassifier(BaseClassifier):
-    """Weighted ensemble of classifiers with fittable ensemble weight.
+    """Bagging ensemble of time series classifiers.
 
-    Produces a probabilistic prediction which is the weighted average of
-    predictions of individual classifiers.
-    Classifier with name `name` has ensemble weight in `weights_[name]`.
-    `weights_` is fitted in `fit`, if `weights` is a scalar, otherwise fixed.
+    Fits ``n_estimators`` clones of a classifier on
+    datasets which are instance sub-samples and/or variable sub-samples.
 
-    If `weights` is a scalar, empirical training loss is computed for each classifier.
-    In this case, ensemble weights of classifier is empirical loss,
-    to the power of `weights` (a scalar).
+    The estimator allows to choose sample sizes fir instances, variables,
+    and whether sampling is with or without replacement.
 
-    The evaluation for the empirical training loss can be selected
-    through the `metric` and `metric_type` parameters.
-
-    The in-sample empirical training loss is computed in-sample or out-of-sample,
-    depending on the `cv` parameter. None = in-sample; other = cross-validated oos.
+    Direct generalization of ``sklearn``'s ``BaggingClassifier``
+    to the time series classification task.
 
     Parameters
     ----------
