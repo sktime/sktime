@@ -1998,32 +1998,31 @@ class BaseForecaster(BaseEstimator):
                 "This is likely a bug, please report, and/or set the flag to False."
             )
 
-        if implements_quantiles:
-            alphas = []
-            for c in coverage:
-                # compute quantiles corresponding to prediction interval coverage
-                #  this uses symmetric predictive intervals
-                alphas.extend([0.5 - 0.5 * float(c), 0.5 + 0.5 * float(c)])
+        # we default to _predict_quantiles if that is implemented or _predict_proba
+        # since _predict_quantiles will default to _predict_proba if it is not
+        alphas = []
+        for c in coverage:
+            # compute quantiles corresponding to prediction interval coverage
+            #  this uses symmetric predictive intervals
+            alphas.extend([0.5 - 0.5 * float(c), 0.5 + 0.5 * float(c)])
 
-            # compute quantile forecasts corresponding to upper/lower
-            pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
+        # compute quantile forecasts corresponding to upper/lower
+        pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
 
-            # change the column labels (multiindex) to the format for intervals
-            # idx returned by _predict_quantiles is
-            #   2-level MultiIndex with variable names, alpha
-            idx = pred_int.columns
-            # variable names (unique, in same order)
-            var_names = idx.get_level_values(0).unique()
-            # if was univariate & unnamed variable, replace default
-            if len(var_names) == 1 and var_names == ["Quantiles"]:
-                var_names = ["Coverage"]
-            # idx returned by _predict_interval should be
-            #   3-level MultiIndex with variable names, coverage, lower/upper
-            int_idx = pd.MultiIndex.from_product(
-                [var_names, coverage, ["lower", "upper"]]
-            )
+        # change the column labels (multiindex) to the format for intervals
+        # idx returned by _predict_quantiles is
+        #   2-level MultiIndex with variable names, alpha
+        idx = pred_int.columns
+        # variable names (unique, in same order)
+        var_names = idx.get_level_values(0).unique()
+        # if was univariate & unnamed variable, replace default
+        if len(var_names) == 1 and var_names == ["Quantiles"]:
+            var_names = ["Coverage"]
+        # idx returned by _predict_interval should be
+        #   3-level MultiIndex with variable names, coverage, lower/upper
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
 
-            pred_int.columns = int_idx
+        pred_int.columns = int_idx
 
         return pred_int
 
