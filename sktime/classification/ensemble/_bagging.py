@@ -18,6 +18,9 @@ class BaggingClassifier(BaseClassifier):
     Fits ``n_estimators`` clones of a classifier on
     datasets which are instance sub-samples and/or variable sub-samples.
 
+    On ``predict_proba``, the mean average of probabilistic predictions is returned.
+    For a deterministic classifier, this results in majority vote for ``predict``.
+
     The estimator allows to choose sample sizes fir instances, variables,
     and whether sampling is with or without replacement.
 
