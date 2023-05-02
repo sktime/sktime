@@ -106,6 +106,8 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         -------
         self : object
         """
+        X = X.transpose(0, 2, 1)
+
         if self.callbacks is None:
             self._callbacks = []
 
