@@ -75,6 +75,8 @@ class BaseObject(_BaseObject):
     Extends skbase BaseObject with additional features.
     """
 
+    _config = {"warnings": "on"}
+
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
