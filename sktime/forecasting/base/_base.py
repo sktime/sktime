@@ -1066,7 +1066,7 @@ class BaseForecaster(BaseEstimator):
         if y is None or (hasattr(y, "__len__") and len(y) == 0):
             warn(
                 f"empty y passed to update_predict of {self}, "
-                "no update was carried out".
+                "no update was carried out",
                 obj=self,
             )
             return self.predict(fh=fh, X=X)

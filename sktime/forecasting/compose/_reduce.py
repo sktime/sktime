@@ -1480,7 +1480,7 @@ def _infer_scitype(estimator):
             'Assuming "tabular-regressor" = scikit-learn regressor interface. '
             "If this warning is followed by an unexpected exception, "
             "please consider report as a bug on the sktime issue tracker.",
-            obj=self,
+            obj=estimator,
         )
         return "tabular-regressor"
 
