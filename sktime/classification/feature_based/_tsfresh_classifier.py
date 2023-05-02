@@ -153,13 +153,14 @@ class TSFreshClassifier(BaseClassifier):
         X_t = self._transformer.fit_transform(X, y)
 
         if X_t.shape[1] == 0:
-            warnings.warn(
-                "TSFresh has extracted no features from the data. Returning the "
-                "majority class in predictions. Setting "
-                "relevant_feature_extractor=False will keep all features.",
-                UserWarning,
-                stacklevel=2,
-            )
+            if self.get_config()["warnings"] == "on":
+                warnings.warn(
+                    "TSFresh has extracted no features from the data. Returning the "
+                    "majority class in predictions. Setting "
+                    "relevant_feature_extractor=False will keep all features.",
+                    UserWarning,
+                    stacklevel=2,
+                )
 
             self._return_majority_class = True
             self._majority_class = np.argmax(np.unique(y, return_counts=True)[1])

@@ -6,11 +6,11 @@ __author__ = ["ltsaprounis"]
 __all__ = ["ScaledLogitTransformer"]
 
 from copy import deepcopy
-from warnings import warn
 
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.warnings import warn
 
 
 class ScaledLogitTransformer(BaseTransformer):
@@ -132,6 +132,7 @@ class ScaledLogitTransformer(BaseTransformer):
                 "X in ScaledLogitTransformer should not have values "
                 "greater than upper_bound",
                 RuntimeWarning,
+                obj=self,
             )
 
         if self.lower_bound is not None and np.any(X <= self.lower_bound):
@@ -139,6 +140,7 @@ class ScaledLogitTransformer(BaseTransformer):
                 "X in ScaledLogitTransformer should not have values "
                 "lower than lower_bound",
                 RuntimeWarning,
+                obj=self,
             )
 
         if self.upper_bound and self.lower_bound:

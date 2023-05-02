@@ -199,7 +199,7 @@ class MUSE(BaseClassifier):
 
         self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
 
-        if self.n_dims == 1:
+        if self.n_dims == 1 and self.get_config()["warnings"] == "on":
             warnings.warn(
                 "MUSE Warning: Input series is univariate; MUSE is designed for"
                 + " multivariate series. It is recommended WEASEL is used instead.",

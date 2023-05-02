@@ -235,12 +235,13 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         ending in "_" and sets is_fitted flag to True.
         """
         if self.n_parameter_samples <= self.randomly_selected_params:
-            warnings.warn(
-                "TemporalDictionaryEnsemble warning: n_parameter_samples <= "
-                "randomly_selected_params, ensemble member parameters will be fully "
-                "randomly selected.",
-                stacklevel=2,
-            )
+            if self.get_config()["warnings"] == "on":
+                warnings.warn(
+                    "TemporalDictionaryEnsemble warning: n_parameter_samples <= "
+                    "randomly_selected_params, ensemble member parameters will be "
+                    "fully randomly selected.",
+                    stacklevel=2,
+                )
 
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
@@ -255,12 +256,13 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         if self.min_window >= max_window:
             self._min_window = max_window
-            warnings.warn(
-                f"TemporalDictionaryEnsemble warning: min_window = "
-                f"{self.min_window} is larger than max_window = {max_window}."
-                f" min_window has been set to {max_window}.",
-                stacklevel=2,
-            )
+            if self.get_config()["warnings"] == "on":
+                warnings.warn(
+                    f"TemporalDictionaryEnsemble warning: min_window = "
+                    f"{self.min_window} is larger than max_window = {max_window}."
+                    f" min_window has been set to {max_window}.",
+                    stacklevel=2,
+                )
 
         win_inc = int((max_window - self._min_window) / max_window_searches)
         if win_inc < 1:

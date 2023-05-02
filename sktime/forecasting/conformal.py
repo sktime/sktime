@@ -9,7 +9,6 @@ __all__ = ["ConformalIntervals"]
 __author__ = ["fkiraly", "bethrice44"]
 
 from math import floor
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -19,6 +18,7 @@ from sklearn.base import clone
 from sktime.datatypes import convert, convert_to
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.warnings import warn
 
 
 class ConformalIntervals(BaseForecaster):
@@ -444,8 +444,9 @@ class ConformalIntervals(BaseForecaster):
                 residuals = forecaster.predict_residuals(y_test, X_test)
             except IndexError:
                 warn(
-                    f"Couldn't predict after fitting on time series of length \
-                                 {len(y_train)}.\n"
+                    "Couldn't predict after fitting on time series of length"
+                    f"{len(y_train)}.",
+                    obj=forecaster,
                 )
             return residuals
 
@@ -471,8 +472,9 @@ class ConformalIntervals(BaseForecaster):
                     residuals = forecaster_to_extend.predict_residuals(y_test, X_test)
                 except IndexError:
                     warn(
-                        f"Couldn't predict with existing forecaster for cutoff {id} \
-                         with existing forecaster.\n"
+                        f"Couldn't predict with existing forecaster for cutoff {id}"
+                        " with existing forecaster.",
+                        obj=forecaster,
                     )
                 return residuals
 
