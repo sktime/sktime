@@ -1220,12 +1220,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             new_value = new_params[param_name]
 
             # We should never change or mutate the internal state of input
-            # parameters by default. To check this we use the joblib.hash function
+            # parameters by default. To check this we use the deep_equals function
             # that introspects recursively any subobjects to compute a checksum.
             # The only exception to this rule of immutable constructor parameters
             # is possible RandomState instance but in this check we explicitly
             # fixed the random_state params recursively to be integer seeds.
-            assert joblib.hash(new_value) == joblib.hash(original_value), (
+            assert deep_equals(new_value, original_value), (
                 "Estimator %s should not change or mutate "
                 " the parameter %s from %s to %s during fit."
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
