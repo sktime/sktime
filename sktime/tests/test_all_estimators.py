@@ -1236,7 +1236,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 assert deep_equals(new_value, original_value), msg
             else:
                 assert joblib.hash(new_value) == joblib.hash(original_value), msg
-            
 
     def test_non_state_changing_method_contract(
         self, estimator_instance, scenario, method_nsc
