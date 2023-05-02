@@ -870,8 +870,7 @@ class BaseForecaster(BaseEstimator):
 
         if y is None or (hasattr(y, "__len__") and len(y) == 0):
             warn(
-                f"empty y passed to update of {self}, "
-                "no update was carried out",
+                f"empty y passed to update of {self}, no update was carried out",
                 obj=self,
             )
             return self
