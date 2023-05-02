@@ -5,8 +5,6 @@
 __all__ = ["ThetaForecaster", "ThetaModularForecaster"]
 __author__ = ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
@@ -22,6 +20,7 @@ from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils.slope_and_trend import _fit_trend
 from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.warnings import warn
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -125,7 +124,10 @@ class ThetaForecaster(ExponentialSmoothing):
         """
         sp = check_sp(self.sp)
         if sp > 1 and not self.deseasonalize:
-            warn("`sp` is ignored when `deseasonalise`=False")
+            warn(
+                "`sp` in ThetaForecaster is ignored when `deseasonalise`=False",
+                obj=self,
+            )
 
         if self.deseasonalize:
             self.deseasonalizer_ = Deseasonalizer(sp=self.sp, model="multiplicative")

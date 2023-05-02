@@ -5,11 +5,10 @@
 __author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
-from warnings import warn
-
 from sktime.datatypes._panel._convert import from_nested_to_long
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_n_jobs
+from sktime.utils.warnings import warn
 
 
 class _TSFreshFeatureExtractor(BaseTransformer):
@@ -281,7 +280,8 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
             warn(
                 "tsfresh requires a unique index, but found "
                 "non-unique. To avoid this warning, please make sure the index of X "
-                "contains only unique values."
+                "contains only unique values.",
+                obj=self,
             )
             X = X.reset_index(drop=True)
 

@@ -5,8 +5,6 @@
 __author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -81,14 +79,14 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
             )
             raise TypeError(msg)
 
-        if len(estimators) == 1:
-            msg = (
-                f"in {self_name}, found steps of length 1, "
-                f"this will result in the same behaviour "
-                f"as not wrapping the single step in a pipeline. "
-                f"Consider not wrapping steps in {self_name} as it is redundant."
-            )
-            warn(msg)
+        # if len(estimators) == 1:
+        #     msg = (
+        #         f"in {self_name}, found steps of length 1, "
+        #         f"this will result in the same behaviour "
+        #         f"as not wrapping the single step in a pipeline. "
+        #         f"Consider not wrapping steps in {self_name} as it is redundant."
+        #     )
+        #     warn(msg, obj=self)
 
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)

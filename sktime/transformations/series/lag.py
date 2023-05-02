@@ -4,13 +4,12 @@
 
 __author__ = ["fkiraly"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.warnings import warn
 
 
 # this function is needed since pandas DataFrame.shift
@@ -485,7 +484,8 @@ class ReducerTransform(BaseTransformer):
         if len(lags) == 0 and y is None:
             warn(
                 "no lags specified and no exogeneous data present, "
-                "empty reduction X. Returning all-zeros X."
+                "empty reduction X. Returning all-zeros X.",
+                obj=self,
             )
             self.trafo_ = 0
             return self
@@ -544,7 +544,8 @@ class ReducerTransform(BaseTransformer):
             duplicates = list(varnames[varnames.duplicated()])
             warn(
                 f"duplicate variable names found in ReducerTransform: {duplicates}, "
-                "returning variables with transformer name prefix"
+                "returning variables with transformer name prefix",
+                obj=self,
             )
             Xt.columns = flatten_multiindex(Xt.columns)
 
