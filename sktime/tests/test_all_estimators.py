@@ -16,6 +16,7 @@ from tempfile import TemporaryDirectory
 
 import joblib
 import numpy as np
+import pandas as pd
 import pytest
 from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import (
@@ -1220,16 +1221,22 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             new_value = new_params[param_name]
 
             # We should never change or mutate the internal state of input
-            # parameters by default. To check this we use the deep_equals function
+            # parameters by default. To check this we use the joblib.hash function
             # that introspects recursively any subobjects to compute a checksum.
             # The only exception to this rule of immutable constructor parameters
             # is possible RandomState instance but in this check we explicitly
             # fixed the random_state params recursively to be integer seeds.
-            assert deep_equals(new_value, original_value), (
+            msg = (
                 "Estimator %s should not change or mutate "
                 " the parameter %s from %s to %s during fit."
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
+            # joblib.hash has problems with pandas objects, so we use deep_equals then
+            if isinstance(original_value, (pd.DataFrame, pd.Series)):
+                assert deep_equals(new_value, original_value), msg
+            else:
+                assert joblib.hash(new_value) == joblib.hash(original_value), msg
+            
 
     def test_non_state_changing_method_contract(
         self, estimator_instance, scenario, method_nsc
