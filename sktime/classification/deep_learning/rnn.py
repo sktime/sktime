@@ -6,6 +6,8 @@
 __author__ = ["mloning"]
 __all__ = ["SimpleRNNClassifier"]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -26,13 +28,13 @@ class SimpleRNNClassifier(BaseDeepClassifier):
 
     def __init__(
         self,
-        nb_epochs=100,
+        num_epochs=100,
         batch_size=1,
         units=6,
         callbacks=None,
         random_state=0,
-        verbose=0,
-        loss="Huber",
+        verbose=False,
+        loss="mean_squared_error",
         metrics=None,
         activation="sigmoid",
         use_bias=True,
@@ -40,7 +42,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     ):
         _check_dl_dependencies(severity="error")
         super(SimpleRNNClassifier, self).__init__()
-        self.nb_epochs = nb_epochs
+        self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -54,7 +56,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
 
-    def build_model(self, input_shape, **kwargs):
+    def build_model(self, input_shape, n_classes, **kwargs):
         """
         Construct a compiled, un-trained, keras model that is ready for training.
 
@@ -67,6 +69,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer, should be (m,d)
+        n_classes: int
+            The number of classes, which becomes the size of the output layer
 
         Returns
         -------
@@ -76,14 +80,15 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         from tensorflow import keras
 
         tf.random.set_seed(self.random_state)
-        if self.metrics is None:
-            metrics = ["accuracy"]
-        else:
-            metrics = self.metrics
+
+        metrics = self.metrics if self.metrics is not None else ["accuracy"]
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
+        output_layer = keras.layers.Dense(
+            units=n_classes, activation=self.activation, use_bias=self.use_bias
+        )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.Adam(learning_rate=0.01)
+            keras.optimizers.RMSprop(lr=0.001)
             if self.optimizer is None
             else self.optimizer
         )
@@ -93,7 +98,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
 
     def _fit(self, X, y):
         """
-        Fit the regressor on the training set (X, y).
+        Fit the classifier on the training set (X, y).
 
         Parameters
         ----------
@@ -108,25 +113,25 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
+        y_onehot = self.convert_y_to_keras(y)
+        X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
         self.batch_size = int(max(1, min(X.shape[0] / 10, self.batch_size)))
 
-        self.model_ = self.build_model(self.input_shape)
+        self.model_ = self.build_model(self.input_shape, self.n_classes_)
 
         if self.verbose:
             self.model_.summary()
 
         self.history = self.model_.fit(
             X,
-            y,
+            y_onehot,
             batch_size=self.batch_size,
-            epochs=self.nb_epochs,
+            epochs=self.num_epochs,
             verbose=self.verbose,
-            callbacks=self.callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
@@ -153,7 +158,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         """
         params1 = {}
         params2 = {
-            "nb_epochs": 50,
+            "num_epochs": 50,
             "batch_size": 2,
             "units": 5,
             "use_bias": False,

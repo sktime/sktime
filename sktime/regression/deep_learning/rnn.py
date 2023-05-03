@@ -6,6 +6,8 @@
 __author__ = ["mloning"]
 __all__ = ["SimpleRNNRegressor"]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.networks.rnn import RNNNetwork
@@ -27,13 +29,14 @@ class SimpleRNNRegressor(BaseDeepRegressor):
 
     def __init__(
         self,
-        nb_epochs=100,
+        num_epochs=100,
         batch_size=1,
         units=6,
         callbacks=None,
+        add_default_callback=True,
         random_state=0,
-        verbose=0,
-        loss="Huber",
+        verbose=False,
+        loss="mean_squared_error",
         metrics=None,
         activation="linear",
         use_bias=True,
@@ -41,7 +44,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     ):
         _check_dl_dependencies(severity="error")
         super(SimpleRNNRegressor, self).__init__()
-        self.nb_epochs = nb_epochs
+        self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -72,14 +75,17 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         from tensorflow import keras
 
         tf.random.set_seed(self.random_state)
-        if self.metrics is None:
-            metrics = ["accuracy"]
-        else:
-            metrics = self.metrics
+
+        metrics = self.metrics if self.metrics is not None else ["accuracy"]
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
+        output_layer = keras.layers.Dense(
+            units=1,
+            activation=self.activation,
+            use_bias=self.use_bias,
+        )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.Adam(learning_rate=0.01)
+            keras.optimizers.RMSprop(lr=0.001)
             if self.optimizer is None
             else self.optimizer
         )
@@ -99,17 +105,12 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             n_dimensions is assumed to be 1.
         y : array-like, shape = [n_instances]
             The training data class labels.
-        input_checks : boolean
-            whether to check the X and y parameters
 
         Returns
         -------
         self : object
         """
         X = X.transpose(0, 2, 1)
-
-        if self.callbacks is None:
-            self._callbacks = []
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
@@ -124,9 +125,9 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             X,
             y,
             batch_size=self.batch_size,
-            epochs=self.nb_epochs,
+            epochs=self.num_epochs,
             verbose=self.verbose,
-            callbacks=self.callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
@@ -153,7 +154,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         """
         params1 = {}
         params2 = {
-            "nb_epochs": 50,
+            "num_epochs": 50,
             "batch_size": 2,
             "units": 5,
             "use_bias": False,
