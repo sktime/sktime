@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from sktime.datasets import load_PBS_dataset, load_airline, load_longley
+from sktime.datasets import load_airline, load_longley, load_PBS_dataset
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformations.series.date import DateTimeFeatures
 from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -281,7 +281,7 @@ def test_month_of_quarter(df_panel):
     """Test month_of_quarter for correctness, failure case of bug #4541."""
     y = load_PBS_dataset()
 
-    FEATURES = ['month_of_quarter']
+    FEATURES = ["month_of_quarter"]
     t = DateTimeFeatures(manual_selection=FEATURES)
 
     yt = t.fit_transform(y)[:13]
