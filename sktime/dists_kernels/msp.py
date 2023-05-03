@@ -155,7 +155,7 @@ def _sum_spanning_tree(mspmat, mspadj):
         pathright = exppat * paths
         paths = (pathleft + pathright) / 2
         paths = paths.multiply(cur_nb)
-        expincrm1 = paths - cur_nb 
+        expincrm1 = paths - cur_nb
         incr = np.log1p(expincrm1)
         res = res + incr.toarray()
 
