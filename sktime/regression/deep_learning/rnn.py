@@ -49,6 +49,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.verbose = verbose
         self.units = units
         self.callbacks = callbacks
+        self.add_default_callback = add_default_callback
         self.random_state = random_state
         self.loss = loss
         self.metrics = metrics
@@ -110,6 +111,8 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         -------
         self : object
         """
+        from tensorflow import keras
+
         X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
@@ -121,13 +124,49 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         if self.verbose:
             self.model_.summary()
 
+        # add a ReduceLROnPlateau callback if default is enabled
+        # if an instance of ReduceLRonPlateau is already present
+        # then don't add it again.
+        if self.add_default_callback:
+            reduce_lr = keras.callbacks.ReduceLROnPlateau(
+                monitor="loss",
+                factor=0.5,
+                patience=50,
+                min_lr=0.0001,
+            )
+            if self.callbacks is None:
+                self.callbacks_ = [
+                    reduce_lr,
+                ]
+            elif isinstance(self.callbacks, keras.callbacks.Callback):
+                self.callbacks_ = [
+                    self.callbacks,
+                    reduce_lr,
+                ]
+            elif isinstance(self.callbacks, tuple):
+                self.callbacks_ = deepcopy([i for i in self.callbacks])
+                if not any(
+                    isinstance(callback, keras.callbacks.ReduceLROnPlateau)
+                    for callback in self.callbacks
+                ):
+                    self.callbacks_.append(reduce_lr)
+            else:
+                raise TypeError(
+                    "`callback` can either be None, an instance "
+                    "of keras.callbacks.Callback or a tuple containing "
+                    "keras.callbacks.Callback objects. "
+                    f"But found {type(self.callbacks)} instead."
+                )
+        else:
+            self.callbacks_ = deepcopy(self.callbacks)
+
         self.history = self.model_.fit(
             X,
             y,
             batch_size=self.batch_size,
             epochs=self.num_epochs,
             verbose=self.verbose,
-            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            callbacks=self.callbacks_,
         )
         return self
 
