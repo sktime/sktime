@@ -213,6 +213,7 @@ def _evaluate_window(x, meta):
         if i == 0 or strategy == "refit":
             forecaster = forecaster.clone()
             forecaster.fit(y=y_train, X=X_train, fh=fh)
+            forecaster.fit(y=y_train, X=X_train, fh=fh)
         else:  # if strategy in ["update", "no-update_params"]:
             update_params = strategy == "update"
             forecaster.update(y_train, X_train, update_params=update_params)
@@ -262,6 +263,10 @@ def _evaluate_window(x, meta):
                 score = metric(y_test, y_pred, y_train=y_train)
                 temp_result[result_key] = [score]
 
+        y_pred = method(fh=fh, X=X_test, **metric_args)
+        pred_time = time.perf_counter() - start_pred
+        # score
+        score = scoring(y_test, y_pred, y_train=y_train)
         # get cutoff
         cutoff = forecaster.cutoff
 
