@@ -137,7 +137,13 @@ def all_estimators(
     Modified version from scikit-learn's `all_estimators()`.
     """
     MODULES_TO_IGNORE = (
-        "tests", "setup", "contrib", "benchmarking", "utils", "all", "plotting"
+        "tests",
+        "setup",
+        "contrib",
+        "benchmarking",
+        "utils",
+        "all",
+        "plotting",
     )
 
     result = []
