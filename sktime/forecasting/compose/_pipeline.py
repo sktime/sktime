@@ -5,8 +5,6 @@
 __author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.base import _HeterogenousMetaEstimator
