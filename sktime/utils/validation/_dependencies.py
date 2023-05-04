@@ -68,17 +68,24 @@ def _check_soft_dependencies(
     if len(packages) == 1 and isinstance(packages[0], (tuple, list)):
         packages = packages[0]
     if not all(isinstance(x, str) for x in packages):
-        raise TypeError("packages must be str or tuple of str")
+        raise TypeError(
+            "packages argument of _check_soft_dependencies must be str or tuple of "
+            f"str, but found packages argument of type {type(packages)}"
+        )
 
     if package_import_alias is None:
         package_import_alias = {}
-    msg = "package_import_alias must be a dict with str keys and values"
+    msg_pkg_import_alias = (
+        "package_import_alias argument of _check_soft_dependencies must "
+        "be a dict with str keys and values, but found "
+        f"package_import_alias of type {type(package_import_alias)}"
+    )
     if not isinstance(package_import_alias, dict):
-        raise TypeError(msg)
+        raise TypeError(msg_pkg_import_alias)
     if not all(isinstance(x, str) for x in package_import_alias.keys()):
-        raise TypeError(msg)
+        raise TypeError(msg_pkg_import_alias)
     if not all(isinstance(x, str) for x in package_import_alias.values()):
-        raise TypeError(msg)
+        raise TypeError(msg_pkg_import_alias)
 
     if obj is None:
         class_name = "This functionality"
