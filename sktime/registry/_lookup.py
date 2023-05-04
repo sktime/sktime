@@ -136,7 +136,9 @@ def all_estimators(
     ----------
     Modified version from scikit-learn's `all_estimators()`.
     """
-    MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking", "utils", "all")
+    MODULES_TO_IGNORE = (
+        "tests", "setup", "contrib", "benchmarking", "utils", "all", "plotting"
+    )
 
     result = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
