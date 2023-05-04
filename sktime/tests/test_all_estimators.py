@@ -1488,6 +1488,36 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             if vars(estimator._network).get(key) is not None:
                 assert vars(estimator._network)[key] == value
 
+    @pytest.mark.skip(reason="Not yet implemented, only conceptualized.")
+    def test_dl_contract_consistency(self, estimator_class):
+        """
+        Test whether all DL estimators follow the required implicit/explicit contract.
+
+        This test checks for the following points:
+            1. The estimator must have a class method called `get_test_params`
+                which returns a list or dict.
+            2. The estimator contains a `._network` attribute after initialization.
+            3. The estimator must implement a `._fit()` method which returns itself.
+            4. After calling `.fit()` on the estimator, private attributes
+                `self.model_`, `self.optimizer_` and
+                `self.callbacks_` must not be None.
+            5. Following naming convention must be consistent during initialization:
+                a. There must be a `num_epochs` attributes and not `nb_epochs`.
+                b. The `verbose` attribute must be of `bool` type.
+            6. Via code-scanning, the following points are checked:
+                a. The input `X` must be transposed inside `.fit()`.
+                b. `y` should be one-hot-encoded via `self.convert_y_to_keras()`
+                   method in case the estimator is a child class of BaseDeepClassifier
+                c. A parameter called `n_classes` must be present inside
+                   `.build_model()` method in case the estimator
+                   is a child class of BaseDeepClassifier
+                d. The random seed must be passed to TensorFlow via
+                    `tf.random.set_seed()` inside the `.build_model()` method.
+        """
+        estimator = estimator_class
+        if not issubclass(estimator, (BaseDeepClassifier, BaseDeepRegressor)):
+            return None
+
     def _get_err_msg(estimator):
         return (
             f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
