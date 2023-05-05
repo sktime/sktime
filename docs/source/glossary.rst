@@ -108,3 +108,38 @@ sktime.
     Application
         A single-purpose piece of code that practitioners write to solve a particular applied problem.
         Compare with :term:`toolbox` and :term:`framework`.
+
+    Bagging: 
+        A technique in ensemble learning where multiple models are trained on different subsets of the training data, with each 
+        model having an equal vote in the final prediction.
+
+    Cross-validation: 
+        A technique used to estimate the performance of a predictive model. The data is split into multiple folds, with the 
+        model trained on a subset of the folds and tested on the remaining fold. This process is repeated for all possible combinations of training and testing folds, and the performance metrics are averaged.
+
+    Ensemble learning: 
+        A technique in which multiple models are combined to improve the overall performance of a predictive model.
+
+    Feature extraction: 
+        A technique used to extract useful information from raw data. In time series analysis, this may involve transforming the 
+        data to a frequency domain, decomposing the signal into components, or extracting statistical features.
+
+    Generalization: 
+        The ability of a predictive model to perform well on unseen data. A model that overfits to the training data may not 
+        generalize well, while a model that underfits may not capture the underlying patterns in the data.
+
+    Hyperparameter: 
+        A parameter of a machine learning model that is set before training and affects the model's performance. Examples 
+        include the learning rate in a neural network, the number of trees in a random forest, or the regularization parameter in a linear model.
+
+    Model selection: 
+        The process of selecting the best machine learning model for a given task. This may involve comparing the performance 
+        of different models on a validation set, or using techniques like grid search to find the best hyperparameters for a given model.
+
+    Resampling: 
+        A technique used to address imbalanced datasets or to create more training data. Examples include oversampling, where 
+        the minority class is oversampled to balance the class distribution, or bootstrap resampling, where multiple datasets are created by randomly sampling with replacement from the original data.
+
+    Time series decomposition: 
+        A technique used to separate a time series into its underlying components, such as trend, seasonality, and noise. 
+        This can be useful for understanding the patterns in the data and for modeling each component separately.
