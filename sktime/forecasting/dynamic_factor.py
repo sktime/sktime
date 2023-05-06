@@ -14,9 +14,9 @@ __author__ = ["Ris-Bali", "lbventura"]
 
 
 class DynamicFactor(_StatsModelsAdapter):
-    """Dynamic Factor Foracster.
+    """Dynamic Factor Forecaster.
 
-    Direct interface for `statsmodels.tsa.statespace.dynamic_factor
+    Direct interface for `statsmodels.tsa.statespace.dynamic_factor`
 
     Parameters
     ----------
@@ -342,7 +342,7 @@ class DynamicFactor(_StatsModelsAdapter):
         Parameters
         ----------
         y:pd.Series
-          Target time series to which forcaster is fit.
+          Target time series to which forecaster is fit.
         X:pd.DataFrame , optional (default=None)
           Exogenous variables
         """
@@ -546,10 +546,10 @@ class DynamicFactor(_StatsModelsAdapter):
         Returns
         -------
         params :dict or list of dict , default = {}
-            arameters to create testing instances of the class
+            Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {"k_factors": 1, "factor_order": 1}
         params2 = {"maxiter": 25, "low_memory": True}
