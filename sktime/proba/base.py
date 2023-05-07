@@ -24,13 +24,11 @@ class BaseDistribution(BaseObject):
         "python_dependencies": None,  # string or str list of pkg soft dependencies
         "reserved_params": ["index", "columns"],
         "capabilities:approx": ["energy", "mean", "var", "pdfnorm"],
+        "approx_mean_spl": 1000,  # sample size used in MC estimates of mean
+        "approx_var_spl": 1000,  # sample size used in MC estimates of var
+        "approx_energy_spl": 1000,  # sample size used in MC estimates of energy
+        "approx_spl": 1000,  # sample size used in other MC estimates
     }
-
-    # move this to configs when the config interface is ready
-    APPROX_MEAN_SPL = 1000  # sample size used in MC estimates of mean
-    APPROX_VAR_SPL = 1000  # sample size used in MC estimates of var
-    APPROX_ENERGY_SPL = 1000  # sample size used in MC estimates of energy
-    APPROX_SPL = 1000  # sample size used in other MC estimates
 
     def __init__(self, index=None, columns=None):
 
@@ -266,12 +264,12 @@ class BaseDistribution(BaseObject):
 
         approx_method = (
             "by approximating the energy expectation by the arithmetic mean of "
-            f"{self.APPROX_ENERGY_SPL} samples"
+            f"{self.get_tag("approx_energy_spl")} samples"
         )
         warn(self._method_error_msg("energy", fill_in=approx_method))
 
         # splx, sply = i.i.d. samples of X - Y of size N = self.APPROX_ENERGY_SPL
-        N = self.APPROX_ENERGY_SPL
+        N = self.get_tag("approx_energy_spl")
         if x is None:
             splx = self.sample(N)
             sply = self.sample(N)
@@ -298,11 +296,11 @@ class BaseDistribution(BaseObject):
         """
         approx_method = (
             "by approximating the expected value by the arithmetic mean of "
-            f"{self.APPROX_MEAN_SPL} samples"
+            f"{self.get_tag("approx_mean_spl")} samples"
         )
         warn(self._method_error_msg("mean", fill_in=approx_method))
 
-        spl = self.sample(self.APPROX_MEAN_SPL)
+        spl = self.sample(self.get_tag("approx_mean_spl"))
         return spl.groupby(level=0).mean()
 
     def var(self):
@@ -318,12 +316,12 @@ class BaseDistribution(BaseObject):
         """
         approx_method = (
             "by approximating the variance by the arithmetic mean of "
-            f"{self.APPROX_VAR_SPL} samples of squared differences"
+            f"{self.get_tag("approx_var_spl")} samples of squared differences"
         )
         warn(self._method_error_msg("var", fill_in=approx_method))
 
-        spl1 = self.sample(self.APPROX_VAR_SPL)
-        spl2 = self.sample(self.APPROX_VAR_SPL)
+        spl1 = self.sample(self.get_tag("approx_var_spl"))
+        spl2 = self.sample(self.get_tag("approx_var_spl"))
         spl = (spl1 - spl2) ** 2
         return spl.groupby(level=0).mean()
 
@@ -348,14 +346,15 @@ class BaseDistribution(BaseObject):
         if a == 1:
             return pd.DataFrame(1.0, index=self.index, columns=self.columns)
 
+        approx_spl_size = self.get_tag("approx_spl")
         approx_method = (
             f"by approximating the {a}-norm of the pdf by the arithmetic mean of "
-            f"{self.APPROX_SPL} samples"
+            f"{approx_spl_size} samples"
         )
         warn(self._method_error_msg("pdfnorm", fill_in=approx_method))
 
         # uses formula int p(x)^a dx = E[p(X)^{a-1}], and MC approximates the RHS
-        spl = [self.pdf(self.sample()) ** (a - 1) for _ in range(self.APPROX_SPL)]
+        spl = [self.pdf(self.sample()) ** (a - 1) for _ in range(approx_spl_size)]
         return pd.concat(spl, axis=0).groupby(level=0).mean()
 
     def _coerce_to_self_index_df(self, x):
