@@ -718,8 +718,11 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "update_behaviour": "inner_only",
         }
 
-        return [params, params2]
+        return [params, params2]    
 
+    class ForecastingSkoptSearchCV(BaseGridSearch):
+        def __init__(self):
+            pass
 
 class ForecastingSkoptSearchCV(BaseGridSearch):
     def __init__(
