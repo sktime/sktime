@@ -262,14 +262,15 @@ class BaseDistribution(BaseObject):
         # if x = None, X,Y are i.i.d. copies of self
         # if x is not None, X=x (constant), Y=self
 
+        approx_spl_size = self.get_tag("approx_energy_spl")
         approx_method = (
             "by approximating the energy expectation by the arithmetic mean of "
-            f"{self.get_tag("approx_energy_spl")} samples"
+            f"{approx_spl_size} samples"
         )
         warn(self._method_error_msg("energy", fill_in=approx_method))
 
         # splx, sply = i.i.d. samples of X - Y of size N = self.APPROX_ENERGY_SPL
-        N = self.get_tag("approx_energy_spl")
+        N = approx_spl_size
         if x is None:
             splx = self.sample(N)
             sply = self.sample(N)
@@ -294,13 +295,14 @@ class BaseDistribution(BaseObject):
         pd.DataFrame with same rows, columns as `self`
         expected value of distribution (entry-wise)
         """
+        approx_spl_size = self.get_tag("approx_mean_spl")
         approx_method = (
             "by approximating the expected value by the arithmetic mean of "
-            f"{self.get_tag("approx_mean_spl")} samples"
+            f"{approx_spl_size} samples"
         )
         warn(self._method_error_msg("mean", fill_in=approx_method))
 
-        spl = self.sample(self.get_tag("approx_mean_spl"))
+        spl = self.sample(approx_spl_size)
         return spl.groupby(level=0).mean()
 
     def var(self):
@@ -314,14 +316,15 @@ class BaseDistribution(BaseObject):
         pd.DataFrame with same rows, columns as `self`
         variance of distribution (entry-wise)
         """
+        approx_spl_size = self.get_tag("approx_var_spl")
         approx_method = (
             "by approximating the variance by the arithmetic mean of "
-            f"{self.get_tag("approx_var_spl")} samples of squared differences"
+            f"{approx_spl_size} samples of squared differences"
         )
         warn(self._method_error_msg("var", fill_in=approx_method))
 
-        spl1 = self.sample(self.get_tag("approx_var_spl"))
-        spl2 = self.sample(self.get_tag("approx_var_spl"))
+        spl1 = self.sample(approx_spl_size)
+        spl2 = self.sample(approx_spl_size)
         spl = (spl1 - spl2) ** 2
         return spl.groupby(level=0).mean()
 
