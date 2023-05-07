@@ -719,7 +719,168 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         }
 
         return [params, params2]
-    
-    class ForecastingSkoptSearchCV(BaseGridSearch):
-        def __init__(self):
-            pass
+
+
+class ForecastingSkoptSearchCV(BaseGridSearch):
+    def __init__(
+        self,
+        forecaster,
+        cv,
+        param_grid,
+        scoring=None,
+        strategy="refit",
+        n_jobs=None,
+        refit=True,
+        verbose=0,
+        return_n_best_forecasters=1,  # pre_dispatch="2*n_jobs",#backend="loky",
+        update_behaviour="full_refit",
+        error_score=np.nan,
+    ):
+        super(ForecastingSkoptSearchCV, self).__init__(
+            forecaster=forecaster,
+            scoring=scoring,
+            n_jobs=n_jobs,
+            refit=refit,
+            cv=cv,
+            strategy=strategy,
+            verbose=verbose,
+            return_n_best_forecasters=return_n_best_forecasters,
+            update_behaviour=update_behaviour,
+            error_score=error_score,
+            )
+        self.param_grid = param_grid
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        cv = check_cv(self.cv)
+
+        scoring = check_scoring(self.scoring, obj=self)
+        scoring_name = f"test_{scoring.name}"
+
+        # ========================= change this to skopt =========================
+        parallel = Parallel(
+            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend=self.backend
+        )
+
+        def _fit_and_score(params):
+            # Clone forecaster.
+            forecaster = self.forecaster.clone()
+
+            # Set parameters.
+            forecaster.set_params(**params)
+
+            # Evaluate.
+            out = evaluate(
+                forecaster,
+                cv,
+                y,
+                X,
+                strategy=self.strategy,
+                scoring=scoring,
+                error_score=self.error_score,
+            )
+
+            # Filter columns.
+            out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
+
+            # Aggregate results.
+            out = out.mean()
+            out = out.add_prefix("mean_")
+
+            # Add parameters to output table.
+            out["params"] = params
+
+            return out
+
+        def evaluate_candidates(candidate_params):
+            candidate_params = list(candidate_params)
+
+            if self.verbose > 0:
+                n_candidates = len(candidate_params)
+                n_splits = cv.get_n_splits(y)
+                print(  # noqa
+                    "Fitting {0} folds for each of {1} candidates,"
+                    " totalling {2} fits".format(
+                        n_splits, n_candidates, n_candidates * n_splits
+                    )
+                )
+
+            out = parallel(
+                delayed(_fit_and_score)(params) for params in candidate_params
+            )
+
+            if len(out) < 1:
+                raise ValueError(
+                    "No fits were performed. "
+                    "Was the CV iterator empty? "
+                    "Were there no candidates?"
+                )
+
+            return out
+
+        # Run grid-search cross-validation.
+        results = self._run_search(evaluate_candidates)
+
+        results = pd.DataFrame(results)
+
+        # ========================= change this to skopt =========================
+
+        # Rank results, according to whether greater is better for the given scoring.
+        results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
+            ascending=scoring.get_tag("lower_is_better")
+        )
+
+        self.cv_results_ = results
+
+        # Select best parameters.
+        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
+        # Raise error if all fits in evaluate failed because all score values are NaN.
+        if self.best_index_ == -1:
+            raise NotFittedError(
+                f"""All fits of forecaster failed,
+                set error_score='raise' to see the exceptions.
+                Failed forecaster: {self.forecaster}"""
+            )
+        self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
+        self.best_params_ = results.loc[self.best_index_, "params"]
+        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
+
+        # Refit model with best parameters.
+        if self.refit:
+            self.best_forecaster_.fit(y, X, fh)
+
+        # Sort values according to rank
+        results = results.sort_values(
+            by=f"rank_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
+        )
+        # Select n best forecaster
+        self.n_best_forecasters_ = []
+        self.n_best_scores_ = []
+        for i in range(self.return_n_best_forecasters):
+            params = results["params"].iloc[i]
+            rank = results[f"rank_{scoring_name}"].iloc[i]
+            rank = str(int(rank))
+            forecaster = self.forecaster.clone().set_params(**params)
+            # Refit model with best parameters.
+            if self.refit:
+                forecaster.fit(y, X, fh)
+            self.n_best_forecasters_.append((rank, forecaster))
+            # Save score
+            score = results[f"mean_{scoring_name}"].iloc[i]
+            self.n_best_scores_.append(score)
+
+        return self  # is there a need for this?
