@@ -2442,7 +2442,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     >>> f = YfromX(LinearRegression())
     >>> f.fit(y=y_train, X=X_train, fh=fh)
     YfromX(...)
-    >>> f.predict(X=X_test)
+    >>> y_pred = f.predict(X=X_test)
     """
 
     _tags = {
