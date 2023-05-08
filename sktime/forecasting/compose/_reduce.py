@@ -2392,12 +2392,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
-    """Simple reduction predicting endogeneous from concurrent endogeneous variables.
+    """Simple reduction predicting endogeneous from concurrent exogeneous variables.
 
     Tabulates all seen `X` and `y` by time index and applies
     tabular supervised regression.    
 
-    In `fit`, given endogeneous time series `y` and possibly exogeneous `X`:
+    In `fit`, given endogeneous time series `y` and exogeneous `X`:
         fits `estimator` to feature-label pairs as defined as follows.
 
         features = :math:`y(t)`, labels: :math:`X(t)`
