@@ -7,6 +7,7 @@ __author__ = ["aiwalter"]
 __all__ = ["HampelFilter"]
 
 import warnings
+from math import ceil
 
 import numpy as np
 import pandas as pd
@@ -183,7 +184,7 @@ def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
             if cv.window_length % 2 == 0:
                 start_end_win = half_window_length
             else:
-                start_end_win = half_window_length + 1
+                start_end_win = ceil(cv.window_length / 2)
             idx_range = range(len(Z) - start_end_win, len(Z))
         else:
             idx_range = [cv_window[0] + half_window_length]
