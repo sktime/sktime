@@ -3,10 +3,11 @@
 """Implements Next generation reservoir computing estimator."""
 
 __all__ = ["NextRC"]
-__author__ = ["frthjf"]
+__author__ = ["frthjf", "fkiraly"]
 
 import numpy as np
 import sklearn.linear_model
+from sklearn.base import clone
 from sklearn.utils.validation import check_array
 
 from sktime.forecasting.base import BaseForecaster
@@ -50,12 +51,12 @@ class NextRC(BaseForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "np.ndarray",
+        "X_inner_mtype": "np.ndarray",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "ignores-exogeneous-X": True,
     }
 
     def __init__(self, regressor=None):
@@ -68,11 +69,11 @@ class NextRC(BaseForecaster):
         self.fitted_y = False
         super(NextRC, self).__init__()
 
-    def _feature_vector(self, X, k=None):
+    def _feature_vector(self, y, k=None):
         if k is None:
             k = self.delay_
 
-        (n_samples, n_features) = X.shape
+        (n_samples, n_features) = y.shape
 
         # size of the linear part of the feature vector
         self.d_linear_ = d_linear = k * n_features
@@ -89,7 +90,7 @@ class NextRC(BaseForecaster):
         # fill in the linear part of the complete feature vector
         for delay in range(k):
             for j in range(delay, n_samples):
-                features[n_features * delay : n_features * (delay + 1), j] = X[
+                features[n_features * delay : n_features * (delay + 1), j] = y[
                     j - delay, :
                 ]
 
@@ -111,14 +112,14 @@ class NextRC(BaseForecaster):
 
         return O_features
 
-    def _fit(self, X, y=None, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y : pd.Series
+        y : np.ndarray
             Target time series with which to fit the forecaster.
-        X : pd.DataFrame, default=None
+        X : np.ndarray, default=None
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
@@ -135,24 +136,34 @@ class NextRC(BaseForecaster):
             self.regressor_ = sklearn.linear_model.Ridge(
                 alpha=1.0e-3, fit_intercept=False
             )
-
-        (n_samples, n_features) = X.shape
-
-        X_features = self._feature_vector(X[: fh[1] + 1, :])
-
-        if y is None:
-            y = (
-                X_features[0:n_features, fh[0] + 1 : fh[1] + 1]
-                - X_features[0:n_features, fh[0] : fh[1]]
-            )
-            self.fitted_y = False
         else:
-            y = y[fh[0] : fh[1], :].T
-            self.fitted_y = True
+            self.regressor_ = clone(self.regressor)
+
+        n_features = y.shape[1]
+
+        # use relative fh as time index to predict
+        fh = self.fh.to_absolute_int(self.cutoff)
+
+        # print(y[: fh[-1] + 1, :])
+
+        X_features = self._feature_vector(y[: fh[-1] + 1, :])
+
+        # print(X_features[:, 19 : 20])
+
+        if X is None:
+            X = (
+                X_features[0:n_features, fh[0] - 2 : fh[-1] - 1]
+                - X_features[0:n_features, fh[0] - 1 : fh[-1]]
+            )
+            self.fitted_X = False
+        else:
+            X = X[fh[0] : fh[-1], :].T
+            self.fitted_X = True
+
+        # print(X)
 
         self.regressor_.fit(
-            X_features[:, fh[0] : fh[1]].T,
-            y.T,
+            X_features[:, fh[0] - 1 : fh[-1]].T,
         )
 
         return self
@@ -164,24 +175,50 @@ class NextRC(BaseForecaster):
         ----------
         fh : int, list or np.array
             The forecast horizon with the steps ahead to predict
-        X : pd.DataFrame, default=None
+        X : np.ndarray, default=None
             Exogenous variables (ignored)
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : np.ndarray
             Point predictions for the forecast
         """
         self.check_is_fitted()
 
-        X = check_array(X)
+        X = check_array(self.y_)
 
-        (n_samples, n_features) = X.shape
+        n_features = X.shape[1]
 
-        X_features = self._feature_vector(X[: fh[1] + 1, :])
+        # use relative fh as time index to predict
+        fh = self.fh.to_absolute_int(self.cutoff)
 
-        y_pred = self.regressor_.predict(X_features[:, fh[0] : fh[1]].T)
+        X_features = self._feature_vector(X[: fh[-1] + 1, :])
+
+        y_pred = self.regressor_.predict(X_features[:, fh[0] - 1 : fh[-1]].T)
+
+        # print(y_pred)
 
         if self.fitted_y:
             return y_pred
-        return y_pred.T + X_features[0:n_features, fh[0] : fh[1]]
+        return y_pred.T + X_features[0:n_features, fh[0] - 1 : fh[-1]]
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        params_list = [{}, {"regressor": RandomForestRegressor()}]
+
+        return params_list
