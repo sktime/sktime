@@ -27,6 +27,7 @@ __all__ = [
     "BaggingForecaster",
     "ForecastByLevel",
     "Permute",
+    "YfromX",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -53,6 +54,7 @@ from sktime.forecasting.compose._reduce import (
     MultioutputTimeSeriesRegressionForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
+    YfromX,
     make_reduction,
 )
 from sktime.forecasting.compose._stack import StackingForecaster

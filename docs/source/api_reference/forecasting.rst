@@ -77,6 +77,7 @@ Use ``make_reduction`` for easy specification.
     RecursiveTimeSeriesRegressionForecaster
     DirRecTabularRegressionForecaster
     DirRecTimeSeriesRegressionForecaster
+    YfromX
 
 Naive forecasters
 -----------------
