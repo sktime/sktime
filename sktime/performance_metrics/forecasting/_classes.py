@@ -1677,18 +1677,19 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
 
 
 class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
-    """Mean absolute percentage error (MAPE) or symmetric version.
-    
-    For a univariate, non-hierarchical sample of true values :math:`y_1, \dots, y_n` and
+    r"""Mean absolute percentage error (MAPE) or symmetric version.
+
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
     at time indices :math:`t_1, \dots, t_n`,
     `evaluate` or call returns the Mean Absolute Percentage Error,
-    :math:`\frac{100%}{n}\sum_{i=1}^n |\frac{y_i - \widehat{y}_i}{y_i}|`.
+    :math:`\frac{100\%}{n}\sum_{i=1}^n |\frac{y_i - \widehat{y}_i}{y_i}|`.
     (the time indices are not used)
 
     if `symmetric` is True then calculates
     symmetric mean absolute percentage error (sMAPE), defined as
-    :math:`\frac{100%}{n}\sum_{i=1}^n \frac{2|y_i - \widehat{y}_i|}
+    :math:`\frac{200\%}{n} \sum_{i=1}^n \frac{|y_i - \widehat{y}_i|}
     {|y_i| + |\widehat{y}_i|}`.
 
     Both MAPE and sMAPE output is non-negative floating point. The best value is 0.0.
@@ -1701,15 +1702,12 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     values are close to zero. In such cases the function returns a large value
     instead of `inf`.
 
-    Notes: In some literatures, sMAPE is also known as Adjusted MAPE because
-    ,in some cases, over- and under-forecasts are not treated equally. [1]_
-
     `multioutput` and `multilevel` control averaging across variables and
     hierarchy indices, see below.
 
     `evaluate_by_index` returns, at a time index :math:`t_i`,
     the abolute percentage error at that time index,
-    :math:`100%|\frac{y_i - \widehat{y}_i}{y_i}|`,
+    :math:`100\%|\frac{y_i - \widehat{y}_i}{y_i}|`,
     for all time indices :math:`t_1, \dots, t_n` in the input.
 
     Parameters
@@ -1723,16 +1721,21 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
-    Defines how to aggregate metric for hierarchical data (with levels).
-    If 'uniform_average' (default), errors are mean-averaged across levels.
-    If 'uniform_average_time', errors are mean-averaged across rows.
-    If 'raw_values', does not average errors across levels, hierarchy is retained.
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', errors are mean-averaged across rows.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
     MedianSquaredPercentageError
+
+    Notes
+    -----
+    In some literatures, sMAPE is also known as Adjusted MAPE because
+    ,in some cases, over- and under-forecasts are not really penalised equally. [1]_
 
     References
     ----------
@@ -1809,18 +1812,18 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
 
 class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
-    """Median absolute percentage error (MdAPE) or symmetric version.
+    r"""Median absolute percentage error (MdAPE) or symmetric version.
 
     For a univariate, non-hierarchical sample of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
     at time indices :math:`t_1, \dots, t_n`,
     `evaluate` or call returns the Median Absolute Percentage Error,
-    :math:`median(|\frac{y_i - \widehat{y}_i}{y_i}|)`.
+    :math:`median(100\%|\frac{y_i - \widehat{y}_i}{y_i}|)`.
     (the time indices are not used)
 
     if `symmetric` is True then calculates
     symmetric Median Absolute Percentage Error (sMdAPE), defined as
-    :math:`median(\frac{2|y_i-\widehat{y}_i|}
+    :math:`median(\frac{200\%|y_i-\widehat{y}_i|}
     {|y_i|+|\widehat{y}_i|})`.
 
     Both MdAPE and sMdAPE output is non-negative floating point. The best value is 0.0.
@@ -1837,15 +1840,12 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     values are close to zero. In such cases the function returns a large value
     instead of `inf`.
 
-    Notes: In some literatures, sMdAPE is also known as Adjusted MdAPE because
-    ,in some cases, over- and under-forecasts are not treated equally. [1]_
-
     `multioutput` and `multilevel` control averaging across variables and
     hierarchy indices, see below.
 
     `evaluate_by_index` returns, at a time index :math:`t_i`,
     the abolute percentage error at that time index,
-    :math:`100%|\frac{y_i - \widehat{y}_i}{y_i}|`,
+    :math:`100\%|\frac{y_i - \widehat{y}_i}{y_i}|`,
     for all time indices :math:`t_1, \dots, t_n` in the input.
 
     Parameters
@@ -1870,10 +1870,15 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     MeanSquaredPercentageError
     MedianSquaredPercentageError
 
+    Notes
+    -----
+    In some literatures, sMdAPE is also known as Adjusted MdAPE because
+    ,in some cases, over- and under-forecasts are not penalised equally. [1]_
+
     References
     ----------
     .. [1] Goodwin.P and Lawton.R (1999) "On the asymmetry of the symmetric MAPE".
-    
+
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
     forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
