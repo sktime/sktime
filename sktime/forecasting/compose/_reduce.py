@@ -2542,7 +2542,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         else:
             X_pool = pd.DataFrame(0, index=fh_idx, columns=y_cols)
 
-        X_idx = X.loc[fh_idx]
+        X_idx = X_pool.loc[fh_idx]
 
         y_pred = self.estimator_.predict(X_idx)
         y_pred = pd.DataFrame(y_pred, index=fh_idx, columns=y_cols)
