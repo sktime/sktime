@@ -24,7 +24,7 @@ __all__ = [
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
     "DirectReductionForecaster",
-    "YfromX"
+    "YfromX",
 ]
 
 from warnings import warn
@@ -2395,7 +2395,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     """Simple reduction predicting endogeneous from concurrent exogeneous variables.
 
     Tabulates all seen `X` and `y` by time index and applies
-    tabular supervised regression.    
+    tabular supervised regression.
 
     In `fit`, given endogeneous time series `y` and exogeneous `X`:
         fits `estimator` to feature-label pairs as defined as follows.
@@ -2434,7 +2434,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.forecasting.compose import YfromX
     >>> from sklearn.linear_model import LinearRegression
-    >>> 
+    >>>
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = y_test.index
