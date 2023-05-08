@@ -2413,6 +2413,9 @@ class YfromX(BaseForecaster, _ReducerMixin):
 
     In order to deal with missing data, combine this with `Imputer`.
 
+    To construct an custom direct reducer,
+    combine with `YtoX`, `Lag`, or `ReducerTransform`.
+
     Parameters
     ----------
     estimator : sklearn regressor, must be compatible with sklearn interface
