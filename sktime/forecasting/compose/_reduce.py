@@ -1692,7 +1692,7 @@ class _ReducerMixin:
         if isinstance(y_index, pd.MultiIndex):
             y_inst_idx = y_index.droplevel(-1).unique()
             if isinstance(y_inst_idx, pd.MultiIndex):
-                fh_idx = pd.Index([x + (y,) for x in y_inst_idx for y in fh_idx ])
+                fh_idx = pd.Index([x + (y,) for x in y_inst_idx for y in fh_idx])
             else:
                 fh_idx = pd.Index([(x, y) for x in y_inst_idx for y in fh_idx])
 
