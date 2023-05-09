@@ -1826,7 +1826,8 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     symmetric Median Absolute Percentage Error (sMdAPE), defined as
     :math:`median(\frac{2|y_i-\widehat{y}_i|}{|y_i|+|\widehat{y}_i|})`.
 
-    Both MdAPE and sMdAPE output is non-negative floating point. The best value is 0.0.
+    Both MdAPE and sMdAPE output non-negative floating point which is in fractional
+    units rather than percentage. The best value is 0.0.
 
     MdAPE and sMdAPE are measured in percentage error relative to the test data.
     Because it takes the absolute value rather than square the percentage forecast
