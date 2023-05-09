@@ -1684,7 +1684,7 @@ class _ReducerMixin:
         if isinstance(fh, ForecastingHorizon):
             fh_idx = pd.Index(fh.to_absolute_index(self.cutoff))
         else:
-            fh_idx = pd.Index(fh.to_pandas())
+            fh_idx = pd.Index(fh)
         y_index = self._y.index
 
         if isinstance(y_index, pd.MultiIndex):
@@ -2267,7 +2267,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_abs_no_gaps = ForecastingHorizon(
             list(y_lags_no_gaps), is_relative=True, freq=self._cutoff
         )
-        y_abs_no_gaps = y_abs_no_gaps.to_absolute(self._cutoff)
+        y_abs_no_gaps = y_abs_no_gaps.to_absolute_index(self._cutoff)
 
         # we will keep growing y_plus_preds recursively
         y_plus_preds = self._y
