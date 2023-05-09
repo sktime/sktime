@@ -1692,9 +1692,12 @@ class _ReducerMixin:
         if isinstance(y_index, pd.MultiIndex):
             y_inst_idx = y_index.droplevel(-1).unique()
             if isinstance(y_inst_idx, pd.MultiIndex):
-                fh_idx = pd.Index([x + (y,) for y in fh_idx for x in y_inst_idx])
+                fh_idx = pd.Index([x + (y,) for x in y_inst_idx for y in fh_idx ])
             else:
-                fh_idx = pd.Index([(x, y) for y in fh_idx for x in y_inst_idx])
+                fh_idx = pd.Index([(x, y) for x in y_inst_idx for y in fh_idx])
+
+        if hasattr(y_index, "names") and y_index.names is not None:
+            fh_idx.names = y_index.names
 
         return fh_idx
 
@@ -2506,6 +2509,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
             estimator = clone(self.estimator)
 
         y = _coerce_col_str(y)
+        y = y.values.flatten()
 
         estimator.fit(X, y)
         self.estimator_ = estimator
