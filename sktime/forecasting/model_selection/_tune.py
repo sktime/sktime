@@ -719,3 +719,44 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         }
 
         return [params, params2]
+
+
+class ForecastingBayesSearchCV(BaseGridSearch):
+    """
+    Bayesian search over hyper parameters for a forecaster.
+    skopt version 0.9.0
+    """
+    def __init__(
+        self,
+        forecaster,
+        cv,
+        param_distributions,
+        n_iter=10,
+        scoring=None,
+        strategy="refit",
+        n_jobs=None,
+        refit=True,
+        verbose=0,
+        return_n_best_forecasters=1,
+        random_state=None,
+        update_behaviour="full_refit",
+        error_score=np.nan,
+    ):
+        super(ForecastingBayesSearchCV, self).__init__(
+            forecaster=forecaster,
+            scoring=scoring,
+            strategy=strategy,
+            n_jobs=n_jobs,
+            refit=refit,
+            cv=cv,
+            verbose=verbose,
+            return_n_best_forecasters=return_n_best_forecasters,
+            update_behaviour=update_behaviour,
+            error_score=error_score,
+        )
+        self.param_distributions = param_distributions
+        self.n_iter = n_iter
+        self.random_state = random_state
+
+    def _run_search(self, evaluate_candidates):
+        pass

@@ -12,6 +12,7 @@ __all__ = [
     "ExpandingWindowSplitter",
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
+    "ForecastingBayesSearchCV"
 ]
 
 from sktime.forecasting.model_selection._split import (
@@ -24,4 +25,5 @@ from sktime.forecasting.model_selection._split import (
 from sktime.forecasting.model_selection._tune import (
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
+    ForecastingBayesSearchCV,
 )
