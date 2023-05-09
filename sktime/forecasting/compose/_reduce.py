@@ -1623,6 +1623,7 @@ def _create_fcst_df(target_date, origin_df, fill=None):
 
 def _coerce_col_str(X):
     """Coerce columns to string, to satisfy sklearn convention."""
+    X = X.copy()
     X.columns = [str(x) for x in X.columns]
     return X
 
