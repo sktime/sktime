@@ -2498,7 +2498,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         if X is None:
             from sklearn.dummy import DummyRegressor
 
-            X = y
+            X = _coerce_col_str(y)
             estimator = DummyRegressor()
         else:
             X = _coerce_col_str(X)
@@ -2541,6 +2541,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
             X_pool = X
         else:
             X_pool = pd.DataFrame(0, index=fh_idx, columns=y_cols)
+
+        X_pool = _coerce_col_str(X_pool)
 
         X_idx = X_pool.loc[fh_idx]
 
