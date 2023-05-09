@@ -1699,9 +1699,9 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     takes the absolute value rather than square the percentage forecast
     error, it penalizes large errors less than MSPE, RMSPE, MdSPE or RMdSPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    MAPE has no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of `inf`. While sMAPE is bounded at 2.
 
     `multioutput` and `multilevel` control averaging across variables and
     hierarchy indices, see below.
@@ -1709,7 +1709,9 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     `evaluate_by_index` returns, at a time index :math:`t_i`,
     the abolute percentage error at that time index,
     :math:`|\frac{y_i - \widehat{y}_i}{y_i}|`,
-    for all time indices :math:`t_1, \dots, t_n` in the input.
+    or :math:`\frac{2|y_i - \widehat{y}_i|}{|y_i| + |\widehat{y}_i|}`,
+    the symmetric version, if `symmetric` is True, for all time indices
+    :math:`t_1, \dots, t_n` in the input.
 
     Parameters
     ----------
@@ -1837,9 +1839,9 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    MAPE has no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of `inf`. While sMAPE is bounded at 2.
 
     `multioutput` and `multilevel` control averaging across variables and
     hierarchy indices, see below.
