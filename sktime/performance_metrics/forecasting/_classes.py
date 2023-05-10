@@ -1684,7 +1684,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
     at time indices :math:`t_1, \dots, t_n`,
     `evaluate` or call returns the Mean Absolute Percentage Error,
-    :math:`\frac{1}{n}\sum_{i=1}^n |\frac{y_i - \widehat{y}_i}{y_i}|`.
+    :math:`\frac{1}{n} \sum_{i=1}^n \left|\frac{y_i - \widehat{y}_i}{y_i} \right|`.
     (the time indices are not used)
 
     if `symmetric` is True then calculates
@@ -1708,7 +1708,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
     `evaluate_by_index` returns, at a time index :math:`t_i`,
     the abolute percentage error at that time index,
-    :math:`|\frac{y_i - \widehat{y}_i}{y_i}|`,
+    :math:`\left| \frac{y_i - \widehat{y}_i}{y_i} \right|`,
     or :math:`\frac{2|y_i - \widehat{y}_i|}{|y_i| + |\widehat{y}_i|}`,
     the symmetric version, if `symmetric` is True, for all time indices
     :math:`t_1, \dots, t_n` in the input.
@@ -1814,7 +1814,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
     at time indices :math:`t_1, \dots, t_n`,
     `evaluate` or call returns the Median Absolute Percentage Error,
-    :math:`median(|\frac{y_i - \widehat{y}_i}{y_i}|)`.
+    :math:`median(\left|\frac{y_i - \widehat{y}_i}{y_i} \right|)`.
     (the time indices are not used)
 
     if `symmetric` is True then calculates
