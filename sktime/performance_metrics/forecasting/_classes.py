@@ -1735,15 +1735,8 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     MeanSquaredPercentageError
     MedianSquaredPercentageError
 
-    Notes
-    -----
-    In some literature sources, sMAPE is also known as Adjusted MAPE because
-    ,in some cases, over- and under-forecasts are not really penalised equally. [1]_
-
     References
     ----------
-    .. [1] Goodwin.P and Lawton.R (1999) "On the asymmetry of the symmetric MAPE".
-
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
     forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
@@ -1868,15 +1861,8 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     MeanSquaredPercentageError
     MedianSquaredPercentageError
 
-    Notes
-    -----
-    In some literature sources, sMdAPE is also known as Adjusted MdAPE because
-    ,in some cases, over- and under-forecasts are not penalised equally. [1]_
-
     References
     ----------
-    .. [1] Goodwin.P and Lawton.R (1999) "On the asymmetry of the symmetric MAPE".
-
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
     forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
