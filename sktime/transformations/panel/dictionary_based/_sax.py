@@ -16,7 +16,7 @@ from sktime.transformations.panel.dictionary_based import PAA
 # from numba import types
 # from numba.experimental import jitclass
 
-__author__ = "MatthewMiddlehurst"
+__author__ = ["MatthewMiddlehurst"]
 
 
 class SAX(BaseTransformer):

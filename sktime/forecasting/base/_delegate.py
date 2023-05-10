@@ -257,7 +257,8 @@ class _DelegatedForecaster(BaseForecaster):
         estimator = self._get_delegate()
         return estimator.predict_var(fh=fh, X=X, cov=cov)
 
-    def _predict_proba(self, fh, X, marginal=True):
+    # todo 0.19.0: remove legacy_interface arg and logic
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -271,9 +272,23 @@ class _DelegatedForecaster(BaseForecaster):
             Exogeneous time series to predict from.
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
+        legacy_interface : bool or None, optional, default=False
+            whether legacy interface is used, deprecation parameter
+            parameter will be removed in 0.19.0
+            True: always returns tfp Distribution object
+            False: always returns sktime BaseDistribution object
+            None: returns tfp Distribution if tensorflow_probability is in the env
+                otherwise returns sktime BaseDistribution
 
         Returns
         -------
+        If legacy_interface=False, or None and tensorflow_probability is not in the env
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+
+        If legacy_interface=True, or None and tensorflow_probability is in the env
         pred_dist : tfp Distribution object
             if marginal=True:
                 batch shape is 1D and same length as fh
@@ -287,7 +302,9 @@ class _DelegatedForecaster(BaseForecaster):
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         estimator = self._get_delegate()
-        return estimator.predict_proba(fh=fh, X=X, marginal=marginal)
+        return estimator.predict_proba(
+            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
+        )
 
     def _get_fitted_params(self):
         """Get fitted parameters.

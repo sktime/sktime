@@ -358,6 +358,56 @@ class BaseDistribution(BaseObject):
         spl = [self.pdf(self.sample()) ** (a - 1) for _ in range(self.APPROX_SPL)]
         return pd.concat(spl, axis=0).groupby(level=0).mean()
 
+    def _coerce_to_self_index_df(self, x):
+        x = np.array(x)
+        x = x.reshape(1, -1)
+        df_shape = self.shape
+        x = np.broadcast_to(x, df_shape)
+        df = pd.DataFrame(x, index=self.index, columns=self.columns)
+        return df
+
+    def quantile(self, alpha):
+        """Return entry-wise quantiles, in Proba/pred_quantiles mtype format.
+
+        This method broadcasts as follows:
+        for a scalar `alpha`, computes the `alpha`-quantile entry-wise,
+        and returns as a `pd.DataFrame` with same index, and columns as in return.
+        If `alpha` is iterable, multiple quantiles will be calculated,
+        and the result will be concatenated column-wise (axis=1).
+
+        The `ppf` method also computes quantiles, but broadcasts differently, in
+        `numpy` style closer to `tensorflow`.
+        In contrast, this `quantile` method broadcasts
+        as forecaster `predict_quantiles`, i.e., columns first.
+
+        Parameters
+        ----------
+        alpha : float or list of float of unique values
+            A probability or list of, at which quantiles are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from `self.columns`,
+            second level being the values of `alpha` passed to the function.
+            Row index is `self.index`.
+            Entries in the i-th row, (j, p)-the column is
+            the p-th quantile of the marginal of `self` at index (i, j).
+        """
+        if not isinstance(alpha, list):
+            alpha = [alpha]
+
+        qdfs = []
+        for p in alpha:
+            p = self._coerce_to_self_index_df(p)
+            qdf = self.ppf(p)
+            qdfs += [qdf]
+
+        qres = pd.concat(qdfs, axis=1, keys=alpha)
+        qres = qres.reorder_levels([1, 0], axis=1)
+        quantiles = qres.sort_index(axis=1)
+        return quantiles
+
     def sample(self, n_samples=None):
         """Sample from the distribution.
 
@@ -535,10 +585,10 @@ class _BaseTFDistribution(BaseDistribution):
         and `MultiIndex` that is product of `RangeIndex(n_samples)` and `self.index`
         """
         if n_samples is None:
-            np_spl = self.distr.sample()
+            np_spl = self.distr.sample().numpy()
             return pd.DataFrame(np_spl, index=self.index, columns=self.columns)
         else:
-            np_spl = np.array(self.distr.sample(n_samples))
+            np_spl = self.distr.sample(n_samples).numpy()
             np_spl = np_spl.reshape(-1, np_spl.shape[-1])
             mi = _prod_multiindex(range(n_samples), self.index)
             df_spl = pd.DataFrame(np_spl, index=mi, columns=self.columns)

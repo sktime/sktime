@@ -14,7 +14,7 @@ Below, we list separately pairwise transformers for time series, and pairwise tr
    :no-members:
    :no-inherited-members:
 
-All time series distances and kernels in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+All time series distances and kernels in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="transformer-pairwise-panel"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
@@ -52,6 +52,14 @@ Composition
     :template: class.rst
 
     CombinedDistance
+
+.. currentmodule:: sktime.dists_kernels.indep
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    IndepDist
 
 .. currentmodule:: sktime.dists_kernels.compose_tab_to_panel
 

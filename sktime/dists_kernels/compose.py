@@ -40,7 +40,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
     Parameters
     ----------
     pw_trafo : pairwise panel transformer,
-        i.e., estimator inheriting from BasePairwiseTransformerPane
+        i.e., estimator inheriting from BasePairwiseTransformerPanel
         this is a "blueprint" estimator, state does not change when `fit` is called
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers

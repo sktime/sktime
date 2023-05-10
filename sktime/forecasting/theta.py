@@ -91,6 +91,7 @@ class ThetaForecaster(ExponentialSmoothing):
         "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

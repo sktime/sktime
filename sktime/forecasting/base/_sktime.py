@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """sktime window forecaster base class."""
 
-__author__ = ["@mloning", "@big-o", "fkiraly"]
+__author__ = ["mloning", "big-o", "fkiraly"]
 __all__ = ["_BaseWindowForecaster"]
 
 import numpy as np
@@ -74,7 +74,7 @@ class _BaseWindowForecaster(BaseForecaster):
         if isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             return y_pred
         else:
-            index = fh.to_absolute(self.cutoff)
+            index = fh.to_absolute_index(self.cutoff)
             return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(

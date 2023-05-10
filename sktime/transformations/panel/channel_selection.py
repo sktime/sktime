@@ -14,7 +14,6 @@ import time
 
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import euclidean
 from sklearn.neighbors import NearestCentroid
 
 from sktime.datatypes import convert
@@ -24,6 +23,8 @@ from sktime.transformations.base import BaseTransformer
 
 def _eu_dist(x, y):
     """Calculate the euclidean distance."""
+    from scipy.spatial.distance import euclidean
+
     return euclidean(x, y)
 
 
@@ -357,6 +358,7 @@ class ElbowClassPairwise(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": False,
         # can the transformer handle unequal length time series (if passed Panel)?
+        "python_dependencies": "scipy",
     }
 
     def __init__(self):

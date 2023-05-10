@@ -810,8 +810,9 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 
         # create the right MultiIndex and assign to X_mi
         idx_df = X[[c]].applymap(lambda x: x.index).explode(c)
-        idx_df = idx_df.set_index(c, append=True)
-        X_col.index = idx_df.index.set_names([instance_index, time_index])
+        index = pd.MultiIndex.from_arrays([idx_df.index, idx_df[c].values])
+        index = index.set_names([instance_index, time_index])
+        X_col.index = index
 
         X_mi[[c]] = X_col
 

@@ -27,6 +27,7 @@ from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
+from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
 
@@ -323,6 +324,56 @@ class NaiveForecaster(_BaseWindowForecaster):
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
+    def _predict_naive(self, fh=None, X=None):
+
+        from sktime.transformations.series.lag import Lag
+
+        strategy = self.strategy
+        sp = self.sp
+        _y = self._y
+        cutoff = self.cutoff
+
+        if isinstance(_y.index, pd.DatetimeIndex) and hasattr(_y.index, "freq"):
+            freq = _y.index.freq
+        else:
+            freq = None
+
+        lagger = Lag(1, keep_column_names=True, freq=freq)
+
+        expected_index = fh.to_absolute(cutoff).to_pandas()
+
+        if strategy == "last" and sp == 1:
+            y_old = lagger.fit_transform(_y)
+            y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
+            full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
+            y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            # subset to rows that contain elements we wanted to fill
+            y_pred = y_filled.loc["b"]
+            # convert to pd.Series from pd.DataFrame
+            y_pred = y_pred.iloc[:, 0]
+
+        elif strategy == "last" and sp > 1:
+
+            y_old = _pivot_sp(_y, sp, anchor_side="end")
+            y_old = lagger.fit_transform(y_old)
+
+            y_new_mask = pd.Series(index=expected_index, dtype="float64")
+            y_new = _pivot_sp(y_new_mask, sp, anchor=_y, anchor_side="end")
+            full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
+            y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            # subset to rows that contain elements we wanted to fill
+            y_pred = y_filled.loc["b"]
+            # reformat to wide
+            y_pred = _unpivot_sp(y_pred, template=_y)
+
+            # subset to required indices
+            y_pred = y_pred.reindex(expected_index)
+            # convert to pd.Series from pd.DataFrame
+            y_pred = y_pred.iloc[:, 0]
+
+        y_pred.name = _y.name
+        return y_pred
+
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
@@ -333,6 +384,12 @@ class NaiveForecaster(_BaseWindowForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
+        strategy = self.strategy
+        NEW_PREDICT = ["last"]
+
+        if strategy in NEW_PREDICT:
+            return self._predict_naive(fh=fh, X=X)
+
         y_pred = super(NaiveForecaster, self)._predict(fh=fh, X=X)
 
         # test_predict_time_index_in_sample_full[ForecastingPipeline-0-int-int-True]
@@ -389,7 +446,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         pred_quantiles = pd.DataFrame(
             errors + y_pred.values.reshape(len(y_pred), 1),
             columns=pd.MultiIndex.from_product([["Quantiles"], alpha]),
-            index=fh.to_absolute(self.cutoff).to_pandas(),
+            index=fh.to_absolute_index(self.cutoff),
         )
 
         return pred_quantiles
@@ -504,7 +561,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         marginal_se = se_res * partial_se_formulas[self.strategy](fh_periods)
         marginal_vars = marginal_se**2
 
-        fh_idx = fh.to_absolute(self.cutoff).to_pandas()
+        fh_idx = fh.to_absolute_index(self.cutoff)
         if cov:
             fh_size = len(fh)
             cov_matrix = np.fill_diagonal(
@@ -681,7 +738,7 @@ class NaiveVariance(BaseForecaster):
             pred_quantiles[("Quantiles", a)] = y_pred + error
 
         fh_absolute = fh.to_absolute(self.cutoff)
-        pred_quantiles.index = fh_absolute
+        pred_quantiles.index = fh_absolute.to_pandas()
 
         return pred_quantiles
 
@@ -720,6 +777,7 @@ class NaiveVariance(BaseForecaster):
 
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
+        fh_absolute_ix = fh_absolute.to_pandas()
 
         if cov:
             fh_size = len(fh)
@@ -734,8 +792,8 @@ class NaiveVariance(BaseForecaster):
                     )
             pred_var = pd.DataFrame(
                 covariance,
-                index=fh_absolute,
-                columns=fh_absolute,
+                index=fh_absolute_ix,
+                columns=fh_absolute_ix,
             )
         else:
             variance = [
@@ -744,9 +802,9 @@ class NaiveVariance(BaseForecaster):
             ]
             if hasattr(self._y, "columns"):
                 columns = self._y.columns
-                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute)
+                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute_ix)
             else:
-                pred_var = pd.DataFrame(variance, index=fh_absolute)
+                pred_var = pd.DataFrame(variance, index=fh_absolute_ix)
 
         return pred_var
 

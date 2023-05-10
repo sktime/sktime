@@ -17,6 +17,7 @@ obj - object to check
 return_metadata - bool, optional, default=False
     if False, returns only "valid" return
     if True, returns all three return objects
+    if str, list of str, metadata return dict is subset to keys in return_metadata
 var_name: str, optional, default="obj" - name of input in error messages
 
 Returns
@@ -36,7 +37,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "n_instances": int, number of instances in the panel
 """
 
-__author__ = ["fkiraly", "tonybagnall"]
+__author__ = ["fkiraly", "TonyBagnall"]
 
 __all__ = ["check_dict"]
 
@@ -44,6 +45,7 @@ import numpy as np
 import pandas as pd
 from pandas.core.dtypes.cast import is_nested_object
 
+from sktime.datatypes._common import _req, _ret
 from sktime.datatypes._series._check import (
     _index_equally_spaced,
     check_pddataframe_series,
@@ -58,13 +60,6 @@ VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 def is_in_valid_multiindex_types(x) -> bool:
     """Check that the input type belongs to the valid multiindex types."""
     return isinstance(x, VALID_MULTIINDEX_TYPES) or is_integer_index(x)
-
-
-def _ret(valid, msg, metadata, return_metadata):
-    if return_metadata:
-        return valid, msg, metadata
-    else:
-        return valid
 
 
 def _list_all_equal(obj):
@@ -108,18 +103,28 @@ def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
-    metadata["is_univariate"] = np.all([res[2]["is_univariate"] for res in check_res])
-    metadata["is_equally_spaced"] = np.all(
-        [res[2]["is_equally_spaced"] for res in check_res]
-    )
-    metadata["is_equal_length"] = _list_all_equal([len(s) for s in obj])
-    metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
-    metadata["has_nans"] = np.any([res[2]["has_nans"] for res in check_res])
-    metadata["is_one_series"] = n == 1
-    metadata["n_panels"] = 1
-    metadata["is_one_panel"] = True
-
-    metadata["n_instances"] = n
+    if _req("is_univariate", return_metadata):
+        metadata["is_univariate"] = np.all(
+            [res[2]["is_univariate"] for res in check_res]
+        )
+    if _req("is_equally_spaced", return_metadata):
+        metadata["is_equally_spaced"] = np.all(
+            [res[2]["is_equally_spaced"] for res in check_res]
+        )
+    if _req("is_equal_length", return_metadata):
+        metadata["is_equal_length"] = _list_all_equal([len(s) for s in obj])
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
+    if _req("has_nans", return_metadata):
+        metadata["has_nans"] = np.any([res[2]["has_nans"] for res in check_res])
+    if _req("is_one_series", return_metadata):
+        metadata["is_one_series"] = n == 1
+    if _req("n_panels", return_metadata):
+        metadata["n_panels"] = 1
+    if _req("is_one_panel", return_metadata):
+        metadata["is_one_panel"] = True
+    if _req("n_instances", return_metadata):
+        metadata["n_instances"] = n
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -138,19 +143,27 @@ def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
 
     # we now know obj is a 3D np.ndarray
     metadata = dict()
-    metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1 or obj.shape[2] < 1
-    metadata["is_univariate"] = obj.shape[1] < 2
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1 or obj.shape[2] < 1
+    if _req("is_univariate", return_metadata):
+        metadata["is_univariate"] = obj.shape[1] < 2
     # np.arrays are considered equally spaced and equal length by assumption
-    metadata["is_equally_spaced"] = True
-    metadata["is_equal_length"] = True
+    if _req("is_equally_spaced", return_metadata):
+        metadata["is_equally_spaced"] = True
+    if _req("is_equal_length", return_metadata):
+        metadata["is_equal_length"] = True
 
-    metadata["n_instances"] = obj.shape[0]
-    metadata["is_one_series"] = obj.shape[0] == 1
-    metadata["n_panels"] = 1
-    metadata["is_one_panel"] = True
+    if _req("n_instances", return_metadata):
+        metadata["n_instances"] = obj.shape[0]
+    if _req("is_one_series", return_metadata):
+        metadata["is_one_series"] = obj.shape[0] == 1
+    if _req("n_panels", return_metadata):
+        metadata["n_panels"] = 1
+    if _req("is_one_panel", return_metadata):
+        metadata["is_one_panel"] = True
 
     # check whether there any nans; only if requested
-    if return_metadata:
+    if _req("has_nans", return_metadata):
         metadata["has_nans"] = pd.isnull(obj).any()
 
     return _ret(True, None, metadata, return_metadata)
@@ -227,30 +240,51 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
 
     metadata = dict()
 
+    if _req("is_univariate", return_metadata):
+        metadata["is_univariate"] = len(obj.columns) < 2
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
+    if _req("has_nans", return_metadata):
+        metadata["has_nans"] = obj.isna().values.any()
+
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
-    if return_metadata:
+    requires_series_grps = [
+        "n_instances",
+        "is_one_series",
+        "is_equal_length",
+        "is_equally_spaced",
+    ]
+    if _req(requires_series_grps, return_metadata):
         series_groups = obj.groupby(level=list(range(index.nlevels - 1)), sort=False)
         n_series = series_groups.ngroups
 
+        if _req("n_instances", return_metadata):
+            metadata["n_instances"] = n_series
+        if _req("is_one_series", return_metadata):
+            metadata["is_one_series"] = n_series == 1
+        if _req("is_equal_length", return_metadata):
+            metadata["is_equal_length"] = _list_all_equal(
+                series_groups.size().to_numpy()
+            )
+        if _req("is_equally_spaced", return_metadata):
+            metadata["is_equally_spaced"] = all(
+                _index_equally_spaced(group.index.get_level_values(-1))
+                for _, group in series_groups
+            )
+
+    requires_panel_grps = ["n_panels", "is_one_panel"]
+    if _req(requires_panel_grps, return_metadata):
         if panel:
             n_panels = 1
         else:
             panel_groups = obj.groupby(level=list(range(index.nlevels - 2)), sort=False)
             n_panels = panel_groups.ngroups
 
-        metadata["is_univariate"] = len(obj.columns) < 2
-        metadata["is_equally_spaced"] = all(
-            _index_equally_spaced(group.index.get_level_values(-1))
-            for _, group in series_groups
-        )
-        metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
-        metadata["n_panels"] = n_panels
-        metadata["is_one_panel"] = n_panels == 1
-        metadata["n_instances"] = n_series
-        metadata["is_one_series"] = n_series == 1
-        metadata["has_nans"] = obj.isna().values.any()
-        metadata["is_equal_length"] = _list_all_equal(series_groups.size().to_numpy())
+        if _req("n_panels", return_metadata):
+            metadata["n_panels"] = n_panels
+        if _req("is_one_panel", return_metadata):
+            metadata["is_one_panel"] = n_panels == 1
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -371,18 +405,26 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
-    metadata["is_univariate"] = obj.shape[1] < 2
-    metadata["n_instances"] = len(obj)
-    metadata["is_one_series"] = len(obj) == 1
-    metadata["n_panels"] = 1
-    metadata["is_one_panel"] = True
-    if return_metadata:
+    if _req("is_univariate", return_metadata):
+        metadata["is_univariate"] = obj.shape[1] < 2
+    if _req("n_instances", return_metadata):
+        metadata["n_instances"] = len(obj)
+    if _req("is_one_series", return_metadata):
+        metadata["is_one_series"] = len(obj) == 1
+    if _req("n_panels", return_metadata):
+        metadata["n_panels"] = 1
+    if _req("is_one_panel", return_metadata):
+        metadata["is_one_panel"] = True
+    if _req("has_nans", return_metadata):
         metadata["has_nans"] = _nested_dataframe_has_nans(obj)
+    if _req("is_equal_length", return_metadata):
         metadata["is_equal_length"] = not _nested_dataframe_has_unequal(obj)
 
     # todo: this is temporary override, proper is_empty logic needs to be added
-    metadata["is_empty"] = False
-    metadata["is_equally_spaced"] = True
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = False
+    if _req("is_equally_spaced", return_metadata):
+        metadata["is_equally_spaced"] = True
     # end hacks
 
     return _ret(True, None, metadata, return_metadata)
@@ -402,18 +444,24 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
 
     # we now know obj is a 3D np.ndarray
     metadata = dict()
-    metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
-    metadata["is_univariate"] = True
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
+    if _req("is_univariate", return_metadata):
+        metadata["is_univariate"] = True
     # np.arrays are considered equally spaced, equal length, by assumption
-    metadata["is_equally_spaced"] = True
-    metadata["is_equal_length"] = True
-    metadata["n_instances"] = obj.shape[0]
-    metadata["is_one_series"] = obj.shape[0] == 1
-    metadata["n_panels"] = 1
-    metadata["is_one_panel"] = True
-
-    # check whether there any nans; only if requested
-    if return_metadata:
+    if _req("is_equally_spaced", return_metadata):
+        metadata["is_equally_spaced"] = True
+    if _req("is_equal_length", return_metadata):
+        metadata["is_equal_length"] = True
+    if _req("n_instances", return_metadata):
+        metadata["n_instances"] = obj.shape[0]
+    if _req("is_one_series", return_metadata):
+        metadata["is_one_series"] = obj.shape[0] == 1
+    if _req("n_panels", return_metadata):
+        metadata["n_panels"] = 1
+    if _req("is_one_panel", return_metadata):
+        metadata["is_one_panel"] = True
+    if _req("has_nans", return_metadata):
         metadata["has_nans"] = np.isnan(obj).any()
 
     return _ret(True, None, metadata, return_metadata)

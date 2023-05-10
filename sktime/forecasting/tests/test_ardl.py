@@ -8,11 +8,11 @@ from numpy.testing import assert_allclose
 from sktime.datasets import load_macroeconomic
 from sktime.forecasting.ardl import ARDL
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ARDL, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_against_statsmodels():
@@ -41,7 +41,7 @@ def test_against_statsmodels():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ARDL, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_against_statsmodels_2():
@@ -73,7 +73,7 @@ def test_against_statsmodels_2():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ARDL, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_against_statsmodels_3():
@@ -101,7 +101,7 @@ def test_against_statsmodels_3():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ARDL, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_against_statsmodels_4():
@@ -128,7 +128,7 @@ def test_against_statsmodels_4():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ARDL, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_auto_ardl():
@@ -162,7 +162,7 @@ def test_auto_ardl():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ARDL, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_against_statsmodels_5():
