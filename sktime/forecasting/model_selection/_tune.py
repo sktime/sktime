@@ -17,6 +17,7 @@ from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -721,42 +722,259 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         return [params, params2]
 
 
-class ForecastingBayesSearchCV(BaseGridSearch):
+class ForecastingSkoptSearchCV(_DelegatedForecaster):
+    """Bayesian search over hyper parameters for a forecaster.
+
+    skopt version 0.9.0 (under-development)
     """
-    Bayesian search over hyper parameters for a forecaster.
-    skopt version 0.9.0
-    """
+
+    _tags = {
+        "scitype:y": "both",
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+    }
+
     def __init__(
         self,
         forecaster,
         cv,
         param_distributions,
         n_iter=10,
+        random_state=None,
         scoring=None,
         strategy="refit",
         n_jobs=None,
         refit=True,
         verbose=0,
         return_n_best_forecasters=1,
-        random_state=None,
+        pre_dispatch="2*n_jobs",
+        backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
     ):
-        super(ForecastingBayesSearchCV, self).__init__(
-            forecaster=forecaster,
-            scoring=scoring,
-            strategy=strategy,
-            n_jobs=n_jobs,
-            refit=refit,
-            cv=cv,
-            verbose=verbose,
-            return_n_best_forecasters=return_n_best_forecasters,
-            update_behaviour=update_behaviour,
-            error_score=error_score,
-        )
+        self.forecaster = forecaster
+        self.scoring = scoring
+        self.strategy = strategy
+        self.n_jobs = n_jobs
+        self.refit = refit
+        self.cv = cv
+        self.verbose = verbose
+        self.return_n_best_forecasters = return_n_best_forecasters
+        self.pre_dispatch = pre_dispatch
+        self.backend = backend
+        self.update_behaviour = update_behaviour
+        self.error_score = error_score
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
+        _check_soft_dependencies(
+            "scikit-optimize", severity="error", package_import_alias="skopt"
+        )
+        super().__init__()
+        tags_to_clone = [
+            "requires-fh-in-fit",
+            "capability:pred_int",
+            "capability:pred_int:insample",
+            "capability:insample",
+            "scitype:y",
+            "ignores-exogeneous-X",
+            "handles-missing-data",
+            "y_inner_mtype",
+            "X_inner_mtype",
+            "X-y-must-have-same-index",
+            "enforce_index_type",
+        ]
+        self.clone_tags(forecaster, tags_to_clone)
+        self._extend_to_all_scitypes("y_inner_mtype")
+        self._extend_to_all_scitypes("X_inner_mtype")
 
-    def _run_search(self, evaluate_candidates):
-        pass
+    # attribute for _DelegatedForecaster, which then delegates
+    # all non-overridden methods are same as of getattr(self, _delegate_name)
+    # see further details in _DelegatedForecaster docstring
+    _delegate_name = "best_forecaster_"
+
+    def _extend_to_all_scitypes(self, tagname):
+        """Ensure mtypes for all scitypes are in the tag with tagname.
+
+        Mutates self tag with name `tagname`.
+        If no mtypes are present of a time series scitype, adds a pandas based one.
+
+        Parameters
+        ----------
+        tagname : str, name of the tag. Should be "y_inner_mtype" or "X_inner_mtype".
+
+        Returns
+        -------
+        None (mutates tag in self)
+        """
+        tagval = self.get_tag(tagname)
+        if not isinstance(tagval, list):
+            tagval = [tagval]
+        scitypes = mtype_to_scitype(tagval, return_unique=True)
+        if "Series" not in scitypes:
+            tagval = tagval + ["pd.DataFrame"]
+        if "Panel" not in scitypes:
+            tagval = tagval + ["pd-multiindex"]
+        if "Hierarchical" not in scitypes:
+            tagval = tagval + ["pd_multiindex_hier"]
+        self.set_tags(**{tagname: tagval})
+
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        Returns
+        -------
+        fitted_params : dict
+            A dict containing the best hyper parameters and the parameters of
+            the best estimator (if available), merged together with the former
+            taking precedence.
+        """
+        fitted_params = {}
+        try:
+            fitted_params = self.best_forecaster_.get_fitted_params()
+        except NotImplementedError:
+            pass
+        fitted_params = {**fitted_params, **self.best_params_}
+        fitted_params.update(self._get_fitted_params_default())
+
+        return fitted_params
+
+    def _run_search(self, space, **kwargs):
+        """Search n_iter candidates from param_distributions.
+
+        under-development - this is where loop should be implemented in favour of
+        _evaluate_candidates
+        """
+        # incomplete
+        from skopt.optimizer import Optimizer
+
+        optimizer = Optimizer(
+            dimensions=space, random_state=42, base_estimator="gp", **kwargs
+        )
+
+        return optimizer
+
+    def _fit(self, y, X=None, fh=None):
+        # incomplete
+        # cv = check_cv(self.cv)
+
+        scoring = check_scoring(self.scoring, obj=self)
+        scoring_name = f"test_{scoring.name}"
+
+        # Run grid-search cross-validation.
+        results = self._evaluate_loop()
+
+        results = pd.DataFrame(results)
+
+        # Rank results, according to whether greater is better for the given scoring.
+        results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
+            ascending=scoring.get_tag("lower_is_better")
+        )
+
+        self.cv_results_ = results
+
+        # ==== reranking & refiting results ====
+
+        # Select best parameters.
+        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
+        # Raise error if all fits in evaluate failed because all score values are NaN.
+        if self.best_index_ == -1:
+            raise NotFittedError(
+                f"""All fits of forecaster failed,
+                set error_score='raise' to see the exceptions.
+                Failed forecaster: {self.forecaster}"""
+            )
+        self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
+        self.best_params_ = results.loc[self.best_index_, "params"]
+        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
+
+        # Refit model with best parameters.
+        if self.refit:
+            self.best_forecaster_.fit(y, X, fh)
+
+        # Sort values according to rank
+        results = results.sort_values(
+            by=f"rank_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
+        )
+        # Select n best forecaster
+        self.n_best_forecasters_ = []
+        self.n_best_scores_ = []
+        for i in range(self.return_n_best_forecasters):
+            params = results["params"].iloc[i]
+            rank = results[f"rank_{scoring_name}"].iloc[i]
+            rank = str(int(rank))
+            forecaster = self.forecaster.clone().set_params(**params)
+            # Refit model with best parameters.
+            if self.refit:
+                forecaster.fit(y, X, fh)
+            self.n_best_forecasters_.append((rank, forecaster))
+            # Save score
+            score = results[f"mean_{scoring_name}"].iloc[i]
+            self.n_best_scores_.append(score)
+
+        return self
+
+    def _fit_and_score(self, params, cv, y, X, scoring):
+        # Clone forecaster.
+        forecaster = self.forecaster.clone()
+
+        # Set parameters.
+        forecaster.set_params(**params)
+
+        # Evaluate.
+        out = evaluate(
+            forecaster,
+            cv,
+            y,
+            X,
+            strategy=self.strategy,
+            scoring=scoring,
+            error_score=self.error_score,
+        )
+
+        # Filter columns.
+        out = out.filter(
+            items=[f"test_{scoring.name}", "fit_time", "pred_time"], axis=1
+        )
+
+        # Aggregate results.
+        out = out.mean()
+        out = out.add_prefix("mean_")
+
+        # Add parameters to output table.
+        out["params"] = params
+
+        return out
+
+    def _evaluate_loop(self, candidate_params, cv, y):
+        # incomplete
+        candidate_params = list(candidate_params)
+
+        if self.verbose > 0:
+            n_candidates = len(candidate_params)
+            n_splits = cv.get_n_splits(y)
+            print(  # noqa
+                "Fitting {0} folds for each of {1} candidates,"
+                " totalling {2} fits".format(
+                    n_splits, n_candidates, n_candidates * n_splits
+                )
+            )
+        parallel = Parallel(
+            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend=self.backend
+        )
+
+        try:
+            out = parallel(
+                delayed(self._fit_and_score)(params) for params in candidate_params
+            )
+            assert len(out) >= 1
+        except AssertionError:
+            raise ValueError(
+                "No fits were performed. "
+                "Was the CV iterator empty? "
+                "Were there no candidates?"
+            )
+        return out
