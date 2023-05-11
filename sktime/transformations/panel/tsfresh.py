@@ -25,7 +25,6 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "python_dependencies": "tsfresh",
-        "python_version": "<3.10",
     }
 
     def __init__(
@@ -209,9 +208,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     --------
     >>> from sklearn.model_selection import train_test_split
     >>> from sktime.datasets import load_arrow_head
-    >>> from sktime.transformations.panel.tsfresh import (
-    ...     TSFreshFeatureExtractor
-    ... )
+    >>> from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
     >>> X, y = load_arrow_head(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> ts_eff = TSFreshFeatureExtractor(
