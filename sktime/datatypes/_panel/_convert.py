@@ -1122,7 +1122,7 @@ _extend_conversions(
 )
 
 _extend_conversions(
-    "pd-multiindex", "pd-long", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    "pd-long", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
 )
 
 
