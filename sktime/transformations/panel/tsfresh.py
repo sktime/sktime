@@ -229,6 +229,8 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     >>> X_transform2 = ts_custom.fit_transform(X_train) # doctest: +SKIP
     """
 
+    _tags = {"X_inner_mtype": "pd-long"}
+
     def __init__(
         self,
         default_fc_parameters="efficient",
@@ -275,27 +277,15 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
             each cell of Xt contains pandas.Series
             transformed version of X
         """
-        # tsfresh requires unique index, returns only values for
-        # unique index values
-        if X.index.nunique() < X.shape[0]:
-            warn(
-                "tsfresh requires a unique index, but found "
-                "non-unique. To avoid this warning, please make sure the index of X "
-                "contains only unique values."
-            )
-            X = X.reset_index(drop=True)
-
-        Xt = from_nested_to_long(X)
-
         # lazy imports to avoid hard dependency
         from tsfresh import extract_features
 
         Xt = extract_features(
-            Xt,
-            column_id="index",
+            X,
+            column_id=X.columns[0],
             column_value="value",
             column_kind="column",
-            column_sort="time_index",
+            column_sort=X.columns[1],
             **self.default_fc_parameters_,
         )
 
