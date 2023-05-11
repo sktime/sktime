@@ -22,7 +22,6 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "python_dependencies": "tsfresh",
-        "python_version": "<3.10",
     }
 
     def __init__(
@@ -280,7 +279,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         Xt = extract_features(
             X,
             column_id=X.columns[0],
-            column_value="value",
+            column_value=X.columns[3],
             column_kind=X.columns[2],
             column_sort=X.columns[1],
             **self.default_fc_parameters_,
@@ -289,7 +288,9 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         # When using the long input format, tsfresh seems to sort the index,
         # here we make sure we return the dataframe in the sort order as the
         # input data
-        return Xt.reindex(X.index)
+        instances = X.iloc[:, 0].unique()
+        Xt = Xt.reindex(instances)
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
