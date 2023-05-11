@@ -31,6 +31,7 @@ Ensembles
     :toctree: auto_generated/
     :template: class.rst
 
+    BaggingClassifier
     ComposableTimeSeriesForestClassifier
     WeightedEnsembleClassifier
 
