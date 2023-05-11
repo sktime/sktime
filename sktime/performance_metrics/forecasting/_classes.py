@@ -1717,8 +1717,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape (n_outputs,)
-    , default='uniform_average'
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape (n_outputs,), default='uniform_average' # noqa: E501
         Defines how to aggregate metric for multivariate (multioutput) data.
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
@@ -1842,8 +1841,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape (n_outputs,)
-    , default='uniform_average'
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape (n_outputs,) , default='uniform_average' # noqa: E501
         Defines how to aggregate metric for multivariate (multioutput) data.
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
