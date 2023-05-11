@@ -1677,20 +1677,20 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
 
 
 class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
-    r"""Mean absolute percentage error (MAPE) or symmetric version.
+    """Mean absolute percentage error (MAPE) or symmetric version.
 
     For a univariate, non-hierarchical sample
-    of true values :math:`y_1, \dots, y_n` and
-    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
-    at time indices :math:`t_1, \dots, t_n`,
+    of true values :math:`y_1, \\dots, y_n` and
+    predicted values :math:`\\widehat{y}_1, \\dots, \\widehat{y}_n`,
+    at time indices :math:`t_1, \\dots, t_n`,
     `evaluate` or call returns the Mean Absolute Percentage Error,
-    :math:`\frac{1}{n} \sum_{i=1}^n \left|\frac{y_i - \widehat{y}_i}{y_i} \right|`.
+    :math:`\\frac{1}{n} \\sum_{i=1}^n \\left|\\frac{y_i-\\widehat{y}_i}{y_i} \\right|`.
     (the time indices are not used)
 
     if `symmetric` is True then calculates
     symmetric mean absolute percentage error (sMAPE), defined as
-    :math:`\frac{2}{n} \sum_{i=1}^n \frac{|y_i - \widehat{y}_i|}
-    {|y_i| + |\widehat{y}_i|}`.
+    :math:`\\frac{2}{n} \\sum_{i=1}^n \\frac{|y_i - \\widehat{y}_i|}
+    {|y_i| + |\\widehat{y}_i|}`.
 
     Both MAPE and sMAPE output non-negative floating point which is in fractional units
     rather than percentage. The best value is 0.0.
@@ -1708,10 +1708,10 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
     `evaluate_by_index` returns, at a time index :math:`t_i`,
     the abolute percentage error at that time index,
-    :math:`\left| \frac{y_i - \widehat{y}_i}{y_i} \right|`,
-    or :math:`\frac{2|y_i - \widehat{y}_i|}{|y_i| + |\widehat{y}_i|}`,
+    :math:`\\left| \\frac{y_i - \\widehat{y}_i}{y_i} \\right|`,
+    or :math:`\\frac{2|y_i - \\widehat{y}_i|}{|y_i| + |\\widehat{y}_i|}`,
     the symmetric version, if `symmetric` is True, for all time indices
-    :math:`t_1, \dots, t_n` in the input.
+    :math:`t_1, \\dots, t_n` in the input.
 
     Parameters
     ----------
@@ -1808,18 +1808,18 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
 
 class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
-    r"""Median absolute percentage error (MdAPE) or symmetric version.
+    """Median absolute percentage error (MdAPE) or symmetric version.
 
-    For a univariate, non-hierarchical sample of true values :math:`y_1, \dots, y_n` and
-    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
-    at time indices :math:`t_1, \dots, t_n`,
+    For a univariate, non-hierarchical sample of true values :math:`y_1, \\dots, y_n`
+    and predicted values :math:`\\widehat{y}_1, \\dots, \\widehat{y}_n`,
+    at time indices :math:`t_1, \\dots, t_n`,
     `evaluate` or call returns the Median Absolute Percentage Error,
-    :math:`median(\left|\frac{y_i - \widehat{y}_i}{y_i} \right|)`.
+    :math:`median(\\left|\\frac{y_i - \\widehat{y}_i}{y_i} \\right|)`.
     (the time indices are not used)
 
     if `symmetric` is True then calculates
     symmetric Median Absolute Percentage Error (sMdAPE), defined as
-    :math:`median(\frac{2|y_i-\widehat{y}_i|}{|y_i|+|\widehat{y}_i|})`.
+    :math:`median(\\frac{2|y_i-\\widehat{y}_i|}{|y_i|+|\\widehat{y}_i|})`.
 
     Both MdAPE and sMdAPE output non-negative floating point which is in fractional
     units rather than percentage. The best value is 0.0.
