@@ -281,7 +281,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
             X,
             column_id=X.columns[0],
             column_value="value",
-            column_kind="column",
+            column_kind=X.columns[2],
             column_sort=X.columns[1],
             **self.default_fc_parameters_,
         )
