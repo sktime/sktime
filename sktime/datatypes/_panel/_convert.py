@@ -569,6 +569,17 @@ def from_long_to_nested_adp(obj, store=None):
 convert_dict[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
 
 
+def from_multiindex_to_long(obj, store=None):
+
+    X_long = pd.melt(obj, value_vars=obj.columns, ignore_index=False)
+    X_long = X_long.reset_index()
+
+    return X_long
+
+
+convert_dict[("pd-multiindex", "pd-long", "Panel")] = from_multiindex_to_long
+
+
 def from_multi_index_to_3d_numpy(X):
     """Convert pandas multi-index Panel to numpy 3D Panel.
 
