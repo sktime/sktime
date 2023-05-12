@@ -21,6 +21,13 @@ from sktime.proba.base import BaseDistribution
 
 # normal distribution with exact implementations removed
 class _DistrDefaultMethodTester(BaseDistribution):
+    """Tester distribution for default methods."""
+
+    _tags = {
+        "capabilities:approx": ["pdfnorm", "mean", "var", "energy", "log_pdf", "cdf"],
+        "capabilities:exact": ["pdf", "ppf"],
+        "distr:measuretype": "continuous",
+    }
 
     def __init__(self, mu, sigma, index=None, columns=None):
 
