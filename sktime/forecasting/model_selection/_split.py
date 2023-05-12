@@ -1314,8 +1314,8 @@ class SingleWindowSplitter(BaseSplitter):
 def temporal_train_test_split(
     y: ACCEPTED_Y_TYPES,
     X: Optional[pd.DataFrame] = None,
-    test_size: Optional[Union[int, float]] = None,
-    train_size: Optional[Union[int, float]] = None,
+    test_size: Optional[float] = None,
+    train_size: Optional[float] = None,
     fh: Optional[FORECASTING_HORIZON_TYPES] = None,
 ) -> SPLIT_TYPE:
     """Split arrays or matrices into sequential train and test subsets.

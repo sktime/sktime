@@ -6,6 +6,12 @@ Welcome to sktime
 
 A unified framework for machine learning with time series.
 
+.. topic:: Applications for sktime internships 2023 open!
+
+    Application deadline is May 19.
+    `Apply here <https://github.com/sktime/mentoring/blob/main/internships/sktime2023.md>`_
+
+
 Mission
 =======
 

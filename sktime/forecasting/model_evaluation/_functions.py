@@ -184,10 +184,11 @@ def _evaluate_window(
         else:
             warnings.warn(
                 f"""
-                Fitting of forecaster failed, you can set error_score='raise' to see
+                In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
+                you can set error_score='raise' in evaluate to see
                 the exception message. Fit failed for len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
-                Failed forecaster: {forecaster}.
+                Failed forecaster with parameters: {forecaster}.
                 """,
                 FitFailedWarning,
                 stacklevel=2,
