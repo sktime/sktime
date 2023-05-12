@@ -35,7 +35,7 @@ class BaseGridSearch(_DelegatedForecaster):
     def __init__(
         self,
         forecaster,
-        cv=None,
+        cv,
         strategy="refit",
         n_jobs=None,
         pre_dispatch=None,
