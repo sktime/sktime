@@ -468,7 +468,7 @@ class AutoETS(_StatsModelsAdapter):
         """
         params1 = {}
         params2 = {
-            "sp": 12,
+            "sp": 2,
             "auto": True,
             "information_criterion": "bic",
             "trend": "add",
