@@ -306,7 +306,7 @@ class Imputer(BaseTransformer):
 
         Returns
         -------
-        Callable[[Optional[int]], Union[int, float]]
+        Callable[[Optional[int]], float]
             Random (discrete) uniform distribution between min and max of series
         """
         rng = check_random_state(self.random_state)

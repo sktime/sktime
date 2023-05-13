@@ -980,10 +980,12 @@ class BaseTransformer(BaseEstimator):
             elif X_scitype == "Hierarchical":
                 y_possible_scitypes = ["Panel", "Hierarchical"]
 
-            y_valid, _, y_metadata = check_is_scitype(
+            y_valid, msg, y_metadata = check_is_scitype(
                 y, scitype=y_possible_scitypes, return_metadata=[], var_name="y"
             )
             if not y_valid:
+                for mtype, err in msg.items():
+                    msg_invalid_input += f" [{mtype}: {err}] "
                 raise TypeError("y " + msg_invalid_input)
 
             y_scitype = y_metadata["scitype"]

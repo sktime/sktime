@@ -7,17 +7,23 @@ from sktime.networks.base import BaseDeepNetwork
 
 
 class RNNNetwork(BaseDeepNetwork):
-    """Establish the network structure for a CNN.
+    """Establish the network structure for an RNN.
 
     Adapted from the implementation used in [1]
 
     Parameters
     ----------
+    units           : int, default = 6
+        the number of recurring units
     random_state    : int, default = 0
         seed to any needed random actions
     """
 
-    def __init__(self, units=50, random_state=0):
+    def __init__(
+        self,
+        units=6,
+        random_state=0,
+    ):
         self.random_state = random_state
         self.units = units
         super(RNNNetwork, self).__init__()
@@ -48,7 +54,7 @@ class RNNNetwork(BaseDeepNetwork):
             else:
                 raise ValueError(
                     "If `input_shape` is a tuple, it must either be "
-                    f"of length 1 or 2. Found length of be {len(input_shape)}"
+                    f"of length 1 or 2. Found length of {len(input_shape)}"
                 )
         else:
             raise TypeError(
@@ -56,10 +62,16 @@ class RNNNetwork(BaseDeepNetwork):
                 f"But found the type to be: {type(input_shape)}"
             )
 
-        rnn = keras.layers.SimpleRNN(units=self.units, return_sequences=True)(
-            input_layer
-        )
+        output_layer = keras.layers.SimpleRNN(
+            units=self.units,
+            input_shape=input_layer.shape,
+            activation="linear",
+            use_bias=False,
+            kernel_initializer="glorot_uniform",
+            recurrent_initializer="orthogonal",
+            bias_initializer="zeros",
+            dropout=0.0,
+            recurrent_dropout=0.0,
+        )(input_layer)
 
-        dense = keras.layers.Dense(units=1)(rnn)
-
-        return input_layer, dense
+        return input_layer, output_layer

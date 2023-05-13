@@ -29,10 +29,9 @@ class BaseDeepRegressor(BaseRegressor, ABC):
     batch_size : int, default = 40
         training batch size for the model
 
-    Arguments
-    ---------
-    self.model = None
-
+    Attributes
+    ----------
+    self.model_ - the fitted DL model
     """
 
     _tags = {
