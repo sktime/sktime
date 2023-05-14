@@ -189,6 +189,10 @@ class _StatsModelsAdapter(BaseForecaster):
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
         get_prediction_arguments = {"start": start, "end": end}
+
+        if hasattr(self, "random_state"):
+            get_prediction_arguments["random_state"] = self.random_state
+
         if inspect.signature(self._fitted_forecaster.get_prediction).parameters.get(
             "exog"
         ):
