@@ -466,12 +466,14 @@ class AutoETS(_StatsModelsAdapter):
         -------
         params : dict or list of dict
         """
+        # default setting, non-auto
         params1 = {}
-        params2 = {
-            "sp": 2,
-            "auto": True,
+        # "auto-ets"
+        params2 = {"sp": 2, "auto": True}
+        # ets (non-auto) with some non-default parameters
+        params3 = {
             "information_criterion": "bic",
             "trend": "add",
             "damped_trend": True,
         }
-        return [params1, params2]
+        return [params1, params2, params3]
