@@ -725,7 +725,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
 class ForecastingSkoptSearchCV(BaseGridSearch):
     """Bayesian search over hyper parameters for a forecaster.
 
-    skopt version 0.9.0 (under-development)
+    skopt version 0.9.0 (under-development) - 90% done
 
     Parameters
     ----------
@@ -737,9 +737,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         self,
         forecaster,
         cv,
-        search_spaces,
+        param_grid,
         n_iter=10,
-        n_points=4,
+        n_points=1,
         random_state=None,
         scoring=None,
         strategy="refit",
@@ -772,80 +772,75 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             update_behaviour=update_behaviour,
             error_score=error_score,
         )
-        self.search_spaces = search_spaces
+        self.param_grid = param_grid
         self.n_iter = n_iter
         self.n_points = n_points
         self.random_state = random_state
         self.optimizer_kwargs = optimizer_kwargs
 
     def _fit(self, y, X=None, fh=None):
-        # incomplete
-        # cv = check_cv(self.cv)
-        self._from_fit_y = y
-        self._from_fit_X = X
+        """Run fit with all sets of parameters."""
+        self._check_cv = check_cv(self.cv)
+        self._check_scoring = check_scoring(self.scoring, obj=self)
+        scoring_name = f"test_{self._check_scoring.name}"
+        self.cv_results_ = pd.DataFrame()
 
-        self.scoring_check = check_scoring(self.scoring, obj=self)
+        self._run_search(y, X)
 
-        return self.scoring_name
+        # Rank results, according to whether greater is better for the given scoring.
+        self.cv_results_[f"rank_{scoring_name}"] = self.cv_results_.loc[
+            :, f"mean_{scoring_name}"
+        ].rank(ascending=self._check_scoring.get_tag("lower_is_better"))
 
-        # results = self._evaluate_loop()
+        results = self.cv_results_
+        # Select best parameters.
+        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
+        # Raise error if all fits in evaluate failed because all score values are NaN.
+        if self.best_index_ == -1:
+            raise NotFittedError(
+                f"""All fits of forecaster failed,
+                set error_score='raise' to see the exceptions.
+                Failed forecaster: {self.forecaster}"""
+            )
+        self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
+        self.best_params_ = results.loc[self.best_index_, "params"]
+        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
 
-        # results = pd.DataFrame(results)
+        # Refit model with best parameters.
+        if self.refit:
+            self.best_forecaster_.fit(y, X, fh)
 
-        # # Rank results, according to whether greater is better for the given scoring.
-        # results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
-        #     ascending=scoring.get_tag("lower_is_better")
-        # )
+        # Sort values according to rank
+        results = results.sort_values(
+            by=f"rank_{scoring_name}",
+            ascending=True,  # self._check_scoring.get_tag("lower_is_better")
+        )
 
-        # self.cv_results_ = results
+        # Select n best forecaster
+        self.n_best_forecasters_ = []
+        self.n_best_scores_ = []
+        for i in range(self.return_n_best_forecasters):
+            params = results["params"].iloc[i]
+            rank = results[f"rank_{scoring_name}"].iloc[i]
+            rank = str(int(rank))
+            forecaster = self.forecaster.clone().set_params(**params)
+            # Refit model with best parameters.
+            if self.refit:
+                forecaster.fit(y, X, fh)
+            self.n_best_forecasters_.append((rank, forecaster))
+            # Save score
+            score = results[f"mean_{scoring_name}"].iloc[i]
+            self.n_best_scores_.append(score)
 
-        # # ==== reranking & refiting results ====
+        return self
 
-        # # Select best parameters.
-        # self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
-        # # Raise error if all fits in evaluate failed because all score values are NaN.
-        # if self.best_index_ == -1:
-        #     raise NotFittedError(
-        #         f"""All fits of forecaster failed,
-        #         set error_score='raise' to see the exceptions.
-        #         Failed forecaster: {self.forecaster}"""
-        #     )
-        # self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
-        # self.best_params_ = results.loc[self.best_index_, "params"]
-        # self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_) # noqa E501
-
-        # # Refit model with best parameters.
-        # if self.refit:
-        #     self.best_forecaster_.fit(y, X, fh)
-
-        # # Sort values according to rank
-        # results = results.sort_values(
-        #     by=f"rank_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
-        # )
-        # # Select n best forecaster
-        # self.n_best_forecasters_ = []
-        # self.n_best_scores_ = []
-        # for i in range(self.return_n_best_forecasters):
-        #     params = results["params"].iloc[i]
-        #     rank = results[f"rank_{scoring_name}"].iloc[i]
-        #     rank = str(int(rank))
-        #     forecaster = self.forecaster.clone().set_params(**params)
-        #     # Refit model with best parameters.
-        #     if self.refit:
-        #         forecaster.fit(y, X, fh)
-        #     self.n_best_forecasters_.append((rank, forecaster))
-        #     # Save score
-        #     score = results[f"mean_{scoring_name}"].iloc[i]
-        #     self.n_best_scores_.append(score)
-
-        # return self
-
-    def _evaluate_step(self, search_space, optimizer, n_points):
+    def _evaluate_step(self, y, X, optimizer, n_points):
         """Evaluate a single candidate parameter set."""
         from skopt.utils import use_named_args
 
-        # Get a list dimension object with name from optimizer
+        # Get a list of dimension object with name from optimizer
         dimensions = optimizer.space.dimensions
+        test_score_name = f"test_{self._check_scoring.name}"
 
         @use_named_args(dimensions)
         def _fit_and_score(**params):
@@ -858,18 +853,18 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
 
             # Evaluate.
             out = evaluate(
-                forecaster,
-                self.cv,
-                self._from_fit_y,
-                self._from_fit_X,
+                forecaster=forecaster,
+                cv=self._check_cv,
+                y=y,
+                X=X,
                 strategy=self.strategy,
-                scoring=self.scoring_check,
+                scoring=self._check_scoring,
                 error_score=self.error_score,
             )
 
             # Filter columns.
             out = out.filter(
-                items=[f"test_{self.scoring_check.name}", "fit_time", "pred_time"],
+                items=[test_score_name, "fit_time", "pred_time"],
                 axis=1,
             )
 
@@ -887,12 +882,16 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         )
 
         candidate_params = optimizer.ask(n_points=n_points)
-        out = parallel(
-            delayed(self._fit_and_score)(params) for params in candidate_params
-        )
+        out = parallel(delayed(_fit_and_score)(params) for params in candidate_params)
 
-        # fetch the evaluation metrics and feed them back to optimizer
+        # Update optimizer with results.
+        # fetch the mean evaluation metrics and feed them back to optimizer
+        # as the optimizer is minimizing the score, we need to negate the score
+        results_df = pd.DataFrame(out)
+        optimizer.tell(candidate_params, list(-results_df["mean_" + test_score_name]))
+
         # keep updating the cv_results_ attribute by concatinating the dataframe
+        self.cv_results_ = pd.concat([self.cv_results_, results_df], ignore_index=True)
 
         try:
             assert len(out) >= 1
@@ -903,16 +902,16 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
                 "Were there no candidates?"
             )
 
-    def _run_search(self, params, y, X, scoring):
+    def _run_search(self, y, X=None, fh=None):
         """Search n_iter candidates from param_distributions.
 
         under-development - this is where loop should be implemented in favour of
         _evaluate_candidates
         """
         # check if space is a single dict, convert to list if so
-        search_spaces = self.search_spaces
-        if isinstance(search_spaces, dict):
-            search_spaces = [search_spaces]
+        param_grid = self.param_grid
+        if isinstance(param_grid, dict):
+            param_grid = [param_grid]
 
         if self.optimizer_kwargs is None:
             self.optimizer_kwargs_ = {}
@@ -921,25 +920,37 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         self.optimizer_kwargs_["random_state"] = self.random_state
 
         optimizers = []
-        for search_space in search_spaces:
+        for search_space in param_grid:
             optimizers.append(self._create_optimizer(search_space))
         self.optimizers_ = optimizers  # will save the states of the optimizers
 
-        # Run sequential-search cross-validation.
+        if self.verbose > 0:
+            n_candidates = self.n_iter
+            n_splits = self.cv.get_n_splits(y)
+            print(  # noqa
+                "Fitting {0} folds for each of {1} candidates,"
+                " totalling {2} fits".format(
+                    n_splits, n_candidates, n_candidates * n_splits
+                )
+            )
+
+        # Run sequential-hyperparameter-search with ts cross-validation.
         n_iter = self.n_iter
         # outer loop
-        for search_space, optimizer in zip(search_spaces, optimizers):
+        for optimizer in optimizers:
             # iterations for each search space
             while n_iter > 0:
                 # when n_iter < n_points points left for evaluation
                 n_points_adjusted = min(n_iter, self.n_points)
-
                 self._evaluate_step(
-                    search_space,
+                    y,
+                    X,
                     optimizer,
                     n_points=n_points_adjusted,
                 )
                 n_iter -= self.n_points
+            # reset n_iter for next search space
+            n_iter = self.n_iter
 
     def _create_optimizer(self, params_space):
         """Instantiate optimizer for hyperparameter tuning."""
@@ -956,32 +967,3 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             optimizer.space.dimensions[i].name = list(sorted(params_space.keys()))[i]
 
         return optimizer
-
-
-if __name__ == "__main__":
-    # ==== for debugging & testing ===
-    from skopt.space import Categorical, Integer  # Real,
-
-    from sktime.datasets import load_airline
-    from sktime.forecasting.model_selection import ExpandingWindowSplitter
-    from sktime.forecasting.naive import NaiveForecaster
-
-    y = load_airline()
-    fh = [1, 2, 3]
-    cv = ExpandingWindowSplitter(fh=fh)
-    forecaster = NaiveForecaster()
-    param_grid = [
-        {"strategy": Categorical(["last", "mean", "drift"])},
-        {"sp": Categorical([1, 2, 3]), "window_length": Integer(low=10, high=20)},
-    ]
-    gscv = ForecastingSkoptSearchCV(
-        forecaster=forecaster, search_spaces=param_grid, cv=cv, random_state=42
-    )
-    # print("start")
-    optimezerlist = gscv._fit(y)
-    # print(optimezerlist)
-    # print(optimezerlist[1].space.dimensions)
-    # print(optimezerlist[1].space.dimensions[0].name)
-    # print(optimezerlist[1].ask())
-    # print(gscv.forecaster)
-    # print("end")
