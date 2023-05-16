@@ -10,6 +10,7 @@ __all__ = ["DrCIF"]
 
 import math
 import time
+import sys
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -108,6 +109,7 @@ class DrCIF(BaseClassifier):
     (n_instances,total_intervals * att_subsample_size)
         The transformed dataset for all classifiers. Only saved when
         save_transformed_data is true.
+    max_depth : int of the maximum depth for each tree.
 
     See Also
     --------
@@ -162,6 +164,7 @@ class DrCIF(BaseClassifier):
         save_transformed_data=False,
         n_jobs=1,
         random_state=None,
+        max_depth=sys.maxsize,
     ):
         self.n_estimators = n_estimators
         self.n_intervals = n_intervals
@@ -194,6 +197,7 @@ class DrCIF(BaseClassifier):
         self._min_interval = min_interval
         self._max_interval = max_interval
         self._base_estimator = base_estimator
+        self.max_depth = max_depth
 
         super(DrCIF, self).__init__()
 
@@ -205,9 +209,9 @@ class DrCIF(BaseClassifier):
         train_time = 0
 
         if self.base_estimator.lower() == "dtc":
-            self._base_estimator = DecisionTreeClassifier(criterion="entropy")
+            self._base_estimator = DecisionTreeClassifier(criterion="entropy", max_depth=self.max_depth)
         elif self.base_estimator.lower() == "cit":
-            self._base_estimator = ContinuousIntervalTree()
+            self._base_estimator = ContinuousIntervalTree(max_depth=self.max_depth)
         elif isinstance(self.base_estimator, BaseEstimator):
             self._base_estimator = self.base_estimator
         else:
