@@ -61,7 +61,7 @@ class DrCIF(BaseClassifier):
         Maximum length of an interval per representation as an int for all
         representations or list for individual settings, if None set to
         (representation_length / 2).
-    base_estimator : BaseEstimator or str, default="DTC"
+    base_estimator : BaseEstimator or str, default="CIT"
         Base estimator for the ensemble, can be supplied a sklearn BaseEstimator or a
         string for suggested options.
         "DTC" uses the sklearn DecisionTreeClassifier using entropy as a splitting
