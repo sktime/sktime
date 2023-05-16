@@ -117,6 +117,8 @@ Dynamic Time Warping Distances
 Time warping distances can also be obtained by composing ``DistFromAligner`` with
 a time warping aligner, see docstring of ``DistFromAligner``:
 
+.. currentmodule:: sktime.dists_kernels.compose_from_align
+
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
