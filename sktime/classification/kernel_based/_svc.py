@@ -40,8 +40,8 @@ class TimeSeriesSVC(BaseClassifier):
     kernel_params : dict, optional. default = None.
         dictionary for distance parameters, in case that distance is a callable
     kernel_mtype : str, or list of str optional. default = None.
-        mtype that distance expects for X and X2, if a callable
-        only set this if distance is not ``BasePairwiseTransformerPanel`` descendant
+        mtype that ``kernel`` expects for X and X2, if a callable
+        only set this if ``kernel`` is not ``BasePairwiseTransformerPanel`` descendant
     C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive. The penalty
@@ -50,9 +50,9 @@ class TimeSeriesSVC(BaseClassifier):
         Whether to use the shrinking heuristic.
     probability : bool, default=False
         Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, will slow down that method as it internally uses
-        5-fold cross-validation, and `predict_proba` may be inconsistent with
-        `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
+        to calling ``fit``, will slow down that method as it internally uses
+        5-fold cross-validation, and ``predict_proba`` may be inconsistent with
+        ``predict``.
     tol : float, default=1e-3
         Tolerance for stopping criterion.
     cache_size : float, default=200
