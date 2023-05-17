@@ -338,7 +338,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sklearn.gaussian_process.kernels import DotProduct, RBF
+        from sklearn.gaussian_process.kernels import RBF, DotProduct
         from sklearn.metrics import brier_score_loss
 
         from sktime.classification.kernel_based import TimeSeriesSVC
