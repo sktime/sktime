@@ -46,16 +46,11 @@ class TSCGridSearchCV(_DelegatedClassifier):
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables a values.
 
-        See :ref:`multimetric_grid_search` for an example.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-
-        .. versionchanged:: v0.20
-           `n_jobs` default changed from 1 to None
 
     refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
@@ -88,9 +83,6 @@ class TSCGridSearchCV(_DelegatedClassifier):
         to see how to design a custom selection strategy using a callable
         via `refit`.
 
-        .. versionchanged:: 0.20
-            Support for callable added.
-
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -107,9 +99,6 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     verbose : int
         Controls the verbosity: the higher, the more messages.
