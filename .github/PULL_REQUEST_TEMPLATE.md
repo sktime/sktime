@@ -51,6 +51,8 @@ Please go through the checklist below. Please feel free to remove points if they
 ##### For new estimators
 - [ ] I've added the estimator to the API reference - in `docs/source/api_reference/taskname.rst`, follow the pattern.
 - [ ] I've added one or more illustrative usage examples to the docstring, in a pydocstyle compliant `Examples` section.
+- [ ] If the estimator relies on a soft dependency, I've set the `python_dependencies` tag and ensured
+  dependency isolation, see the [estimator dependencies guide](https://www.sktime.net/en/latest/developer_guide/dependencies.html#adding-a-soft-dependency).
 
 
 <!--
