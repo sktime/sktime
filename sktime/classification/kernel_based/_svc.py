@@ -35,8 +35,8 @@ class TimeSeriesSVC(BaseClassifier):
         output must be mxn array if ``X`` is Panel of m Series, ``X``2 of n Series
         if ``distance_mtype`` is not set, must be able to take
         ``X``, ``X2`` which are ``pd_multiindex`` and ``numpy3D`` mtype
-        default = mean Euclidean kernel, same as ``AggrDist(DotProduct())``,
-        where ``AggrDist`` is from ``sktime`` and ``DotProduct`` from ``sklearn``
+        default = mean Euclidean kernel, same as ``AggrDist(RBF())``,
+        where ``AggrDist`` is from ``sktime`` and ``RBF`` from ``sklearn``
     kernel_params : dict, optional. default = None.
         dictionary for distance parameters, in case that distance is a callable
     kernel_mtype : str, or list of str optional. default = None.
@@ -182,11 +182,11 @@ class TimeSeriesSVC(BaseClassifier):
             kernel_params = {}
 
         if kernel is None:
-            from sklearn.gaussian_process.kernels import DotProduct
+            from sklearn.gaussian_process.kernels import RBF
 
             from sktime.dists_kernels.compose_tab_to_panel import AggrDist
 
-            kernel = AggrDist(DotProduct())
+            kernel = AggrDist(RBF())
 
         if X2 is not None:
             return kernel(X, X2, **kernel_params)
