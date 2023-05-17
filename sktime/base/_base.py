@@ -98,11 +98,11 @@ class BaseObject(_BaseObject):
 
         Parameters
         ----------
-        locals : dict, should be ``locals()`` directly at start of ``__init__``     
+        locals : dict, should be ``locals()`` directly at start of ``__init__``
 
         Returns
         -------
-        self   
+        self
         """
         if isinstance(locals, dict):
             for param in self.get_param_names():
