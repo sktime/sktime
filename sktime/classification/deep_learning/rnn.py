@@ -22,7 +22,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     
     Parameters
     ----------
-    should inherited fields be listed here?
     n_epochs       : int, default = 2000
         the number of epochs to train the model
     batch_size      : int, default = 16
