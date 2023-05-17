@@ -152,12 +152,8 @@ class ConformalIntervals(BaseForecaster):
                 f"method must be one of {self.ALLOWED_METHODS}, but found {method}"
             )
 
-        self.forecaster = forecaster
-        self.method = method
-        self.verbose = verbose
-        self.initial_window = initial_window
-        self.sample_frac = sample_frac
-        self.n_jobs = n_jobs
+        self._set_params_from(locals())
+
         self.forecasters_ = []
 
         super(ConformalIntervals, self).__init__()

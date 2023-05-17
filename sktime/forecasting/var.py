@@ -96,14 +96,7 @@ class VAR(_StatsModelsAdapter):
         random_state=None,
     ):
         # Model params
-        self.trend = trend
-        self.maxlags = maxlags
-        self.method = method
-        self.verbose = verbose
-        self.missing = missing
-        self.dates = dates
-        self.freq = freq
-        self.ic = ic
+        self._set_params_from(locals())
 
         super(VAR, self).__init__(random_state=random_state)
 

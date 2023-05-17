@@ -250,33 +250,7 @@ class VARMAX(_StatsModelsAdapter):
         suppress_warnings=False,
     ):
         # Model parameters
-        self.order = order
-        self.trend = trend
-        self.error_cov_type = error_cov_type
-        self.measurement_error = measurement_error
-        self.enforce_stationarity = enforce_stationarity
-        self.enforce_invertibility = enforce_invertibility
-        self.trend_offset = trend_offset
-        self.start_params = start_params
-        self.transformed = transformed
-        self.includes_fixed = includes_fixed
-        self.cov_type = cov_type
-        self.cov_kwds = cov_kwds
-        self.method = method
-        self.maxiter = maxiter
-        self.full_output = full_output
-        self.disp = disp
-        self.callback = callback
-        self.return_params = return_params
-        self.optim_score = optim_score
-        self.optim_complex_step = optim_complex_step
-        self.optim_hessian = optim_hessian
-        self.flags = flags
-        self.low_memory = low_memory
-        self.dynamic = dynamic
-        self.information_set = information_set
-        self.signal_only = signal_only
-        self.suppress_warnings = suppress_warnings
+        self._set_params_from(locals())
 
         super(VARMAX, self).__init__()
 

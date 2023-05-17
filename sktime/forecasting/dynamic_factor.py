@@ -140,12 +140,14 @@ class DynamicFactor(_StatsModelsAdapter):
 
     def __init__(
         self,
+        # Model Params
         k_factors=1,
         factor_order=1,
         error_cov_type="diagonal",
         error_order=0,
         error_var=False,
         enforce_stationarity=True,
+        # Fit Params
         start_params=None,
         transformed=True,
         includes_fixed=False,
@@ -163,31 +165,7 @@ class DynamicFactor(_StatsModelsAdapter):
         flags=None,
         low_memory=False,
     ):
-        # Model Params
-        self.k_factors = k_factors
-        self.factor_order = factor_order
-        self.error_cov_type = error_cov_type
-        self.error_order = error_order
-        self.error_var = error_var
-        self.enforce_stationarity = enforce_stationarity
-
-        # Fit Params
-        self.start_params = start_params
-        self.transformed = transformed
-        self.includes_fixed = includes_fixed
-        self.cov_type = cov_type
-        self.cov_kwds = cov_kwds
-        self.method = method
-        self.maxiter = maxiter
-        self.full_output = full_output
-        self.disp = disp
-        self.callback = callback
-        self.return_params = return_params
-        self.optim_score = optim_score
-        self.optim_complex_step = optim_complex_step
-        self.optim_hessian = optim_hessian
-        self.flags = flags
-        self.low_memory = low_memory
+        self._set_params_from(locals())
 
         super(DynamicFactor, self).__init__()
 
