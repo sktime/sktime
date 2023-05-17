@@ -44,8 +44,8 @@ Please go through the checklist below. Please feel free to remove points if they
 -->
 
 ##### For all contributions
-- [ ] I've added myself to the list of contributors with any new badges I've earned :-)
-  How to: add yourself to the [all-contributors file](https://github.com/sktime/sktime/blob/main/.all-contributorsrc) in the `sktime` root directory. Common badges: `code` - fixing a bug, or adding code logic. `doc` - writing or improving documentation or docstrings. `bug` - reporting or diagnosing a bug (get this plus `code` if you also fixed the bug in the PR).`maintenance` - CI, test framework, release.
+- [ ] I've added myself to the [list of contributors](https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md) with any new badges I've earned :-)
+  How to: add yourself to the [all-contributors file](https://github.com/sktime/sktime/blob/main/.all-contributorsrc) in the `sktime` root directory (not the `CONTRIBUTORS.md`). Common badges: `code` - fixing a bug, or adding code logic. `doc` - writing or improving documentation or docstrings. `bug` - reporting or diagnosing a bug (get this plus `code` if you also fixed the bug in the PR).`maintenance` - CI, test framework, release.
   See here for [full badge reference](https://allcontributors.org/docs/en/emoji-key)
 - [ ] Optionally, I've added myself and possibly others to the [CODEOWNERS](https://github.com/sktime/sktime/blob/main/CODEOWNERS) file - do this if you want to become the owner or maintainer of an estimator you added.
   See here for further details on the [algorithm maintainer role](https://www.sktime.net/en/latest/get_involved/governance.html#algorithm-maintainers).
