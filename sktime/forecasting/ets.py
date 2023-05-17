@@ -470,6 +470,7 @@ class AutoETS(_StatsModelsAdapter):
             # default setting, non-auto
             {},
             # "auto-ets"
+            # TODO: uncomment following line while fixing #4591
             # {"sp": 2, "auto": True},
             # ets (non-auto) with some non-default parameters
             {"information_criterion": "bic", "trend": "add", "damped_trend": True},
