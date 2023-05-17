@@ -39,6 +39,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          python -m pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
           python -m pip install .[all_extras,binder,dev,mlflow]
       - name: Run example notebooks
         run: build_tools/run_examples.sh
@@ -58,6 +59,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
+          python -m pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
           python -m pip install .
 
       - name: Run pytest-free tests
@@ -78,6 +80,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
+          python -m pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
           python -m pip install .[dev]
 
       - name: Show dependencies
@@ -100,6 +103,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
+          python -m pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
           python -m pip install .[dev]
 
       - name: Show dependencies
@@ -122,6 +126,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
+          python -m pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
           python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
 
       - name: Show dependencies
@@ -147,6 +152,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
+          python -m pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
           python -m pip install .[dev,cython_extras] --no-cache-dir
 
       - name: Show dependencies
@@ -186,7 +192,9 @@ jobs:
         run: conda install -c anaconda libpython
 
       - name: Install sktime and dependencies
-        run: python -m pip install .[all_extras,dev]
+        run: |
+          python -m pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
+          python -m pip install .[all_extras,dev]
 
       - name: Show dependencies
         run: python -m pip list
@@ -220,6 +228,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
+          python -m pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
           python -m pip install .[all_extras,dev] --no-cache-dir
 
       - name: Show dependencies
