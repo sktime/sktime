@@ -338,6 +338,8 @@ class TSCGridSearchCV(_DelegatedClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sklearn.metrics import brier_score_loss
+
         from sktime.classification.kernel_based import TimeSeriesSVC
 
         param1 = {
@@ -349,6 +351,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
             "estimator": TimeSeriesSVC(),
             "param_grid": {"C": [0.1, 1]},
             "refit": False,
+            "scoring": brier_score_loss,
         }
 
         return [param1, param2]
