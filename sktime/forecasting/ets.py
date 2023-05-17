@@ -35,13 +35,13 @@ class AutoETS(_StatsModelsAdapter):
     Parameters
     ----------
     error : str, default="add"
-        The error model. Takes one of "add" or "mul".
+        The error model. Takes one of "add" or "mul". Ignored if auto=True. 
     trend : str or None, default=None
-        The trend component model. Takes one of "add", "mul", or None.
+        The trend component model. Takes one of "add", "mul", or None. Ignored if auto=True. 
     damped_trend : bool, default=False
-        Whether or not an included trend component is damped.
+        Whether or not an included trend component is damped. Ignored if auto=True. 
     seasonal : str or None, default=None
-        The seasonality model. Takes one of "add", "mul", or None.
+        The seasonality model. Takes one of "add", "mul", or None. Ignored if auto=True. 
     sp : int, default=1
         The number of periods in a complete seasonal cycle for seasonal
         (Holt-Winters) models. For example, 4 for quarterly data with an
@@ -242,7 +242,7 @@ class AutoETS(_StatsModelsAdapter):
         
         if self.auto and (any(param for param in [trend, damped_trend, seasonal]) or error=="add"):
             warnings.warn(
-                "Warning: The user-specified parameters provided alongside auto=True may not be respected. The AutoETS function automatically selects the best model based on the information criterion, ignoring the error, trend, seasonal, and damped parameters when auto=True is set. Please ensure that your intended behavior aligns with the automatic model selection."
+                "Warning: The user-specified parameters provided alongside auto=True in AutoETS may not be respected. The AutoETS function automatically selects the best model based on the information criterion, ignoring the error, trend, seasonal, and damped parameters when auto=True is set. Please ensure that your intended behavior aligns with the automatic model selection."
             )
             
     def _fit_forecaster(self, y, X=None):
