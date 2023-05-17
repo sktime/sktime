@@ -258,7 +258,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
         self.refit = refit
         self.cv = cv
         self.verbose = verbose
-        self.pre_dispach = pre_dispatch
+        self.pre_dispatch = pre_dispatch
         self.error_score = error_score
         self.return_train_score = return_train_score
 
