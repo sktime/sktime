@@ -283,13 +283,13 @@ class TimeSeriesSVC(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # testing that callables/classes can be passed
-        from sktime.dists_kernels.compose_tab_to_panel import AggrDist, FlatDist
+        from sktime.dists_kernels.compose_tab_to_panel import FlatDist
 
         # probability must be True, or predict_proba will not work
         dist1 = FlatDist.create_test_instance()
         params1 = {"kernel": dist1, "probability": True}
 
-        dist2 = AggrDist.create_test_instance()
-        params2 = {"kernel": dist2, "probability": True}
+        # testing the default kernel
+        params2 = {"probability": True}
 
         return [params1, params2]
