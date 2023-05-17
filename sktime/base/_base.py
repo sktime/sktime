@@ -72,8 +72,44 @@ from sktime.exceptions import NotFittedError
 class BaseObject(_BaseObject):
     """Base class for parametric objects with tags in sktime.
 
-    Extends skbase BaseObject with additional features.
+    Extends ``skbase`` ``BaseObject`` with additional features.
     """
+
+    def _set_params_from(self, locals):
+        """Set parameters to self from locals.
+
+        Convenience method for estimator authors and developers.
+
+        Writing ``self._set_params_from(locals())`` is
+        equivalent to writing ``self.paramname = paramname`` for all
+        variables ``paramname` in the current locals scope.
+
+        This is simpler, and less error prone (e.g., to typos of ``paramname``)
+        to write out ``self.param1 = param1, self.param2 = param2`` and so on,
+        as is required to satisfy the ``sklearn`` and ``sktime`` extension contracts,
+        at the start of ``__init__`.
+
+        Developer notes:
+
+        * the only case this should be used is at the start of ``__init__``,
+          as the single line ``self._set_params_from(locals())``
+        * ``__init__`` parameters written to ``self`` should never be overwritten,
+          not in ``__init__`` after this call and not in other methods
+
+        Parameters
+        ----------
+        locals : dict, should be ``locals()`` directly at start of ``__init__``     
+
+        Returns
+        -------
+        self   
+        """
+        if isinstance(locals, dict):
+            for param in self.get_param_names():
+                if param in locals.keys():
+                    setattr(self, param, locals[param])
+
+        return self
 
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
