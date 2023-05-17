@@ -29,17 +29,19 @@ class TimeSeriesSVC(BaseClassifier):
 
     Parameters
     ----------
-    kernel : pairwise panel transformer or callable
-        pairwise panel transformer inheriting from BasePairwiseTransformerPanel, or
-        callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
-            output must be mxn array if X is Panel of m Series, X2 of n Series
-            if distance_mtype is not set, must be able to take
-                X, X2 which are pd_multiindex and numpy3D mtype
+    kernel : pairwise panel transformer or callable, optional, default see below
+        pairwise panel transformer inheriting from ``BasePairwiseTransformerPanel``, or
+        callable, must be of signature ``(X: Panel, X2: Panel) -> np.ndarray``
+        output must be mxn array if ``X`` is Panel of m Series, ``X``2 of n Series
+        if ``distance_mtype`` is not set, must be able to take
+        ``X``, ``X2`` which are ``pd_multiindex`` and ``numpy3D`` mtype
+        default = mean Euclidean kernel, same as ``AggrDist(DotProduct())``,
+        where ``AggrDist`` is from ``sktime`` and ``DotProduct`` from ``sklearn``
     kernel_params : dict, optional. default = None.
         dictionary for distance parameters, in case that distance is a callable
     kernel_mtype : str, or list of str optional. default = None.
         mtype that distance expects for X and X2, if a callable
-            only set this if distance is not BasePairwiseTransformerPanel descendant
+        only set this if distance is not ``BasePairwiseTransformerPanel`` descendant
     C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive. The penalty
@@ -68,7 +70,7 @@ class TimeSeriesSVC(BaseClassifier):
         properly in a multithreaded context.
     max_iter : int, default=-1
         Hard limit on iterations within solver, or -1 for no limit.
-    decision_function_shape : {'ovo', 'ovr'}, default='ovr'
+    decision_function_shape : ``{'ovo', 'ovr'}``, default='ovr'
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
@@ -85,7 +87,6 @@ class TimeSeriesSVC(BaseClassifier):
         Controls the pseudo random number generation for shuffling the data for
         probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
-        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -128,7 +129,7 @@ class TimeSeriesSVC(BaseClassifier):
 
     def __init__(
         self,
-        kernel,
+        kernel=None,
         kernel_params=None,
         kernel_mtype=None,
         C=1,
@@ -179,6 +180,13 @@ class TimeSeriesSVC(BaseClassifier):
         kernel_params = self.kernel_params
         if kernel_params is None:
             kernel_params = {}
+
+        if kernel is None:
+            from sklearn.gaussian_process.kernels import DotProduct
+
+            from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+
+            kernel = AggrDist(DotProduct())
 
         if X2 is not None:
             return kernel(X, X2, **kernel_params)
