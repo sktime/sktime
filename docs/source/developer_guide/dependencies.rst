@@ -46,12 +46,10 @@ To add an estimator with a soft dependency, ensure the following:
 *  the ``python_dependencies`` tag of the estimator is populated with a ``str``,
    or a ``list`` of ``str``, of import dependencies. Exceptions will automatically raised when constructing the estimator
    in an environment without the required packages.
-*  in the python module containing the estimator, the ``_check_soft_dependencies`` utility is called
-   at the top of the module, with ``severity="warning"``. This will raise an informative warning message already at module import.
-   See `here <https://github.com/sktime/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__
 *  In a case where the package import differs from the package name, i.e., ``import package_string`` is different from
    ``pip install different-package-string`` (usually the case for packages containing a dash in the name), the ``_check_soft_dependencies``
-   utility should be used in ``__init__``. Both the warning and constructor call should use the ``package_import_alias`` argument for this.
+   utility should be called in ``__init__`` before the ``super.__init__`` call, with ``severity="error"``.
+   The ``package_import_alias`` argument should be used to pass the information on package and import strings.
 *  If the soft dependencies require specific python versions, the ``python_version``
    tag should also be populated, with a PEP 440 compliant version specification ``str`` such as ``"<3.10"`` or ``">3.6,~=3.8"``.
 *  If including docstring examples that use soft dependencies, ensure to skip doctest. To do this add a ``# doctest: +SKIP`` to the end of each

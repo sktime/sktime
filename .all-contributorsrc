@@ -2117,6 +2117,54 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "ShivamPathak99",
+      "name": "Shivam Pathak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/98941325?s=400&v=4",
+      "profile": "https://github.com/ShivamPathak99",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "SamiAlavi",
+      "name": "Sami Alavi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32700289?v=4",
+      "profile": "https://github.com/SamiAlavi",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "yarnabrina",
+      "name": "Anirban Ray",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39331844?v=4",
+      "profile": "https://github.com/yarnabrina/",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "dashapetr",
+      "name": "Darya Petrashka",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54349415?v=4",
+      "profile": "https://github.com/dashapetr",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "marrov",
+      "name": "Marc Rovira",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54272586?v=4",
+      "profile": "https://github.com/marrov",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }

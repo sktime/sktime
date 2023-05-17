@@ -6,7 +6,7 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
-All clusterers in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+All clusterers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="forecaster"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
@@ -77,6 +77,7 @@ Use ``make_reduction`` for easy specification.
     RecursiveTimeSeriesRegressionForecaster
     DirRecTabularRegressionForecaster
     DirRecTimeSeriesRegressionForecaster
+    YfromX
 
 Naive forecasters
 -----------------

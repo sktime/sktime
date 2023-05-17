@@ -9,13 +9,10 @@ Seasonality, Box-Cox transformation, ARMA errors, Trend and Seasonal components.
 Wrapping implementation in [1]_ of method proposed in [2]_.
 """
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["TBATS"]
 
 from sktime.forecasting.base.adapters import _TbatsAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tbats", severity="warning")
 
 
 class TBATS(_TbatsAdapter):

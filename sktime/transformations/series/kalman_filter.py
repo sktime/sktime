@@ -21,9 +21,6 @@ import numpy as np
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("pykalman", severity="warning")
-_check_soft_dependencies("filterpy", severity="warning")
-
 
 def _get_t_matrix(time_t, matrices, shape, time_steps):
     """Extract matrix to be used at iteration `time_t` of the Kalman filter iterations.

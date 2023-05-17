@@ -66,14 +66,22 @@ Core Developers
 
    * - Name
      - GitHub ID
+   * - Anirban Ray
+     - :user:`yarnabrina`
    * - Daniel Bartling
      - :user:`danbartl`
+   * - Jonathan Bechtel
+     - :user:`jonathanbechtel`
    * - Franz Király
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
+   * - Kiril Ralinovski
+     - :user:`kirilral`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
+   * - Marc Rovira
+     - :user:`marrov`
    * - Mirae Parker
      - :user:`miraep8`
    * - Sagar Mishra

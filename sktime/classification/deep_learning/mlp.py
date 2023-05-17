@@ -12,8 +12,6 @@ from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mlp import MLPNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies(severity="warning")
-
 
 class MLPClassifier(BaseDeepClassifier):
     """Multi Layer Perceptron Network (MLP), as described in [1]_.

@@ -73,9 +73,24 @@ __all__ = [
 ]
 
 
-def _is_uniform_average(multilevel):
-    """Check if multilevel is one of strings uniform_average, uniform_average_time."""
-    return multilevel in ["uniform_average", "uniform_average_time"]
+def _is_average(multilevel_or_multioutput):
+    """Check if multilevel is one of the inputs that lead to averaging.
+
+    True if `multilevel_or_multioutput`
+    is one of the strings `"uniform_average"`, `"uniform_average_time"`
+
+    False if `multilevel_or_multioutput`
+    is the string `"raw_values"`
+
+    True otherwise
+    """
+    if isinstance(multilevel_or_multioutput, str):
+        if multilevel_or_multioutput in ["uniform_average", "uniform_average_time"]:
+            return True
+        if multilevel_or_multioutput in ["raw_values"]:
+            return False
+    else:
+        return True
 
 
 class BaseForecastingErrorMetric(BaseMetric):
@@ -202,11 +217,11 @@ class BaseForecastingErrorMetric(BaseMetric):
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
 
-        if _is_uniform_average(multilevel) and multioutput == "raw_values":
+        if _is_average(multilevel) and not _is_average(multioutput):
             out_df = _coerce_to_1d_numpy(out_df)
-        if _is_uniform_average(multilevel) and multioutput == "uniform_average":
+        if _is_average(multilevel) and _is_average(multioutput):
             out_df = _coerce_to_scalar(out_df)
-        if multilevel == "raw_values":
+        if not _is_average(multilevel):
             out_df = _coerce_to_df(out_df)
 
         return out_df
@@ -1662,30 +1677,57 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
 
 
 class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
-    """Mean absolute percentage error (MAPE) or symmetric version.
+    r"""Mean absolute percentage error (MAPE) or symmetric version.
 
-    If `symmetric` is False then calculates MAPE and if `symmetric` is True
-    then calculates symmetric mean absolute percentage error (sMAPE). Both
-    MAPE and sMAPE output is non-negative floating point. The best value is 0.0.
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
+    at time indices :math:`t_1, \dots, t_n`,
+    `evaluate` or call returns the Mean Absolute Percentage Error,
+    :math:`\frac{1}{n} \sum_{i=1}^n \left|\frac{y_i-\widehat{y}_i}{y_i} \right|`.
+    (the time indices are not used)
+
+    if `symmetric` is True then calculates
+    symmetric mean absolute percentage error (sMAPE), defined as
+    :math:`\frac{2}{n} \sum_{i=1}^n \frac{|y_i - \widehat{y}_i|}
+    {|y_i| + |\widehat{y}_i|}`.
+
+    Both MAPE and sMAPE output non-negative floating point which is in fractional units
+    rather than percentage. The best value is 0.0.
 
     sMAPE is measured in percentage error relative to the test data. Because it
     takes the absolute value rather than square the percentage forecast
     error, it penalizes large errors less than MSPE, RMSPE, MdSPE or RMdSPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    MAPE has no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of `inf`. While sMAPE is bounded at 2.
+
+    `multioutput` and `multilevel` control averaging across variables and
+    hierarchy indices, see below.
+
+    `evaluate_by_index` returns, at a time index :math:`t_i`,
+    the abolute percentage error at that time index,
+    :math:`\left| \frac{y_i - \widehat{y}_i}{y_i} \right|`,
+    or :math:`\frac{2|y_i - \widehat{y}_i|}{|y_i| + |\widehat{y}_i|}`,
+    the symmetric version, if `symmetric` is True, for all time indices
+    :math:`t_1, \dots, t_n` in the input.
 
     Parameters
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
+    multioutput : str or 1D array-like (n_outputs,), default='uniform_average'
+        if str, must be one of {'raw_values', 'uniform_average'}
         Defines how to aggregate metric for multivariate (multioutput) data.
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', errors are mean-averaged across rows.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1701,8 +1743,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.performance_metrics.forecasting import \
-    MeanAbsolutePercentageError
+    >>> from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mape = MeanAbsolutePercentageError(symmetric=False)
@@ -1766,11 +1807,21 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
 
 class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
-    """Median absolute percentage error (MdAPE) or symmetric version.
+    r"""Median absolute percentage error (MdAPE) or symmetric version.
 
-    If `symmetric` is False then calculates MdAPE and if `symmetric` is True
-    then calculates symmetric median absolute percentage error (sMdAPE). Both
-    MdAPE and sMdAPE output is non-negative floating point. The best value is 0.0.
+    For a univariate, non-hierarchical sample of true values :math:`y_1, \dots, y_n`
+    and predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
+    at time indices :math:`t_1, \dots, t_n`,
+    `evaluate` or call returns the Median Absolute Percentage Error,
+    :math:`median(\left|\frac{y_i - \widehat{y}_i}{y_i} \right|)`.
+    (the time indices are not used)
+
+    if `symmetric` is True then calculates
+    symmetric Median Absolute Percentage Error (sMdAPE), defined as
+    :math:`median(\frac{2|y_i-\widehat{y}_i|}{|y_i|+|\widehat{y}_i|})`.
+
+    Both MdAPE and sMdAPE output non-negative floating point which is in fractional
+    units rather than percentage. The best value is 0.0.
 
     MdAPE and sMdAPE are measured in percentage error relative to the test data.
     Because it takes the absolute value rather than square the percentage forecast
@@ -1780,20 +1831,28 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    MAPE has no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of `inf`. While sMAPE is bounded at 2.
+
+    `multioutput` and `multilevel` control averaging across variables and
+    hierarchy indices, see below.
 
     Parameters
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
+    multioutput : str or 1D array-like (n_outputs,), default='uniform_average'
+        if str, must be one of {'raw_values', 'uniform_average'}
         Defines how to aggregate metric for multivariate (multioutput) data.
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', errors are mean-averaged across rows.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1809,8 +1868,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.performance_metrics.forecasting import \
-    MedianAbsolutePercentageError
+    >>> from sktime.performance_metrics.forecasting import MedianAbsolutePercentageError
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdape = MedianAbsolutePercentageError(symmetric=False)
@@ -1837,7 +1895,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smdape(y_true, y_pred)
     0.5066666666666666
-    """
+    """  # noqa: E501
 
     func = median_absolute_percentage_error
 

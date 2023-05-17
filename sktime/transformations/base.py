@@ -327,7 +327,7 @@ class BaseTransformer(BaseEstimator):
     def __getitem__(self, key):
         """Magic [...] method, return column subsetted transformer.
 
-        First index does intput subsetting, second index does output subsetting.
+        First index does input subsetting, second index does output subsetting.
 
         Keys must be valid inputs for `columns` in `ColumnSubset`.
 
@@ -916,10 +916,11 @@ class BaseTransformer(BaseEstimator):
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
+        X_metadata_required = ["is_univariate"]
         X_valid, msg, X_metadata = check_is_scitype(
             X,
             scitype=ALLOWED_SCITYPES,
-            return_metadata=True,
+            return_metadata=X_metadata_required,
             var_name="X",
         )
 
@@ -979,10 +980,12 @@ class BaseTransformer(BaseEstimator):
             elif X_scitype == "Hierarchical":
                 y_possible_scitypes = ["Panel", "Hierarchical"]
 
-            y_valid, _, y_metadata = check_is_scitype(
-                y, scitype=y_possible_scitypes, return_metadata=True, var_name="y"
+            y_valid, msg, y_metadata = check_is_scitype(
+                y, scitype=y_possible_scitypes, return_metadata=[], var_name="y"
             )
             if not y_valid:
+                for mtype, err in msg.items():
+                    msg_invalid_input += f" [{mtype}: {err}] "
                 raise TypeError("y " + msg_invalid_input)
 
             y_scitype = y_metadata["scitype"]

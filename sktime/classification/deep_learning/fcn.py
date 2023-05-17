@@ -12,8 +12,6 @@ from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.fcn import FCNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies(severity="warning")
-
 
 class FCNClassifier(BaseDeepClassifier):
     """Fully Connected Neural Network (FCN), as described in [1]_.

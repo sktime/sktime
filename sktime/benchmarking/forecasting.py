@@ -36,10 +36,9 @@ def forecasting_validation(
     """
     y = dataset_loader()
     results = {}
+    scores_df = evaluate(forecaster=estimator, y=y, cv=cv_splitter, scoring=scorers)
     for scorer in scorers:
         scorer_name = scorer.name
-        # TODO re-write evaluate to allow multiple scorers, to avoid recomputation
-        scores_df = evaluate(forecaster=estimator, y=y, cv=cv_splitter, scoring=scorer)
         for ix, row in scores_df.iterrows():
             results[f"{scorer_name}_fold_{ix}_test"] = row[f"test_{scorer_name}"]
         results[f"{scorer_name}_mean"] = scores_df[f"test_{scorer_name}"].mean()
