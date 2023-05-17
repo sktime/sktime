@@ -144,13 +144,6 @@ EXCLUDED_TESTS = {
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAX": "test_fit_transform_output",
-    # AutoETS is failing for auto=True case, see #4587, #4588, #4591 for details
-    "AutoETS": [
-        "test_predict_interval",
-        "test_predict_proba",
-        "test_predict_quantiles",
-        "test_predict_time_index",
-    ],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
