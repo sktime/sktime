@@ -338,18 +338,25 @@ class TSCGridSearchCV(_DelegatedClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sklearn.gaussian_process.kernels import DotProduct, RBF
         from sklearn.metrics import brier_score_loss
 
         from sktime.classification.kernel_based import TimeSeriesSVC
+        from sktime.dists_kernels import AggrDist
+
+        mean_euclidean_tskernel = AggrDist(DotProduct())
+        mean_gaussian_tskernel = AggrDist(RBF())
 
         param1 = {
-            "estimator": TimeSeriesSVC(),
+            "estimator": TimeSeriesSVC(kernel=mean_gaussian_tskernel),
             "param_grid": {"C": [0.1, 1]},
         }
 
         param2 = {
-            "estimator": TimeSeriesSVC(),
-            "param_grid": {"C": [0.1, 1]},
+            "estimator": TimeSeriesSVC(kernel=mean_euclidean_tskernel),
+            "param_grid": {
+                "estimator__kernel": [mean_euclidean_tskernel, mean_gaussian_tskernel],
+            },
             "refit": False,
             "scoring": brier_score_loss,
         }
