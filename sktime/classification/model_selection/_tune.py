@@ -9,20 +9,12 @@ from sklearn.model_selection import GridSearchCV
 from sktime.classification._delegate import _DelegatedClassifier
 
 
-class TSCGridsearchCV(_DelegatedClassifier):
+class TSCGridSearchCV(_DelegatedClassifier):
     """Exhaustive search over specified parameter values for an estimator.
 
-    Important members are fit, predict.
+    Adapts sklearn GridSearchCV for sktime time series classifiers
 
-    GridSearchCV implements a "fit" and a "score" method.
-    It also implements "score_samples", "predict", "predict_proba",
-    "decision_function", "transform" and "inverse_transform" if they are
-    implemented in the estimator used.
-
-    The parameters of the estimator used to apply these methods are optimized
-    by cross-validated grid-search over a parameter grid.
-
-    Read more in the :ref:`User Guide <grid_search>`.
+    Optimizes hyper-parameters of `estimators` by exhaustive grid search.
 
     Parameters
     ----------
@@ -160,63 +152,11 @@ class TSCGridsearchCV(_DelegatedClassifier):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-        .. versionadded:: 0.19
-
-        .. versionchanged:: 0.21
-            Default value was changed from ``True`` to ``False``
-
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
-
-        For instance the below given table
-
-        +------------+-----------+------------+-----------------+---+---------+
-        |param_kernel|param_gamma|param_degree|split0_test_score|...|rank_t...|
-        +============+===========+============+=================+===+=========+
-        |  'poly'    |     --    |      2     |       0.80      |...|    2    |
-        +------------+-----------+------------+-----------------+---+---------+
-        |  'poly'    |     --    |      3     |       0.70      |...|    4    |
-        +------------+-----------+------------+-----------------+---+---------+
-        |  'rbf'     |     0.1   |     --     |       0.80      |...|    3    |
-        +------------+-----------+------------+-----------------+---+---------+
-        |  'rbf'     |     0.2   |     --     |       0.93      |...|    1    |
-        +------------+-----------+------------+-----------------+---+---------+
-
-        will be represented by a ``cv_results_`` dict of::
-
-            {
-            'param_kernel': masked_array(data = ['poly', 'poly', 'rbf', 'rbf'],
-                                         mask = [False False False False]...)
-            'param_gamma': masked_array(data = [-- -- 0.1 0.2],
-                                        mask = [ True  True False False]...),
-            'param_degree': masked_array(data = [2.0 3.0 -- --],
-                                         mask = [False False  True  True]...),
-            'split0_test_score'  : [0.80, 0.70, 0.80, 0.93],
-            'split1_test_score'  : [0.82, 0.50, 0.70, 0.78],
-            'mean_test_score'    : [0.81, 0.60, 0.75, 0.85],
-            'std_test_score'     : [0.01, 0.10, 0.05, 0.08],
-            'rank_test_score'    : [2, 4, 3, 1],
-            'split0_train_score' : [0.80, 0.92, 0.70, 0.93],
-            'split1_train_score' : [0.82, 0.55, 0.70, 0.87],
-            'mean_train_score'   : [0.81, 0.74, 0.70, 0.90],
-            'std_train_score'    : [0.01, 0.19, 0.00, 0.03],
-            'mean_fit_time'      : [0.73, 0.63, 0.43, 0.49],
-            'std_fit_time'       : [0.01, 0.02, 0.01, 0.01],
-            'mean_score_time'    : [0.01, 0.06, 0.04, 0.04],
-            'std_score_time'     : [0.00, 0.00, 0.00, 0.01],
-            'params'             : [{'kernel': 'poly', 'degree': 2}, ...],
-            }
-
-        NOTE
-
-        The key ``'params'`` is used to store a list of parameter
-        settings dicts for all the parameter candidates.
-
-        The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
-        ``std_score_time`` are all in seconds.
 
         For multi-metric evaluation, the scores for all the scorers are
         available in the ``cv_results_`` dict at the keys ending with that
@@ -270,8 +210,6 @@ class TSCGridsearchCV(_DelegatedClassifier):
 
         This is present only if ``refit`` is not False.
 
-        .. versionadded:: 0.20
-
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
 
@@ -285,15 +223,11 @@ class TSCGridsearchCV(_DelegatedClassifier):
         parameter for more details) and that `best_estimator_` exposes
         `n_features_in_` when fit.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if
         `best_estimator_` is defined (see the documentation for the `refit`
         parameter for more details) and that `best_estimator_` exposes
         `feature_names_in_` when fit.
-
-        .. versionadded:: 1.0
 
     See Also
     --------
@@ -303,41 +237,10 @@ class TSCGridsearchCV(_DelegatedClassifier):
         for its final evaluation.
     sklearn.metrics.make_scorer : Make a scorer from a performance metric or
         loss function.
-
-    Notes
-    -----
-    The parameters selected are those that maximize the score of the left out
-    data, unless an explicit score is passed in which case it is used instead.
-
-    If `n_jobs` was set to a value higher than one, the data is copied for each
-    point in the grid (and not `n_jobs` times). This is done for efficiency
-    reasons if individual jobs take very little time, but may raise errors if
-    the dataset is large and not enough memory is available.  A workaround in
-    this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
-    n_jobs`.
-
-    Examples
-    --------
-    >>> from sklearn import svm, datasets
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> iris = datasets.load_iris()
-    >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC()
-    >>> clf = GridSearchCV(svc, parameters)
-    >>> clf.fit(iris.data, iris.target)
-    GridSearchCV(estimator=SVC(),
-                 param_grid={'C': [1, 10], 'kernel': ('linear', 'rbf')})
-    >>> sorted(clf.cv_results_.keys())
-    ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
-     'param_C', 'param_kernel', 'params',...
-     'rank_test_score', 'split0_test_score',...
-     'split2_test_score', ...
-     'std_fit_time', 'std_score_time', 'std_test_score']
     """
 
     _tags = {
-        "X_inner_mtype": "nested_univ",
+        "X_inner_mtype": ["nested_univ", "numpy3D"],
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
@@ -370,13 +273,59 @@ class TSCGridsearchCV(_DelegatedClassifier):
         self.error_score = error_score
         self.return_train_score = return_train_score
 
-        self.get_param_names()
+        super(TSCGridSearchCV, self).__init__()
 
+        gcsvargs = {k: getattr(self, k) for k in self.get_param_names()}
 
-        self.estimator_ = GridSearchCV(
+        self.estimator_ = GridSearchCV(**gcsvargs)
 
-        )
+    def _fit(self, X, y):
+        """Fit time series classifier to training data.
 
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
+            indices correspond to instance indices in X
+
+        Returns
+        -------
+        self : Reference to self.
+        """
+        estimator = self._get_delegate()
+        estimator.fit(X=X, y=y)
+
+        fitted_param_names = [
+            "cv_results_",
+            "best_estimator_",
+            "best_score_",
+            "best_params_",
+            "best_index_",
+            "scorer_",
+            "n_splits",
+            "refit_time",
+            "multimetric_",
+            "classes_",
+            "n_features_in_",
+            "feature_names_in_",
+        ]
+
+        for p in fitted_param_names:
+            val = getattr(estimator, p)
+            setattr(self, p, val)
+
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -400,20 +349,19 @@ class TSCGridsearchCV(_DelegatedClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        if parameter_set == "results_comparison":
-            return {
-                "estimator": RandomForestClassifier(n_estimators=10),
-                "outlier_norm": True,
-            }
+        from sklearn.metrics import 
 
-        from sklearn.dummy import DummyClassifier
+        from sktime.classification.kernel_based import TimeSeriesSVC
 
-        param1 = {"estimator": RandomForestClassifier(n_estimators=2)}
+        param1 = {
+            "estimator": TimeSeriesSVC(),
+            "param_grid": {"C": [0.1, 1]},
+        }
+
         param2 = {
-            "estimator": DummyClassifier(),
-            "outlier_norm": True,
-            "replace_nans": False,
-            "random_state": 42,
+            "estimator": TimeSeriesSVC(),
+            "param_grid": {"C": [0.1, 1]},
+            "refit": False, 
         }
 
         return [param1, param2]
