@@ -114,12 +114,14 @@ class MyForecaster(BaseForecaster):
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, parama, paramb="default", paramc=None):
 
-        # todo: write any hyper-parameters to self
-        self.parama = parama
-        self.paramb = paramb
-        self.paramc = paramc
+        # this should be the first line and not change
+        self._set_params_from(locals())
+        # convenience function that does self.parama = parama, self.paramb=paramb etc
+        # parameters of same name as __init__ args should never be overwritten!
+        # if parameters are generated, write to other attr names, such as self._parama
 
         # todo: change "MyForecaster" to the name of the class
+        # this should be the second line and not be changed except the class name
         super(MyForecaster, self).__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here

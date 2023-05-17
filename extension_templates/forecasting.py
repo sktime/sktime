@@ -165,13 +165,16 @@ class MyForecaster(BaseForecaster):
         # estimators should precede parameters
         #  if estimators have default values, set None and initalize below
 
-        # todo: write any hyper-parameters and components to self
-        self.est = est
-        self.parama = parama
-        self.paramb = paramb
-        self.paramc = paramc
+        # this should be the first line and not change
+        self._set_params_from(locals())
+        # convenience function that does self.est = est, self.parama = parama, etc
+        # parameters of same name as __init__ args should never be overwritten!
+        # if parameters are generated, write to other attr names, such as self._parama
+        # estimators of same name as __init__ args should never be mutated!
+        # for internal use, make a clone later, e.g., self._est = est.clone()
 
         # todo: change "MyForecaster" to the name of the class
+        # this should be the second line and not be changed except the class name
         super(MyForecaster, self).__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
