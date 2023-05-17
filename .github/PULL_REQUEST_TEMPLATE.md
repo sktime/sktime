@@ -50,7 +50,7 @@ Please go through the checklist below. Please feel free to remove points if they
 
 ##### For new estimators
 - [ ] I've added the estimator to the API reference - in `docs/source/api_reference/taskname.rst`, follow the pattern.
-- [ ] I've added an example to the docstring, in a pydocstyle compliant `Examples` section.
+- [ ] I've added one or more illustrative usage examples to the docstring, in a pydocstyle compliant `Examples` section.
 
 
 <!--
