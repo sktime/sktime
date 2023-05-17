@@ -1,4 +1,4 @@
-<a href="https://www.sktime.net"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.jpg?raw=true)" width="175" align="right" /></a>
+<a href="https://www.sktime.net"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.png)" width="175" align="right" /></a>
 
 # Welcome to sktime
 
