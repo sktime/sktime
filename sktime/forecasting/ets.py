@@ -242,7 +242,7 @@ class AutoETS(_StatsModelsAdapter):
         
         if self.auto:
             # If auto=True, check if trend, damped_trend, seasonal, or error have been passed in by user
-            if any([trend, damped_trend, seasonal, error]):
+            if any(param is not None for param in [trend, damped_trend, seasonal, error]):
                 warnings.warn(
                     "The user-specified parameters provided alongside auto=True in AutoETS may not be respected. "
                     "The AutoETS function automatically selects the best model based on the information criterion, ignoring "
