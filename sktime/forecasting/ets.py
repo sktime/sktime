@@ -244,7 +244,7 @@ class AutoETS(_StatsModelsAdapter):
             # If auto=True, check if trend, damped_trend, seasonal, or error have been passed in by user
             if any([trend, damped_trend, seasonal, error]):
                 warnings.warn(
-                    "Warning: The user-specified parameters provided alongside auto=True in AutoETS may not be respected. "
+                    "The user-specified parameters provided alongside auto=True in AutoETS may not be respected. "
                     "The AutoETS function automatically selects the best model based on the information criterion, ignoring "
                     "the error, trend, seasonal, and damped_trend parameters when auto=True is set. Please ensure that your "
                     "intended behavior aligns with the automatic model selection."
