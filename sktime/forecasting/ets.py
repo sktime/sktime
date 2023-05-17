@@ -120,7 +120,7 @@ class AutoETS(_StatsModelsAdapter):
         Whether or not to return only the array of maximizing parameters.
     auto : bool, default=False
         Set True to enable automatic model selection. If auto=True, then error,
-        trend, seasonal and trend_damped are ignored.
+        trend, seasonal and damped_trend are ignored.
     information_criterion : str, default="aic"
         Information criterion to be used in model selection. One of:
 
@@ -240,9 +240,12 @@ class AutoETS(_StatsModelsAdapter):
 
         super(AutoETS, self).__init__(random_state=random_state)
         
-        if self.auto and (any(param for param in [trend, damped_trend, seasonal]) or error=="add"):
+        if self.auto and (any(param for param in [trend, damped_trend, seasonal]) or error!="add"):
             warnings.warn(
-                "Warning: The user-specified parameters provided alongside auto=True in AutoETS may not be respected. The AutoETS function automatically selects the best model based on the information criterion, ignoring the error, trend, seasonal, and damped parameters when auto=True is set. Please ensure that your intended behavior aligns with the automatic model selection."
+                "Warning: The user-specified parameters provided alongside auto=True in AutoETS may not be respected. "
+                "The AutoETS function automatically selects the best model based on the information criterion, ignoring "
+                "the error, trend, seasonal, and damped_trend parameters when auto=True is set. Please ensure that your "
+                "intended behavior aligns with the automatic model selection."
             )
             
     def _fit_forecaster(self, y, X=None):
