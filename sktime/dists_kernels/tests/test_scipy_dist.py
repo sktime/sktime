@@ -52,7 +52,7 @@ def _get_kul_name():
         one of "kulsinski" (if scipy < 1.11.0) and "kulczynski1" (if scipy >= 1.11.0)
     """
     try:
-        from scipy.spatial.distance import kulczynski1
+        from scipy.spatial.distance import kulczynski1  # noqa: F401
 
         name = "kulczynski1"
     except Exception:
