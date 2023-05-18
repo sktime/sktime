@@ -36,8 +36,8 @@ class AlignerFixtureGenerator(BaseFixtureGenerator):
     estimator_type_filter = "aligner"
 
 
-class TestAllClassifiers(AlignerFixtureGenerator, QuickTester):
-    """Module level tests for all sktime classifiers."""
+class TestAllAligners(AlignerFixtureGenerator, QuickTester):
+    """Module level tests for all sktime aligners."""
 
     def test_get_alignment(self, estimator_instance):
         """Test that get_alignment returns an alignment (iloc)."""
