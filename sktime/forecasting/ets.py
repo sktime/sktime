@@ -450,3 +450,30 @@ class AutoETS(_StatsModelsAdapter):
         https://www.statsmodels.org/dev/examples/notebooks/generated/ets.html
         """
         return self._fitted_forecaster.summary()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = [
+            # default setting, non-auto
+            {},
+            # "auto-ets"
+            # TODO: uncomment following line while fixing #4591
+            # {"sp": 2, "auto": True},
+            # ets (non-auto) with some non-default parameters
+            {"information_criterion": "bic", "trend": "add", "damped_trend": True},
+        ]
+
+        return params
