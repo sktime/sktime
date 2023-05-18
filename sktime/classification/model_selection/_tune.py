@@ -342,19 +342,17 @@ class TSCGridSearchCV(_DelegatedClassifier):
         from sktime.classification.kernel_based import TimeSeriesSVC
         from sktime.dists_kernels import AggrDist
 
-        mean_euclidean_tskernel = AggrDist(DotProduct())
-        mean_gaussian_tskernel = AggrDist(RBF())
+        mean_eucl_tskernel = AggrDist(DotProduct())
+        mean_rbf_tskernel = AggrDist(RBF())
 
         param1 = {
-            "estimator": TimeSeriesSVC(kernel=mean_gaussian_tskernel),
+            "estimator": TimeSeriesSVC(kernel=mean_rbf_tskernel, probability=True),
             "param_grid": {"C": [0.1, 1]},
         }
 
         param2 = {
-            "estimator": TimeSeriesSVC(kernel=mean_euclidean_tskernel),
-            "param_grid": {
-                "estimator__kernel": [mean_euclidean_tskernel, mean_gaussian_tskernel],
-            },
+            "estimator": TimeSeriesSVC(kernel=mean_eucl_tskernel, probability=True),
+            "param_grid": {"kernel__transformer": [DotProduct(), RBF()]},
             "refit": False,
             "scoring": brier_score_loss,
         }
