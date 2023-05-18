@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.model_selection import GridSearchCV
 
 from sktime.classification._delegate import _DelegatedClassifier
+from sktime.classification.base import BaseClassifier
 
 
 class TSCGridSearchCV(_DelegatedClassifier):
@@ -314,6 +315,40 @@ class TSCGridSearchCV(_DelegatedClassifier):
                 setattr(self, p, val)
 
         return self
+
+    def _predict_proba(self, X):
+        """Predicts labels probabilities for sequences in X.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        Returns
+        -------
+        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
+            1st dimension indices correspond to instance indices in X
+            2nd dimension indices correspond to possible labels (integers)
+            (i, j)-th entry is predictive probability that i-th instance is of class j
+        """
+        if not self.refit:
+            return BaseClassifier._predict_proba(self, X)
+        else:
+            estimator = self._get_delegate()
+            return estimator.predict_proba(X=X)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
