@@ -5,10 +5,8 @@
 __author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
-from sktime.datatypes._panel._convert import from_nested_to_long
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.warnings import warn
 
 
 class _TSFreshFeatureExtractor(BaseTransformer):
@@ -24,7 +22,6 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "python_dependencies": "tsfresh",
-        "python_version": "<3.10",
     }
 
     def __init__(
@@ -208,9 +205,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     --------
     >>> from sklearn.model_selection import train_test_split
     >>> from sktime.datasets import load_arrow_head
-    >>> from sktime.transformations.panel.tsfresh import (
-    ...     TSFreshFeatureExtractor
-    ... )
+    >>> from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
     >>> X, y = load_arrow_head(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> ts_eff = TSFreshFeatureExtractor(
@@ -227,6 +222,8 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     ... ) # doctest: +SKIP
     >>> X_transform2 = ts_custom.fit_transform(X_train) # doctest: +SKIP
     """
+
+    _tags = {"X_inner_mtype": "pd-long"}
 
     def __init__(
         self,
@@ -274,35 +271,24 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
             each cell of Xt contains pandas.Series
             transformed version of X
         """
-        # tsfresh requires unique index, returns only values for
-        # unique index values
-        if X.index.nunique() < X.shape[0]:
-            warn(
-                "tsfresh requires a unique index, but found "
-                "non-unique. To avoid this warning, please make sure the index of X "
-                "contains only unique values.",
-                obj=self,
-            )
-            X = X.reset_index(drop=True)
-
-        Xt = from_nested_to_long(X)
-
         # lazy imports to avoid hard dependency
         from tsfresh import extract_features
 
         Xt = extract_features(
-            Xt,
-            column_id="index",
-            column_value="value",
-            column_kind="column",
-            column_sort="time_index",
+            X,
+            column_id=X.columns[0],
+            column_value=X.columns[3],
+            column_kind=X.columns[2],
+            column_sort=X.columns[1],
             **self.default_fc_parameters_,
         )
 
         # When using the long input format, tsfresh seems to sort the index,
         # here we make sure we return the dataframe in the sort order as the
         # input data
-        return Xt.reindex(X.index)
+        instances = X.iloc[:, 0].unique()
+        Xt = Xt.reindex(instances)
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

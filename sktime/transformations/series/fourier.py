@@ -6,7 +6,7 @@ __author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
 from distutils.log import warn
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -38,7 +38,7 @@ class FourierFeatures(BaseTransformer):
 
     Parameters
     ----------
-    sp_list : List[Union[int, float]]
+    sp_list : List[float]
         list of seasonal periods
     fourier_terms_list : List[int]
         list of number of fourier terms (K) for each seasonal period.
@@ -110,7 +110,7 @@ class FourierFeatures(BaseTransformer):
 
     def __init__(
         self,
-        sp_list: List[Union[int, float]],
+        sp_list: List[float],
         fourier_terms_list: List[int],
         freq: Optional[str] = None,
         keep_original_columns: Optional[bool] = False,

@@ -6,13 +6,13 @@
 __author__ = ["mloning"]
 __all__ = ["SimpleRNNRegressor"]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.networks.rnn import RNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class SimpleRNNRegressor(BaseDeepRegressor):
@@ -27,13 +27,14 @@ class SimpleRNNRegressor(BaseDeepRegressor):
 
     def __init__(
         self,
-        nb_epochs=100,
+        num_epochs=100,
         batch_size=1,
         units=6,
         callbacks=None,
+        add_default_callback=True,
         random_state=0,
-        verbose=0,
-        loss="Huber",
+        verbose=False,
+        loss="mean_squared_error",
         metrics=None,
         activation="linear",
         use_bias=True,
@@ -41,11 +42,12 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     ):
         _check_dl_dependencies(severity="error")
         super(SimpleRNNRegressor, self).__init__()
-        self.nb_epochs = nb_epochs
+        self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
         self.callbacks = callbacks
+        self.add_default_callback = add_default_callback
         self.random_state = random_state
         self.loss = loss
         self.metrics = metrics
@@ -72,14 +74,17 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         from tensorflow import keras
 
         tf.random.set_seed(self.random_state)
-        if self.metrics is None:
-            metrics = ["accuracy"]
-        else:
-            metrics = self.metrics
+
+        metrics = self.metrics if self.metrics is not None else ["accuracy"]
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
+        output_layer = keras.layers.Dense(
+            units=1,
+            activation=self.activation,
+            use_bias=self.use_bias,
+        )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.Adam(learning_rate=0.01)
+            keras.optimizers.RMSprop(lr=0.001)
             if self.optimizer is None
             else self.optimizer
         )
@@ -99,32 +104,66 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             n_dimensions is assumed to be 1.
         y : array-like, shape = [n_instances]
             The training data class labels.
-        input_checks : boolean
-            whether to check the X and y parameters
 
         Returns
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
+        from tensorflow import keras
+
+        X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
-        self.batch_size = int(max(1, min(X.shape[0] / 10, self.batch_size)))
 
-        self.model = self.build_model(self.input_shape)
+        self.model_ = self.build_model(self.input_shape)
 
         if self.verbose:
-            self.model.summary()
+            self.model_.summary()
 
-        self.history = self.model.fit(
+        # add a ReduceLROnPlateau callback if default is enabled
+        # if an instance of ReduceLRonPlateau is already present
+        # then don't add it again.
+        if self.add_default_callback:
+            reduce_lr = keras.callbacks.ReduceLROnPlateau(
+                monitor="loss",
+                factor=0.5,
+                patience=50,
+                min_lr=0.0001,
+            )
+            if self.callbacks is None:
+                self.callbacks_ = [
+                    reduce_lr,
+                ]
+            elif isinstance(self.callbacks, keras.callbacks.Callback):
+                self.callbacks_ = [
+                    self.callbacks,
+                    reduce_lr,
+                ]
+            elif isinstance(self.callbacks, tuple):
+                self.callbacks_ = deepcopy([i for i in self.callbacks])
+                if not any(
+                    isinstance(callback, keras.callbacks.ReduceLROnPlateau)
+                    for callback in self.callbacks
+                ):
+                    self.callbacks_.append(reduce_lr)
+            else:
+                raise TypeError(
+                    "`callback` can either be None, an instance "
+                    "of keras.callbacks.Callback or a tuple containing "
+                    "keras.callbacks.Callback objects. "
+                    f"But found {type(self.callbacks)} instead."
+                )
+        else:
+            self.callbacks_ = deepcopy(self.callbacks)
+
+        self.history = self.model_.fit(
             X,
             y,
             batch_size=self.batch_size,
-            epochs=self.nb_epochs,
+            epochs=self.num_epochs,
             verbose=self.verbose,
-            callbacks=self.callbacks,
+            callbacks=self.callbacks_,
         )
         return self
 
@@ -151,7 +190,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         """
         params1 = {}
         params2 = {
-            "nb_epochs": 50,
+            "num_epochs": 50,
             "batch_size": 2,
             "units": 5,
             "use_bias": False,
