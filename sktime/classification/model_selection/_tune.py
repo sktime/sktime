@@ -306,8 +306,6 @@ class TSCGridSearchCV(_DelegatedClassifier):
             "refit_time_",
             "multimetric_",
             "classes_",
-            "n_features_in_",
-            "feature_names_in_",
         ]
 
         for p in fitted_param_names:
