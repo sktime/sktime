@@ -40,6 +40,21 @@ X2_df = make_transformer_problem(
 )
 
 
+def _get_kul_name():
+    """Utility to bridge deprecation of kulsinski distance in scipy.
+
+    Name pre-1.11.0 is kulsinski, and from 1.11.0 it is kulcynski1
+    """
+    try:
+        from scipy.spatial.distance import kulczynski1
+
+        name = "kulczynski1"
+    except Exception:
+        name = "kulsinski"
+
+    return name
+
+
 # potential parameters
 METRIC_VALUES = [
     "braycurtis",
@@ -53,7 +68,7 @@ METRIC_VALUES = [
     "hamming",
     "jaccard",
     "jensenshannon",
-    "kulsinski",
+    _get_kul_name(),
     "mahalanobis",
     "matching",
     "minkowski",
