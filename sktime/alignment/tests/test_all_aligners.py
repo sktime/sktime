@@ -59,8 +59,8 @@ class TestAllAligners(AlignerFixtureGenerator, QuickTester):
 
         check_raise(align, mtype="alignment_loc", scitype="Alignment")
 
-    def test_get_alignment_loc(self, estimator_instance):
-        """Test that get_alignment returns an alignment (loc)."""
+    def test_get_aligned(self, estimator_instance):
+        """Test that get_aligned returns aligned series."""
         X = [_make_series(n_columns=2), _make_series(n_columns=2)]
         n = len(X)
         X_aligned = estimator_instance.fit(X).get_aligned()
