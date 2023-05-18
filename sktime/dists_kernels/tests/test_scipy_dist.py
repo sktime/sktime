@@ -41,9 +41,15 @@ X2_df = make_transformer_problem(
 
 
 def _get_kul_name():
-    """Utility to bridge deprecation of kulsinski distance in scipy.
+    """Get name of kul... distance.
 
-    Name pre-1.11.0 is kulsinski, and from 1.11.0 it is kulcynski1
+    Utility to bridge deprecation of kulsinski distance in scipy.
+    Name pre-1.11.0 is kulsinski, and from 1.11.0 it is kulczynski1.
+
+    Returns
+    -------
+    name : str
+        one of "kulsinski" (if scipy < 1.11.0) and "kulczynski1" (if scipy >= 1.11.0)
     """
     try:
         from scipy.spatial.distance import kulczynski1
