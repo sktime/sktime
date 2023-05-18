@@ -337,7 +337,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         from sklearn.gaussian_process.kernels import RBF, DotProduct
-        from sklearn.metrics import brier_score_loss
+        from sklearn.metrics import accuracy_score
 
         from sktime.classification.kernel_based import TimeSeriesSVC
         from sktime.dists_kernels import AggrDist
@@ -354,7 +354,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
             "estimator": TimeSeriesSVC(kernel=mean_eucl_tskernel, probability=True),
             "param_grid": {"kernel__transformer": [DotProduct(), RBF()]},
             "refit": False,
-            "scoring": brier_score_loss,
+            "scoring": accuracy_score,
         }
 
         return [param1, param2]
