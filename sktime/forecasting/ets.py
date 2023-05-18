@@ -38,7 +38,7 @@ class AutoETS(_StatsModelsAdapter):
         The error model. Takes one of "add" or "mul". Ignored if auto=True. 
     trend : str or None, default=None
         The trend component model. Takes one of "add", "mul", or None. Ignored if auto=True. 
-    damped_trend : bool, default=None
+    damped_trend : bool, default=False
         Whether or not an included trend component is damped. Ignored if auto=True. 
     seasonal : str or None, default=None
         The seasonality model. Takes one of "add", "mul", or None. Ignored if auto=True. 
@@ -180,9 +180,9 @@ class AutoETS(_StatsModelsAdapter):
 
     def __init__(
         self,
-        error=None,
+        error="add",
         trend=None,
-        damped_trend=None,
+        damped_trend=False,
         seasonal=None,
         sp=1,
         initialization_method="estimated",
@@ -241,26 +241,14 @@ class AutoETS(_StatsModelsAdapter):
         super(AutoETS, self).__init__(random_state=random_state)
         
         if self.auto:
-            # If auto=True, check if trend, damped_trend, seasonal, or error have been passed in by user
-            if any(param is not None for param in [trend, damped_trend, seasonal, error]):
+            # If auto=True, check if trend, damped_trend, seasonal, or error are not set to default values
+            if any([trend, damped_trend, seasonal]) or error != "add":
                 warnings.warn(
                     "The user-specified parameters provided alongside auto=True in AutoETS may not be respected. "
                     "The AutoETS function automatically selects the best model based on the information criterion, ignoring "
                     "the error, trend, seasonal, and damped_trend parameters when auto=True is set. Please ensure that your "
                     "intended behavior aligns with the automatic model selection."
                 )
-        else:
-            # If auto=False, check if damped_trend has been passed by user
-            if damped_trend:
-                self.damped_trend = damped_trend
-            else:
-                self.damped_trend = False
-            # If auto=False, check if error has been passed by user
-            if error:
-                self.error = error
-            else:
-                self.error = "add"
-         
             
     def _fit_forecaster(self, y, X=None):
         from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
