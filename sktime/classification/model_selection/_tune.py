@@ -309,8 +309,9 @@ class TSCGridSearchCV(_DelegatedClassifier):
         ]
 
         for p in fitted_param_names:
-            val = getattr(estimator, p)
-            setattr(self, p, val)
+            if hasattr(estimator, p):
+                val = getattr(estimator, p)
+                setattr(self, p, val)
 
         return self
 
