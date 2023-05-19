@@ -165,7 +165,7 @@ class DrCIF(BaseClassifier):
         save_transformed_data=False,
         n_jobs=1,
         random_state=None,
-        max_depth=sys.maxsize,
+        max_depth=None,
     ):
         self.n_estimators = n_estimators
         self.n_intervals = n_intervals
