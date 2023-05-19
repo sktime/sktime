@@ -100,15 +100,12 @@ class AlignerDtwNumba(BaseAligner):
 
     Examples
     --------
-    >>> from sktime.datasets import load_unit_test
-    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>> from sktime.utils._testing.panel import _make_panel_X
+    >>> from sktime.alignment.dtw_numba import class AlignerDtwNumba
     >>>
-    >>> X, _ = load_unit_test(return_type="pd-multiindex")  # doctest: +SKIP
-    >>> d = DtwDist(weighted=True, derivative=True)  # doctest: +SKIP
-    >>> distmat = d.transform(X)  # doctest: +SKIP
-
-    distances are also callable, this does the same:
-    >>> distmat = d(X)  # doctest: +SKIP
+    >>> X = _make_panel_X(n_instances=2)  # doctest: +SKIP
+    >>> d = AlignerDtwNumba(weighted=True, derivative=True)  # doctest: +SKIP
+    >>> align = d.fit(X).get_alignment()
     """
 
     _tags = {
