@@ -81,6 +81,8 @@ class DrCIF(BaseClassifier):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
+    max_depth : int
+        The maximum depth for each tree.
 
     Attributes
     ----------
@@ -109,8 +111,6 @@ class DrCIF(BaseClassifier):
     (n_instances,total_intervals * att_subsample_size)
         The transformed dataset for all classifiers. Only saved when
         save_transformed_data is true.
-    max_depth : int
-        The maximum depth for each tree.
 
     See Also
     --------
