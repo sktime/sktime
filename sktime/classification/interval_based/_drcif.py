@@ -8,10 +8,9 @@ periodogram and differences representations as well as the base series.
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["DrCIF"]
 
+import copy
 import math
 import time
-import sys
-import copy
 
 import numpy as np
 from joblib import Parallel, delayed
