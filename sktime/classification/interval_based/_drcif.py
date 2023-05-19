@@ -109,7 +109,8 @@ class DrCIF(BaseClassifier):
     (n_instances,total_intervals * att_subsample_size)
         The transformed dataset for all classifiers. Only saved when
         save_transformed_data is true.
-    max_depth : int of the maximum depth for each tree.
+    max_depth : int
+        The maximum depth for each tree.
 
     See Also
     --------
