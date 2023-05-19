@@ -714,9 +714,8 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
-    # todo 0.18.0: switch legacy_interface default to False
     # todo 0.19.0: remove any legacy_interface logic
-    def predict_proba(self, fh=None, X=None, marginal=True, legacy_interface=None):
+    def predict_proba(self, fh=None, X=None, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         Note: currently only implemented for Series (non-panel, non-hierarchical) y.
@@ -742,9 +741,8 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
-        legacy_interface : bool or None, optional, default=None
+        legacy_interface : bool or None, optional, default=False
             whether legacy interface is used, deprecation parameter
-            default will change to False in 0.18.0
             parameter will be removed in 0.19.0
             True: always returns tfp Distribution object
             False: always returns sktime BaseDistribution object
@@ -2000,32 +1998,31 @@ class BaseForecaster(BaseEstimator):
                 "This is likely a bug, please report, and/or set the flag to False."
             )
 
-        if implements_quantiles:
-            alphas = []
-            for c in coverage:
-                # compute quantiles corresponding to prediction interval coverage
-                #  this uses symmetric predictive intervals
-                alphas.extend([0.5 - 0.5 * float(c), 0.5 + 0.5 * float(c)])
+        # we default to _predict_quantiles if that is implemented or _predict_proba
+        # since _predict_quantiles will default to _predict_proba if it is not
+        alphas = []
+        for c in coverage:
+            # compute quantiles corresponding to prediction interval coverage
+            #  this uses symmetric predictive intervals
+            alphas.extend([0.5 - 0.5 * float(c), 0.5 + 0.5 * float(c)])
 
-            # compute quantile forecasts corresponding to upper/lower
-            pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
+        # compute quantile forecasts corresponding to upper/lower
+        pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
 
-            # change the column labels (multiindex) to the format for intervals
-            # idx returned by _predict_quantiles is
-            #   2-level MultiIndex with variable names, alpha
-            idx = pred_int.columns
-            # variable names (unique, in same order)
-            var_names = idx.get_level_values(0).unique()
-            # if was univariate & unnamed variable, replace default
-            if len(var_names) == 1 and var_names == ["Quantiles"]:
-                var_names = ["Coverage"]
-            # idx returned by _predict_interval should be
-            #   3-level MultiIndex with variable names, coverage, lower/upper
-            int_idx = pd.MultiIndex.from_product(
-                [var_names, coverage, ["lower", "upper"]]
-            )
+        # change the column labels (multiindex) to the format for intervals
+        # idx returned by _predict_quantiles is
+        #   2-level MultiIndex with variable names, alpha
+        idx = pred_int.columns
+        # variable names (unique, in same order)
+        var_names = idx.get_level_values(0).unique()
+        # if was univariate & unnamed variable, replace default
+        if len(var_names) == 1 and var_names == ["Quantiles"]:
+            var_names = ["Coverage"]
+        # idx returned by _predict_interval should be
+        #   3-level MultiIndex with variable names, coverage, lower/upper
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
 
-            pred_int.columns = int_idx
+        pred_int.columns = int_idx
 
         return pred_int
 
@@ -2206,7 +2203,7 @@ class BaseForecaster(BaseEstimator):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -2220,9 +2217,8 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series to predict from.
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
-        legacy_interface : bool or None, optional, default=None
+        legacy_interface : bool or None, optional, default=False
             whether legacy interface is used, deprecation parameter
-            default will change to False in 0.18.0
             parameter will be removed in 0.19.0
             True: always returns tfp Distribution object
             False: always returns sktime BaseDistribution object

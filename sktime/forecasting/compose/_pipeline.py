@@ -5,8 +5,6 @@
 __author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -80,15 +78,6 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                 f"the two can be mixed; but, found steps of type {type(estimators)}"
             )
             raise TypeError(msg)
-
-        if len(estimators) == 1:
-            msg = (
-                f"in {self_name}, found steps of length 1, "
-                f"this will result in the same behaviour "
-                f"as not wrapping the single step in a pipeline. "
-                f"Consider not wrapping steps in {self_name} as it is redundant."
-            )
-            warn(msg)
 
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)
@@ -625,9 +614,10 @@ class ForecastingPipeline(_Pipeline):
         X = self._transform(X=X)
         return self.forecaster_.predict_var(fh=fh, X=X, cov=cov)
 
-    # todo 0.18.0 change legacy_interface default to False
+    # todo: does not work properly for multivariate or hierarchical
+    #   still need to implement this - once interface is consolidated
     # todo 0.19.0 remove legacy_interface arg and logic
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -1516,9 +1506,8 @@ class ForecastX(BaseForecaster):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    # todo 0.18.0 change legacy_interface default to False
     # todo 0.19.0 remove legacy_interface arg and logic
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba

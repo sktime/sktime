@@ -13,13 +13,109 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.18.0 - 2023-04-28
+---------------------------
+
+Maintenance release - scheduled ``numba``, ``scikit-base``, ``pandas`` dependency updates,
+scheduled deprecations.
+
+For last non-maintenance content update, see 0.17.2.
+
+Contents
+~~~~~~~~
+
+* ``numba`` has been changed to be a soft dependency. All ``numba`` based estimators
+  continue working unchanged, but require explicit ``numba`` installation.
+* the base module of ``sktime`` has been factored out to ``scikit-base``,
+  the abstract base layer for ``scikit-learn`` like packages maintained by ``sktime``
+* ``pandas 2`` support continues in testing/experimental period until 0.18.last.
+  All ``sktime`` native functionality is ``pandas 2`` compatible, the transition period
+  allows testing of deployments and custom extensions.
+  See instructions below for upgrading dependenet code to ``pandas 2``, or remaining on ``pandas 1``.
+* scheduled deprecation of ``tensorflow`` based probability interface and ``VectorizedDF`` methods.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numba`` is no longer a core dependency, it has changed to soft dependency
+* ``scikit-base`` is a new core dependency
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dependencies
+^^^^^^^^^^^^
+
+* ``numba`` has changed from core dependency to soft dependency in ``sktime 0.18.0``.
+  To ensure functioning of setups of ``sktime`` code dependent on ``numba`` based estimators
+  going forward, ensure to install ``numba`` in the environment explicitly,
+  or install the ``all_extras`` soft dependency set which will continue to contain ``numba``.
+  Besides this, ``numba`` dependent estimators will function identically as before.
+* ``sktime``'s base module has moved to a new core dependency, ``scikit-base``, from ``sktime 0.18.0``.
+  This will not impact functionality or imports directly from ``sktime``, or any usage.
+* ``tensorflow-probability`` will cease to be a soft dependency from 0.19.0,
+  as the only dependency locus (forecasters' old ``predict_proba`` return type)
+  is being deprecated.
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``VectorizedDF.get_iloc_indexer`` was removed.
+  Developers and users should use ``iter``, ``__iter__``, or ``get_iter_indices`` instead.
+
+Forecasting
+^^^^^^^^^^^
+
+* forecasters' ``predict_proba`` now by default returns a ``BaseDistribution``.
+  The old ``tensorflow-probability`` based return from pre-0.17.0 can still be obtained
+  by setting the argument ``legacy_interface=False`` in ``predict_proba``.
+  This is useful for handling deprecation.
+* from 0.19.0, the ``legacy_interface`` argument will be removed from ``predict_proba``,
+  together with the option to return ``tensorflow-probability`` based returns.
+
+``pandas 2`` upgrade and testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* support for ``pandas 2`` is being introduced gradually:
+
+  * experimental support period until 0.19.0 (all 0.17.X and 0.18.X versions)
+  * full support from 0.19.0 (0.19.0, 0.19.X and onwards)
+
+* in the experimental period (0.17.1-0.18.last):
+
+  * ``sktime`` will have a dependency bound of ``pandas<2.0.0``
+  * ``sktime`` will aim to be compatible with ``pandas 2.0.X`` as well as ``pandas 1, >=1.1.0``,
+  * ``sktime`` can be run and tested with ``pandas 2.0.X`` by force-installing ``pandas 2.0.X``
+  * estimators can be tested for ``pandas 2`` compatibility via ``check_estimator`` under force-installed ``pandas 2.0.X``
+  * reports on compatibility issues are appreciated in :issue:`4426` (direct input or link from)
+
+* in the full support period (0.19.0-onwards):
+
+  * ``sktime`` requirements will allow ``pandas 2.0.X`` and extend support with ``pandas`` releases
+  * ``sktime`` will aim to be compatible with ``pandas 2`` (any version), as well as ``pandas 1, >=1.1.0``
+  * users choose their preferred ``pandas`` version by requirements on their downstream environment
+  * the bug and issue trackers should be used as normal
+
+List of PR
+~~~~~~~~~~
+
+* [MNT] 0.18.0 change action - ``numba`` as soft dependency (:pr:`3843`) :user:`fkiraly`
+* [MNT] 0.18.0 deprecation actions (:pr:`4510`) :user:`fkiraly`
+* [MNT] ensure ``predict_proba`` calls in ``mlflow`` forecasting interface explicitly call ``legacy_interface`` (:pr:`4514`) :user:`fkiraly`
+* [MNT] ``skbase`` refactor - part 1: ``BaseObject`` and package dependencies (:pr:`3151`) :user:`fkiraly`
+* [MNT] ``skbase`` refactor - part 2: ``all_estimators`` lookup (:pr:`3777`) :user:`fkiraly`
+* [ENH] ``quantile`` method for distributions, default implementation of forecaster ``predict_quantiles`` if ``predict_proba`` is present (:pr:`4513`) :user:`fkiraly`
+* [ENH] add test for ``all_estimators`` tag filter (:pr:`4512`) :user:`fkiraly`
+
+
 Version 0.17.2 - 2023-04-24
 ---------------------------
 
 Highlights
 ~~~~~~~~~~
 
-* the transformers and pipelines tutorial from pydata global 2022 is now available in ``sktime``, see `examples <https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples>`_(:pr:`4381`) :user:`dashapetr`
+* the transformers and pipelines tutorial from pydata global 2022 is now available in ``sktime``, see `examples <https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples>`_ (:pr:`4381`) :user:`dashapetr`
 * probabilistic prediction functionality for ``SARIMAX`` (:pr:`4439`) :user:`yarnabrina`
 * ``InceptionTime`` classifier from ``sktime-dl`` migrated (:pr:`3003`) :user:`tobiasweede`
 * ``SplitterBootstrapTransformer`` for booststrapping based on any splitter (:pr:`4455`) :user:`fkiraly`

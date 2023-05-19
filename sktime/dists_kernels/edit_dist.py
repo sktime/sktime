@@ -100,6 +100,18 @@ class EditDist(BasePairwiseTransformerPanel):
     .. [4] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
         for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
         Intelligence. 31 (2): 306–318.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.dists_kernels.edit_dist import EditDist
+    >>>
+    >>> X, _ = load_unit_test(return_type="pd-multiindex")  # doctest: +SKIP
+    >>> d = EditDist("edr")  # doctest: +SKIP
+    >>> distmat = d.transform(X)  # doctest: +SKIP
+
+    distances are also callable, this does the same:
+    >>> distmat = d(X)  # doctest: +SKIP
     """
 
     _tags = {
