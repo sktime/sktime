@@ -11,6 +11,7 @@ __all__ = ["DrCIF"]
 import math
 import time
 import sys
+import copy
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -69,6 +70,7 @@ class DrCIF(BaseClassifier):
         measure.
         "CIT" uses the sktime ContinuousIntervalTree, an implementation of the original
         tree used with embedded attribute processing for faster predictions.
+        In order to pass parameters to estimators, pass a BaseEstimator instance.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding n_estimators.
         Default of 0 means n_estimators is used.
@@ -81,8 +83,6 @@ class DrCIF(BaseClassifier):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
-    max_depth : int
-        The maximum depth for each tree.
 
     Attributes
     ----------
@@ -165,7 +165,6 @@ class DrCIF(BaseClassifier):
         save_transformed_data=False,
         n_jobs=1,
         random_state=None,
-        max_depth=None,
     ):
         self.n_estimators = n_estimators
         self.n_intervals = n_intervals
@@ -197,10 +196,18 @@ class DrCIF(BaseClassifier):
         self._att_subsample_size = att_subsample_size
         self._min_interval = min_interval
         self._max_interval = max_interval
-        self._base_estimator = base_estimator
-        self.max_depth = max_depth
 
         super(DrCIF, self).__init__()
+
+        if isinstance(base_estimator, str):
+            if base_estimator.lower() == "dtc":
+                self._base_estimator = DecisionTreeClassifier(criterion="entropy")
+            elif base_estimator.lower() == "cit":
+                self._base_estimator = ContinuousIntervalTree()
+        elif isinstance(base_estimator, BaseEstimator):
+            self._base_estimator = copy.deepcopy(base_estimator)
+        else:
+            raise ValueError("DrCIF invalid base estimator given")
 
     def _fit(self, X, y):
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
@@ -208,23 +215,6 @@ class DrCIF(BaseClassifier):
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0
-
-        if self.base_estimator.lower() == "dtc":
-            if self.max_depth is not None:
-                self._base_estimator = DecisionTreeClassifier(
-                    criterion="entropy", max_depth=self.max_depth
-                )
-            else:
-                self._base_estimator = DecisionTreeClassifier(criterion="entropy")
-        elif self.base_estimator.lower() == "cit":
-            if self.max_depth is not None:
-                self._base_estimator = ContinuousIntervalTree(max_depth=self.max_depth)
-            else:
-                self._base_estimator = ContinuousIntervalTree()
-        elif isinstance(self.base_estimator, BaseEstimator):
-            self._base_estimator = self.base_estimator
-        else:
-            raise ValueError("DrCIF invalid base estimator given.")
 
         X_p = np.zeros(
             (
