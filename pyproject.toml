@@ -138,6 +138,10 @@ dl = [
     "tensorflow-probability",
 ]
 
+pandas1 = [
+    "pandas<2.0.0",
+]
+
 [project.urls]
 Homepage = "https://www.sktime.net"
 Repository = "https://github.com/sktime/sktime"
