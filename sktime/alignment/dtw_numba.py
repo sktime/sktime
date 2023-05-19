@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Interface module to dtw-python package.
-
-Exposes basic interface, excluding multivariate case.
-"""
+"""BaseAligner interface to sktime dtw aligners in distances module."""
 
 __author__ = ["fkiraly"]
 
