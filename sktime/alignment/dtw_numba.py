@@ -171,8 +171,8 @@ class AlignerDtwNumba(BaseAligner):
         """
         from sktime.distances import distance_alignment_path
 
-        X1 = X[0]
-        X2 = X[1]
+        X1 = X[0].values
+        X2 = X[1].values
 
         metric_key = self.metric_key
         kwargs = self.kwargs
