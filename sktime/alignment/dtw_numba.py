@@ -100,7 +100,7 @@ class AlignerDtwNumba(BaseAligner):
     Examples
     --------
     >>> from sktime.utils._testing.panel import _make_panel_X
-    >>> from sktime.alignment.dtw_numba import class AlignerDtwNumba
+    >>> from sktime.alignment.dtw_numba import AlignerDtwNumba
     >>>
     >>> X = _make_panel_X(n_instances=2)  # doctest: +SKIP
     >>> d = AlignerDtwNumba(weighted=True, derivative=True)  # doctest: +SKIP
