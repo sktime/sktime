@@ -276,7 +276,10 @@ class UnobservedComponents(_StatsModelsAdapter):
         self.optim_hessian = optim_hessian
         self.flags = flags
         self.low_memory = low_memory
+        self.random_state = random_state
 
+        # todo 0.20.0: remove random_state parameter
+        # also docstring references and logic
         if random_state is not None:
             from warnings import warn
 
