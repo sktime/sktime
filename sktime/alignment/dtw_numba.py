@@ -115,7 +115,6 @@ class AlignerDtwNumba(BaseAligner):
         "python_dependencies": "numba",
     }
 
-
     def __init__(
         self,
         weighted: bool = False,
