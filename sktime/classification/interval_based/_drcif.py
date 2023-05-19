@@ -210,9 +210,17 @@ class DrCIF(BaseClassifier):
         train_time = 0
 
         if self.base_estimator.lower() == "dtc":
-            self._base_estimator = DecisionTreeClassifier(criterion="entropy", max_depth=self.max_depth)
+            if self.max_depth is not None:
+                self._base_estimator = DecisionTreeClassifier(
+                    criterion="entropy", max_depth=self.max_depth
+                )
+            else:
+                self._base_estimator = DecisionTreeClassifier(criterion="entropy")
         elif self.base_estimator.lower() == "cit":
-            self._base_estimator = ContinuousIntervalTree(max_depth=self.max_depth)
+            if self.max_depth is not None:
+                self._base_estimator = ContinuousIntervalTree(max_depth=self.max_depth)
+            else:
+                self._base_estimator = ContinuousIntervalTree()
         elif isinstance(self.base_estimator, BaseEstimator):
             self._base_estimator = self.base_estimator
         else:
