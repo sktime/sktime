@@ -120,8 +120,8 @@ class AlignerDtwNumba(BaseAligner):
         self,
         weighted: bool = False,
         derivative: bool = False,
-        window: None,
-        itakura_max_slope: None,
+        window=None,
+        itakura_max_slope=None,
         bounding_matrix: np.ndarray = None,
         g: float = 0.0,
     ):
