@@ -104,7 +104,7 @@ class AlignerDtwNumba(BaseAligner):
     >>>
     >>> X = _make_panel_X(n_instances=2)  # doctest: +SKIP
     >>> d = AlignerDtwNumba(weighted=True, derivative=True)  # doctest: +SKIP
-    >>> align = d.fit(X).get_alignment()
+    >>> align = d.fit(X).get_alignment()  # doctest: +SKIP
     """
 
     _tags = {
