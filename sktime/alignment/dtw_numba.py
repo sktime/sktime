@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.alignment.base import BaseAligner
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class AlignerDtwNumba(BaseAligner):
