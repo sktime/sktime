@@ -190,12 +190,14 @@ class _StatsModelsAdapter(BaseForecaster):
 
         get_prediction_arguments = {"start": start, "end": end}
 
-        if hasattr(self, "random_state"):
+        def _pred_has_arg(x):
+            get_pred_args = inspect.signature(self._fitted_forecaster.get_prediction)
+            return x in get_pred_args.parameters.keys()
+
+        if hasattr(self, "random_state") and _pred_has_arg("random_state"):
             get_prediction_arguments["random_state"] = self.random_state
 
-        if inspect.signature(self._fitted_forecaster.get_prediction).parameters.get(
-            "exog"
-        ):
+        if _pred_has_arg("exog"):
             get_prediction_arguments["exog"] = X
 
         prediction_results = self._fitted_forecaster.get_prediction(
