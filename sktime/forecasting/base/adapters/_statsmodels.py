@@ -188,8 +188,18 @@ class _StatsModelsAdapter(BaseForecaster):
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
+        get_prediction_arguments = {"start": start, "end": end}
+
+        if hasattr(self, "random_state"):
+            get_prediction_arguments["random_state"] = self.random_state
+
+        if inspect.signature(self._fitted_forecaster.get_prediction).parameters.get(
+            "exog"
+        ):
+            get_prediction_arguments["exog"] = X
+
         prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end, exog=X
+            **get_prediction_arguments
         )
 
         columns = pd.MultiIndex.from_product(
