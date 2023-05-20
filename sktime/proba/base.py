@@ -193,7 +193,7 @@ class BaseDistribution(BaseObject):
             warn(self._method_error_msg("pdf", fill_in=approx_method))
             return self.log_pdf(x=x).applymap(np.exp)
 
-        raise NotImplementedError(self._method_err_msg("pdf", "error"))
+        raise NotImplementedError(self._method_error_msg("pdf", "error"))
 
     def log_pdf(self, x):
         r"""Logarithmic probability density function.
@@ -233,7 +233,7 @@ class BaseDistribution(BaseObject):
 
             return self.pdf(x=x).applymap(np.log)
 
-        raise NotImplementedError(self._method_err_msg("log_pdf", "error"))
+        raise NotImplementedError(self._method_error_msg("log_pdf", "error"))
 
     def cdf(self, x):
         """Cumulative distribution function."""
@@ -252,7 +252,7 @@ class BaseDistribution(BaseObject):
 
     def ppf(self, p):
         """Quantile function = percent point function = inverse cdf."""
-        raise NotImplementedError(self._method_err_msg("cdf", "error"))
+        raise NotImplementedError(self._method_error_msg("cdf", "error"))
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -457,7 +457,7 @@ class BaseDistribution(BaseObject):
                 df_spl = pd.concat(pd_smpl, keys=range(n_samples))
                 return df_spl
 
-        raise NotImplementedError(self._method_err_msg("sample", "error"))
+        raise NotImplementedError(self._method_error_msg("sample", "error"))
 
 
 class _Indexer:
