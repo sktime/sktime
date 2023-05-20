@@ -1,37 +1,33 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements adapter for StatsForecast forecasters to be used in sktime framework."""
-
-__author__ = ["FedericoGarza"]
-__all__ = ["_StatsForecastAdapter"]
-
-
-import pandas as pd
+"""Implements adapter for StatsForecast models."""
+import pandas
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
+
+__all__ = ["_StatsForecastAdapter"]
+__author__ = ["yarnabrina"]
 
 
 class _StatsForecastAdapter(BaseForecaster):
-    """Base class for interfacing StatsForecast."""
+    """Base adapter class for StatsForecast models."""
 
     _tags = {
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
-        "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "capability:pred_int": True,  # does forecaster implement predict_quantiles?
-        "capability:pred_int:insample": True,
-        "python_dependencies": "statsforecast",
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "scitype:y": "univariate",
+        "requires-fh-in-fit": False,
+        # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
+        # "enforce_index_type": None,  # TODO: need to check (how?)
+        "handles-missing-data": False,
+        "python_version": ">=3.7",  # TODO: change to 3.8 (when?)
+        "python_dependencies": ["statsforecast"],
     }
 
     def __init__(self):
+        super().__init__()
+
         self._forecaster = None
-        super(_StatsForecastAdapter, self).__init__()
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
@@ -46,7 +42,8 @@ class _StatsForecastAdapter(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
                 guaranteed to have a single column/variable
@@ -57,18 +54,91 @@ class _StatsForecastAdapter(BaseForecaster):
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
 
         Returns
         -------
         self : reference to self
         """
+        del fh  # avoid being detected as unused by ``vulture`` like tools
+
         self._forecaster = self._instantiate_model()
-        self._forecaster.fit(y.values, X.values if X is not None else X)
+
+        y_fit_input = y.to_numpy(copy=False)
+        X_fit_input = X.to_numpy(copy=False) if X is not None else X
+
+        self._forecaster.fit(y_fit_input, X=X_fit_input)
 
         return self
+
+    def _predict_in_or_out_of_sample(self, fh, fh_type, X=None, levels=None):
+        maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
+
+        absolute_horizons = fh.to_absolute(self.cutoff).to_pandas()
+        horizon_positions = fh.to_indexer(self.cutoff)
+
+        level_arguments = None if levels is None else [100 * level for level in levels]
+
+        if fh_type == "in-sample":
+            predictions = self._forecaster.predict_in_sample(level=level_arguments)
+            point_predictions = predictions["fitted"]
+        elif fh_type == "out-of-sample":
+            predictions = self._forecaster.predict(
+                maximum_forecast_horizon, X=X, level=level_arguments
+            )
+            point_predictions = predictions["mean"]
+
+        if isinstance(point_predictions, pandas.Series):
+            point_predictions = point_predictions.to_numpy()
+
+        final_point_predictions = pandas.Series(
+            point_predictions[horizon_positions], index=absolute_horizons
+        )
+
+        if levels is None:
+            return final_point_predictions
+
+        interval_predictions_indices = pandas.MultiIndex.from_product(
+            [["Coverage"], levels, ["lower", "upper"]]
+        )
+        interval_predictions = pandas.DataFrame(
+            index=absolute_horizons, columns=interval_predictions_indices
+        )
+
+        if fh_type == "out-of-sample":
+            column_prefix = ""
+        elif fh_type == "in-sample":
+            column_prefix = "fitted-"
+
+        for level, level_argument in zip(levels, level_arguments):
+            lower_interval_predictions = predictions[
+                f"{column_prefix}lo-{level_argument}"
+            ]
+            if isinstance(lower_interval_predictions, pandas.Series):
+                lower_interval_predictions = lower_interval_predictions.to_numpy()
+
+            upper_interval_predictions = predictions[
+                f"{column_prefix}hi-{level_argument}"
+            ]
+            if isinstance(upper_interval_predictions, pandas.Series):
+                upper_interval_predictions = upper_interval_predictions.to_numpy()
+
+            interval_predictions[
+                ("Coverage", level, "lower")
+            ] = lower_interval_predictions[horizon_positions]
+            interval_predictions[
+                ("Coverage", level, "upper")
+            ] = upper_interval_predictions[horizon_positions]
+
+        return interval_predictions
+
+    def _split_horizon(self, fh):
+        in_sample_horizon = fh.to_in_sample(self.cutoff)
+        out_of_sample_horizon = fh.to_out_of_sample(self.cutoff)
+
+        return in_sample_horizon, out_of_sample_horizon
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -87,135 +157,59 @@ class _StatsForecastAdapter(BaseForecaster):
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             If not passed in _fit, guaranteed to be passed here
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : sktime time series object
+            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        # distinguish between in-sample and out-of-sample prediction
-        fh_oos = fh.to_out_of_sample(self.cutoff)
-        fh_ins = fh.to_in_sample(self.cutoff)
+        X_predict_input = X.to_numpy(copy=False) if X is not None else X
 
-        # all values are out-of-sample
-        if fh.is_all_out_of_sample(self.cutoff):
-            y_pred = self._predict_fixed_cutoff(fh_oos, X=X)
+        in_sample_horizon, out_of_sample_horizon = self._split_horizon(fh)
 
-        # all values are in-sample
-        elif fh.is_all_in_sample(self.cutoff):
-            y_pred = self._predict_in_sample(fh_ins, X=X)
+        point_predictions = []
 
-        # both in-sample and out-of-sample values
-        else:
-            y_ins = self._predict_in_sample(fh_ins, X=X)
-            y_oos = self._predict_fixed_cutoff(fh_oos, X=X)
-            y_pred = pd.concat([y_ins, y_oos])
+        if in_sample_horizon:
+            in_sample_point_predictions = self._predict_in_or_out_of_sample(
+                in_sample_horizon, "in-sample"
+            )
+            point_predictions.append(in_sample_point_predictions)
 
-        # ensure that name is not added nor removed
-        # otherwise this may upset conversion to pd.DataFrame
-        y_pred.name = self._y.name
-        return y_pred
+        if out_of_sample_horizon:
+            out_of_sample_point_predictions = self._predict_in_or_out_of_sample(
+                out_of_sample_horizon, "out-of-sample", X=X_predict_input
+            )
+            point_predictions.append(out_of_sample_point_predictions)
 
-    def _predict_in_sample(
-        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
-        """Generate in sample predictions.
+        final_point_predictions = pandas.concat(point_predictions, copy=False)
+        final_point_predictions.name = self._y.name
 
-        Parameters
-        ----------
-        fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
-            Default is
-            one-step ahead forecast, i.e. np.array([1]).
+        return final_point_predictions
 
-        Returns
-        -------
-        y_pred : pandas.Series
-            Returns series of predicted values.
-        """
-        # initialize return objects
-        fh_abs = fh.to_absolute(self.cutoff).to_numpy()
-        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=True)
-        y_pred = pd.Series(index=fh_abs, dtype="float64")
-
-        result = self._forecaster.predict_in_sample()
-        y_pred.loc[fh_abs] = result["mean"].values[fh_idx]
-
-        if return_pred_int:
-            pred_ints = []
-            for a in alpha:
-                pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
-                result = self._forecaster.predict_in_sample(level=int(100 * a))
-                pred_int.loc[fh_abs] = result.drop("mean", axis=1).values[fh_idx, :]
-                pred_ints.append(pred_int)
-            return y_pred, pred_ints
-
-        return y_pred
-
-    def _predict_fixed_cutoff(
-        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
-        """Make predictions out of sample.
-
-        Parameters
-        ----------
-        fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
-            Default is
-            one-step ahead forecast, i.e. np.array([1]).
-
-        Returns
-        -------
-        y_pred : pandas.Series
-        Returns series of predicted values.
-        """
-        n_periods = int(fh.to_relative(self.cutoff)[-1])
-        result = self._forecaster.predict(
-            h=n_periods,
-            X=X.values if X is not None else X,
-        )
-
-        fh_abs = fh.to_absolute(self.cutoff)
-        fh_idx = fh.to_indexer(self.cutoff)
-        mean = pd.Series(result["mean"].values[fh_idx], index=fh_abs.to_pandas())
-        if return_pred_int:
-            pred_ints = []
-            for a in alpha:
-                result = self._forecaster.predict(
-                    h=n_periods,
-                    X=X.values if X is not None else X,
-                    level=int(100 * a),
-                )
-                pred_int = result.drop("mean", axis=1).values
-                pred_int = pd.DataFrame(
-                    pred_int[fh_idx, :],
-                    index=fh_abs.to_pandas(),
-                    columns=["lower", "upper"],
-                )
-                pred_ints.append(pred_int)
-            return mean, pred_ints
-        else:
-            return pd.Series(mean, index=fh_abs.to_pandas())
-
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
             called from predict_interval and possibly predict_quantiles
+
         State required:
             Requires state to be "fitted".
+
         Accesses in self:
             Fitted model attributes ending in "_"
             self.cutoff
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
         coverage : list of float (guaranteed not None and floats in [0,1] interval)
            nominal coverage(s) of predictive interval(s)
 
@@ -226,47 +220,35 @@ class _StatsForecastAdapter(BaseForecaster):
                 second level coverage fractions for which intervals were computed.
                     in the same order as in input `coverage`.
                 Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
                 lower/upper depending on third col index, for the row index.
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        # initializaing cutoff and fh related info
-        cutoff = self.cutoff
-        fh_oos = fh.to_out_of_sample(cutoff)
-        fh_ins = fh.to_in_sample(cutoff)
-        fh_is_in_sample = fh.is_all_in_sample(cutoff)
-        fh_is_oosample = fh.is_all_out_of_sample(cutoff)
+        X_predict_input = X if X is None else X.to_numpy(copy=False)
 
-        # prepare the return DataFrame - empty with correct cols
-        var_names = ["Coverage"]
-        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
-        pred_int = pd.DataFrame(columns=int_idx)
+        in_sample_horizon, out_of_sample_horizon = self._split_horizon(fh)
 
-        kwargs = {"X": X, "return_pred_int": True, "alpha": coverage}
-        # all values are out-of-sample
-        if fh_is_oosample:
-            _, y_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
+        interval_predictions = []
 
-        # all values are in-sample
-        elif fh_is_in_sample:
-            _, y_pred_int = self._predict_in_sample(fh_ins, **kwargs)
+        if in_sample_horizon:
+            in_sample_interval_predictions = self._predict_in_or_out_of_sample(
+                in_sample_horizon, "in-sample", levels=coverage
+            )
+            interval_predictions.append(in_sample_interval_predictions)
 
-        # if all in-sample/out-of-sample, we put y_pred_int in the required format
-        if fh_is_in_sample or fh_is_oosample:
-            # needs to be replaced, also seems duplicative, identical to part A
-            for intervals, a in zip(y_pred_int, coverage):
-                pred_int[("Coverage", a, "lower")] = intervals["lower"]
-                pred_int[("Coverage", a, "upper")] = intervals["upper"]
-            return pred_int
+        if out_of_sample_horizon:
+            out_of_sample_interval_predictions = self._predict_in_or_out_of_sample(
+                out_of_sample_horizon,
+                "out-of-sample",
+                X=X_predict_input,
+                levels=coverage,
+            )
+            interval_predictions.append(out_of_sample_interval_predictions)
 
-        # both in-sample and out-of-sample values (we reach this line only then)
-        # in this case, we additionally need to concat in and out-of-sample returns
-        _, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
-        _, y_oos_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
-        for ins_int, oos_int, a in zip(y_ins_pred_int, y_oos_pred_int, coverage):
-            pred_int[("Coverage", a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
-            pred_int[("Coverage", a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
+        final_interval_predictions = pandas.concat(interval_predictions, copy=False)
 
-        return pred_int
+        return final_interval_predictions
