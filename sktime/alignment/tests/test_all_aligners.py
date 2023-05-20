@@ -93,6 +93,6 @@ class TestAllAligners(AlignerFixtureGenerator, QuickTester):
             return None
 
         X = [_make_series(n_columns=2), _make_series(n_columns=2)]
-        dist = estimator_instance.fit(X).get_distance()
+        dist = estimator_instance.fit(X).get_distance_matrix()
         assert isinstance(dist, np.ndarray)
         assert dist.shape == (2, 2)
