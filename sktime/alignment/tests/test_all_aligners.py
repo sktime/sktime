@@ -47,7 +47,7 @@ class TestAllAligners(AlignerFixtureGenerator, QuickTester):
         check_raise(align, mtype="alignment", scitype="Alignment")
 
         # todo: replace this by scenarios
-        if estimator_instance.get_tag("capability:multivariate"):
+        if estimator_instance.get_tag("capability:multiple-alignment"):
             Xm = [_make_series(n_columns=2) for _ in range(3)]
             alignm = estimator_instance.fit(Xm).get_alignment()
             check_raise(alignm, mtype="alignment", scitype="Alignment")
