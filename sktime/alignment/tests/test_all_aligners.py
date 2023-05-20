@@ -65,7 +65,7 @@ class TestAllAligners(AlignerFixtureGenerator, QuickTester):
         n = len(X)
         X_aligned = estimator_instance.fit(X).get_aligned()
 
-        cls_name = type(estimator_instance.__name__)
+        cls_name = type(estimator_instance).__name__
 
         msg = f"{cls_name}.get_aligned must return list of pd.DataFrame"
         msg += ", same length as X in fit"
