@@ -8,7 +8,6 @@ periodogram and differences representations as well as the base series.
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["DrCIF"]
 
-import copy
 import math
 import time
 
@@ -204,7 +203,7 @@ class DrCIF(BaseClassifier):
             elif base_estimator.lower() == "cit":
                 self._base_estimator = ContinuousIntervalTree()
         elif isinstance(base_estimator, BaseEstimator):
-            self._base_estimator = copy.deepcopy(base_estimator)
+            self._base_estimator = _clone_estimator(base_estimator)
         else:
             raise ValueError("DrCIF invalid base estimator given")
 
@@ -639,5 +638,6 @@ class DrCIF(BaseClassifier):
                 "n_estimators": 2,
                 "n_intervals": 2,
                 "att_subsample_size": 2,
+                "base_estimator": ContinuousIntervalTree(),
                 "save_transformed_data": True,
             }
