@@ -237,7 +237,7 @@ class BaseDistribution(BaseObject):
 
     def cdf(self, x):
         """Cumulative distribution function."""
-        N = self.APPROX_SPL
+        N = self.get_tag("approx_spl")
         approx_method = (
             "by approximating the expected value by the indicator function on "
             f"{N} samples"
@@ -252,7 +252,7 @@ class BaseDistribution(BaseObject):
 
     def ppf(self, p):
         """Quantile function = percent point function = inverse cdf."""
-        raise NotImplementedError(self._method_error_msg("cdf", "error"))
+        raise NotImplementedError(self._method_error_msg("ppf", "error"))
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -285,7 +285,7 @@ class BaseDistribution(BaseObject):
         )
         warn(self._method_error_msg("energy", fill_in=approx_method))
 
-        # splx, sply = i.i.d. samples of X - Y of size N = self.APPROX_ENERGY_SPL
+        # splx, sply = i.i.d. samples of X - Y of size N = approx_spl_size
         N = approx_spl_size
         if x is None:
             splx = self.sample(N)
