@@ -69,21 +69,24 @@ class AlignerDtwNumba(BaseAligner):
         False = unmodified distance, i.e., dtw distance or weighted dtw distance
         True = derivative distance, i.e., derivative dtw distance or derivative wdtw
     window: int, defaults = None
-        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
-    itakura_max_slope: float, defaults = None
-        Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        if ``None``, does not use Sakoe-Chiba window
+        if ``int``, uses Sakoe-Chiba lower bounding window with radius ``window``.
+    itakura_max_slope: float, between 0. and 1., default = None
+        if ``None``, does not use Itakura parallelogram lower bounding
+        if ``float``, uses Itakura parallelogram lower bounding,
+        with slope gradient ``itakura_max_slope``
     bounding_matrix: optional, 2D np.ndarray, default=None
-        must be of size len(X) and n is len(X2) for X, X2 passed in transform
-        Custom bounding matrix to use. If defined then other lower_bounding params
-        are ignored. The matrix should be structure so that indexes considered in
+        must be of shape ``(len(X), len(X2))``, ``len`` meaning number time points,
+        where ``X``, ``X2`` are the two time series passed in transform
+        Custom bounding matrix to use.
+        If provided, then ``window`` and ``itakura_max_slope`` are ignored.
+        The matrix should be structured so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should
         be infinity.
-    g: float, optional, default = 0. Used only if weighted=True.
-        Constant that controls the curvature (slope) of the function; that is, g
-        controls the level of penalisation for the points with larger phase
-        difference.
+    g: float, optional, default = 0. Used only if ``weighted=True``.
+        Constant that controls the curvature (slope) of the function;
+        that is, ``g`` controls the level of penalisation for the points
+        with larger phase difference.
 
     References
     ----------
@@ -99,12 +102,13 @@ class AlignerDtwNumba(BaseAligner):
 
     Examples
     --------
-    >>> from sktime.utils._testing.panel import _make_panel_X
+    >>> from sktime.utils._testing.series import _make_series
     >>> from sktime.alignment.dtw_numba import AlignerDtwNumba
     >>>
-    >>> X = _make_panel_X(n_instances=2)  # doctest: +SKIP
+    >>> X0 = _make_series()  # doctest: +SKIP
+    >>> X1 = _make_series()  # doctest: +SKIP
     >>> d = AlignerDtwNumba(weighted=True, derivative=True)  # doctest: +SKIP
-    >>> align = d.fit(X).get_alignment()  # doctest: +SKIP
+    >>> align = d.fit([X0, X1]).get_alignment()  # doctest: +SKIP
     """
 
     _tags = {
@@ -254,7 +258,7 @@ class AlignerDtwNumba(BaseAligner):
         """
         params0 = {}
         params1 = {"weighted": True}
-        params2 = {"derivative": True, "itakura_max_slope": 3}
+        params2 = {"derivative": True, "itakura_max_slope": 0.5}
         params3 = {"weighted": True, "derivative": True, "g": 1.5}
 
         return [params0, params1, params2, params3]
