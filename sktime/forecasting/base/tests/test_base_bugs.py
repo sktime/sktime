@@ -23,7 +23,6 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
 )
 def test_vectorization_series_to_panel(mtype):
     """Regression test for bugfix #4574, related to get_fitted_params."""
-
     y = _make_hierarchical(hierarchy_levels=(2, 2), min_timepoints=7, max_timepoints=7)
     agg = Aggregator()
     y_agg = agg.fit_transform(y)
