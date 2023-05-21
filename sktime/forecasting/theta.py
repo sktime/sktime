@@ -91,6 +91,7 @@ class ThetaForecaster(ExponentialSmoothing):
         "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
@@ -432,7 +433,9 @@ class ThetaModularForecaster(BaseForecaster):
         # Call predict on the forecaster directly, not on the pipeline
         # because of output conversion
         Y_pred = self.pipe_.steps_[-1][-1].predict(fh, X)
-        return _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
+        y_pred = _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
+        y_pred.name = self._y.name
+        return y_pred
 
     def _update(self, y, X=None, update_params=True):
         self.pipe_._update(y, X=None, update_params=update_params)

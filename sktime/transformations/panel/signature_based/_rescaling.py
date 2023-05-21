@@ -12,10 +12,6 @@ import math
 
 import numpy as np
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("esig", severity="warning")
-
 
 def _rescale_path(path, depth):
     """Rescale input path by depth! ** (1 / depth).

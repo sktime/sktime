@@ -151,8 +151,8 @@ class Croston(BaseForecaster):
         # Predicting future forecasts:to_numpy()
         y_pred = np.full(len_fh, f[-1])
 
-        index = self.fh.to_absolute(self.cutoff)
-        return pd.Series(y_pred, index=index)
+        index = self.fh.to_absolute_index(self.cutoff)
+        return pd.Series(y_pred, index=index, name=self._y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

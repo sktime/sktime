@@ -3,14 +3,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Test grid search CV."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["test_gscv", "test_rscv"]
 
 import numpy as np
 import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
-from sktime.datasets import load_longley
+from sktime.datasets import load_airline, load_longley
+from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -31,10 +32,13 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanSquaredError,
 )
+from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
 from sktime.transformations.series.detrend import Detrender
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
+TEST_METRICS_PROBA = [CRPS(), PinballLoss()]
 
 
 def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
@@ -101,6 +105,10 @@ def test_gscv(forecaster, param_grid, cv, scoring, error_score):
     param_grid = ParameterGrid(param_grid)
     _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring)
 
+    fitted_params = gscv.get_fitted_params()
+    assert "best_forecaster" in fitted_params.keys()
+    assert "best_score" in fitted_params.keys()
+
 
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
@@ -160,3 +168,34 @@ def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
 
     param_grid = ParameterGrid(param_grid)
     _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring)
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
+@pytest.mark.parametrize("scoring", TEST_METRICS_PROBA)
+@pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+def test_gscv_proba(cv, scoring, error_score):
+    """Test ForecastingGridSearchCV with probabilistic metrics."""
+    y = load_airline()
+
+    forecaster = ARIMA()
+    param_grid = {"order": [(1, 0, 0), (1, 1, 0)]}
+
+    gscv = ForecastingGridSearchCV(
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
+    )
+    gscv.fit(y)
+
+    param_grid = ParameterGrid(param_grid)
+    _check_cv(forecaster, gscv, cv, param_grid, y, None, scoring)
+
+    fitted_params = gscv.get_fitted_params()
+    assert "best_forecaster" in fitted_params.keys()
+    assert "best_score" in fitted_params.keys()

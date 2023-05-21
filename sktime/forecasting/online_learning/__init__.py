@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implments algorithms for creating online ensembles of forecasters."""
 
-__author__ = ["William Zheng"]
+__author__ = ["magittan"]
 
 __all__ = [
     "NormalHedgeEnsemble",
@@ -11,10 +11,8 @@ __all__ = [
     "OnlineEnsembleForecaster",
 ]
 
+from sktime.forecasting.online_learning._online_ensemble import OnlineEnsembleForecaster
 from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
-    NormalHedgeEnsemble,
     NNLSEnsemble,
-)
-from sktime.forecasting.online_learning._online_ensemble import (
-    OnlineEnsembleForecaster,
+    NormalHedgeEnsemble,
 )

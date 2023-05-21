@@ -82,7 +82,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -193,24 +193,14 @@ html_theme_options = {
             "icon": "fab fa-github",
         },
         {
-            "name": "Slack",
-            "url": "https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig",  # noqa: E501
-            "icon": "fab fa-slack",
-        },
-        {
             "name": "Discord",
-            "url": "https://discord.com/invite/gqSab2K",
+            "url": "https://discord.com/invite/54ACzaFsn7",
             "icon": "fab fa-discord",
         },
         {
             "name": "LinkedIn",
-            "url": "https://www.linkedin.com/company/sktime/",
+            "url": "https://www.linkedin.com/company/scikit-time/",
             "icon": "fab fa-linkedin",
-        },
-        {
-            "name": "Twitter",
-            "url": "https://twitter.com/sktime_toolbox",
-            "icon": "fab fa-twitter",
         },
     ],
     "favicons": [
@@ -369,7 +359,7 @@ def _make_estimator_overview(app):
         clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
         # adds html link reference
         modname = str(
-            '<a href="https://www.sktime.org/en/latest/api_reference'
+            '<a href="https://www.sktime.net/en/latest/api_reference'
             + "/auto_generated/"
             + clean_path
             + '.html">'

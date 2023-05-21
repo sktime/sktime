@@ -4,13 +4,13 @@
 __author__ = ["James-Large", "AurumnPegasus", "nilesh05apr"]
 __all__ = ["ResNetClassifier"]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.resnet import ResNetNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class ResNetClassifier(BaseDeepClassifier):
@@ -156,9 +156,6 @@ class ResNetClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
-
         y_onehot = self.convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
@@ -174,7 +171,7 @@ class ResNetClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
@@ -200,6 +197,8 @@ class ResNetClassifier(BaseDeepClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         param1 = {
             "n_epochs": 10,
             "batch_size": 4,
@@ -211,5 +210,16 @@ class ResNetClassifier(BaseDeepClassifier):
             "batch_size": 6,
             "use_bias": True,
         }
+        test_params = [param1, param2]
 
-        return [param1, param2]
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import LambdaCallback
+
+            test_params.append(
+                {
+                    "n_epochs": 2,
+                    "callbacks": [LambdaCallback()],
+                }
+            )
+
+        return test_params

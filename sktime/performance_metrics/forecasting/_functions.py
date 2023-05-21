@@ -20,7 +20,7 @@ from sklearn.utils.validation import check_consistent_length
 from sktime.utils.stats import _weighted_geometric_mean
 from sktime.utils.validation.series import check_series
 
-__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
+__author__ = ["mloning", "tch", "RNKuhns"]
 __all__ = [
     "relative_loss",
     "mean_linex_error",

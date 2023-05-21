@@ -90,7 +90,9 @@ class SquaringResiduals(BaseForecaster):
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "capability:insample": False,
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
+        "capability:pred_int:insample": False,
         "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
@@ -173,7 +175,7 @@ class SquaringResiduals(BaseForecaster):
                 y_pred_current = []
                 y_pred_current_index = []
                 for col in y_pred.columns:
-                    fh_current_abs = fh_current.to_absolute(col)
+                    fh_current_abs = fh_current.to_absolute_index(col)
                     y_pred_current.append(y_pred.at[fh_current_abs[0], col])
                     y_pred_current_index.append(fh_current_abs[0])
                 y_pred_current = pd.Series(
@@ -225,6 +227,7 @@ class SquaringResiduals(BaseForecaster):
         """
         fh_abs = fh.to_absolute(self.cutoff)
         y_pred = self._forecaster_.predict(X=X, fh=fh_abs)
+        y_pred.name = self._y.name
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -316,7 +319,7 @@ class SquaringResiduals(BaseForecaster):
         for a, error in zip(alpha, errors):
             pred_quantiles[("Quantiles", a)] = y_pred + error
 
-        pred_quantiles.index = fh_abs
+        pred_quantiles.index = fh_abs.to_pandas()
 
         return pred_quantiles
 
@@ -347,12 +350,13 @@ class SquaringResiduals(BaseForecaster):
             warn(f"cov={cov} is not supported. Defaulting to cov=False instead.")
         fh_abs = fh.to_absolute(self.cutoff)
         fh_rel = fh.to_relative(self.cutoff)
-        pred_var = pd.Series(index=fh_rel)
+        fh_rel_index = fh_rel.to_pandas()
+        pred_var = pd.Series(index=fh_rel_index, dtype="float64")
         for el in fh_rel:
             pred_var.at[el] = self._res_forecasters[el].predict(fh=el)[0]
         if self.strategy == "square":
             pred_var = pred_var**0.5
-        pred_var.index = fh_abs
+        pred_var.index = fh_abs.to_pandas()
         return pred_var
 
     @classmethod

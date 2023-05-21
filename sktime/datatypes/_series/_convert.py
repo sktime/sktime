@@ -37,6 +37,7 @@ import pandas as pd
 ##############################################################
 # methods to convert one machine type to another machine type
 ##############################################################
+from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._registry import MTYPE_LIST_SERIES
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -45,7 +46,8 @@ convert_dict = dict()
 
 
 def convert_identity(obj, store=None):
-
+    # coerces pandas nullable dtypes; does nothing if obj is not pandas
+    obj = _coerce_df_dtypes(obj)
     return obj
 
 
@@ -58,6 +60,11 @@ def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
 
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
+
+    obj = _coerce_df_dtypes(obj)
+
+    if isinstance(store, dict):
+        store["name"] = obj.name
 
     res = pd.DataFrame(obj)
 
@@ -79,6 +86,8 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input is not a pd.DataFrame")
 
+    obj = _coerce_df_dtypes(obj)
+
     if len(obj.columns) != 1:
         raise ValueError("input must be univariate pd.DataFrame, with one column")
 
@@ -86,7 +95,11 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
         store["columns"] = obj.columns[[0]]
 
     y = obj[obj.columns[0]]
-    y.name = None
+
+    if isinstance(store, dict) and "name" in store.keys():
+        y.name = store["name"]
+    else:
+        y.name = None
 
     return y
 
@@ -98,6 +111,8 @@ def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
 
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input must be a pd.DataFrame")
+
+    obj = _coerce_df_dtypes(obj)
 
     if isinstance(store, dict):
         store["columns"] = obj.columns
@@ -114,8 +129,11 @@ def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
+    obj = _coerce_df_dtypes(obj)
+
     if isinstance(store, dict):
         store["index"] = obj.index
+        store["name"] = obj.name
 
     return pd.DataFrame(obj).to_numpy(dtype="float")
 
@@ -171,6 +189,9 @@ def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
     ):
         res.index = store["index"]
 
+    if isinstance(store, dict) and "name" in store.keys():
+        res.name = store["name"]
+
     return res
 
 
@@ -202,6 +223,8 @@ if _check_soft_dependencies("xarray", severity="none"):
     ) -> xr.DataArray:
         if not isinstance(obj, pd.DataFrame):
             raise TypeError("input must be a xr.DataArray")
+
+        obj = _coerce_df_dtypes(obj)
 
         result = xr.DataArray(obj.values, coords=[obj.index, obj.columns])
         if isinstance(store, dict) and "coords" in store:

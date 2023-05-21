@@ -97,7 +97,9 @@ class BaggingForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "requires-fh-in-fit": False,  # like AutoETS overwritten if forecaster not None
         "enforce_index_type": None,  # like AutoETS overwritten if forecaster not None
-        "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        "capability:insample": True,  # can the estimator make in-sample predictions?
+        "capability:pred_int": True,  # can the estimator produce prediction intervals?
+        "capability:pred_int:insample": True,  # ... for in-sample horizons?
     }
 
     def __init__(
@@ -226,7 +228,7 @@ class BaggingForecaster(BaseForecaster):
         """
         y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=None)
         y_pred = y_bootstraps_pred.groupby(level=-1).mean().iloc[:, 0]
-        y_pred.name = None
+        y_pred.name = self._y.name
         return y_pred
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
@@ -262,7 +264,6 @@ class BaggingForecaster(BaseForecaster):
         """
         # X is ignored
         y_pred = self.forecaster_.predict(fh=fh, X=None)
-
         return _calculate_data_quantiles(y_pred, alpha)
 
     def _update(self, y, X=None, update_params=True):
@@ -338,8 +339,7 @@ def _calculate_data_quantiles(df: pd.DataFrame, alpha: List[float]) -> pd.DataFr
     index = pd.MultiIndex.from_product([["Quantiles"], alpha])
     pred_quantiles = pd.DataFrame(columns=index)
     for a in alpha:
-        pred_quantiles[("Quantiles", a)] = (
-            df.groupby(level=-1, as_index=True).quantile(a).squeeze()
-        )
+        quant_a = df.groupby(level=-1, as_index=True).quantile(a)
+        pred_quantiles[[("Quantiles", a)]] = quant_a
 
     return pred_quantiles

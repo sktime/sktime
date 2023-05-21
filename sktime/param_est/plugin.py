@@ -5,22 +5,36 @@
 __author__ = ["fkiraly"]
 __all__ = ["PluginParamsForecaster"]
 
+from inspect import signature
+
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
 class PluginParamsForecaster(_DelegatedForecaster):
     """Plugs parameters from a parameter estimator into a forecaster.
 
-    In `fit`, first fits `param_est` to data.
+    In `fit`, first fits `param_est` to data passed:
+
+    * `y` of `fit` is passed as the first arg to `param_est.fit`
+    * `X` of `fit` is passed as the second arg, if `param_est.fit` has a second arg
+    * `fh` of `fit` is passed as `fh`, if any remaining arg of `param_est.fit` is `fh`
+
     Then, does `forecaster.set_params` with desired/selected parameters.
-    After that, behaves as `forecaster` with those parameters set.
+    Parameters of the fitted `param_est` are passed on to `forecaster`,
+    from/to pairs are as specified by the `params` parameter of `self`, see below.
+
+    Then, fits `forecaster` to the data passed in `fit`.
+
+    After that, behaves identically to `forecaster` with those parameters set.
+    `update` behaviour is controlled by the `update_params` parameter.
 
     Example: `param_est` seasonality test to determine `sp` parameter;
         `forecaster` being any forecaster with an `sp` parameter.
 
     Parameters
     ----------
-    param_est : parameter estimator, i.e., estimator inheriting from BaseParamFitter
+    param_est : sktime estimator object with a fit method, inheriting from BaseEstimator
+        e.g., estimator inheriting from BaseParamFitter or forecaster
         this is a "blueprint" estimator, state does not change when `fit` is called
     forecaster : sktime forecaster, i.e., estimator inheriting from BaseForecaster
         this is a "blueprint" estimator, state does not change when `fit` is called
@@ -130,7 +144,19 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
         # fit the parameter estimator to y
         param_est = self.param_est_
-        param_est.fit(y)
+
+        # map args y, X, fh onto inner signature
+        # y is passed always
+        # X is passed if param_est fit has at least two arguments
+        # fh is passed if any remaining argument is fh
+        inner_params = list(signature(param_est.fit).parameters.keys())
+        fit_kwargs = {}
+        if len(inner_params) > 1:
+            fit_kwargs[inner_params[1]] = X
+            if "fh" in inner_params[2:]:
+                fit_kwargs["fh"] = fh
+
+        param_est.fit(y, **fit_kwargs)
         fitted_params = param_est.get_fitted_params()
 
         # obtain the mapping restricted to param names that are available

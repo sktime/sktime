@@ -6,6 +6,7 @@
 __author__ = ["mloning"]
 
 __all__ = [
+    "HierarchyEnsembleForecaster",
     "ColumnEnsembleForecaster",
     "EnsembleForecaster",
     "AutoEnsembleForecaster",
@@ -26,6 +27,7 @@ __all__ = [
     "BaggingForecaster",
     "ForecastByLevel",
     "Permute",
+    "YfromX",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -35,6 +37,7 @@ from sktime.forecasting.compose._ensemble import (
     EnsembleForecaster,
 )
 from sktime.forecasting.compose._grouped import ForecastByLevel
+from sktime.forecasting.compose._hierarchy_ensemble import HierarchyEnsembleForecaster
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster
 from sktime.forecasting.compose._pipeline import (
     ForecastingPipeline,
@@ -51,6 +54,7 @@ from sktime.forecasting.compose._reduce import (
     MultioutputTimeSeriesRegressionForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
+    YfromX,
     make_reduction,
 )
 from sktime.forecasting.compose._stack import StackingForecaster

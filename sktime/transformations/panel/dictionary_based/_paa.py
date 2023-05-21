@@ -5,7 +5,7 @@ import pandas as pd
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.base import BaseTransformer
 
-__author__ = "MatthewMiddlehurst"
+__author__ = ["MatthewMiddlehurst"]
 
 
 class PAA(BaseTransformer):

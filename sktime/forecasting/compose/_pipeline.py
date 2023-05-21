@@ -12,6 +12,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
 
 
@@ -21,8 +22,13 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "_steps"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "steps_"
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""
@@ -64,6 +70,15 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         TypeError if there is not exactly one forecaster in `estimators`
         TypeError if not allow_postproc and forecaster is not last estimator
         """
+        self_name = type(self).__name__
+        if not isinstance(estimators, list):
+            msg = (
+                f"steps in {self_name} must be list of estimators, "
+                f"or (string, estimator) pairs, "
+                f"the two can be mixed; but, found steps of type {type(estimators)}"
+            )
+            raise TypeError(msg)
+
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)
 
@@ -73,7 +88,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         scitypes = self._get_pipeline_scitypes(estimator_tuples)
         if not set(scitypes).issubset(["forecaster", "transformer"]):
             raise TypeError(
-                f"estimators passed to {type(self).__name__} "
+                f"estimators passed to {self_name} "
                 f"must be either transformer or forecaster"
             )
         if scitypes.count("forecaster") != 1:
@@ -86,7 +101,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
             TypeError(
-                f"in {type(self).__name__}, last estimator must be a forecaster, "
+                f"in {self_name}, last estimator must be a forecaster, "
                 f"but found a transformer"
             )
 
@@ -160,6 +175,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                     y = pd.concat(yt, axis=1)
                     flipcols = [n - 1] + list(range(n - 1))
                     y.columns = y.columns.reorder_levels(flipcols)
+                    y = y.loc[:, idx]
                 else:
                     raise ValueError('mode arg must be None or "proba"')
         return y
@@ -383,6 +399,8 @@ class ForecastingPipeline(_Pipeline):
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
+            "capability:pred_int:insample",  # ... for in-sample horizons?
+            "capability:insample",  # can the estimator make in-sample predictions?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -596,7 +614,10 @@ class ForecastingPipeline(_Pipeline):
         X = self._transform(X=X)
         return self.forecaster_.predict_var(fh=fh, X=X, cov=cov)
 
-    def _predict_proba(self, fh, X, marginal=True):
+    # todo: does not work properly for multivariate or hierarchical
+    #   still need to implement this - once interface is consolidated
+    # todo 0.19.0 remove legacy_interface arg and logic
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -626,7 +647,9 @@ class ForecastingPipeline(_Pipeline):
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         X = self._transform(X=X)
-        return self.forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
+        return self.forecaster_.predict_proba(
+            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
+        )
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -797,6 +820,8 @@ class TransformedTargetForecaster(_Pipeline):
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
+            "capability:pred_int:insample",  # ... for in-sample horizons?
+            "capability:insample",  # can the estimator make in-sample predictions?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -1195,6 +1220,18 @@ class ForecastX(BaseForecaster):
     >>> pipe = pipe.fit(y, X=X, fh=fh)  # doctest: +SKIP
     >>> # this now works without X from the future of y!
     >>> y_pred = pipe.predict(fh=fh)  # doctest: +SKIP
+
+    to forecast only some columns, use the `columns` arg,
+    and pass known columns to `predict`:
+    >>> columns = ["ARMED", "POP"]
+    >>> pipe = ForecastX(  # doctest: +SKIP
+    ...     forecaster_X=VAR(),
+    ...     forecaster_y=SARIMAX(),
+    ...     columns=columns,
+    ... )
+    >>> pipe = pipe.fit(y_train, X=X_train, fh=fh)  # doctest: +SKIP
+    >>> # dropping ["ARMED", "POP"] = columns where we expect not to have future values
+    >>> y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))  # doctest: +SKIP
     """
 
     _tags = {
@@ -1204,6 +1241,7 @@ class ForecastX(BaseForecaster):
         "fit_is_empty": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
@@ -1227,7 +1265,13 @@ class ForecastX(BaseForecaster):
 
         super(ForecastX, self).__init__()
 
-        self.clone_tags(forecaster_y, "capability:pred_int")
+        tags_to_clone_from_forecaster_y = [
+            "capability:pred_int",
+            "capability:pred_int:insample",
+            "capability:insample",
+        ]
+
+        self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)
 
         # tag_translate_dict = {
         #    "handles-missing-data": forecaster.get_tag("handles-missing-data")
@@ -1387,7 +1431,7 @@ class ForecastX(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X, coverage=coverage)
         return y_pred
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -1417,7 +1461,7 @@ class ForecastX(BaseForecaster):
                 at quantile probability in second col index, for the row index.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -1457,12 +1501,13 @@ class ForecastX(BaseForecaster):
                 Note: no covariance forecasts are returned between different variables.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_var(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_var(fh=fh, X=X, cov=cov)
         return y_pred
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    def _predict_proba(self, fh, X, marginal=True):
+    # todo 0.19.0 remove legacy_interface arg and logic
+    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -1492,7 +1537,9 @@ class ForecastX(BaseForecaster):
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_proba(
+            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
+        )
         return y_pred
 
     @classmethod
@@ -1516,13 +1563,25 @@ class ForecastX(BaseForecaster):
         """
         from sktime.forecasting.compose import DirectTabularRegressionForecaster
         from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.naive import NaiveForecaster
 
         fx = DirectReductionForecaster.create_test_instance()
         fy = DirectTabularRegressionForecaster.create_test_instance()
 
-        params = {"forecaster_X": fx, "forecaster_y": fy}
+        params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
-        return params
+        # example with probabilistic capability
+        if _check_soft_dependencies("pmdarima", severity="none"):
+            from sktime.forecasting.arima import ARIMA
+
+            fy_proba = ARIMA()
+        else:
+            fy_proba = NaiveForecaster()
+        fx = NaiveForecaster()
+
+        params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
+
+        return [params1, params2]
 
 
 class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
@@ -1604,6 +1663,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "X-y-must-have-same-index": False,
     }
 
@@ -1617,7 +1677,9 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         super(Permute, self).__init__()
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
+            "capability:insample",
             "capability:pred_int",  # can the estimator produce prediction intervals?
+            "capability:pred_int:insample",
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
             "fit_is_empty",
