@@ -403,6 +403,10 @@ class BaseEstimator(BaseObject):
             optional, name of the parameter to retrieve
             if passed, changes return to be `fitted_params.get(param, None)` instead
 
+        If only a single ``str`` argument is passed, it is interpreted as ``param``.
+        That is, the call ``get_fitted_params("myparam")``
+        is the same as ``get_fitted_params(deep=True, param="myparam)``
+
         Returns
         -------
         fitted_params : dict with str-valued keys
@@ -424,6 +428,11 @@ class BaseEstimator(BaseObject):
                 f"estimator of type {type(self).__name__} has not been "
                 "fitted yet, please call fit on data before get_fitted_params"
             )
+
+        # deal with single arg, str case
+        if isinstance(deep, str) and param is None:
+            param = deep
+            deep = True
 
         # treat case where param is not None
         if param is not None:

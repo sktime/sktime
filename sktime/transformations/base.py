@@ -781,6 +781,10 @@ class BaseTransformer(BaseEstimator):
               a modified `self.get_fitted_params("forecasters")` (a `pd.DataFrame`),
               where each entry `x` is replaced by `x.get_fitted_params(param, None)`
 
+        If only a single ``str`` argument is passed, it is interpreted as ``param``.
+        That is, the call ``get_fitted_params("myparam")``
+        is the same as ``get_fitted_params(deep=True, param="myparam)``
+
         Returns
         -------
         fitted_params : dict with str-valued keys
@@ -802,6 +806,11 @@ class BaseTransformer(BaseEstimator):
             return super(BaseTransformer, self).get_fitted_params(
                 deep=deep, param=param
             )
+
+        # deal with single arg, str case
+        if isinstance(deep, str) and param is None:
+            param = deep
+            deep = True
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys
