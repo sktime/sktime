@@ -386,7 +386,7 @@ class BaseEstimator(BaseObject):
         """Get fitted parameters.
 
         State required:
-            Requires state to be "fitted".
+            Requires state to be "fitted". If not, returns empty dict.
 
         Parameters
         ----------
@@ -412,12 +412,11 @@ class BaseEstimator(BaseObject):
               all parameters of `componentname` appear as `paramname` with its value
             * if `deep=True`, also contains arbitrary levels of component recursion,
               e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
+
+            If estimator is not fitted, will return an empty dict.
         """
         if not self.is_fitted:
-            raise NotFittedError(
-                f"estimator of type {type(self).__name__} has not been "
-                "fitted yet, please call fit on data before get_fitted_params"
-            )
+            return {}
 
         # collect non-nested fitted params of self
         fitted_params = self._get_fitted_params()

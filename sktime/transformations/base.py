@@ -759,7 +759,7 @@ class BaseTransformer(BaseEstimator):
         """Get fitted parameters.
 
         State required:
-            Requires state to be "fitted".
+            Requires state to be "fitted". If not, returns empty dict.
 
         Parameters
         ----------
@@ -785,6 +785,8 @@ class BaseTransformer(BaseEstimator):
               all parameters of `componentname` appear as `paramname` with its value
             * if `deep=True`, also contains arbitrary levels of component recursion,
               e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
+
+            If estimator is not fitted, will return an empty dict.
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
