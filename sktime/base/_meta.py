@@ -114,7 +114,7 @@ class _HeterogenousMetaEstimator:
             out.update(estimators)
             for name, estimator in estimators:
                 # checks estimator has get_params resp get_fitted_params
-                if hasattr(estimator, method):
+                if hasattr(estimator, methodd):
                     # checks estimator is fitted before get_fitted_params call
                     if not fitted or estimator.is_fitted:
                         for key, value in getattr(estimator, methodd)(**deepkw).items():
