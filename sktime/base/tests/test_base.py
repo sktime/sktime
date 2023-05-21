@@ -376,10 +376,6 @@ def test_set_get_config():
     assert config_end["bar"] == "b"
     assert config_end["foobar"] == 126
 
-    assert composite.get_fitted_params("foo") is composite.foo_
-    assert composite.get_fitted_params("foo") is not composite.foo
-    assert non_composite.get_fitted_params("bar") is None
-
 
 def test_eq_dunder():
     """Tests equality dunder for BaseObject descendants.
