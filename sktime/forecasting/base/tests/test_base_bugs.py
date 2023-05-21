@@ -7,8 +7,8 @@ import pytest
 from sktime.forecasting.compose import ForecastByLevel, TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import (
-    ForecastingGridSearchCV,
     ExpandingWindowSplitter,
+    ForecastingGridSearchCV,
 )
 from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -55,7 +55,7 @@ def test_vectorization_series_to_panel(mtype):
     )
 
     gscv = ForecastingGridSearchCV(forecaster=pipe, param_grid=param_grid, cv=cv)
-    gscv_bylevel = ForecastByLevel(gscv, 'local')
+    gscv_bylevel = ForecastByLevel(gscv, "local")
     reconciler = ReconcilerForecaster(gscv_bylevel, method="ols")
 
     reconciler.fit(y_agg)
