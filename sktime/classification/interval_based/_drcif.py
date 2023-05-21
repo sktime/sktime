@@ -65,9 +65,10 @@ class DrCIF(BaseClassifier):
         Base estimator for the ensemble, can be supplied a sklearn BaseEstimator or a
         string for suggested options.
         "DTC" uses the sklearn DecisionTreeClassifier using entropy as a splitting
-        measure.
+        measure (sklearn.tree.DecisionTreeClassifier).
         "CIT" uses the sktime ContinuousIntervalTree, an implementation of the original
-        tree used with embedded attribute processing for faster predictions.
+        tree used with embedded attribute processing for faster predictions
+        (sktime.classification.interval_based.ContinuousIntervalTree).
         In order to pass parameters to estimators, pass a BaseEstimator instance.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding n_estimators.
@@ -634,10 +635,18 @@ class DrCIF(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
         else:
-            return {
-                "n_estimators": 2,
-                "n_intervals": 2,
-                "att_subsample_size": 2,
-                "base_estimator": ContinuousIntervalTree(),
-                "save_transformed_data": True,
-            }
+            return [
+                {
+                    "n_estimators": 2,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                    "save_transformed_data": True,
+                },
+                {
+                    "n_estimators": 2,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                    "base_estimator": ContinuousIntervalTree(),
+                    "save_transformed_data": True,
+                }
+            ]
