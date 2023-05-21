@@ -69,13 +69,19 @@ class AlignerDtwNumba(BaseAligner):
         False = unmodified distance, i.e., dtw distance or weighted dtw distance
         True = derivative distance, i.e., derivative dtw distance or derivative wdtw
     window: int, defaults = None
+        Sakoe-Chiba window radius
+        one of three mutually exclusive ways to specify bounding matrix
         if ``None``, does not use Sakoe-Chiba window
         if ``int``, uses Sakoe-Chiba lower bounding window with radius ``window``.
+        If ``window`` is passed, ``itakura_max_slope`` will be ignored.
     itakura_max_slope: float, between 0. and 1., default = None
+        Itakura parallelogram slope
+        one of three mutually exclusive ways to specify bounding matrix
         if ``None``, does not use Itakura parallelogram lower bounding
         if ``float``, uses Itakura parallelogram lower bounding,
         with slope gradient ``itakura_max_slope``
     bounding_matrix: optional, 2D np.ndarray, default=None
+        one of three mutually exclusive ways to specify bounding matrix
         must be of shape ``(len(X), len(X2))``, ``len`` meaning number time points,
         where ``X``, ``X2`` are the two time series passed in transform
         Custom bounding matrix to use.
