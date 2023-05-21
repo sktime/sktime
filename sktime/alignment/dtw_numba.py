@@ -264,7 +264,7 @@ class AlignerDtwNumba(BaseAligner):
         """
         params0 = {}
         params1 = {"weighted": True}
-        params2 = {"derivative": True, "itakura_max_slope": 0.5}
+        params2 = {"derivative": True, "itakura_max_slope": 0.1}
         params3 = {"weighted": True, "derivative": True, "g": 1.5}
 
         return [params0, params1, params2, params3]
