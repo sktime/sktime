@@ -2158,6 +2158,16 @@
       ]
     },
     {
+      "login": "luca-miniati",
+      "name": "Luca Miniati",
+      "avatar_url": "https://avatars.githubusercontent.com/u/87467600?v=4",
+      "profile": "https://github.com/luca-miniati",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
       "login": "marrov",
       "name": "Marc Rovira",
       "avatar_url": "https://avatars.githubusercontent.com/u/54272586?v=4",
@@ -2165,6 +2175,6 @@
       "contributions": [
         "doc"
       ]
-    }    
+    }
   ]
 }
