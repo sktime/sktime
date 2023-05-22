@@ -1,10 +1,12 @@
-"""Mutli-scale Attention Convolutional Neural Classifier"""
+# -*- coding: utf-8 -*-
+"""Mutli-scale Attention Convolutional Neural Classifier."""
 
 __author__ = ["jnrusson1"]
 
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
+
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.macnn import MACNNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
@@ -26,7 +28,7 @@ class MACNNClassifier(BaseDeepClassifier):
         A single value representing pooling windows which are applied
         between two MACNN Blocks.
     strides : int, optional (default=2)
-        A single value representing strides to be taken during the 
+        A single value representing strides to be taken during the
         pooling operation.
     repeats : int, optional (default=2)
         The number of MACNN Blocks to be stacked.
@@ -40,7 +42,7 @@ class MACNNClassifier(BaseDeepClassifier):
         The name of the loss function to be used during training,
         should be supported by keras.
     activation : str, optional (default="sigmoid")
-        The activation function to apply at the output. It should be 
+        The activation function to apply at the output. It should be
         "software" if response variable has more than two types.
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
@@ -60,7 +62,8 @@ class MACNNClassifier(BaseDeepClassifier):
 
     References
     ----------
-    .. [1] Wei Chen et. al, Multi-scale Attention Convolutional Neural Network for time series classification,
+    .. [1] Wei Chen et. al, Multi-scale Attention Convolutional
+    Neural Network for time series classification,
     Neural Networks, Volume 136, 2021, Pages 126-140, ISSN 0893-6080,
     https://doi.org/10.1016/j.neunet.2021.01.001.
 
@@ -78,24 +81,24 @@ class MACNNClassifier(BaseDeepClassifier):
     _tags = {"python_dependencies": "tensorflow"}
 
     def __init__(
-            self,
-            n_epochs=1500,
-            batch_size=4,
-            padding="same",
-            pool_size=3,
-            strides=2,
-            repeats=2,
-            filter_sizes=(64, 128, 256),
-            kernel_size=(3, 6, 12),
-            reduction=16,
-            loss="categorical_crossentropy",
-            activation="sigmoid",
-            use_bias=True,
-            metrics=None,
-            optimizer=None,
-            callbacks=None,
-            random_state=0,
-            verbose=False,
+        self,
+        n_epochs=1500,
+        batch_size=4,
+        padding="same",
+        pool_size=3,
+        strides=2,
+        repeats=2,
+        filter_sizes=(64, 128, 256),
+        kernel_size=(3, 6, 12),
+        reduction=16,
+        loss="categorical_crossentropy",
+        activation="sigmoid",
+        use_bias=True,
+        metrics=None,
+        optimizer=None,
+        callbacks=None,
+        random_state=0,
+        verbose=False,
     ):
         _check_dl_dependencies(severity="error")
         super(MACNNClassifier, self).__init__()
@@ -153,7 +156,7 @@ class MACNNClassifier(BaseDeepClassifier):
         from tensorflow import keras
 
         tf.random.set_seed(self.random_state)
-        
+
         metrics = ["accuracy"] if self.metrics is None else self.metrics
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
@@ -162,9 +165,11 @@ class MACNNClassifier(BaseDeepClassifier):
             units=n_classes, activation=self.activation, use_bias=self.use_bias
         )(output_layer)
 
-        self.optimizer_ = keras.optimizers.Adam(learning_rate=0.0001) \
-            if self.optimizer is None \
+        self.optimizer_ = (
+            keras.optimizers.Adam(learning_rate=0.0001)
+            if self.optimizer is None
             else self.optimizer
+        )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
@@ -174,7 +179,7 @@ class MACNNClassifier(BaseDeepClassifier):
         )
 
         return model
-    
+
     def _fit(self, X, y):
         """
         Fit the classifier on the training set (X, y).
@@ -200,7 +205,7 @@ class MACNNClassifier(BaseDeepClassifier):
 
         if self.verbose:
             self.model_.summary()
-        
+
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -211,7 +216,7 @@ class MACNNClassifier(BaseDeepClassifier):
         )
 
         return self
-    
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -244,7 +249,7 @@ class MACNNClassifier(BaseDeepClassifier):
             "n_epochs": 1,
             "filter_sizes": (1, 2, 4),
             "reduction": 8,
-            "random_state": 1
+            "random_state": 1,
         }
 
         return [params1, params2]
