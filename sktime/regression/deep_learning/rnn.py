@@ -20,35 +20,33 @@ _check_dl_dependencies(severity="warning")
 class SimpleRNNRegressor(BaseDeepRegressor):
     """
     Simple recurrent neural network.
-    
+
     Parameters
     ----------
-    n_epochs       : int, default = 2000
+    n_epochs : int, default = 100
         the number of epochs to train the model
-    batch_size      : int, default = 16
+    batch_size : int, default = 1
         the number of samples per gradient update.
-    kernel_size     : int, default = 7
-        the length of the 1D convolution window
-    avg_pool_size   : int, default = 3
-        size of the average pooling windows
-    n_conv_layers   : int, default = 2
-        the number of convolutional plus average pooling layers
-    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
-    random_state    : int or None, default=None
-                      Seed for random number generation.
-    verbose         : boolean, default = False
-                      whether to output extra information
-    loss            : string, default="mean_squared_error"
-                      fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics         : list of strings, default=["accuracy"],
-    activation      : string or a tf callable, default="sigmoid"
-                      Activation function used in the output linear layer.
-                      List of available activation functions:https://keras.io/api/layers/activations/
-    use_bias        : boolean, default = True
-                      whether the layer uses a bias vector.
-    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
-                      specify the optimizer and the learning rate to be used.
+    units : int, default = 6
+        number of units in the network
+    callbacks : list of tf.keras.callbacks.Callback objects, default = None
+    add_default_callback : bool, default = True
+        whether to add default callback
+    random_state : int or None, default=0
+        Seed for random number generation.
+    verbose : boolean, default = False
+        whether to output extra information
+    loss : string, default="mean_squared_error"
+        fit parameter for the keras model
+    metrics : list of strings, default=["accuracy"]
+        metrics to use in fitting the neural network
+    activation : string or a tf callable, default="linear"
+        Activation function used in the output layer.
+        List of available activation functions: https://keras.io/api/layers/activations/
+    use_bias : boolean, default = True
+        whether the layer uses a bias vector.
+    optimizer : keras.optimizers object, default = RMSprop(lr=0.001)
+        specify the optimizer and the learning rate to be used.
 
     References
     ----------
