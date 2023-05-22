@@ -4,7 +4,7 @@ __author__ = ["jnrusson1"]
 
 from copy import deepcopy
 
-from sktime.utils import check_random_state
+from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.macnn import MACNNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
@@ -63,6 +63,16 @@ class MACNNClassifier(BaseDeepClassifier):
     .. [1] Wei Chen et. al, Multi-scale Attention Convolutional Neural Network for time series classification,
     Neural Networks, Volume 136, 2021, Pages 126-140, ISSN 0893-6080,
     https://doi.org/10.1016/j.neunet.2021.01.001.
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.macnn import MACNNClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> macnn = MACNNClassifier(n_epochs=3) # doctest: +SKIP
+    >>> macnn.fit(X_train, y_train) # doctest: +SKIP
+    MACNNClassifier(...)
     """
 
     _tags = {"python_dependencies": "tensorflow"}

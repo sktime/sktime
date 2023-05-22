@@ -143,7 +143,7 @@ class MACNNNetwork(BaseDeepNetwork):
         x = keras.layers.MaxPooling1D(self.pool_size, self.strides, padding=self.padding)(x)
         
         x = self._stack(x, self.repeats, self.filter_sizes[1], self.reduction)
-        x = self.layers.MaxPooling1D(self.pool_size, self.strides, padding=self.padding)(x)
+        x = keras.layers.MaxPooling1D(self.pool_size, self.strides, padding=self.padding)(x)
 
         x = self._stack(x, self.repeats, self.filter_sizes[2], self.reduction)
 
