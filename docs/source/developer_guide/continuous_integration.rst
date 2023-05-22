@@ -117,7 +117,7 @@ the following command:
 
   .. code:: bash
 
-      find . -name "*.py" -print0 | xargs -0 python -m doctest -v
+      pytest --doctest-modules
 
 To run doctest on a specific module, navigate to the directory where the
 module is located and execute the following command:
