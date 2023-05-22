@@ -107,12 +107,12 @@ via the embedded graphical user interface.
 Running docstring examples via ``doctest``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-sktime's Python modules are equipped with docstrings that include examples 
-demonstrating the usage of specific classes within each module. These examples 
-can be executed using doctest to ensure the expected functionality of the 
+sktime's Python modules are equipped with docstrings that include examples
+demonstrating the usage of specific classes within each module. These examples
+can be executed using doctest to ensure the expected functionality of the
 modules after making modifications, thereby identifying any unforeseen bugs.
 
-To run doctest on a specific module, navigate to the directory where the 
+To run doctest on a specific module, navigate to the directory where the
 modified file is located and execute the following command:
 
    .. code:: bash
@@ -120,7 +120,7 @@ modified file is located and execute the following command:
       python -m doctest -v {filename}
 
 
-Executing this command will display the test results for all the docstrings 
+Executing this command will display the test results for all the docstrings
 contained within the module.
 
 Alternative: dockerized testing
