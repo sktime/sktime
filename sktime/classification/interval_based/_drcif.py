@@ -648,5 +648,5 @@ class DrCIF(BaseClassifier):
                     "att_subsample_size": 2,
                     "base_estimator": ContinuousIntervalTree(),
                     "save_transformed_data": True,
-                }
+                },
             ]
