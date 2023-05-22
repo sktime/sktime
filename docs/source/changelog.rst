@@ -17,7 +17,85 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.18.1 - 2023-05-22
 ---------------------------
 
+Documentation
+~~~~~~~~~~~~~
 
+* [DOC] fix typos in ``DynamicFactor`` docstrings (:pr:`4523`) :user:`kbpk`
+* [DOC] improved docstrings in distances/kernels module (:pr:`4526`) :user:`fkiraly`
+* [DOC} adds sktime internship link on the docs page (:pr:`4559`) :user:`fkiraly`
+* [DOC] Improve Docstring for MAPE Metrics (:pr:`4563`) :user:`hazrulakmal`
+* [DOC] change logos to vector graphic ``png`` (:pr:`4605`) :user:`fkiraly`
+* [DOC] change ``sktime`` logos to vector graphic ``svg`` (:pr:`4606`) :user:`fkiraly`
+* [DOC] Remove white fill from ``svg`` and ``png`` ``sktime`` logos (:pr:`4607`) :user:`fkiraly`
+* [DOC] ``AutoETS`` docstring - clarify conditional ignore of parameters dependent on ``auto`` (:pr:`4597`) :user:`luca-miniati`
+* [DOC] correcting module path in ``dists_kernels.rst`` (:pr:`4625`) :user:`mdsaad2305`
+* [DOC] Contributors update (:pr:`4609`) :user:`fkiraly`
+
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] corrected default logic for ``_predict_interval`` in case ``_predict_quantiles`` is not implemented but ``_predict_proba`` is (:pr:`4529`) :user:`fkiraly`
+* [ENH] replace ``joblib.hash`` with ``deep_equals`` in ``test_fit_does_not_overwrite_hyper_params`` for ``pandas`` based parameters (:pr:`4538`) :user:`fkiraly`
+* [ENH] bagging for time series classifiers (:pr:`4533`) :user:`fkiraly`
+* [ENH] Clearer error message on fitting fail of ``evaluate`` (:pr:`4545`) :user:`fkiraly`
+* [ENH] remove warning for length 1 forecasting pipelines (:pr:`4546`) :user:`fkiraly`
+* [ENH] move probability distribution statistic approximation sample sizes to config interface (:pr:`4561`) :user:`fkiraly`
+* [ENH] remove remaining soft dependency related module import warnings (:pr:`4554`) :user:`fkiraly`
+* [MNT][ENH] ``pytest`` isolation in ``check_estimator``, added ``msg`` argument (:pr:`4552`) :user:`fkiraly`
+* [ENH] simple tabular prediction reduction for forecasting (:pr:`4564`) :user:`fkiraly`
+* [ENH] remove unneccesary conversion in ``TSFreshFeatureExtractor`` (:pr:`4571`) :user:`fkiraly`
+* [ENH] add more test parameter sets to ``AutoETS`` (:pr:`4588`) :user:`fkiraly`
+* [DOC] ``AutoETS`` docstring - clarify conditional ignore of parameters dependent on ``auto`` (:pr:`4597`) :user:`luca-miniati`
+* [ENH] improving ``BaseDistribution`` defaulting, and add test coverage (:pr:`4583`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] add silent dependencies to core dependency set (:pr:`4551`) :user:`fkiraly`
+* [ENH] move classification ensembles to ``classification.ensembles`` (:pr:`4532`) :user:`fkiraly`
+* [MNT] bound ``tensorflow-probability`` to ``<0.20.0`` (:pr:`4567`) :user:`fkiraly`
+* [ENH] changing Union[int | float] to float as per issue #4379 (:pr:`4575`) :user:`mdsaad2305`
+* [ENH] remove remaining soft dependency related module import warnings (:pr:`4554`) :user:`fkiraly`
+* [MNT][ENH] ``pytest`` isolation in ``check_estimator``, added ``msg`` argument (:pr:`4552`) :user:`fkiraly`
+* [MNT] bound ``holidays`` to avoid error in ``Prophet`` (:pr:`4594`) :user:`fkiraly`
+* [MNT] remove ``tsfresh`` python version bounds from estimators (:pr:`4573`) :user:`fkiraly`
+* Revert "[MNT] bound ``holidays`` to avoid error in ``Prophet``" (:pr:`4600`) :user:`yarnabrina`
+* [MNT] excepting ``FCNClassifier`` from CI to prevent memouts until bugfix (:pr:`4616`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+* [ENH] corrected default logic for ``_predict_interval`` in case ``_predict_quantiles`` is not implemented but ``_predict_proba`` is (:pr:`4529`) :user:`fkiraly`
+* [BUG] fix informative error message on ``y`` input type check in ``BaseTransformer`` (:pr:`4525`) :user:`fkiraly`
+* [BUG] Fixes incorrect window indexing in ``HampelFilter`` (:pr:`4560`) :user:`antonioramos1`
+* [ENH] ``RecursiveReductionForecaster`` pandas 2 fix (:pr:`4568`) :user:`fkiraly`
+* [BUG] fix incorrect sorting of ``n_best_forecasters_`` in ``BaseGridCV`` if metric's ``lower_is_better`` is ``False`` (:pr:`4590`) :user:`hazrulakmal`
+
+Other
+~~~~~
+
+* [MNT] test for isolation of ``pytest`` (:pr:`4548`) :user:`fkiraly`
+* achievordie [BUG] fix RNN classifier and regressor (:pr:`4531`) :user:`fkiraly`
+* [BUG] fix incorrect values returned by ``DateTimeFeatures`` ``'month_of_quarter'`` feature (:pr:`4542`) :user:`fkiraly`
+* [DOC] Update link in minirocket.ipynb (:pr:`4577`) :user:`panozzaj`
+* [ENH] Extend forecasting benchmarking framework to multiple metrics, add test coverage (:pr:`4586`) :user:`hazrulakmal`
+* [ENH] fix warnings in make sphinx - language (``conf.py``) and ``dists_kernels.rst`` wrong imports (:pr:`4593`) :user:`mdsaad2305`
+* [DOC] Add SVG version of the sktime logo (:pr:`4604`) :user:`marrov`
+* [BUG] in ``_StatsModelsAdapter``, avoid passing ``exog`` to ``get_prediction`` of ``statsmodels`` in ``_predict_interval`` if parameter is not supported (:pr:`4589`) :user:`yarnabrina`
+* [DOC] Add luca-miniati to .all-contributorsrc, for PR #4597 (:pr:`4601`) :user:`luca-miniati`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`antonioramos1`,
+:user:`fkiraly`,
+:user:`hazrulakmal`,
+:user:`kbpk`,
+:user:`luca-miniati`,
+:user:`marrov`,
+:user:`mdsaad2305`,
+:user:`panozzaj`,
+:user:`yarnabrina`
 
 
 
