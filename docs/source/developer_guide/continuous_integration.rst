@@ -112,8 +112,15 @@ demonstrating the usage of specific classes within each module. These examples
 can be executed using doctest to ensure the expected functionality of the
 modules after making modifications, thereby identifying any unforeseen bugs.
 
+To run doctest on all the files, navigate to the root directory and execute
+the following command:
+
+  .. code:: bash
+
+      find . -name "*.py" -print0 | xargs -0 python -m doctest -v
+
 To run doctest on a specific module, navigate to the directory where the
-modified file is located and execute the following command:
+module is located and execute the following command:
 
    .. code:: bash
 
