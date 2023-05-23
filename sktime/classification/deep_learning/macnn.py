@@ -243,12 +243,14 @@ class MACNNClassifier(BaseDeepClassifier):
             "n_epochs": 5,
             "batch_size": 3,
             "filter_sizes": (2, 4, 8),
+            "repeats": 1,
         }
 
         params2 = {
             "n_epochs": 1,
             "filter_sizes": (1, 2, 4),
             "reduction": 8,
+            "repeats": 1,
             "random_state": 1,
         }
 
