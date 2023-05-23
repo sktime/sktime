@@ -220,7 +220,7 @@ class DtwDist(BasePairwiseTransformerPanel):
         """
         params0 = {}
         params1 = {"weighted": True}
-        params2 = {"derivative": True, "itakura_max_slope": 0.1}
-        params3 = {"weighted": True, "derivative": True, "g": 1.5}
+        params2 = {"derivative": True, "window": 0.2}
+        params3 = {"weighted": True, "derivative": True, "g": 0.05}
 
         return [params0, params1, params2, params3]
