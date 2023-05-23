@@ -21,7 +21,7 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
     not _check_estimator_deps(ExponentialSmoothing, severity="none"),
     reason="skip test if required soft dependency not available",
 )
-def test_vectorization_series_to_panel(mtype):
+def test_heterogeneous_get_fitted_params():
     """Regression test for bugfix #4574, related to get_fitted_params."""
     y = _make_hierarchical(hierarchy_levels=(2, 2), min_timepoints=7, max_timepoints=7)
     agg = Aggregator()
