@@ -264,9 +264,9 @@ class AlignerDtwNumba(BaseAligner):
         """
         params0 = {}
         params1 = {"weighted": True}
-        params2 = {"derivative": True}
-        params3 = {"weighted": True, "derivative": True}
+        # derivative alignment paths do not seem to work - memouts. Bug?
         # params2 = {"derivative": True, "window": 0.2}
         # params3 = {"weighted": True, "derivative": True, "g": 0.05}
 
-        return [params0, params1, params2, params3]
+        return [params0, params1]
+        # return [params0, params1, params2, params3]
