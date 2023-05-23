@@ -264,7 +264,9 @@ class AlignerDtwNumba(BaseAligner):
         """
         params0 = {}
         params1 = {"weighted": True}
-        params2 = {"derivative": True, "window": 0.2}
-        params3 = {"weighted": True, "derivative": True, "g": 0.05}
+        params2 = {"derivative": True}
+        params3 = {"weighted": True, "derivative": True}
+        # params2 = {"derivative": True, "window": 0.2}
+        # params3 = {"weighted": True, "derivative": True, "g": 0.05}
 
         return [params0, params1, params2, params3]
