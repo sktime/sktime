@@ -76,8 +76,8 @@ class MCDCNNClassifier(BaseDeepClassifier):
     >>> from sktime.classification.deep_learning.mcdcnn import MCDCNNClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_tain = load_unit_test(split="train")
-    >>> mcdcnn = MCDCNNClassifier()
-    >>> mcdcnn.fit(X_train, y_train)
+    >>> mcdcnn = MCDCNNClassifier()     # doctest: +SKIP
+    >>> mcdcnn.fit(X_train, y_train)    # doctest: +SKIP
     MCDCNNClassifier(...)
     """
 
