@@ -1220,7 +1220,7 @@ class BaseForecaster(BaseEstimator):
 
         return mean_absolute_percentage_error(y, self.predict(fh, X))
 
-    def get_fitted_params(self, deep=True):
+    def get_fitted_params(self, deep=True, param=None):
         """Get fitted parameters.
 
         State required:
@@ -1237,6 +1237,19 @@ class BaseForecaster(BaseEstimator):
             * If False, will return a dict of parameter name : value for this object,
               but not include fitted parameters of components.
 
+        param : str or None, optional, default=None
+            optional, name of the parameter to retrieve
+            if provided, changes return as follows:
+            * if `self` is not vectorized, returns `fitted_params.get(param, None)`
+            * if `self` is vectorized and `param` is valid in `fitted_params`, same
+            * if `self` is vectorized and `param` not valid in `fitted_params`, returns
+              a modified `self.get_fitted_params("forecasters")` (a `pd.DataFrame`),
+              where each entry `x` is replaced by `x.get_fitted_params(param, None)`
+
+        If only a single ``str`` argument is passed, it is interpreted as ``param``.
+        That is, the call ``get_fitted_params("myparam")``
+        is the same as ``get_fitted_params(deep=True, param="myparam)``
+
         Returns
         -------
         fitted_params : dict with str-valued keys
@@ -1250,10 +1263,17 @@ class BaseForecaster(BaseEstimator):
               all parameters of `componentname` appear as `paramname` with its value
             * if `deep=True`, also contains arbitrary levels of component recursion,
               e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
+
+            if `param` is provided, this return instead changes as described above
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super(BaseForecaster, self).get_fitted_params(deep=deep)
+            return super(BaseForecaster, self).get_fitted_params(deep=deep, param=param)
+
+        # deal with single arg, str case
+        if isinstance(deep, str) and param is None:
+            param = deep
+            deep = True
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys
@@ -1278,6 +1298,19 @@ class BaseForecaster(BaseEstimator):
             fcst_params = fcst.get_fitted_params(deep=deep)
             for key, val in fcst_params.items():
                 fitted_params[f"{fcst_key}__{key}"] = val
+
+        # treat case where param is not None and one of the reserved vectorization attrs
+        if param is not None and param in fitted_params.keys():
+            return self.get_fitted_params(deep=deep).get(param, None)
+
+        # treat case where param needs to be broadcast to vectorized forecasters
+        if param is not None and param not in fitted_params.keys():
+            # shallow copy of self.forecasters_
+            result_df = forecasters.copy()
+            # replace all entries with retrieved key
+            for ix, col in product(forecasters.index, forecasters.columns):
+                result_df.loc[ix, col] = result_df.loc[ix, col].get_fitted_params(param)
+            return result_df
 
         return fitted_params
 

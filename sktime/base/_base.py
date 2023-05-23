@@ -382,7 +382,7 @@ class BaseEstimator(BaseObject):
                 f"been fitted yet; please call `fit` first."
             )
 
-    def get_fitted_params(self, deep=True):
+    def get_fitted_params(self, deep=True, param=None):
         """Get fitted parameters.
 
         State required:
@@ -399,6 +399,14 @@ class BaseEstimator(BaseObject):
             * If False, will return a dict of parameter name : value for this object,
               but not include fitted parameters of components.
 
+        param : str or None, optional, default=None
+            optional, name of the parameter to retrieve
+            if passed, changes return to be `fitted_params.get(param, None)` instead
+
+        If only a single ``str`` argument is passed, it is interpreted as ``param``.
+        That is, the call ``get_fitted_params("myparam")``
+        is the same as ``get_fitted_params(deep=True, param="myparam)``
+
         Returns
         -------
         fitted_params : dict with str-valued keys
@@ -412,12 +420,23 @@ class BaseEstimator(BaseObject):
               all parameters of `componentname` appear as `paramname` with its value
             * if `deep=True`, also contains arbitrary levels of component recursion,
               e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
+
+            If `param` is provided, returns instead `fitted_params.get(param, None)`
         """
         if not self.is_fitted:
             raise NotFittedError(
                 f"estimator of type {type(self).__name__} has not been "
                 "fitted yet, please call fit on data before get_fitted_params"
             )
+
+        # deal with single arg, str case
+        if isinstance(deep, str) and param is None:
+            param = deep
+            deep = True
+
+        # treat case where param is not None
+        if param is not None:
+            return self.get_fitted_params(deep=deep).get(param, None)
 
         # collect non-nested fitted params of self
         fitted_params = self._get_fitted_params()
