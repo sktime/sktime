@@ -185,17 +185,15 @@ class BaseDistribution(BaseObject):
         `DataFrame` with same columns and index as `self`
             containing :math:`p_{X_{ij}}(x_{ij})`, as above
         """
-        try:
-            self.pdf(x=x).applymap(np.log)
-
+        if self._has_implementation_of("log_pdf"):
             approx_method = (
                 "by exponentiating the output returned by the log_pdf method, "
                 "this may be numerically unstable"
             )
             warn(self._method_error_msg("pdf", fill_in=approx_method))
+            return self.log_pdf(x=x).applymap(np.exp)
 
-        except NotImplementedError:
-            raise NotImplementedError(self._method_err_msg("pdf", "error"))
+        raise NotImplementedError(self._method_err_msg("pdf", "error"))
 
     def log_pdf(self, x):
         r"""Logarithmic probability density function.
@@ -226,17 +224,35 @@ class BaseDistribution(BaseObject):
         `DataFrame` with same columns and index as `self`
             containing :math:`\log p_{X_{ij}}(x_{ij})`, as above
         """
-        try:
-            self.pdf(x=x).applymap(np.log)
-
+        if self._has_implementation_of("pdf"):
             approx_method = (
                 "by taking the logarithm of the output returned by the pdf method, "
                 "this may be numerically unstable"
             )
             warn(self._method_error_msg("log_pdf", fill_in=approx_method))
 
-        except NotImplementedError:
-            raise NotImplementedError(self._method_err_msg("log_pdf", "error"))
+            return self.pdf(x=x).applymap(np.log)
+
+        raise NotImplementedError(self._method_err_msg("log_pdf", "error"))
+
+    def cdf(self, x):
+        """Cumulative distribution function."""
+        N = self.APPROX_SPL
+        approx_method = (
+            "by approximating the expected value by the indicator function on "
+            f"{N} samples"
+        )
+        warn(self._method_error_msg("mean", fill_in=approx_method))
+
+        splx = pd.concat([x] * N, keys=range(N))
+        spl = self.sample(N)
+        ind = splx <= spl
+
+        return ind.groupby(level=1).mean()
+
+    def ppf(self, p):
+        """Quantile function = percent point function = inverse cdf."""
+        raise NotImplementedError(self._method_err_msg("cdf", "error"))
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -303,7 +319,7 @@ class BaseDistribution(BaseObject):
         warn(self._method_error_msg("mean", fill_in=approx_method))
 
         spl = self.sample(approx_spl_size)
-        return spl.groupby(level=0).mean()
+        return spl.groupby(level=1).mean()
 
     def var(self):
         r"""Return element/entry-wise variance of the distribution.
@@ -326,7 +342,7 @@ class BaseDistribution(BaseObject):
         spl1 = self.sample(approx_spl_size)
         spl2 = self.sample(approx_spl_size)
         spl = (spl1 - spl2) ** 2
-        return spl.groupby(level=0).mean()
+        return spl.groupby(level=1).mean()
 
     def pdfnorm(self, a=2):
         r"""a-norm of pdf, defaults to 2-norm.
@@ -358,7 +374,7 @@ class BaseDistribution(BaseObject):
 
         # uses formula int p(x)^a dx = E[p(X)^{a-1}], and MC approximates the RHS
         spl = [self.pdf(self.sample()) ** (a - 1) for _ in range(approx_spl_size)]
-        return pd.concat(spl, axis=0).groupby(level=0).mean()
+        return pd.concat(spl, axis=0).groupby(level=1).mean()
 
     def _coerce_to_self_index_df(self, x):
         x = np.array(x)
@@ -427,6 +443,20 @@ class BaseDistribution(BaseObject):
         in `pd-multiindex` mtype format convention, with same `columns` as `self`,
         and `MultiIndex` that is product of `RangeIndex(n_samples)` and `self.index`
         """
+
+        def gen_unif():
+            np_unif = np.random.uniform(size=self.shape)
+            return pd.DataFrame(np_unif, index=self.index, columns=self.columns)
+
+        # if ppf is implemented, we use inverse transform sampling
+        if self._has_implementation_of("ppf"):
+            if n_samples is None:
+                return self.ppf(gen_unif())
+            else:
+                pd_smpl = [self.ppf(gen_unif()) for _ in range(n_samples)]
+                df_spl = pd.concat(pd_smpl, keys=range(n_samples))
+                return df_spl
+
         raise NotImplementedError(self._method_err_msg("sample", "error"))
 
 

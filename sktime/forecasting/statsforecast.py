@@ -8,10 +8,12 @@ __all__ = ["StatsForecastAutoARIMA"]
 
 from typing import Dict, Optional
 
-from sktime.forecasting.base.adapters._statsforecast import _StatsForecastAdapter
+from sktime.forecasting.base.adapters._generalised_statsforecast import (
+    _GeneralisedStatsForecastAdapter,
+)
 
 
-class StatsForecastAutoARIMA(_StatsForecastAdapter):
+class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     """StatsForecast AutoARIMA estimator.
 
     This implementation is inspired by Hyndman's forecast::auto.arima [1]_
@@ -160,6 +162,12 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
+    _tags = {
+        "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+    }
+
     def __init__(
         self,
         start_p: int = 2,
@@ -234,7 +242,7 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
 
     def _instantiate_model(self):
         # import inside method to avoid hard dependency
-        from statsforecast.arima import AutoARIMA as _AutoARIMA
+        from statsforecast.models import AutoARIMA as _AutoARIMA
 
         return _AutoARIMA(
             d=self.d,
@@ -269,7 +277,7 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
             biasadj=self.biasadj,
             parallel=self.parallel,
             num_cores=self.n_jobs,
-            period=self.sp,
+            season_length=self.sp,
         )
 
     @classmethod
