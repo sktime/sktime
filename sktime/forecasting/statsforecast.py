@@ -8,10 +8,12 @@ __all__ = ["StatsForecastAutoARIMA"]
 
 from typing import Dict, Optional
 
-from sktime.forecasting.base.adapters._statsforecast import _StatsForecastAdapter
+from sktime.forecasting.base.adapters._generalised_statsforecast import (
+    _GeneralisedStatsForecastAdapter,
+)
 
 
-class StatsForecastAutoARIMA(_StatsForecastAdapter):
+class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     """StatsForecast AutoARIMA estimator.
 
     This implementation is inspired by Hyndman's forecast::auto.arima [1]_
