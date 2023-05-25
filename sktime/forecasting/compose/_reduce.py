@@ -1516,7 +1516,9 @@ def _get_forecaster(scitype, strategy):
 
 
 def _cut_df(X, n_obs=1, type="tail"):
-    """Cut input at tail or tail, supports grouping."""
+    """Cut input at tail or head, supports grouping."""
+    if n_obs == 0:
+        return X.copy()
     if isinstance(X.index, pd.MultiIndex):
         Xi_grp = X.index.names[0:-1]
         if type == "tail":
