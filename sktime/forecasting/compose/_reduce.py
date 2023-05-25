@@ -129,6 +129,13 @@ def _sliding_window_transform(
     window_length = check_window_length(window_length, n_timepoints)
 
     if pooling == "global":
+        n_cut = -window_length
+
+        # Do not truncate data if the NA handling strategy is specified in transformers.
+        truncate = any(tr.truncate is None for tr in transformers)
+        if not truncate:
+            n_cut = 0
+
         if len(transformers) == 1:
             tf_fit = transformers[0].fit(y)
         else:
@@ -136,11 +143,11 @@ def _sliding_window_transform(
             tf_fit = FeatureUnion(feat).fit(y)
         X_from_y = tf_fit.transform(y)
 
-        X_from_y_cut = _cut_df(X_from_y, n_obs=n_timepoints - window_length)
-        yt = _cut_df(y, n_obs=n_timepoints - window_length)
+        X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
+        yt = _cut_df(y, n_obs=n_cut)
 
         if X is not None:
-            X_cut = _cut_df(X, n_obs=n_timepoints - window_length)
+            X_cut = _cut_df(X, n_obs=n_cut)
             Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
         else:
             Xt = X_from_y_cut
