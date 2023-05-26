@@ -20,8 +20,25 @@ sktime.
 
     Scientific type
         A class or object type to denote a category of objects defined by a
-        common interface and data scientific purpose. For example, "forecaster"
-        or "classifier".
+        common python class interface and data scientific purpose.
+        For example, "forecaster" or "classifier", and the interface defined in
+        ``BaseForecaster`` or ``BaseClassifier``.
+
+    Estimator
+        An algorithm of a specific :term:`scientific type`, implementing the python
+        class interface defined by it. For example, the ``ARIMA`` class.
+
+    Composite estimator
+        An :term:`estimator` that consists of multiple other component estimators which
+        can vary. An example would be a pipeline consisting of a transformer and
+        forecaster.
+
+    Hyperparameter: 
+        A parameter of a machine learning model that is set at construction.
+        Usually, this affects the model's performance.
+        Examples include the learning rate in a neural network,
+        the number of trees in a random forest, or the regularization parameter
+        in a linear model.
 
     Forecasting
         A learning task focused on prediction future values of a time series. For more details, see the :ref:`user_guide_introduction`.
@@ -110,12 +127,8 @@ sktime.
         Compare with :term:`toolbox` and :term:`framework`.
 
     Bagging: 
-        A technique in ensemble learning where multiple models are trained on different subsets of the training data, with each 
-        model having an equal vote in the final prediction.
-
-    Cross-validation: 
-        A technique used to estimate the performance of a predictive model. The data is split into multiple folds, with the 
-        model trained on a subset of the folds and tested on the remaining fold. This process is repeated for all possible combinations of training and testing folds, and the performance metrics are averaged.
+        A technique in ensemble learning where multiple models are trained on different subsets of the training data,
+        and individual model outputs are averaged by some rule (e.g., majority vote) to obtain a consensus prediction.
 
     Ensemble learning: 
         A technique in which multiple models are combined to improve the overall performance of a predictive model.
@@ -128,17 +141,9 @@ sktime.
         The ability of a predictive model to perform well on unseen data. A model that overfits to the training data may not 
         generalize well, while a model that underfits may not capture the underlying patterns in the data.
 
-    Hyperparameter: 
-        A parameter of a machine learning model that is set before training and affects the model's performance. Examples 
-        include the learning rate in a neural network, the number of trees in a random forest, or the regularization parameter in a linear model.
-
     Model selection: 
         The process of selecting the best machine learning model for a given task. This may involve comparing the performance 
         of different models on a validation set, or using techniques like grid search to find the best hyperparameters for a given model.
-
-    Resampling: 
-        A technique used to address imbalanced datasets or to create more training data. Examples include oversampling, where 
-        the minority class is oversampled to balance the class distribution, or bootstrap resampling, where multiple datasets are created by randomly sampling with replacement from the original data.
 
     Time series decomposition: 
         A technique used to separate a time series into its underlying components, such as trend, seasonality, and noise. 
