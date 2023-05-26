@@ -122,12 +122,12 @@ the following command:
 To run doctest on all the files without ``pytest``, navigate to the root directory and execute
 the following command:
 
-   (for ``UNIX`` based OS)
+(for ``UNIX`` based OS)
   .. code:: bash
 
       find . -name "*.py" -print0 | xargs -0 python -m doctest -v
 
-   (for windows)
+(for windows)
   .. code:: bash
 
       for /r %G in (*.py) do python -m doctest -v "%G"
