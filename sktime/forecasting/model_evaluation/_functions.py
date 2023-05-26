@@ -167,10 +167,6 @@ def _evaluate_window(
         methodname = pred_type[scitype]
         method = getattr(forecaster, methodname)
 
-        # todo 0.19.0: remove this patch
-        if methodname == "predict_proba":
-            metric_args["legacy_interface"] = False
-
         y_pred = method(fh, X_test, **metric_args)
         pred_time = time.perf_counter() - start_pred
         # score

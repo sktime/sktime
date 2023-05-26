@@ -714,8 +714,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
-    # todo 0.19.0: remove any legacy_interface logic
-    def predict_proba(self, fh=None, X=None, marginal=True, legacy_interface=False):
+    def predict_proba(self, fh=None, X=None, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         Note: currently only implemented for Series (non-panel, non-hierarchical) y.
@@ -741,34 +740,13 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
-        legacy_interface : bool or None, optional, default=False
-            whether legacy interface is used, deprecation parameter
-            parameter will be removed in 0.19.0
-            True: always returns tfp Distribution object
-            False: always returns sktime BaseDistribution object
-            None: returns tfp Distribution if tensorflow_probability is in the env
-                otherwise returns sktime BaseDistribution
 
         Returns
         -------
-        If legacy_interface=False, or None and tensorflow_probability is not in the env
         pred_dist : sktime BaseDistribution
             predictive distribution
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
-
-        If legacy_interface=True, or None and tensorflow_probability is in the env
-        pred_dist : tfp Distribution object
-            if marginal=True:
-                batch shape is 1D and same length as fh
-                event shape is 1D, with length equal number of variables being forecast
-                i-th (batch) distribution is forecast for i-th entry of fh
-                j-th (event) index is j-th variable, order as y in `fit`/`update`
-            if marginal=False:
-                there is a single batch
-                event shape is 2D, of shape (len(fh), no. variables)
-                i-th (event dim 1) distribution is forecast for i-th entry of fh
-                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -789,24 +767,8 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        # pass legacy_interface arg on only if inner function has it
-        inner_params = signature(self._predict_proba).parameters.keys()
-        if "legacy_interface" in inner_params:
-            pred_dist = self._predict_proba(
-                fh=fh, X=X_inner, marginal=marginal, legacy_interface=legacy_interface
-            )
-        else:
-            pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
-            msg = (
-                f"warning: {type(self)} implements _predict_proba, but "
-                "has no legacy_interface parameter. This likely means that the class "
-                "is custom built. Please note that from 0.19.0 on, "
-                "_predict_proba will be expected to return an sktime BaseDistribution. "
-                "We will try to catch this via coercion from 0.18.0, if a "
-                "tensorflow distribution is returned, but to minimize risk, "
-                "we recommend to move to sktime BaseDistribution. "
-            )
-            warn(msg)
+        # pass to inner _predict_proba
+        pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
 
         return pred_dist
 
@@ -2102,8 +2064,7 @@ class BaseForecaster(BaseEstimator):
 
         elif implements_proba:
 
-            # 0.19.0 - one instance of legacy_interface to remove
-            pred_proba = self.predict_proba(fh=fh, X=X, legacy_interface=False)
+            pred_proba = self.predict_proba(fh=fh, X=X)
             pred_int = pred_proba.quantile(alpha=alpha)
 
         return pred_int
@@ -2203,7 +2164,7 @@ class BaseForecaster(BaseEstimator):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -2217,34 +2178,13 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series to predict from.
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
-        legacy_interface : bool or None, optional, default=False
-            whether legacy interface is used, deprecation parameter
-            parameter will be removed in 0.19.0
-            True: always returns tfp Distribution object
-            False: always returns sktime BaseDistribution object
-            None: returns tfp Distribution if tensorflow_probability is in the env
-                otherwise returns sktime BaseDistribution
 
         Returns
         -------
-        If legacy_interface=False, or None and tensorflow_probability is not in the env
         pred_dist : sktime BaseDistribution
             predictive distribution
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
-
-        If legacy_interface=True, or None and tensorflow_probability is in the env
-        pred_dist : tfp Distribution object
-            if marginal=True:
-                batch shape is 1D and same length as fh
-                event shape is 1D, with length equal number of variables being forecast
-                i-th (batch) distribution is forecast for i-th entry of fh
-                j-th (event) index is j-th variable, order as y in `fit`/`update`
-            if marginal=False:
-                there is a single batch
-                event shape is 2D, of shape (len(fh), no. variables)
-                i-th (event dim 1) distribution is forecast for i-th entry of fh
-                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         # default behaviour is implemented if one of the following three is implemented
         implements_interval = self._has_implementation_of("_predict_interval")
@@ -2270,22 +2210,12 @@ class BaseForecaster(BaseEstimator):
         pred_mean = convert_to(pred_mean, to_type=df_types)
         # pred_mean and pred_var now have the same format
 
-        if legacy_interface is None:
-            legacy_interface = _check_dl_dependencies(severity="none")
-        if legacy_interface:
-            import tensorflow_probability as tfp
+        # default is normal with predict as mean and pred_var as variance
+        from sktime.proba.normal import Normal
 
-            d = tfp.distributions.Normal
-            pred_dist = d(loc=pred_mean, scale=pred_std)
-
-        else:
-            from sktime.proba.normal import Normal
-
-            index = pred_mean.index
-            columns = pred_mean.columns
-            pred_dist = Normal(
-                mu=pred_mean, sigma=pred_std, index=index, columns=columns
-            )
+        index = pred_mean.index
+        columns = pred_mean.columns
+        pred_dist = Normal(mu=pred_mean, sigma=pred_std, index=index, columns=columns)
 
         return pred_dist
 

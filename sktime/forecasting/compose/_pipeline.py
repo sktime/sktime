@@ -616,8 +616,7 @@ class ForecastingPipeline(_Pipeline):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    # todo 0.19.0 remove legacy_interface arg and logic
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -647,9 +646,7 @@ class ForecastingPipeline(_Pipeline):
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         X = self._transform(X=X)
-        return self.forecaster_.predict_proba(
-            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
-        )
+        return self.forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -1506,8 +1503,7 @@ class ForecastX(BaseForecaster):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    # todo 0.19.0 remove legacy_interface arg and logic
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -1537,9 +1533,7 @@ class ForecastX(BaseForecaster):
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_proba(
-            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
-        )
+        y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X, marginal=marginal)
         return y_pred
 
     @classmethod
