@@ -39,13 +39,12 @@ Additional configurations can be found in
 ``sktime`` specific code formatting conventions
 -----------------------------------------------
 
--  Check out our :ref:`glossary`.
 -  Use underscores to separate words in non-class names: ``n_instances``
    rather than ``ninstances``.
 -  exceptionally, capital letters ``X``, ``Y``, ``Z``, are permissible as variable names
    or part of variable names such as ``X_train`` if referring to data sets, in accordance
    with the PEP8 convention that such variable names are permissible if in prior use in an area
-   (here, this is the ``scikit-learn`` adjacenet ecosystem)
+   (here, this is the ``scikit-learn`` adjacent ecosystem)
 -  Avoid multiple statements on one line. Prefer a line return after a
    control flow statement (``if``/``for``).
 -  Use absolute imports for references inside sktime.
