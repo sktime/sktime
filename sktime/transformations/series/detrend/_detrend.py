@@ -90,7 +90,7 @@ class Detrender(BaseTransformer):
     def __init__(self, forecaster=None, model="additive", out_of_sample=False):
         self.forecaster = forecaster
         self.model = model
-        self.oos = out_of_sample
+        self.out_of_sample = out_of_sample
 
         super(Detrender, self).__init__()
 
@@ -121,16 +121,16 @@ class Detrender(BaseTransformer):
         self: a fitted instance of the estimator
         """
         if len(X) <= 10:
-            self.oos = False
+            self.out_of_sample = False
             warn(
                 """
                     Length of X is less than 11, forecasters tend to break
                     below length 10, using in-sample Detrender now
-                    """
+                """
             )
 
         if not self.forecaster_.get_tag("requires-fh-in-fit", True):
-            if not self.oos:
+            if not self.out_of_sample:
                 self.forecaster_.fit(y=X, X=y)
             else:
                 self.forecaster_.fit(y=X[:10], X=y)
@@ -152,7 +152,7 @@ class Detrender(BaseTransformer):
         if self.forecaster_.get_tag("requires-fh-in-fit", True):
             X = update_data(self._X, X)
             y = update_data(self._y, y)
-            if not self.oos:
+            if not self.out_of_sample:
                 forecaster = self.forecaster_.clone().fit(y=X, X=y, fh=fh)
             else:
                 forecaster = self.forecaster_.clone().fit(y=X[:10], X=y, fh=fh)
@@ -181,14 +181,16 @@ class Detrender(BaseTransformer):
         fh = self._get_fh_from_X(X=X)
         forecaster = self._get_fitted_forecaster(X=X, y=y, fh=fh)
 
-        if not self.oos:
+        if not self.out_of_sample:
             X_pred = forecaster.predict(fh=fh, X=y)
         else:
             cv = ExpandingWindowSplitter()
-            X_pred1 = forecaster.predict(fh=fh, X=y[:10])
-            X_pred2 = forecaster.update_predict(X=y, cv=cv)
-            X_pred2 = X_pred.drop_duplicates()
+            fh2 = X.index[:10]
+            X_pred1 = forecaster.predict(fh=fh2, X=X[:10])
+            X_pred2 = forecaster.update_predict(y=X, cv=cv)
             X_pred = pd.concat([X_pred1, X_pred2])
+            X_pred = X_pred.drop_duplicates()
+            X_pred = X_pred.loc[X_pred.index.isin(X.index)]
 
         if self.model == "additive":
             return X - X_pred
