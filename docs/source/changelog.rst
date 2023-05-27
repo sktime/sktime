@@ -25,7 +25,7 @@ Highlights
 * the time series alignment module has been updated: extension template for aligners (:pr:`4613`),
   ``numba`` based alignment paths are availableas ``sktime`` aligners (:pr:`4620`) :user:`fkiraly`
 * the forecasting benchmarking framework now allows to pass multiple metrics (:pr:`4586`) :user:`hazrulakmal`
-* new time series classifiers: bagging, MACNN, fixed RNN (:pr:`4533`, :pr:`4636`) :user:`fkiraly`, :user:`achieveordie`
+* new time series classifiers: bagging, MACNN, RNN (:pr:`4185`, :pr:`4533`, :pr:`4636`) :user:`ArushikaBansal`, :user:`fkiraly`, :user:`achieveordie`
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -75,12 +75,19 @@ Time series alignment
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] `SimpleRNN` DL time series regressor, migrated from ``sktime-dl`` (:pr:`4185`) :user:`ArushikaBansal`
 * [ENH] bagging for time series classifiers (:pr:`4533`) :user:`fkiraly`
 * [ENH] move classification ensembles to ``classification.ensembles`` (:pr:`4532`) :user:`fkiraly`
 * [ENH] test for isolation of ``pytest`` (:pr:`4548`) :user:`fkiraly`
 * [ENH] add default kernel to ``TimeSeriesSVC`` - mean RBF kernel (:pr:`4603`) :user:`fkiraly`
 * [ENH] better documentation and test coverage for custom estimators and parameters in ``DrCIF`` (:pr:`4621`) :user:`Taise228`
 * [ENH] Add MACNN classifier and network (:pr:`4636`) :user:`achieveordie`
+
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] independent distance and multivariate aggregated kernel wrapper (:pr:`4598`) :user:`fkiraly`
+* [ENH] variable subsetting dunder for distances and kernels (:pr:`4596`) :user:`fkiraly`
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -157,14 +164,21 @@ Probability distributions
 * [BUG] fix error messages in ``BaseDistribution`` if default methods are not implemented (:pr:`4628`) :user:`fkiraly`
 * [BUG] fix wrong ``alpha`` sorting in ``BaseDistribution`` ``quantile`` return (:pr:`4631`) :user:`fkiraly`
 
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix input check error message in ``BasePairwiseTransformerPanel``  (:pr:`4499`) :user:`fkiraly`
+
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 * [BUG] fix broken RNN classifier (:pr:`4531`) :user:`achieveordie`
+* [BUG] fix bug from clash between ``ABC`` inheritance and RNN ``fit`` override (:pr:`4527`) :user:`achieveordie` :user:`fkiraly`
 
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 
 * [BUG] fix broken RNN regressor (:pr:`4531`) :user:`achieveordie`
+* [BUG] fix bug from clash between ``ABC`` inheritance and RNN ``fit`` override (:pr:`4527`) :user:`achieveordie` :user:`fkiraly`
 
 Transformations
 ^^^^^^^^^^^^^^^
