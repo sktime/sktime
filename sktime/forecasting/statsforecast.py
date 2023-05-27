@@ -3,7 +3,7 @@
 """Implements AutoARIMA and AutoTheta model from statsforecast by Nixtla."""
 
 __author__ = ["FedericoGarza"]
-__all__ = ["StatsForecastAutoARIMA", "StatsForecastAutoTheta"]
+__all__ = ["StatsForecastAutoARIMA", "StatsForecastAutoETS", "StatsForecastAutoTheta"]
 
 
 from typing import Dict, Optional
@@ -382,5 +382,95 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
         params = [{}, {"season_length": 4}]
+
+        return params
+
+
+class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
+    """StatsForecast Automatic Exponential Smoothing model.
+
+    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+
+    Automatically selects the best ETS (Error, Trend, Seasonality) model using an
+    information criterion. Default is Akaike Information Criterion (AICc), while
+    particular models are estimated using maximum likelihood. The state-space
+    equations can be determined based on their $M$ multiplicative, $A$ additive, $Z$
+    optimized or $N$ ommited components. The `model` string parameter defines the ETS
+    equations: E in [$M, A, Z$], T in [$N, A, M, Z$], and S in [$N, A, M, Z$].
+
+    For example when model='ANN' (additive error, no trend, and no seasonality), ETS
+    will explore only a simple exponential smoothing.
+
+    If the component is selected as 'Z', it operates as a placeholder to ask the
+    AutoETS model to figure out the best parameter.
+
+    Parameters
+    ----------
+    season_length : int
+        Number of observations per unit of time. Ex: 24 Hourly data.
+    model : str
+        Controlling state-space-equations.
+    damped : bool
+        A parameter that 'dampens' the trend.
+
+    Notes
+    -----
+    This implementation is a mirror of Hyndman's forecast::ets [2]_.
+
+    References
+    ----------
+    .. [1] https://nixtla.github.io/statsforecast/models.html#autoets
+    .. [2] https://github.com/robjhyndman/forecast
+
+    See Also
+    --------
+    AutoETS
+    """
+
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+    }
+
+    def __init__(
+        self, season_length: int = 1, model: str = "ZZZ", damped: Optional[bool] = None
+    ):
+        self.season_length = season_length
+        self.model = model
+        self.damped = damped
+
+        super().__init__()
+
+    def _instantiate_model(self):
+        """Create underlying forecaster instance."""
+        from statsforecast.models import AutoETS
+
+        return AutoETS(
+            season_length=self.season_length, model=self.model, damped=self.damped
+        )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        params = [{}, {"season_length": 4, "model": "ZMZ"}]
 
         return params
