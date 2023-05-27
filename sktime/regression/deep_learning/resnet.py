@@ -29,7 +29,7 @@ class ResNetRegressor(BaseDeepRegressor):
     loss            : string, default="mean_squared_error"
         fit parameter for the keras model
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics         : list of strings, default=["accuracy"],
+    metrics         : list of strings, default=["mean_squared_error"],
     activation      : string or a tf callable, default="linear"
         Activation function used in the output linear layer.
         List of available activation functions:
@@ -68,11 +68,11 @@ class ResNetRegressor(BaseDeepRegressor):
         n_epochs=1500,
         callbacks=None,
         verbose=False,
-        loss="categorical_crossentropy",
+        loss="mean_squared_error",
         metrics=None,
         batch_size=16,
         random_state=None,
-        activation="sigmoid",
+        activation="linear",
         use_bias=True,
         optimizer=None,
     ):
@@ -121,7 +121,9 @@ class ResNetRegressor(BaseDeepRegressor):
         )
 
         if self.metrics is None:
-            metrics = ["accuracy"]
+            metrics = [
+                "mean_squared_error",
+            ]
         else:
             metrics = self.metrics
 
@@ -159,7 +161,7 @@ class ResNetRegressor(BaseDeepRegressor):
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
-        self.model_ = self.build_model(self.input_shape, self.n_classes_)
+        self.model_ = self.build_model(self.input_shape)
         if self.verbose:
             self.model_.summary()
 
