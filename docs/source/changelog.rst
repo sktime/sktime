@@ -76,10 +76,8 @@ Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] `SimpleRNN` DL time series regressor, migrated from ``sktime-dl`` (:pr:`4185`) :user:`ArushikaBansal`
-* [ENH] bagging for time series classifiers (:pr:`4533`) :user:`fkiraly`
+
 * [ENH] move classification ensembles to ``classification.ensembles`` (:pr:`4532`) :user:`fkiraly`
-* [ENH] test for isolation of ``pytest`` (:pr:`4548`) :user:`fkiraly`
-* [ENH] add default kernel to ``TimeSeriesSVC`` - mean RBF kernel (:pr:`4603`) :user:`fkiraly`
 * [ENH] better documentation and test coverage for custom estimators and parameters in ``DrCIF`` (:pr:`4621`) :user:`Taise228`
 * [ENH] Add MACNN classifier and network (:pr:`4636`) :user:`achieveordie`
 
@@ -192,6 +190,7 @@ Contributors
 
 :user:`achieveordie`,
 :user:`antonioramos1`,
+:user:`ArushikaBansal`,
 :user:`fkiraly`,
 :user:`hazrulakmal`,
 :user:`kbpk`,
