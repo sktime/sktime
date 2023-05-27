@@ -39,7 +39,6 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
-from inspect import signature
 from itertools import product
 from warnings import warn
 
@@ -58,10 +57,7 @@ from sktime.datatypes import (
 )
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies,
-    _check_estimator_deps,
-)
+from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 
