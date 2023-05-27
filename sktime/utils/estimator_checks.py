@@ -105,6 +105,7 @@ def check_estimator(
     )
     _check_soft_dependencies("pytest", msg=msg)
 
+    from sktime.alignment.tests.test_all_aligners import TestAllAligners
     from sktime.base import BaseEstimator
     from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
         TestAllEarlyClassifiers,
@@ -123,6 +124,7 @@ def check_estimator(
     from sktime.transformations.tests.test_all_transformers import TestAllTransformers
 
     testclass_dict = dict()
+    testclass_dict["aligner"] = TestAllAligners
     testclass_dict["classifier"] = TestAllClassifiers
     testclass_dict["distribution"] = TestAllDistributions
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
