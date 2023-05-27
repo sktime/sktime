@@ -46,7 +46,7 @@ class Normal(BaseDistribution):
         # todo: untangle index handling
         # and broadcast of parameters.
         # move this functionality to the base class
-        # 0.18.0?
+        # 0.19.0?
         self._mu, self._sigma = self._get_bc_params()
         shape = self._mu.shape
 
