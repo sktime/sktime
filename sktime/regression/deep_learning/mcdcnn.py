@@ -53,7 +53,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
     optimizer: None or keras.optimizers.Optimizer instance, optional (default=None)
         The optimizer that is used for model compiltation. If left as None,
         then `keras.optimizers.SGD` is used with the following parameters -
-        `learning_rate=0.01, momentum=0.9, decay=0.0005`.
+        `learning_rate=0.01, momentum=0.9, weight_decay=0.0005`.
     callbacks : None or list of keras.callbacks.Callback, optinal (default=None)
         The callback(s) to use during training.
     random_state : int, optional (default=0)
@@ -166,7 +166,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
             keras.optimizers.SGD(
                 learning_rate=0.01,
                 momentum=0.9,
-                decay=0.0005,
+                weight_decay=0.0005,
             )
             if self.optimizer is None
             else self.optimizer
