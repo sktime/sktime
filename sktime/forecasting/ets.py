@@ -159,6 +159,10 @@ class AutoETS(_StatsModelsAdapter):
     .. [3] R Version of ETS:
         https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets
 
+    See Also
+    --------
+    StatsForecastAutoETS
+
     Examples
     --------
     >>> from sktime.datasets import load_airline
