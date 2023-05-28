@@ -344,7 +344,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
         if not self.refit:
-            return self.estimator._predict_proba(self, X)
+            return self.estimator._predict_proba(X)
         else:
             estimator = self._get_delegate()
             return estimator.predict_proba(X=X)
@@ -352,7 +352,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
     def _predict(self, X):
         """Predicts labels for sequences in X."""
         if not self.refit:
-            return self.estimator._predict(self, X)
+            return self.estimator._predict(X)
         else:
             estimator = self._get_delegate()
             return estimator.predict(X=X)
