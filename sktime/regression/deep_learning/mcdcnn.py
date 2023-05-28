@@ -220,7 +220,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
 
         return self
 
-    def predict_proba(self, X, **kwargs):
+    def _predict_proba(self, X, **kwargs):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -233,7 +233,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
         output : array of shape = [n_instances, n_classes] of probabilities
         """
         self.check_is_fitted()
-        X = X.transpose(0, 2, 1)
+        X = X.transpose([0, 2, 1])
         X = self._network._prepare_input(X)
 
         probs = self.model_.predict(X, self.batch_size, **kwargs)
