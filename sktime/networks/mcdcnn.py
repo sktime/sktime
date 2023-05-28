@@ -78,8 +78,8 @@ class MCDCNNNetwork(BaseDeepNetwork):
         """
         from tensorflow import keras
 
-        n_t = input_shape[0]
-        n_vars = input_shape[1]
+        n_t = input_shape[0]  # corresponding to the number of time steps (m)
+        n_vars = input_shape[1]  # corresponding to the number of variables (d)
 
         input_layers, conv2_layers = [], []
 
@@ -112,7 +112,14 @@ class MCDCNNNetwork(BaseDeepNetwork):
 
             conv2_layers.append(conv2)
 
-        output_layer = keras.layers.Concatenate(axis=-1)(conv2_layers)
+        # In univariate cases, legacy tf loaders returns just the
+        # layer and not a list of layers with one element,
+        # therefore simply use that layer, bypassing concat layer.
+        if n_vars == 1:
+            output_layer = conv2_layers[0]
+        else:
+            output_layer = keras.layers.Concatenate(axis=-1)(conv2_layers)
+
         output_layer = keras.layers.Dense(units=self.dense_units, activation="relu")(
             output_layer
         )

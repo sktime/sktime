@@ -7,7 +7,7 @@ __author__ = [
 
 from copy import deepcopy
 
-from numpy import hstack
+from numpy import squeeze
 from sklearn.utils import check_random_state
 
 from sktime.networks.mcdcnn import MCDCNNNetwork
@@ -182,8 +182,6 @@ class MCDCNNRegressor(BaseDeepRegressor):
 
         return model
 
-    import numpy as np
-
     def _fit(self, X, y):
         """Fit the regressor on the training set (X, y).
 
@@ -208,7 +206,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
         self.callbacks_ = deepcopy(self.callbacks)
 
         if self.verbose:
-            self.model_.smumary()
+            self.model_.summary()
 
         self.history = self.model_.fit(
             X,
@@ -220,17 +218,18 @@ class MCDCNNRegressor(BaseDeepRegressor):
 
         return self
 
-    def _predict_proba(self, X, **kwargs):
-        """Find probability estimates for each class for all cases in X.
+    def _predict(self, X, **kwargs):
+        """Find regression estimates, for a given independent sample X.
 
         Parameters
         ----------
         X : an np.ndarray of shape = (n_instances, n_dimensions, series_length)
-            The training input samples.
+            The testing input samples.
 
         Returns
         -------
-        output : array of shape = [n_instances, n_classes] of probabilities
+        output : array of shape = [n_instances,]
+            Representing the estimates for all instances in X.
         """
         self.check_is_fitted()
         X = X.transpose([0, 2, 1])
@@ -238,7 +237,5 @@ class MCDCNNRegressor(BaseDeepRegressor):
 
         probs = self.model_.predict(X, self.batch_size, **kwargs)
 
-        if probs.shape[1] == 1:
-            probs = hstack([1 - probs, probs])
-        probs = probs / probs.sum(axis=1, keepdims=1)
+        probs = squeeze(probs, axis=-1)
         return probs

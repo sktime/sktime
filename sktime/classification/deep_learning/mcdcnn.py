@@ -211,7 +211,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self.callbacks_ = deepcopy(self.callbacks)
 
         if self.verbose:
-            self.model_.smumary()
+            self.model_.summary()
 
         self.history = self.model_.fit(
             X,
