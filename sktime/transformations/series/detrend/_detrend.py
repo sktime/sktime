@@ -4,7 +4,7 @@
 """Implements transformations to detrend a time series."""
 
 __all__ = ["Detrender"]
-__author__ = ["mloning", "SveaMeyer13", "KishManani", "fkiraly"]
+__author__ = ["mloning", "SveaMeyer13", "KishManani", "fkiraly", "blazingbhavneek"]
 
 from warnings import warn
 
@@ -50,6 +50,9 @@ class Detrender(BaseTransformer):
         i.e., `transform(X)` returns `X - forecaster.predict(fh=X.index)`
         If `model="multiplicative"` the `forecaster.transform` divides by the trend,
         i.e., `transform(X)` returns `X / forecaster.predict(fh=X.index)`
+    out_of_sample : Boolean value, default="False"
+        If "True", the detrender will compute out-of-sample residuals rather
+        than in-sample residuals.
 
     Attributes
     ----------
