@@ -7,7 +7,6 @@ import collections
 from functools import partial
 
 import numpy as np
-from scipy.sparse.linalg import svds
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
@@ -83,6 +82,8 @@ def cumsum_shift_mult(array, dims):
 
 def rankreduce(array, rankbound):
     """Project 2D array on top rankbound singular values."""
+    from scipy.sparse.linalg import svds
+
     arraysvd = svds(array.astype("f"), k=rankbound)
     return np.dot(arraysvd[0], np.diag(arraysvd[1]))
 

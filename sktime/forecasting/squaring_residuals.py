@@ -94,6 +94,7 @@ class SquaringResiduals(BaseForecaster):
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "capability:pred_int:insample": False,
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": "scipy",
     }
 
     def __init__(

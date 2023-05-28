@@ -13,7 +13,6 @@ import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
-from scipy.sparse import hstack
 from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
@@ -125,7 +124,7 @@ class MUSE(BaseClassifier):
         "capability:predict_proba": True,
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "scipy"],
     }
 
     def __init__(
@@ -190,6 +189,8 @@ class MUSE(BaseClassifier):
         self :
             Reference to self.
         """
+        from scipy.sparse import hstack
+
         y = np.asarray(y)
 
         # add first order differences in each dimension to TS
@@ -308,6 +309,8 @@ class MUSE(BaseClassifier):
             )
 
     def _transform_words(self, X):
+        from scipy.sparse import hstack
+
         if self.use_first_order_differences:
             X = self._add_first_order_differences(X)
 
