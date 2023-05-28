@@ -7,7 +7,6 @@ import numpy as np
 from sklearn.model_selection import GridSearchCV
 
 from sktime.classification._delegate import _DelegatedClassifier
-from sktime.classification.base import BaseClassifier
 
 
 class TSCGridSearchCV(_DelegatedClassifier):
@@ -345,7 +344,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
         if not self.refit:
-            return BaseClassifier._predict_proba(self, X)
+            return self.estimator._predict_proba(self, X)
         else:
             estimator = self._get_delegate()
             return estimator.predict_proba(X=X)
@@ -353,7 +352,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
     def _predict(self, X):
         """Predicts labels for sequences in X."""
         if not self.refit:
-            return BaseClassifier._predict(self, X)
+            return self.estimator._predict(self, X)
         else:
             estimator = self._get_delegate()
             return estimator.predict(X=X)
