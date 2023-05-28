@@ -350,6 +350,14 @@ class TSCGridSearchCV(_DelegatedClassifier):
             estimator = self._get_delegate()
             return estimator.predict_proba(X=X)
 
+    def _predict(self, X):
+        """Predicts labels for sequences in X."""
+        if not self.refit:
+            return BaseClassifier._predict(self, X)
+        else:
+            estimator = self._get_delegate()
+            return estimator.predict(X=X)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
