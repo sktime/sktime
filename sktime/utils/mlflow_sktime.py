@@ -741,12 +741,9 @@ class _SktimeModelWrapper:
                     ]["marginal"]
                 )
 
-                y_pred_dist = self.sktime_model.predict_proba(
-                    X=X, marginal=marginal, legacy_interface=True
-                )
-                y_pred_dist_quantiles = pd.DataFrame(y_pred_dist.quantile(quantiles))
+                y_pred_dist = self.sktime_model.predict_proba(X=X, marginal=marginal)
+                y_pred_dist_quantiles = y_pred_dist.quantile(quantiles)
                 y_pred_dist_quantiles.columns = [f"Quantiles_{q}" for q in quantiles]
-                y_pred_dist_quantiles.index = y_pred_dist.parameters["loc"].index
 
                 raw_predictions[SKTIME_PREDICT_PROBA] = y_pred_dist_quantiles
 
