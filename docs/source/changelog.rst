@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
 Version 0.19.0 - 2023-05-30
 ---------------------------
 
@@ -65,6 +66,10 @@ Forecasting
 
 List of PR
 ~~~~~~~~~~
+
+* [MNT] 0.19.0 change action - relax ``pandas`` bound to ``<2.1.0`` (:pr:`4429`) :user:`fkiraly`
+* [MNT] 0.19.0 release action - tests for both ``pandas 1`` and ``pandas 2`` (:pr:`4622`) :user:`fkiraly`
+* [MNT] 0.19.0 deprecations and changes (:pr:`4646`) :user:`fkiraly`
 
 
 Version 0.18.1 - 2023-05-22
