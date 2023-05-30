@@ -7,6 +7,7 @@ __author__ = ["mloning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
 from collections.abc import Sequence
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,8 @@ from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
+from sktime.forecasting.model_selection._split import BaseSplitter
+from sktime.performance_metrics.base import BaseMetric
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_scoring
 
@@ -725,33 +728,99 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
 class ForecastingSkoptSearchCV(BaseGridSearch):
     """Bayesian search over hyper parameters for a forecaster.
 
-    skopt version 0.9.0 (under-development) - 90% done
-
     Parameters
     ----------
-    search_spaces : dict or a list of dic. for each dict, keys are parameters names
-    (string) and values are skopt space Real, Interger, Object.
+    forecaster : estimator object.
+        The estimator should implement the sktime or scikit-learn estimator interface.
+        Either the estimator must contain a "score" function,
+        or a scoring function must be passed.
+    cv : cross-validation generator or an iterable
+        Splitter used for generating validation folds.
+        e.g. SlidingWindowSplitter()
+    param_grid : dict or a list of dict. See below for details.
+        if dict, a dictionary that represents the search space over the parameters of
+        the provided estimator. The keys are parameter names (strings), and the values
+        are instances of skopt.space.Dimension (Real, Integer, or Categorical)
+        or any other valid value that defines a skopt dimension.
+        Please refer to the `skopt.Optimizer` documentation for more information.
+        if a list of dict, each dictionary corresponds to a parameter space, following
+        the same structure described in case 1 above. the search will be performed
+        sequentially for each parameter space, with the maximum number of evaluations
+        set to n_iter.
+    n_iter : int, default=10
+        Number of parameter settings that are sampled. n_iter trades
+        off runtime vs quality of the solution. Consider increasing n_points
+        if you want to try more parameter settings in parallel.
+    n_points : int, default=1
+        Number of parameter settings to sample in parallel.
+        If this does not align with n_iter, the last iteration will sample less points
+    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+        scoring metric to use in tuning the forecaster
+        if callable, must have signature
+        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        assuming np.ndarrays being of the same length, and lower being better.
+    optimizer_kwargs: dict, optional
+        Dict of arguments passed to Optimizer.
+        For example, {'base_estimator': 'RF'} would use a Random Forest surrogate
+        instead of the default Gaussian Process.
+    random_state : int, RandomState instance or None, default=None
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
+        Pass an int for reproducible output across multiple
+        function calls.
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        data ingestion strategy in fitting cv, passed to `evaluate` internally
+        defines the ingestion mode when the forecaster sees new data when window expands
+        "refit" = forecaster is refitted to each training window
+        "update" = forecaster is updated with training window data, in sequence provided
+        "no-update_params" = fit to first training window, re-used without fit or update
+    update_behaviour: str, optional, default = "full_refit"
+        one of {"full_refit", "inner_only", "no_update"}
+        behaviour of the forecaster when calling update
+        "full_refit" = both tuning parameters and inner estimator refit on all data seen
+        "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
+        "no_update" = neither tuning parameters nor inner estimator are updated
+    n_jobs : int, optional (default=None)
+        Number of jobs to run in parallel.
+        None means 1 unless in a joblib.parallel_backend context.
+        -1 means using all processors.
+    refit : bool, optional (default=True)
+        True = refit the forecaster with the best parameters on the entire data in fit
+        False = best forecaster remains fitted on the last fold in cv
+    verbose : int, optional (default=0)
+    return_n_best_forecasters: int, default=1
+        In case the n best forecaster should be returned, this value can be set
+        and the n best forecasters will be assigned to n_best_forecasters_
+    pre_dispatch : str, optional (default='2*n_jobs')
+    pre_dispatch : str, optional (default='2*n_jobs')
+    backend : str, optional (default="loky")
+        Specify the parallelisation backend implementation in joblib, where
+        "loky" is used by default.
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
     """
 
     def __init__(
         self,
         forecaster,
-        cv,
-        param_grid,
-        n_iter=10,
-        n_points=1,
-        random_state=None,
-        scoring=None,
+        cv: BaseSplitter,
+        param_grid: Union[Dict, List[Dict]],
+        n_iter: int = 10,
+        n_points: int = 1,
+        random_state: Optional[int] = None,
+        scoring: Optional[List[BaseMetric]] = None,
+        optimizer_kwargs: Optional[Dict] = None,
         strategy="refit",
-        n_jobs=None,
-        refit=True,
-        verbose=0,
-        return_n_best_forecasters=1,
-        pre_dispatch="2*n_jobs",
-        backend="loky",
-        update_behaviour="full_refit",
+        n_jobs: Optional[int] = None,
+        refit: bool = True,
+        verbose: int = 0,
+        return_n_best_forecasters: int = 1,
+        pre_dispatch: str = "2*n_jobs",
+        backend: str = "loky",
+        update_behaviour: str = "full_refit",
         error_score=np.nan,
-        optimizer_kwargs=None,
     ):
         _check_soft_dependencies(
             "scikit-optimize",
@@ -835,7 +904,21 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         return self
 
     def _evaluate_step(self, y, X, optimizer, n_points):
-        """Evaluate a single candidate parameter set."""
+        """Evaluate a candidate parameter set at each iteration.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, default=None
+            Exogenous variables, optional.
+        optimizer : skopt.Optimizer
+            Optimizer instance.
+        n_points : int
+            Number of candidate parameter set to evaluate at each step. if n_points=2,
+            then the two candidate parameter set are evaluated
+            e.g {'sp': 1, 'strategy':'last'} and {'sp': 2, 'strategy': 'mean'}.
+        """
         from skopt.utils import use_named_args
 
         # Get a list of dimension object with name from optimizer
@@ -884,13 +967,17 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         candidate_params = optimizer.ask(n_points=n_points)
         out = parallel(delayed(_fit_and_score)(params) for params in candidate_params)
 
-        # Update optimizer with results.
         # fetch the mean evaluation metrics and feed them back to optimizer
-        # as the optimizer is minimizing the score, we need to negate the score
         results_df = pd.DataFrame(out)
-        optimizer.tell(candidate_params, list(-results_df["mean_" + test_score_name]))
-
-        # keep updating the cv_results_ attribute by concatinating the dataframe
+        # as the optimizer is minimising a score,
+        # we need to negate the score if higher_is_better
+        if self._check_scoring.get_tag("lower_is_better"):
+            scores = list(results_df["mean_" + test_score_name])
+        else:
+            scores = list(-results_df["mean_" + test_score_name])
+        # Update optimizer with evaluation metrics.
+        optimizer.tell(candidate_params, scores)
+        # keep updating the cv_results_ attribute by concatinating the result dataframe
         self.cv_results_ = pd.concat([self.cv_results_, results_df], ignore_index=True)
 
         try:
