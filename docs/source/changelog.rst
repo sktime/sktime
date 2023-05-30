@@ -13,6 +13,59 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.19.0 - 2023-05-30
+---------------------------
+
+Maintenance release - scheduled ``pandas`` dependency updates, scheduled deprecations.
+
+For last non-maintenance content update, see 0.18.1.
+
+Contents
+~~~~~~~~
+
+* ``pandas 2`` is now fully supported.
+  All ``sktime`` native functionality remains compatible with ``pandas 1``, ``>=1.1.0``.
+* scheduled deprecation of ``tensorflow`` based probability interface.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``pandas`` version bounds now allow versions ``2.0.X`` in addition to
+  currently supported ``pandas 1`` versions.
+  This concludes the interim period for experimental support and
+  begins full support for ``pandas 2``, with aim to support any ``pandas 2`` version.
+* ``tensorflow-probability`` is no longer a dependency or soft dependency,
+  it has also been removed from all dependency sets (including ``dl``)
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Python 3.7 end-of-life
+^^^^^^^^^^^^^^^^^^^^^^
+
+Python 3.7 reaches end-of-life on Jun 27, 2023, and core dependencies of ``sktime``
+have already dropped support for python 3.7 with their most recent versions
+(e.g., ``scikit-learn``).
+
+``sktime`` will drop support for python 3.7 with 0.20.0, or the first minor release
+after Jun 27, 2023, whichever is later.
+
+Dependencies
+^^^^^^^^^^^^
+
+* ``tensorflow-probability`` is no longer a dependency or soft dependency,
+  it has also been removed from all dependency sets (including ``dl``)
+
+Forecasting
+^^^^^^^^^^^
+
+* The ``legacy_interface`` argument has been removed from
+  forecasters' ``predict_proba``. The method now always returns a ``BaseDistribution``
+  object, in line with prior default behaviour, i.e., ``legacy_interface=False``.
+
+List of PR
+~~~~~~~~~~
+
 
 Version 0.18.1 - 2023-05-22
 ---------------------------
@@ -223,7 +276,7 @@ Contents
 * ``pandas 2`` support continues in testing/experimental period until 0.18.last.
   All ``sktime`` native functionality is ``pandas 2`` compatible, the transition period
   allows testing of deployments and custom extensions.
-  See instructions below for upgrading dependenet code to ``pandas 2``, or remaining on ``pandas 1``.
+  See instructions below for upgrading dependent code to ``pandas 2``, or remaining on ``pandas 1``.
 * scheduled deprecation of ``tensorflow`` based probability interface and ``VectorizedDF`` methods.
 
 Dependency changes
