@@ -13,6 +13,12 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.19.1 - 2023-05-30
+---------------------------
+
+Identical with 0.19.0 to prevent disruption to users from
+correction of the uploaded 0.19.0 wheels
+(would otherwise result in downtime for corner cases of requirements)
 
 Version 0.19.0 - 2023-05-30
 ---------------------------
