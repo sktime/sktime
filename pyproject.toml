@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.18.1"
+version = "0.19.0"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
@@ -80,7 +80,6 @@ all_extras = [
     "statsmodels>=0.12.1",
     "stumpy>=1.5.1; python_version < '3.11'",
     "tbats>=1.1.0",
-    "tensorflow-probability<0.20.0; python_version < '3.11'",
     "tensorflow; python_version < '3.11'",
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2; python_version < '3.11'",
@@ -135,7 +134,6 @@ docs = [
 
 dl = [
     "tensorflow",
-    "tensorflow-probability",
 ]
 
 pandas1 = [
