@@ -200,6 +200,25 @@ ESTIMATOR_TAG_REGISTER = [
         "does the forecaster implement predict_variance?",
     ),
     (
+        "capability:insample",
+        "forecaster",
+        "bool",
+        "can the forecaster make in-sample predictions?",
+    ),
+    (
+        "capability:pred_int:insample",
+        "forecaster",
+        "bool",
+        "can the forecaster make in-sample predictions in predict_interval/quantiles?",
+    ),
+    (
+        "capability:predict_proba",
+        "classifier",
+        "bool",
+        "does the classifier implement a non-default predict_proba, "
+        "i.e., not just 0/1 probabilities obtained from predict?",
+    ),
+    (
         "capability:multivariate",
         [
             "classifier",
@@ -395,6 +414,30 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         ("str", ["continuous", "discrete", "mixed"]),
         "class the distribution measure belongs to - abs.continuous, discrete, mixed",
+    ),
+    (
+        "approx_mean_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative mean if not available",
+    ),
+    (
+        "approx_var_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative variance if not available",
+    ),
+    (
+        "approx_energy_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative energy if not available",
+    ),
+    (
+        "approx_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating other statistics if not available",
     ),
 ]
 

@@ -167,10 +167,6 @@ def _evaluate_window(
         methodname = pred_type[scitype]
         method = getattr(forecaster, methodname)
 
-        # todo 0.19.0: remove this patch
-        if methodname == "predict_proba":
-            metric_args["legacy_interface"] = False
-
         y_pred = method(fh, X_test, **metric_args)
         pred_time = time.perf_counter() - start_pred
         # score
@@ -184,10 +180,11 @@ def _evaluate_window(
         else:
             warnings.warn(
                 f"""
-                Fitting of forecaster failed, you can set error_score='raise' to see
+                In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
+                you can set error_score='raise' in evaluate to see
                 the exception message. Fit failed for len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
-                Failed forecaster: {forecaster}.
+                Failed forecaster with parameters: {forecaster}.
                 """,
                 FitFailedWarning,
                 stacklevel=2,

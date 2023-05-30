@@ -33,13 +33,19 @@ EXCLUDE_ESTIMATORS = [
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
+    # DL classifier suspected to cause hangs and memouts, see #4610
+    "FCNClassifier",
 ]
 
 
 EXCLUDED_TESTS = {
-    # issue when predicting residuals, see #3479
+    # issue when prediction intervals, see #3479 and #4504
     # known issue with prediction intervals that needs fixing, tracked in #4181
-    "SquaringResiduals": ["test_predict_residuals", "test_predict_interval"],
+    "SquaringResiduals": [
+        "test_predict_time_index",
+        "test_predict_residuals",
+        "test_predict_interval",
+    ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
@@ -97,6 +103,22 @@ EXCLUDED_TESTS = {
     "MLPClassifier": [
         "test_fit_idempotent",
     ],
+    "InceptionTimeClassifier": [
+        "test_fit_idempotent",
+    ],
+    "SimpleRNNClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "SimpleRNNRegressor": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "MACNNClassifier": [
+        "test_fit_idempotent",
+    ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
@@ -127,22 +149,6 @@ EXCLUDED_TESTS = {
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAX": "test_fit_transform_output",
-    # known bug in BaggingForecaster, returns wrong index, #4363
-    "BaggingForecaster": [
-        "test_predict_interval",
-        "test_predict_quantiles",
-        "test_predict_proba",
-    ],
-    # known bug in DynamicFactor, returns wrong index, #4362
-    "DynamicFactor": [
-        "test_predict_interval",
-        "test_predict_quantiles",
-        "test_predict_proba",
-    ],
-    # stochastic failure of quantile prediction monotonicity, refer to #4420, #4431
-    "VAR": ["test_predict_quantiles"],
-    "Prophet": ["test_predict_quantiles"],
-    "VECM": ["test_predict_quantiles"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

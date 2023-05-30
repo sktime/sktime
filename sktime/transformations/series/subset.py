@@ -84,7 +84,7 @@ class IndexSubset(BaseTransformer):
             Xt = X.loc[ind_X_and_y]
         elif index_treatment == "keep":
             Xt = X.loc[ind_X_and_y]
-            y_idx_frame = type(X)(index=y.index)
+            y_idx_frame = type(X)(index=y.index, dtype="float64")
             Xt = Xt.combine_first(y_idx_frame)
         else:
             raise ValueError(

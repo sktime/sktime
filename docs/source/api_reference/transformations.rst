@@ -65,6 +65,8 @@ Pipeline building
     InvertTransform
     Id
     YtoX
+    IxToX
+    TransformByLevel
     TransformIf
 
 .. currentmodule:: sktime.transformations.panel.compose
@@ -625,8 +627,9 @@ Bootstrap transformations
     :toctree: auto_generated/
     :template: class.rst
 
-    STLBootstrapTransformer
     MovingBlockBootstrapTransformer
+    SplitterBootstrapTransformer
+    STLBootstrapTransformer
 
 Outlier detection, changepoint detection
 ----------------------------------------

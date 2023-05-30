@@ -124,6 +124,7 @@ class ConformalIntervals(BaseForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
     }
 
     ALLOWED_METHODS = [

@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements AutoARIMA model from statsforecast by Nixtla."""
+"""Implements AutoARIMA and AutoTheta model from statsforecast by Nixtla."""
 
 __author__ = ["FedericoGarza"]
-__all__ = ["StatsForecastAutoARIMA"]
+__all__ = ["StatsForecastAutoARIMA", "StatsForecastAutoTheta"]
 
 
 from typing import Dict, Optional
 
-from sktime.forecasting.base.adapters._statsforecast import _StatsForecastAdapter
+from sktime.forecasting.base.adapters._generalised_statsforecast import (
+    _GeneralisedStatsForecastAdapter,
+)
 
 
-class StatsForecastAutoARIMA(_StatsForecastAdapter):
+class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     """StatsForecast AutoARIMA estimator.
 
     This implementation is inspired by Hyndman's forecast::auto.arima [1]_
@@ -160,6 +162,12 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
+    _tags = {
+        "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+    }
+
     def __init__(
         self,
         start_p: int = 2,
@@ -234,7 +242,7 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
 
     def _instantiate_model(self):
         # import inside method to avoid hard dependency
-        from statsforecast.arima import AutoARIMA as _AutoARIMA
+        from statsforecast.models import AutoARIMA as _AutoARIMA
 
         return _AutoARIMA(
             d=self.d,
@@ -269,7 +277,7 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
             biasadj=self.biasadj,
             parallel=self.parallel,
             num_cores=self.n_jobs,
-            period=self.sp,
+            season_length=self.sp,
         )
 
     @classmethod
@@ -292,4 +300,87 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = {"approximation": True, "max_p": 4, "max_Q": 1}
+        return params
+
+
+class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
+    """StatsForecast AutoTheta estimator.
+
+    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+
+    AutoTheta model automatically selects the best Theta (Standard Theta Model ("STM"),
+    Optimized Theta Model ("OTM"), Dynamic Standard Theta Model ("DSTM"), Dynamic
+    Optimized Theta Model ("DOTM")) model using mse.
+
+    Parameters
+    ----------
+    season_length : int, optional
+        number of observations per unit of time (e.g. 24 for hourly data), by default 1
+    decomposition_type : str, optional
+        type of seasonal decomposition, by default "multiplicative"
+
+        possible values: "additive", "multiplicative"
+    model : Optional[str], optional
+        controlling Theta Model, by default searches the best model
+
+    References
+    ----------
+    .. [1] https://nixtla.github.io/statsforecast/models.html#autotheta
+
+    See Also
+    --------
+    ThetaForecaster
+    """
+
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+    }
+
+    def __init__(
+        self,
+        season_length: int = 1,
+        decomposition_type: str = "multiplicative",
+        model: Optional[str] = None,
+    ):
+        self.season_length = season_length
+        self.decomposition_type = decomposition_type
+        self.model = model
+
+        super().__init__()
+
+    def _instantiate_model(self):
+        """Create underlying forecaster instance."""
+        from statsforecast.models import AutoTheta
+
+        return AutoTheta(
+            season_length=self.season_length,
+            decomposition_type=self.decomposition_type,
+            model=self.model,
+        )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        params = [{}, {"season_length": 4}]
+
         return params

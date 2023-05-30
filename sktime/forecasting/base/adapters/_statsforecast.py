@@ -25,6 +25,7 @@ class _StatsForecastAdapter(BaseForecaster):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        "capability:pred_int:insample": True,
         "python_dependencies": "statsforecast",
     }
 
@@ -145,9 +146,7 @@ class _StatsForecastAdapter(BaseForecaster):
         if return_pred_int:
             pred_ints = []
             for a in alpha:
-                pred_int = pd.DataFrame(
-                    index=fh_abs.to_pandas(), columns=["lower", "upper"]
-                )
+                pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
                 result = self._forecaster.predict_in_sample(level=int(100 * a))
                 pred_int.loc[fh_abs] = result.drop("mean", axis=1).values[fh_idx, :]
                 pred_ints.append(pred_int)

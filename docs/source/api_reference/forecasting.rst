@@ -77,6 +77,7 @@ Use ``make_reduction`` for easy specification.
     RecursiveTimeSeriesRegressionForecaster
     DirRecTabularRegressionForecaster
     DirRecTimeSeriesRegressionForecaster
+    YfromX
 
 Naive forecasters
 -----------------
@@ -205,6 +206,7 @@ All "ARIMA" models below include SARIMAX capability.
     :template: class.rst
 
     StatsForecastAutoARIMA
+    StatsForecastAutoTheta
 
 .. currentmodule:: sktime.forecasting.sarimax
 

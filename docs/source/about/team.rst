@@ -38,6 +38,8 @@ Community Council Observers
 
    * - Name
      - GitHub ID
+   * - Benedikt Heidrich
+     - :user:`benheid`
    * - Jana Schmidberger
      - :user:`janasberger`
    * - Lovkush Agarwal
@@ -66,6 +68,10 @@ Core Developers
 
    * - Name
      - GitHub ID
+   * - Anirban Ray
+     - :user:`yarnabrina`
+   * - Benedikt Heidrich
+     - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
    * - Jonathan Bechtel
