@@ -117,6 +117,7 @@ mlflow_tests = [
 
 binder = [
     "jupyter",
+    "pandas<2.0.0",
 ]
 
 docs = [
@@ -135,6 +136,10 @@ docs = [
 dl = [
     "tensorflow",
     "tensorflow-probability",
+]
+
+pandas1 = [
+    "pandas<2.0.0",
 ]
 
 [project.urls]
