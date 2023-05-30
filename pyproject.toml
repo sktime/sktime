@@ -12,6 +12,7 @@ maintainers = [
     {name = "Kiril Ralinovski"},
     {name = "Marc Rovira"},
     {name = "Sagar Mishra"},
+    {name = "Ugochukwu Onyeka"},
 ]
 readme = "README.md"
 keywords = [
