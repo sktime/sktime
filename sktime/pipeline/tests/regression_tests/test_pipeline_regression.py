@@ -6,9 +6,12 @@ from sktime.datasets import load_longley, load_arrow_head
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.pipeline.pipeline import Pipeline
+from sktime.transformations.compose import Id
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
+from sktime.transformations.series.lag import Lag
+from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
 
 
 def test_transformer_regression():
@@ -130,3 +133,52 @@ def test_endogenous_exogenous_transform_regression():
     result_pi_general = general_pipeline.predict_interval(X=X_test)
     np.testing.assert_array_equal(result, result_general)
     np.testing.assert_array_equal(result_pi, result_pi_general)
+
+
+def test_feature_union_regression():
+    X = _bottom_hier_datagen(no_levels=1, no_bottom_nodes=2)
+    pipe = Id() + Differencer() + Lag([1, 2], index_out="original")
+    result = pipe.fit_transform(X)
+    general_pipeline = Pipeline()
+    for step in [{"skobject": Id(),
+                  "name": "id",
+                  "edges": {"X": "X"}},
+                 {"skobject": Differencer(),
+                  "name": "differencer",
+                  "edges": {"X": "X"}},
+                 {"skobject": Lag([1, 2], index_out="original"),
+                  "name": "lag",
+                  "edges": {"X": "X"}},
+                 {"skobject": Id(),
+                  "name": "combined",
+                  "edges": {"X": ["id", "differencer", "lag"]}},
+                 ]:
+        general_pipeline.add_step(**step)
+    result_general = general_pipeline.fit_transform(X=X)
+    np.testing.assert_array_equal(result, result_general)
+def test_feature_union_subsetting_regression():
+    X = _make_hierarchical(
+        hierarchy_levels=(2, 2), n_columns=2, min_timepoints=3, max_timepoints=3
+    )
+    pipe = Id() + Differencer()["c0"] + Lag([1, 2], index_out="original")[["c1", "c0"]]
+
+    result = pipe.fit_transform(X)
+
+    general_pipeline = Pipeline()
+    for step in [{"skobject": Id(),
+                  "name": "id",
+                  "edges": {"X": "X"}},
+                 {"skobject": Differencer(),
+                  "name": "differencer",
+                  "edges": {"X": "X__c0"}},
+                 {"skobject": Lag([1, 2], index_out="original"),
+                  "name": "lag",
+                  "edges": {"X": "X__c1_c0"}},
+                 {"skobject": Id(),
+                  "name": "combined",
+                  "edges": {"X": ["id", "differencer", "lag"]}},
+                 ]:
+        general_pipeline.add_step(**step)
+    result_general = general_pipeline.fit_transform(X=X)
+    np.testing.assert_array_equal(result, result_general)
+

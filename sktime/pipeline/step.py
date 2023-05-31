@@ -5,11 +5,11 @@ import pandas as pd
 from sktime.pipeline.computation_setting import ComputationSetting
 import inspect
 
+
 class StepResult:
     def __init__(self, result, mode):
         self.result = result
         self.mode = mode
-
 
 
 class Step():
@@ -23,23 +23,19 @@ class Step():
 
     def get_allowed_method(self):
         if self.skobject is None:
-            return ["transform"] # TODO very hacky
+            return ["transform"]  # TODO very hacky
         "Returns a list of allowed methods of the skobject or the method specified by the user."
         return dir(self.skobject)
 
     def get_result(self, fit=False):
-        # TODO Probably separate get_result from fit?
-        #      Fit should call fit only if required (if a module is added multiple times than fit only the first occurence)
-        #      Fit asks for input data only if it needs to be fitted or asked for input_data
         if self.input_edges is None:
             # If the input_edges are none that the step is a first step.
             return StepResult(self.buffer, "")
         # 1. Get results from all previous steps!
-        # TODO should fetch y only if fit should be called. If not do not fetch it....
-        #      Would not work if y can also be passed to predict... For global model forecasting
-        #      How can we derive if y should be fetched or not...
-        #      Fetch y only if y is passed to pipeline.predict(...) this should solve it.
-        input_data = {step_name : step.get_result(fit=fit) for step_name, step in self.input_edges.items()}
+
+        input_data, mode, all_none = self._fetch_input_data(fit)
+        if all_none:
+            return StepResult(None, "")
 
         # 2. Get the method that should be called on skobject
         mro = self.computation_setting.method_resolution_order
@@ -47,8 +43,7 @@ class Step():
             mro = [self.params["method"]]
         if hasattr(self.skobject, "fit") and fit and not self.skobject.is_fitted:
             kwargs = self._extract_kwargs("fit")
-            self.skobject.fit(**{k: in_data.result for k, in_data in input_data.items() }, **kwargs)
-
+            self.skobject.fit(**input_data, **kwargs)
 
         for method in mro:
             if hasattr(self.skobject, method):
@@ -56,43 +51,33 @@ class Step():
                 if "fh" in kwargs and fit:
                     # TODO check this if it works with numpy. Check if this can be done more generalized!
                     #      Here should be nothing that is only focusing on a specific estimator/...
-                    kwargs["fh"] = input_data["y"].result.index if hasattr(input_data["y"].result, "index") else range(len(input_data["y"].result))
-                all_none = True
-                mode = ""
-                for inp in input_data.values():
-                    if inp.mode != "":
-                        mode = inp.mode
-                    if not inp.result is None:
-                        all_none = False
-                        # TODO make this prettier. Returns None if no input data is provided.
-                if all_none:
-                    return StepResult(None, "")
+                    kwargs["fh"] = input_data["y"].index if hasattr(input_data["y"], "index") else range(
+                        len(input_data["y"]))
                 # 3. Call method on skobject and return result
                 if mode == "proba":
                     # TODO fix the case if we need to apply this to X and y?
-                    idx = input_data["X"].result.columns
+                    idx = input_data["X"].columns
                     n = idx.nlevels
-                    idx_low = idx.droplevel(0).unique()
                     yt = dict()
                     for ix in idx:
                         levels = list(range(1, n))
                         if len(levels) == 1:
                             levels = levels[0]
-                        yt[ix] = input_data["X"].result[ix]
+                        yt[ix] = input_data["X"][ix]
                         # deal with the "Coverage" case, we need to get rid of this
                         #   i.d., special 1st level name of prediction objet
                         #   in the case where there is only one variable
-                        #if len(yt[ix].columns) == 1:
+                        # if len(yt[ix].columns) == 1:
                         #    temp = yt[ix].columns
                         #    yt[ix].columns = input_data["X"].result.columns
                         yt[ix] = getattr(self.skobject, method)(X=yt[ix],
-                            **kwargs
-                        ).to_frame()
+                                                                **kwargs
+                                                                ).to_frame()
                     result = pd.concat(yt.values(), axis=1)
                 else:
                     result = getattr(self.skobject, method)(
                         **dict(filter(lambda k: k[0] in inspect.getfullargspec(getattr(self.skobject, method)).args,
-                                      {k: in_data.result for k, in_data in input_data.items() }.items())),
+                                      input_data.items())),
                         **kwargs
                     )
 
@@ -100,17 +85,32 @@ class Step():
                 return StepResult(result, mode)
             # TODO fill buffer to save
 
-    def predict_classifier(self):
-        pass
+    def _fetch_input_data(self, fit):
+        # TODO enable different mtypes
+        all_none = True
+        mode = ""
+        input_data = {}
+        all_none = True
+        transformer_names = []
 
-    def predict_forecaster(self):
-        pass
-
-    def transform(self):
-        pass
-
-    def inverse_transform(self):
-        pass
+        for step_name, steps in self.input_edges.items():
+            results = []
+            for step in steps:
+                transformer_names.append(step.name)
+                result = step.get_result(fit=fit)
+                results.append(result.result)
+                if result.mode != "":
+                    mode = result.mode
+                if not result.result is None:
+                    all_none = False
+            if not results[0] is None:  # TODO more generic and prettier
+                if len(results) > 1:
+                    input_data[step_name] = pd.concat(
+                        results, axis=1, keys=transformer_names
+                    )
+                else:
+                    input_data[step_name] = results[0]
+        return input_data, mode, all_none
 
     def _extract_kwargs(self, method_name):
         use_kwargs = {}

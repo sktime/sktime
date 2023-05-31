@@ -3,6 +3,7 @@ from copy import deepcopy
 from sktime.base import BaseEstimator
 from sktime.pipeline.computation_setting import ComputationSetting
 from sktime.pipeline.step import Step
+from sktime.transformations.series.subset import ColumnSelect
 
 
 class Pipeline(BaseEstimator):
@@ -19,28 +20,15 @@ class Pipeline(BaseEstimator):
             for step_info in step_informations:
                 self.add_step(**step_info)
 
-    @staticmethod
-    def _check_validity(step, method_name, **kwargs):
-        # Checks if the method_name is allowed to call on the pipeline.
-        # Thus, it uses ducktyping
-        # Returns the all kwargs that are provided to the pipeline and needed by method_name.
-        pass
-
-        ## TODO How to check allowed methods, we need to go through the whole graph. Rules should be:
-        #    * Start at the end at the beginning only transform is allowed.
-        #    * The first non-transformer determines the type of the pipeline!
-        #    * During operation:
-        #       * On transformer transform or inverse_transform is called
-        #           * Inverse_transform is first expicitly added. Laterly, we can make it implicitly if it is on the y path.
-        #       * On non-transformer, predict<X> is called
-        #           * What happens with PI or something like that after deterministic forecasts?
-
     def _get_unique_id(self, skobject):
         return -1
 
     def _get_step(self, name):
+        # TODO do here subsetting using Subsetter
+        #   ColumnSelect Transformer
         if name in self.steps:
             return self.steps[name]
+
         raise Exception("Required Input does not exist")
 
     def add_step(self, skobject, name, edges, **kwargs):
@@ -51,7 +39,15 @@ class Pipeline(BaseEstimator):
         if not unique_id in self.model_dict:
             self.model_dict[unique_id] = skobject.clone()
 
-        input_steps = {key: self._get_step(edge) for key, edge in edges.items()}
+        input_steps = {}
+        for key, edge in edges.items():
+            edge = edge if isinstance(edge, list) else [edge]
+            for edg in edge:
+                if "__" in edg and not edg in self.steps:
+                    # Just semantic sugar..
+                    self._create_subsetter(edg)
+                input_steps[key] = [self._get_step(edg) for edg in edge]
+
         step = Step(skobject, name, input_steps, kwargs, compuatation_setting=self.computation_setting)
         if name in self.steps:
             raise Exception("Name Conflict")
@@ -72,6 +68,11 @@ class Pipeline(BaseEstimator):
 
         # 4. call get_result or something similar on last step!
         self.steps[self._last_step_name].get_result(fit=True)
+        return self
+
+    def fit_transform   (self, X, y=None, **kwargs):
+        return self.fit(X, y).transform(X, y)
+
 
     def transform(self, X, y=None, **kwargs):
         # Implementation of transform, such methods also are required for predict, ...
@@ -155,4 +156,9 @@ class Pipeline(BaseEstimator):
                 #   exist after a forecaster. There might be the case that predict could be possible.
                 return False
         return True
+
+    def _create_subsetter(self, edg):
+        keys = edg.split("__")[-1].split("_")
+        column_select = ColumnSelect(columns=keys)
+        self.add_step(column_select, edg, {"X": edg.split("__")[0]})
 
