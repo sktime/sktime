@@ -45,18 +45,15 @@ Enhancements
 Benchmarking
 ^^^^^^^^^^^^
 
-* [ENH] ``statsforecast`` ``AutoTheta`` direct interface estimator (:pr:`4539`) :user:`yarnabrina`
 * [ENH] Clearer error message on fitting fail of ``evaluate`` (:pr:`4545`) :user:`fkiraly`
-* [ENH] remove warning for length 1 forecasting pipelines (:pr:`4546`) :user:`fkiraly`
-* [ENH] simple tabular prediction reduction for forecasting (:pr:`4564`) :user:`fkiraly`
 * [ENH] Extend forecasting benchmarking framework to multiple metrics, add test coverage (:pr:`4586`) :user:`hazrulakmal`
-
-Data types, checks, conversions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Forecasting
 ^^^^^^^^^^^
 
+* [ENH] ``statsforecast`` ``AutoTheta`` direct interface estimator (:pr:`4539`) :user:`yarnabrina`
+* [ENH] remove warning for length 1 forecasting pipelines (:pr:`4546`) :user:`fkiraly`
+* [ENH] simple tabular prediction reduction for forecasting (:pr:`4564`) :user:`fkiraly`
 * [ENH] rewrite of ``_StatsForecastAdapter`` in a generic way to support other models than ``AutoARIMA`` (:pr:`4629`) :user:`yarnabrina`
 
 Probability distributions
