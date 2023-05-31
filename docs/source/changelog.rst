@@ -16,11 +16,6 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.19.1 - 2023-05-30
 ---------------------------
 
-Identical with 0.19.0 for maintenance purposes.
-
-Version 0.19.0 - 2023-05-30
----------------------------
-
 Maintenance release - scheduled ``pandas`` dependency updates, scheduled deprecations.
 
 For last non-maintenance content update, see 0.18.1.
@@ -74,6 +69,13 @@ List of PR
 * [MNT] 0.19.0 change action - relax ``pandas`` bound to ``<2.1.0`` (:pr:`4429`) :user:`fkiraly`
 * [MNT] 0.19.0 release action - tests for both ``pandas 1`` and ``pandas 2`` (:pr:`4622`) :user:`fkiraly`
 * [MNT] 0.19.0 deprecations and changes (:pr:`4646`) :user:`fkiraly`
+
+
+Version 0.19.0
+--------------
+
+Skipped for maintenance purposes, should not be used.
+(yanked from pypi)
 
 
 Version 0.18.1 - 2023-05-22
