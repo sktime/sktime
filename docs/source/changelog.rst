@@ -16,9 +16,7 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.19.1 - 2023-05-30
 ---------------------------
 
-Identical with 0.19.0 to prevent disruption to users from
-correction of the uploaded 0.19.0 wheels
-(would otherwise result in downtime for corner cases of requirements)
+Identical with 0.19.0 for maintenance purposes.
 
 Version 0.19.0 - 2023-05-30
 ---------------------------
