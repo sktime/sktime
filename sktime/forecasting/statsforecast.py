@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements AutoARIMA and AutoTheta model from statsforecast by Nixtla."""
+"""Interfaces to estimators from statsforecast by Nixtla."""
 
-__author__ = ["FedericoGarza"]
+__author__ = ["FedericoGarza", "yarnabrina"]
+
 __all__ = [
     "StatsForecastAutoARIMA",
     "StatsForecastAutoCES",
