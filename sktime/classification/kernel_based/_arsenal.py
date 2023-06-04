@@ -229,7 +229,7 @@ class Arsenal(BaseClassifier):
                             if self.random_state is None
                             else (255 if self.random_state == 0 else self.random_state)
                             * 37
-                            * (i + 1),
+                            * (i + 1) % 2**31,
                         ),
                         X,
                         y,
@@ -253,7 +253,7 @@ class Arsenal(BaseClassifier):
                         if self.random_state is None
                         else (255 if self.random_state == 0 else self.random_state)
                         * 37
-                        * (i + 1),
+                        * (i + 1) % 2**31,
                     ),
                     X,
                     y,
