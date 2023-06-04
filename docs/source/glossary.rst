@@ -33,7 +33,7 @@ sktime.
         can vary. An example would be a pipeline consisting of a transformer and
         forecaster.
 
-    Hyperparameter: 
+    Hyperparameter:
         A parameter of a machine learning model that is set at construction.
         Usually, this affects the model's performance.
         Examples include the learning rate in a neural network,
@@ -126,25 +126,25 @@ sktime.
         A single-purpose piece of code that practitioners write to solve a particular applied problem.
         Compare with :term:`toolbox` and :term:`framework`.
 
-    Bagging: 
+    Bagging:
         A technique in ensemble learning where multiple models are trained on different subsets of the training data,
         and individual model outputs are averaged by some rule (e.g., majority vote) to obtain a consensus prediction.
 
-    Ensemble learning: 
+    Ensemble learning:
         A technique in which multiple models are combined to improve the overall performance of a predictive model.
 
-    Feature extraction: 
-        A technique used to extract useful information from raw data. In time series analysis, this may involve transforming the 
+    Feature extraction:
+        A technique used to extract useful information from raw data. In time series analysis, this may involve transforming the
         data to a frequency domain, decomposing the signal into components, or extracting statistical features.
 
-    Generalization: 
-        The ability of a predictive model to perform well on unseen data. A model that overfits to the training data may not 
+    Generalization:
+        The ability of a predictive model to perform well on unseen data. A model that overfits to the training data may not
         generalize well, while a model that underfits may not capture the underlying patterns in the data.
 
-    Model selection: 
-        The process of selecting the best machine learning model for a given task. This may involve comparing the performance 
+    Model selection:
+        The process of selecting the best machine learning model for a given task. This may involve comparing the performance
         of different models on a validation set, or using techniques like grid search to find the best hyperparameters for a given model.
 
-    Time series decomposition: 
-        A technique used to separate a time series into its underlying components, such as trend, seasonality, and noise. 
+    Time series decomposition:
+        A technique used to separate a time series into its underlying components, such as trend, seasonality, and noise.
         This can be useful for understanding the patterns in the data and for modeling each component separately.
