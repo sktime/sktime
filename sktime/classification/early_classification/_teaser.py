@@ -430,7 +430,7 @@ class TEASER(BaseEarlyClassifier):
 
     def _predict_proba_for_estimator(self, X, i):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (i + 1)
+        rs = None if self.random_state is None else rs * 37 * (i + 1) % 2**31
         rng = check_random_state(rs)
 
         probas = self._estimators[i].predict_proba(
