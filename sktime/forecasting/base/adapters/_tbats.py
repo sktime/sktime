@@ -58,8 +58,8 @@ class _TbatsAdapter(BaseForecaster):
     def _create_model_class(self):
         """Instantiate (T)BATS model.
 
-        This method should write a (T)BATS model to self._ModelClass,
-            and should be overridden by concrete classes.
+        This method should write a (T)BATS model to self._ModelClass,     and should be
+        overridden by concrete classes.
         """
         raise NotImplementedError
 

@@ -130,10 +130,9 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def _forecasters(self):
         """Make internal list of forecasters.
 
-        The list only contains the name and forecasters.
-        This is for the implementation of get_params
-        via _HeterogenousMetaEstimator._get_params which expects
-        lists of tuples of len 2.
+        The list only contains the name and forecasters. This is for the implementation
+        of get_params via _HeterogenousMetaEstimator._get_params which expects lists of
+        tuples of len 2.
         """
         forecasters = self.forecasters
         if isinstance(forecasters, BaseForecaster):
@@ -258,7 +257,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return hier_dict
 
     def _get_node_dict(self, z):
-        """Create a separate dictionary of nodes and forecasters linked with common key value.
+        """Create a separate dictionary of nodes and forecasters linked with common key
+        value.
 
         Parameters
         ----------
@@ -273,7 +273,6 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         frcstr_dict : dict
                     Dictionary with key as int and value as
                     forecaster
-
         """
         node_dict = {}
         frcstr_dict = {}

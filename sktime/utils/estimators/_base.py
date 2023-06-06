@@ -87,7 +87,6 @@ def make_mock_estimator(
     >>> mock_estimator_instance = mock_estimator_class({"strategy": "last", "sp": 1})
     >>> mock_estimator_instance.fit(y)
     _MockEstimator(...)
-
     """
     dunder_methods_regex = r"^__\w+__$"
 

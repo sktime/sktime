@@ -253,8 +253,7 @@ class ElbowClassSum(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        """
-        Transform X and return a transformed version.
+        """Transform X and return a transformed version.
 
         Parameters
         ----------
@@ -375,7 +374,6 @@ class ElbowClassPairwise(BaseTransformer):
         Returns
         -------
         self : reference to self.
-
         """
         self.channels_selected_ = []
         start = int(round(time.time() * 1000))
@@ -395,8 +393,7 @@ class ElbowClassPairwise(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        """
-        Transform X and return a transformed version.
+        """Transform X and return a transformed version.
 
         Parameters
         ----------

@@ -38,8 +38,7 @@ def run_clustering_experiment(
     resample_id=0,
     overwrite=True,
 ):
-    """
-    Run a clustering experiment and save the results to file.
+    """Run a clustering experiment and save the results to file.
 
     Method to run a basic experiment and write the results to files called
     testFold<resampleID>.csv and, if required, trainFold<resampleID>.csv. This
@@ -73,7 +72,6 @@ def run_clustering_experiment(
         Name of problem, written to the results file, ignored if None
     resample_id : int, default = 0
         Resample identifier, defaults to 0
-
     """
     if not overwrite:
         full_path = (

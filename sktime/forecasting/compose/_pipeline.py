@@ -410,7 +410,10 @@ class ForecastingPipeline(_Pipeline):
 
     @property
     def forecaster_(self):
-        """Return reference to the forecaster in the pipeline. Valid after _fit."""
+        """Return reference to the forecaster in the pipeline.
+
+        Valid after _fit.
+        """
         return self.steps_[-1][1]
 
     def __rpow__(self, other):

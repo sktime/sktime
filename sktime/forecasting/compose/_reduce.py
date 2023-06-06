@@ -1,7 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Composition functionality for reduction approaches to forecasting."""
 
 __author__ = [
@@ -327,7 +326,6 @@ class _Reducer(_BaseWindowForecaster):
         -------
         y, X: A pandas dataframe or series
             contains the y and X data prepared for the respective windows, see above.
-
         """
         if hasattr(self._timepoints, "freq"):
             if self._timepoints.freq is None:

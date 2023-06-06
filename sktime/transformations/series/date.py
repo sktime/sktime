@@ -320,9 +320,8 @@ def _get_supported_calendar(ts_freq, DUMMIES):
 def _prep_dummies(DUMMIES):
     """Use to prepare dummy data.
 
-    Includes defining function call names and ranking
-    of date information based on frequency (e.g. year
-    has a lower frequency than week).
+    Includes defining function call names and ranking of date information based on
+    frequency (e.g. year has a lower frequency than week).
     """
     DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
 

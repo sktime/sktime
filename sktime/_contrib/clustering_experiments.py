@@ -98,9 +98,8 @@ def tune_window(metric: str, train_X):
 
 
 if __name__ == "__main__":
-    """
-    Example simple usage, with arguments input via script or hard coded for testing.
-    """
+    """Example simple usage, with arguments input via script or hard coded for
+    testing."""
     clusterer = "kmeans"
     chris_config = True  # This is so chris doesn't have to change config each time
     tune = False

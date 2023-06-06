@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """KNN time series regression.
 
-This class is a KNN regressor which supports time series distance measures.
-The class has hardcoded string references to numba based distances in sktime.distances.
-It can also be used with callables, or sktime (pairwise transformer) estimators.
+This class is a KNN regressor which supports time series distance measures. The class
+has hardcoded string references to numba based distances in sktime.distances. It can
+also be used with callables, or sktime (pairwise transformer) estimators.
 
-This is a direct wrap or sklearn KNeighbors, with added functionality that allows
-time series distances to be passed, and the sktime time series regressor interface.
+This is a direct wrap or sklearn KNeighbors, with added functionality that allows time
+series distances to be passed, and the sktime time series regressor interface.
 """
 
 __author__ = ["fkiraly"]

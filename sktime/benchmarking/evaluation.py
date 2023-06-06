@@ -62,9 +62,8 @@ class Evaluator:
     def evaluate(self, metric, train_or_test="test", cv_fold="all"):
         """Evaluate estimator performance.
 
-        Calculates the average prediction error per estimator as well as the
-        prediction error achieved by each
-        estimator on individual datasets.
+        Calculates the average prediction error per estimator as well as the prediction
+        error achieved by each estimator on individual datasets.
         """
         # check input
         if isinstance(cv_fold, int) and cv_fold >= 0:
@@ -162,8 +161,8 @@ class Evaluator:
     def rank(self, metric_name=None, ascending=False):
         """Determine estimator ranking.
 
-        Calculates the average ranks based on the performance of each
-        estimator on each dataset
+        Calculates the average ranks based on the performance of each estimator on each
+        dataset
         """
         self._check_is_evaluated()
         if not isinstance(ascending, bool):
@@ -398,11 +397,10 @@ class Evaluator:
     def nemenyi(self, metric_name=None):
         """Nemenyi test.
 
-        Post-hoc test run if the `friedman_test` reveals statistical
-        significance.
-        For more information see `Nemenyi test
-        <https://en.wikipedia.org/wiki/Nemenyi_test>`_.
-        Implementation used `scikit-posthocs
+        Post-hoc test run if the `friedman_test` reveals statistical significance. For
+        more information see
+        `Nemenyi test <https://en.wikipedia.org/wiki/Nemenyi_test>`_.
+         Implementation used `scikit-posthocs
         <https://github.com/maximtrp/scikit-posthocs>`_.
         """
         _check_soft_dependencies("scikit_posthocs")

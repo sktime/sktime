@@ -627,7 +627,6 @@ class BaseSplitter(BaseObject):
         Returns
         -------
         np.ndarray with integer indices of the train window
-
         """
         if split_point > max(0, train_start):
             return np.argwhere(
@@ -840,7 +839,6 @@ class BaseWindowSplitter(BaseSplitter):
         -------
         (np.ndarray, np.ndarray)
             Integer indices of the train/test windows
-
         """
         fh = _check_fh(self.fh)
         if not self.start_with_window:
@@ -1082,7 +1080,6 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     >>> splitter = SlidingWindowSplitter(fh=[2, 4], window_length=3, step_length=2)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([0, 1, 2]), array([4, 6])), (array([2, 3, 4]), array([6, 8]))]
-
     """
 
     def __init__(
@@ -1148,7 +1145,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     >>> splitter = ExpandingWindowSplitter(fh=[2, 4], initial_window=5, step_length=2)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     '[(array([0, 1, 2, 3, 4]), array([6, 8]))]'
-
     """
 
     def __init__(
@@ -1211,7 +1207,6 @@ class SingleWindowSplitter(BaseSplitter):
     >>> splitter = SingleWindowSplitter(fh=[2, 4], window_length=3)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([3, 4, 5]), array([7, 9]))]
-
     """
 
     def __init__(

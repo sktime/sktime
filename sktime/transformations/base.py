@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for transformers.
+"""Base class template for transformers.
 
     class name: BaseTransformer
 

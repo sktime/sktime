@@ -205,8 +205,7 @@ _CHECKS = {
 
 @pytest.mark.parametrize("dataset", sorted(_CHECKS.keys()))
 def test_data_loaders(dataset):
-    """
-    Assert if datasets are loaded correctly.
+    """Assert if datasets are loaded correctly.
 
     dataset: dictionary with values to assert against should contain:
         'columns' : list with column names in correct order,

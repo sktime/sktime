@@ -3,8 +3,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements ensemble forecasters.
 
-Creates univariate (optionally weighted)
-combination of the predictions from underlying forecasts.
+Creates univariate (optionally weighted) combination of the predictions from underlying
+forecasts.
 """
 
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]

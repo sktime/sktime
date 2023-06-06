@@ -13,8 +13,7 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class ResNetRegressor(BaseDeepRegressor):
-    """
-    Residual Neural Network Regressor adopted from [1].
+    """Residual Neural Network Regressor adopted from [1].
 
     Parameters
     ----------

@@ -200,8 +200,8 @@ all_args = [
 def test_eval(test_input, expected):
     """Tests which columns are returned for different arguments.
 
-    For a detailed description what these arguments do,
-    and how they interact see docstring of DateTimeFeatures.
+    For a detailed description what these arguments do, and how they interact see
+    docstring of DateTimeFeatures.
     """
     assert len(test_input) == len(expected)
     assert all([a == b for a, b in zip(test_input, expected)])

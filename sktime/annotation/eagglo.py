@@ -15,8 +15,7 @@ __all__ = ["EAgglo"]
 
 
 class EAgglo(BaseTransformer):
-    """
-    Hierarchical agglomerative estimation of multiple change points.
+    """Hierarchical agglomerative estimation of multiple change points.
 
     E-Agglo is a non-parametric clustering approach for multivariate timeseries[1]_,
     where neighboring segments are sequentially merged_ to maximize a goodness-of-fit
@@ -431,7 +430,7 @@ def len_penalty(x: pd.DataFrame) -> int:
 def mean_diff_penalty(x: pd.DataFrame) -> float:
     """Penalize goodness-of-fit statistic.
 
-    Favors segmentations with larger sizes, while taking into consideration
-    the size of the new segments.
+    Favors segmentations with larger sizes, while taking into consideration the size of
+    the new segments.
     """
     return np.mean(np.diff(np.sort(x)))

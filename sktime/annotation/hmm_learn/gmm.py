@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
-"""
-Hidden Markov Model with Gaussian mixture emissions.
+"""Hidden Markov Model with Gaussian mixture emissions.
 
 Please see the original library
 (https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py)
@@ -14,8 +12,7 @@ __all__ = ["GMMHMM"]
 
 
 class GMMHMM(BaseHMMLearn):
-    """
-    Hidden Markov Model with Gaussian mixture emissions.
+    """Hidden Markov Model with Gaussian mixture emissions.
 
     Parameters
     ----------

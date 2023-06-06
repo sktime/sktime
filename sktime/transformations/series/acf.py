@@ -1,10 +1,10 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Auto-correlation transformations.
 
-Module :mod:`sktime.transformations.series` implements auto-correlation
+Module
+:mod: `sktime.transformations.series` implements auto-correlation
 transformers.
 """
 

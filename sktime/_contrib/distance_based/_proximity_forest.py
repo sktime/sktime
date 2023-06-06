@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """Proximity Forest time series classifier.
 
-A decision tree forest which uses distance measures to partition data.
-B. Lucas and A. Shifaz, C. Pelletier, L. O’Neill, N. Zaidi, B. Goethals,
-F. Petitjean and G. Webb
-Proximity Forest: an effective and scalable distance-based classifier for
-time series,
+A decision tree forest which uses distance measures to partition data. B. Lucas and A.
+Shifaz, C. Pelletier, L. O’Neill, N. Zaidi, B. Goethals, F. Petitjean and G. Webb
+Proximity Forest: an effective and scalable distance-based classifier for time series,
 Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
 """
 
@@ -101,7 +99,6 @@ class _CachedTransformer(_PanelToPanelTransformer):
     Attributes
     ----------
     cache       : location to store transforms seen before for fast look up
-
     """
 
     _required_parameters = ["transformer"]
@@ -116,8 +113,7 @@ class _CachedTransformer(_PanelToPanelTransformer):
         self.cache = {}
 
     def transform(self, X, y=None):
-        """
-        Fit transformer, creating a cache for transformation.
+        """Fit transformer, creating a cache for transformation.
 
         Parameters
         ----------
@@ -928,7 +924,7 @@ class ProximityStump(BaseClassifier):
         :param X: Array-like containing instances
         :param y: Array-like containing class labels
         :return: Returns a dictionary {Label: [sub_X]} in which sub_X contains all
-        instances that match that label
+                instances that match that label
         """
         split_class_x = dict()
         y_size = len(y)
@@ -1083,8 +1079,8 @@ class ProximityStump(BaseClassifier):
         """Find distance to exemplars.
 
         :param X: the dataset containing a list of instances
-        :return: 2d numpy array of distances from each instance to each
-        exemplar (instance by exemplar)
+        :return: 2d numpy array of distances from each instance to each         exemplar
+                (instance by exemplar)
         """
         check_X(X)
         if self.n_jobs > 1 or self.n_jobs < 0:
@@ -1285,7 +1281,7 @@ class ProximityTree(BaseClassifier):
     def predict_class_label(self, query):
         """Predict the label of a query.
 
-        :param query:
+        :param query: 
         :return:
         """
         stump = self.root_stump
@@ -1539,8 +1535,8 @@ class ProximityForest(BaseClassifier):
         """Find probability estimates for each class for all cases in X.
 
         :param predictions_per_tree: Array-like of shape
-        [n_instances,[n_tree_estimators,labels]] which contains an array of labels
-        predicted by each tree for each instance.
+                [n_instances,[n_tree_estimators,labels]] which contains an array of
+                labels         predicted by each tree for each instance.
         :param size: Size of X dataset containing the instances to predict
         :return:
         """

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """Hidalgo (Heterogeneous Intrinsic Dimensionality Algorithm) Segmentation."""
 
 __author__ = ["KatieBuc"]
@@ -134,8 +133,7 @@ class Hidalgo(BaseTransformer):
         super(Hidalgo, self).__init__()
 
     def _get_neighbourhood_params(self, X):
-        """
-        Neighbourhood information from input data X.
+        """Neighbourhood information from input data X.
 
         Parameters
         ----------
@@ -206,8 +204,7 @@ class Hidalgo(BaseTransformer):
         return N_in, f1
 
     def _initialise_params(self, N, mu, Iin, _rng):
-        """
-        Initialise parameters used in algorithm.
+        """Initialise parameters used in algorithm.
 
         Outputs
         ----------
@@ -276,8 +273,8 @@ class Hidalgo(BaseTransformer):
         N_in,
         _rng,
     ):
-        """
-        Gibbs sampling method to find joint posterior distribution of target variables.
+        """Gibbs sampling method to find joint posterior distribution of target
+        variables.
 
         Notes
         -----
@@ -308,7 +305,6 @@ class Hidalgo(BaseTransformer):
         -------
         sampling : 2D np.ndarray of shape (n_iter, Npar), where Npar = N + 2 * K + 2 + 1
             posterior samples of d, p, Z and likelihood samples, respectively.
-
         """
         zeta = self.zeta
         q = self.q

@@ -141,8 +141,8 @@ def distance_predefined_params(distance_measure, **params):
 def numba_wrapper(distance_measure):
     """Wrap a numba distance measure with numpy conversion.
 
-     Converts to 1 column per dimension format. Really would be better if the whole
-     thing worked directly with numpy arrays.
+    Converts to 1 column per dimension format. Really would be better if the whole thing
+    worked directly with numpy arrays.
     :param distance_measure: distance measure to wrap
     :returns: a distance measure which automatically formats data for numba
     distance measures
@@ -853,8 +853,7 @@ class ProximityStump(BaseClassifier):
         return distances
 
     def _fit(self, X, y):
-        """
-        Build the classifier on the training set (X, y).
+        """Build the classifier on the training set (X, y).
 
         Parameters
         ----------

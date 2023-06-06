@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Composers that create panel pairwise transformers from table pairwise transformers.
+"""Composers that create panel pairwise transformers from table pairwise transformers.
 
 Currently implemented composers in this module:
 

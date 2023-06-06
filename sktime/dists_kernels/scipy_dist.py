@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Interface module to scipy.
 
-Interface module to scipy.spatial's pairwise distance function cdist
-    exposes parameters as scikit-learn hyper-parameters
+Interface module to scipy.spatial's pairwise distance function cdist     exposes
+parameters as scikit-learn hyper-parameters
 """
 
 __author__ = ["fkiraly"]

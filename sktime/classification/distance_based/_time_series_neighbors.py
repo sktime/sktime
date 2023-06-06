@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 """KNN time series classification.
 
-This class is a KNN classifier which supports time series distance measures.
-The class has hardcoded string references to numba based distances in sktime.distances.
-It can also be used with callables, or sktime (pairwise transformer) estimators.
+This class is a KNN classifier which supports time series distance measures. The class
+has hardcoded string references to numba based distances in sktime.distances. It can
+also be used with callables, or sktime (pairwise transformer) estimators.
 
-This is a direct wrap or sklearn KNeighbors, with added functionality that allows
-time series distances to be passed, and the sktime time series classifier interface.
+This is a direct wrap or sklearn KNeighbors, with added functionality that allows time
+series distances to be passed, and the sktime time series classifier interface.
 
-todo: add a utility method to set keyword args for distance measure parameters.
-(e.g.  handle the parameter name(s) that are passed as metric_params automatically,
-depending on what distance measure is used in the classifier (e.g. know that it is w
-for dtw, c for msm, etc.). Also allow long-format specification for
-non-standard/user-defined measures e.g. set_distance_params(measure_type=None,
-param_values_to_set=None,
+todo: add a utility method to set keyword args for distance measure parameters. (e.g.
+handle the parameter name(s) that are passed as metric_params automatically, depending
+on what distance measure is used in the classifier (e.g. know that it is w for dtw, c
+for msm, etc.). Also allow long-format specification for non-standard/user-defined
+measures e.g. set_distance_params(measure_type=None, param_values_to_set=None,
 param_names=None)
 """
 

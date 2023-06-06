@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Delegator mixin that delegates all methods to wrapped forecaster.
 
-Useful for building estimators where all but one or a few methods are delegated.
-For that purpose, inherit from this estimator and then override only the methods
-    that are not delegated.
+Useful for building estimators where all but one or a few methods are delegated. For
+that purpose, inherit from this estimator and then override only the methods     that
+are not delegated.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -141,9 +141,9 @@ class _DelegatedForecaster(BaseForecaster):
     def _update_predict_single(self, y, fh, X=None, update_params=True):
         """Update forecaster and then make forecasts.
 
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
+        Implements default behaviour of calling update and predict sequentially, but can
+        be overwritten by subclasses to implement more efficient updating algorithms
+        when available.
         """
         estimator = self._get_delegate()
         return estimator.update_predict_single(

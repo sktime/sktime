@@ -339,7 +339,6 @@ def _check_index(X):
     -------
     freq_ind : str or None
         Frequency of data in string format
-
     """
     if not (isinstance(X.index, pd.DatetimeIndex)) | (
         isinstance(X.index, pd.PeriodIndex)

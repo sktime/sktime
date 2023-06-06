@@ -1,6 +1,5 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-
 """Functions for checking input data."""
 
 __author__ = ["mloning", "Dbhasin1", "khrapovs"]

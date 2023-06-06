@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for forecaster scitype.
+"""Base class template for forecaster scitype.
 
     class name: BaseForecaster
 
@@ -75,11 +74,10 @@ def _coerce_to_list(obj):
 class BaseForecaster(BaseEstimator):
     """Base forecaster template class.
 
-    The base forecaster specifies the methods and method
-    signatures that all forecasters have to implement.
+    The base forecaster specifies the methods and method signatures that all forecasters
+    have to implement.
 
-    Specific implementations of these methods is deferred to concrete
-    forecasters.
+    Specific implementations of these methods is deferred to concrete forecasters.
     """
 
     # default tag values - these typically make the "safest" assumption
@@ -1905,9 +1903,9 @@ class BaseForecaster(BaseEstimator):
     ):
         """Update forecaster and then make forecasts.
 
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
+        Implements default behaviour of calling update and predict sequentially, but can
+        be overwritten by subclasses to implement more efficient updating algorithms
+        when available.
         """
         self.update(y=y, X=X, update_params=update_params)
         return self.predict(fh=fh, X=X)

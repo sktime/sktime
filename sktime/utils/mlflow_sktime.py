@@ -323,8 +323,7 @@ def log_model(
     serialization_format=SERIALIZATION_FORMAT_PICKLE,
     **kwargs,
 ):  # TODO: can we specify a type for fitted instance of sktime model below?
-    """
-    Log a sktime model as an MLflow artifact for the current run.
+    """Log a sktime model as an MLflow artifact for the current run.
 
     Parameters
     ----------
@@ -448,8 +447,7 @@ def log_model(
 
 
 def load_model(model_uri, dst_path=None):
-    """
-    Load a sktime model from a local file or a run.
+    """Load a sktime model from a local file or a run.
 
     Parameters
     ----------

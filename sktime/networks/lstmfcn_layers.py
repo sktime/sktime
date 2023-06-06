@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Attention Layers used in by the LSTM-FCN Network. Ported over from sktime-dl."""
+"""Attention Layers used in by the LSTM-FCN Network.
+
+Ported over from sktime-dl.
+"""
 
 
 def make_attention_lstm():

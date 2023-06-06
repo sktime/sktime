@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Tests for BaseObject universal base class.
+"""Tests for BaseObject universal base class.
 
 tests in this module:
 

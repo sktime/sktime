@@ -76,11 +76,10 @@ __all__ = [
 def _is_average(multilevel_or_multioutput):
     """Check if multilevel is one of the inputs that lead to averaging.
 
-    True if `multilevel_or_multioutput`
-    is one of the strings `"uniform_average"`, `"uniform_average_time"`
+    True if `multilevel_or_multioutput` is one of the strings `"uniform_average"`,
+    `"uniform_average_time"`
 
-    False if `multilevel_or_multioutput`
-    is the string `"raw_values"`
+    False if `multilevel_or_multioutput` is the string `"raw_values"`
 
     True otherwise
     """

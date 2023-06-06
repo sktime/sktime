@@ -62,8 +62,8 @@ DELEGATED_METHODS = (
 def _delegator(method):
     """Automatically decorate ForecastingHorizon class with pandas.Index methods.
 
-    Also delegates method calls to wrapped pandas.Index object.
-    methods from pandas.Index and delegate method calls to wrapped pandas.Index
+    Also delegates method calls to wrapped pandas.Index object. methods from
+    pandas.Index and delegate method calls to wrapped pandas.Index
     """
 
     def delegated(obj, *args, **kwargs):

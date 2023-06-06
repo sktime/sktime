@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Abstract base class for the Keras neural network regressors.
+"""Abstract base class for the Keras neural network regressors.
 
 The reason for this class between BaseClassifier and deep_learning classifiers is
 because we can generalise tags and _predict
@@ -48,8 +47,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
 
     @abstractmethod
     def build_model(self, input_shape, **kwargs):
-        """
-        Construct a compiled, un-trained, keras model that is ready for training.
+        """Construct a compiled, un-trained, keras model that is ready for training.
 
         Parameters
         ----------
@@ -63,8 +61,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         ...
 
     def _predict(self, X, **kwargs):
-        """
-        Find regression estimate for all cases in X.
+        """Find regression estimate for all cases in X.
 
         Parameters
         ----------

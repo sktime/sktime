@@ -123,10 +123,9 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
     def _transformers(self):
         """Make internal list of transformers.
 
-        The list only contains the name and transformers, dropping
-        the columns. This is for the implementation of get_params
-        via _HeterogenousMetaEstimator._get_params which expects
-        lists of tuples of len 2.
+        The list only contains the name and transformers, dropping the columns. This is
+        for the implementation of get_params via _HeterogenousMetaEstimator._get_params
+        which expects lists of tuples of len 2.
         """
         transformers = self.transformers
         if isinstance(transformers, BaseTransformer):
