@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements AutoARIMA and AutoTheta model from statsforecast by Nixtla."""
+"""Interfaces to estimators from statsforecast by Nixtla."""
 
-__author__ = ["FedericoGarza"]
-__all__ = ["StatsForecastAutoARIMA", "StatsForecastAutoETS", "StatsForecastAutoTheta"]
+__author__ = ["FedericoGarza", "yarnabrina"]
+
+__all__ = [
+    "StatsForecastAutoARIMA",
+    "StatsForecastAutoCES",
+    "StatsForecastAutoETS",
+    "StatsForecastAutoTheta",
+]
 
 
 from typing import Dict, Optional
@@ -472,5 +478,78 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
         params = [{}, {"season_length": 4, "model": "ZMZ"}]
+
+        return params
+
+
+class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
+    """StatsForecast Complex Exponential Smoothing model.
+
+    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+
+    Automatically selects the best Complex Exponential Smoothing model using an
+    information criterion. Default is Akaike Information Criterion (AICc), while
+    particular models are estimated using maximum likelihood. The state-space equations
+    can be determined based on their $S$ simple, $P$ parial, $Z$ optimized or $N$
+    ommited components. The `model` string parameter defines the kind of CES model:
+    $N$ for simple CES (withous seasonality), $S$ for simple seasonality (lagged CES),
+    $P$ for partial seasonality (without complex part), $F$ for full seasonality
+    (lagged CES with real and complex seasonal parts).
+
+    If the component is selected as 'Z', it operates as a placeholder to ask the
+    AutoCES model to figure out the best parameter.
+
+    Parameters
+    ----------
+    season_length : int
+        Number of observations per unit of time. Ex: 24 Hourly data.
+    model : str
+        Controlling state-space-equations.
+
+    References
+    ----------
+    .. [1] https://nixtla.github.io/statsforecast/models.html#autoces
+    """
+
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+    }
+
+    def __init__(self, season_length: int = 1, model: str = "Z"):
+        self.season_length = season_length
+        self.model = model
+
+        super().__init__()
+
+    def _instantiate_model(self):
+        """Create underlying forecaster instance."""
+        from statsforecast.models import AutoCES
+
+        return AutoCES(season_length=self.season_length, model=self.model)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        params = [{}, {"season_length": 4, "model": "Z"}]
 
         return params
