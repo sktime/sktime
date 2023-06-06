@@ -1281,7 +1281,7 @@ class ProximityTree(BaseClassifier):
     def predict_class_label(self, query):
         """Predict the label of a query.
 
-        :param query: 
+        :param query:
         :return:
         """
         stump = self.root_stump
