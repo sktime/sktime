@@ -21,8 +21,7 @@ _Pair = co.namedtuple("Pair", ("start", "end"))
 def _window_getter(
     window_name, window_depth=None, window_length=None, window_step=None
 ):
-    """Get the window method correspondent to the given string and initialises with
-    specified parameters.
+    """Get window method correspondent to given string and initialises with parameters.
 
     Parameters
     ----------
@@ -126,17 +125,17 @@ class _ExpandingSliding(_Window):
 
 
 class _Sliding(_ExpandingSliding):
-    """A window starting at zero and going to some point that increases between
-    windows."""  # noqa: E501
+    """Build a Sliding object.
+
+    A window starting at zero and going to some point that increases between windows.
+
+    Parameters
+    ----------
+    length: int, The length of the window.
+    step: int, The sliding step size.
+    """
 
     def __init__(self, length, step):
-        """Build a Sliding object.
-
-        Parameters
-        ----------
-        length: int, The length of the window.
-        step: int, The sliding step size.
-        """
         super(_Sliding, self).__init__(
             initial_length=length, start_step=step, end_step=step
         )

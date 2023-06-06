@@ -273,8 +273,7 @@ class Hidalgo(BaseTransformer):
         N_in,
         _rng,
     ):
-        """Gibbs sampling method to find joint posterior distribution of target
-        variables.
+        """Gibbs sampling method for joint posterior distribution of target variables.
 
         Notes
         -----

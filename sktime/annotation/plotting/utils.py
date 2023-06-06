@@ -75,8 +75,7 @@ def plot_time_series_with_profiles(
     score_name="ClaSP Score",
     font_size=16,
 ):
-    """Plot the TS with the known and found change points and profiles from
-    segmentation.
+    """Plot TS with known and found change points and profiles from segmentation.
 
     Parameters
     ----------

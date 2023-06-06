@@ -257,8 +257,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return hier_dict
 
     def _get_node_dict(self, z):
-        """Create a separate dictionary of nodes and forecasters linked with common key
-        value.
+        """Create dictionaries of nodes and forecasters linked with common key value.
 
         Parameters
         ----------

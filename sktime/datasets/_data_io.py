@@ -1411,8 +1411,7 @@ def write_tabular_transformation_to_arff(
     fold="",
     fit_transform=True,
 ):
-    """Transform a dataset using a tabular transformer and write the result to a arff
-    file.
+    """Transform dataset using a tabular transformer and write the result to arff file.
 
     Parameters
     ----------

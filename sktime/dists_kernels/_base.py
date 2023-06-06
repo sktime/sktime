@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Base class templates for distances or kernels between time series, and for tabular
-data.
+"""Base class templates for distances or kernels between time series and tabular data.
 
 templates in this module:
 

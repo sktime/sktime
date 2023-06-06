@@ -2,7 +2,7 @@
 """Proximity Forest time series classifier.
 
 A decision tree forest which uses distance measures to partition data. B. Lucas and A.
-Shifaz, C. Pelletier, L. O’Neill, N. Zaidi, B. Goethals, F. Petitjean and G. Webb
+Shifaz, C. Pelletier, L. O'Neill, N. Zaidi, B. Goethals, F. Petitjean and G. Webb
 Proximity Forest: an effective and scalable distance-based classifier for time series,
 Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
 """
