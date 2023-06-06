@@ -70,7 +70,6 @@ class AggrDist(BasePairwiseTransformerPanel):
         aggfunc=None,
         aggfunc_is_symm=False,  # False for safety, but set True later if aggfunc=None
     ):
-
         self.aggfunc = aggfunc
         self.aggfunc_is_symm = aggfunc_is_symm
         self.transformer = transformer
@@ -132,7 +131,6 @@ class AggrDist(BasePairwiseTransformerPanel):
 
         for i in range(n):
             for j in range(m):
-
                 if all_symm and j < i:
                     distmat[i, j] = distmat[j, i]
                 else:
@@ -200,7 +198,6 @@ class FlatDist(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, transformer):
-
         self.transformer = transformer
 
         super(FlatDist, self).__init__()

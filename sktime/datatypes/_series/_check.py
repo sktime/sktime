@@ -56,7 +56,6 @@ check_dict = dict()
 
 
 def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
-
     metadata = dict()
 
     if not isinstance(obj, pd.DataFrame):
@@ -115,7 +114,6 @@ check_dict[("pd.DataFrame", "Series")] = check_pddataframe_series
 
 
 def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
-
     metadata = dict()
 
     if not isinstance(obj, pd.Series):
@@ -169,7 +167,6 @@ check_dict[("pd.Series", "Series")] = check_pdseries_series
 
 
 def check_numpy_series(obj, return_metadata=False, var_name="obj"):
-
     metadata = dict()
 
     if not isinstance(obj, np.ndarray):
@@ -323,7 +320,6 @@ if _check_soft_dependencies("dask", severity="none"):
     from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
 
     def check_dask_series(obj, return_metadata=False, var_name="obj"):
-
         return check_dask_frame(
             obj=obj,
             return_metadata=return_metadata,

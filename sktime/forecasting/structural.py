@@ -376,7 +376,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         initial_state=None,
         anchor=None,
         repetitions=None,
-        **kwargs
+        **kwargs,
     ):
         r"""Simulate a new time series following the state space model.
 
@@ -450,7 +450,7 @@ class UnobservedComponents(_StatsModelsAdapter):
             anchor=anchor,
             repetitions=repetitions,
             exog=X,
-            **kwargs
+            **kwargs,
         )
 
     def plot_diagnostics(

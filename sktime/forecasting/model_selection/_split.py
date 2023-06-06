@@ -947,9 +947,7 @@ class BaseWindowSplitter(BaseSplitter):
         # If we start with a full window, the first split point depends on the window
         # length.
         if hasattr(self, "start_with_window") and self.start_with_window:
-
             if self._initial_window not in [None, 0]:
-
                 if is_timedelta_or_date_offset(x=self._initial_window):
                     start = y.get_loc(
                         y[start] + self._initial_window + self.step_length
@@ -1159,7 +1157,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
     ) -> None:
-
         start_with_window = initial_window != 0
 
         # Note that we pass the initial window as the window_length below. This

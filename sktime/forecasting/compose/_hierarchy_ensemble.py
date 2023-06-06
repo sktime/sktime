@@ -197,7 +197,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         if self.by == "level":
             hier_dict = self._get_hier_dict(z)
-            for (_, forecaster, level) in self.forecasters_:
+            for _, forecaster, level in self.forecasters_:
                 if level in hier_dict.keys():
                     frcstr = forecaster.clone()
                     df = z[z.index.droplevel(-1).isin(hier_dict[level])]
@@ -281,7 +281,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         counter = 0
         zindex = z.index.droplevel(-1).unique()
 
-        for (_, forecaster, node) in self.forecasters_:
+        for _, forecaster, node in self.forecasters_:
             if z.index.nlevels == 2:
                 mi = pd.Index(node)
                 if counter == 0:

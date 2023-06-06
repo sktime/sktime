@@ -31,7 +31,6 @@ class BaseDistribution(BaseObject):
     }
 
     def __init__(self, index=None, columns=None):
-
         self.index = index
         self.columns = columns
 
@@ -87,7 +86,6 @@ class BaseDistribution(BaseObject):
         return self._iloc(rowidx=row_iloc, colidx=col_iloc)
 
     def _subset_params(self, rowidx, colidx):
-
         params = self._get_dist_params()
 
         subset_param_dict = {}
@@ -126,7 +124,6 @@ class BaseDistribution(BaseObject):
         )
 
     def _get_dist_params(self):
-
         params = self.get_params(deep=False)
         paramnames = params.keys()
         reserved_names = ["index", "columns"]
@@ -510,13 +507,11 @@ class _BaseTFDistribution(BaseDistribution):
     }
 
     def __init__(self, index=None, columns=None, distr=None):
-
         self.distr = distr
 
         super(_BaseTFDistribution, self).__init__(index=index, columns=columns)
 
     def __str__(self):
-
         return self.to_str()
 
     def pdf(self, x):

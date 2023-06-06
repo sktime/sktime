@@ -26,7 +26,6 @@ def _fit_biases(
     quantiles,
     seed,
 ):
-
     if seed is not None:
         np.random.seed(seed)
     num_examples, num_channels, input_length = X.shape
@@ -307,14 +306,12 @@ def _fit_biases(
     num_channels_start = 0
 
     for dilation_index in range(num_dilations):
-
         dilation = dilations[dilation_index]
         padding = ((9 - 1) * dilation) // 2
 
         num_features_this_dilation = num_features_per_dilation[dilation_index]
 
         for kernel_index in range(num_kernels):
-
             feature_index_end = feature_index_start + num_features_this_dilation
 
             num_channels_this_combination = num_channels_per_combination[
@@ -708,7 +705,6 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
     n_features_per_transform = np.int64(features.shape[1] / 2)
 
     for example_index in prange(num_examples):
-
         _X = X[example_index]
 
         A = -_X  # A = alpha * X = -X
@@ -721,7 +717,6 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
         num_channels_start = 0
 
         for dilation_index in range(num_dilations):
-
             _padding0 = dilation_index % 2
 
             dilation = dilations[dilation_index]
@@ -751,7 +746,6 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
                 start += dilation
 
             for kernel_index in range(num_kernels):
-
                 feature_index_end = feature_index_start + num_features_this_dilation
 
                 num_channels_this_combination = num_channels_per_combination[
@@ -865,7 +859,6 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
         num_channels_start = 0
 
         for dilation_index in range(num_dilations1):
-
             _padding0 = dilation_index % 2
 
             dilation = dilations1[dilation_index]
@@ -895,7 +888,6 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
                 start += dilation
 
             for kernel_index in range(num_kernels):
-
                 feature_index_end = feature_index_start + num_features_this_dilation
 
                 num_channels_this_combination = num_channels_per_combination[

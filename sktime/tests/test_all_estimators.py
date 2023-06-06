@@ -553,7 +553,6 @@ class QuickTester:
         results = dict()
         # loop A: we loop over all the tests
         for test_name in test_names_subset:
-
             test_fun = getattr(self, test_name)
             fixture_sequence = self.fixture_sequence
 
@@ -593,7 +592,6 @@ class QuickTester:
 
             # loop B: for each test, we loop over all fixtures
             for params, fixt_name in zip(fixture_prod, fixture_names):
-
                 # this is needed because pytest unwraps 1-tuples automatically
                 # but subsequent code assumes params is k-tuple, no matter what k is
                 if len(fixture_vars) == 1:

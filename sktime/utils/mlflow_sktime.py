@@ -522,7 +522,6 @@ def load_model(model_uri, dst_path=None):
 
 
 def _save_model(model, path, serialization_format):
-
     _check_soft_dependencies("mlflow", severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.protos.databricks_pb2 import INTERNAL_ERROR
@@ -546,7 +545,6 @@ def _save_model(model, path, serialization_format):
 
 
 def _load_model(path, serialization_format):
-
     _check_soft_dependencies("mlflow", severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
@@ -630,7 +628,6 @@ class _SktimeModelWrapper:
         self.sktime_model = sktime_model
 
     def predict(self, X):
-
         from mlflow.exceptions import MlflowException
         from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
 
@@ -641,7 +638,6 @@ class _SktimeModelWrapper:
             raw_predictions[SKTIME_PREDICT] = self.sktime_model.predict(X=X)
 
         else:
-
             if not isinstance(self.sktime_model.pyfunc_predict_conf, dict):
                 raise MlflowException(
                     f"Attribute {PYFUNC_PREDICT_CONF} must be of type dict.",

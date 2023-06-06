@@ -82,7 +82,6 @@ class KinematicFeatures(BaseTransformer):
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, features=None):
-
         self.features = features
         if features is None:
             self._features = ["v_abs", "a_abs", "curv"]

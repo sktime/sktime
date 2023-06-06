@@ -110,7 +110,6 @@ class ClearSky(BaseTransformer):
         n_jobs=None,
         backend="loky",
     ):
-
         self.quantile_prob = quantile_prob
         self.bw_diurnal = bw_diurnal
         self.bw_annual = bw_annual

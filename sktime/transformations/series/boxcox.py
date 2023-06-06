@@ -315,7 +315,6 @@ class LogTransformer(BaseTransformer):
 
 
 def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):
-
     from scipy import optimize
 
     # bounds is None, use simple Brent optimisation

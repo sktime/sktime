@@ -166,7 +166,6 @@ class BaseTransformer(BaseEstimator):
     ]
 
     def __init__(self):
-
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
 
         super(BaseTransformer, self).__init__()
@@ -970,7 +969,6 @@ class BaseTransformer(BaseEstimator):
         # end checking X
 
         if y_inner_mtype != ["None"] and y is not None:
-
             if "Table" in y_inner_scitype:
                 y_possible_scitypes = "Table"
             elif X_scitype == "Series":

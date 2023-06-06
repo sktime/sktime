@@ -119,7 +119,6 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         transformer_weights=None,
         preserve_dataframe=True,
     ):
-
         warn(
             "ColumnTransformer is not fully compliant with the sktime interface "
             "and will be replaced by sktime.transformations.ColumnEnsembleTransformer "

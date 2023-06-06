@@ -34,7 +34,6 @@ def _fit_biases_multi(
     quantiles,
     seed,
 ):
-
     if seed is not None:
         np.random.seed(seed)
 
@@ -314,14 +313,12 @@ def _fit_biases_multi(
     num_channels_start = 0
 
     for dilation_index in range(num_dilations):
-
         dilation = dilations[dilation_index]
         padding = ((9 - 1) * dilation) // 2
 
         num_features_this_dilation = num_features_per_dilation[dilation_index]
 
         for kernel_index in range(num_kernels):
-
             feature_index_end = feature_index_start + num_features_this_dilation
 
             num_channels_this_combination = num_channels_per_combination[
@@ -353,14 +350,12 @@ def _fit_biases_multi(
             end = n_timepoints - padding
 
             for gamma_index in range(9 // 2):
-
                 C_alpha[:, -end:] = C_alpha[:, -end:] + A[:, :end]
                 C_gamma[gamma_index, :, -end:] = G[:, :end]
 
                 end += dilation
 
             for gamma_index in range(9 // 2 + 1, 9):
-
                 C_alpha[:, :-start] = C_alpha[:, :-start] + A[:, start:]
                 C_gamma[gamma_index, :, :-start] = G[:, start:]
 
@@ -384,7 +379,6 @@ def _fit_biases_multi(
 
 
 def _fit_dilations(n_timepoints, num_features, max_dilations_per_kernel):
-
     num_kernels = 84
 
     num_features_per_kernel = num_features // num_kernels
@@ -484,7 +478,6 @@ def _fit_multi(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
     cache=True,
 )
 def _transform_multi(X, parameters):
-
     n_instances, n_columns, n_timepoints = X.shape
 
     (
@@ -764,7 +757,6 @@ def _transform_multi(X, parameters):
     features = np.zeros((n_instances, num_features), dtype=np.float32)
 
     for example_index in prange(n_instances):
-
         _X = X[example_index]
 
         A = -_X  # A = alpha * X = -X
@@ -776,7 +768,6 @@ def _transform_multi(X, parameters):
         num_channels_start = 0
 
         for dilation_index in range(num_dilations):
-
             _padding0 = dilation_index % 2
 
             dilation = dilations[dilation_index]
@@ -794,21 +785,18 @@ def _transform_multi(X, parameters):
             end = n_timepoints - padding
 
             for gamma_index in range(9 // 2):
-
                 C_alpha[:, -end:] = C_alpha[:, -end:] + A[:, :end]
                 C_gamma[gamma_index, :, -end:] = G[:, :end]
 
                 end += dilation
 
             for gamma_index in range(9 // 2 + 1, 9):
-
                 C_alpha[:, :-start] = C_alpha[:, :-start] + A[:, start:]
                 C_gamma[gamma_index, :, :-start] = G[:, start:]
 
                 start += dilation
 
             for kernel_index in range(num_kernels):
-
                 feature_index_end = feature_index_start + num_features_this_dilation
 
                 num_channels_this_combination = num_channels_per_combination[

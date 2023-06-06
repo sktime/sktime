@@ -111,7 +111,6 @@ class TimeBinner(BaseTransformer):
     }
 
     def __init__(self, idx, aggfunc=None):
-
         assert isinstance(
             idx, pd.IntervalIndex
         ), "idx should be of type pd.IntervalIndex"

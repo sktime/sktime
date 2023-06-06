@@ -15,7 +15,6 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 if _check_estimator_deps(DateTimeFeatures, severity="none"):
-
     # Load multivariate dataset longley and apply calendar extraction
 
     y, X = load_longley()

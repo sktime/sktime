@@ -142,7 +142,6 @@ class MUSE(BaseClassifier):
         n_jobs=1,
         random_state=None,
     ):
-
         # currently other values than 4 are not supported.
         self.alphabet_size = alphabet_size
 

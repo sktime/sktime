@@ -124,7 +124,6 @@ class GaussianHMM(BaseHMMLearn):
         init_params: str = "stmc",
         implementation: str = "log",
     ):
-
         self.n_components = n_components
         self.covariance_type = covariance_type
         self.min_covar = min_covar

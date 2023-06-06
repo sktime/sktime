@@ -488,7 +488,6 @@ class TEASER(BaseEarlyClassifier):
     def _predict_oc_classifier(
         self, X_oc, n_consecutive_predictions, idx, estimator_preds, state_info
     ):
-
         # stores whether we have made a final decision on a prediction, if true
         # state info won't be edited in later time stamps
         finished = state_info[:, 1] >= n_consecutive_predictions

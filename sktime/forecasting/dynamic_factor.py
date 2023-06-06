@@ -277,7 +277,6 @@ class DynamicFactor(_StatsModelsAdapter):
         df_list = []
         # generate the forecasts for each alpha/coverage
         for coverage in coverage_list:
-
             alpha = 1 - coverage
 
             if "exog" in inspect.signature(model.__init__).parameters.keys():

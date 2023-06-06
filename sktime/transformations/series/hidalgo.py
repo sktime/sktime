@@ -114,7 +114,6 @@ class Hidalgo(BaseTransformer):
         f=None,
         seed=1,
     ):
-
         self.metric = metric
         self.K = K
         self.zeta = zeta
@@ -438,7 +437,6 @@ class Hidalgo(BaseTransformer):
                 for k1 in range(K):
                     g = 0
                     if use_Potts:
-
                         n_in = sum([Z[Iin[q * i + j]] == k1 for j in range(q)])
 
                         m_in = sum(
@@ -508,7 +506,6 @@ class Hidalgo(BaseTransformer):
             return lik0, lik1
 
         for it in range(n_iter):
-
             d = sample_d(K, a1, b1, _rng)
             sampling = np.append(sampling, d)
 
@@ -602,7 +599,6 @@ class Hidalgo(BaseTransformer):
         maxlik = -1e10
 
         for _ in range(n_replicas):
-
             sampling = self._gibbs_sampling(
                 N,
                 mu,
@@ -627,9 +623,7 @@ class Hidalgo(BaseTransformer):
                 for it in range(n_iter)
                 if it % sampling_rate == 0 and it >= n_iter * burn_in
             ]
-            sampling = sampling[
-                idx,
-            ]
+            sampling = sampling[idx,]
 
             lik = np.mean(sampling[:, -1], axis=0)
 

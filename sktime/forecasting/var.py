@@ -240,7 +240,6 @@ class VAR(_StatsModelsAdapter):
         df_list = []
 
         for cov in coverage:
-
             alpha = 1 - cov
 
             fcast_interval = model.forecast_interval(

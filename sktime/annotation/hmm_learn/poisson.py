@@ -99,7 +99,6 @@ class PoissonHMM(BaseHMMLearn):
         init_params: str = "stl",
         implementation: str = "log",
     ):
-
         self.n_components = n_components
         self.startprob_prior = startprob_prior
         self.transmat_prior = transmat_prior

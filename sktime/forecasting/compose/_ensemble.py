@@ -161,7 +161,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
         if self.method == "feature-importance":
-
             self.regressor_ = check_regressor(
                 regressor=self.regressor, random_state=self.random_state
             )

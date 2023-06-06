@@ -328,7 +328,6 @@ class AutoARIMA(_PmdArimaAdapter):
         hamilton_representation=False,
         concentrate_scale=False,
     ):
-
         self.start_p = start_p
         self.d = d
         self.start_q = start_q
@@ -698,7 +697,6 @@ class ARIMA(_PmdArimaAdapter):
         hamilton_representation=False,
         concentrate_scale=False,
     ):
-
         self.order = order
         self.seasonal_order = seasonal_order
         self.start_params = start_params

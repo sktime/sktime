@@ -292,7 +292,6 @@ class _TbatsAdapter(BaseForecaster):
         pred_int = pd.DataFrame(columns=int_idx, index=fh.to_absolute_index(cutoff))
 
         for c in coverage:
-
             # separate treatment for "0" coverage: upper/lower = point prediction
             if c == 0:
                 pred_int[("Coverage", 0, "lower")] = self._tbats_forecast(fh)

@@ -285,7 +285,6 @@ def test_from_multiindex_to_listdataset(n_instances, n_columns, n_timepoints):
     def _make_example_multiindex(
         n_instances, n_columns, n_timepoints, random_seed=42
     ) -> pd.DataFrame:
-
         import numpy as np
 
         start = pd.to_datetime("1750-01-01")

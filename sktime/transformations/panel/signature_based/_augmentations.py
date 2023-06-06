@@ -81,7 +81,6 @@ class _AddTime(BaseTransformer):
     }
 
     def _transform(self, X, y=None):
-
         data = np.swapaxes(X, 1, 2)
         # Batch and length dim
         B, L = data.shape[0], data.shape[1]

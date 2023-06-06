@@ -106,7 +106,6 @@ class Imputer(BaseTransformer):
         forecaster=None,
         missing_values=None,
     ):
-
         self.method = method
         self.missing_values = missing_values
         self.value = value

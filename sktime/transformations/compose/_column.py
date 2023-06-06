@@ -170,7 +170,7 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
         self.transformers_ = []
         self._Xcolumns = list(X.columns)
 
-        for (name, transformer, index) in transformers:
+        for name, transformer, index in transformers:
             transformer_ = transformer.clone()
 
             pd_index = self._coerce_to_pd_index(index)

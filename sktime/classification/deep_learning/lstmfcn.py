@@ -80,7 +80,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         random_state=None,
         verbose=0,
     ):
-
         super(LSTMFCNClassifier, self).__init__()
 
         self.classes_ = None

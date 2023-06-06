@@ -21,7 +21,6 @@ class Evaluator:
     """Analyze results of machine learning experiments."""
 
     def __init__(self, results):
-
         if not isinstance(results, BaseResults):
             raise ValueError("`results` must inherit from BaseResults")
         self.results = results

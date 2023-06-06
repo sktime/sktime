@@ -178,7 +178,6 @@ class MyTransformer(BaseTransformer):
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, parama, paramb="default", paramc=None):
-
         # todo: write any hyper-parameters to self
         self.parama = parama
         self.paramb = paramb

@@ -134,9 +134,7 @@ class EAgglo(BaseTransformer):
             return list(
                 filter(
                     lambda v: v == v,
-                    self.progression[
-                        i,
-                    ],
+                    self.progression[i,],
                 )
             )
 

@@ -25,7 +25,6 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, aligner=None):
-
         self.aligner = aligner
 
         super(DistFromAligner, self).__init__()

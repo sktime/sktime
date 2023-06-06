@@ -198,7 +198,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         class_weight=None,
         max_samples=None,
     ):
-
         self.estimator = estimator
 
         # Assign values, even though passed on to base estimator below,
@@ -261,7 +260,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         BaseTimeSeriesForest._fit(self, X=X, y=y)
 
     def _validate_estimator(self):
-
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
                 "n_estimators must be an integer, "
