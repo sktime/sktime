@@ -32,6 +32,7 @@ Deep learning
     CNNRegressor
     MCDCNNRegressor
     SimpleRNNRegressor
+    ResNetRegressor
     TapNetRegressor
 
 Distance-based
