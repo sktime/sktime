@@ -24,6 +24,8 @@ subject to `widening of governance model <https://github.com/sktime/community-or
      - :user:`fkiraly`
    * - Sagar Mishra
      - :user:`achieveordie`
+   * - Ugochukwu Onyeka
+     - :user:`onyekaugochukwu`
    * - Kiril Ralinovski
      - :user:`kirilral`
    * - Marc Rovira
@@ -38,6 +40,8 @@ Community Council Observers
 
    * - Name
      - GitHub ID
+   * - Benedikt Heidrich
+     - :user:`benheid`
    * - Jana Schmidberger
      - :user:`janasberger`
    * - Lovkush Agarwal
@@ -68,14 +72,16 @@ Core Developers
      - GitHub ID
    * - Anirban Ray
      - :user:`yarnabrina`
+   * - Benedikt Heidrich
+     - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
-   * - Jonathan Bechtel
-     - :user:`jonathanbechtel`
    * - Franz Király
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
+   * - Jonathan Bechtel
+     - :user:`jonathanbechtel`
    * - Kiril Ralinovski
      - :user:`kirilral`
    * - Lovkush Agarwal
@@ -90,6 +96,8 @@ Core Developers
      - :user:`khrapovs`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
+   * - Ugochukwu Onyeka
+     - :user:`onyekaugochukwu`
 
 Former Core Developers
 ----------------------
