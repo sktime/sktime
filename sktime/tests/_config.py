@@ -35,6 +35,7 @@ EXCLUDE_ESTIMATORS = [
     "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
+    "MACNNClassifier",
 ]
 
 
