@@ -14,6 +14,7 @@ from pandas.testing import assert_series_equal
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.var import VAR
 from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -274,6 +275,26 @@ def test_vectorization_multivariate(mtype, exogeneous):
         "equal length, and length equal to the forecasting horizon [1, 2, 3]"
     )
     assert y_pred_equal_length, msg
+
+
+def test_col_vectorization_correct_col_order():
+    """Test that forecaster vectorization preserves column index ordering.
+
+    Failure case is as in issue #4683 where the column index is correct,
+    but the values are in fact coming from forecasters in jumbled order.
+    """
+    from sktime.datasets import load_macroeconomic
+
+    y = load_macroeconomic().iloc[:5]
+
+    f = NaiveForecaster()
+    f.fit(y=y, fh=[1])
+    y_pred = f.predict()
+
+    # last value, so entries of last y column and y_pred should all be exactly equal
+    # if they were jumbled, as in #4683 by lexicographic column name order,
+    # this assertion would fail since the values are all different
+    assert (y_pred == y.iloc[4]).all().all()
 
 
 @pytest.mark.skipif(
