@@ -36,6 +36,8 @@ EXCLUDE_ESTIMATORS = [
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
     "MACNNClassifier",
+    "SimpleRNNClassifier",
+    "SimpleRNNRegressor",
 ]
 
 
