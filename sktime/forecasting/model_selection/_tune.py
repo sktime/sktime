@@ -903,6 +903,56 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
 
         return self
 
+    def _run_search(self, y, X=None, fh=None):
+        """Search n_iter candidates from param_distributions.
+
+        under-development - this is where loop should be implemented in favour of
+        _evaluate_candidates
+        """
+        # check if space is a single dict, convert to list if so
+        param_grid = self.param_grid
+        if isinstance(param_grid, dict):
+            param_grid = [param_grid]
+
+        if self.optimizer_kwargs is None:
+            self.optimizer_kwargs_ = {}
+        else:
+            self.optimizer_kwargs_ = dict(self.optimizer_kwargs)
+        self.optimizer_kwargs_["random_state"] = self.random_state
+
+        optimizers = []
+        for search_space in param_grid:
+            optimizers.append(self._create_optimizer(search_space))
+        self.optimizers_ = optimizers  # will save the states of the optimizers
+
+        if self.verbose > 0:
+            n_candidates = self.n_iter
+            n_splits = self.cv.get_n_splits(y)
+            print(  # noqa
+                "Fitting {0} folds for each of {1} candidates,"
+                " totalling {2} fits".format(
+                    n_splits, n_candidates, n_candidates * n_splits
+                )
+            )
+
+        # Run sequential-hyperparameter-search with ts cross-validation.
+        n_iter = self.n_iter
+        # outer loop
+        for optimizer in optimizers:
+            # iterations for each search space
+            while n_iter > 0:
+                # when n_iter < n_points points left for evaluation
+                n_points_adjusted = min(n_iter, self.n_points)
+                self._evaluate_step(
+                    y,
+                    X,
+                    optimizer,
+                    n_points=n_points_adjusted,
+                )
+                n_iter -= self.n_points
+            # reset n_iter for next search space
+            n_iter = self.n_iter
+
     def _evaluate_step(self, y, X, optimizer, n_points):
         """Evaluate a candidate parameter set at each iteration.
 
@@ -988,56 +1038,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
                 "Was the CV iterator empty? "
                 "Were there no candidates?"
             )
-
-    def _run_search(self, y, X=None, fh=None):
-        """Search n_iter candidates from param_distributions.
-
-        under-development - this is where loop should be implemented in favour of
-        _evaluate_candidates
-        """
-        # check if space is a single dict, convert to list if so
-        param_grid = self.param_grid
-        if isinstance(param_grid, dict):
-            param_grid = [param_grid]
-
-        if self.optimizer_kwargs is None:
-            self.optimizer_kwargs_ = {}
-        else:
-            self.optimizer_kwargs_ = dict(self.optimizer_kwargs)
-        self.optimizer_kwargs_["random_state"] = self.random_state
-
-        optimizers = []
-        for search_space in param_grid:
-            optimizers.append(self._create_optimizer(search_space))
-        self.optimizers_ = optimizers  # will save the states of the optimizers
-
-        if self.verbose > 0:
-            n_candidates = self.n_iter
-            n_splits = self.cv.get_n_splits(y)
-            print(  # noqa
-                "Fitting {0} folds for each of {1} candidates,"
-                " totalling {2} fits".format(
-                    n_splits, n_candidates, n_candidates * n_splits
-                )
-            )
-
-        # Run sequential-hyperparameter-search with ts cross-validation.
-        n_iter = self.n_iter
-        # outer loop
-        for optimizer in optimizers:
-            # iterations for each search space
-            while n_iter > 0:
-                # when n_iter < n_points points left for evaluation
-                n_points_adjusted = min(n_iter, self.n_points)
-                self._evaluate_step(
-                    y,
-                    X,
-                    optimizer,
-                    n_points=n_points_adjusted,
-                )
-                n_iter -= self.n_points
-            # reset n_iter for next search space
-            n_iter = self.n_iter
 
     def _create_optimizer(self, params_space):
         """Instantiate optimizer for hyperparameter tuning."""
