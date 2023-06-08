@@ -295,6 +295,9 @@ def test_col_vectorization_correct_col_order():
     y = load_macroeconomic().iloc[:5]
 
     f = NaiveForecaster()
+    # force univariate tag to trigger vectorization over columns for sure
+    f.set_tags(**{"scitype:y": "univariate"})
+
     f.fit(y=y, fh=[1])
     y_pred = f.predict()
 
