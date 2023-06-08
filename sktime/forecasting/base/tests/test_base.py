@@ -20,7 +20,10 @@ from sktime.forecasting.var import VAR
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.validation._dependencies import (
+    _check_estimator_deps,
+    _check_soft_dependencies,
+)
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
@@ -277,6 +280,10 @@ def test_vectorization_multivariate(mtype, exogeneous):
     assert y_pred_equal_length, msg
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_col_vectorization_correct_col_order():
     """Test that forecaster vectorization preserves column index ordering.
 
