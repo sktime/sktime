@@ -737,7 +737,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     cv : cross-validation generator or an iterable
         Splitter used for generating validation folds.
         e.g. SlidingWindowSplitter()
-    param_grid : dict or a list of dict. See below for details.
+    param_distributions : dict or a list of dict. See below for details.
         if dict, a dictionary that represents the search space over the parameters of
         the provided estimator. The keys are parameter names (strings), and the values
         are instances of skopt.space.Dimension (Real, Integer, or Categorical)
@@ -823,7 +823,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         self,
         forecaster,
         cv: BaseSplitter,
-        param_grid: Union[Dict, List[Dict]],
+        param_distributions: Union[Dict, List[Dict]],
         n_iter: int = 10,
         n_points: int = 1,
         random_state: Optional[int] = None,
@@ -858,7 +858,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             update_behaviour=update_behaviour,
             error_score=error_score,
         )
-        self.param_grid = param_grid
+        self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.n_points = n_points
         self.random_state = random_state
@@ -932,9 +932,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
         """
         # check if space is a single dict, convert to list if so
-        param_grid = self.param_grid
-        if isinstance(param_grid, dict):
-            param_grid = [param_grid]
+        param_distributions = self.param_distributions
+        if isinstance(param_distributions, dict):
+            param_distributions = [param_distributions]
 
         if self.optimizer_kwargs is None:
             self.optimizer_kwargs_ = {}
@@ -943,7 +943,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         self.optimizer_kwargs_["random_state"] = self.random_state
 
         optimizers = []
-        for search_space in param_grid:
+        for search_space in param_distributions:
             optimizers.append(self._create_optimizer(search_space))
         self.optimizers_ = optimizers  # will save the states of the optimizers
 
@@ -1108,6 +1108,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
+        from skopt.space import Categorical
+
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -1116,16 +1118,18 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
             "cv": SingleWindowSplitter(fh=1),
-            "param_distributions": {"window_length": [2, 5]},
+            "param_distributions": {"window_length": Categorical([2, 5])},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "n_iter": 2,
         }
 
         params2 = {
             "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
-            "param_distributions": {"degree": [1, 2]},
+            "param_distributions": {"degree": Categorical([1, 2])},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
+            "n_iter": 2,
         }
 
         return [params, params2]
