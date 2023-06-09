@@ -800,6 +800,23 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+
+    Attributes
+    ----------
+    best_index_ : int
+    best_score_: float
+        Score of the best model
+    best_params_ : dict
+        Best parameter values across the parameter grid
+    best_forecaster_ : estimator
+        Fitted estimator with the best parameters
+    cv_results_ : dict
+        Results from grid search cross validation
+    n_best_forecasters_: list of tuples ("rank", <forecaster>)
+        The "rank" is in relation to best_forecaster_
+    n_best_scores_: list of float
+        The scores of n_best_forecasters_ sorted from best to worst
+        score of forecasters
     """
 
     def __init__(
@@ -906,8 +923,13 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     def _run_search(self, y, X=None, fh=None):
         """Search n_iter candidates from param_distributions.
 
-        under-development - this is where loop should be implemented in favour of
-        _evaluate_candidates
+        Parameters
+        ----------
+        y : time series in sktime compatible data container format
+            Target time series to which to fit the forecaster.
+        X : time series in sktime compatible format, optional (default=None)
+            Exogenous variables.
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
         """
         # check if space is a single dict, convert to list if so
         param_grid = self.param_grid
@@ -935,9 +957,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
                 )
             )
 
-        # Run sequential-hyperparameter-search with ts cross-validation.
+        # Run sequential search by iterating through each optimizer and evaluates
+        # the search space iteratively until all n_iter candidates are evaluated.
         n_iter = self.n_iter
-        # outer loop
         for optimizer in optimizers:
             # iterations for each search space
             while n_iter > 0:
@@ -958,20 +980,20 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
 
         Parameters
         ----------
-        y : pd.Series
+        y : time series in sktime compatible data container format
             Target time series to which to fit the forecaster.
-        X : pd.DataFrame, default=None
-            Exogenous variables, optional.
+        X : time series in sktime compatible format, optional (default=None)
+            Exogenous variables.
         optimizer : skopt.Optimizer
             Optimizer instance.
         n_points : int
-            Number of candidate parameter set to evaluate at each step. if n_points=2,
-            then the two candidate parameter set are evaluated
+            Number of candidate parameter combination to evaluate at each step.
+            if n_points=2, then the two candidate parameter combinations are evaluated
             e.g {'sp': 1, 'strategy':'last'} and {'sp': 2, 'strategy': 'mean'}.
         """
         from skopt.utils import use_named_args
 
-        # Get a list of dimension object with name from optimizer
+        # Get a list of dimension parameter space with name from optimizer
         dimensions = optimizer.space.dimensions
         test_score_name = f"test_{self._check_scoring.name}"
 
@@ -1021,10 +1043,11 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         results_df = pd.DataFrame(out)
         # as the optimizer is minimising a score,
         # we need to negate the score if higher_is_better
+        mean_test_score = results_df["mean_" + test_score_name]
         if self._check_scoring.get_tag("lower_is_better"):
-            scores = list(results_df["mean_" + test_score_name])
+            scores = list(mean_test_score)
         else:
-            scores = list(-results_df["mean_" + test_score_name])
+            scores = list(-mean_test_score)
         # Update optimizer with evaluation metrics.
         optimizer.tell(candidate_params, scores)
         # keep updating the cv_results_ attribute by concatinating the result dataframe
@@ -1040,17 +1063,69 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             )
 
     def _create_optimizer(self, params_space):
-        """Instantiate optimizer for hyperparameter tuning."""
+        """Instantiate optimizer for a search parameter space.
+
+        Responsible for initialising optimizer with the correct parameters
+        names and values.
+
+        Parameters
+        ----------
+        params_space : dict
+            Dictionary with parameters names (string) as keys and the values are
+            instances of skopt.space.Dimension (Real, Integer, or Categorical)
+
+        Returns
+        -------
+        optimizer : skopt.Optimizer
+        """
         from skopt.optimizer import Optimizer
         from skopt.utils import dimensions_aslist
 
         kwargs = self.optimizer_kwargs_.copy()
-        # list is sorted by params_space.keys()
+        # convert params space to a list ordered by the key name
         kwargs["dimensions"] = dimensions_aslist(params_space)
+        dimensions_name = list(sorted(params_space.keys()))
         optimizer = Optimizer(**kwargs)
+        # set the name of the dimensions if not set
         for i in range(len(optimizer.space.dimensions)):
             if optimizer.space.dimensions[i].name is not None:
                 continue
-            optimizer.space.dimensions[i].name = list(sorted(params_space.keys()))[i]
+            optimizer.space.dimensions[i].name = dimensions_name[i]
 
         return optimizer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.model_selection._split import SingleWindowSplitter
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
+        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+
+        params = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"window_length": [2, 5]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+        }
+
+        params2 = {
+            "forecaster": PolynomialTrendForecaster(),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"degree": [1, 2]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "update_behaviour": "inner_only",
+        }
+
+        return [params, params2]
