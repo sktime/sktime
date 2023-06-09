@@ -2,7 +2,7 @@
 """Multi Channel Deep Convolutional Neural Classifier (MCDCNN)."""
 
 __author__ = [
-    "James Large",
+    "JamesLarge",
 ]
 
 from copy import deepcopy

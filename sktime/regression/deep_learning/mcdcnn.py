@@ -2,7 +2,7 @@
 """Multi Channel Deep Convolutional Neural Regressor (MCDCNN)."""
 
 __author__ = [
-    "James Large",
+    "JamesLarge",
 ]
 
 from copy import deepcopy
@@ -231,7 +231,6 @@ class MCDCNNRegressor(BaseDeepRegressor):
         output : array of shape = [n_instances,]
             Representing the estimates for all instances in X.
         """
-        self.check_is_fitted()
         X = X.transpose([0, 2, 1])
         X = self._network._prepare_input(X)
 
