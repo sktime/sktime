@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Test grid search CV."""
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "hazrul"]
 __all__ = ["test_gscv", "test_rscv"]
 
 import numpy as np
@@ -230,19 +230,12 @@ def test_gscv_proba(cv, scoring, error_score):
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
 @pytest.mark.parametrize("cv", CVs)
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
-@pytest.mark.parametrize("random_state", [42])
-def test_sscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
+def test_skoptcv(forecaster, param_grid, cv, scoring, error_score, n_iter):
     """Test ForecastingSkoptSearchCV.
 
     Tests that ForecastingSkoptSearchCV successfully searches the
     parameter distributions to identify the best parameter set
     """
-    from skopt.space import Categorical
-
-    for key, value in param_grid.items():
-        if isinstance(value, list):
-            param_grid[key] = Categorical(value)
-
     # test for forecasting dataset
     y_forecasting, X_forecasting = load_longley()
     # test for hierarchical dataset
@@ -256,7 +249,7 @@ def test_sscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_s
         scoring=scoring,
         error_score=error_score,
         n_iter=n_iter,
-        random_state=random_state,
+        random_state=42,
         n_jobs=-1,
     )
     for y, X in datasets:

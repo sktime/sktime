@@ -3,8 +3,12 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements grid search functionality to tune forecasters."""
 
-__author__ = ["mloning"]
-__all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
+__author__ = ["mloning", "hazrul"]
+__all__ = [
+    "ForecastingGridSearchCV",
+    "ForecastingRandomizedSearchCV",
+    "ForecastingSkoptSearchCV",
+]
 
 from collections.abc import Sequence
 from typing import Dict, List, Optional, Union
@@ -792,7 +796,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch : str, optional (default='2*n_jobs')
     pre_dispatch : str, optional (default='2*n_jobs')
     backend : str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
