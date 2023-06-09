@@ -741,7 +741,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         if dict, a dictionary that represents the search space over the parameters of
         the provided estimator. The keys are parameter names (strings), and the values
         are instances of skopt.space.Dimension (Real, Integer, or Categorical)
-        or any other valid value that defines a skopt dimension.
+        or any other valid value that defines a skopt dimension - Note that if a list
+        is given, the dimension is automatically set to Categorical.
         Please refer to the `skopt.Optimizer` documentation for more information.
         if a list of dict, each dictionary corresponds to a parameter space, following
         the same structure described in case 1 above. the search will be performed
@@ -819,17 +820,27 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         score of forecasters
     """
 
+    _tags = {
+        "scitype:y": "both",
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "python_dependencies": "skopt",
+    }
+
     def __init__(
         self,
         forecaster,
         cv: BaseSplitter,
         param_distributions: Union[Dict, List[Dict]],
         n_iter: int = 10,
-        n_points: int = 1,
+        n_points: Optional[int] = 1,
         random_state: Optional[int] = None,
         scoring: Optional[List[BaseMetric]] = None,
         optimizer_kwargs: Optional[Dict] = None,
-        strategy="refit",
+        strategy: Optional[str] = "refit",
         n_jobs: Optional[int] = None,
         refit: bool = True,
         verbose: int = 0,
@@ -1108,8 +1119,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from skopt.space import Categorical
-
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -1118,7 +1127,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
             "cv": SingleWindowSplitter(fh=1),
-            "param_distributions": {"window_length": Categorical([2, 5])},
+            "param_distributions": {"window_length": [2, 5]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "n_iter": 2,
         }
@@ -1126,7 +1135,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         params2 = {
             "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
-            "param_distributions": {"degree": Categorical([1, 2])},
+            "param_distributions": {"degree": [1, 2]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
             "n_iter": 2,

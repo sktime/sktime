@@ -17,6 +17,7 @@ from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
+    ForecastingSkoptSearchCV,
     SingleWindowSplitter,
     SlidingWindowSplitter,
 )
@@ -35,7 +36,10 @@ from sktime.performance_metrics.forecasting import (
 from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
 from sktime.transformations.series.detrend import Detrender
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.validation._dependencies import (
+    _check_estimator_deps,
+    _check_soft_dependencies,
+)
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 TEST_METRICS_PROBA = [CRPS(), PinballLoss()]
@@ -63,6 +67,22 @@ def _check_cv(forecaster, tuner, cv, param_grid, y, X, scoring):
 
     fitted_params = tuner.get_fitted_params()
     assert param_grid[best_idx].items() <= fitted_params.items()
+
+
+def _create_hierarchical_data():
+    y = _make_hierarchical(
+        random_state=TEST_RANDOM_SEEDS[0],
+        hierarchy_levels=(2, 2),
+        min_timepoints=20,
+        max_timepoints=20,
+    )
+    X = _make_hierarchical(
+        random_state=TEST_RANDOM_SEEDS[1],
+        hierarchy_levels=(2, 2),
+        min_timepoints=20,
+        max_timepoints=20,
+    )
+    return y, X
 
 
 NAIVE = NaiveForecaster(strategy="mean")
@@ -150,13 +170,7 @@ def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_s
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
 def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
     """Test ForecastingGridSearchCV."""
-    y = _make_hierarchical(
-        random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
-    )
-    X = _make_hierarchical(
-        random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
-    )
-
+    y, X = _create_hierarchical_data()
     gscv = ForecastingGridSearchCV(
         forecaster,
         param_grid=param_grid,
@@ -199,3 +213,58 @@ def test_gscv_proba(cv, scoring, error_score):
     fitted_params = gscv.get_fitted_params()
     assert "best_forecaster" in fitted_params.keys()
     assert "best_score" in fitted_params.keys()
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies(
+        "scikit-optimize",
+        severity="none",
+        package_import_alias={"scikit-optimize": "skopt"},
+    ),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize(
+    "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
+)
+@pytest.mark.parametrize("scoring", TEST_METRICS)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+@pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize("n_iter", TEST_N_ITERS)
+@pytest.mark.parametrize("random_state", [42])
+def test_sscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
+    """Test ForecastingSkoptSearchCV.
+
+    Tests that ForecastingSkoptSearchCV successfully searches the
+    parameter distributions to identify the best parameter set
+    """
+    from skopt.space import Categorical
+
+    for key, value in param_grid.items():
+        if isinstance(value, list):
+            param_grid[key] = Categorical(value)
+
+    # test for forecasting dataset
+    y_forecasting, X_forecasting = load_longley()
+    # test for hierarchical dataset
+    y_hierarchical, X_hierarchical = _create_hierarchical_data()
+
+    datasets = [(y_hierarchical, X_hierarchical), (y_forecasting, X_forecasting)]
+    sscv = ForecastingSkoptSearchCV(
+        forecaster,
+        param_distributions=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
+        n_iter=n_iter,
+        random_state=random_state,
+        n_jobs=-1,
+    )
+    for y, X in datasets:
+        sscv.fit(y, X)
+        param_distributions = list(sscv.cv_results_["params"])
+        _check_cv(forecaster, sscv, cv, param_distributions, y, X, scoring)
+
+        # ensure that the best_forecaster and best_score are in fitted_params
+        fitted_params = sscv.get_fitted_params()
+        assert "best_forecaster" in fitted_params.keys()
+        assert "best_score" in fitted_params.keys()
