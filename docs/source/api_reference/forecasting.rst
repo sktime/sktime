@@ -206,6 +206,7 @@ All "ARIMA" models below include SARIMAX capability.
     :template: class.rst
 
     StatsForecastAutoARIMA
+    StatsForecastAutoCES
     StatsForecastAutoETS
     StatsForecastAutoTheta
 

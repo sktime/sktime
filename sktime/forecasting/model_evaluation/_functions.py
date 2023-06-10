@@ -208,7 +208,7 @@ def _evaluate_window(
     ).astype({"cutoff": cutoff_dtype})
 
     # Return forecaster if "update"
-    if strategy == "update":
+    if strategy == "update" or (strategy == "no-update_params" and i == 0):
         return result, forecaster
     else:
         return result
@@ -398,7 +398,7 @@ def evaluate(
         # Run temporal cross-validation sequentially
         results = []
         for i, (train, test) in enumerate(cv.split(y)):
-            if strategy == "update":
+            if strategy == "update" or (strategy == "no-update_params" and i == 0):
                 result, forecaster = _evaluate_window(
                     y,
                     X,
