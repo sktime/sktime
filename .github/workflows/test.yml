@@ -196,7 +196,7 @@ jobs:
           mkdir -p testdir/
           cp .coveragerc testdir/
           cp setup.cfg testdir/
-          python -m pytest -v -n 1
+          python -m pytest -v
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
