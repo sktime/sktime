@@ -730,7 +730,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
 
 
 class ForecastingSkoptSearchCV(BaseGridSearch):
-    """Bayesian search over hyper parameters for a forecaster.
+    """Bayesian search over hyperparameters for a forecaster.
 
     Parameters
     ----------
@@ -750,7 +750,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         Please refer to the `skopt.Optimizer` documentation for more information.
         if a list of dict, each dictionary corresponds to a parameter space, following
         the same structure described in case 1 above. the search will be performed
-        sequentially for each parameter space, with the maximum number of evaluations
+        sequentially for each parameter space, with the number of samples
         set to n_iter.
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
@@ -765,9 +765,10 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
     optimizer_kwargs: dict, optional
-        Dict of arguments passed to Optimizer.
+        Arguments passed to Optimizer to control the bahaviour of the bayesian search.
         For example, {'base_estimator': 'RF'} would use a Random Forest surrogate
-        instead of the default Gaussian Process.
+        instead of the default Gaussian Process. Please refer to the `skopt.Optimizer`
+        documentation for more information.
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
