@@ -178,7 +178,7 @@ class Detrender(BaseTransformer):
         fh = self._get_fh_from_X(X=X)
         forecaster = self._get_fitted_forecaster(X=X, y=y, fh=fh)
 
-        if not self.out_of_sample:
+        if not self.out_of_sample or len(X) <= 10:
             X_pred = forecaster.predict(fh=fh, X=y)
         else:
             cv = ExpandingWindowSplitter()
