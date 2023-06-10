@@ -124,7 +124,6 @@ class Detrender(BaseTransformer):
         self: a fitted instance of the estimator
         """
         if len(X) <= 10:
-            self.out_of_sample = False
             warn(
                 """
                     Length of X is less than 11, forecasters tend to break
@@ -133,10 +132,7 @@ class Detrender(BaseTransformer):
             )
 
         if not self.forecaster_.get_tag("requires-fh-in-fit", True):
-            if not self.out_of_sample:
-                self.forecaster_.fit(y=X, X=y)
-            else:
-                self.forecaster_.fit(y=X[:10], X=y)
+            self.forecaster_.fit(y=X, X=y)
         else:
             self._X = X
             self._y = y
@@ -155,10 +151,8 @@ class Detrender(BaseTransformer):
         if self.forecaster_.get_tag("requires-fh-in-fit", True):
             X = update_data(self._X, X)
             y = update_data(self._y, y)
-            if not self.out_of_sample:
-                forecaster = self.forecaster_.clone().fit(y=X, X=y, fh=fh)
-            else:
-                forecaster = self.forecaster_.clone().fit(y=X[:10], X=y, fh=fh)
+
+            forecaster = self.forecaster_.clone().fit(y=X, X=y, fh=fh)
 
         else:
             forecaster = self.forecaster_
@@ -188,8 +182,7 @@ class Detrender(BaseTransformer):
             X_pred = forecaster.predict(fh=fh, X=y)
         else:
             cv = ExpandingWindowSplitter()
-            fh2 = X.index[:10]
-            X_pred1 = forecaster.predict(fh=fh2, X=X[:10])
+            X_pred1 = forecaster.predict(fh=fh, X=X[:10])
             X_pred2 = forecaster.update_predict(y=X, cv=cv)
             X_pred = pd.concat([X_pred1, X_pred2])
             X_pred = X_pred.drop_duplicates()
