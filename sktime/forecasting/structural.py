@@ -179,8 +179,8 @@ class UnobservedComponents(_StatsModelsAdapter):
 
     References
     ----------
-    .. [1] Seabold, Skipper, and Josef Perktold. “statsmodels: Econometric
-       and statistical modeling with python.” Proceedings of the 9th Python
+    .. [1] Seabold, Skipper, and Josef Perktold. "statsmodels: Econometric
+       and statistical modeling with python." Proceedings of the 9th Python
        in Science Conference. 2010.
 
     .. [2] Durbin, James, and Siem Jan Koopman. 2012.

@@ -49,7 +49,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         one of: 'uniform', 'distance', or a callable function
     algorithm : str, optional. default = 'brute'
         search method for neighbours
-        one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
+        one of {'auto', 'ball_tree', 'kd_tree', 'brute'}
     distance : str or callable, optional. default ='dtw'
         distance measure between time series
         if str, must be one of the following strings:

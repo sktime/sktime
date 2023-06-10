@@ -154,8 +154,8 @@ class ElbowClassSum(BaseTransformer):
 
     References
     ----------
-    ..[1]: Bhaskar Dhariyal et al. “Fast Channel Selection for Scalable Multivariate
-    Time Series Classification.” AALTD, ECML-PKDD, Springer, 2021
+    ..[1]: Bhaskar Dhariyal et al. "Fast Channel Selection for Scalable Multivariate
+    Time Series Classification." AALTD, ECML-PKDD, Springer, 2021
 
     Examples
     --------
@@ -327,8 +327,8 @@ class ElbowClassPairwise(BaseTransformer):
 
     References
     ----------
-    ..[1]: Bhaskar Dhariyal et al. “Fast Channel Selection for Scalable Multivariate
-    Time Series Classification.” AALTD, ECML-PKDD, Springer, 2021
+    ..[1]: Bhaskar Dhariyal et al. "Fast Channel Selection for Scalable Multivariate
+    Time Series Classification." AALTD, ECML-PKDD, Springer, 2021
 
     Examples
     --------

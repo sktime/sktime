@@ -69,7 +69,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
           containing the weights.
     algorithm : str, optional. default = 'brute'
         search method for neighbours
-        one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
+        one of {'auto', 'ball_tree', 'kd_tree', 'brute'}
     distance : str or callable, optional. default ='dtw'
         distance measure between time series
         if str, must be one of the following strings:
@@ -227,7 +227,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             # if we do not want/need to pass train-train distances,
             #   we still need to pass a zeros matrix, this means "do not consider"
             # citing the sklearn KNeighborsClassifier docs on distance matrix input:
-            # "X may be a sparse graph, in which case only “nonzero” elements
+            # "X may be a sparse graph, in which case only "nonzero" elements
             #   may be considered neighbors."
             X_inner_mtype = self.get_tag("X_inner_mtype")
             _, _, X_meta = check_is_mtype(X, X_inner_mtype, return_metadata=True)

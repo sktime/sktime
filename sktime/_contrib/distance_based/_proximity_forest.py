@@ -1313,7 +1313,7 @@ class ProximityForest(BaseClassifier):
 
         title={Proximity Forest: an effective and scalable distance-based
         classifier for time series},
-        author={B. Lucas and A. Shifaz and C. Pelletier and L. O’Neill and N.
+        author={B. Lucas and A. Shifaz and C. Pelletier and L. O'Neill and N.
         Zaidi and B. Goethals and F. Petitjean and G. Webb},
          journal={Data Mining and Knowledge Discovery},
         volume={33},
