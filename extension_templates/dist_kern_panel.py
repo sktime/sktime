@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Extension template for pairwise distance or kernel between time series.
+"""Extension template for pairwise distance or kernel between time series.
 
 How to use this:
 - this is meant as a "fill in" template for easy extension
