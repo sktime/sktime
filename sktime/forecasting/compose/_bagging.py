@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 from sklearn import clone
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import set_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
@@ -22,6 +21,7 @@ from sktime.transformations.bootstrap import (
     STLBootstrapTransformer,
 )
 from sktime.utils.estimators import MockForecaster
+from sktime.utils.random_state import set_random_state
 
 
 class BaggingForecaster(BaseForecaster):
@@ -97,7 +97,9 @@ class BaggingForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "requires-fh-in-fit": False,  # like AutoETS overwritten if forecaster not None
         "enforce_index_type": None,  # like AutoETS overwritten if forecaster not None
-        "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        "capability:insample": True,  # can the estimator make in-sample predictions?
+        "capability:pred_int": True,  # can the estimator produce prediction intervals?
+        "capability:pred_int:insample": True,  # ... for in-sample horizons?
     }
 
     def __init__(
@@ -262,7 +264,6 @@ class BaggingForecaster(BaseForecaster):
         """
         # X is ignored
         y_pred = self.forecaster_.predict(fh=fh, X=None)
-
         return _calculate_data_quantiles(y_pred, alpha)
 
     def _update(self, y, X=None, update_params=True):
@@ -338,8 +339,7 @@ def _calculate_data_quantiles(df: pd.DataFrame, alpha: List[float]) -> pd.DataFr
     index = pd.MultiIndex.from_product([["Quantiles"], alpha])
     pred_quantiles = pd.DataFrame(columns=index)
     for a in alpha:
-        pred_quantiles[("Quantiles", a)] = (
-            df.groupby(level=-1, as_index=True).quantile(a).squeeze()
-        )
+        quant_a = df.groupby(level=-1, as_index=True).quantile(a)
+        pred_quantiles[[("Quantiles", a)]] = quant_a
 
     return pred_quantiles

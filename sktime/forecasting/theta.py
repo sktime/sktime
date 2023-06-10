@@ -75,6 +75,10 @@ class ThetaForecaster(ExponentialSmoothing):
        International J. Forecasting, 19, 287-290, 2003.
        https://www.sciencedirect.com/science/article/pii/S0169207001001431
 
+    See Also
+    --------
+    StatsForecastAutoTheta
+
     Examples
     --------
     >>> from sktime.datasets import load_airline
@@ -91,6 +95,7 @@ class ThetaForecaster(ExponentialSmoothing):
         "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

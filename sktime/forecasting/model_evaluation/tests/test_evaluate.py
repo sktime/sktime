@@ -21,6 +21,7 @@ from sklearn.linear_model import LinearRegression
 
 from sktime.datasets import load_airline, load_longley
 from sktime.exceptions import FitFailedWarning
+from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -32,6 +33,7 @@ from sktime.forecasting.model_selection import (
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import TEST_FHS, TEST_STEP_LENGTHS_INT
 from sktime.performance_metrics.forecasting import (
+    MeanAbsoluteError,
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,
 )
@@ -44,7 +46,10 @@ from sktime.performance_metrics.forecasting.probabilistic import (
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_estimator_deps,
+    _check_soft_dependencies,
+)
 
 
 def _check_evaluate_output(out, cv, y, scoring):
@@ -96,7 +101,7 @@ def _check_evaluate_output(out, cv, y, scoring):
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", [7, 10])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
-@pytest.mark.parametrize("strategy", ["refit", "update"])
+@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize(
     "scoring",
     [
@@ -211,7 +216,7 @@ def test_evaluate_no_exog_against_with_exog():
 )
 @pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
 @pytest.mark.parametrize("return_data", [True, False])
-@pytest.mark.parametrize("strategy", ["refit", "update"])
+@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_error_score(error_score, return_data, strategy, backend):
     """Test evaluate to raise warnings and exceptions according to error_score value."""
@@ -280,6 +285,32 @@ def test_evaluate_hierarchical(backend):
 
     scoring_name = f"test_{scoring.name}"
     assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])
+
+
+# ARIMA models from statsmodels, pmdarima
+ARIMA_MODELS = [ARIMA, AutoARIMA]
+
+# breaks for SARIMAX, see issue #3670, this should be fixed
+# ARIMA_MODELS = [ARIMA, AutoARIMA, SARIMAX]
+
+
+@pytest.mark.parametrize("cls", ARIMA_MODELS)
+def test_evaluate_bigger_X(cls):
+    """Check that evaluating ARIMA models with exogeneous X works.
+
+    Example adapted from bug report #3657.
+    """
+    if not _check_estimator_deps(cls, severity="none"):
+        return None
+
+    y, X = load_longley()
+
+    f = cls.create_test_instance()
+    cv = ExpandingWindowSplitter(initial_window=3, step_length=1, fh=np.arange(1, 4))
+    loss = MeanAbsoluteError()
+
+    # check that this does not break
+    evaluate(forecaster=f, y=y, X=X, cv=cv, error_score="raise", scoring=loss)
 
 
 PROBA_METRICS = [CRPS, EmpiricalCoverage, LogLoss, PinballLoss]

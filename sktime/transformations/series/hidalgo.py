@@ -7,7 +7,6 @@ __all__ = ["Hidalgo"]
 
 
 from functools import reduce
-from typing import Union
 
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
@@ -720,7 +719,7 @@ class Hidalgo(BaseTransformer):
         }
 
 
-def binom(N: Union[int, float], q: Union[int, float]):
+def binom(N: float, q: float):
     """Calculate the binomial coefficient.
 
     Parameters

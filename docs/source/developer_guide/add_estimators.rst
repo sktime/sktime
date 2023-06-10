@@ -247,7 +247,7 @@ To add an estimator to ``sktime`` that depends on cython, the following addition
     This can be a simple import from ``home-package``,
     if the algorithm in ``home-package`` already passes ``check_estimator``.
 *   Alternatively, the algorithm can be interfaced via a delegator as a delegate,
-    tags and method overrides can be added in the delegator. See, e.g., ``MySQM`` for this.
+    tags and method overrides can be added in the delegator. See, e.g., ``MrSQM`` for this.
 *   For the ``sktime`` interface, the ``requires_cython`` tag should be set to ``True``,
     and the ``python_dependencies`` tag should be set to the string ``"home-package"``.
 

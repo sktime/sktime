@@ -267,7 +267,7 @@ def _calendar_dummies(x, funcs):
     elif funcs == "week_of_month":
         cd = (date_sequence.day - 1) // 7 + 1
     elif funcs == "month_of_quarter":
-        cd = (np.floor(date_sequence.month / 4) + 1).astype(np.int64)
+        cd = (date_sequence.month.astype(np.int64) + 2) % 3 + 1
     elif funcs == "week_of_quarter":
         col_names = x.columns
         x_columns = col_names.intersection(["year", "quarter", "week"]).to_list()

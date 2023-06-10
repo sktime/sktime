@@ -6,7 +6,7 @@ __author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
 from distutils.log import warn
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -38,7 +38,7 @@ class FourierFeatures(BaseTransformer):
 
     Parameters
     ----------
-    sp_list : List[Union[int, float]]
+    sp_list : List[float]
         list of seasonal periods
     fourier_terms_list : List[int]
         list of number of fourier terms (K) for each seasonal period.
@@ -110,7 +110,7 @@ class FourierFeatures(BaseTransformer):
 
     def __init__(
         self,
-        sp_list: List[Union[int, float]],
+        sp_list: List[float],
         fourier_terms_list: List[int],
         freq: Optional[str] = None,
         keep_original_columns: Optional[bool] = False,
@@ -190,7 +190,7 @@ class FourierFeatures(BaseTransformer):
         # this is used to make sure that time t is calculated with reference to
         # the data passed on fit
         # store the integer form of the minimum date in the prediod index
-        self.min_t_ = np.min(time_index.astype(int))
+        self.min_t_ = np.min(time_index.astype("int64"))
 
         return self
 
@@ -218,7 +218,7 @@ class FourierFeatures(BaseTransformer):
             time_index = time_index.to_period(self.freq_)
 
         # get the integer form of the PeriodIndex
-        int_index = time_index.astype(int) - self.min_t_
+        int_index = time_index.astype("int64") - self.min_t_
 
         for sp_k in self.sp_k_pairs_list_:
             sp = sp_k[0]

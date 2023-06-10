@@ -28,6 +28,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
@@ -62,6 +63,8 @@ class BaseGridSearch(_DelegatedForecaster):
         tags_to_clone = [
             "requires-fh-in-fit",
             "capability:pred_int",
+            "capability:pred_int:insample",
+            "capability:insample",
             "scitype:y",
             "ignores-exogeneous-X",
             "handles-missing-data",
@@ -240,7 +243,8 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Sort values according to rank
         results = results.sort_values(
-            by=f"rank_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
+            by=f"rank_{scoring_name}",
+            ascending=True,
         )
         # Select n best forecaster
         self.n_best_forecasters_ = []
