@@ -28,7 +28,7 @@ test: ## Run unit tests
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	python -m pytest
+	python -m pytest -v
 
 test_check_suite: ## run only estimator contract tests in TestAll classes
 	-rm -rf ${TEST_DIR}
