@@ -1005,7 +1005,7 @@ def from_multiindex_to_dflist(obj, store=None):
 
     obj = _coerce_df_dtypes(obj)
 
-    instance_index = obj.index.levels[0]
+    instance_index = set(obj.index.get_level_values(0))
 
     Xlist = [obj.loc[i].rename_axis(None) for i in instance_index]
 
