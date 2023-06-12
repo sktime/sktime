@@ -1602,7 +1602,7 @@ class BaseForecaster(BaseEstimator):
         if self._fh is None:
             raise ValueError(
                 f"No `fh` has been set yet, in this instance of {self.__class__.__name__} "
-                "please specify `fh` " "in `fit` or `predict`"
+                "please specify `fh` in `fit` or `predict`"
             )
 
         return self._fh
