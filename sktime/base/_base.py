@@ -64,9 +64,9 @@ from copy import deepcopy
 from skbase.base import BaseObject as _BaseObject
 from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
-from sklearn.ensemble._base import _set_random_states
 
 from sktime.exceptions import NotFittedError
+from sktime.utils.random_state import set_random_state
 
 
 class BaseObject(_BaseObject):
@@ -508,6 +508,6 @@ def _clone_estimator(base_estimator, random_state=None):
     estimator = clone(base_estimator)
 
     if random_state is not None:
-        _set_random_states(estimator, random_state)
+        set_random_state(estimator, random_state)
 
     return estimator

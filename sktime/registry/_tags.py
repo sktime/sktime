@@ -415,6 +415,30 @@ ESTIMATOR_TAG_REGISTER = [
         ("str", ["continuous", "discrete", "mixed"]),
         "class the distribution measure belongs to - abs.continuous, discrete, mixed",
     ),
+    (
+        "approx_mean_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative mean if not available",
+    ),
+    (
+        "approx_var_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative variance if not available",
+    ),
+    (
+        "approx_energy_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative energy if not available",
+    ),
+    (
+        "approx_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating other statistics if not available",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)

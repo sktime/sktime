@@ -243,7 +243,8 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Sort values according to rank
         results = results.sort_values(
-            by=f"rank_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
+            by=f"rank_{scoring_name}",
+            ascending=True,
         )
         # Select n best forecaster
         self.n_best_forecasters_ = []
