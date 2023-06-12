@@ -263,7 +263,8 @@ class BaseForecaster(BaseEstimator):
                     "there should be one or two keys when calling [] or getitem, "
                     "of a forecaster, "
                     "e.g., mytrafo[key], or mytrafo[key1, key2]. "
-                    f"But {self.__class__.__name__} instance got tuple with {len(key)} keys."
+                    f"But {self.__class__.__name__} instance got tuple"
+                    f" with {len(key)} keys."
                 )
             columns1 = key[0]
             columns2 = key[1]
@@ -1601,7 +1602,8 @@ class BaseForecaster(BaseEstimator):
         # raise error if some method tries to accessed it before it has been set
         if self._fh is None:
             raise ValueError(
-                f"No `fh` has been set yet, in this instance of {self.__class__.__name__} "
+                f"No `fh` has been set yet, in this instance of "
+                f"{self.__class__.__name__}, "
                 "please specify `fh` in `fit` or `predict`"
             )
 
@@ -1696,7 +1698,8 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "A different forecasting horizon `fh` has been "
                     "provided from "
-                    f"the one seen in `fit` in this instance of {self.__class__.__name__}. "
+                    "the one seen already in `fit`, in this instance of "
+                    f"{self.__class__.__name__}. "
                     "If you want to change the forecasting "
                     "horizon, please re-fit the forecaster. " + msg
                 )
