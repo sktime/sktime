@@ -320,13 +320,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
         or a scoring function must be passed.
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
-    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+    strategy : {"refit", "update", "no-update_params"}, optional (default="refit")
         data ingestion strategy in fitting cv, passed to `evaluate` internally
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = forecaster is refitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
-    update_behaviour : str, optional, default = "full_refit"
+    update_behaviour : str, optional (default = "full_refit")
         one of {"full_refit", "inner_only", "no_update"}
         behaviour of the forecaster when calling update
         "full_refit" = both tuning parameters and inner estimator refit on all data seen
@@ -340,11 +340,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
         if None (default), then uses scoring = MeanAbsolutePercentageError()
-    n_jobs: int, optional (default=None)
-        Number of jobs to run in parallel if backend either "loky",
-        "multiprocessing" or "threading".
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = best forecaster remains fitted on the last fold in cv
@@ -352,10 +347,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
     return_n_best_forecasters : int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    error_score: numeric value or the str 'raise', optional (default=np.nan)
-        The test score returned when a forecaster fails to be fitted.
     return_train_score: bool, optional (default=False)
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+    error_score : "raise" or numeric, optional (default=np.nan)
+        Value to assign to the score if an exception occurs in estimator fitting.
+        i.e  a forecaster fails to be fitted.
+        If set to "raise", the exception is raised.
+        If a numeric value is given, FitFailedWarning is raised.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, optional (default=None)
         Runs parallel evaluate if specified and `strategy` is set as "refit".
         - "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         - "dask": uses `dask`, requires `dask` package in environment
@@ -363,13 +361,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (`cloudpickle`) for "dask" and "loky" is generally more robust than the
         standard `pickle` library used in "multiprocessing".
-    pre_dispatch: str, optional (default='2*n_jobs').
+    pre_dispatch: str, optional (default='2*n_jobs')
         Controls the number of jobs that get dispatched during parallel execution when
         using "loky", "threading", or "multiprocessing" backend.
-    error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an exception occurs in estimator fitting. If set
-        to "raise", the exception is raised. If a numeric value is given,
-        FitFailedWarning is raised.
+    n_jobs: int, optional (default=None)
+        Number of jobs to run in parallel if backend either "loky",
+        "multiprocessing" or "threading".
+        None means 1 unless in a joblib.parallel_backend context.
+        -1 means using all processors.
 
     Attributes
     ----------
@@ -579,13 +578,13 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         or a scoring function must be passed.
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
-    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+    strategy : {"refit", "update", "no-update_params"}, optional (default="refit")
         data ingestion strategy in fitting cv, passed to `evaluate` internally
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = forecaster is refitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
-    update_behaviour: str, optional, default = "full_refit"
+    update_behaviour: str, optional (default = "full_refit")
         one of {"full_refit", "inner_only", "no_update"}
         behaviour of the forecaster when calling update
         "full_refit" = both tuning parameters and inner estimator refit on all data seen
@@ -598,32 +597,33 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         If a list is given, it is sampled uniformly.
         If a list of dicts is given, first a dict is sampled uniformly, and
         then a parameter is sampled using that dict as above.
-    n_iter : int, default=10
+    n_iter : int, optional (default=10)
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
+        Pass an int for reproducible output across multiple
+        function calls.
     scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
         if callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
         if None (default), then uses scoring = MeanAbsolutePercentageError()
-    n_jobs : int, optional (default=None)
-        Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = best forecaster remains fitted on the last fold in cv
     verbose : int, optional (default=0)
-    return_n_best_forecasters: int, default=1
+    return_n_best_forecasters: int, optional (default=1)
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    random_state : int, RandomState instance or None, default=None
-        Pseudo random number generator state used for random uniform sampling
-        from lists of possible values instead of scipy.stats distributions.
-        Pass an int for reproducible output across multiple
-        function calls.
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+    error_score : "raise" or numeric, optional (default=np.nan)
+        Value to assign to the score if an exception occurs in estimator fitting.
+        i.e  a forecaster fails to be fitted.
+        If set to "raise", the exception is raised.
+        If a numeric value is given, FitFailedWarning is raised.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, optional (default=None)
         Runs parallel evaluate if specified and `strategy` is set as "refit".
         - "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         - "dask": uses `dask`, requires `dask` package in environment
@@ -631,13 +631,14 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (`cloudpickle`) for "dask" and "loky" is generally more robust than the
         standard `pickle` library used in "multiprocessing".
-    pre_dispatch: str, optional (default='2*n_jobs').
+    pre_dispatch: str, optional (default='2*n_jobs')
         Controls the number of jobs that get dispatched during parallel execution when
         using "loky", "threading", or "multiprocessing" backend.
-    error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an exception occurs in estimator fitting. If set
-        to "raise", the exception is raised. If a numeric value is given,
-        FitFailedWarning is raised.
+    n_jobs : int, optional (default=None)
+        Number of jobs to run in parallel.
+        None means 1 unless in a joblib.parallel_backend context.
+        -1 means using all processors.
+
 
     Attributes
     ----------
