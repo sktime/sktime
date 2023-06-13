@@ -339,6 +339,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         if callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        if None (default), then uses scoring = MeanAbsolutePercentageError()
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel if backend either "loky",
         "multiprocessing" or "threading".
@@ -351,9 +352,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     return_n_best_forecasters : int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch: str, optional (default='2*n_jobs').
-        Controls the number of jobs that get dispatched during parallel execution when
-        using the "loky", "threading", or "multiprocessing" backend.
     error_score: numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score: bool, optional (default=False)
@@ -367,7 +365,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         standard `pickle` library used in "multiprocessing".
     pre_dispatch: str, optional (default='2*n_jobs').
         Controls the number of jobs that get dispatched during parallel execution when
-        using the "loky", "threading", or "multiprocessing" backend.
+        using "loky", "threading", or "multiprocessing" backend.
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
@@ -608,6 +606,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         if callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        if None (default), then uses scoring = MeanAbsolutePercentageError()
     n_jobs : int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
@@ -619,9 +618,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch: str, optional (default='2*n_jobs').
-        Controls the number of jobs that get dispatched during parallel execution when
-        using the "loky", "threading", or "multiprocessing" backend.
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
@@ -635,6 +631,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (`cloudpickle`) for "dask" and "loky" is generally more robust than the
         standard `pickle` library used in "multiprocessing".
+    pre_dispatch: str, optional (default='2*n_jobs').
+        Controls the number of jobs that get dispatched during parallel execution when
+        using "loky", "threading", or "multiprocessing" backend.
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
