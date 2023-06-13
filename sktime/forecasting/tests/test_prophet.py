@@ -37,7 +37,7 @@ def test_prophet_nonnative_index(indextype):
     y_pred = f.predict(fh=fh, X=X_test)
 
     if indextype == "range":
-        assert y_pred.index.is_integer()
+        assert pd.api.types.is_integer_dtype(y_pred.index)
     if indextype == "period":
         assert isinstance(y_pred.index, pd.PeriodIndex)
 

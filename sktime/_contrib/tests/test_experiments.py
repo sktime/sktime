@@ -5,7 +5,7 @@ tests the experiments code works with all current valid classifiers.
 Loops through all classifiers in the list in experiments, trains,  Builds all.
 """
 
-__author__ = ["Tony Bagnall"]
+__author__ = ["TonyBagnall"]
 
 
 class TestStats:

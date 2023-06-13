@@ -7,7 +7,6 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
-from scipy.linalg import null_space
 from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
 
@@ -83,6 +82,7 @@ class DOBIN(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",
         "fit_is_empty": False,
         "skip-inverse-transform": True,
+        "python_dependencies": "scipy",
     }
 
     def __init__(
@@ -110,6 +110,8 @@ class DOBIN(BaseTransformer):
         -------
         self: reference to self
         """
+        from scipy.linalg import null_space
+
         self._X = X
 
         assert all(X.apply(is_numeric_dtype, axis=0))
@@ -119,7 +121,8 @@ class DOBIN(BaseTransformer):
         if n_dim == 1:
             warnings.warn(
                 "Warning: Input data X is univariate. For dimensionality reduction, "
-                "please provide multivariate input."
+                "please provide multivariate input.",
+                stacklevel=2,
             )
             self._coords = X
             return self
@@ -207,7 +210,8 @@ class DOBIN(BaseTransformer):
             warnings.warn(
                 "Warning: Input data X differs from that given to fit(). "
                 "Refitting with new input data, not storing updated public class "
-                "attributes. For this, explicitly use fit(X) or fit_transform(X)."
+                "attributes. For this, explicitly use fit(X) or fit_transform(X).",
+                stacklevel=2,
             )
             return new_dobin._coords
 

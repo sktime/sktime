@@ -27,6 +27,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
@@ -61,6 +62,8 @@ class BaseGridSearch(_DelegatedForecaster):
         tags_to_clone = [
             "requires-fh-in-fit",
             "capability:pred_int",
+            "capability:pred_int:insample",
+            "capability:insample",
             "scitype:y",
             "ignores-exogeneous-X",
             "handles-missing-data",
@@ -145,7 +148,7 @@ class BaseGridSearch(_DelegatedForecaster):
         """
         cv = check_cv(self.cv)
 
-        scoring = check_scoring(self.scoring)
+        scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
         def _fit_and_score(params):
@@ -237,7 +240,8 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Sort values according to rank
         results = results.sort_values(
-            by=f"rank_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
+            by=f"rank_{scoring_name}",
+            ascending=True,
         )
         # Select n best forecaster
         self.n_best_forecasters_ = []
@@ -322,7 +326,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         "refit" = forecaster is refitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
-    update_behaviour: str, optional, default = "full_refit"
+    update_behaviour : str, optional, default = "full_refit"
         one of {"full_refit", "inner_only", "no_update"}
         behaviour of the forecaster when calling update
         "full_refit" = both tuning parameters and inner estimator refit on all data seen
@@ -330,19 +334,21 @@ class ForecastingGridSearchCV(BaseGridSearch):
         "no_update" = neither tuning parameters nor inner estimator are updated
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
-    scoring: function, optional (default=None)
-        Function to score models for evaluation of optimal parameters. If None,
-        then MeanAbsolutePercentageError() is used.
+    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+        scoring metric to use in tuning the forecaster
+        if callable, must have signature
+        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        assuming np.ndarrays being of the same length, and lower being better.
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel if backend either "loky",
         "multiprocessing" or "threading".
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
-    refit: bool, optional (default=True)
+    refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = best forecaster remains fitted on the last fold in cv
     verbose: int, optional (default=0)
-    return_n_best_forecasters: int, default=1
+    return_n_best_forecasters : int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
     pre_dispatch: str, optional (default='2*n_jobs').
@@ -533,7 +539,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
-        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.performance_metrics.forecasting import (
+            MeanAbsolutePercentageError,
+            mean_absolute_percentage_error,
+        )
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
@@ -545,7 +554,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
             "param_grid": {"degree": [1, 2]},
-            "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "scoring": mean_absolute_percentage_error,
             "update_behaviour": "inner_only",
         }
         return [params, params2]
@@ -594,18 +603,19 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
-    scoring: function, optional (default=None)
-        Function to score models for evaluation of optimal parameters. If None,
-        then MeanAbsolutePercentageError() is used.
-    n_jobs: int, optional (default=None)
-        Number of jobs to run in parallel if backend either "loky",
-        "multiprocessing" or "threading".
+    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+        scoring metric to use in tuning the forecaster
+        if callable, must have signature
+        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        assuming np.ndarrays being of the same length, and lower being better.
+    n_jobs : int, optional (default=None)
+        Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
-    refit: bool, optional (default=True)
+    refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = best forecaster remains fitted on the last fold in cv
-    verbose: int, optional (default=0)
+    verbose : int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_

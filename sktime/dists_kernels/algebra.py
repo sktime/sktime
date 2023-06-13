@@ -46,6 +46,10 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     >>> X = X[0:3]
     >>> sum_dist = CombinedDistance([DtwDist(), DtwDist(weighted=True)], "+")
     >>> dist_mat = sum_dist.transform(X)
+
+    the same can also be done more compactly using dunders:
+    >>> sum_dist = DtwDist() + DtwDist(weighted=True)
+    >>> dist_mat = sum_dist(X)
     """
 
     _tags = {

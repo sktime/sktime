@@ -13,9 +13,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from numpy import float64 as DOUBLE
-from scipy.sparse import issparse
 from sklearn.base import clone
-from sklearn.ensemble._base import _set_random_states
 from sklearn.ensemble._forest import (
     MAX_INT,
     BaseForest,
@@ -26,6 +24,7 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array, check_random_state, compute_sample_weight
 
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils.random_state import set_random_state
 
 
 def _parallel_build_trees(
@@ -113,7 +112,7 @@ class BaseTimeSeriesForest(BaseForest):
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
 
         if random_state is not None:
-            _set_random_states(estimator, random_state)
+            set_random_state(estimator, random_state)
 
         if append:
             self.estimators_.append(estimator)
@@ -143,7 +142,7 @@ class BaseTimeSeriesForest(BaseForest):
         -------
         self : object
         """
-        #        X, y = check_X_y(X, y, enforce_univariate=True)
+        from scipy.sparse import issparse
 
         # Validate or convert input data
         if sample_weight is not None:
@@ -368,10 +367,3 @@ class BaseTimeSeriesForest(BaseForest):
             fis /= fis_count
 
         return fis
-
-    def _get_fitted_params(self):
-
-        return {
-            "classes": self.classes_,
-            "estimators": self.estimators_,
-        }

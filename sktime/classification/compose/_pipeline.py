@@ -99,6 +99,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:predict_proba": True,
     }
 
     # no default tag values - these are set dynamically below
@@ -133,6 +134,8 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         unequal = unequal or self.transformers_.get_tag(
             "capability:unequal_length:removes", False
         )
+        # predict_proba is same as that of classifier
+        predict_proba = classifier.get_tag("capability:predict_proba")
         # last three tags are always False, since not supported by transformers
         tags_to_set = {
             "capability:multivariate": multivariate,
@@ -141,6 +144,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
             "capability:contractable": False,
             "capability:train_estimate": False,
             "capability:multithreading": False,
+            "capability:predict_proba": predict_proba,
         }
         self.set_tags(**tags_to_set)
 
@@ -403,12 +407,13 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     _tags = {
         "X_inner_mtype": "pd-multiindex",  # which type do _fit/_predict accept
-        "capability:multivariate": False,
-        "capability:unequal_length": False,
+        "capability:multivariate": True,
+        "capability:unequal_length": True,
         "capability:missing_values": True,
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:predict_proba": True,
     }
 
     # no default tag values - these are set dynamically below
@@ -424,9 +429,8 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
         super(SklearnClassifierPipeline, self).__init__()
 
-        # can handle multivariate iff all transformers can
-        # sklearn transformers always support multivariate
-        multivariate = not self.transformers_.get_tag("univariate-only", True)
+        # all sktime and sklearn transformers always support multivariate
+        multivariate = True
         # can handle missing values iff transformer chain removes missing data
         # sklearn classifiers might be able to handle missing data (but no tag there)
         # so better set the tag liberally
