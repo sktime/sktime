@@ -38,7 +38,6 @@ EXCLUDE_ESTIMATORS = [
     "MACNNClassifier",
     "SimpleRNNClassifier",
     "SimpleRNNRegressor",
-    "EditDist",
 ]
 
 
