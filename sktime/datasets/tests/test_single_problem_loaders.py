@@ -76,7 +76,7 @@ def test_load_numpy2d_multivariate_raises(loader):
 
 def test_load_UEA():
     """Test loading of a random subset of the UEA data, to check API."""
-    from sktime.datasets.tsc_dataset_names import univariate, multivariate
+    from sktime.datasets.tsc_dataset_names import multivariate, univariate
 
     n_univariate = 3
     n_multivariate = 2
