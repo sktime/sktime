@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.datasets import load_longley, load_arrow_head
+from sktime.datasets import load_arrow_head, load_longley
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.pipeline.pipeline import Pipeline

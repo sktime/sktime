@@ -1,9 +1,8 @@
-from inspect import _ParameterKind
+import inspect
 
 import pandas as pd
 
 from sktime.pipeline.computation_setting import ComputationSetting
-import inspect
 
 
 class StepResult:
@@ -31,7 +30,6 @@ class Step:
     def get_allowed_method(self):
         if self.skobject is None:
             return ["transform"]  # TODO very hacky
-        "Returns a list of allowed methods of the skobject or the method specified by the user."
         return dir(self.skobject)
 
     def get_result(self, fit=False):
@@ -56,8 +54,10 @@ class Step:
             if hasattr(self.skobject, method):
                 kwargs = self._extract_kwargs(method)
                 if "fh" in kwargs and fit:
-                    # TODO check this if it works with numpy. Check if this can be done more generalized!
-                    #      Here should be nothing that is only focusing on a specific estimator/...
+                    # TODO check this if it works with numpy. Check if this
+                    #      can be done more generalized!
+                    #      Here should be nothing that is only focusing on
+                    #      a specific estimator/...
                     kwargs["fh"] = (
                         input_data["y"].index
                         if hasattr(input_data["y"], "index")
@@ -122,7 +122,7 @@ class Step:
                 results.append(result.result)
                 if result.mode != "":
                     mode = result.mode
-                if not result.result is None:
+                if result.result is not None:
                     all_none = False
             if not results[0] is None:  # TODO more generic and prettier
                 if len(results) > 1:

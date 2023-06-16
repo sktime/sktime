@@ -1,5 +1,4 @@
 import pytest
-from unittest import TestCase
 
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.pipeline.pipeline import Pipeline

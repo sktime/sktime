@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from sktime.base import BaseEstimator
 from sktime.pipeline.computation_setting import ComputationSetting
 from sktime.pipeline.step import Step
@@ -41,14 +39,14 @@ class Pipeline(BaseEstimator):
         TODO
         """
         unique_id = self._get_unique_id(skobject)
-        if not unique_id in self.model_dict:
+        if unique_id not in self.model_dict:
             self.model_dict[unique_id] = skobject.clone()
 
         input_steps = {}
         for key, edge in edges.items():
             edge = edge if isinstance(edge, list) else [edge]
             for edg in edge:
-                if "__" in edg and not edg in self.steps:
+                if "__" in edg and edg not in self.steps:
                     # Just semantic sugar..
                     self._create_subsetter(edg)
                 input_steps[key] = [self._get_step(edg) for edg in edge]
@@ -85,7 +83,8 @@ class Pipeline(BaseEstimator):
 
     def transform(self, X, y=None, **kwargs):
         # Implementation of transform, such methods also are required for predict, ...
-        # 1. Check if transform is allowed. I.e., Check method needs to check if all steps implement transform + If all required params are passed
+        # 1. Check if transform is allowed. I.e., Check method needs to check if
+        #    all steps implement transform + If all required params are passed
         if not self._method_allowed("transform"):
             raise Exception("TODO")
 
@@ -103,7 +102,8 @@ class Pipeline(BaseEstimator):
 
     def predict(self, X, y=None, **kwargs):
         # Implementation of transform, such methods also are required for predict, ...
-        # 1. Check if transform is allowed. I.e., Check method needs to check if all steps implement transform or predict + If all required params are passed
+        # 1. Check if transform is allowed. I.e., Check method needs to check if all
+        #    steps implement transform or predict + If all required params are passed
         # 2. Set predict/transform as global methods
         if not self._method_allowed("predict"):
             raise Exception("TODO")
@@ -142,7 +142,9 @@ class Pipeline(BaseEstimator):
 
     def predict_quantiles(self, *args, **kwargs):
         # Implementation of transform, such methods also are required for predict, ...
-        # 1. Check if transform is allowed. I.e., Check method needs to check if all steps implement transform or predict / predict_quantiles? + If all required params are passed
+        # 1. Check if transform is allowed. I.e., Check method needs to check if all
+        #    steps implement transform or predict / predict_quantiles? + If all required
+        #    params are passed
         # 2. Set predict/transform as global methods
         pass
 
@@ -157,8 +159,6 @@ class Pipeline(BaseEstimator):
         pass
 
     def _method_allowed(self, method):
-        allowed_methods = ["transform"]
-        method_resolution_order = ["transform"]
         for step_name, step in self.steps.items():
             print(step.get_allowed_method())
             if "transform" in step.get_allowed_method():
@@ -166,8 +166,10 @@ class Pipeline(BaseEstimator):
             elif method in step.get_allowed_method():
                 pass  # This would be okay
             else:
-                # TODO for now raise an exception. However if PI based postprocessing or an Ensemble
-                #   exist after a forecaster. There might be the case that predict could be possible.
+                # TODO for now raise an exception. However
+                #   if PI based postprocessing or an Ensemble
+                #   exist after a forecaster. There might be the
+                #   case that predict could be possible.
                 return False
         return True
 
