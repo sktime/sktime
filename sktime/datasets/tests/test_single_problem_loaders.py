@@ -80,8 +80,8 @@ def test_load_UEA():
 
     TOO_LARGE_DATA = ["InsectWingbeat"]
 
-    univariate = set(univariate).difference(TOO_LARGE_DATA)
-    multivariate = set(multivariate).difference(TOO_LARGE_DATA)
+    univariate = list(set(univariate).difference(TOO_LARGE_DATA))
+    multivariate = list(set(multivariate).difference(TOO_LARGE_DATA))
 
     n_univariate = 3
     n_multivariate = 2
