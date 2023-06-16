@@ -24,7 +24,6 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -831,8 +830,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": "skopt",
-        "python_version": "<3.11",
+        "python_dependencies": ("skopt>=0.9.0", "numpy<1.24"),
     }
 
     def __init__(
@@ -855,11 +853,16 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         update_behaviour: str = "full_refit",
         error_score=np.nan,
     ):
-        _check_soft_dependencies(
-            "scikit-optimize",
-            severity="error",
-            package_import_alias={"scikit-optimize": "skopt"},
-        )
+        # _check_soft_dependencies(
+        #     "scikit-optimize",
+        #     severity="error",
+        #     package_import_alias={"scikit-optimize": "skopt"},
+        # )
+        self.param_distributions = param_distributions
+        self.n_iter = n_iter
+        self.n_points = n_points
+        self.random_state = random_state
+        self.optimizer_kwargs = optimizer_kwargs
         super(ForecastingSkoptSearchCV, self).__init__(
             forecaster=forecaster,
             scoring=scoring,
@@ -874,11 +877,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             update_behaviour=update_behaviour,
             error_score=error_score,
         )
-        self.param_distributions = param_distributions
-        self.n_iter = n_iter
-        self.n_points = n_points
-        self.random_state = random_state
-        self.optimizer_kwargs = optimizer_kwargs
 
     def _fit(self, y, X=None, fh=None):
         """Run fit with all sets of parameters."""

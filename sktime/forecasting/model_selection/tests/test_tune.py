@@ -36,10 +36,7 @@ from sktime.performance_metrics.forecasting import (
 from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
 from sktime.transformations.series.detrend import Detrender
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import (
-    _check_estimator_deps,
-    _check_soft_dependencies,
-)
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 TEST_METRICS_PROBA = [CRPS(), PinballLoss()]
@@ -216,13 +213,8 @@ def test_gscv_proba(cv, scoring, error_score):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(
-        "scikit-optimize",
-        severity="none",
-        package_import_alias={"scikit-optimize": "skopt"},
-    )
-    and not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none"),
+    reason="skip test if required soft dependency not compatible",
 )
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
