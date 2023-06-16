@@ -78,6 +78,11 @@ def test_load_UEA():
     """Test loading of a random subset of the UEA data, to check API."""
     from sktime.datasets.tsc_dataset_names import multivariate, univariate
 
+    TOO_LARGE_DATA = ["InsectWingbeat"]
+
+    univariate = set(univariate).difference(TOO_LARGE_DATA)
+    multivariate = set(multivariate).difference(TOO_LARGE_DATA)
+
     n_univariate = 3
     n_multivariate = 2
 
