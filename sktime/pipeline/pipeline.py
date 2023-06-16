@@ -7,14 +7,19 @@ from sktime.transformations.series.subset import ColumnSelect
 
 
 class Pipeline(BaseEstimator):
-
     def __init__(self, step_informations=None):
         super().__init__()
         self.computation_setting = ComputationSetting()
 
         # Initialise the method
-        self.steps = {"X": Step(None, "X", None, {}, compuatation_setting=self.computation_setting),
-                      "y" : Step(None, "y", None, {}, compuatation_setting=self.computation_setting)}
+        self.steps = {
+            "X": Step(
+                None, "X", None, {}, compuatation_setting=self.computation_setting
+            ),
+            "y": Step(
+                None, "y", None, {}, compuatation_setting=self.computation_setting
+            ),
+        }
         self.model_dict = {}
         if step_informations is not None:
             for step_info in step_informations:
@@ -48,14 +53,19 @@ class Pipeline(BaseEstimator):
                     self._create_subsetter(edg)
                 input_steps[key] = [self._get_step(edg) for edg in edge]
 
-        step = Step(skobject, name, input_steps, kwargs, compuatation_setting=self.computation_setting)
+        step = Step(
+            skobject,
+            name,
+            input_steps,
+            kwargs,
+            compuatation_setting=self.computation_setting,
+        )
         if name in self.steps:
             raise Exception("Name Conflict")
 
         self.steps[name] = step
         self._last_step_name = name
         return step
-
 
     def fit(self, X, y=None, **kwargs):
         # Fits the pipeline
@@ -70,9 +80,8 @@ class Pipeline(BaseEstimator):
         self.steps[self._last_step_name].get_result(fit=True)
         return self
 
-    def fit_transform   (self, X, y=None, **kwargs):
+    def fit_transform(self, X, y=None, **kwargs):
         return self.fit(X, y).transform(X, y)
-
 
     def transform(self, X, y=None, **kwargs):
         # Implementation of transform, such methods also are required for predict, ...
@@ -92,7 +101,6 @@ class Pipeline(BaseEstimator):
         # 4. call get_result or something similar on last step!
         return self.steps[self._last_step_name].get_result(fit=False).result
 
-
     def predict(self, X, y=None, **kwargs):
         # Implementation of transform, such methods also are required for predict, ...
         # 1. Check if transform is allowed. I.e., Check method needs to check if all steps implement transform or predict + If all required params are passed
@@ -103,7 +111,7 @@ class Pipeline(BaseEstimator):
         # 2. Set transform as global method as well as provide all kwargs to step
         self.computation_setting.required_method = "predict"
         self.computation_setting.method_resolution_order = ["predict", "transform"]
-        self.computation_setting.kwargs.update(kwargs) # TODO Update or overwrite?
+        self.computation_setting.kwargs.update(kwargs)  # TODO Update or overwrite?
 
         # 3. set data into start steps buffer!
         self.steps["X"].buffer = X
@@ -118,8 +126,12 @@ class Pipeline(BaseEstimator):
 
         # 2. Set transform as global method as well as provide all kwargs to step
         self.computation_setting.required_method = "predict_interval"
-        self.computation_setting.method_resolution_order = ["predict_interval", "predict", "transform"]
-        self.computation_setting.kwargs.update(kwargs) # TODO Update or overwrite?
+        self.computation_setting.method_resolution_order = [
+            "predict_interval",
+            "predict",
+            "transform",
+        ]
+        self.computation_setting.kwargs.update(kwargs)  # TODO Update or overwrite?
 
         # 3. set data into start steps buffer!
         self.steps["X"].buffer = X
@@ -134,13 +146,15 @@ class Pipeline(BaseEstimator):
         # 2. Set predict/transform as global methods
         pass
 
-
     def predict_proba(self, *args, **kwargs):
         # Implementation of transform, such methods also are required for predict, ...
         pass
 
-    # TODO Weitere Methoden
-    ...
+    def predict_var(self, *args, **kwargs):
+        pass
+
+    def predict_residuals(self, *args, **kwargs):
+        pass
 
     def _method_allowed(self, method):
         allowed_methods = ["transform"]
@@ -148,9 +162,9 @@ class Pipeline(BaseEstimator):
         for step_name, step in self.steps.items():
             print(step.get_allowed_method())
             if "transform" in step.get_allowed_method():
-                pass # This would be okay
+                pass  # This would be okay
             elif method in step.get_allowed_method():
-                pass # This would be okay
+                pass  # This would be okay
             else:
                 # TODO for now raise an exception. However if PI based postprocessing or an Ensemble
                 #   exist after a forecaster. There might be the case that predict could be possible.
@@ -161,4 +175,3 @@ class Pipeline(BaseEstimator):
         keys = edg.split("__")[-1].split("_")
         column_select = ColumnSelect(columns=keys)
         self.add_step(column_select, edg, {"X": edg.split("__")[0]})
-

@@ -12,8 +12,15 @@ class StepResult:
         self.mode = mode
 
 
-class Step():
-    def __init__(self, skobject, name, input_edges, params, compuatation_setting: ComputationSetting):
+class Step:
+    def __init__(
+        self,
+        skobject,
+        name,
+        input_edges,
+        params,
+        compuatation_setting: ComputationSetting,
+    ):
         self.buffer = None
         self.skobject = skobject
         self.name = name
@@ -51,8 +58,11 @@ class Step():
                 if "fh" in kwargs and fit:
                     # TODO check this if it works with numpy. Check if this can be done more generalized!
                     #      Here should be nothing that is only focusing on a specific estimator/...
-                    kwargs["fh"] = input_data["y"].index if hasattr(input_data["y"], "index") else range(
-                        len(input_data["y"]))
+                    kwargs["fh"] = (
+                        input_data["y"].index
+                        if hasattr(input_data["y"], "index")
+                        else range(len(input_data["y"]))
+                    )
                 # 3. Call method on skobject and return result
                 if mode == "proba":
                     # TODO fix the case if we need to apply this to X and y?
@@ -70,18 +80,29 @@ class Step():
                         # if len(yt[ix].columns) == 1:
                         #    temp = yt[ix].columns
                         #    yt[ix].columns = input_data["X"].result.columns
-                        yt[ix] = getattr(self.skobject, method)(X=yt[ix],
-                                                                **kwargs
-                                                                ).to_frame()
+                        yt[ix] = getattr(self.skobject, method)(
+                            X=yt[ix], **kwargs
+                        ).to_frame()
                     result = pd.concat(yt.values(), axis=1)
                 else:
                     result = getattr(self.skobject, method)(
-                        **dict(filter(lambda k: k[0] in inspect.getfullargspec(getattr(self.skobject, method)).args,
-                                      input_data.items())),
-                        **kwargs
+                        **dict(
+                            filter(
+                                lambda k: k[0]
+                                in inspect.getfullargspec(
+                                    getattr(self.skobject, method)
+                                ).args,
+                                input_data.items(),
+                            )
+                        ),
+                        **kwargs,
                     )
 
-                mode = "proba" if ("predict_interval" == method) or (mode == "proba") else ""
+                mode = (
+                    "proba"
+                    if ("predict_interval" == method) or (mode == "proba")
+                    else ""
+                )
                 return StepResult(result, mode)
             # TODO fill buffer to save
 
