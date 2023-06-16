@@ -220,7 +220,8 @@ def test_gscv_proba(cv, scoring, error_score):
         "scikit-optimize",
         severity="none",
         package_import_alias={"scikit-optimize": "skopt"},
-    ),
+    )
+    and not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize(
