@@ -22,9 +22,12 @@ class TimeSeriesDBSCAN(BaseClusterer):
     ----------
     distance : str, or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, it must be one of
+        feature array. If metric is a string, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
+        If metric is a callable function, it must be compatible with
+        :func:`sklearn.metrics.pairwise_distances` i.e. it should take two
+        arrays and return a value indicating the distance between them.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a :term:`Glossary <sparse graph>`, in which
         case only "nonzero" elements may be considered neighbors for DBSCAN.
@@ -120,8 +123,12 @@ class TimeSeriesDBSCAN(BaseClusterer):
         """
         self._X = X
 
-        distance = self.distance
-        distmat = distance(X)
+        if isinstance(self.distance, str):
+            distance = BaseClusterer._resolve_distance_from_str(self.distance)
+        else:
+            distance = self.distance
+
+        distmat = BaseClusterer._calculate_dist_matrix_using_callable(distance, X)
 
         deleg_param_dict = {key: getattr(self, key) for key in self.DELEGATED_PARAMS}
 
@@ -214,13 +221,25 @@ class TimeSeriesDBSCAN(BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.dists_kernels import AggrDist, DtwDist, EditDist
+        from sklearn.metrics.pairwise import euclidean_distances
+
+        from sktime.dists_kernels import AggrDist, DtwDist
 
         params1 = {"distance": DtwDist()}
-        params2 = {"distance": EditDist()}
+        params2 = {"distance": euclidean_distances}
 
         # distance capable of unequal length
         dist = AggrDist.create_test_instance()
         params3 = {"distance": dist}
 
-        return [params1, params2, params3]
+        # distance is a string, belonging to sktime's distance module
+        # params4 = {"distance": "dtw"}
+
+        # distance is a string, belonging to sklearn's metrics module
+        params5 = {"distance": "euclidean"}
+
+        # distance is a string, beloning to scipy's spatial.distance module
+        params6 = {"distance": "jaccard"}
+
+        # return [params1, params2, params3, params4, params5, params6]
+        return [params1, params2, params3, params5, params6]

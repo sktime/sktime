@@ -4,10 +4,14 @@ __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["BaseClusterer"]
 
 import time
+from inspect import getmodule
 from typing import Any, Union
 
 import numpy as np
 import pandas as pd
+from scipy.spatial.distance import _METRICS as SCIPY_DISTANCE_METRICS
+from sklearn.metrics import pairwise_distances
+from sklearn.metrics.pairwise import distance_metrics
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
@@ -17,6 +21,7 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # Valid input types for clustering
 TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
+SKLEARN_DISTANCE_METRICS = distance_metrics()
 
 
 class BaseClusterer(BaseEstimator):
@@ -402,3 +407,66 @@ class BaseClusterer(BaseEstimator):
             to_type=self.get_tag("X_inner_mtype"),
             as_scitype="Panel",
         )
+
+    @staticmethod
+    def _resolve_distance_from_str(string_distance):
+        """
+        Private function to resolve distance metric from string.
+
+        Parameters
+        ----------
+        string_distance : str
+            String representation of distance metric.
+        """
+        # Check if distance string is directly available from
+        # sklearn's interface
+        if string_distance in SKLEARN_DISTANCE_METRICS:
+            return SKLEARN_DISTANCE_METRICS[string_distance]
+
+        # Otherwise check in scipy's interface
+        elif string_distance in SCIPY_DISTANCE_METRICS:
+            return SCIPY_DISTANCE_METRICS[string_distance].dist_func
+
+        # Otherwise check in sktime's interface
+        # TODO
+
+        else:
+            raise KeyError(
+                f"The distance metric {string_distance} is not available in either "
+                "in `sklearn.metrics.pairwise_distance` or `scipy.spatial.distance`."
+            )
+
+    @staticmethod
+    def _calculate_dist_matrix_using_callable(callable_distance, X):
+        """
+        Private function to calculate distance matrix using a callable distance metric.
+
+        Parameters
+        ----------
+        callable_distance : callable
+            Callable distance metric. It is either a callable from
+            `sktime.distances`, `sklearn.metrics.pairwise`,
+            `scipy.spatial.distance` or a custom callable.
+        X : panel of time series, any sklearn Panel mtype
+            Time series to fit clusters to
+        """
+        module_info = vars(getmodule(callable_distance))
+
+        if module_info.get("__name__") is None:
+            raise ValueError(
+                "The attribute `__name__` could not be resovled from the callable."
+            )
+
+        name_ = module_info.get("__name__").split(".")[0]
+
+        # both implementations are directly callable
+        if name_ in ("sktime", "sklearn"):
+            return callable_distance(X)
+
+        # if is belongs to scipy, then callable expects a 1D array, use
+        # sklearn's pairwise_distances to calculate distance matrix
+        elif name_ == "scipy":
+            return pairwise_distances(X, metric=callable_distance)
+
+        else:
+            return pairwise_distances(X, metrics=callable_distance)
