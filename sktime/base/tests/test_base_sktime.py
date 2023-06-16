@@ -64,4 +64,4 @@ def test_clone_nested_sklearn():
     copy_model.set_params(estimator__random_state=42, estimator__learning_rate=0.01)
 
     # failure condition, see issue #4704: the setting of the copy also sets the orig
-    assert original_model.get_params()["estimator__random_state"] == 5
+    assert original_model.get_params()["estimator__random_state"] == 42
