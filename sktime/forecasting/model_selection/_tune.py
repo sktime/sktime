@@ -831,6 +831,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["skopt>=0.9.0", "numpy<1.24"],
+        "python_version": "<3.11",
     }
 
     def __init__(
