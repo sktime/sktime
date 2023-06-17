@@ -52,7 +52,6 @@ class KernelFromDist(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, dist, dist_diag=None):
-
         self.dist = dist
         self.dist_diag = dist_diag
 
@@ -183,7 +182,6 @@ class DistFromKernel(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, kernel):
-
         self.kernel = kernel
 
         super(DistFromKernel, self).__init__()

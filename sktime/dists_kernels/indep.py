@@ -67,7 +67,6 @@ class IndepDist(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, dist, aggfun=None):
-
         self.dist = dist
         self.aggfun = aggfun
 

@@ -75,7 +75,6 @@ class IxToX(BaseTransformer):
     }
 
     def __init__(self, coerce_to_type="auto", level=None, ix_source="X"):
-
         self.coerce_to_type = coerce_to_type
         self.level = level
         self.ix_source = ix_source

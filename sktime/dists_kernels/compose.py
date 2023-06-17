@@ -67,7 +67,6 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
     }
 
     def __init__(self, pw_trafo, transformers):
-
         self.pw_trafo = pw_trafo
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)

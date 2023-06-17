@@ -300,9 +300,9 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     ):
         """Recursive function for finding intervals for a feature using fisher score.
 
-        Given a start and end point the series is split in half and both intervals
-        are evaluated. The half with the higher score is retained and used as the new
-        start and end for a recursive call.
+        Given a start and end point the series is split in half and both intervals are
+        evaluated. The half with the higher score is retained and used as the new start
+        and end for a recursive call.
         """
         series_length = end - start
         if series_length < 4:

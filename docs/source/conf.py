@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """Configuration file for the Sphinx documentation builder."""
 
 import os
@@ -305,8 +304,7 @@ def _make_estimator_overview(app):
     from sktime.registry import all_estimators
 
     def _process_author_info(author_info):
-        """
-        Process author information from source code files.
+        """Process author information from source code files.
 
         Parameters
         ----------

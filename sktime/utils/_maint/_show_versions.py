@@ -1,10 +1,10 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # License: BSD 3 clause
-
 """Utility methods to print system info for debugging.
 
-adapted from :func:`sklearn.show_versions`
+adapted from
+:func: `sklearn.show_versions`
 """
 
 __author__ = ["mloning", "fkiraly"]
@@ -16,8 +16,7 @@ import sys
 
 
 def _get_sys_info():
-    """
-    System information.
+    """System information.
 
     Return
     ------
@@ -56,8 +55,7 @@ DEFAULT_DEPS_TO_SHOW = [
 
 
 def _get_deps_info(deps=None):
-    """
-    Overview of the installed version of main dependencies.
+    """Overview of the installed version of main dependencies.
 
     Parameters
     ----------

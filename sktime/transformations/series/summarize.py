@@ -208,7 +208,6 @@ class WindowSummarizer(BaseTransformer):
         target_cols=None,
         truncate=None,
     ):
-
         self.lag_feature = lag_feature
         self.n_jobs = n_jobs
         self.target_cols = target_cols

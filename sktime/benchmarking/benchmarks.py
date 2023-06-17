@@ -38,7 +38,6 @@ class BaseBenchmark:
             Estimator to add to the benchmark.
         estimator_id : str, optional (default=None)
             Identifier for estimator. If none given then uses estimator's class name.
-
         """
         estimator_id = estimator_id or f"{estimator.__class__.__name__}-v1"
         estimator = estimator.clone()  # extra cautious

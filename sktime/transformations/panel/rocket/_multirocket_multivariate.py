@@ -90,7 +90,6 @@ class MultiRocketMultivariate(BaseTransformer):
         n_jobs=1,
         random_state=None,
     ):
-
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
         self.num_kernels = num_kernels

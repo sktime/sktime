@@ -89,9 +89,8 @@ class DWTTransformer(BaseTransformer):
     def _extract_wavelet_coefficients(self, data):
         """Extract wavelet coefficients of a 2d array of time series.
 
-        The coefficients correspond to the wavelet coefficients
-        from levels 1 to num_levels followed by the approximation
-        coefficients of the highest level.
+        The coefficients correspond to the wavelet coefficients from levels 1 to
+        num_levels followed by the approximation coefficients of the highest level.
         """
         num_levels = self.num_levels
         res = []

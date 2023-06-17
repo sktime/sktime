@@ -318,14 +318,12 @@ def _fit_biases_multi_var(
     num_channels_start = 0
 
     for dilation_index in range(num_dilations):
-
         dilation = dilations[dilation_index]
         padding = ((9 - 1) * dilation) // 2
 
         num_features_this_dilation = num_features_per_dilation[dilation_index]
 
         for kernel_index in range(num_kernels):
-
             feature_index_end = feature_index_start + num_features_this_dilation
 
             num_channels_this_combination = num_channels_per_combination[
@@ -364,19 +362,15 @@ def _fit_biases_multi_var(
             end = input_length - padding
 
             for gamma_index in range(9 // 2):
-
                 # thanks to Murtaza Jafferji @murtazajafferji for suggesting this fix
                 if end > 0:
-
                     C_alpha[:, -end:] = C_alpha[:, -end:] + A[:, :end]
                     C_gamma[gamma_index, :, -end:] = G[:, :end]
 
                 end += dilation
 
             for gamma_index in range(9 // 2 + 1, 9):
-
                 if start < input_length:
-
                     C_alpha[:, :-start] = C_alpha[:, :-start] + A[:, start:]
                     C_gamma[gamma_index, :, :-start] = G[:, start:]
 
@@ -400,7 +394,6 @@ def _fit_biases_multi_var(
 
 
 def _fit_dilations_multi_var(reference_length, num_features, max_dilations_per_kernel):
-
     num_kernels = 84
 
     num_features_per_kernel = num_features // num_kernels
@@ -518,7 +511,6 @@ def _fit_multi_var(
     cache=True,
 )
 def _transform_multi_var(X, L, parameters):
-
     n_instances = len(L)
 
     num_channels, _ = X.shape
@@ -802,7 +794,6 @@ def _transform_multi_var(X, L, parameters):
     features = np.zeros((n_instances, num_features), dtype=np.float32)
 
     for example_index in prange(n_instances):
-
         input_length = np.int64(L[example_index])
 
         b = np.sum(L[0 : example_index + 1])
@@ -819,7 +810,6 @@ def _transform_multi_var(X, L, parameters):
         num_channels_start = 0
 
         for dilation_index in range(num_dilations):
-
             dilation = dilations[dilation_index]
             padding = ((9 - 1) * dilation) // 2
 
@@ -835,7 +825,6 @@ def _transform_multi_var(X, L, parameters):
             end = input_length - padding
 
             for gamma_index in range(9 // 2):
-
                 # thanks to Murtaza Jafferji @murtazajafferji for suggesting this fix
                 if end > 0:
                     C_alpha[:, -end:] = C_alpha[:, -end:] + A[:, :end]
@@ -844,7 +833,6 @@ def _transform_multi_var(X, L, parameters):
                 end += dilation
 
             for gamma_index in range(9 // 2 + 1, 9):
-
                 if start < input_length:
                     C_alpha[:, :-start] = C_alpha[:, :-start] + A[:, start:]
                     C_gamma[gamma_index, :, :-start] = G[:, start:]
@@ -852,7 +840,6 @@ def _transform_multi_var(X, L, parameters):
                 start += dilation
 
             for kernel_index in range(num_kernels):
-
                 feature_index_end = feature_index_start + num_features_this_dilation
 
                 num_channels_this_combination = num_channels_per_combination[

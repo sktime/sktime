@@ -21,7 +21,6 @@ from sktime.utils.validation.forecasting import check_scoring
 
 
 class BaseGridSearch(_DelegatedForecaster):
-
     _tags = {
         "scitype:y": "both",
         "requires-fh-in-fit": False,
@@ -46,7 +45,6 @@ class BaseGridSearch(_DelegatedForecaster):
         update_behaviour="full_refit",
         error_score=np.nan,
     ):
-
         self.forecaster = forecaster
         self.cv = cv
         self.strategy = strategy

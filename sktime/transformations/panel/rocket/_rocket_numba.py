@@ -45,7 +45,6 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
     a2 = 0  # for channel_indices
 
     for i in range(num_kernels):
-
         _length = lengths[i]
         _num_channel_indices = num_channel_indices[i]
 
@@ -105,13 +104,11 @@ def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
     end = (n_timepoints + padding) - ((length - 1) * dilation)
 
     for i in range(-padding, end):
-
         _sum = bias
 
         index = i
 
         for j in range(length):
-
             if index > -1 and index < n_timepoints:
                 _sum = _sum + weights[j] * X[index]
 
@@ -140,15 +137,12 @@ def _apply_kernel_multivariate(
     end = (n_timepoints + padding) - ((length - 1) * dilation)
 
     for i in range(-padding, end):
-
         _sum = bias
 
         index = i
 
         for j in range(length):
-
             if index > -1 and index < n_timepoints:
-
                 for k in range(num_channel_indices):
                     _sum = _sum + weights[k, j] * X[channel_indices[k], index]
 
@@ -189,19 +183,16 @@ def _apply_kernels(X, kernels):
     )  # 2 features per kernel
 
     for i in prange(n_instances):
-
         a1 = 0  # for weights
         a2 = 0  # for channel_indices
         a3 = 0  # for features
 
         for j in range(num_kernels):
-
             b1 = a1 + num_channel_indices[j] * lengths[j]
             b2 = a2 + num_channel_indices[j]
             b3 = a3 + 2
 
             if num_channel_indices[j] == 1:
-
                 _X[i, a3:b3] = _apply_kernel_univariate(
                     X[i, channel_indices[a2]],
                     weights[a1:b1],
@@ -212,7 +203,6 @@ def _apply_kernels(X, kernels):
                 )
 
             else:
-
                 _weights = weights[a1:b1].reshape((num_channel_indices[j], lengths[j]))
 
                 _X[i, a3:b3] = _apply_kernel_multivariate(

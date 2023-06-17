@@ -63,7 +63,6 @@ class VectorizedDF:
     def __init__(
         self, X, y=None, iterate_as="Series", is_scitype="Panel", iterate_cols=False
     ):
-
         self.X = X
 
         if is_scitype is None:
@@ -571,7 +570,7 @@ class VectorizedDF:
 
         ret = []
 
-        for ((group_name, col_name, group), args_i, args_i_rowvec, est_i) in zip(
+        for (group_name, col_name, group), args_i, args_i_rowvec, est_i in zip(
             self.items(),
             explode(args, iterate_as=self.iterate_as, iterate_cols=self.iterate_cols),
             explode(args_rowvec, iterate_as=self.iterate_as, iterate_cols=False),

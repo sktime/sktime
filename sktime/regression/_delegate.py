@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Delegator mixin that delegates all methods to wrapped regressors.
 
-Useful for building estimators where all but one or a few methods are delegated.
-For that purpose, inherit from this estimator and then override only the methods
-    that are not delegated.
+Useful for building estimators where all but one or a few methods are delegated. For
+that purpose, inherit from this estimator and then override only the methods     that
+are not delegated.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for forecaster scitype.
+"""Base class template for forecaster scitype.
 
     class name: BaseForecaster
 
@@ -75,11 +74,10 @@ def _coerce_to_list(obj):
 class BaseForecaster(BaseEstimator):
     """Base forecaster template class.
 
-    The base forecaster specifies the methods and method
-    signatures that all forecasters have to implement.
+    The base forecaster specifies the methods and method signatures that all forecasters
+    have to implement.
 
-    Specific implementations of these methods is deferred to concrete
-    forecasters.
+    Specific implementations of these methods is deferred to concrete forecasters.
     """
 
     # default tag values - these typically make the "safest" assumption
@@ -1746,7 +1744,6 @@ class BaseForecaster(BaseEstimator):
         # predict-like methods: return as list, then run through reconstruct
         # to obtain a pandas based container in one of the pandas mtype formats
         elif methodname in PREDICT_METHODS:
-
             if methodname == "update_predict_single":
                 self._yvec = y
 
@@ -1906,9 +1903,9 @@ class BaseForecaster(BaseEstimator):
     ):
         """Update forecaster and then make forecasts.
 
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
+        Implements default behaviour of calling update and predict sequentially, but can
+        be overwritten by subclasses to implement more efficient updating algorithms
+        when available.
         """
         self.update(y=y, X=X, update_params=update_params)
         return self.predict(fh=fh, X=X)
@@ -2023,7 +2020,6 @@ class BaseForecaster(BaseEstimator):
             )
 
         if implements_interval:
-
             pred_int = pd.DataFrame()
             for a in alpha:
                 # compute quantiles corresponding to prediction interval coverage
@@ -2059,7 +2055,6 @@ class BaseForecaster(BaseEstimator):
             pred_int.columns = int_idx
 
         elif implements_proba:
-
             pred_proba = self.predict_proba(fh=fh, X=X)
             pred_int = pred_proba.quantile(alpha=alpha)
 

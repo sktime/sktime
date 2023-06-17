@@ -205,8 +205,7 @@ _CHECKS = {
 
 @pytest.mark.parametrize("dataset", sorted(_CHECKS.keys()))
 def test_data_loaders(dataset):
-    """
-    Assert if datasets are loaded correctly.
+    """Assert if datasets are loaded correctly.
 
     dataset: dictionary with values to assert against should contain:
         'columns' : list with column names in correct order,
@@ -457,7 +456,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -484,7 +482,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -510,7 +507,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -597,7 +593,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -691,7 +686,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -731,7 +725,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -758,7 +751,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -787,7 +779,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -867,7 +858,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -955,7 +945,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (

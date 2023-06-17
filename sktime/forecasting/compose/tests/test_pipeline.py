@@ -155,8 +155,8 @@ def test_pipeline_with_detrender():
 def test_pipeline_with_dimension_changing_transformer():
     """Example of pipeline with dimension changing transformer.
 
-    The code below should run without generating any errors.  Issues
-    can arise from using Differencer in the pipeline.
+    The code below should run without generating any errors.  Issues can arise from
+    using Differencer in the pipeline.
     """
     y, X = load_longley()
 
@@ -225,8 +225,8 @@ def test_pipeline_with_dimension_changing_transformer():
 def test_nested_pipeline_with_index_creation_y_before_X():
     """Tests a nested pipeline where y indices are created before X indices.
 
-    The potential failure mode is the pipeline failing as y has more indices than X,
-    in an intermediate stage and erroneous checks from the pipeline raise an error.
+    The potential failure mode is the pipeline failing as y has more indices than X, in
+    an intermediate stage and erroneous checks from the pipeline raise an error.
     """
     X = get_examples("pd_multiindex_hier")[0]
     y = get_examples("pd_multiindex_hier")[1]
@@ -254,8 +254,8 @@ def test_nested_pipeline_with_index_creation_y_before_X():
 def test_nested_pipeline_with_index_creation_X_before_y():
     """Tests a nested pipeline where X indices are created before y indices.
 
-    The potential failure mode is the pipeline failing as X has more indices than y,
-    in an intermediate stage and erroneous checks from the pipeline raise an error.
+    The potential failure mode is the pipeline failing as X has more indices than y, in
+    an intermediate stage and erroneous checks from the pipeline raise an error.
     """
     X = get_examples("pd_multiindex_hier")[0]
     y = get_examples("pd_multiindex_hier")[1]
@@ -368,8 +368,8 @@ def test_forecasting_pipeline_dunder_exog():
 def test_tag_handles_missing_data():
     """Test missing data with Imputer in pipelines.
 
-    Make sure that no exception is raised when NaN and Imputer is given.
-    This test is based on bug issue #3547.
+    Make sure that no exception is raised when NaN and Imputer is given. This test is
+    based on bug issue #3547.
     """
     forecaster = MockForecaster()
     # make sure that test forecaster cant handle missing data

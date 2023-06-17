@@ -63,9 +63,9 @@ def _factory_forecasting_validation(
 class ForecastingBenchmark(BaseBenchmark):
     """Forecasting benchmark.
 
-    Run a series of forecasters against a series of tasks defined via
-    dataset loaders, cross validation splitting strategies and performance metrics,
-    and return results as a df (as well as saving to file).
+    Run a series of forecasters against a series of tasks defined via dataset loaders,
+    cross validation splitting strategies and performance metrics, and return results as
+    a df (as well as saving to file).
     """
 
     def add_task(
