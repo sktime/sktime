@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements grid search functionality to tune forecasters."""
 
-__author__ = ["mloning", "hazrul"]
+__author__ = ["mloning"]
 __all__ = [
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
@@ -731,6 +731,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
 class ForecastingSkoptSearchCV(BaseGridSearch):
     """Bayesian search over hyperparameters for a forecaster.
 
+    Experimental: This feature is under active development and is likely to change
+
     Parameters
     ----------
     forecaster : estimator object.
@@ -746,7 +748,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         are instances of skopt.space.Dimension (Real, Integer, or Categorical)
         or any other valid value that defines a skopt dimension - Note that if a list
         is given, the dimension is automatically set to Categorical.
-        Please refer to the `skopt.Optimizer` documentation for more information.
         if a list of dict, each dictionary corresponds to a parameter space, following
         the same structure described in case 1 above. the search will be performed
         sequentially for each parameter space, with the number of samples
@@ -785,25 +786,26 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "full_refit" = both tuning parameters and inner estimator refit on all data seen
         "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
         "no_update" = neither tuning parameters nor inner estimator are updated
-    n_jobs : int, optional (default=None)
-        Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = best forecaster remains fitted on the last fold in cv
     verbose : int, optional (default=0)
-    return_n_best_forecasters: int, default=1
-        In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch : str, optional (default='2*n_jobs')
-    backend : str, optional (default="loky")
-        Specify the parallelisation backend implementation in joblib, where
-        "loky" is used by default.
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+    return_n_best_forecasters: int, default=1
+        In case the n best forecaster should be returned, this value can be set
+        and the n best forecasters will be assigned to n_best_forecasters_
+    pre_dispatch : str, optional (default='2*n_jobs')
+    n_jobs : int, optional (default=None)
+        Number of jobs to run in parallel.
+        None means 1 unless in a joblib.parallel_backend context.
+        -1 means using all processors.
+    backend : str, optional (default="loky")
+        Specify the parallelisation backend implementation in joblib, where
+        "loky" is used by default.
+
 
     Attributes
     ----------
@@ -884,6 +886,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         self._check_cv = check_cv(self.cv)
         self._check_scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{self._check_scoring.name}"
+        self._check_search_space(self.param_distributions)
         self.cv_results_ = pd.DataFrame()
 
         self._run_search(y, X)
@@ -1108,6 +1111,64 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             optimizer.space.dimensions[i].name = dimensions_name[i]
 
         return optimizer
+
+    def _check_search_space(self, search_space):
+        """Check whether the search space argument is correct.
+
+        from skopt.BayesSearchCV._check_search_space
+        """
+        from skopt.space import check_dimension
+
+        if len(search_space) == 0:
+            raise ValueError(
+                "The search_spaces parameter should contain at least one"
+                "non-empty search space, got %s" % search_space
+            )
+
+        # check if space is a single dict, convert to list if so
+        if isinstance(search_space, dict):
+            search_space = [search_space]
+
+        # check if the structure of the space is proper
+        if isinstance(search_space, list):
+            # convert to just a list of dicts
+            dicts_only = []
+
+            # 1. check the case when a tuple of space, n_iter is provided
+            for elem in search_space:
+                if isinstance(elem, tuple):
+                    if len(elem) != 2:
+                        raise ValueError(
+                            "All tuples in list of search spaces should have"
+                            "length 2, and contain (dict, int), got %s" % elem
+                        )
+                    subspace, n_iter = elem
+
+                    if (not isinstance(n_iter, int)) or n_iter < 0:
+                        raise ValueError(
+                            "Number of iterations in search space should be"
+                            "positive integer, got %s in tuple %s " % (n_iter, elem)
+                        )
+
+                    # save subspaces here for further checking
+                    dicts_only.append(subspace)
+                elif isinstance(elem, dict):
+                    dicts_only.append(elem)
+                else:
+                    raise TypeError(
+                        "A search space should be provided as a dict or"
+                        "tuple (dict, int), got %s" % elem
+                    )
+
+            # 2. check all the dicts for correctness of contents
+            for subspace in dicts_only:
+                for _, v in subspace.items():
+                    check_dimension(v)
+        else:
+            raise TypeError(
+                "Search space should be provided as a dict or list of dict,"
+                "got %s" % search_space
+            )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
