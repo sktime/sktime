@@ -593,18 +593,8 @@ class VectorizedDF:
             ret.append((group_name, col_name, est_i_result))
 
         if return_type == "pd.DataFrame":
-            df_long = pd.DataFrame(ret)
-            cols_right_order = df_long.loc[:, 1].unique()
-
-            df = df_long.pivot(index=0, columns=1, values=2)
-            # DataFrame.pivot sorts the columns (is this a bug? see #4683)
-            # either way, we need to fix this:
-            df = df.loc[:, cols_right_order]
-
-            # remove "0" and "1" from index/columns name
-            df.index.names = [None] * len(df.index.names)
-            df.columns.name = None
-
+            df = pd.DataFrame(ret)
+            df = df.pivot(index=0, columns=1, values=2).reindex(df[1], axis=1)
             # TODO: add test case for tuple index
             try:
                 df.index = pd.MultiIndex.from_tuples(df.index)
