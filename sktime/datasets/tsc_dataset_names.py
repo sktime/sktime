@@ -159,7 +159,6 @@ univariate = [
     "WordSynonyms",
     "Worms",
     "WormsTwoClass",
-    "IOError",
 ]
 
 """ 33 UEA multivariate time series classification problems [2]"""

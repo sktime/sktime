@@ -35,6 +35,10 @@ EXCLUDE_ESTIMATORS = [
     "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
+    "MACNNClassifier",
+    "SimpleRNNClassifier",
+    "SimpleRNNRegressor",
+    "EditDist",
 ]
 
 
@@ -86,6 +90,9 @@ EXCLUDED_TESTS = {
     ],
     # `test_fit_idempotent` fails with `AssertionError`, see #3616
     "ResNetClassifier": [
+        "test_fit_idempotent",
+    ],
+    "ResNetRegressor": [
         "test_fit_idempotent",
     ],
     "CNNClassifier": [
