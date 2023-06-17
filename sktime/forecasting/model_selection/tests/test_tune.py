@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Test grid search CV."""
 
-__author__ = ["mloning", "fkiraly", "hazrul"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["test_gscv", "test_rscv"]
 
 import numpy as np
@@ -50,6 +50,12 @@ def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
         out = evaluate(f, cv, y, X=X, scoring=scoring)
         scores[i] = out.loc[:, f"test_{scoring.name}"].mean()
     return scores
+
+
+def _check_params_keys(fitted_params):
+    # ensure that the best_forecaster and best_score are in fitted_params
+    assert "best_forecaster" in fitted_params.keys()
+    assert "best_score" in fitted_params.keys()
 
 
 def _check_cv(forecaster, tuner, cv, param_grid, y, X, scoring):
