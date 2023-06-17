@@ -2145,6 +2145,10 @@
       "contributions": [
         "bug",
         "code",
+        "doc",
+        "ideas",
+        "maintenance",
+        "review",
         "test"
       ]
     },
