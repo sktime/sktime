@@ -40,6 +40,7 @@ DEFAULT_DEPS_TO_SHOW = [
     "pip",
     "sktime",
     "sklearn",
+    "skbase",
     "numpy",
     "scipy",
     "pandas",
