@@ -4,7 +4,6 @@
 """Unit tests of EnsembleForecaster functionality."""
 
 __author__ = ["GuzalBulatova", "RNKuhns"]
-import sys
 
 import numpy as np
 import pandas as pd
