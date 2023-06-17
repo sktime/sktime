@@ -612,3 +612,29 @@ def test_regular_spaced_fh_of_different_periodicity():
     naive = NaiveForecaster()
     naive.fit(y)
     naive.predict([1, 3, 5])
+
+
+def test_standard_range_in_fh():
+    """Test creation of ``ForecastingHorizon`` using ``range``."""
+    standard_range = ForecastingHorizon(values=range(5))
+    assert (standard_range == ForecastingHorizon(values=[0, 1, 2, 3, 4])).all()
+
+
+def test_range_with_positive_step_in_fh():
+    range_with_positive_step = ForecastingHorizon(values=range(0, 5, 2))
+    assert (range_with_positive_step == ForecastingHorizon(values=[0, 2, 4])).all()
+
+
+def test_range_with_negative_step_in_fh():
+    range_with_negative_step = ForecastingHorizon(values=range(3, -5, -2))
+    assert (range_with_negative_step == ForecastingHorizon(values=[3, 1, -1, -3])).all()
+
+
+def test_range_sorting_in_fh():
+    standard_range = ForecastingHorizon(values=range(5))
+    assert (standard_range == ForecastingHorizon(values=[0, 3, 4, 1, 2])).all()
+
+
+def test_empty_range_in_fh():
+    empty_range = ForecastingHorizon(values=range(-5))
+    assert (empty_range == ForecastingHorizon(values=[])).all()
