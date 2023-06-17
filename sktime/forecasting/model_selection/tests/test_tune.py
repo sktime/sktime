@@ -52,7 +52,7 @@ def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
     return scores
 
 
-def _check_params_keys(fitted_params):
+def _check_fitted_params_keys(fitted_params):
     # ensure that the best_forecaster and best_score are in fitted_params
     assert "best_forecaster" in fitted_params.keys()
     assert "best_score" in fitted_params.keys()
@@ -127,10 +127,7 @@ def test_gscv(forecaster, param_grid, cv, scoring, error_score):
 
     param_grid = ParameterGrid(param_grid)
     _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring)
-
-    fitted_params = gscv.get_fitted_params()
-    assert "best_forecaster" in fitted_params.keys()
-    assert "best_score" in fitted_params.keys()
+    _check_fitted_params_keys(gscv.get_fitted_params())
 
 
 @pytest.mark.parametrize(
@@ -212,10 +209,7 @@ def test_gscv_proba(cv, scoring, error_score):
 
     param_grid = ParameterGrid(param_grid)
     _check_cv(forecaster, gscv, cv, param_grid, y, None, scoring)
-
-    fitted_params = gscv.get_fitted_params()
-    assert "best_forecaster" in fitted_params.keys()
-    assert "best_score" in fitted_params.keys()
+    _check_fitted_params_keys(gscv.get_fitted_params())
 
 
 @pytest.mark.skipif(
@@ -255,8 +249,4 @@ def test_skoptcv(forecaster, param_grid, cv, scoring, error_score, n_iter):
         sscv.fit(y, X)
         param_distributions = list(sscv.cv_results_["params"])
         _check_cv(forecaster, sscv, cv, param_distributions, y, X, scoring)
-
-        # ensure that the best_forecaster and best_score are in fitted_params
-        fitted_params = sscv.get_fitted_params()
-        assert "best_forecaster" in fitted_params.keys()
-        assert "best_score" in fitted_params.keys()
+        _check_fitted_params_keys(sscv.get_fitted_params())
