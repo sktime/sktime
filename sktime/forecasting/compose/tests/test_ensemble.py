@@ -94,7 +94,6 @@ def test_aggregation_unweighted(forecasters, y, aggfunc):
         ),
     ],
 )
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 def test_aggregation_weighted(forecasters, y, aggfunc, weights):
     """Assert weighted aggfunc returns the correct values."""
     forecaster = EnsembleForecaster(
