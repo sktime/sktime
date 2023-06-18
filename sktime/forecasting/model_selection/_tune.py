@@ -1065,7 +1065,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
 
         @use_named_args(dimensions)  # decorater to convert candidate param list to dict
         def _fit_and_score(**params):
-
             # Clone forecaster.
             forecaster = self.forecaster.clone()
 
