@@ -24,6 +24,7 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -847,10 +848,10 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     ...     param_distributions=param_distributions,
     ...     cv=cv,
     ...     n_iter=5,
-    ...     random_state=10)
-    >>> sscv.fit(y)
+    ...     random_state=10)  # doctest: +SKIP
+    >>> sscv.fit(y)  # doctest: +SKIP
     ForecastingSkoptSearchCV(...)
-    >>> y_pred = sscv.predict(fh)
+    >>> y_pred = sscv.predict(fh)  # doctest: +SKIP
     """
 
     _tags = {
@@ -860,7 +861,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["skopt>=0.9.0", "numpy<1.24"],
+        "python_dependencies": "numpy<1.24",
         "python_version": ">=3.6",
     }
 
@@ -884,6 +885,11 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         update_behaviour: str = "full_refit",
         error_score=np.nan,
     ):
+        _check_soft_dependencies(
+            "scikit-optimize",
+            severity="error",
+            package_import_alias={"scikit-optimize": "skopt"},
+        )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.n_points = n_points

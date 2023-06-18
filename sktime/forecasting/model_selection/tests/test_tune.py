@@ -38,7 +38,10 @@ from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLo
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.validation._dependencies import (
+    _check_estimator_deps,
+    _check_soft_dependencies,
+)
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 TEST_METRICS_PROBA = [CRPS(), PinballLoss()]
@@ -215,7 +218,12 @@ def test_gscv_proba(cv, scoring, error_score):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none"),
+    not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none")
+    or not _check_soft_dependencies(
+        "scikit-optimize",
+        severity="none",
+        package_import_alias={"scikit-optimize": "skopt"},
+    ),
     reason="skip test if required soft dependency not compatible",
 )
 @pytest.mark.parametrize(
@@ -255,7 +263,12 @@ def test_skoptcv(forecaster, param_grid, cv, scoring, error_score, n_iter):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none"),
+    not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none")
+    or not _check_soft_dependencies(
+        "scikit-optimize",
+        severity="none",
+        package_import_alias={"scikit-optimize": "skopt"},
+    ),
     reason="skip test if required soft dependency not compatible",
 )
 def test_skoptcv_multiple_forecaster():
