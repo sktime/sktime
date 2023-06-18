@@ -100,9 +100,9 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     def _iter(self, replace_strings=False):
         """Generate (name, estimator, column) tuples.
 
-        If fitted=True, use the fitted transformations, else use the
-        user specified transformations updated with converted column names
-        and potentially appended with transformer for remainder.
+        If fitted=True, use the fitted transformations, else use the user specified
+        transformations updated with converted column names and potentially appended
+        with transformer for remainder.
         """
         if self.is_fitted:
             estimators = self.estimators_
@@ -140,7 +140,6 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
 
         y : array-like, shape (n_samples, ...), optional
             Targets for supervised learning.
-
         """
         if self.estimators is None or len(self.estimators) == 0:
             raise AttributeError(
@@ -301,8 +300,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
 
 def _get_column(X, key):
-    """
-    Get feature column(s) from input data X.
+    """Get feature column(s) from input data X.
 
     Supported input types (X): numpy arrays and DataFrames
 
@@ -319,7 +317,6 @@ def _get_column(X, key):
         - only supported for dataframes
         - So no keys other than strings are allowed (while in principle you
           can use any hashable object as key).
-
     """
     # check whether we have string column names or integers
     if _check_key_type(key, int):
@@ -355,8 +352,7 @@ def _get_column(X, key):
 
 
 def _check_key_type(key, superclass):
-    """
-    Check that scalar, list or slice is of a certain type.
+    """Check that scalar, list or slice is of a certain type.
 
     This is only used in _get_column and _get_column_indices to check
     if the `key` (column specification) is fully integer or fully string-like.
@@ -367,7 +363,6 @@ def _check_key_type(key, superclass):
         The column specification to check
     superclass : int or str
         The type for which to check the `key`
-
     """
     if isinstance(key, superclass):
         return True
@@ -387,11 +382,9 @@ def _check_key_type(key, superclass):
 
 
 def _get_column_indices(X, key):
-    """
-    Get feature column indices for input data X and key.
+    """Get feature column indices for input data X and key.
 
     For accepted values of `key`, see the docstring of _get_column
-
     """
     n_columns = X.shape[1]
 

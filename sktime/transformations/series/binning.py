@@ -73,7 +73,6 @@ class TimeBinAggregate(BaseTransformer):
     }
 
     def __init__(self, bins, aggfunc=None, return_index="bin_start"):
-
         self.bins = bins
         self.aggfunc = aggfunc
         self.return_index = return_index

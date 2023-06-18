@@ -66,7 +66,6 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     _steps_attr = "_pw_trafos"
 
     def __init__(self, pw_trafos, operation=None):
-
         self.pw_trafos = pw_trafos
         self.pw_trafos_ = self._check_estimators(
             self.pw_trafos, cls_type=BasePairwiseTransformerPanel

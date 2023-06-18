@@ -37,7 +37,6 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
 
     axes : np.ndarray
         Array of the figure's Axe objects
-
     """
     # Checks availability of plotting libraries
     _check_soft_dependencies("matplotlib")
@@ -76,7 +75,7 @@ def plot_time_series_with_profiles(
     score_name="ClaSP Score",
     font_size=16,
 ):
-    """Plot the TS with the known and found change points and profiles from segmentation.
+    """Plot TS with known and found change points and profiles from segmentation.
 
     Parameters
     ----------

@@ -78,7 +78,6 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         transformer_weights=None,
         flatten_transform_index=True,
     ):
-
         self.transformer_list = transformer_list
         self.transformer_list_ = self._check_estimators(
             transformer_list, cls_type=BaseTransformer

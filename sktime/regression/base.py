@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Abstract base class for time series regressors.
+"""Abstract base class for time series regressors.
 
     class name: BaseRegressor
 

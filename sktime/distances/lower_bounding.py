@@ -69,7 +69,6 @@ class LowerBounding(Enum):
     .. [3]  Ratanamahatana, Chotirat & Keogh, Eamonn. (2004). Making Time-Series
             Classification More Accurate Using Learned Constraints.
             10.1137/1.9781611972740.2.
-
     """
 
     NO_BOUNDING = 1  # No bounding on the matrix

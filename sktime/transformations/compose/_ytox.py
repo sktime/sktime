@@ -34,7 +34,6 @@ class YtoX(BaseTransformer):
     }
 
     def __init__(self, subset_index=False):
-
         self.subset_index = subset_index
 
         super(YtoX, self).__init__()

@@ -21,7 +21,6 @@ def _generate_fixture_tuples():
     fixture_tuples = []
 
     for scitype in SCITYPES:
-
         # if we know there are no conversions defined, skip this scitype
         if scitype in SCITYPES_NO_CONVERSIONS:
             continue
@@ -112,7 +111,6 @@ def test_convert(scitype, from_mtype, to_mtype, fixture_index):
 
     # test that converted from-fixture equals to-fixture
     if cond1 and cond2 and cond3:
-
         converted_fixture_i = convert(
             obj=from_fixture[0],
             from_type=from_mtype,

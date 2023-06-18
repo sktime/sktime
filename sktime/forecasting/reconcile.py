@@ -109,7 +109,6 @@ class ReconcilerForecaster(BaseForecaster):
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
 
     def __init__(self, forecaster, method="mint_shrink"):
-
         self.forecaster = forecaster
         self.method = method
 

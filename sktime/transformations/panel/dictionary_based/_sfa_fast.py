@@ -2,7 +2,6 @@
 """Symbolic Fourier Approximation (SFA) Transformer.
 
 Configurable SFA transform for discretising time series into words.
-
 """
 
 __author__ = ["patrickzib"]

@@ -603,9 +603,9 @@ def test_regular_spaced_fh_of_different_periodicity():
     """Test for failure condition from bug #4462.
 
     Due to pandas frequency inference logic, a specific case of constructing
-    `ForecastingHorizon` could upset the constructor:
-    passing a regular `DatetimeIndex` with frequency different from the `freq` argument,
-    which would be triggered in some `to_absolute` conversions.
+    `ForecastingHorizon` could upset the constructor: passing a regular `DatetimeIndex`
+    with frequency different from the `freq` argument, which would be triggered in some
+    `to_absolute` conversions.
     """
     y = _make_series(n_columns=1)
 

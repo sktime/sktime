@@ -1,6 +1,5 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-
 """Implements FunctionTransformer, a class to create custom transformers."""
 
 __author__ = ["BoukePostma"]

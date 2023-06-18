@@ -13,9 +13,7 @@ from sktime.networks.lstmfcn import LSTMFCNNetwork
 
 
 class LSTMFCNClassifier(BaseDeepClassifier):
-    """
-
-    Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
+    """Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
 
     Overview
     --------
@@ -62,7 +60,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
     https://arxiv.org/pdf/1801.04503.pdf
-
     """
 
     _tags = {"python_dependencies": "tensorflow"}
@@ -80,7 +77,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         random_state=None,
         verbose=0,
     ):
-
         super(LSTMFCNClassifier, self).__init__()
 
         self.classes_ = None

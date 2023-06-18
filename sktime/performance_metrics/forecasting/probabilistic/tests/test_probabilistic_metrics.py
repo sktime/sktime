@@ -40,20 +40,14 @@ y_train_multi, y_test_multi = temporal_train_test_split(y_multi)
 fh_multi = np.arange(len(y_test_multi)) + 1
 f_multi = NaiveVariance(NaiveForecaster())
 f_multi.fit(y_train_multi)
-"""
-Cases we need to test
-score average = TRUE/FALSE
-multivariable = TRUE/FALSE
-multiscores = TRUE/FALSE
+"""Cases we need to test score average = TRUE/FALSE multivariable = TRUE/FALSE
+multiscores = TRUE/FALSE.
 
-Data types
-Univariate and single score
-Univariate and multi score
-Multivariate and single score
-Multivariate and multiscor
+Data types Univariate and single score Univariate and multi score Multivariate and
+single score Multivariate and multiscor
 
-For each of the data types we need to test with score average = T/F \
-    and multioutput with "raw_values" and "uniform_average"
+For each of the data types we need to test with score average = T/F and multioutput with
+"raw_values" and "uniform_average"
 """
 quantile_pred_uni_s = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.5])
 interval_pred_uni_s = f_uni.predict_interval(fh=fh_uni, coverage=0.9)

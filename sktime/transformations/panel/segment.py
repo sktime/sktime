@@ -56,8 +56,7 @@ class IntervalSegmenter(BaseTransformer):
         super(IntervalSegmenter, self).__init__()
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer, generating random interval indices.
+        """Fit transformer, generating random interval indices.
 
         Parameters
         ----------
@@ -467,7 +466,6 @@ class SlidingWindowSegmenter(BaseTransformer):
         Adopted from -
         https://stackoverflow.com/questions/4923617/efficient-numpy-2d-array-
         construction-from-1d-array/4924433#4924433
-
         """
         shape = (n_timepoints, self.window_length)
         strides = (instance.itemsize, instance.itemsize)

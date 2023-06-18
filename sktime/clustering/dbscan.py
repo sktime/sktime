@@ -84,7 +84,6 @@ class TimeSeriesDBSCAN(BaseClusterer):
         leaf_size=30,
         n_jobs=None,
     ):
-
         self.distance = distance
         self.eps = eps
         self.min_samples = min_samples

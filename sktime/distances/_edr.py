@@ -37,7 +37,7 @@ class _EdrDistance(NumbaDistance):
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         epsilon: float = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceAlignmentPathCallable:
         """Create a no_python compiled edr alignment path distance callable.
 
@@ -136,7 +136,7 @@ class _EdrDistance(NumbaDistance):
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         epsilon: float = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled edr distance callable.
 

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Interface to Christiano Fitzgerald asymmetric, random walk filter from `statsmodels`.
+"""Interface to Christiano Fitzgerald asymmetric, random walk filter from `statsmodels`.
 
 Interfaces `cf_filter` from `statsmodels.tsa.filters`.
 """

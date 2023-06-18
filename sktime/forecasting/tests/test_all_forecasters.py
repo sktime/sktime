@@ -396,7 +396,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
-
             pred_ints = estimator_instance.predict_interval(
                 fh_int_oos, coverage=coverage
             )

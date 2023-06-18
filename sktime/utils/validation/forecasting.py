@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """Validations for use with forecasting module."""
 
 __all__ = [
@@ -157,8 +156,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
 
 
 def check_cv(cv, enforce_start_with_window=False):
-    """
-    Check CV generators.
+    """Check CV generators.
 
     Parameters
     ----------
@@ -372,7 +370,6 @@ def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
     ValueError
         If cutoffs is not a instance of np.array or pd.Index
         If cutoffs array is empty.
-
     """
     if not isinstance(cutoffs, ACCEPTED_CUTOFF_TYPES):
         raise ValueError(
@@ -464,7 +461,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
 
 
 def check_regressor(regressor=None, random_state=None):
-    """Check if a regressor is given and if it is valid, otherwise set default regressor.
+    """Check if a valid regressor is given, otherwise set default regressor.
 
     Parameters
     ----------
@@ -494,8 +491,7 @@ def check_regressor(regressor=None, random_state=None):
 
 
 def check_interval_df(interval_df, index_to_match):
-    """
-    Verify that a predicted interval DataFrame is formatted correctly.
+    """Verify that a predicted interval DataFrame is formatted correctly.
 
     Parameters
     ----------

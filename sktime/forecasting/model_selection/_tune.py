@@ -28,7 +28,6 @@ from sktime.utils.validation.forecasting import check_scoring
 
 
 class BaseGridSearch(_DelegatedForecaster):
-
     _tags = {
         "scitype:y": "both",
         "requires-fh-in-fit": False,
@@ -53,7 +52,6 @@ class BaseGridSearch(_DelegatedForecaster):
         update_behaviour="full_refit",
         error_score=np.nan,
     ):
-
         self.forecaster = forecaster
         self.cv = cv
         self.strategy = strategy
@@ -250,7 +248,8 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Sort values according to rank
         results = results.sort_values(
-            by=f"rank_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
+            by=f"rank_{scoring_name}",
+            ascending=True,
         )
         # Select n best forecaster
         self.n_best_forecasters_ = []

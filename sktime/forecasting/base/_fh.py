@@ -62,8 +62,8 @@ DELEGATED_METHODS = (
 def _delegator(method):
     """Automatically decorate ForecastingHorizon class with pandas.Index methods.
 
-    Also delegates method calls to wrapped pandas.Index object.
-    methods from pandas.Index and delegate method calls to wrapped pandas.Index
+    Also delegates method calls to wrapped pandas.Index object. methods from
+    pandas.Index and delegate method calls to wrapped pandas.Index
     """
 
     def delegated(obj, *args, **kwargs):
@@ -711,7 +711,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        # TODO: 0.19.0:
+        # TODO: 0.20.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #

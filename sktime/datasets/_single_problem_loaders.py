@@ -343,8 +343,7 @@ def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
 
 
 def load_unit_test(split=None, return_X_y=True, return_type=None):
-    """
-    Load UnitTest data.
+    """Load UnitTest data.
 
     This is an equal length univariate time series classification problem. It is a
     stripped down version of the ChinaTown problem that is used in correctness tests
@@ -472,8 +471,7 @@ def load_japanese_vowels(split=None, return_X_y=True, return_type=None):
 
 
 def load_arrow_head(split=None, return_X_y=True, return_type=None):
-    """
-    Load the ArrowHead time series classification problem and returns X and y.
+    """Load the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -598,8 +596,7 @@ def load_acsf1(split=None, return_X_y=True, return_type=None):
 
 
 def load_basic_motions(split=None, return_X_y=True, return_type=None):
-    """
-    Load the BasicMotions time series classification problem and returns X and y.
+    """Load the BasicMotions time series classification problem and returns X and y.
 
     This is an equal length multivariate time series classification problem. It loads a
     4 class classification problem with number of cases, n, where n = 80 (if
@@ -1039,8 +1036,7 @@ def load_PBS_dataset():
 
 
 def load_macroeconomic():
-    """
-    Load the US Macroeconomic Data [1]_.
+    """Load the US Macroeconomic Data [1]_.
 
     Returns
     -------
@@ -1087,8 +1083,7 @@ def load_macroeconomic():
 
 
 def load_unit_test_tsf():
-    """
-    Load tsf UnitTest dataset.
+    """Load tsf UnitTest dataset.
 
     Returns
     -------

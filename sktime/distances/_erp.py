@@ -24,7 +24,7 @@ class _ErpDistance(NumbaDistance):
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         g: float = 0.0,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceAlignmentPathCallable:
         """Create a no_python compiled erp distance alignment path callable.
 
@@ -111,7 +111,7 @@ class _ErpDistance(NumbaDistance):
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         g: float = 0.0,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled erp distance callable.
 
