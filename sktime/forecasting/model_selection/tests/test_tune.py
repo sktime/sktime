@@ -259,7 +259,7 @@ def test_skoptcv(forecaster, param_grid, cv, scoring, error_score, n_iter):
     reason="skip test if required soft dependency not compatible",
 )
 def test_skoptcv_multiple_forecaster():
-    """Test ForecastingSkoptSearchCV with multiple forecasters with custom n_iter.
+    """Test ForecastingSkoptSearchCV with multiple forecasters and custom n_iter.
 
     Other behaviours are tested in test_skoptcv.
     """
