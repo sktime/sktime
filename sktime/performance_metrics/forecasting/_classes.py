@@ -131,7 +131,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         self.multioutput = multioutput
         self.multilevel = multilevel
 
-        if not hasattr(self, "name"):
+        if not hasattr(self, "name") or self.name is None:
             self.name = type(self).__name__
 
         super(BaseForecastingErrorMetric, self).__init__()
