@@ -254,6 +254,10 @@ def test_skoptcv(forecaster, param_grid, cv, scoring, error_score, n_iter):
         _check_fitted_params_keys(sscv.get_fitted_params())
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none"),
+    reason="skip test if required soft dependency not compatible",
+)
 def test_skoptcv_multiple_forecaster():
     """Test ForecastingSkoptSearchCV with multiple forecasters with custom n_iter.
 
