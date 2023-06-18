@@ -810,7 +810,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
 
-
     Attributes
     ----------
     best_index_ : int
@@ -827,7 +826,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     n_best_scores_: list of float
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
-
 
     Examples
     --------
