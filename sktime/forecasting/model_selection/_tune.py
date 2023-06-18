@@ -742,16 +742,20 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     cv : cross-validation generator or an iterable
         Splitter used for generating validation folds.
         e.g. SlidingWindowSplitter()
-    param_distributions : dict or a list of dict. See below for details.
-        if dict, a dictionary that represents the search space over the parameters of
+    param_distributions : dict or a list of dict/tuple. See below for details.
+        1. If dict, a dictionary that represents the search space over the parameters of
         the provided estimator. The keys are parameter names (strings), and the values
-        are instances of skopt.space.Dimension (Real, Integer, or Categorical)
-        or any other valid value that defines a skopt dimension - Note that if a list
-        is given, the dimension is automatically set to Categorical.
-        if a list of dict, each dictionary corresponds to a parameter space, following
-        the same structure described in case 1 above. the search will be performed
-        sequentially for each parameter space, with the number of samples
+        follows the following format. A list to store categorical parameters and a
+        tuple for integer and real parameters with the following format
+        (int/float, int/float, "prior") e.g (1e-6, 1e-1, "log-uniform").
+        2. If a list of dict, each dictionary corresponds to a parameter space,
+        following the same structure described in case 1 above. the search will be
+        performed sequentially for each parameter space, with the number of samples
         set to n_iter.
+        3. If a list of tuple, tuple must contain (dict, int) where the int refers to
+        n_iter for that search space. dict must follow the same structure as in case 1.
+        This is useful if you want to perform a search with different number of
+        iterations for each parameter space.
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution. Consider increasing n_points
@@ -823,6 +827,33 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     n_best_scores_: list of float
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
+
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> from sktime.forecasting.model_selection import (
+    ...     ExpandingWindowSplitter,
+    ...     ForecastingSkoptSearchCV)
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> y = load_shampoo_sales()
+    >>> fh = [1,2,3]
+    >>> cv = ExpandingWindowSplitter(fh=fh)
+    >>> forecaster = make_reduction(GradientBoostingRegressor(random_state=10))
+    >>> param_distributions = {
+    ...     "estimator__learning_rate" : (1e-4, 1e-1, "log-uniform"),
+    ...     "window_length" : (1, 10, "uniform"),
+    ...     "estimator__criterion" : ["friedman_mse", "squared_error"]}
+    >>> sscv = ForecastingSkoptSearchCV(
+    ...     forecaster=forecaster,
+    ...     param_distributions=param_distributions,
+    ...     cv=cv,
+    ...     n_iter=5,
+    ...     random_state=10)
+    >>> sscv.fit(y)
+    ForecastingSkoptSearchCV(...)
+    >>> y_pred = sscv.predict(fh)
     """
 
     _tags = {
@@ -833,7 +864,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["skopt>=0.9.0", "numpy<1.24"],
-        "python_version": "<3.11",
+        "python_version": ">=3.6",
     }
 
     def __init__(
@@ -856,11 +887,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         update_behaviour: str = "full_refit",
         error_score=np.nan,
     ):
-        # _check_soft_dependencies(
-        #     "scikit-optimize",
-        #     severity="error",
-        #     package_import_alias={"scikit-optimize": "skopt"},
-        # )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.n_points = n_points
@@ -917,7 +943,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         # Sort values according to rank
         results = results.sort_values(
             by=f"rank_{scoring_name}",
-            ascending=True,  # self._check_scoring.get_tag("lower_is_better")
+            ascending=True,
         )
 
         # Select n best forecaster
@@ -961,7 +987,22 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         self.optimizer_kwargs_["random_state"] = self.random_state
 
         optimizers = []
+        mappings = []
         for search_space in param_distributions:
+            if isinstance(search_space, tuple):
+                search_space = search_space[0]
+
+            # hacky approach to handle unhashable type objects
+            if "forecaster" in search_space:
+                forecasters = search_space.get("forecaster")
+                mapping = {
+                    num: estimator for num, estimator in enumerate(forecasters)
+                }  # noqa
+                search_space["forecaster"] = list(mapping.keys())
+                mappings.append(mapping)
+            else:
+                mappings.append(None)
+
             optimizers.append(self._create_optimizer(search_space))
         self.optimizers_ = optimizers  # will save the states of the optimizers
 
@@ -977,8 +1018,15 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
 
         # Run sequential search by iterating through each optimizer and evaluates
         # the search space iteratively until all n_iter candidates are evaluated.
-        n_iter = self.n_iter
-        for optimizer in optimizers:
+        for num, (search_space, optimizer) in enumerate(
+            zip(param_distributions, optimizers)
+        ):
+            # if search subspace n_iter is provided, use it otherwise use self.n_iter
+            if isinstance(search_space, tuple):
+                n_iter = search_space[1]
+            else:
+                n_iter = self.n_iter
+
             # iterations for each search space
             while n_iter > 0:
                 # when n_iter < n_points points left for evaluation
@@ -988,12 +1036,13 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
                     X,
                     optimizer,
                     n_points=n_points_adjusted,
+                    mapping=mappings[num],
                 )
                 n_iter -= self.n_points
             # reset n_iter for next search space
             n_iter = self.n_iter
 
-    def _evaluate_step(self, y, X, optimizer, n_points):
+    def _evaluate_step(self, y, X, optimizer, n_points, mapping=None):
         """Evaluate a candidate parameter set at each iteration.
 
         Parameters
@@ -1008,6 +1057,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             Number of candidate parameter combination to evaluate at each step.
             if n_points=2, then the two candidate parameter combinations are evaluated
             e.g {'sp': 1, 'strategy':'last'} and {'sp': 2, 'strategy': 'mean'}.
+        mapping : dict, optional (default=None)
+            Mapping of forecaster to estimator instance.
         """
         from skopt.utils import use_named_args
 
@@ -1015,11 +1066,15 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         dimensions = optimizer.space.dimensions
         test_score_name = f"test_{self._check_scoring.name}"
 
-        @use_named_args(dimensions)
+        @use_named_args(dimensions)  # decorater to convert candidate param list to dict
         def _fit_and_score(**params):
 
             # Clone forecaster.
             forecaster = self.forecaster.clone()
+
+            # map forecaster back to estimator instance
+            if "forecaster" in params:
+                params["forecaster"] = mapping[params["forecaster"]]
 
             # Set parameters.
             forecaster.set_params(**params)
@@ -1162,8 +1217,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
 
             # 2. check all the dicts for correctness of contents
             for subspace in dicts_only:
-                for _, v in subspace.items():
-                    check_dimension(v)
+                for params_name, param_value in subspace.items():
+                    if params_name != "forecaster":
+                        check_dimension(param_value)
         else:
             raise TypeError(
                 "Search space should be provided as a dict or list of dict,"

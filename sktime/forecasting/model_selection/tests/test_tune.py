@@ -13,6 +13,7 @@ from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
@@ -35,6 +36,7 @@ from sktime.performance_metrics.forecasting import (
 )
 from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
 from sktime.transformations.series.detrend import Detrender
+from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
@@ -250,3 +252,40 @@ def test_skoptcv(forecaster, param_grid, cv, scoring, error_score, n_iter):
         param_distributions = list(sscv.cv_results_["params"])
         _check_cv(forecaster, sscv, cv, param_distributions, y, X, scoring)
         _check_fitted_params_keys(sscv.get_fitted_params())
+
+
+def test_skoptcv_multiple_forecaster():
+    """Test ForecastingSkoptSearchCV with multiple forecasters with custom n_iter.
+
+    Other behaviours are tested in test_skoptcv.
+    """
+    params_distributions = [
+        {
+            "forecaster": [NaiveForecaster(sp=12)],
+            "forecaster__strategy": ["drift", "last", "mean"],
+        },
+        (
+            {
+                "imputer__method": ["mean", "median"],
+                "forecaster": [ExponentialSmoothing(sp=12)],
+                "forecaster__trend": ["add", "mul"],
+            },
+            3,
+        ),
+    ]
+    cv = CVs[-1]
+    y, X = load_longley()
+    pipe = TransformedTargetForecaster(
+        steps=[("imputer", Imputer()), ("forecaster", NaiveForecaster())]
+    )
+    sscv = ForecastingSkoptSearchCV(
+        forecaster=pipe,
+        param_distributions=params_distributions,
+        cv=cv,
+        n_jobs=-1,
+        random_state=123,
+        n_points=2,
+        n_iter=2,
+    )
+    sscv.fit(y)
+    assert len(sscv.cv_results_) == 5
