@@ -374,6 +374,10 @@ def test_nullable_dtypes(nullable_type):
     assert y_pred.dtype == "float64"
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(VAR, severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_range_fh_in_fit():
     """Test using ``range`` in ``fit``."""
     test_dataset = _make_panel(n_instances=10, n_columns=5)
@@ -385,6 +389,10 @@ def test_range_fh_in_fit():
     assert var_predictions.shape == (10 * 2, 5)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(VAR, severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_range_fh_in_predict():
     """Test using ``range`` in ``predict``."""
     test_dataset = _make_panel(n_instances=10, n_columns=5)
