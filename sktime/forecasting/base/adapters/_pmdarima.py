@@ -26,7 +26,7 @@ class _PmdArimaAdapter(BaseForecaster):
 
     def __init__(self):
         self._forecaster = None
-        super(_PmdArimaAdapter, self).__init__()
+        super().__init__()
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")

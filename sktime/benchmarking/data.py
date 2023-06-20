@@ -23,7 +23,7 @@ class UEADataset(HDDBaseDataset):
         fmt=".ts",
         target_name="target",
     ):
-        super(UEADataset, self).__init__(path, name)
+        super().__init__(path, name)
         # create all the neccesary attributes for UAEDataset object
         # store a dataset
 
@@ -80,7 +80,7 @@ class RAMDataset(BaseDataset):
                 f"Dataset must be pandas DataFrame, but found: " f"{type(dataset)}"
             )
         self._dataset = dataset
-        super(RAMDataset, self).__init__(name=name)
+        super().__init__(name=name)
 
     def load(self):
         """Load dataset."""

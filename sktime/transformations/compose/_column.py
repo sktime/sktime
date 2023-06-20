@@ -76,7 +76,7 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
 
     def __init__(self, transformers):
         self.transformers = transformers
-        super(ColumnEnsembleTransformer, self).__init__()
+        super().__init__()
 
         # set requires-fh-in-fit depending on transformers
         if isinstance(transformers, BaseTransformer):
@@ -285,7 +285,7 @@ class ColumnwiseTransformer(BaseTransformer):
     def __init__(self, transformer, columns=None):
         self.transformer = transformer
         self.columns = columns
-        super(ColumnwiseTransformer, self).__init__()
+        super().__init__()
 
         tags_to_clone = [
             "y_inner_mtype",

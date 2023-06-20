@@ -110,7 +110,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         self._base_estimator = DecisionTreeClassifier(criterion="entropy")
         self._stats = [np.mean, np.median, np.std, _slope, stats.iqr, np.min, np.max]
 
-        super(SupervisedTimeSeriesForest, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).

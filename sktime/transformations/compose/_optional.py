@@ -89,7 +89,7 @@ class OptionalPassthrough(_DelegatedTransformer):
         self.transformer = transformer
         self.passthrough = passthrough
 
-        super(OptionalPassthrough, self).__init__()
+        super().__init__()
 
         # should be all tags, but not fit_is_empty
         #   (_fit should not be skipped)

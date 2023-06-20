@@ -60,7 +60,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         self.dropout = dropout
         self.attention = attention
 
-        super(LSTMFCNNetwork, self).__init__()
+        super().__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.

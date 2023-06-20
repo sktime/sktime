@@ -242,7 +242,7 @@ class Differencer(BaseTransformer):
         self._X = None
         self._lags = _check_lags(self.lags)
         self._cumulative_lags = None
-        super(Differencer, self).__init__()
+        super().__init__()
 
         # if the na_handling is "fill_zero" or "keep_na"
         #   then the returned indices are same to the passed indices

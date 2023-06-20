@@ -188,7 +188,7 @@ class DynamicFactor(_StatsModelsAdapter):
         self.flags = flags
         self.low_memory = low_memory
 
-        super(DynamicFactor, self).__init__()
+        super().__init__()
 
     def _predict(self, fh, X=None):
         """Make forecasts.

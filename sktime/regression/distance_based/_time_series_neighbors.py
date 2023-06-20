@@ -133,7 +133,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         )
         self.weights = weights
 
-        super(KNeighborsTimeSeriesRegressor, self).__init__()
+        super().__init__()
 
         # the distances in sktime.distances want numpy3D
         #   otherwise all Panel formats are ok

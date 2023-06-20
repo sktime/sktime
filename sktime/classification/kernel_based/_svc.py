@@ -155,7 +155,7 @@ class TimeSeriesSVC(BaseClassifier):
         for key, val in delegated_param_dict.items():
             setattr(self, key, val)
 
-        super(TimeSeriesSVC, self).__init__()
+        super().__init__()
 
         self.svc_estimator_ = SVC(kernel="precomputed", **delegated_param_dict)
 

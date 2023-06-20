@@ -109,7 +109,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ClassifierPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = classifier.get_tag("capability:multivariate", False)
@@ -424,7 +424,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(SklearnClassifierPipeline, self).__init__()
+        super().__init__()
 
         # all sktime and sklearn transformers always support multivariate
         multivariate = True

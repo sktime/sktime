@@ -286,7 +286,7 @@ class BaseKalmanFilter:
         # P0
         self.initial_state_covariance = initial_state_covariance
 
-        super(BaseKalmanFilter, self).__init__()
+        super().__init__()
 
     def _get_shapes(self, state_dim, measurement_dim):
         """Return dictionary with default shape of each matrix parameter.
@@ -547,7 +547,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         estimate_matrices=None,
         denoising=False,
     ):
-        super(KalmanFilterTransformerPK, self).__init__(
+        super().__init__(
             state_dim=state_dim,
             state_transition=state_transition,
             process_noise=process_noise,
@@ -1009,7 +1009,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         estimate_matrices=None,
         denoising=False,
     ):
-        super(KalmanFilterTransformerFP, self).__init__(
+        super().__init__(
             state_dim=state_dim,
             state_transition=state_transition,
             process_noise=process_noise,

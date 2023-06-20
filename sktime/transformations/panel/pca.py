@@ -113,7 +113,7 @@ class PCATransformer(BaseTransformer):
             random_state=random_state,
         )
 
-        super(PCATransformer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

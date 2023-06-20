@@ -73,7 +73,7 @@ class DistanceFeatures(BaseTransformer):
         self.distance_mtype = distance_mtype
         self.flatten_hierarchy = flatten_hierarchy
 
-        super(DistanceFeatures, self).__init__()
+        super().__init__()
 
         from sktime.dists_kernels import (
             BasePairwiseTransformerPanel,

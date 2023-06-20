@@ -171,7 +171,7 @@ class MUSE(BaseClassifier):
         self.total_features_count = 0
         self.feature_selection = feature_selection
 
-        super(MUSE, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Build a WEASEL+MUSE classifiers from the training set (X, y).
@@ -247,7 +247,7 @@ class MUSE(BaseClassifier):
         if type(all_words[0]) is np.ndarray:
             all_words = np.concatenate(all_words, axis=1)
         else:
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         # Ridge Classifier does not give probabilities
         if not self.support_probabilities:
@@ -322,7 +322,7 @@ class MUSE(BaseClassifier):
         if type(all_words[0]) is np.ndarray:
             all_words = np.concatenate(all_words, axis=1)
         else:
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         return all_words
 

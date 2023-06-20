@@ -39,7 +39,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
     }
 
     def __init__(self, batch_size=40):
-        super(BaseDeepRegressor, self).__init__()
+        super().__init__()
 
         self.batch_size = batch_size
         self.model_ = None

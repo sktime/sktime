@@ -17,7 +17,7 @@ class RAMResults(BaseResults):
 
     def __init__(self):
         self.results = {}
-        super(RAMResults, self).__init__()
+        super().__init__()
 
     def save_predictions(
         self,

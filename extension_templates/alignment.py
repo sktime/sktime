@@ -87,7 +87,7 @@ class MyAligner(BaseAligner):
         self.paramc = paramc
 
         # todo: change "MyAligner" to the name of the class
-        super(MyAligner, self).__init__()
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

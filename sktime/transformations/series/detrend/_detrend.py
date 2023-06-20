@@ -87,7 +87,7 @@ class Detrender(BaseTransformer):
         self.forecaster = forecaster
         self.model = model
 
-        super(Detrender, self).__init__()
+        super().__init__()
 
         # default for forecaster - written to forecaster_ to not overwrite param
         if self.forecaster is None:

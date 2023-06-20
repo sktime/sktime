@@ -96,7 +96,7 @@ class TimeSeriesKernelKMeans(BaseClusterer):
 
         self._tslearn_kernel_k_means = None
 
-        super(TimeSeriesKernelKMeans, self).__init__(n_clusters=n_clusters)
+        super().__init__(n_clusters=n_clusters)
 
     def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.

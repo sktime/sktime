@@ -243,7 +243,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         self.biasadj = biasadj
         self.parallel = parallel
 
-        super(StatsForecastAutoARIMA, self).__init__()
+        super().__init__()
 
     def _instantiate_model(self):
         # import inside method to avoid hard dependency

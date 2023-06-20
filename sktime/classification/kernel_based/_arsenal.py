@@ -155,7 +155,7 @@ class Arsenal(BaseClassifier):
 
         self._weight_sum = 0
 
-        super(Arsenal, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit Arsenal to training data.

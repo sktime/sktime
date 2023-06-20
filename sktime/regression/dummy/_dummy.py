@@ -60,7 +60,7 @@ class DummyRegressor(BaseRegressor):
         self.sklearn_dummy_regressor = SklearnDummyRegressor(
             strategy=strategy, constant=constant, quantile=quantile
         )
-        super(DummyRegressor, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y) -> np.ndarray:
         """Fit the dummy regressor.

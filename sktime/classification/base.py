@@ -88,7 +88,7 @@ class BaseClassifier(BaseEstimator, ABC):
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
 
-        super(BaseClassifier, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):

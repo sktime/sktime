@@ -82,7 +82,7 @@ class ElasticEnsemblePostProcess:
                 + str(self.resample_id)
                 + ".csv"
             )
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 lines = f.readlines()
                 third_line = lines[2].split(",")
                 self.train_accs_by_classifier[c_id] = float(third_line[0].strip())
@@ -152,7 +152,7 @@ class ElasticEnsemblePostProcess:
                 + str(self.resample_id)
                 + ".csv"
             )
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 lines = f.readlines()
                 third_line = lines[2].split(",")
                 this_class_vals = (

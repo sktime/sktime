@@ -110,7 +110,7 @@ class Imputer(BaseTransformer):
         self.value = value
         self.forecaster = forecaster
         self.random_state = random_state
-        super(Imputer, self).__init__()
+        super().__init__()
 
         # these methods require self._X remembered in _fit and _update
         if method in ["drift", "forecaster", "random"]:

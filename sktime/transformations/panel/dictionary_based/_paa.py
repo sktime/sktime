@@ -40,7 +40,7 @@ class PAA(BaseTransformer):
 
     def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
-        super(PAA, self).__init__()
+        super().__init__()
 
     def set_num_intervals(self, n):
         """Set self.num_intervals to n."""

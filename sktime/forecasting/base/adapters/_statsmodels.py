@@ -29,7 +29,7 @@ class _StatsModelsAdapter(BaseForecaster):
         self._forecaster = None
         self.random_state = random_state
         self._fitted_forecaster = None
-        super(_StatsModelsAdapter, self).__init__()
+        super().__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.

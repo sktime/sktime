@@ -276,7 +276,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         self.flags = flags
         self.low_memory = low_memory
 
-        super(UnobservedComponents, self).__init__(random_state=random_state)
+        super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.

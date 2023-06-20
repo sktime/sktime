@@ -324,7 +324,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     def _get_alpha_from(self, y_pred):
         """Fetch the alphas present in y_pred."""
         alphas = np.unique(list(y_pred.columns.get_level_values(1)))
-        if not all(((alphas > 0) & (alphas < 1))):
+        if not all((alphas > 0) & (alphas < 1)):
             raise ValueError("Alpha must be between 0 and 1.")
 
         return alphas
@@ -340,7 +340,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         if not isinstance(alpha, np.ndarray):
             alpha = np.asarray(alpha)
 
-        if not all(((alpha > 0) & (alpha < 1))):
+        if not all((alpha > 0) & (alpha < 1)):
             raise ValueError("Alpha must be between 0 and 1.")
 
         return alpha

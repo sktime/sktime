@@ -35,7 +35,7 @@ class FixedParams(BaseParamFitter):
 
     def __init__(self, param_dict):
         self.param_dict = param_dict
-        super(FixedParams, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.

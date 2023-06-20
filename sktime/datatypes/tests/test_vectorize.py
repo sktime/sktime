@@ -122,7 +122,7 @@ def pytest_generate_tests(metafunc):
 
     fixturenames = set(metafunc.fixturenames)
 
-    if set(["scitype", "mtype", "fixture_index"]).issubset(fixturenames):
+    if {"scitype", "mtype", "fixture_index"}.issubset(fixturenames):
         keys = _generate_scitype_mtype_fixtureindex_combinations()
 
         ids = []
@@ -132,7 +132,7 @@ def pytest_generate_tests(metafunc):
         # parameterize test with from-mtpes
         metafunc.parametrize("scitype,mtype,fixture_index", keys, ids=ids)
 
-    elif set(["scitype", "mtype"]).issubset(fixturenames):
+    elif {"scitype", "mtype"}.issubset(fixturenames):
         keys = _generate_scitype_mtype_combinations()
 
         ids = []

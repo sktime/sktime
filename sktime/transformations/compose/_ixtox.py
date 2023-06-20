@@ -78,7 +78,7 @@ class IxToX(BaseTransformer):
         self.level = level
         self.ix_source = ix_source
 
-        super(IxToX, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

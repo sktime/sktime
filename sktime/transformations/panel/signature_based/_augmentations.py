@@ -198,7 +198,7 @@ class _CumulativeSum(BaseTransformer):
 
     def __init__(self, append_zero=False):
         self.append_zero = append_zero
-        super(_CumulativeSum, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         if self.append_zero:

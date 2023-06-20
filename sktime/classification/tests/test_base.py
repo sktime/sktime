@@ -49,7 +49,7 @@ class _DummyDeepClassifierEmpty(BaseDeepClassifier):
     """Dummy Deep Classifier for testing empty base deep class save utilities."""
 
     def __init__(self):
-        super(_DummyDeepClassifierEmpty, self).__init__()
+        super().__init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         return None
@@ -65,7 +65,7 @@ class _DummyDeepClassifierFull(BaseDeepClassifier):
         self,
         optimizer,
     ):
-        super(_DummyDeepClassifierFull, self).__init__()
+        super().__init__()
         self.optimizer = optimizer
 
     def build_model(self, input_shape, n_classes, **kwargs):

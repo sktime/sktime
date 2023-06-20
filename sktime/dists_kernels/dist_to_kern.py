@@ -54,7 +54,7 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         self.dist = dist
         self.dist_diag = dist_diag
 
-        super(KernelFromDist, self).__init__()
+        super().__init__()
 
         # set property tags based on tags of components
         missing = True
@@ -183,7 +183,7 @@ class DistFromKernel(BasePairwiseTransformerPanel):
     def __init__(self, kernel):
         self.kernel = kernel
 
-        super(DistFromKernel, self).__init__()
+        super().__init__()
 
         # set property tags based on tags of components
         tags_to_clone = [

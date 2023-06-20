@@ -179,7 +179,7 @@ def test_pipeline_column_vectorization():
 
     X_theta = t.fit_transform(X)
 
-    assert set(X_theta.columns) == set(["a__0", "a__2", "b__0", "b__2"])
+    assert set(X_theta.columns) == {"a__0", "a__2", "b__0", "b__2"}
 
 
 def test_pipeline_inverse():

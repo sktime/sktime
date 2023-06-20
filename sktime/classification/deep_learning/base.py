@@ -40,7 +40,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
     }
 
     def __init__(self, batch_size=40, random_state=None):
-        super(BaseDeepClassifier, self).__init__()
+        super().__init__()
 
         self.batch_size = batch_size
         self.random_state = random_state

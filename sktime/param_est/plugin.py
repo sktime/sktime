@@ -102,7 +102,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         self.params = params
         self.update_params = update_params
 
-        super(PluginParamsForecaster, self).__init__()
+        super().__init__()
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
         # todo: only works for single series now

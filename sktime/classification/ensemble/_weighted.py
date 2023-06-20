@@ -150,7 +150,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         else:
             self._metric = metric
 
-        super(WeightedEnsembleClassifier, self).__init__()
+        super().__init__()
 
         # todo: remove in 0.20.0
         warn(

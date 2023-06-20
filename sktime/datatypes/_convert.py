@@ -286,8 +286,8 @@ def _conversions_defined(scitype: str):
                                      0 if conversion from i to j is not defined
     """
     pairs = [(x[0], x[1]) for x in list(convert_dict.keys()) if x[2] == scitype]
-    cols0 = set([x[0] for x in list(convert_dict.keys()) if x[2] == scitype])
-    cols1 = set([x[1] for x in list(convert_dict.keys()) if x[2] == scitype])
+    cols0 = {x[0] for x in list(convert_dict.keys()) if x[2] == scitype}
+    cols1 = {x[1] for x in list(convert_dict.keys()) if x[2] == scitype}
     cols = sorted(list(cols0.union(cols1)))
 
     mat = np.zeros((len(cols), len(cols)), dtype=int)

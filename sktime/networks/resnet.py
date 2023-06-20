@@ -38,7 +38,7 @@ class ResNetNetwork(BaseDeepNetwork):
 
     def __init__(self, random_state=0):
         _check_dl_dependencies(severity="error")
-        super(ResNetNetwork, self).__init__()
+        super().__init__()
         self.random_state = random_state
 
     def build_network(self, input_shape, **kwargs):

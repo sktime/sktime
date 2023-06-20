@@ -399,7 +399,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         self.step = step
 
         _check_estimator_deps(self)
-        super(InformationGainSegmentation, self).__init__()
+        super().__init__()
 
         self._adaptee_class = get_IGTS()
         self._adaptee = self._adaptee_class(

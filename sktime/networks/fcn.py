@@ -42,7 +42,7 @@ class FCNNetwork(BaseDeepNetwork):
         self,
         random_state=0,
     ):
-        super(FCNNetwork, self).__init__()
+        super().__init__()
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
 

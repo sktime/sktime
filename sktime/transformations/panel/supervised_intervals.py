@@ -131,7 +131,7 @@ class SupervisedIntervals(BaseTransformer):
         self._transform_features = []
         self._n_jobs = n_jobs
 
-        super(SupervisedIntervals, self).__init__()
+        super().__init__()
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.

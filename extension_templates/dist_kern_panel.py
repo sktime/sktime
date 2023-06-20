@@ -75,7 +75,7 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         self.paramc = paramc
 
         # todo: change "MyTrafoPwPanel" to the name of the class
-        super(MyTrafoPwPanel, self).__init__()
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

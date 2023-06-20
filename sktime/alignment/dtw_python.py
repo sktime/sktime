@@ -72,7 +72,7 @@ class AlignerDTW(BaseAligner):
             obj=self,
             suppress_import_stdout=True,
         )
-        super(AlignerDTW, self).__init__()
+        super().__init__()
 
         self.dist_method = dist_method
         self.step_pattern = step_pattern
@@ -248,7 +248,7 @@ class AlignerDTWfromDist(BaseAligner):
             obj=self,
             suppress_import_stdout=True,
         )
-        super(AlignerDTWfromDist, self).__init__()
+        super().__init__()
 
         self.dist_trafo = dist_trafo
         self.dist_trafo_ = self.dist_trafo.clone()

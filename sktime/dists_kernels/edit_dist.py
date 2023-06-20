@@ -143,7 +143,7 @@ class EditDist(BasePairwiseTransformerPanel):
         self.nu = nu
         self.p = p
 
-        super(EditDist, self).__init__()
+        super().__init__()
 
         kwargs = {
             "window": window,

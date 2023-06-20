@@ -128,7 +128,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             "ColumnTransformer can simply be replaced by ColumnEnsembleTransformer."
         )
 
-        super(ColumnTransformer, self).__init__(
+        super().__init__(
             transformers=transformers,
             remainder=remainder,
             sparse_threshold=sparse_threshold,
@@ -144,7 +144,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
 
         Supports input types (X): list of numpy arrays, sparse arrays and DataFrames
         """
-        types = set(type(X) for X in Xs)
+        types = {type(X) for X in Xs}
 
         if self.sparse_output_:
             from scipy import sparse
@@ -176,7 +176,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         for Xs, name in zip(result, names):
             if not (getattr(Xs, "ndim", 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (scipy "
+                    "The output of the '{}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name)
                 )
 
@@ -206,7 +206,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
     def fit(self, X, y=None):
         """Fit the transformer."""
         X = check_X(X, coerce_to_pandas=True)
-        super(ColumnTransformer, self).fit(X, y)
+        super().fit(X, y)
         self._is_fitted = True
         return self
 
@@ -214,12 +214,12 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         """Transform the data."""
         self.check_is_fitted()
         X = check_X(X, coerce_to_pandas=True)
-        return super(ColumnTransformer, self).transform(X)
+        return super().transform(X)
 
     def fit_transform(self, X, y=None):
         """Fit and transform, shorthand."""
         # Wrap fit_transform to set _is_fitted attribute
-        Xt = super(ColumnTransformer, self).fit_transform(X, y)
+        Xt = super().fit_transform(X, y)
         self._is_fitted = True
         return Xt
 

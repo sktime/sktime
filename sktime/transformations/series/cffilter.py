@@ -83,7 +83,7 @@ class CFFilter(BaseTransformer):
         self.low = low
         self.high = high
         self.drift = drift
-        super(CFFilter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

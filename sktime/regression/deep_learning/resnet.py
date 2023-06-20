@@ -75,7 +75,7 @@ class ResNetRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(ResNetRegressor, self).__init__()
+        super().__init__()
 
         self.n_epochs = n_epochs
         self.callbacks = callbacks

@@ -102,7 +102,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
                 if average_dist == "wddtw":
                     self._average_params["averaging_distance_metric"] = "wdtw"
 
-        super(TimeSeriesKMeans, self).__init__(
+        super().__init__(
             n_clusters,
             init_algorithm,
             metric,

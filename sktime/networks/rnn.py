@@ -25,7 +25,7 @@ class RNNNetwork(BaseDeepNetwork):
     ):
         self.random_state = random_state
         self.units = units
-        super(RNNNetwork, self).__init__()
+        super().__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

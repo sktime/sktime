@@ -174,7 +174,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         self._transform_limit_in_minutes = 0
         self._classifier_limit_in_minutes = 0
 
-        super(ShapeletTransformClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit ShapeletTransformClassifier to training data.

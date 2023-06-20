@@ -68,7 +68,7 @@ class Filter(BaseTransformer):
                 raise ValueError("Negative values not supported")
             if l_freq > h_freq:
                 raise ValueError("High frequency must be higher" " than low frequency")
-        super(Filter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None) -> np.ndarray:
         """Transform data.
