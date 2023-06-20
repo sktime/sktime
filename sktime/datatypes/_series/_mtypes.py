@@ -37,7 +37,6 @@ infer_mtype_dict = dict()
 
 
 def infer_mtype_Series(obj):
-
     obj_type = type(obj)
 
     infer_dict = {

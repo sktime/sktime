@@ -149,7 +149,6 @@ def _bottom_hier_datagen(
         df.index.rename("timepoints", inplace=True)
         return df
     else:
-
         df.columns = ["l1_node01"]
 
         intercept = np.arange(0, intercept_max, 0.01)
@@ -164,7 +163,6 @@ def _bottom_hier_datagen(
         node_lookup.columns = ["l1_agg"]
 
         if no_levels >= 2:
-
             # create index from bottom up, sampling node names
             for i in range(2, no_levels + 1):
                 node_lookup["l" + str(i) + "_agg"] = node_lookup.groupby(

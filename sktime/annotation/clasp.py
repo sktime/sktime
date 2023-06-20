@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
-"""
-ClaSP (Classification Score Profile) Segmentation.
+"""ClaSP (Classification Score Profile) Segmentation.
 
 Notes
 -----
@@ -340,7 +338,6 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         -------
         IntervalIndex:
             Segmentation based on found change pints
-
         """
         cps = np.array(found_cps)
         start = np.insert(cps, 0, 0)

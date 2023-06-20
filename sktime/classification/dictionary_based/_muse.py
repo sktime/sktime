@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """WEASEL+MUSE classifier.
 
-multivariate dictionary based classifier based on SFA transform, dictionaries
-and logistic regression.
+multivariate dictionary based classifier based on SFA transform, dictionaries and
+logistic regression.
 """
 
 __author__ = ["patrickzib", "BINAYKUMAR943"]
@@ -142,7 +142,6 @@ class MUSE(BaseClassifier):
         n_jobs=1,
         random_state=None,
     ):
-
         # currently other values than 4 are not supported.
         self.alphabet_size = alphabet_size
 

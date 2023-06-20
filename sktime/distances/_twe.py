@@ -36,7 +36,7 @@ class _TweDistance(NumbaDistance):
         lmbda: float = 1.0,
         nu: float = 0.001,
         p: int = 2,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled twe distance callable.
 
@@ -128,7 +128,7 @@ class _TweDistance(NumbaDistance):
         lmbda: float = 1.0,
         nu: float = 0.001,
         p: int = 2,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled twe distance callable.
 

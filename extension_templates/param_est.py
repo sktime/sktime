@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Extension template for parameter estimators.
+"""Extension template for parameter estimators.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template

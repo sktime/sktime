@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Interface to Baxter-King bandpass filter from `statsmodels`.
+"""Interface to Baxter-King bandpass filter from `statsmodels`.
 
 Interfaces `bk_filter` from `statsmodels.tsa.filters`.
 """
@@ -25,7 +24,7 @@ class BKFilter(BaseTransformer):
     data and deals with the periodicity of the business cycle. Applying their
     band-pass filter to a series will produce a new series that does not contain
     fluctuations at a higher or lower frequency than those of the business cycle.
-    Baxter-King follow Burns and Mitchell’s work on business cycles, which suggests
+    Baxter-King follow Burns and Mitchell's work on business cycles, which suggests
     that U.S. business cycles typically last from 1.5 to 8 years.
 
     Parameters

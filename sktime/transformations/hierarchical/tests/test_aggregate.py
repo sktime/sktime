@@ -16,9 +16,9 @@ from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 def test_aggregator_fit_transform_index(flatten_single_levels):
     """Tests fit_transform of aggregator function.
 
-    This test asserts that the output of Aggregator using fit_transfrom() with a
-    named multiindex is equal to an unnamed one. It also tests that
-    Aggregator does not change the names of the input index in both cases.
+    This test asserts that the output of Aggregator using fit_transfrom() with a named
+    multiindex is equal to an unnamed one. It also tests that Aggregator does not change
+    the names of the input index in both cases.
     """
     agg = Aggregator(flatten_single_levels=flatten_single_levels)
 
@@ -44,8 +44,8 @@ def test_aggregator_fit_transform_index(flatten_single_levels):
 def test_aggregator_flatten():
     """Tests Aggregator flattening single levels.
 
-    This tests that the flatten_single_levels argument works as expected for a
-    fixed example of a complicated hierarchy.
+    This tests that the flatten_single_levels argument works as expected for a fixed
+    example of a complicated hierarchy.
     """
     agg = Aggregator(flatten_single_levels=False)
     agg_flat = Aggregator(flatten_single_levels=True)

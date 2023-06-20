@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Interface module to scipy.
 
-Interface module to scipy.spatial's pairwise distance function cdist
-    exposes parameters as scikit-learn hyper-parameters
+Interface module to scipy.spatial's pairwise distance function cdist     exposes
+parameters as scikit-learn hyper-parameters
 """
 
 __author__ = ["fkiraly"]
@@ -26,7 +26,9 @@ class ScipyDist(BasePairwiseTransformer):
     metric : string or function, as in cdist; default = 'euclidean'
         if string, one of: 'braycurtis', 'canberra', 'chebyshev', 'cityblock',
             'correlation', 'cosine', 'dice', 'euclidean', 'hamming', 'jaccard',
-            'jensenshannon', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
+            'jensenshannon',
+            'kulsinski' (< scipy 1.11) or 'kulczynski1' (from scipy 1.11),
+            'mahalanobis', 'matching', 'minkowski',
             'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
             'sokalsneath', 'sqeuclidean', 'yule'
         if function, should have signature 1D-np.array x 1D-np.array -> float
@@ -62,7 +64,6 @@ class ScipyDist(BasePairwiseTransformer):
         var_weights=None,
         metric_kwargs=None,
     ):
-
         self.metric = metric
         self.p = p
         self.colalign = colalign

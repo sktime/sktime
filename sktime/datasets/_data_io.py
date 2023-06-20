@@ -65,8 +65,7 @@ def _alias_mtype_check(return_type):
 
 # time series classification data sets
 def _download_and_extract(url, extract_path=None):
-    """
-    Download and unzip datasets (helper function).
+    """Download and unzip datasets (helper function).
 
     This code was modified from
     https://github.com/tslearn-team/tslearn/blob
@@ -126,7 +125,6 @@ def _list_available_datasets(extract_path):
     -------
     datasets : List
         List of the names of datasets downloaded
-
     """
     if extract_path is None:
         data_dir = os.path.join(MODULE, "data")
@@ -195,7 +193,10 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
         ):
             # Dataset is not already present in the datasets directory provided.
             # If it is not there, download and install it.
-            url = "https://timeseriesclassification.com/Downloads/%s.zip" % name
+            url = (
+                "https://timeseriesclassification.com/"
+                f"ClassificationDownloads/{name}.zip"
+            )
             # This also tests the validitiy of the URL, can't rely on the html
             # status code as it always returns 200
             try:
@@ -1413,8 +1414,7 @@ def write_tabular_transformation_to_arff(
     fold="",
     fit_transform=True,
 ):
-    """
-    Transform a dataset using a tabular transformer and write the result to a arff file.
+    """Transform dataset using a tabular transformer and write the result to arff file.
 
     Parameters
     ----------
@@ -1552,8 +1552,7 @@ def write_dataframe_to_tsfile(
     comment=None,
     fold="",
 ):
-    """
-    Output a dataset in dataframe format to .ts file.
+    """Output a dataset in dataframe format to .ts file.
 
     Parameters
     ----------
@@ -1663,8 +1662,7 @@ def write_ndarray_to_tsfile(
     comment=None,
     fold="",
 ):
-    """
-    Output a dataset in ndarray format to .ts file.
+    """Output a dataset in ndarray format to .ts file.
 
     Parameters
     ----------
@@ -1762,8 +1760,7 @@ def load_tsf_to_dataframe(
     value_column_name="series_value",
     return_type="pd_multiindex_hier",
 ):
-    """
-    Convert the contents in a .tsf file into a dataframe.
+    """Convert the contents in a .tsf file into a dataframe.
 
     This code was extracted from
     https://github.com/rakshitha123/TSForecasting/blob

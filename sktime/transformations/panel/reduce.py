@@ -15,15 +15,13 @@ from sktime.transformations.base import BaseTransformer
 
 
 class Tabularizer(BaseTransformer):
-    """
-    A transformer that turns time series/panel data into tabular data.
+    """A transformer that turns time series/panel data into tabular data.
 
-    This estimator converts nested pandas dataframe containing
-    time-series/panel data with numpy arrays or pandas Series in
-    dataframe cells into a tabular pandas dataframe with only primitives in
-    cells. This is useful for transforming
-    time-series/panel data into a format that is accepted by standard
-    validation learning algorithms (as in sklearn).
+    This estimator converts nested pandas dataframe containing time-series/panel data
+    with numpy arrays or pandas Series in dataframe cells into a tabular pandas
+    dataframe with only primitives in cells. This is useful for transforming time-
+    series/panel data into a format that is accepted by standard validation learning
+    algorithms (as in sklearn).
     """
 
     _tags = {
@@ -111,7 +109,6 @@ class TimeBinner(BaseTransformer):
     }
 
     def __init__(self, idx, aggfunc=None):
-
         assert isinstance(
             idx, pd.IntervalIndex
         ), "idx should be of type pd.IntervalIndex"

@@ -213,8 +213,7 @@ class ElasticEnsemblePostProcess:
         write_test=True,
         overwrite=False,
     ):
-        """
-        Write the results to file.
+        """Write the results to file.
 
         Probably could be replaced with data_io.write_results_UEA
 

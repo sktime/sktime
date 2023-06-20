@@ -102,7 +102,6 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     # no default tag values - these are set dynamically below
 
     def __init__(self, regressor, transformers):
-
         self.regressor = regressor
         self.regressor_ = regressor.clone()
         self.transformers = transformers
@@ -392,7 +391,6 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     # no default tag values - these are set dynamically below
 
     def __init__(self, regressor, transformers):
-
         from sklearn.base import clone
 
         self.regressor = regressor

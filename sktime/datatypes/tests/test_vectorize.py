@@ -73,7 +73,6 @@ def _generate_scitype_mtype_combinations():
     sci_mtype_tuples = []
 
     for scitype in SCITYPES:
-
         mtypes = _get_all_mtypes_for_scitype(scitype)
 
         for mtype in mtypes:

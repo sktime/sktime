@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """ContractableBOSS classifier.
 
-Dictionary based cBOSS classifier based on SFA transform. Improves the
-ensemble structure of the original BOSS algorithm.
+Dictionary based cBOSS classifier based on SFA transform. Improves the ensemble
+structure of the original BOSS algorithm.
 """
 
 __author__ = ["MatthewMiddlehurst", "BINAYKUMAR943"]

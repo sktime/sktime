@@ -104,7 +104,6 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     # no default tag values - these are set dynamically below
 
     def __init__(self, clusterer, transformers):
-
         self.clusterer = clusterer
         self.clusterer_ = clusterer.clone()
         self.transformers = transformers
@@ -320,7 +319,6 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         params = params + [params1]
 
         if _check_estimator_deps(TimeSeriesKMeans, severity="none"):
-
             t1 = ExponentTransformer(power=2)
             t2 = ExponentTransformer(power=0.5)
             c = TimeSeriesKMeans(random_state=42)
@@ -428,7 +426,6 @@ class SklearnClustererPipeline(ClustererPipeline):
     # no default tag values - these are set dynamically below
 
     def __init__(self, clusterer, transformers):
-
         from sklearn.base import clone
 
         self.clusterer = clusterer

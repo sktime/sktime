@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Empty for now
+"""Interval based series-as-features estimators."""
 
 __all__ = ["BaseTimeSeriesForest"]
 

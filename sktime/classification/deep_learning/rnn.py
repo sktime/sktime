@@ -1,6 +1,5 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-
 """Time Recurrent Neural Network (RNN) for classification."""
 
 __author__ = ["mloning"]
@@ -17,6 +16,33 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 class SimpleRNNClassifier(BaseDeepClassifier):
     """Simple recurrent neural network.
+
+    Parameters
+    ----------
+    n_epochs : int, default = 100
+        the number of epochs to train the model
+    batch_size : int, default = 1
+        the number of samples per gradient update.
+    units : int, default = 6
+        number of units in the network
+    callbacks : list of tf.keras.callbacks.Callback objects, default = None
+    add_default_callback : bool, default = True
+        whether to add default callback
+    random_state : int or None, default=0
+        Seed for random number generation.
+    verbose : boolean, default = False
+        whether to output extra information
+    loss : string, default="mean_squared_error"
+        fit parameter for the keras model
+    metrics : list of strings, default=["accuracy"]
+        metrics to use in fitting the neural network
+    activation : string or a tf callable, default="sigmoid"
+        Activation function used in the output layer.
+        List of available activation functions: https://keras.io/api/layers/activations/
+    use_bias : boolean, default = True
+        whether the layer uses a bias vector.
+    optimizer : keras.optimizers object, default = RMSprop(lr=0.001)
+        specify the optimizer and the learning rate to be used.
 
     References
     ----------
@@ -57,8 +83,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self._network = RNNNetwork(random_state=random_state, units=units)
 
     def build_model(self, input_shape, n_classes, **kwargs):
-        """
-        Construct a compiled, un-trained, keras model that is ready for training.
+        """Construct a compiled, un-trained, keras model that is ready for training.
 
         In sktime, time series are stored in numpy arrays of shape (d,m), where d
         is the number of dimensions, m is the series length. Keras/tensorflow assume
@@ -97,8 +122,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         return model
 
     def _fit(self, X, y):
-        """
-        Fit the classifier on the training set (X, y).
+        """Fit the classifier on the training set (X, y).
 
         Parameters
         ----------

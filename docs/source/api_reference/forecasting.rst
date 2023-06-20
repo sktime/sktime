@@ -206,6 +206,9 @@ All "ARIMA" models below include SARIMAX capability.
     :template: class.rst
 
     StatsForecastAutoARIMA
+    StatsForecastAutoCES
+    StatsForecastAutoETS
+    StatsForecastAutoTheta
 
 .. currentmodule:: sktime.forecasting.sarimax
 

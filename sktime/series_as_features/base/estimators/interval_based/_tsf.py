@@ -121,7 +121,6 @@ class BaseTimeSeriesForest:
         return self
 
     def _get_fitted_params(self):
-
         return {
             "classes": self.classes_,
             "intervals": self.intervals_,

@@ -16,22 +16,28 @@ class DtwDist(BasePairwiseTransformerPanel):
 
     Interface to simple dynamic time warping (DTW) distance,
     and the following weighted/derivative versions:
-    WDTW - weighted dynamic tyme warping - `weighted=True, derivative=False`
-    DDTW - derivative dynamic time warping - `weighted=False, derivative=True`
-    WDDTW - weighted derivative dynamic time warping - `weighted=True, derivative=True`
 
-    `sktime` interface to the efficient `numba` implementations in `sktime.distances`.
+    * WDTW - weighted dynamic tyme warping - ``weighted=True, derivative=False`
+    * DDTW - derivative dynamic time warping - ``weighted=False, derivative=True``
+    * WDDTW - weighted derivative dynamic time
+      warping - ``weighted=True, derivative=True``
+
+    `sktime` interface to the efficient `numba` implementations
+    provided by ``pairwise_distance`` in `sktime.distances`.
 
     This estimator provides performant implementation of time warping distances for:
     * time series of equal length
     * the Euclidean pairwise distance
 
-    For unequal length time series, use `sktime.dists_kernels.DistFromAligner`
-    with a time warping aligner such as `sktime.aligners.AlignerDTW`.
-    To use arbitrary pairwise distances, use `sktime.aligners.AlignerDTWfromDist`.
-    (for derivative DTW, pipeline an alignment distance with `Differencer`)
+    For unequal length time series, use ``sktime.dists_kernels.DistFromAligner``
+    with a time warping aligner such as ``sktime.aligners.AlignerDTW``.
+    To use arbitrary pairwise distances, use ``sktime.aligners.AlignerDTWfromDist``.
+    (for derivative DTW, pipeline an alignment distance with ``Differencer``)
 
     Note that the more flexible options above may be less performant.
+
+    The algorithms are also available as alignment estimators
+    ``sktime.alignmnent.dtw_numba``, producing alignments aka alignment paths.
 
     DTW was originally proposed in [1]_, DTW computes the distance between two
     time series by considering their alignments during the calculation.
@@ -66,21 +72,30 @@ class DtwDist(BasePairwiseTransformerPanel):
         False = unmodified distance, i.e., dtw distance or weighted dtw distance
         True = derivative distance, i.e., derivative dtw distance or derivative wdtw
     window: int, defaults = None
-        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
-    itakura_max_slope: float, defaults = None
-        Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        Sakoe-Chiba window radius
+        one of three mutually exclusive ways to specify bounding matrix
+        if ``None``, does not use Sakoe-Chiba window
+        if ``int``, uses Sakoe-Chiba lower bounding window with radius ``window``.
+        If ``window`` is passed, ``itakura_max_slope`` will be ignored.
+    itakura_max_slope: float, between 0. and 1., default = None
+        Itakura parallelogram slope
+        one of three mutually exclusive ways to specify bounding matrix
+        if ``None``, does not use Itakura parallelogram lower bounding
+        if ``float``, uses Itakura parallelogram lower bounding,
+        with slope gradient ``itakura_max_slope``
     bounding_matrix: optional, 2D np.ndarray, default=None
-        must be of size len(X) and n is len(X2) for X, X2 passed in transform
-        Custom bounding matrix to use. If defined then other lower_bounding params
-        are ignored. The matrix should be structure so that indexes considered in
+        one of three mutually exclusive ways to specify bounding matrix
+        must be of shape ``(len(X), len(X2))``, ``len`` meaning number time points,
+        where ``X``, ``X2`` are the two time series passed in transform
+        Custom bounding matrix to use.
+        If provided, then ``window`` and ``itakura_max_slope`` are ignored.
+        The matrix should be structured so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should
         be infinity.
-    g: float, optional, default = 0. Used only if weighted=True.
-        Constant that controls the curvature (slope) of the function; that is, g
-        controls the level of penalisation for the points with larger phase
-        difference.
+    g: float, optional, default = 0. Used only if ``weighted=True``.
+        Constant that controls the curvature (slope) of the function;
+        that is, ``g`` controls the level of penalisation for the points
+        with larger phase difference.
 
     References
     ----------
@@ -122,7 +137,6 @@ class DtwDist(BasePairwiseTransformerPanel):
         bounding_matrix: np.ndarray = None,
         g: float = 0.0,
     ):
-
         self.weighted = weighted
         self.derivative = derivative
         self.window = window
@@ -183,3 +197,29 @@ class DtwDist(BasePairwiseTransformerPanel):
         distmat = pairwise_distance(X, X2, metric=metric_key, **kwargs)
 
         return distmat
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for distance/kernel transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params0 = {}
+        params1 = {"weighted": True}
+        params2 = {"derivative": True, "window": 0.2}
+        params3 = {"weighted": True, "derivative": True, "g": 0.05}
+
+        return [params0, params1, params2, params3]

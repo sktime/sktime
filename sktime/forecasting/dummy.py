@@ -64,7 +64,6 @@ class ForecastKnownValues(BaseForecaster):
     }
 
     def __init__(self, y_known, method=None, fill_value=None, limit=None):
-
         self.y_known = y_known
         self.method = method
         self.fill_value = fill_value

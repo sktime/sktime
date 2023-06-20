@@ -261,8 +261,7 @@ class Differencer(BaseTransformer):
         return na_handling
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
         private _fit containing the core logic, called from fit
 

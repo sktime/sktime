@@ -1,8 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Do-nothing script for making a release.
+"""Do-nothing script for making a release.
 
 This idea comes from here:
 - https://blog.danslimmon.com/2019/07/15/do-nothing-scripting-the-key-to

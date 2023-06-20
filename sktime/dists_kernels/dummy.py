@@ -27,7 +27,6 @@ class ConstantPwTrafoPanel(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, constant=0):
-
         self.constant = constant
 
         super(ConstantPwTrafoPanel, self).__init__()

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-Metrics for evaluating performance of segmentation estimators.
+"""Metrics for evaluating performance of segmentation estimators.
 
-Metrics are suitable for comparing predicted change point sets
-against true change points and quantify the error.
+Metrics are suitable for comparing predicted change point sets against true change
+points and quantify the error.
 """
 import numpy as np
 import numpy.typing as npt
@@ -16,8 +15,7 @@ __author__ = ["lmmentel"]
 def count_error(
     true_change_points: npt.ArrayLike, pred_change_points: npt.ArrayLike
 ) -> float:
-    """
-    Error counting the difference in the number of change points.
+    """Error counting the difference in the number of change points.
 
     Parameters
     ----------
@@ -41,8 +39,7 @@ def hausdorff_error(
     symmetric: bool = True,
     seed: int = 0,
 ) -> float:
-    """
-    Compute the Hausdorff distance between two sets of change points.
+    """Compute the Hausdorff distance between two sets of change points.
 
     .. seealso::
 
@@ -78,8 +75,7 @@ def hausdorff_error(
 def prediction_ratio(
     true_change_points: npt.ArrayLike, pred_change_points: npt.ArrayLike
 ) -> float:
-    """
-    Prediction ratio is the ratio of number of predicted to true change points.
+    """Prediction ratio is the ratio of number of predicted to true change points.
 
     Parameters
     ----------

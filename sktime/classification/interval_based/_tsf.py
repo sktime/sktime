@@ -105,10 +105,10 @@ class TimeSeriesForestClassifier(
     def fit(self, X, y, **kwargs):
         """Wrap fit to call BaseClassifier.fit.
 
-        This is a fix to get around the problem with multiple inheritance. The
-        problem is that if we just override _fit, this class inherits the fit from
-        the sklearn class BaseTimeSeriesForest. This is the simplest solution,
-        albeit a little hacky.
+        This is a fix to get around the problem with multiple inheritance. The problem
+        is that if we just override _fit, this class inherits the fit from the sklearn
+        class BaseTimeSeriesForest. This is the simplest solution, albeit a little
+        hacky.
         """
         return BaseClassifier.fit(self, X=X, y=y, **kwargs)
 

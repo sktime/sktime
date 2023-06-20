@@ -140,7 +140,6 @@ class Lag(BaseTransformer):
         flatten_transform_index=True,
         keep_column_names=False,
     ):
-
         self.lags = lags
         self.freq = freq
         self.index_out = index_out
@@ -442,7 +441,6 @@ class ReducerTransform(BaseTransformer):
         transformers=None,
         impute_method="bfill",
     ):
-
         self.lags = lags
         self.freq = freq
         self.shifted_vars = shifted_vars
