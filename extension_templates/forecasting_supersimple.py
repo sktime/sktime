@@ -76,18 +76,6 @@ class MyForecaster(BaseForecaster):
         # behavioural tags: internal type
         # -------------------------------
         #
-        # y_inner_mtype, X_inner_mtype control which format X/y appears in
-        # in the inner functions _fit, _predict, etc
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
-        # valid values: str and list of str
-        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
-        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
-        #   in that case, all inputs are converted to that one type
-        # if list of str, must be a list of valid str specifiers
-        #   in that case, X/y are passed through without conversion if on the list
-        #   if not on the list, converted to the first entry of the same scitype
-        #
         # scitype:y controls whether internal y can be univariate/multivariate
         # if multivariate is not valid, applies vectorization over variables
         "scitype:y": "univariate",
@@ -95,19 +83,6 @@ class MyForecaster(BaseForecaster):
         #   "univariate": inner _fit, _predict, etc, receive only univariate series
         #   "multivariate": inner methods receive only series with 2 or more variables
         #   "both": inner methods can see series with any number of variables
-        #
-        # capability tags: properties of the estimator
-        # --------------------------------------------
-        #
-        # ignores-exogeneous-X = does estimator ignore the exogeneous X?
-        "ignores-exogeneous-X": False,
-        # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
-        # CAVEAT: if tag is set to True, inner methods always see X=None
-        #
-        # requires-fh-in-fit = is forecasting horizon always required in fit?
-        "requires-fh-in-fit": True,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception in fit if fh has not been passed
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -154,12 +129,16 @@ class MyForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-        #
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
+        #
+        # todo:
+        # insert logic here
+        # self.fitted_model_param_ = sthsth
+        #
+        return self
+
+        # IMPORTANT: avoid side effects to y, X, fh
         #
         # Note: when interfacing a model that has fit, with parameters
         #   that are not data (y, X) or forecasting-horizon-like,
@@ -190,12 +169,25 @@ class MyForecaster(BaseForecaster):
 
         Returns
         -------
-        y_pred : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
+        y_pred : pd.DataFrame
             Point predictions
         """
+        # todo
+        # to get fitted model params set in fit, do this:
+        #
+        # fitted_model_param = self.fitted_model_param_
 
-        # implement here
+        # todo: add logic to compute values
+        # values = sthsthsth
+
+        # then return as pd.DataFrame
+        # below code guarantees the right row and column index
+        #
+        # row_idx = fh.to_absolute_index(self.cutoff)
+        # col_idx = self._y.index
+        #
+        # y_pred = pd.DataFrame(values, index=row_ind, columns=col_idx)
+
         # IMPORTANT: avoid side effects to X, fh
 
     # todo: implement this if this is an estimator contributed to sktime
