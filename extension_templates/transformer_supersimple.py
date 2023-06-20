@@ -3,8 +3,9 @@
 """Extension template for transformers, SIMPLE version.
 
 Contains only bare minimum of implementation requirements for a functional transformer.
-Also assumes *no composition*, i.e., no transformer or other estimator components.
+Covers only the case of series-to-series transformation.
 Assumes pd.DataFrame used internally, and no hierarchical functionality.
+Also assumes *no composition*, i.e., no transformer or other estimator components.
 For advanced cases (inverse transform, composition, etc),
     see full extension template in forecasting.py
 
