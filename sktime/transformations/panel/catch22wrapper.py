@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Catch22 features.
 
 A transformer for the Catch22 features using the pycatch22 C wrapper.

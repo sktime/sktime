@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Proximity Forest time series classifier.
 
 A decision tree forest which uses distance measures to partition data. B. Lucas and A.

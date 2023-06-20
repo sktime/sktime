@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """KNN time series regression.
 
 This class is a KNN regressor which supports time series distance measures. The class

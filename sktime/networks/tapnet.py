@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
 __author__ = [

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implemenents Box-Cox and Log Transformations."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 

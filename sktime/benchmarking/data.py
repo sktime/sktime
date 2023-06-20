@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Data storage for benchmarking."""
 
 __all__ = ["UEADataset", "RAMDataset", "make_datasets"]

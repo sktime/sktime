@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Series Forest (TSF) Classifier.
 
 Interval based TSF classifier, extracts basic summary features from random intervals.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type converters for Series scitype.
 
 Exports conversion and mtype dictionary for Series scitype:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Slope transformer."""
 import math
 import statistics

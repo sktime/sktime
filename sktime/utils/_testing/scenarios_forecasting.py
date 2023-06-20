@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for forecasters.
 
 Contains TestScenario concrete children to run in tests for forecasters.

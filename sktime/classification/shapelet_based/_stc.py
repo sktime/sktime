@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A shapelet transform classifier (STC).
 
 Shapelet transform classifier pipeline that simply performs a (configurable) shapelet

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Martrix Profile classifier.
 
 Pipeline classifier using the Matrix Profile transformer and an estimator.

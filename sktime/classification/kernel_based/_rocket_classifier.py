@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """RandOm Convolutional KErnel Transform (Rocket).
 
 Pipeline classifier using the ROCKET transformer and RidgeClassifierCV estimator.

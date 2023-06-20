@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Transformers for index and column subsetting."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 

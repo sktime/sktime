@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing vectorization via VectorizedDF."""
 
 __author__ = ["fkiraly"]

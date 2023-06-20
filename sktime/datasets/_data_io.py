@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for loading panel datasets."""
 
 __author__ = [

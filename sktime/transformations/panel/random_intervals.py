@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Random interval features.
 
 A transformer for the extraction of features on randomly selected intervals.

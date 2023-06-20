@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Signature kernels from Kiraly et al, 2016."""
 
 __author__ = ["fkiraly"]

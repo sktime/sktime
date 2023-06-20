@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implements simple conformal forecast intervals.
 
 Code based partially on NaiveVariance by ilyasmoutawwakil.

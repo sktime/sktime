@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """E-Agglo: agglomerative clustering algorithm that preserves observation order."""
 
 import warnings

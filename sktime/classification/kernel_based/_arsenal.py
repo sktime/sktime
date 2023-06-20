@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Arsenal classifier.
 
 kernel based ensemble of ROCKET classifiers.

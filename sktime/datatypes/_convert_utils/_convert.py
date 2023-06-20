@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Conversion utilities for mtypes."""
 
 __author__ = ["fkiraly"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Padding transformer, pad unequal length panel to max length or fixed length."""
 import numpy as np
 import pandas as pd

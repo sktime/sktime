@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series kshapes."""
 from typing import Union
 

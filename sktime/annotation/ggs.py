@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Greedy Gaussian Segmentation (GGS).
 
 The method approximates solutions for the problem of breaking a

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Composer that creates distance from aligner."""
 
 __author__ = ["fkiraly"]

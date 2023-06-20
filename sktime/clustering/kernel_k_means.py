@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series kernel kmeans."""
 from typing import Dict, Union
 

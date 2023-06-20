@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """RandOm Convolutional KErnel Transform (Rocket) regressor.
 
 Pipeline regressor using the ROCKET transformer and RidgeCV estimator.

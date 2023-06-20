@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Register of estimator base classes corresponding to sktime scitypes.
 
 This module exports the following:

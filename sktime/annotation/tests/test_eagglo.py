@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for E-Agglo (agglomerative clustering algorithm)."""
 
 __author__ = ["KatieBuc"]

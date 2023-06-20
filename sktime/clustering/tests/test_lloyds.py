@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for time series Lloyds partitioning."""
 from typing import Callable
 

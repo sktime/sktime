@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Wrappers to convert distance to kernel or kernel to distance."""
 
 __author__ = ["fkiraly"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Base class for clustering."""
 __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["BaseClusterer"]

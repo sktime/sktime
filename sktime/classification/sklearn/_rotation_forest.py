@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A rotation forest (RotF) vector classifier.
 
 A rotation Forest sktime implementation for continuous values only. Fits sklearn

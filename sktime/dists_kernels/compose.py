@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipelines for pairwise panel transformers."""
 
 __author__ = ["fkiraly"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Piecewise Aggregate Approximation Transformer (PAA)."""
 import pandas as pd
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Series Forest (TSF) Classifier."""
 
 __author__ = [

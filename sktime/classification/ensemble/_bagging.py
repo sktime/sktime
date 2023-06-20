@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Bagging time series classifiers."""
 
 __author__ = ["fkiraly"]

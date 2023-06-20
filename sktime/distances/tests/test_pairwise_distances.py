@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test suite for numba pairwise distances."""
 
 __author__ = ["chrisholder"]

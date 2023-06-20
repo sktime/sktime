@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """CIF classifier.
 
 Interval based CIF classifier extracting catch22 features from random intervals.

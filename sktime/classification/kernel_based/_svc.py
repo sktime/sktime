@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Support vector classifier using time series kernels..
 
 Direct wrap of sklearn SVC with added functionality that allows time series kernel to be

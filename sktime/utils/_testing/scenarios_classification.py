@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for classification and regression.
 
 Contains TestScenario concrete children to run in tests for classifiers/regressirs.

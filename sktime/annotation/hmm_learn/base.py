@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Hidden Markov Model based annotation from hmmlearn.
 
 This code provides a base interface template for models

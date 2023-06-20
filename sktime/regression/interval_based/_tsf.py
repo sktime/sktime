@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Series Forest Regressor (TSF)."""
 
 __author__ = ["TonyBagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"]

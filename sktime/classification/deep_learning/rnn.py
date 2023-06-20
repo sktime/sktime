@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """Time Recurrent Neural Network (RNN) for classification."""
 
 __author__ = ["mloning"]

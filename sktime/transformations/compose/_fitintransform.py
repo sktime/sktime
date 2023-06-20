@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Fit-in-transform wrapper."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 

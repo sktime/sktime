@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """TDE classifiers.
 
 Dictionary based TDE classifiers based on SFA transform. Contains a single IndividualTDE

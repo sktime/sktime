@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Elastic Ensemble classifier from file."""
 __author__ = ["jasonlines"]
 

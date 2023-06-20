@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # License: BSD 3 clause
 """Utility methods to print system info for debugging.
 

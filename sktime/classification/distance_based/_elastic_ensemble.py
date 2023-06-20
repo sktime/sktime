@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The Elastic Ensemble (EE).
 
 An ensemble of elastic nearest neighbour classifiers.

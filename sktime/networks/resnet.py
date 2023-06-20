@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Residual Network (ResNet) (minus the final output layer)."""
 
 __author__ = ["James Large", "Withington", "nilesh05apr"]

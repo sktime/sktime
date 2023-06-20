@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multi Layer Perceptron Network (MLP) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus"]

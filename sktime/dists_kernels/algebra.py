@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Arithmetics with distances/kernels, e.g., addition, multiplication."""
 
 __author__ = ["fkiraly"]

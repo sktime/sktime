@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Benchmarking base module."""
 
 __author__ = ["mloning", "viktorkaz"]

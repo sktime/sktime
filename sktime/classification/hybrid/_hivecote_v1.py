@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
 
 Hybrid ensemble of classifiers from 4 separate time series classification

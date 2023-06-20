@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """MultiRocket transform."""
 
 import multiprocessing

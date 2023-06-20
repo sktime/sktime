@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for deep_equals utility."""
 from copy import deepcopy
 

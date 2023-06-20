@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Signature transformer."""
 
 from sklearn.pipeline import Pipeline

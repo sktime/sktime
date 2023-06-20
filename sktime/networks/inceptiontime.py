@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Inception Time."""
 __author__ = "James Large, Withington"
 

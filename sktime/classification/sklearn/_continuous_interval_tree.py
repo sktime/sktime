@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
 Continuous Interval Tree aka Time Series Tree, base classifier originally used in the

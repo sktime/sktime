@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Supervised interval features.
 
 A transformer for the extraction of features on intervals extracted from a supervised

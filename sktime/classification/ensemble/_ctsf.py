@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Composable time series forest."""
 
 __author__ = ["mloning", "AyushmaanSeth"]

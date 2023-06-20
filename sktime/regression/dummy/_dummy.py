@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Dummy time series regressor."""
 
 __author__ = ["Badr-Eddine Marani"]

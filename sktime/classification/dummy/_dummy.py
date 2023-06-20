@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Dummy time series classifier."""
 
 __author__ = ["ZiyaoWei"]

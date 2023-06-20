@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Mutli-scale Attention Convolutional Neural Classifier."""
 
 __author__ = ["jnrusson1"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing machine type checkers for scitypes."""
 
 __author__ = ["fkiraly"]

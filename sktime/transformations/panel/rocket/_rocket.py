@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Rocket transformer."""
 
 __author__ = ["angus924"]

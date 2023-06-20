@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Abstract base class for time series classifiers.
 
     class name: BaseClassifier

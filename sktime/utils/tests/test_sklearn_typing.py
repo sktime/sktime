@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for sklearn typing utilities in utils.sktime."""
 
 __author__ = ["fkiraly"]

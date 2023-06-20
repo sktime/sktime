@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Benchmark results classes."""
 
 __all__ = ["HDDResults", "RAMResults"]

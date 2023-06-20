@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Deep learning based regressors."""
 __all__ = [
     "CNNRegressor",

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series kmedoids."""
 __author__ = ["chrisholder", "TonyBagnall"]
 

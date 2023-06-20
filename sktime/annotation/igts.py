@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Information Gain-based Temporal Segmentation.
 
 Information Gain Temporal Segmentation (IGTS) is a method for segmenting

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multi Layer Perceptron (MLP) (minus the final output layer)."""
 
 __author__ = ["James-Large", "Withington", "AurumnPegasus"]

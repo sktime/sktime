@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implementation of a SignatureClassifier.
 
 Utilises the signature method of feature extraction.

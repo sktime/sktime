@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Registry of mtypes for Panel scitype.
 
 See datatypes._registry for API.

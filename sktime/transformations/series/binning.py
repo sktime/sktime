@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time binning for turning series equally spaced."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 

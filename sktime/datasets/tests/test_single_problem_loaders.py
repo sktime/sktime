@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test single problem loaders with varying return types."""
 import numpy as np
 import pandas as pd

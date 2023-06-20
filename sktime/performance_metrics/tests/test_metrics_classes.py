@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for classes in _classes module."""
 from inspect import getmembers, isclass
 

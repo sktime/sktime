@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series DBSCAN, wrapping sklearn DBSCAN."""
 
 __author__ = ["fkiraly"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests the VAR model."""
 __author__ = ["thayeylolu", "AurumnPegasus"]
 import numpy as np
