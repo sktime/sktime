@@ -74,8 +74,11 @@ class MyForecaster(BaseForecaster):
         #   "both": inner _predict gets pd.DataFrame series with any number of columns
         #
         # do not change these:
+        # (look at advanced templates if you think these should change)
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
+        "ignores-exogeneous-X": False,
+        "requires-fh-in-fit": True,
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -109,8 +112,7 @@ class MyForecaster(BaseForecaster):
             if self.get_tag("scitype:y")=="both": no restrictions apply
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
+            Required (non-optional) here.
         X : pd.DataFrame, optional (default=None)
             Exogeneous time series to fit to.
 
@@ -152,7 +154,6 @@ class MyForecaster(BaseForecaster):
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
 
