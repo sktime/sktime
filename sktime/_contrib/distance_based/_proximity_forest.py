@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """Proximity Forest time series classifier.
 
-A decision tree forest which uses distance measures to partition data.
-B. Lucas and A. Shifaz, C. Pelletier, L. O’Neill, N. Zaidi, B. Goethals,
-F. Petitjean and G. Webb
-Proximity Forest: an effective and scalable distance-based classifier for
-time series,
+A decision tree forest which uses distance measures to partition data. B. Lucas and A.
+Shifaz, C. Pelletier, L. O'Neill, N. Zaidi, B. Goethals, F. Petitjean and G. Webb
+Proximity Forest: an effective and scalable distance-based classifier for time series,
 Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
 """
 
@@ -101,7 +99,6 @@ class _CachedTransformer(_PanelToPanelTransformer):
     Attributes
     ----------
     cache       : location to store transforms seen before for fast look up
-
     """
 
     _required_parameters = ["transformer"]
@@ -116,8 +113,7 @@ class _CachedTransformer(_PanelToPanelTransformer):
         self.cache = {}
 
     def transform(self, X, y=None):
-        """
-        Fit transformer, creating a cache for transformation.
+        """Fit transformer, creating a cache for transformation.
 
         Parameters
         ----------
@@ -195,8 +191,8 @@ def numba_wrapper(distance_measure):
 
     (to 1 column per dimension format)
     :param distance_measure: distance measure to wrap
-    :return: a distance measure which automatically formats data for cython
-    distance measures
+    :return: a distance measure which automatically formats data for cython distance
+        measures
     """
 
     def distance(instance_a, instance_b, **params):
@@ -641,8 +637,8 @@ def setup_all_distance_measure_getter(proximity):
     def pick_rand_distance_measure(proximity):
         """Generate a distance measure from a range of parameters.
 
-        :param proximity: proximity object containing distance measures,
-        ranges and dataset
+        :param proximity: proximity object containing distance measures, ranges and
+            dataset
         :return: a distance measure with no parameters
         """
         random_state = proximity.random_state
@@ -928,7 +924,7 @@ class ProximityStump(BaseClassifier):
         :param X: Array-like containing instances
         :param y: Array-like containing class labels
         :return: Returns a dictionary {Label: [sub_X]} in which sub_X contains all
-        instances that match that label
+            instances that match that label
         """
         split_class_x = dict()
         y_size = len(y)
@@ -1083,8 +1079,8 @@ class ProximityStump(BaseClassifier):
         """Find distance to exemplars.
 
         :param X: the dataset containing a list of instances
-        :return: 2d numpy array of distances from each instance to each
-        exemplar (instance by exemplar)
+        :return: 2d numpy array of distances from each instance to each exemplar
+            (instance by exemplar)
         """
         check_X(X)
         if self.n_jobs > 1 or self.n_jobs < 0:
@@ -1230,22 +1226,21 @@ class ProximityTree(BaseClassifier):
         """Build a Proximity Tree object.
 
         :param random_state: the random state
-        :param get_exemplars: get the exemplars from a given dataframe and
-        list of class labels
+        :param get_exemplars: get the exemplars from a given dataframe and list of class
+            labels
         :param distance_measure: distance measure to use
-        :param get_distance_measure: method to get the distance measure if
-        no already set
-        :param setup_distance_measure: method to setup the distance measures
-        based upon the dataset given
+        :param get_distance_measure: method to get the distance measure if no already
+            set
+        :param setup_distance_measure: method to setup the distance measures based upon
+            the dataset given
         :param get_gain: method to find the gain of a data split
         :param max_depth: maximum depth of the tree
         :param is_leaf: function to decide when to mark a node as a leaf node
         :param verbosity: number reflecting the verbosity of logging
         :param n_jobs: number of parallel threads to use while building
-        :param find_stump: method to find the best split of data / stump at
-        a node
-        :param n_stump_evaluations: number of stump evaluations to do if
-        find_stump method is None
+        :param find_stump: method to find the best split of data / stump at a node
+        :param n_stump_evaluations: number of stump evaluations to do if find_stump
+            method is None
         """
         super().__init__()
         self.verbosity = verbosity
@@ -1317,7 +1312,7 @@ class ProximityForest(BaseClassifier):
 
         title={Proximity Forest: an effective and scalable distance-based
         classifier for time series},
-        author={B. Lucas and A. Shifaz and C. Pelletier and L. O’Neill and N.
+        author={B. Lucas and A. Shifaz and C. Pelletier and L. O'Neill and N.
         Zaidi and B. Goethals and F. Petitjean and G. Webb},
          journal={Data Mining and Knowledge Discovery},
         volume={33},
@@ -1366,22 +1361,21 @@ class ProximityForest(BaseClassifier):
         """Build a Proximity Forest object.
 
         :param random_state: the random state
-        :param get_exemplars: get the exemplars from a given dataframe and
-        list of class labels
+        :param get_exemplars: get the exemplars from a given dataframe and list of class
+            labels
         :param distance_measure: distance measure to use
-        :param get_distance_measure: method to get the distance measure if
-        no already set
-        :param setup_distance_measure_getter: method to setup the distance
-        measures based upon the dataset given
+        :param get_distance_measure: method to get the distance measure if no already
+            set
+        :param setup_distance_measure_getter: method to setup the distance measures
+            based upon the dataset given
         :param get_gain: method to find the gain of a data split
         :param max_depth: maximum depth of the tree
         :param is_leaf: function to decide when to mark a node as a leaf node
         :param verbosity: number reflecting the verbosity of logging
         :param n_jobs: number of parallel threads to use while building
-        :param find_stump: method to find the best split of data / stump at
-        a node
-        :param n_stump_evaluations: number of stump evaluations to do if
-        find_stump method is None
+        :param find_stump: method to find the best split of data / stump at a node
+        :param n_stump_evaluations: number of stump evaluations to do if find_stump
+            method is None
         :param n_estimators: number of trees to construct
         """
         self.verbosity = verbosity
@@ -1539,8 +1533,8 @@ class ProximityForest(BaseClassifier):
         """Find probability estimates for each class for all cases in X.
 
         :param predictions_per_tree: Array-like of shape
-        [n_instances,[n_tree_estimators,labels]] which contains an array of labels
-        predicted by each tree for each instance.
+            [n_instances,[n_tree_estimators,labels]] which contains an array of labels
+            predicted by each tree for each instance.
         :param size: Size of X dataset containing the instances to predict
         :return:
         """

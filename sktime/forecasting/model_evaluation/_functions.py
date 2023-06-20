@@ -118,7 +118,6 @@ def _evaluate_window(
     error_score,
     cutoff_dtype,
 ):
-
     # set default result values in case estimator fitting fails
     score = error_score
     fit_time = np.nan

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
-"""
-Hidden Markov Model with Gaussian emissions.
+"""Hidden Markov Model with Gaussian emissions.
 
 Please see the original library
 (https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py)
@@ -124,7 +122,6 @@ class GaussianHMM(BaseHMMLearn):
         init_params: str = "stmc",
         implementation: str = "log",
     ):
-
         self.n_components = n_components
         self.covariance_type = covariance_type
         self.min_covar = min_covar

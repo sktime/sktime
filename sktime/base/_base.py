@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for objects and fittable objects.
+"""Base class template for objects and fittable objects.
 
 templates in this module:
 
@@ -78,8 +77,8 @@ class BaseObject(_BaseObject):
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
-        Returns True iff result of get_params(deep=False)
-        results in equal parameter sets.
+        Returns True iff result of get_params(deep=False) results in equal parameter
+        sets.
 
         Nested BaseObject descendants from get_params are compared via __eq__ as well.
         """
@@ -180,20 +179,20 @@ class TagAliaserMixin:
     """Mixin class for tag aliasing and deprecation of old tags.
 
     To deprecate tags, add the TagAliaserMixin to BaseObject or BaseEstimator.
-    alias_dict contains the deprecated tags, and supports removal and renaming.
-        For removal, add an entry "old_tag_name": ""
-        For renaming, add an entry "old_tag_name": "new_tag_name"
-    deprecate_dict contains the version number of renaming or removal.
-        the keys in deprecate_dict should be the same as in alias_dict.
-        values in deprecate_dict should be strings, the version of removal/renaming.
+    alias_dict contains the deprecated tags, and supports removal and renaming.     For
+    removal, add an entry "old_tag_name": ""     For renaming, add an entry
+    "old_tag_name": "new_tag_name" deprecate_dict contains the version number of
+    renaming or removal.     the keys in deprecate_dict should be the same as in
+    alias_dict.     values in deprecate_dict should be strings, the version of
+    removal/renaming.
 
-    The class will ensure that new tags alias old tags and vice versa, during
-    the deprecation period. Informative warnings will be raised whenever the
-    deprecated tags are being accessed.
+    The class will ensure that new tags alias old tags and vice versa, during the
+    deprecation period. Informative warnings will be raised whenever the deprecated tags
+    are being accessed.
 
-    When removing tags, ensure to remove the removed tags from this class.
-    If no tags are deprecated anymore (e.g., all deprecated tags are removed/renamed),
-    ensure toremove this class as a parent of BaseObject or BaseEstimator.
+    When removing tags, ensure to remove the removed tags from this class. If no tags
+    are deprecated anymore (e.g., all deprecated tags are removed/renamed), ensure
+    toremove this class as a parent of BaseObject or BaseEstimator.
     """
 
     def __init__(self):

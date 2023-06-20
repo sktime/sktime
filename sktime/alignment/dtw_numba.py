@@ -133,7 +133,6 @@ class AlignerDtwNumba(BaseAligner):
         bounding_matrix: np.ndarray = None,
         g: float = 0.0,
     ):
-
         self.weighted = weighted
         self.derivative = derivative
         self.window = window

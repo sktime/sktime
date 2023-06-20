@@ -15,8 +15,8 @@ from sktime.transformations.series.summarize import WindowSummarizer
 def check_eval(test_input, expected):
     """Test which columns are returned for different arguments.
 
-    For a detailed description what these arguments do,
-    and how theyinteract see docstring of DateTimeFeatures.
+    For a detailed description what these arguments do, and how theyinteract see
+    docstring of DateTimeFeatures.
     """
     if test_input is not None:
         assert len(test_input) == len(expected)

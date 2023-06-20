@@ -205,7 +205,7 @@ Rights and responsibilities
    * - Right/responsibility
      - Description
    * - Direct access
-     - Being a core developer allows contributors to more easily carry on with their project related activities by giving them direct access to the project’s repository.
+     - Being a core developer allows contributors to more easily carry on with their project related activities by giving them direct access to the project's repository.
    * - Issue/PR management
      - Core developers are responsible for reviewing and managing issues and pull requests. This includes commenting on issues, reviewing code contributions, merging approved pull requests, and closing issues once resolved.
    * - Decision making
@@ -228,7 +228,7 @@ they have been nominated, there will be a vote by the current core
 developers.
 
 Voting on appointments is one of the few activities that takes
-place on the project’s private communication channels. The vote will be
+place on the project's private communication channels. The vote will be
 anonymous.
 
 While it is expected that most votes will be unanimous, a 2/3 majority of
@@ -438,11 +438,11 @@ used by the sktime project. We clarify:
 * how decisions are made, and
 * who participates in the decision making.
 
-sktime’s decision-making process is designed to take into account
+sktime's decision-making process is designed to take into account
 feedback from all community members and strives to find consensus, while
 avoiding deadlocks when no consensus can be found.
 
-All discussion and votes takes place on the project’s `issue
+All discussion and votes takes place on the project's `issue
 tracker <https://github.com/sktime/sktime/issues>`__,
 `pull requests <https://github.com/sktime/sktime/pulls>`__ or an :ref:`steps`. Some
 sensitive discussions and appointment votes occur on private chats.
@@ -475,7 +475,7 @@ corresponding decision making process is described in more detail below.
 Stage 1: lazy consensus with veto right
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-sktime uses a “consensus seeking” process for making decisions. The
+sktime uses a "consensus seeking" process for making decisions. The
 community tries to find a resolution that has no open objections among
 core developers.
 
@@ -573,7 +573,7 @@ comparison with alternative solutions, as outlined in our
 A complete STEP must always include at least a high-level design for the proposed change,
 not just a wishlist of features.
 
-Usually, we collect and discuss proposals in sktime’s `repository for
+Usually, we collect and discuss proposals in sktime's `repository for
 enhancement-proposals <https://github.com/sktime/enhancement-proposals>`__.
 
 For smaller changes, such as punctual changes to the API or governance documents,
@@ -632,7 +632,7 @@ If algorithms require major dependencies, we encourage to create a
 separate companion repository. For smaller
 dependencies which are limited to a few files, we encourage to use soft
 dependencies, which are only required for particular modules, but not
-for most of sktime’s functionality and not for installing sktime.
+for most of sktime's functionality and not for installing sktime.
 
 .. _acknowledging-contributions:
 
@@ -644,11 +644,11 @@ developers, users, educators, and other stakeholders. We value all kinds
 of contributions and are committed to recognising each of them fairly.
 
 We follow the `all-contributors <https://allcontributors.org>`__
-specification to recognise all contributors, including those that don’t
+specification to recognise all contributors, including those that don't
 contribute code. Please see `our list of all
 contributors <https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md>`__.
 
-If you think, we’ve missed anything, please let us know or open a PR
+If you think, we've missed anything, please let us know or open a PR
 with the appropriate changes to
 `sktime/.all-contributorsrc <https://github.com/sktime/sktime/blob/main/.all-contributorsrc>`__.
 
@@ -659,7 +659,7 @@ All contributors acknowledge that they have all the rights to the code
 they contribute to make it available under this license.
 
 The project belongs to the sktime community, and all parts of it are
-always considered “work in progress” so that they can evolve over time
+always considered "work in progress" so that they can evolve over time
 with newer contributions.
 
 .. _outlook:
@@ -668,7 +668,7 @@ Outlook
 -------
 
 We are open to improvement suggestions for our governance model. Once
-the community grows more and sktime’s code base becomes more
+the community grows more and sktime's code base becomes more
 consolidated, we will consider the following changes:
 
 -  Allow for more time to discuss changes, and more time to cast vote
@@ -681,7 +681,7 @@ In addition, we plan to add more roles for managing/coordinating
 specific project:
 
 * Community manager (mentorship, outreach, social media, etc),
-* Sub-councils for project-specific technical leadership (e.g.  for documentation, learning tasks, continuous integration)
+* Sub-councils for project-specific technical leadership (e.g.  for documentation, learning tasks, continuous integration)
 
 .. _references:
 
@@ -689,9 +689,9 @@ References
 ----------
 
 Our governance model is inspired by various existing governance
-structures. In particular, we’d like to acknowledge:
+structures. In particular, we'd like to acknowledge:
 
-* scikit-learn’s `governance model <https://www.sktime.net/en/latest/governance.html>`__
+* scikit-learn's `governance model <https://www.sktime.net/en/latest/governance.html>`__
 * `The Turing Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
 * `The Art of Community <https://www.jonobacon.com/books/artofcommunity/>`__ by Jono Bacon
 * The `astropy <https://www.astropy.org>`__ project

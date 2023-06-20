@@ -7,7 +7,6 @@ import pandas as pd
 
 
 def _is_nullable_numeric(dtype):
-
     return dtype in ["Int64", "Float64", "boolean"]
 
 

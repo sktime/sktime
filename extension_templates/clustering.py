@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Extension template for clusterers.
+"""Extension template for clusterers.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template

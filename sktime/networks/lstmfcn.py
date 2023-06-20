@@ -7,8 +7,7 @@ from sktime.networks.base import BaseDeepNetwork
 
 
 class LSTMFCNNetwork(BaseDeepNetwork):
-    """
-    Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
+    """Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
 
     Overview
     --------
@@ -37,8 +36,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         dropout=0.8,
         attention=False,
     ):
-        """
-        Initialize a new LSTMFCNNetwork object.
+        """Initialize a new LSTMFCNNetwork object.
 
         Parameters
         ----------
@@ -66,8 +64,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         super(LSTMFCNNetwork, self).__init__()
 
     def build_network(self, input_shape, **kwargs):
-        """
-        Construct a network and return its input and output layers.
+        """Construct a network and return its input and output layers.
 
         Parameters
         ----------

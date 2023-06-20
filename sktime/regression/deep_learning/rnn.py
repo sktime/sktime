@@ -1,6 +1,5 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-
 """Time Recurrent Neural Network (RNN) for regression."""
 
 __author__ = ["mloning"]
@@ -16,8 +15,7 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class SimpleRNNRegressor(BaseDeepRegressor):
-    """
-    Simple recurrent neural network.
+    """Simple recurrent neural network.
 
     Parameters
     ----------
@@ -85,8 +83,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self._network = RNNNetwork(random_state=random_state, units=units)
 
     def build_model(self, input_shape, **kwargs):
-        """
-        Construct a compiled, un-trained, keras model that is ready for training.
+        """Construct a compiled, un-trained, keras model that is ready for training.
 
         Parameters
         ----------
@@ -120,8 +117,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         return model
 
     def _fit(self, X, y):
-        """
-        Fit the regressor on the training set (X, y).
+        """Fit the regressor on the training set (X, y).
 
         Parameters
         ----------

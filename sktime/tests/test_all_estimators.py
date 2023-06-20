@@ -74,8 +74,8 @@ CYTHON_ESTIMATORS = False
 def subsample_by_version_os(x):
     """Subsample objects by operating system and python version.
 
-    Ensures each estimator is tested at least once on every OS and python version,
-    if combined with a matrix of OS/versions.
+    Ensures each estimator is tested at least once on every OS and python version, if
+    combined with a matrix of OS/versions.
 
     Currently assumes that matrix includes py3.8-3.10, and win/ubuntu/mac.
     """
@@ -167,8 +167,8 @@ class BaseFixtureGenerator:
     def pytest_generate_tests(self, metafunc):
         """Test parameterization routine for pytest.
 
-        This uses create_conditional_fixtures_and_names and generator_dict
-        to create the fixtures for a mark.parametrize decoration of all tests.
+        This uses create_conditional_fixtures_and_names and generator_dict to create the
+        fixtures for a mark.parametrize decoration of all tests.
         """
         # get name of the test
         test_name = metafunc.function.__name__
@@ -553,7 +553,6 @@ class QuickTester:
         results = dict()
         # loop A: we loop over all the tests
         for test_name in test_names_subset:
-
             test_fun = getattr(self, test_name)
             fixture_sequence = self.fixture_sequence
 
@@ -593,7 +592,6 @@ class QuickTester:
 
             # loop B: for each test, we loop over all fixtures
             for params, fixt_name in zip(fixture_prod, fixture_names):
-
                 # this is needed because pytest unwraps 1-tuples automatically
                 # but subsequent code assumes params is k-tuple, no matter what k is
                 if len(fixture_vars) == 1:
@@ -797,9 +795,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     def test_create_test_instances_and_names(self, estimator_class):
         """Check that create_test_instances_and_names works.
 
-        create_test_instance and create_test_instances_and_names are the
-        key methods used to create test instances in testing.
-        If this test does not pass, validity of the other tests cannot be guaranteed.
+        create_test_instance and create_test_instances_and_names are the key methods
+        used to create test instances in testing. If this test does not pass, validity
+        of the other tests cannot be guaranteed.
 
         Tests expected function signature of create_test_instances_and_names.
         """
@@ -947,9 +945,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     def test_set_params_sklearn(self, estimator_class):
         """Check that set_params works correctly, mirrors sklearn check_set_params.
 
-        Instead of the "fuzz values" in sklearn's check_set_params,
-        we use the other test parameter settings (which are assumed valid).
-        This guarantees settings which play along with the __init__ content.
+        Instead of the "fuzz values" in sklearn's check_set_params, we use the other
+        test parameter settings (which are assumed valid). This guarantees settings
+        which play along with the __init__ content.
         """
         estimator = estimator_class.create_test_instance()
         test_params = estimator_class.get_test_params()
@@ -1426,8 +1424,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         """Test that single and multi-process run results are identical.
 
         Check that running an estimator on a single process is no different to running
-        it on multiple processes. We also check that we can set n_jobs=-1 to make use
-        of all CPUs. The test is not really necessary though, as we rely on joblib for
+        it on multiple processes. We also check that we can set n_jobs=-1 to make use of
+        all CPUs. The test is not really necessary though, as we rely on joblib for
         parallelization and can trust that it works as expected.
         """
         method_nsc = method_nsc_arraylike

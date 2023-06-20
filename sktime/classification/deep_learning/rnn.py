@@ -1,6 +1,5 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-
 """Time Recurrent Neural Network (RNN) for classification."""
 
 __author__ = ["mloning"]
@@ -84,8 +83,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self._network = RNNNetwork(random_state=random_state, units=units)
 
     def build_model(self, input_shape, n_classes, **kwargs):
-        """
-        Construct a compiled, un-trained, keras model that is ready for training.
+        """Construct a compiled, un-trained, keras model that is ready for training.
 
         In sktime, time series are stored in numpy arrays of shape (d,m), where d
         is the number of dimensions, m is the series length. Keras/tensorflow assume
@@ -124,8 +122,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         return model
 
     def _fit(self, X, y):
-        """
-        Fit the classifier on the training set (X, y).
+        """Fit the classifier on the training set (X, y).
 
         Parameters
         ----------

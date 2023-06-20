@@ -140,7 +140,6 @@ class WEASEL(BaseClassifier):
         support_probabilities=False,
         random_state=None,
     ):
-
         self.alphabet_size = alphabet_size
 
         # feature selection is applied based on the chi-squared test.

@@ -179,8 +179,8 @@ class UnobservedComponents(_StatsModelsAdapter):
 
     References
     ----------
-    .. [1] Seabold, Skipper, and Josef Perktold. “statsmodels: Econometric
-       and statistical modeling with python.” Proceedings of the 9th Python
+    .. [1] Seabold, Skipper, and Josef Perktold. "statsmodels: Econometric
+       and statistical modeling with python." Proceedings of the 9th Python
        in Science Conference. 2010.
 
     .. [2] Durbin, James, and Siem Jan Koopman. 2012.
@@ -376,7 +376,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         initial_state=None,
         anchor=None,
         repetitions=None,
-        **kwargs
+        **kwargs,
     ):
         r"""Simulate a new time series following the state space model.
 
@@ -450,7 +450,7 @@ class UnobservedComponents(_StatsModelsAdapter):
             anchor=anchor,
             repetitions=repetitions,
             exog=X,
-            **kwargs
+            **kwargs,
         )
 
     def plot_diagnostics(

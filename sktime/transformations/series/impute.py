@@ -106,7 +106,6 @@ class Imputer(BaseTransformer):
         forecaster=None,
         missing_values=None,
     ):
-
         self.method = method
         self.missing_values = missing_values
         self.value = value
@@ -295,7 +294,7 @@ class Imputer(BaseTransformer):
             pass
 
     def _create_random_distribution(self, z: pd.Series):
-        """Create a uniform random distribution function within boundaries of given series.
+        """Create uniform distribution function within boundaries of given series.
 
         The distribution is discrete, if the series contains only int-like values.
 

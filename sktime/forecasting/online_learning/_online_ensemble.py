@@ -33,7 +33,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
-
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
 

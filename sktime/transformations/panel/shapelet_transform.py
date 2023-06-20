@@ -147,7 +147,6 @@ class ShapeletTransform(BaseTransformer):
         verbose=0,
         remove_self_similar=True,
     ):
-
         self.min_shapelet_length = min_shapelet_length
         self.max_shapelet_length = max_shapelet_length
         self.max_shapelets_to_store_per_class = max_shapelets_to_store_per_class
@@ -256,7 +255,6 @@ class ShapeletTransform(BaseTransformer):
         # for every series
         case_idx = 0
         while case_idx < len(cases_to_visit):
-
             series_id = cases_to_visit[case_idx][0]
             this_class_val = cases_to_visit[case_idx][1]
 
@@ -333,7 +331,6 @@ class ShapeletTransform(BaseTransformer):
                 candidates_to_visit = [candidate_starts_and_lens[x] for x in cand_idx]
 
             for candidate_idx in range(num_candidates_per_case):
-
                 # if shapelet heap for this class is not full yet, set entry
                 # criteria to be the predetermined IG threshold
                 ig_cutoff = self.predefined_ig_rejection_level
@@ -658,12 +655,17 @@ class ShapeletTransform(BaseTransformer):
         -------
         shapelet_list: list of Shapelet objects
         """
-        # IMPORTANT: it is assumed that shapelets are already in descending
-        # order of quality. This is preferable in the fit method as removing
-        # self-similar
-        # shapelets may be False so the sort needs to happen there in those
-        # cases, and avoids a second redundant sort here if it is set to True
+
         def is_self_similar(shapelet_one, shapelet_two):
+            """Check if two shapelets are similar.
+
+            Notes
+            -----
+            IMPORTANT: it is assumed that shapelets are already in descending order
+            of quality. This is preferable in the fit method as removing self-similar
+            shapelets may be False so the sort needs to happen there in those cases,
+            and avoids a second redundant sort here if it is set to True
+            """
             # not self similar if from different series
             if shapelet_one.series_id != shapelet_two.series_id:
                 return False

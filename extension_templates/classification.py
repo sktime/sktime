@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Extension template for time series classifiers.
+"""Extension template for time series classifiers.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template

@@ -267,7 +267,6 @@ class ElasticEnsemble(BaseClassifier):
             # If 100 parameter options are being considered per measure,
             # use a GridSearchCV
             if self.proportion_of_param_options == 1:
-
                 grid = GridSearchCV(
                     estimator=KNeighborsTimeSeriesClassifier(
                         distance=this_measure, n_neighbors=1

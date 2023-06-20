@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for transformers, SIMPLE version.
+"""Extension template for transformers, SIMPLE version.
 
 Contains only bare minimum of implementation requirements for a functional transformer.
 Also assumes *no composition*, i.e., no transformer or other estimator components.
@@ -178,7 +177,6 @@ class MyTransformer(BaseTransformer):
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, parama, paramb="default", paramc=None):
-
         # todo: write any hyper-parameters to self
         self.parama = parama
         self.paramb = paramb

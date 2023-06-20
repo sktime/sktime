@@ -109,7 +109,6 @@ def _check_soft_dependencies(
         )
 
     for package in packages:
-
         try:
             req = Requirement(package)
         except InvalidRequirement:

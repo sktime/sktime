@@ -61,7 +61,6 @@ class _WindowSignatureTransform(BaseTransformer):
         )
 
     def _transform(self, X, y=None):
-
         import esig
 
         depth = self.sig_depth

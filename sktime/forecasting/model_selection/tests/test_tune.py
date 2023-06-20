@@ -121,8 +121,8 @@ def test_gscv(forecaster, param_grid, cv, scoring, error_score):
 def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
     """Test ForecastingRandomizedSearchCV.
 
-    Tests that ForecastingRandomizedSearchCV successfully searches the
-    parameter distributions to identify the best parameter set
+    Tests that ForecastingRandomizedSearchCV successfully searches the parameter
+    distributions to identify the best parameter set
     """
     y, X = load_longley()
     rscv = ForecastingRandomizedSearchCV(

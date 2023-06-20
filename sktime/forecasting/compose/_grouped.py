@@ -68,7 +68,6 @@ class ForecastByLevel(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     def __init__(self, forecaster, groupby="local"):
-
         self.forecaster = forecaster
         self.groupby = groupby
 

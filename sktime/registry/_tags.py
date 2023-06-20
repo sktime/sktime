@@ -37,7 +37,6 @@ ESTIMATOR_TAG_LIST - list of string
 ---
 
 check_tag_is_valid(tag_name, tag_value) - checks whether tag_value is valid for tag_name
-
 """
 
 __author__ = ["fkiraly", "victordremov"]

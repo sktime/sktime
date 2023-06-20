@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""sklearn PCA applied after flattening series."""
+"""Sklearn PCA applied after flattening series."""
 __author__ = ["prockenschaub", "fkiraly"]
 __all__ = ["PCATransformer"]
 

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 def convert_gluonts_result_to_multiindex(gluonts_result):
-    """
-
-    Back Convert from Gluonts to sktime.
+    """Back Convert from Gluonts to sktime.
 
     Convert the output of Gluonts's prediction to a multiindex
     dataframe compatible with sktime.
@@ -18,7 +16,6 @@ def convert_gluonts_result_to_multiindex(gluonts_result):
     Returns
     -------
     A MultiIndex DF mtype type compatible with sktime.
-
     """
     import pandas as pd
 
