@@ -1,4 +1,3 @@
-
 __author__ = ["fkiraly", "klam-data"]
 __all__ = []
 
