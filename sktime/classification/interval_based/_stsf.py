@@ -82,7 +82,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = SupervisedTimeSeriesForest(n_estimators=5)
     >>> clf.fit(X_train, y_train)
-    SupervisedTimeSeriesForest(...)
+    SupervisedTimeSeriesForest(n_estimators=5)
     >>> y_pred = clf.predict(X_test)
     """
 
