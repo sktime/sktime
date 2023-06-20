@@ -4,7 +4,8 @@
 
 Contains only bare minimum of implementation requirements for a functional forecaster.
 Also assumes *no composition*, i.e., no forecaster or other estimator components.
-For advanced cases (probabilistic, composition, etc),
+Assumes pd.DataFrame used internally, and no hierarchical functionality.
+For advanced cases (probabilistic, composition, hierarchical, etc),
     see full extension template in forecasting.py
 
 Purpose of this implementation template:
@@ -63,26 +64,18 @@ class MyForecaster(BaseForecaster):
     and so on
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    # tag values are "safe defaults" which can usually be left as-is
+    # todo: fill in the scitype:y tag for univariate/multivariate
     _tags = {
-        # to list all valid tags with description, use sktime.registry.all_tags
-        #   all_tags(estimator_types="forecaster", as_dataframe=True)
-        #
-        # behavioural tags: internal type
-        # -------------------------------
-        #
         # scitype:y controls whether internal y can be univariate/multivariate
         # if multivariate is not valid, applies vectorization over variables
         "scitype:y": "univariate",
-        # valid values: "univariate", "multivariate", "both"
-        #   "univariate": inner _fit, _predict, etc, receive only univariate series
-        #   "multivariate": inner methods receive only series with 2 or more variables
-        #   "both": inner methods can see series with any number of variables
+        # fill in "univariate" or "both"
+        #   "univariate": inner _fit, _predict, receives only single-column DataFrame
+        #   "both": inner _predict gets pd.DataFrame series with any number of columns
+        #
+        # do not change these:
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -110,19 +103,15 @@ class MyForecaster(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
+        y : pd.DataFrame
             if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
+                guaranteed to have a single column
             if self.get_tag("scitype:y")=="both": no restrictions apply
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+        X : pd.DataFrame, optional (default=None)
             Exogeneous time series to fit to.
 
         Returns
