@@ -372,3 +372,43 @@ def test_nullable_dtypes(nullable_type):
     assert isinstance(y_pred, pd.Series)
     assert len(y_pred) == 40
     assert y_pred.dtype == "float64"
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(VAR, severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_range_fh_in_fit():
+    """Test using ``range`` in ``fit``."""
+    test_dataset = _make_panel(n_instances=10, n_columns=5)
+
+    var_model = VAR().fit(test_dataset, fh=range(1, 2 + 1))
+    var_predictions = var_model.predict()
+
+    assert isinstance(var_predictions, pd.DataFrame)
+    assert var_predictions.shape == (10 * 2, 5)
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(VAR, severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_range_fh_in_predict():
+    """Test using ``range`` in ``predict``."""
+    test_dataset = _make_panel(n_instances=10, n_columns=5)
+
+    var_model = VAR().fit(test_dataset)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "The forecasting horizon `fh` must be passed either to `fit` or `predict`,"
+            " but was found in neither."
+        ),
+    ):
+        _ = var_model.predict()
+
+    var_predictions = var_model.predict(fh=range(1, 2 + 1))
+
+    assert isinstance(var_predictions, pd.DataFrame)
+    assert var_predictions.shape == (10 * 2, 5)
