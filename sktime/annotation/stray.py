@@ -187,9 +187,7 @@ class STRAY(BaseTransformer):
         """
         r = np.shape(X)[0]
         idx_dropna = np.array([i for i in range(r) if not np.isnan(X[i]).any()])
-        X_dropna = X[
-            idx_dropna,
-        ]
+        X_dropna = X[idx_dropna,]
 
         n = np.shape(X_dropna)[0]
         outliers = self._find_outliers_kNN(X_dropna, n)

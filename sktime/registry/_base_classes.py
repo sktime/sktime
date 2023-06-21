@@ -50,8 +50,6 @@ TRANSFORMER_MIXIN_LIST - list of string
 
 TRANSFORMER_MIXIN_LOOKUP - dictionary
     keys/entries are 0/1-th entries of TRANSFORMER_MIXIN_REGISTER
-
-
 """
 
 __author__ = ["fkiraly"]

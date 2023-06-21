@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
-"""
-Hidden Markov Model based annotation from hmmlearn.
+"""Hidden Markov Model based annotation from hmmlearn.
 
 This code provides a base interface template for models
 from hmmlearn for using that library for annotation of time series.

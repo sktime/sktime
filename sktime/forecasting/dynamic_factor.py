@@ -26,8 +26,8 @@ class DynamicFactor(_StatsModelsAdapter):
         The order of vector autoregression followed by factors.
     error_cov_type : {'scalar','diagonal','unstructured'} ,default = 'diagonal'
         The structure of the covariance matrix of the observation error term, where
-        “unstructured” puts no restrictions on the matrix, “diagonal” requires it
-        to be any diagonal matrix (uncorrelated errors), and “scalar” requires it
+        "unstructured" puts no restrictions on the matrix, "diagonal" requires it
+        to be any diagonal matrix (uncorrelated errors), and "scalar" requires it
         to be a scalar times the identity matrix.
     error_order : int , default = 0
         The order of the vector autoregression followed by the observation error
@@ -47,37 +47,37 @@ class DynamicFactor(_StatsModelsAdapter):
          describes whether or not start_params also includes the fixed parameters,
           in addition to the free parameters.
     cov_type : {'opg','oim','approx','robust','robust_approx','none'},default = 'opg'
-        ‘opg’ for the outer product of gradient estimator
-        ‘oim’ for the observed information matrix estimator, calculated
+        'opg' for the outer product of gradient estimator
+        'oim' for the observed information matrix estimator, calculated
         using the method of Harvey (1989)
-        ‘approx’ for the observed information matrix estimator, calculated using
+        'approx' for the observed information matrix estimator, calculated using
          a numerical approximation of the Hessian matrix.
-        ‘robust’ for an approximate (quasi-maximum likelihood) covariance matrix
+        'robust' for an approximate (quasi-maximum likelihood) covariance matrix
          that may be valid even in the presence of some misspecifications.
-          Intermediate calculations use the ‘oim’ method.
-        ‘robust_approx’ is the same as ‘robust’ except that the intermediate
-        calculations use the ‘approx’ method.
-        ‘none’ for no covariance matrix calculation
+          Intermediate calculations use the 'oim' method.
+        'robust_approx' is the same as 'robust' except that the intermediate
+        calculations use the 'approx' method.
+        'none' for no covariance matrix calculation
     cov_kwds :dict or None , default = None
-        ‘approx_complex_step’ : bool, optional - If True, numerical approximations are
+        'approx_complex_step' : bool, optional - If True, numerical approximations are
          computed using complex-step methods. If False, numerical approximations are
          computed using finite difference methods. Default is True.
-        ‘approx_centered’ : bool, optional - If True, numerical approximations computed
+        'approx_centered' : bool, optional - If True, numerical approximations computed
         using finite difference methods use a centered approximation. Default is False.
     method : str , 'lbfgs'
-        ‘newton’ for Newton-Raphson
-        ‘nm’ for Nelder-Mead
-        ‘bfgs’ for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
-        ‘lbfgs’ for limited-memory BFGS with optional box constraints
-        ‘powell’ for modified Powell’s method
-        ‘cg’ for conjugate gradient
-        ‘ncg’ for Newton-conjugate gradient
-        ‘basinhopping’ for global basin-hopping solver
+        'newton' for Newton-Raphson
+        'nm' for Nelder-Mead
+        'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
+        'lbfgs' for limited-memory BFGS with optional box constraints
+        'powell' for modified Powell's method
+        'cg' for conjugate gradient
+        'ncg' for Newton-conjugate gradient
+        'basinhopping' for global basin-hopping solver
     maxiter : int , optional ,default = 50
         The maximum number of iterations to perform.
     full_output : bool , default = 1
         Set to True to have all available output in the
-        Results object’s mle_retvals attribute.
+        Results object's mle_retvals attribute.
         The output is dependent on the solver.
     disp : bool ,   default = 5
         Set to True to print convergence messages.
@@ -87,16 +87,16 @@ class DynamicFactor(_StatsModelsAdapter):
     return_params : bool ,default = False
         Whether or not to return only the array of maximizing parameters.
     optim_score : {'harvey','approx'} , default = None
-        The method by which the score vector is calculated. ‘harvey’ uses the method
-        from Harvey (1989), ‘approx’ uses either finite difference or
+        The method by which the score vector is calculated. 'harvey' uses the method
+        from Harvey (1989), 'approx' uses either finite difference or
         complex step differentiation depending upon the value of optim_complex_step,
         and None uses the built-in gradient approximation of the optimizer.
     optim_complex_step : bool , default = True
         Whether or not to use complex step differentiation
         when approximating the score; if False, finite difference approximation is used.
     optim_hessian : {'opg','oim','approx'} , default = None
-        ‘opg’ uses outer product of gradients, ‘oim’ uses the information
-        matrix formula from Harvey (1989), and ‘approx’ uses numerical approximation.
+        'opg' uses outer product of gradients, 'oim' uses the information
+        matrix formula from Harvey (1989), and 'approx' uses numerical approximation.
     low_memory : bool , default = False
         If set to True, techniques are applied to substantially reduce memory usage.
         If used, some features of the results object will not be available
@@ -277,7 +277,6 @@ class DynamicFactor(_StatsModelsAdapter):
         df_list = []
         # generate the forecasts for each alpha/coverage
         for coverage in coverage_list:
-
             alpha = 1 - coverage
 
             if "exog" in inspect.signature(model.__init__).parameters.keys():
@@ -428,15 +427,15 @@ class DynamicFactor(_StatsModelsAdapter):
             If unspecified, but the model has been initialized,
             then that initialization is used.
             This must be specified if anchor is anything
-            other than “start” or 0.
+            other than "start" or 0.
         anchor : int,str,or datetime , optional
             Starting point from which to begin the simulations; type depends
             on the index of the given endog model.
-            Two special cases are the strings ‘start’ and ‘end’,
+            Two special cases are the strings 'start' and 'end',
             which refer to starting at the beginning and end of the sample,
             respectively. If a date/time index was provided to the model,
             then this argument can be a date string to parse or a datetime type.
-            Otherwise, an integer index should be given. Default is ‘start’.
+            Otherwise, an integer index should be given. Default is 'start'.
         repetitions : int , optional
             Number of simulated paths to generate. Default is 1 simulated path
 
@@ -511,7 +510,7 @@ class DynamicFactor(_StatsModelsAdapter):
             the last significant autocorrelation.
             In this case, a moving average model is assumed for the data
             and the standard errors for the confidence intervals should be generated
-             using Bartlett’s formula.
+             using Bartlett's formula.
         acf_kwargs : dict , optional
             Optional dictionary of keyword arguments that are directly
             passed on to the correlogram Matplotlib plot produced by plot_acf().

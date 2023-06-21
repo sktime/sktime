@@ -28,9 +28,8 @@ CASES = ("TSR", "TSC")
 class BaseStrategy(BaseEstimator):
     """Abstract base strategy class.
 
-    Implements attributes and operations shared by all strategies,
-    including input and compatibility checks between passed estimator,
-    data and task.
+    Implements attributes and operations shared by all strategies, including input and
+    compatibility checks between passed estimator, data and task.
     """
 
     def __init__(self, estimator, name=None):
@@ -185,8 +184,8 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
 
     Accepts a low-level estimator to perform a given task.
 
-    Implements predict and internal fit methods for time series regression
-    and classification.
+    Implements predict and internal fit methods for time series regression and
+    classification.
     """
 
     def _fit(self, data):
@@ -231,8 +230,7 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
 
 
 class TSCStrategy(BaseSupervisedLearningStrategy):
-    """
-    Strategy for time series classification.
+    """Strategy for time series classification.
 
     Parameters
     ----------
@@ -249,8 +247,7 @@ class TSCStrategy(BaseSupervisedLearningStrategy):
 
 
 class TSRStrategy(BaseSupervisedLearningStrategy):
-    """
-    Strategy for time series regression.
+    """Strategy for time series regression.
 
     Parameters
     ----------

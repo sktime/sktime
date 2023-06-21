@@ -460,7 +460,6 @@ def sqize_kernel_low_rank_fast(
         R*R^t[i,j] is sequential kernel (low-rank) between i-th and j-th sequence in K
     """
     if normalize:
-
         Ksize = K.shape[0]
         B = np.ones([Ksize, 1, 1])
         R = np.ones([Ksize, 1])

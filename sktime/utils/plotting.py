@@ -118,7 +118,6 @@ def plot_series(
 
     # plot series
     for x, y, color, label, marker in zip(xs, series, colors, labels, markers):
-
         # scatter if little data is available or index is not complete
         if len(x) <= 3 or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
             plot_func = sns.scatterplot

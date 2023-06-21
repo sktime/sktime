@@ -220,8 +220,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         super(RandomIntervalFeatureExtractor, self).__init__()
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer, generating random interval indices.
+        """Fit transformer, generating random interval indices.
 
         Parameters
         ----------

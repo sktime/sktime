@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
-"""
-ClaSP (Classification Score Profile) Transformer implementation.
+"""ClaSP (Classification Score Profile) Transformer implementation.
 
 Notes
 -----

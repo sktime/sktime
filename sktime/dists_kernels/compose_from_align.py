@@ -15,7 +15,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
 
     Components
     ----------
-    aligner: BaseAligner, must implement get_distances method
+    aligner: BaseAligner, must implement get_distance method
         if None, distance is equal zero
     """
 
@@ -25,7 +25,6 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, aligner=None):
-
         self.aligner = aligner
 
         super(DistFromAligner, self).__init__()

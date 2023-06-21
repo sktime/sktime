@@ -627,7 +627,6 @@ class BaseSplitter(BaseObject):
         Returns
         -------
         np.ndarray with integer indices of the train window
-
         """
         if split_point > max(0, train_start):
             return np.argwhere(
@@ -840,7 +839,6 @@ class BaseWindowSplitter(BaseSplitter):
         -------
         (np.ndarray, np.ndarray)
             Integer indices of the train/test windows
-
         """
         fh = _check_fh(self.fh)
         if not self.start_with_window:
@@ -947,9 +945,7 @@ class BaseWindowSplitter(BaseSplitter):
         # If we start with a full window, the first split point depends on the window
         # length.
         if hasattr(self, "start_with_window") and self.start_with_window:
-
             if self._initial_window not in [None, 0]:
-
                 if is_timedelta_or_date_offset(x=self._initial_window):
                     start = y.get_loc(
                         y[start] + self._initial_window + self.step_length
@@ -1084,7 +1080,6 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     >>> splitter = SlidingWindowSplitter(fh=[2, 4], window_length=3, step_length=2)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([0, 1, 2]), array([4, 6])), (array([2, 3, 4]), array([6, 8]))]
-
     """
 
     def __init__(
@@ -1150,7 +1145,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     >>> splitter = ExpandingWindowSplitter(fh=[2, 4], initial_window=5, step_length=2)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     '[(array([0, 1, 2, 3, 4]), array([6, 8]))]'
-
     """
 
     def __init__(
@@ -1159,7 +1153,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
     ) -> None:
-
         start_with_window = initial_window != 0
 
         # Note that we pass the initial window as the window_length below. This
@@ -1214,7 +1207,6 @@ class SingleWindowSplitter(BaseSplitter):
     >>> splitter = SingleWindowSplitter(fh=[2, 4], window_length=3)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([3, 4, 5]), array([7, 9]))]
-
     """
 
     def __init__(

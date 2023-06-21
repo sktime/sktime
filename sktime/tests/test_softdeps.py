@@ -2,8 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests that soft dependencies are handled correctly.
 
-sktime supports a number of soft dependencies which are necessary for using
-a certain module but otherwise not necessary.
+sktime supports a number of soft dependencies which are necessary for using a certain
+module but otherwise not necessary.
 
 Adapted from code of mloning for the legacy Azure CI/CD build tools.
 """

@@ -281,8 +281,6 @@ def test_gibbs():
         _rng,
     )
     sampling = np.reshape(sampling, (10, 17))
-    actual = sampling[
-        [6, 8],
-    ]
+    actual = sampling[[6, 8],]
 
     assert np.allclose(actual, expected)

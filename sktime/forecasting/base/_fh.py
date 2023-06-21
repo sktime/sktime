@@ -62,8 +62,8 @@ DELEGATED_METHODS = (
 def _delegator(method):
     """Automatically decorate ForecastingHorizon class with pandas.Index methods.
 
-    Also delegates method calls to wrapped pandas.Index object.
-    methods from pandas.Index and delegate method calls to wrapped pandas.Index
+    Also delegates method calls to wrapped pandas.Index object. methods from
+    pandas.Index and delegate method calls to wrapped pandas.Index
     """
 
     def delegated(obj, *args, **kwargs):
@@ -80,7 +80,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
 
     Parameters
     ----------
-    values : int, list, array, certain pd.Index types
+    values : int, range, list of int, array of int, certain pd.Index types
         Forecasting horizon with steps ahead to predict.
 
     Raises
@@ -107,6 +107,11 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     elif is_int(values):
         values = pd.Index([values], dtype=int)
 
+    # convert range object to pandas.RangeIndex
+    # range has to be for integers, no need to separate check
+    elif isinstance(values, range):
+        values = pd.Index(values)
+
     elif is_timedelta_or_date_offset(values):
         values = pd.Index([values])
 
@@ -121,9 +126,10 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     else:
         valid_types = (
             "int",
+            "range",
             "1D np.ndarray of type int",
             "1D np.ndarray of type timedelta or dateoffset",
-            "list",
+            "list of type int",
             *[f"pd.{index_type.__name__}" for index_type in VALID_INDEX_TYPES],
         )
         raise TypeError(
@@ -711,7 +717,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        # TODO: 0.19.0:
+        # TODO: 0.20.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #

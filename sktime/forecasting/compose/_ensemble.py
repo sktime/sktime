@@ -3,8 +3,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements ensemble forecasters.
 
-Creates univariate (optionally weighted)
-combination of the predictions from underlying forecasts.
+Creates univariate (optionally weighted) combination of the predictions from underlying
+forecasts.
 """
 
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
@@ -161,7 +161,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
         if self.method == "feature-importance":
-
             self.regressor_ = check_regressor(
                 regressor=self.regressor, random_state=self.random_state
             )

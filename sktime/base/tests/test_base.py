@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Tests for BaseObject universal base class.
+"""Tests for BaseObject universal base class.
 
 tests in this module:
 
@@ -44,13 +43,11 @@ from sktime.base import BaseEstimator, BaseObject
 
 # Fixture class for testing tag system
 class FixtureClassParent(BaseObject):
-
     _tags = {"A": "1", "B": 2, "C": 1234, 3: "D"}
 
 
 # Fixture class for testing tag system, child overrides tags
 class FixtureClassChild(FixtureClassParent):
-
     _tags = {"A": 42, 3: "E"}
 
 
@@ -203,7 +200,6 @@ def test_is_composite():
 
 
 class ResetTester(BaseObject):
-
     clsvar = 210
 
     def __init__(self, a, b=42):
@@ -331,7 +327,6 @@ def test_get_fitted_params():
 
 
 class ConfigTester(BaseObject):
-
     _config = {"foo_config": 42, "bar": "a"}
 
     clsvar = 210

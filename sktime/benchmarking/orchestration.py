@@ -77,7 +77,6 @@ class Orchestrator:
             train_idx,
             _test_idx,
         ) in self._iter():
-
             # skip strategy, if overwrite is set to False and fitted
             # strategy already exists
             if (
@@ -134,7 +133,6 @@ class Orchestrator:
 
         # fitting and prediction
         for task, dataset, data, strategy, cv_fold, train_idx, test_idx in self._iter():
-
             # check which results already exist
             train_pred_exist = self.results.check_predictions_exist(
                 strategy.name, dataset.name, cv_fold, train_or_test="train"

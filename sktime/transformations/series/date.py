@@ -140,7 +140,6 @@ class DateTimeFeatures(BaseTransformer):
         manual_selection=None,
         keep_original_columns=False,
     ):
-
         self.ts_freq = ts_freq
         self.feature_scope = feature_scope
         self.manual_selection = manual_selection
@@ -321,9 +320,8 @@ def _get_supported_calendar(ts_freq, DUMMIES):
 def _prep_dummies(DUMMIES):
     """Use to prepare dummy data.
 
-    Includes defining function call names and ranking
-    of date information based on frequency (e.g. year
-    has a lower frequency than week).
+    Includes defining function call names and ranking of date information based on
+    frequency (e.g. year has a lower frequency than week).
     """
     DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
 

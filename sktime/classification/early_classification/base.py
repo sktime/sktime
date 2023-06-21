@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Abstract base class for early time series classifiers.
+"""Abstract base class for early time series classifiers.
 
     class name: BaseEarlyClassifier
 
@@ -78,12 +77,12 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+        """An array containing the state info for each decision in X from update and
+        predict methods.
 
-        """
-        An array containing the state info for each decision in X from update and
-        predict methods. Contains classifier dependant information for future decisions
-        on the data and information on when a cases decision has been made. Each row
-        contains information for a case from the latest decision on its safety made in
+        Contains classifier dependant information for future decisions on the data and
+        information on when a cases decision has been made. Each row contains
+        information for a case from the latest decision on its safety made in
         update/predict. Successive updates are likely to remove rows from the
         state_info, as it will only store as many rows as there are input instances to
         update/predict.

@@ -184,7 +184,10 @@ def test_pipeline_column_vectorization():
 
 
 def test_pipeline_inverse():
-    """Tests that inverse composition works, with inverse skips. Also see #3084."""
+    """Tests that inverse composition works, with inverse skips.
+
+    Also see #3084.
+    """
     X = load_airline()
     t = LogTransformer() * Imputer()
 

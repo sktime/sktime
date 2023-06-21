@@ -13,7 +13,10 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
     reason="skip test if required soft dependency not available",
 )
 def test_ARIMA_pred_quantiles_insample():
-    """Test ARIMA predict_quantiles with in-sample fh. Failure condition of #4468."""
+    """Test ARIMA predict_quantiles with in-sample fh.
+
+    Failure condition of #4468.
+    """
     y = load_airline()
     forecaster = ARIMA(order=(1, 1, 0), seasonal_order=(0, 1, 0, 12))
     forecaster.fit(y)

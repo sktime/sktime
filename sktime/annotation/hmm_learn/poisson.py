@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
-"""
-Hidden Markov Model with Poisson emissions.
+"""Hidden Markov Model with Poisson emissions.
 
 Please see the original library
 (https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py)
@@ -14,8 +12,7 @@ __all__ = ["PoissonHMM"]
 
 
 class PoissonHMM(BaseHMMLearn):
-    """
-    Hidden Markov Model with Poisson emissions.
+    """Hidden Markov Model with Poisson emissions.
 
     Parameters
     ----------
@@ -99,7 +96,6 @@ class PoissonHMM(BaseHMMLearn):
         init_params: str = "stl",
         implementation: str = "log",
     ):
-
         self.n_components = n_components
         self.startprob_prior = startprob_prior
         self.transmat_prior = transmat_prior

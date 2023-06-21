@@ -73,7 +73,6 @@ class Aggregator(BaseTransformer):
     }
 
     def __init__(self, flatten_single_levels=True):
-
         self.flatten_single_levels = flatten_single_levels
 
         super(Aggregator, self).__init__()
