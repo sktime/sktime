@@ -6,8 +6,6 @@
 __all__ = ["Detrender"]
 __author__ = ["mloning", "SveaMeyer13", "KishManani", "fkiraly", "blazingbhavneek"]
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.datatypes import update_data
@@ -50,9 +48,12 @@ class Detrender(BaseTransformer):
         i.e., `transform(X)` returns `X - forecaster.predict(fh=X.index)`
         If `model="multiplicative"` the `forecaster.transform` divides by the trend,
         i.e., `transform(X)` returns `X / forecaster.predict(fh=X.index)`
-    out_of_sample : Boolean value, default="False"
-        If "True", the detrender will compute out-of-sample residuals rather
-        than in-sample residuals.
+    out_of_sample : boolean of BaseSplitter descendant, default=False
+        whether estimator detrends in-sample or out-of-sample in `transform`
+        if False, detrender will behave as described, substract `forecaster.predict`
+        If True or BaseSplitter, will subtract `forecaster.update_predict` instead
+        if True, `cv` used in `update_predict` is `ExpandingWindowSplitter()`
+        if BaseSplitter, `cv` used in `update_predict` is `out_of_sample`
 
     Attributes
     ----------
@@ -123,14 +124,6 @@ class Detrender(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        if len(X) <= 10:
-            warn(
-                """
-                    Length of X is less than 11, forecasters tend to break
-                    below length 10, using in-sample Detrender now
-                """
-            )
-
         if not self.forecaster_.get_tag("requires-fh-in-fit", True):
             self.forecaster_.fit(y=X, X=y)
         else:
@@ -146,9 +139,10 @@ class Detrender(BaseTransformer):
             time_index = X.index.get_level_values(-1).unique()
         return ForecastingHorizon(time_index, is_relative=False)
 
-    def _get_fitted_forecaster(self, X, y, fh):
+    def _get_fitted_forecaster(self, X, y):
         """Obtain fitted forecaster from self."""
         if self.forecaster_.get_tag("requires-fh-in-fit", True):
+            fh = self._get_fh_from_X(X=X)
             X = update_data(self._X, X)
             y = update_data(self._y, y)
 
@@ -157,6 +151,23 @@ class Detrender(BaseTransformer):
         else:
             forecaster = self.forecaster_
         return forecaster
+
+    def _get_trend(self, forecaster, X, y=None):
+
+        oos = self.out_of_sample
+
+        if isinstance(oos, bool) and not oos:
+            fh = self._get_fh_from_X(X=X)
+            X_pred = forecaster.predict(fh=fh, X=y)
+        else:
+            if isinstance(oos, bool) and oos:
+                cv = ExpandingWindowSplitter(initial_window=0)
+            else:
+                cv = oos
+            X_pred = forecaster.update_predict(y=X, X=y, cv=cv, reset_forecaster=True)
+            X_pred = X_pred.drop_duplicates()
+            X_pred = X_pred.loc[X_pred.index.isin(X.index)]
+        return X_pred
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -175,23 +186,14 @@ class Detrender(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X, detrended series
         """
-        fh = self._get_fh_from_X(X=X)
-        forecaster = self._get_fitted_forecaster(X=X, y=y, fh=fh)
+        forecaster = self._get_fitted_forecaster(X=X, y=y)
 
-        if not self.out_of_sample or len(X) <= 10:
-            X_pred = forecaster.predict(fh=fh, X=y)
-        else:
-            cv = ExpandingWindowSplitter()
-            X_pred1 = forecaster.predict(fh=fh, X=X[:10])
-            X_pred2 = forecaster.update_predict(y=X, cv=cv)
-            X_pred = pd.concat([X_pred1, X_pred2])
-            X_pred = X_pred.drop_duplicates()
-            X_pred = X_pred.loc[X_pred.index.isin(X.index)]
+        X_trend = self._get_trend(forecaster, X=X, y=y)
 
         if self.model == "additive":
-            return X - X_pred
+            return X - X_trend
         elif self.model == "multiplicative":
-            return X / X_pred
+            return X / X_trend
 
     def _inverse_transform(self, X, y=None):
         """Logic used by `inverse_transform` to reverse transformation on `X`.
@@ -208,17 +210,16 @@ class Detrender(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        fh = self._get_fh_from_X(X=X)
         # we pass X and y as None, since the X passed is inverse transformed (detrended)
         # the fit, in case fh needs be passed late, is done on remembered data from fit
-        forecaster = self._get_fitted_forecaster(X=None, y=None, fh=fh)
+        forecaster = self._get_fitted_forecaster(X=None, y=None)
 
-        X_pred = forecaster.predict(fh=fh, X=y)
+        X_trend = self._get_trend(forecaster, X=X, y=y)
 
         if self.model == "additive":
-            return X + X_pred
+            return X + X_trend
         elif self.model == "multiplicative":
-            return X * X_pred
+            return X * X_trend
 
     def _update(self, X, y=None, update_params=True):
         """Update the parameters of the detrending estimator with new data.
@@ -265,9 +266,11 @@ class Detrender(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import TrendForecaster
 
         params1 = {"forecaster": TrendForecaster()}
         params2 = {"model": "multiplicative"}
+        params3 = {"forecaster": NaiveForecaster(), "out_of_sample": True}
 
-        return [params1, params2]
+        return [params1, params2, params3]
