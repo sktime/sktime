@@ -55,6 +55,13 @@ List of PR
 ~~~~~~~~~~
 
 
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`jorenham`,
+:user:`yarnabrina`
+
 Version 0.19.2 - 2023-06-19
 ---------------------------
 
