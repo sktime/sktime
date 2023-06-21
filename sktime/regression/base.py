@@ -24,7 +24,6 @@ __all__ = [
 __author__ = ["mloning", "fkiraly"]
 
 import time
-from abc import ABC, abstractmethod
 from warnings import warn
 
 import numpy as np
@@ -36,7 +35,7 @@ from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 
 
-class BaseRegressor(BaseEstimator, ABC):
+class BaseRegressor(BaseEstimator):
     """Abstract base class for time series regressors.
 
     The base regressor specifies the methods and method signatures that all
@@ -80,7 +79,7 @@ class BaseRegressor(BaseEstimator, ABC):
         # i.e. CalibratedRegressorCV
         self._estimator_type = "regressor"
 
-        super(BaseRegressor, self).__init__()
+        BaseEstimator.__init__(self)
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
@@ -230,7 +229,6 @@ class BaseRegressor(BaseEstimator, ABC):
 
         return r2_score(y, self.predict(X), normalize=True)
 
-    @abstractmethod
     def _fit(self, X, y):
         """Fit time series regressor to training data.
 
@@ -258,7 +256,6 @@ class BaseRegressor(BaseEstimator, ABC):
         """
         ...
 
-    @abstractmethod
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 

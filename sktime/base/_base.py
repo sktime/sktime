@@ -360,7 +360,7 @@ class BaseEstimator(BaseObject):
 
     def __init__(self):
         self._is_fitted = False
-        super(BaseEstimator, self).__init__()
+        BaseObject.__init__(self)
 
     @property
     def is_fitted(self):
