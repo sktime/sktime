@@ -23,15 +23,15 @@ Highlights
 * developer guide on remote setup of test suite (:pr:`4689`) :user:`fkiraly`
 * update to all pre-commit hook versions, corresponding changes throughout the code base (:pr:`4680`) :user:`yarnabrina`
 
-Enhancements
-~~~~~~~~~~~~
-
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
 * ``ForecastingHorizon`` and forecasters' ``fit``, ``predict`` now support ``range``
   as input. Caveat: ``range(n)`` starts at ``0`` and ends at ``n-1``.
   For an ``n``-step-ahead forecast, including all ``n`` integer steps in the horizon, pass ``range(1, n+1)``.
+
+Enhancements
+~~~~~~~~~~~~
 
 Forecasting
 ^^^^^^^^^^^
