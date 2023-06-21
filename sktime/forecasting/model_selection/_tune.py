@@ -25,8 +25,8 @@ from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
 from sktime.utils.validation._dependencies import (
-    _check_soft_dependencies,
     _check_python_version,
+    _check_soft_dependencies,
 )
 from sktime.utils.validation.forecasting import check_scoring
 
