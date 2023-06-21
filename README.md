@@ -90,6 +90,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [time series clustering]: https://github.com/sktime/sktime/tree/main/sktime/clustering
 [annotation]: https://github.com/sktime/sktime/tree/main/sktime/annotation
 [time series distances/kernels]: https://github.com/sktime/sktime/tree/main/sktime/dists_kernels
+[time series alignment]: https://github.com/sktime/sktime/tree/main/sktime/alignment
 [transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
 [distributions and simulation]: https://github.com/sktime/sktime/tree/main/sktime/proba
 [parameter fitting]: https://github.com/sktime/sktime/tree/main/sktime/param_est
