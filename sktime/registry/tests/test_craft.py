@@ -8,7 +8,6 @@ import pytest
 
 from sktime.registry._craft import craft
 
-
 pipe_spec = """
 pipe = TransformedTargetForecaster(steps=[
     ("imputer", Imputer()),

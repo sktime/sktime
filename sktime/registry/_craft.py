@@ -37,7 +37,7 @@ def _extract_class_names(spec):
     cls_name_list : list of str
         list of all maximal alphanumeric substrings starting with a capital in ``spec``
     """
-    pattern = r'\b([A-Z][A-Za-z0-9_]*)\b'
+    pattern = r"\b([A-Z][A-Za-z0-9_]*)\b"
     cls_name_list = re.findall(pattern, spec)
     return cls_name_list
 
