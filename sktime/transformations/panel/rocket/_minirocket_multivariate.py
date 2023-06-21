@@ -45,7 +45,7 @@ class MiniRocketMultivariate(BaseTransformer):
 
     Examples
     --------
-     >>> from sktime.transformations.panel.rocket import Rocket
+     >>> from sktime.transformations.panel.rocket import MiniRocketMultivariate
      >>> from sktime.datasets import load_basic_motions
      >>> X_train, y_train = load_basic_motions(split="train")
      >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
