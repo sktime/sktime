@@ -13,6 +13,48 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.20.0 - 2023-06-21
+---------------------------
+
+Maintenance release - python 3.7 end-of-life maintenance update,
+scheduled deprecations.
+
+For last non-maintenance content updates, see 0.19.2 and 0.19.1.
+
+Contents
+~~~~~~~~
+
+* python 3.7 is no longer supported by ``sktime``, as python 3.7 end-of-life is
+  imminent (June 27), with ``sktime`` dependencies already having dropped support.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` version bounds now allow versions ``1.25.X``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Python 3.7 end-of-life
+^^^^^^^^^^^^^^^^^^^^^^
+
+``sktime`` no longer supports python 3.7 with ``sktime`` 0.20.0 and later.
+
+python reaches end-of-life on Jun 27, 2023, and core dependencies of ``sktime``
+have already dropped support for python 3.7 with their most recent versions
+(e.g., ``scikit-learn``).
+
+Time Series Classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``ComposableTimeSeriesClassifier`` and ``WeightedEnsembleClassifier``
+have finished their move to ``classification.ensemble``, they are no longer
+importable in their original locations.
+
+List of PR
+~~~~~~~~~~
+
+
 Version 0.19.2 - 2023-06-19
 ---------------------------
 
@@ -230,7 +272,6 @@ Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] `SimpleRNN` DL time series regressor, migrated from ``sktime-dl`` (:pr:`4185`) :user:`ArushikaBansal`
-
 * [ENH] move classification ensembles to ``classification.ensembles`` (:pr:`4532`) :user:`fkiraly`
 * [ENH] better documentation and test coverage for custom estimators and parameters in ``DrCIF`` (:pr:`4621`) :user:`Taise228`
 * [ENH] Add MACNN classifier and network (:pr:`4636`) :user:`achieveordie`
