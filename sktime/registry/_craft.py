@@ -1,0 +1,57 @@
+# -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Quick crafting methods to build an object from string and registry.
+
+craft(spec)
+    craft an object or estimator from string
+
+deps(spec)
+    retrieves all dependencies required to craft str, in PEP440 format
+"""
+
+__author__ = ["fkiraly"]
+
+import re
+
+from sktime.registry._lookup import all_estimators
+
+
+def _extract_class_names(spec):
+    """Get all maximal alphanumeric substrings that start with a capital letter.
+
+    Parameters
+    ----------
+    spec : str (any)
+
+    Returns
+    -------
+    cls_name_list : list of str
+        list of all maximal alphanumeric substrings starting with a capital in ``spec``
+    """
+    pattern = r'\b([A-Z][A-Za-z0-9_]*)\b'
+    cls_name_list = re.findall(pattern, spec)
+    return cls_name_list
+
+
+def craft(spec):
+    """Get all maximal alphanumeric substrings that start with a capital letter.
+
+    Parameters
+    ----------
+    spec : str, sktime/skbase compatible object specification
+        i.e., a string that executes to construct an object if all imports were present
+        imports inferred are of any classes in the scope of ``all_estimators``
+
+    Returns
+    -------
+    obj : skbase BaseObject descendant, constructed from ``spec``
+        this will have the property that ``spec == str(obj)`` (up to formatting)
+    """
+    register = dict(all_estimators())  # noqa: F841
+
+    for x in _extract_class_names(spec):
+        exec(f"{x} = register['{x}']")
+
+    obj = eval(spec)
+
+    return obj
