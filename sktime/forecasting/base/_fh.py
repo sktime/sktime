@@ -79,7 +79,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
 
     Parameters
     ----------
-    values : int, list, array, certain pd.Index types
+    values : int, range, list of int, array of int, certain pd.Index types
         Forecasting horizon with steps ahead to predict.
 
     Raises
@@ -106,6 +106,11 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     elif is_int(values):
         values = pd.Index([values], dtype=int)
 
+    # convert range object to pandas.RangeIndex
+    # range has to be for integers, no need to separate check
+    elif isinstance(values, range):
+        values = pd.Index(values)
+
     elif is_timedelta_or_date_offset(values):
         values = pd.Index([values])
 
@@ -120,9 +125,10 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     else:
         valid_types = (
             "int",
+            "range",
             "1D np.ndarray of type int",
             "1D np.ndarray of type timedelta or dateoffset",
-            "list",
+            "list of type int",
             *[f"pd.{index_type.__name__}" for index_type in VALID_INDEX_TYPES],
         )
         raise TypeError(
