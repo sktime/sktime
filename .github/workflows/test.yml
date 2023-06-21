@@ -164,7 +164,7 @@ jobs:
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
       - uses: actions/checkout@v3
@@ -196,7 +196,7 @@ jobs:
           mkdir -p testdir/
           cp .coveragerc testdir/
           cp setup.cfg testdir/
-          python -m pytest
+          python -m pytest -v
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
@@ -206,7 +206,7 @@ jobs:
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
         os: [ubuntu-20.04, macOS-11]
     runs-on: ${{ matrix.os }}
     steps:
@@ -236,7 +236,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3

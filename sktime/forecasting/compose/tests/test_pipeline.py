@@ -480,3 +480,45 @@ def test_forecastx_logic():
 
     # compare that test and comparison case results are equal
     assert np.allclose(y_pred, y_pred_manual)
+
+
+def test_forecastx_attrib_broadcast():
+    """Test ForecastX broadcasting and forecaster attributes."""
+    from sktime.forecasting.compose import ForecastX
+    from sktime.forecasting.naive import NaiveForecaster
+
+    df = pd.DataFrame(
+        {
+            "a": ["series_1", "series_1", "series_1"],
+            "b": pd.to_datetime(["2024-01-01", "2024-01-02", "2024-01-03"]),
+            "c": [1, 2, 3],
+            "d": [4, 5, 6],
+            "e": [7, 8, 9],
+        }
+    )
+    df = df.set_index(["a", "b"])
+
+    model = ForecastX(NaiveForecaster(), NaiveForecaster())
+
+    model_1 = model.clone()
+    model_1.fit(df[["c"]], X=df[["d", "e"]], fh=[1, 2, 3])
+
+    assert hasattr(model_1, "forecaster_X_")
+    assert isinstance(model_1.forecaster_X_, NaiveForecaster)
+    assert model_1.forecaster_X_.is_fitted
+
+    assert hasattr(model_1, "forecaster_y_")
+    assert isinstance(model_1.forecaster_y_, NaiveForecaster)
+    assert model_1.forecaster_y_.is_fitted
+
+    model_2 = model.clone()
+    model_2.fit(df[["c", "d"]], X=df[["e"]], fh=[1, 2, 3])
+    assert hasattr(model_2, "forecaster_X_")
+
+    assert hasattr(model_2, "forecaster_X_")
+    assert isinstance(model_2.forecaster_X_, NaiveForecaster)
+    assert model_2.forecaster_X_.is_fitted
+
+    assert hasattr(model_2, "forecaster_y_")
+    assert isinstance(model_2.forecaster_y_, NaiveForecaster)
+    assert model_2.forecaster_y_.is_fitted
