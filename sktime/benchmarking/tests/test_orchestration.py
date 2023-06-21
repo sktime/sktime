@@ -21,7 +21,7 @@ from sktime.benchmarking.orchestration import Orchestrator
 from sktime.benchmarking.results import HDDResults, RAMResults
 from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
-from sktime.classification.compose import ComposableTimeSeriesForestClassifier
+from sktime.classification.ensemble import ComposableTimeSeriesForestClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_arrow_head, load_gunpoint
 from sktime.series_as_features.model_selection import SingleSplit
