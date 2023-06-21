@@ -2190,6 +2190,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "CTFallon",
+      "name": "Colin Fallon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19725980?v=4",
+      "profile": "https://github.com/CTFallon",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
