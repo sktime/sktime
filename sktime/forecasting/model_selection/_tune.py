@@ -24,7 +24,10 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_soft_dependencies,
+    _check_python_version,
+)
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -885,6 +888,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         update_behaviour: str = "full_refit",
         error_score=np.nan,
     ):
+        _check_python_version(self)
         _check_soft_dependencies(
             "scikit-optimize",
             severity="error",
