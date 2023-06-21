@@ -13,6 +13,99 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.19.2 - 2023-06-19
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* ``statsforecast`` ``AutoETS`` and ``AutoCES`` interfaces (:pr:`4648`, :pr:`4649`) :user:`yarnabrina`
+* developer guide on remote setup of test suite (:pr:`4689`) :user:`fkiraly`
+* update to all pre-commit hook versions, corresponding changes throughout the code base (:pr:`4680`) :user:`yarnabrina`
+
+Enhancements
+~~~~~~~~~~~~
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+* ``ForecastingHorizon`` and forecasters' ``fit``, ``predict`` now support ``range``
+  as input. Caveat: ``range(n)`` starts at ``0`` and ends at ``n-1``.
+  For an ``n``-step-ahead forecast, including all ``n`` integer steps in the horizon, pass ``range(1, n+1)``.
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] ``statsforecast`` ``AutoETS`` direct interface estimator (:pr:`4648`) :user:`yarnabrina`
+* [ENH] ``statsforecast`` ``AutoCES`` direct interface estimator (:pr:`4649`) :user:`yarnabrina`
+* [ENH] improved ``BaseForecaster`` exception messages, with reference to ``self`` class name (:pr:`4699`) :user:`fkiraly`
+* [ENH] support passing horizons as ``range`` object in ``ForecastingHorizon`` and in ``fit`` and ``predict`` methods (:pr:`4716`) :user:`yarnabrina`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] migrate ``ResNetRegressor`` from ``sktime-dl`` (:pr:`4638`) :user:`achieveordie`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] correct accidental duplication of 0.19.0 changelog (:pr:`4662`) :user:`fkiraly`
+* [DOC] developer guide on remote setup of test suite (:pr:`4689`) :user:`fkiraly`
+* [DOC] User registration link on documentation landing page (:pr:`4675`) :user:`fkiraly`
+* [DOC] correct some failing doctests (:pr:`4679`) :user:`mdsaad2305`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] resolve pre-commit issues on ``main`` (:pr:`4673`) :user:`yarnabrina`
+* [MNT] except some DL and ``numba`` based estimators from tests to prevent memory overload (:pr:`4682`) :user:`fkiraly`
+* [MNT] remove private imports from ``sklearn`` - ``set_random_state`` (:pr:`4672`) :user:`fkiraly`
+* [MNT] update pre-commit hook versions and corresponding changes (:pr:`4680`) :user:`yarnabrina`
+* [MNT] add ``skbase`` to default package version display of ``show_versions`` (:pr:`4694`) :user:`fkiraly`
+* [MNT] reduce CI test log verbosity (:pr:`4715`) :user:`fkiraly`
+* [MNT] remove python 3.7 tests from CI (:pr:`4722`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+BaseObject
+^^^^^^^^^^
+
+* [BUG] fix ``clone`` / ``set_params`` with nested ``sklearn`` objects (:pr:`4707`) :user:`fkiraly`, :user:`hazrulakmal`
+
+Benchmarking
+^^^^^^^^^^^^
+
+* [BUG] bugfix for ``no-update_params`` strategy in ``evaluate`` (:pr:`4686`) :user:`hazrulakmal`
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix dead source link for UEA datasets (:pr:`4705`) :user:`fkiraly`
+* [BUG] remove ``IOError`` dataset from TSC data registry (:pr:`4711`) :user:`fkiraly`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix conversion from ``pd-multiindex`` to ``df-list`` if not all index levels are present (:pr:`4693`) :user:`fkiraly`
+* [BUG] Fix ``vectorize_est`` returning jumbled columns for column vectorization, ``pd.DataFrame`` return, if column names were not lexicographically ordered (:pr:`4684`) :user:`fkiraly`, :user:`hoesler`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] correct ``ForecastX`` behaviour in case of multivariate ``y`` (:pr:`4719`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`achieveordie`,
+:user:`fkiraly`,
+:user:`hazrulakmal`,
+:user:`hoesler`,
+:user:`mdsaad2305`,
+:user:`yarnabrina`
+
+
 Version 0.19.1 - 2023-05-30
 ---------------------------
 
