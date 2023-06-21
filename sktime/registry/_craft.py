@@ -7,6 +7,15 @@ craft(spec)
 
 deps(spec)
     retrieves all dependencies required to craft str, in PEP440 format
+
+The ``craft`` function is a pair to ``str`` coercion, the two can be seen as
+deserialization/serialization counterparts to each other.
+
+That is,
+spec = str(my_est)
+new_est = craft(spec)
+
+will have the same effect as new_est = spec.clone()
 """
 
 __author__ = ["fkiraly"]
