@@ -1,27 +1,29 @@
 # -*- coding: utf-8 -*-
 """Base class for clustering."""
-__author__ = ["chrisholder", "TonyBagnall"]
+__author__ = [
+    "chrisholder",
+    "TonyBagnall",
+    "achieveordie",
+]
 __all__ = ["BaseClusterer"]
 
 import time
-from inspect import getmodule
+from inspect import signature
 from typing import Any, Union
 
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import _METRICS as SCIPY_DISTANCE_METRICS
-from sklearn.metrics import pairwise_distances
-from sklearn.metrics.pairwise import distance_metrics
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels._registry import _VALID_DIST_KERNELS
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # Valid input types for clustering
 TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
-SKLEARN_DISTANCE_METRICS = distance_metrics()
 
 
 class BaseClusterer(BaseEstimator):
@@ -409,64 +411,63 @@ class BaseClusterer(BaseEstimator):
         )
 
     @staticmethod
-    def _resolve_distance_from_str(string_distance):
+    def _resolve_str_to_dist_kernel(str):
         """
-        Private function to resolve distance metric from string.
+        Given a string, it returns the instance of appropriate dist_kernel.
 
         Parameters
         ----------
-        string_distance : str
-            String representation of distance metric.
+        str : str
+            A string to match to appropriate dist_kernel.
+
+        Returns
+        -------
+        distance_kernel_instance : A subclass of BasePairwiseTransformerPanel
+            The instance corresponding to provided string, can be used
+            further to calculate the distance matrix.
         """
-        # Check if distance string is directly available from
-        # sklearn's interface
-        if string_distance in SKLEARN_DISTANCE_METRICS:
-            return SKLEARN_DISTANCE_METRICS[string_distance]
+        for entries in _VALID_DIST_KERNELS:
+            if str in entries.aka:
+                return entries.dist_kernel_instance
 
-        # Otherwise check in scipy's interface
-        elif string_distance in SCIPY_DISTANCE_METRICS:
-            return SCIPY_DISTANCE_METRICS[string_distance].dist_func
-
-        # Otherwise check in sktime's interface
-        # TODO
-
-        else:
-            raise KeyError(
-                f"The distance metric {string_distance} is not available in either "
-                "in `sklearn.metrics.pairwise_distance` or `scipy.spatial.distance`."
-            )
+        raise ValueError(
+            f"The passed string: {str} could not be resolved "
+            "into a valid sktime.dist_kernel instance. "
+        )
 
     @staticmethod
-    def _calculate_dist_matrix_using_callable(callable_distance, X):
-        """
-        Private function to calculate distance matrix using a callable distance metric.
+    def _get_distance_kernel(distance):
+        """Given a distance metric, tries to resolve it to be a proper callable.
 
         Parameters
         ----------
-        callable_distance : callable
-            Callable distance metric. It is either a callable from
-            `sktime.distances`, `sklearn.metrics.pairwise`,
-            `scipy.spatial.distance` or a custom callable.
-        X : panel of time series, any sklearn Panel mtype
-            Time series to fit clusters to
+        distance : Union[str, Callable] or Subclass of BasePairwiseTransformerPanel
+            The metric to resolve
+
+        Returns
+        -------
+        resolved_distance : Callable or Subclass of BasePairwiseTransformerPanel
+            The resolved distance function/instance that can directly calculate
+            distance matrix.
         """
-        module_info = vars(getmodule(callable_distance))
-
-        if module_info.get("__name__") is None:
-            raise ValueError(
-                "The attribute `__name__` could not be resovled from the callable."
+        if isinstance(distance, str):
+            return BaseClusterer._resolve_str_to_dist_kernel(distance)()
+        elif isinstance(distance, BasePairwiseTransformerPanel):
+            return distance
+        elif callable(distance):
+            # If callable then it checks for at least two parameters
+            # and confirms that return type is not float.
+            sig = signature(distance)
+            assert (
+                len(sig.parameters) >= 2
+                and sig.return_annotation is not float
+                and "The callable must have at least two parameters and return "
+                "a distance matrix and not a single value."
             )
-
-        name_ = module_info.get("__name__").split(".")[0]
-
-        # both implementations are directly callable
-        if name_ in ("sktime", "sklearn"):
-            return callable_distance(X)
-
-        # if is belongs to scipy, then callable expects a 1D array, use
-        # sklearn's pairwise_distances to calculate distance matrix
-        elif name_ == "scipy":
-            return pairwise_distances(X, metric=callable_distance)
-
+            return distance
         else:
-            return pairwise_distances(X, metrics=callable_distance)
+            raise ValueError(
+                f"The distance provided: {distance} has to either be a string, "
+                "a callable or have `BasePairwiseTransformerPanel` as a superclass "
+                f"but found type to be: {type(distance)}."
+            )

@@ -123,12 +123,10 @@ class TimeSeriesDBSCAN(BaseClusterer):
         """
         self._X = X
 
-        if isinstance(self.distance, str):
-            distance = BaseClusterer._resolve_distance_from_str(self.distance)
-        else:
-            distance = self.distance
-
-        distmat = BaseClusterer._calculate_dist_matrix_using_callable(distance, X)
+        # `._get_distance_kernel` returns the class, create an instance to be directly
+        # used as an instance
+        distance = BaseClusterer._get_distance_kernel(distance=self.distance)
+        distmat = distance(X)
 
         deleg_param_dict = {key: getattr(self, key) for key in self.DELEGATED_PARAMS}
 
@@ -221,25 +219,18 @@ class TimeSeriesDBSCAN(BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sklearn.metrics.pairwise import euclidean_distances
-
-        from sktime.dists_kernels import AggrDist, DtwDist
+        from sktime.dists_kernels import AggrDist, DtwDist, EditDist
 
         params1 = {"distance": DtwDist()}
-        params2 = {"distance": euclidean_distances}
+        params2 = {"distance": EditDist()}
 
         # distance capable of unequal length
         dist = AggrDist.create_test_instance()
         params3 = {"distance": dist}
 
         # distance is a string, belonging to sktime's distance module
-        # params4 = {"distance": "dtw"}
-
-        # distance is a string, belonging to sklearn's metrics module
-        params5 = {"distance": "euclidean"}
-
-        # distance is a string, beloning to scipy's spatial.distance module
-        params6 = {"distance": "jaccard"}
+        params4 = {"distance": "dtw"}
+        params5 = {"distance": "ScipyDist"}
 
         # return [params1, params2, params3, params4, params5, params6]
-        return [params1, params2, params3, params5, params6]
+        return [params1, params2, params3, params4, params5]
