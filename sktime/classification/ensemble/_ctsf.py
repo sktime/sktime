@@ -227,14 +227,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         )
         BaseClassifier.__init__(self)
 
-        # todo: remove in 0.20.0
-        warn(
-            "ComposableTimeSeriesClassifier has moved to classification.ensemble, "
-            "and will no longer be importable from classification.compose "
-            "from 0.20.0 on. To safely deprecate the old location, "
-            "replace the import with an import from classification.ensemble."
-        )
-
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 

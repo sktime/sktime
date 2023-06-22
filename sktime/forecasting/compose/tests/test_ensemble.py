@@ -4,7 +4,6 @@
 """Unit tests of EnsembleForecaster functionality."""
 
 __author__ = ["GuzalBulatova", "RNKuhns"]
-import sys
 
 import numpy as np
 import pandas as pd
@@ -94,7 +93,6 @@ def test_aggregation_unweighted(forecasters, y, aggfunc):
         ),
     ],
 )
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 def test_aggregation_weighted(forecasters, y, aggfunc, weights):
     """Assert weighted aggfunc returns the correct values."""
     forecaster = EnsembleForecaster(
