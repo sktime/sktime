@@ -81,3 +81,46 @@ def build_obj():
         obj = eval("build_obj()")
 
     return obj
+
+
+def deps(spec):
+    """Get PEP 440 dependency requirements for a craft spec.
+
+    Parameters
+    ----------
+    spec : str, sktime/skbase compatible object specification
+        i.e., a string that executes to construct an object if all imports were present
+        imports inferred are of any classes in the scope of ``all_estimators``
+        option 1: a string that evaluates to an estimator
+        option 2: a sequence of assignments in valid python code,
+            with the object to be defined preceded by a "return"
+            assignments can use names of classes as if all imports were present
+
+    Returns
+    -------
+    reqs : list of str
+        each str is PEP 440 compatible requirement string for craft(spec)
+        if spec has no requirements, return is [], the length 0 list
+    """
+    register = dict(all_estimators())  # noqa: F841
+
+    dep_strs = []
+
+    for x in _extract_class_names(spec):
+        if x not in register.keys():
+            raise RuntimeError(
+                f"class {x} is required to build spec, but was not found "
+                "in all_estimators scope"
+            )
+        cls = register[x]
+
+        new_deps = cls.get_class_tag("python_dependencies")
+
+        if isinstance(new_deps, list):
+            dep_strs += new_deps
+        elif isinstance(new_deps, str) and len(new_deps) > 0:
+            dep_strs += [new_deps]
+
+        reqs = list(set(dep_strs))
+
+    return reqs

@@ -6,8 +6,11 @@ __author__ = ["fkiraly"]
 
 import pytest
 
-from sktime.registry._craft import craft
+from sktime.registry._craft import craft, deps
 from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+simple_spec = "NaiveForecaster()"
+simple_spec_with_dep = "VAR(trend='ct')"
 
 pipe_spec = """
 pipe = TransformedTargetForecaster(steps=[
@@ -38,11 +41,13 @@ return ForecastingGridSearchCV(
     n_jobs=-1)
 """
 
-specs = ["VAR(trend='ct')", pipe_spec]
+dunder_spec = "Detrender(ExponentialSmoothing(sp=12)) * ARIMA()"
+
+specs = [simple_spec, simple_spec_with_dep, pipe_spec, dunder_spec]
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_soft_dependencies(["statsmodels", "pmdarima"], severity="none"),
     reason="skip test if required soft dependencies not available",
 )
 @pytest.mark.parametrize("spec", specs)
@@ -55,3 +60,19 @@ def test_craft(spec):
     crafted_again = craft(new_spec)
 
     assert crafted_again == crafted_obj
+
+
+def test_deps(spec):
+    """Check that deps retrieves the correct requirement sets."""
+    # should return length 0 list since has no deps
+    assert deps(simple_spec) == []
+
+    # should correctly find the single dependency
+    assert deps(simple_spec_with_dep) == ["statsmodels"]
+
+    # has multiple estimators with "statsmodels",
+    # this should be returned like this and not as ["statsmodels", "statsmodels"]
+    assert deps(pipe_spec) == ["statsmodels"]
+
+    # example with two dependencies, should be identified, order does not matter
+    assert set(deps(dunder_spec)) == set(["statsmodels", "pmdarima"])
