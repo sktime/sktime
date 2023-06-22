@@ -19,7 +19,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
         "handles-missing-data": False,
-        "python_version": ">=3.7",  # TODO: change to 3.8 (when?)
+        "python_version": ">=3.8",
         "python_dependencies": ["statsforecast"],
     }
 
