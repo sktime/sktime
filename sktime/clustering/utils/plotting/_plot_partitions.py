@@ -13,10 +13,10 @@ from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
-def _plot(cluster_values, center, axes):
+def _plot(cluster_values, center, axes, alpha: float = 1.0):
     for cluster_series in cluster_values:
         for cluster in cluster_series:
-            axes.plot(cluster, color="b")
+            axes.plot(cluster, color="b", alpha=alpha)
     axes.plot(center[0], color="r")
 
 
@@ -58,7 +58,12 @@ def plot_series(X: TimeSeriesInstances):
     plt.show()
 
 
-def plot_cluster_algorithm(model: TimeSeriesLloyds, X: TimeSeriesInstances, k: int):
+def plot_cluster_algorithm(
+    model: TimeSeriesLloyds,
+    X: TimeSeriesInstances,
+    k: int,
+    timeseries_alpha: float = 1.0,
+):
     """Plot the results from a univariate partitioning algorithm.
 
     Parameters
@@ -69,6 +74,8 @@ def plot_cluster_algorithm(model: TimeSeriesLloyds, X: TimeSeriesInstances, k: i
         The series to predict the values for
     k: int
         Number of centers
+    timeseries_alpha: float
+        Alpha (transparency) value for the individual timeseries lines.
     """
     _check_soft_dependencies("matplotlib")
     import matplotlib.patches as mpatches
@@ -86,7 +93,7 @@ def plot_cluster_algorithm(model: TimeSeriesLloyds, X: TimeSeriesInstances, k: i
 
     fig, axes = plt.subplots(nrows=k, ncols=1)
     for i in range(k):
-        _plot(series_values[i], centers[i], axes[i])
+        _plot(series_values[i], centers[i], axes[i], alpha=timeseries_alpha)
 
     blue_patch = mpatches.Patch(color="blue", label="Series that belong to the cluster")
     red_patch = mpatches.Patch(color="red", label="Cluster centers")
