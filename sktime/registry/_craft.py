@@ -67,9 +67,12 @@ def craft(spec):
         from textwrap import indent
 
         spec_fun = indent(spec, "    ")
-        spec_fun = """
+        spec_fun = (
+            """
 def build_obj():
-        """ + spec_fun
+        """
+            + spec_fun
+        )
         exec(spec_fun, locals())
         obj = eval("build_obj()")
 
