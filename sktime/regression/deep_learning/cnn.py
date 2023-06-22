@@ -12,8 +12,6 @@ from sktime.networks.cnn import CNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies(severity="warning")
-
 
 class CNNRegressor(BaseDeepRegressor):
     """Time Series Convolutional Neural Network (CNN), as described in [1].

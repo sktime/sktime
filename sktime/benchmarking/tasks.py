@@ -179,8 +179,7 @@ class BaseTask(BaseObject):
 
 
 class TSCTask(BaseTask):
-    """
-    Time series classification task.
+    """Time series classification task.
 
     A task encapsulates metadata information such as the feature and target
     variable
@@ -205,8 +204,7 @@ class TSCTask(BaseTask):
 
 
 class TSRTask(BaseTask):
-    """
-    Time series regression task.
+    """Time series regression task.
 
     A task encapsulates metadata information such as the feature and target
     variable

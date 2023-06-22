@@ -5,8 +5,6 @@
 __author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -81,15 +79,6 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
             )
             raise TypeError(msg)
 
-        if len(estimators) == 1:
-            msg = (
-                f"in {self_name}, found steps of length 1, "
-                f"this will result in the same behaviour "
-                f"as not wrapping the single step in a pipeline. "
-                f"Consider not wrapping steps in {self_name} as it is redundant."
-            )
-            warn(msg)
-
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)
 
@@ -120,7 +109,6 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         return estimator_tuples
 
     def _iter_transformers(self, reverse=False, fc_idx=-1):
-
         # exclude final forecaster
         steps = self.steps_[:fc_idx]
 
@@ -422,7 +410,10 @@ class ForecastingPipeline(_Pipeline):
 
     @property
     def forecaster_(self):
-        """Return reference to the forecaster in the pipeline. Valid after _fit."""
+        """Return reference to the forecaster in the pipeline.
+
+        Valid after _fit.
+        """
         return self.steps_[-1][1]
 
     def __rpow__(self, other):
@@ -627,8 +618,7 @@ class ForecastingPipeline(_Pipeline):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    # todo 0.19.0 remove legacy_interface arg and logic
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -645,22 +635,13 @@ class ForecastingPipeline(_Pipeline):
 
         Returns
         -------
-        pred_dist : tfp Distribution object
-            if marginal=True:
-                batch shape is 1D and same length as fh
-                event shape is 1D, with length equal number of variables being forecast
-                i-th (batch) distribution is forecast for i-th entry of fh
-                j-th (event) index is j-th variable, order as y in `fit`/`update`
-            if marginal=False:
-                there is a single batch
-                event shape is 2D, of shape (len(fh), no. variables)
-                i-th (event dim 1) distribution is forecast for i-th entry of fh
-                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
         """
         X = self._transform(X=X)
-        return self.forecaster_.predict_proba(
-            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
-        )
+        return self.forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -1248,6 +1229,7 @@ class ForecastX(BaseForecaster):
     _tags = {
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
+        "scitype:y": "both",
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
         "ignores-exogeneous-X": False,
@@ -1258,7 +1240,6 @@ class ForecastX(BaseForecaster):
     def __init__(
         self, forecaster_y, forecaster_X, fh_X=None, behaviour="update", columns=None
     ):
-
         if behaviour not in ["update", "refit"]:
             raise ValueError('behaviour must be one of "update", "refit"')
 
@@ -1517,8 +1498,7 @@ class ForecastX(BaseForecaster):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    # todo 0.19.0 remove legacy_interface arg and logic
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -1535,22 +1515,13 @@ class ForecastX(BaseForecaster):
 
         Returns
         -------
-        pred_dist : tfp Distribution object
-            if marginal=True:
-                batch shape is 1D and same length as fh
-                event shape is 1D, with length equal number of variables being forecast
-                i-th (batch) distribution is forecast for i-th entry of fh
-                j-th (event) index is j-th variable, order as y in `fit`/`update`
-            if marginal=False:
-                there is a single batch
-                event shape is 2D, of shape (len(fh), no. variables)
-                i-th (event dim 1) distribution is forecast for i-th entry of fh
-                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_proba(
-            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
-        )
+        y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X, marginal=marginal)
         return y_pred
 
     @classmethod
@@ -1709,7 +1680,6 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self.estimator_ = estimator.clone()
 
         if permutation is not None:
-
             inner_estimators = getattr(estimator, steps_arg)
             estimator_tuples = self._get_estimator_tuples(inner_estimators)
 

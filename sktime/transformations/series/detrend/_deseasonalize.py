@@ -543,7 +543,6 @@ class STLTransformer(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-
         from statsmodels.tsa.seasonal import STL as _STL
 
         # fit again if indices not seen, but don't store anything
@@ -582,13 +581,11 @@ class STLTransformer(BaseTransformer):
         # return y + self.seasonal_ + self.trend_
 
     def _make_return_object(self, X, stl):
-
         # deseasonalize only
         transformed = pd.Series(X.values - stl.seasonal, index=X.index)
         # transformed = pd.Series(X.values - stl.seasonal - stl.trend, index=X.index)
 
         if self.return_components:
-
             seasonal = pd.Series(stl.seasonal, index=X.index)
             resid = pd.Series(stl.resid, index=X.index)
             trend = pd.Series(stl.trend, index=X.index)

@@ -130,10 +130,9 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def _forecasters(self):
         """Make internal list of forecasters.
 
-        The list only contains the name and forecasters.
-        This is for the implementation of get_params
-        via _HeterogenousMetaEstimator._get_params which expects
-        lists of tuples of len 2.
+        The list only contains the name and forecasters. This is for the implementation
+        of get_params via _HeterogenousMetaEstimator._get_params which expects lists of
+        tuples of len 2.
         """
         forecasters = self.forecasters
         if isinstance(forecasters, BaseForecaster):
@@ -197,7 +196,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         if self.by == "level":
             hier_dict = self._get_hier_dict(z)
-            for (_, forecaster, level) in self.forecasters_:
+            for _, forecaster, level in self.forecasters_:
                 if level in hier_dict.keys():
                     frcstr = forecaster.clone()
                     df = z[z.index.droplevel(-1).isin(hier_dict[level])]
@@ -258,7 +257,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return hier_dict
 
     def _get_node_dict(self, z):
-        """Create a separate dictionary of nodes and forecasters linked with common key value.
+        """Create dictionaries of nodes and forecasters linked with common key value.
 
         Parameters
         ----------
@@ -273,7 +272,6 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         frcstr_dict : dict
                     Dictionary with key as int and value as
                     forecaster
-
         """
         node_dict = {}
         frcstr_dict = {}
@@ -281,7 +279,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         counter = 0
         zindex = z.index.droplevel(-1).unique()
 
-        for (_, forecaster, node) in self.forecasters_:
+        for _, forecaster, node in self.forecasters_:
             if z.index.nlevels == 2:
                 mi = pd.Index(node)
                 if counter == 0:

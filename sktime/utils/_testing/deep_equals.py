@@ -138,7 +138,6 @@ def deep_equals(x, y, return_msg=False):
 
 
 def _is_np_nan(x):
-
     return isinstance(x, float) and np.isnan(x)
 
 

@@ -20,7 +20,10 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
     reason="skip test if required soft dependencies not available",
 )
 def test_seasonality_acf():
-    """Test PluginParamsForecaster on airline data. Same as docstring example."""
+    """Test PluginParamsForecaster on airline data.
+
+    Same as docstring example.
+    """
     y = load_airline()
 
     sp_est = Differencer() * SeasonalityACF()

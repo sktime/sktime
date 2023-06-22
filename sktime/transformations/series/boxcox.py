@@ -137,8 +137,7 @@ class BoxCoxTransformer(BaseTransformer):
         super(BoxCoxTransformer, self).__init__()
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
         private _fit containing the core logic, called from fit
 
@@ -315,7 +314,6 @@ class LogTransformer(BaseTransformer):
 
 
 def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):
-
     from scipy import optimize
 
     # bounds is None, use simple Brent optimisation

@@ -35,7 +35,6 @@ class ModelSpec:
 
         # Sample from model parameters.
         for t in range(1, n):
-
             zeta[t] = self.params["zeta"] * np.random.normal(loc=0.0, scale=sigma_zeta)
             beta[t] = self.params["beta_1"] * beta[t - 1] + zeta[t]
 

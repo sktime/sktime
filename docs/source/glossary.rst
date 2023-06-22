@@ -20,8 +20,25 @@ sktime.
 
     Scientific type
         A class or object type to denote a category of objects defined by a
-        common interface and data scientific purpose. For example, "forecaster"
-        or "classifier".
+        common python class interface and data scientific purpose.
+        For example, "forecaster" or "classifier", and the interface defined in
+        ``BaseForecaster`` or ``BaseClassifier``.
+
+    Estimator
+        An algorithm of a specific :term:`scientific type`, implementing the python
+        class interface defined by it. For example, the ``ARIMA`` class.
+
+    Composite estimator
+        An :term:`estimator` that consists of multiple other component estimators which
+        can vary. An example would be a pipeline consisting of a transformer and
+        forecaster.
+
+    Hyperparameter:
+        A parameter of a machine learning model that is set at construction.
+        Usually, this affects the model's performance.
+        Examples include the learning rate in a neural network,
+        the number of trees in a random forest, or the regularization parameter
+        in a linear model.
 
     Forecasting
         A learning task focused on prediction future values of a time series. For more details, see the :ref:`user_guide_introduction`.
@@ -88,7 +105,7 @@ sktime.
 
     Tabular
         Is a setting where each :term:`timepoint` of the :term:`univariate time series` being measured for each instance are treated as features and
-        stored as a primitive data type in the DataFrame’s cells. E.g., there are N :term:`instances <instance>` of time series and each has T
+        stored as a primitive data type in the DataFrame's cells. E.g., there are N :term:`instances <instance>` of time series and each has T
         :term:`timepoints <timepoint>`, this would yield a pandas DataFrame with shape (N, T): N rows, T columns.
 
     Framework
@@ -108,3 +125,26 @@ sktime.
     Application
         A single-purpose piece of code that practitioners write to solve a particular applied problem.
         Compare with :term:`toolbox` and :term:`framework`.
+
+    Bagging:
+        A technique in ensemble learning where multiple models are trained on different subsets of the training data,
+        and individual model outputs are averaged by some rule (e.g., majority vote) to obtain a consensus prediction.
+
+    Ensemble learning:
+        A technique in which multiple models are combined to improve the overall performance of a predictive model.
+
+    Feature extraction:
+        A technique used to extract useful information from raw data. In time series analysis, this may involve transforming the
+        data to a frequency domain, decomposing the signal into components, or extracting statistical features.
+
+    Generalization:
+        The ability of a predictive model to perform well on unseen data. A model that overfits to the training data may not
+        generalize well, while a model that underfits may not capture the underlying patterns in the data.
+
+    Model selection:
+        The process of selecting the best machine learning model for a given task. This may involve comparing the performance
+        of different models on a validation set, or using techniques like grid search to find the best hyperparameters for a given model.
+
+    Time series decomposition:
+        A technique used to separate a time series into its underlying components, such as trend, seasonality, and noise.
+        This can be useful for understanding the patterns in the data and for modeling each component separately.

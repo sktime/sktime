@@ -64,9 +64,8 @@ def _make_augmentation_pipeline(augmentation_list):
 class _AddTime(BaseTransformer):
     """Add time component to each path.
 
-    For a path of shape [B, L, C] this adds a time channel to be placed at the
-    first index. The time channel will be of length L and scaled to exist in
-    [0, 1].
+    For a path of shape [B, L, C] this adds a time channel to be placed at the first
+    index. The time channel will be of length L and scaled to exist in [0, 1].
     """
 
     _tags = {
@@ -81,7 +80,6 @@ class _AddTime(BaseTransformer):
     }
 
     def _transform(self, X, y=None):
-
         data = np.swapaxes(X, 1, 2)
         # Batch and length dim
         B, L = data.shape[0], data.shape[1]
@@ -98,7 +96,9 @@ class _InvisibilityReset(BaseTransformer):
 
     This adds sensitivity to translation.
 
-    Introduced by Yang et al.: https://arxiv.org/pdf/1707.03993.pdf
+    Introduced by Yang et al.:
+    https://arxiv.org/pdf/1707.03993.pdf
+    : https: //arxiv.org/pdf/1707.03993.pdf
     """
 
     _tags = {

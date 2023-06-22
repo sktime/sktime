@@ -74,8 +74,8 @@ def test_multiplex_transformer_in_grid():
     """Test behavior of MultiplexTransformer.
 
     It often makes sense to use MultiplexTransformer in conjunction with
-    ForecastingGridSearchCV within a pipeline.  Here we check that when you do that
-    you get the expected result.
+    ForecastingGridSearchCV within a pipeline.  Here we check that when you do that you
+    get the expected result.
     """
     y = load_shampoo_sales()
     # randomly make some of the values nans:
@@ -113,9 +113,9 @@ def test_multiplex_transformer_in_grid():
 def test_multiplex_or_dunder():
     """Test that the MultiplexTransforemer magic "|" dunder works.
 
-    A MultiplexTransformer can be created by using the "|" dunder method on
-    either transformer or MultiplexTransformer objects. Here we test that it performs
-    as expected on all the use cases, and raises the expected error in some others.
+    A MultiplexTransformer can be created by using the "|" dunder method on either
+    transformer or MultiplexTransformer objects. Here we test that it performs as
+    expected on all the use cases, and raises the expected error in some others.
     """
     # test a simple | example with two transformers:
     multiplex_two_transformers = ExponentTransformer(2) | ExponentTransformer(3)

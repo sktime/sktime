@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """Configuration file for the Sphinx documentation builder."""
 
 import os
@@ -82,7 +81,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -305,8 +304,7 @@ def _make_estimator_overview(app):
     from sktime.registry import all_estimators
 
     def _process_author_info(author_info):
-        """
-        Process author information from source code files.
+        """Process author information from source code files.
 
         Parameters
         ----------

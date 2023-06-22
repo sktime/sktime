@@ -48,7 +48,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         The function to measure the quality of a split. Supported criteria are
         "squared_error" for the mean squared error, which is equal to variance reduction
         as feature selection criterion and minimizes the L2 loss using the mean of each
-        terminal node, "friedman_mse", which uses mean squared error with Friedman’s
+        terminal node, "friedman_mse", which uses mean squared error with Friedman's
         improvement score for potential splits, "absolute_error" for the mean absolute
         error, which minimizes the L1 loss using the median of each terminal node,
         and "poisson" which uses reduction in Poisson deviance to find splits.
@@ -191,7 +191,6 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         warm_start=False,
         max_samples=None,
     ):
-
         self.estimator = estimator
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
@@ -226,10 +225,10 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     def fit(self, X, y, **kwargs):
         """Wrap fit to call BaseRegressor.fit.
 
-        This is a fix to get around the problem with multiple inheritance. The
-        problem is that if we just override _fit, this class inherits the fit from
-        the sklearn class BaseTimeSeriesForest. This is the simplest solution,
-        albeit a little hacky.
+        This is a fix to get around the problem with multiple inheritance. The problem
+        is that if we just override _fit, this class inherits the fit from the sklearn
+        class BaseTimeSeriesForest. This is the simplest solution, albeit a little
+        hacky.
         """
         return BaseRegressor.fit(self, X=X, y=y, **kwargs)
 
@@ -245,7 +244,6 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
 
     def _validate_estimator(self):
-
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
                 "n_estimators must be an integer, "

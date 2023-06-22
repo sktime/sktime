@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Greedy Gaussian Segmentation (GGS).
+"""Greedy Gaussian Segmentation (GGS).
 
 The method approximates solutions for the problem of breaking a
 multivariate time series into segments, where the data in each segment
@@ -54,8 +53,7 @@ def get_GGS():
 
     @define
     class GGS:
-        """
-        Greedy Gaussian Segmentation.
+        """Greedy Gaussian Segmentation.
 
         The method approxmates solutions for the problem of breaking a
         multivariate time series into segments, where the data in each segment
@@ -131,8 +129,7 @@ def get_GGS():
             self._intermediate_ll = []
 
         def log_likelihood(self, data: npt.ArrayLike) -> float:
-            """
-            Compute the GGS log-likelihood of the segmented Gaussian model.
+            """Compute the GGS log-likelihood of the segmented Gaussian model.
 
             Parameters
             ----------
@@ -157,8 +154,7 @@ def get_GGS():
         def cumulative_log_likelihood(
             self, data: npt.ArrayLike, change_points: List[int]
         ) -> float:
-            """
-            Calculate cumulative GGS log-likelihood for all segments.
+            """Calculate cumulative GGS log-likelihood for all segments.
 
             Args
             ----
@@ -181,8 +177,7 @@ def get_GGS():
             return log_likelihood
 
         def add_new_change_point(self, data: npt.ArrayLike) -> Tuple[int, float]:
-            """
-            Add change point.
+            """Add change point.
 
             This methods finds a new change point by that splits the segment and
             optimizes the objective function. See section 3.1 on split subroutine
@@ -249,8 +244,7 @@ def get_GGS():
         def adjust_change_points(
             self, data: npt.ArrayLike, change_points: List[int], new_index: List[int]
         ) -> List[int]:
-            """
-            Adjust change points.
+            """Adjust change points.
 
             This method adjusts the positions of all change points until the
             result is 1-OPT, i.e., no change of any one breakpoint improves

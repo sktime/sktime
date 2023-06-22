@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """TEASER early classifier.
 
-An early classifier using a one class SVM's to determine decision safety with a
-time series classifier.
+An early classifier using a one class SVM's to determine decision safety with a time
+series classifier.
 """
 
 __author__ = ["MatthewMiddlehurst", "patrickzib"]
@@ -352,7 +352,7 @@ class TEASER(BaseEarlyClassifier):
 
     def _fit_estimator(self, X, y, i):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (i + 1)
+        rs = None if self.random_state is None else rs * 37 * (i + 1) % 2**31
         rng = check_random_state(rs)
 
         default = (
@@ -430,7 +430,7 @@ class TEASER(BaseEarlyClassifier):
 
     def _predict_proba_for_estimator(self, X, i):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (i + 1)
+        rs = None if self.random_state is None else rs * 37 * (i + 1) % 2**31
         rng = check_random_state(rs)
 
         probas = self._estimators[i].predict_proba(
@@ -488,7 +488,6 @@ class TEASER(BaseEarlyClassifier):
     def _predict_oc_classifier(
         self, X_oc, n_consecutive_predictions, idx, estimator_preds, state_info
     ):
-
         # stores whether we have made a final decision on a prediction, if true
         # state info won't be edited in later time stamps
         finished = state_info[:, 1] >= n_consecutive_predictions

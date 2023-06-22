@@ -109,7 +109,6 @@ class ShapeDTW(BaseClassifier):
     .. [1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
-
     """
 
     _tags = {
@@ -302,9 +301,8 @@ class ShapeDTW(BaseClassifier):
     def _generate_shape_descriptors(self, data):
         """Generate shape descriptors.
 
-        This function is used to convert a list of
-        subsequences into a list of shape descriptors
-        to be used for classification.
+        This function is used to convert a list of subsequences into a list of shape
+        descriptors to be used for classification.
         """
         # Get the appropriate transformer objects
         if self.shape_descriptor_function != "compound":

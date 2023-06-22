@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class templates for distances or kernels between time series, and for tabular data.
+"""Base class templates for distances or kernels between time series and tabular data.
 
 templates in this module:
 
@@ -42,8 +41,8 @@ from sktime.datatypes._series_as_panel import convert_Series_to_Panel
 class BasePairwiseTransformer(BaseEstimator):
     """Base pairwise transformer for tabular or series data template class.
 
-    The base pairwise transformer specifies the methods and method
-    signatures that all pairwise transformers have to implement.
+    The base pairwise transformer specifies the methods and method signatures that all
+    pairwise transformers have to implement.
 
     Specific implementations of these methods is deferred to concrete classes.
     """
@@ -175,8 +174,8 @@ class BasePairwiseTransformer(BaseEstimator):
 class BasePairwiseTransformerPanel(BaseEstimator):
     """Base pairwise transformer for panel data template class.
 
-    The base pairwise transformer specifies the methods and method
-    signatures that all pairwise transformers have to implement.
+    The base pairwise transformer specifies the methods and method signatures that all
+    pairwise transformers have to implement.
 
     Specific implementations of these methods is deferred to concrete classes.
     """

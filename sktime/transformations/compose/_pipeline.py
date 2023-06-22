@@ -131,7 +131,6 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     _steps_fitted_attr = "steps_"
 
     def __init__(self, steps):
-
         self.steps = steps
         self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
 

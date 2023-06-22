@@ -119,7 +119,6 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         transformer_weights=None,
         preserve_dataframe=True,
     ):
-
         warn(
             "ColumnTransformer is not fully compliant with the sktime interface "
             "and will be replaced by sktime.transformations.ColumnEnsembleTransformer "
@@ -142,11 +141,9 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         self._is_fitted = False
 
     def _hstack(self, Xs):
-        """
-        Stacks X horizontally.
+        """Stacks X horizontally.
 
-        Supports input types (X): list of numpy arrays, sparse arrays and
-        DataFrames
+        Supports input types (X): list of numpy arrays, sparse arrays and DataFrames
         """
         types = set(type(X) for X in Xs)
 
@@ -169,8 +166,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
     def _validate_output(self, result):
         """Validate output of every transformer.
 
-        Ensure that the output of each transformer is 2D. Otherwise
-        hstack can raise an error or produce incorrect results.
+        Ensure that the output of each transformer is 2D. Otherwise hstack can raise an
+        error or produce incorrect results.
 
         Output can also be a pd.Series which is actually a 1D
         """
