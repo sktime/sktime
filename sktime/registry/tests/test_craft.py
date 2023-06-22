@@ -62,6 +62,7 @@ def test_craft(spec):
     assert crafted_again == crafted_obj
 
 
+@pytest.mark.parametrize("spec", specs)
 def test_deps(spec):
     """Check that deps retrieves the correct requirement sets."""
     # should return length 0 list since has no deps
