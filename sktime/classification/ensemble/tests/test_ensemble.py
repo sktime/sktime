@@ -9,7 +9,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.classification.compose import ComposableTimeSeriesForestClassifier
+from sktime.classification.ensemble import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
