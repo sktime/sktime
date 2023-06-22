@@ -61,6 +61,16 @@ def craft(spec):
     for x in _extract_class_names(spec):
         exec(f"{x} = register['{x}']")
 
-    obj = eval(spec)
+    try:
+        obj = eval(spec)
+    except Exception:
+        from textwrap import indent
+
+        spec_fun = indent(spec, "    ")
+        spec_fun = """
+def build_obj():
+        """ + spec_fun
+        exec(spec_fun, locals())
+        obj = eval("build_obj()")
 
     return obj

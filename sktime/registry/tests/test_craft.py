@@ -7,6 +7,7 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.registry._craft import craft
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 pipe_spec = """
 pipe = TransformedTargetForecaster(steps=[
@@ -16,7 +17,8 @@ cv = ExpandingWindowSplitter(
     initial_window=24,
     step_length=12,
     fh=[1, 2, 3])
-gscv = ForecastingGridSearchCV(
+
+return ForecastingGridSearchCV(
     forecaster=pipe,
     param_grid=[{
         "forecaster": [NaiveForecaster(sp=12)],
@@ -39,6 +41,10 @@ gscv = ForecastingGridSearchCV(
 specs = ["VAR(trend='ct')", pipe_spec]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 @pytest.mark.parametrize("spec", specs)
 def test_craft(spec):
     """Check that crafting works and is inverse to str coercion."""
