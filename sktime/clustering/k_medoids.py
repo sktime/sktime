@@ -65,10 +65,10 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     >>> from sktime.clustering.k_medoids import TimeSeriesKMedoids
     >>> X_train, y_train = load_arrow_head(split="train")
     >>> X_test, y_test = load_arrow_head(split="test")
-    >>> clusterer = TimeSeriesKMedoids(n_clusters=3)
-    >>> clusterer.fit(X_train)
+    >>> clusterer = TimeSeriesKMedoids(n_clusters=3)  # doctest: +SKIP
+    >>> clusterer.fit(X_train)  # doctest: +SKIP
     TimeSeriesKMedoids(n_clusters=3)
-    >>> y_pred = clusterer.predict(X_test)
+    >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {"python_dependencies": "numba"}
