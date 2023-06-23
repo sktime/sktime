@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-"""Interfaces AutoReg Forecaster from statsmodels
+"""Interfaces AutoReg Forecaster from statsmodels.
 
 Available from statsmodels.tsa.ar_model
 """
@@ -11,8 +11,9 @@ __all__ = ["AutoREG"]
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
+
 class AutoREG(_StatsModelsAdapter):
-    """Autoregressive AR-X(p) model
+    """Autoregressive AR-X(p) model.
 
     Estimate an AR-X model using Conditional Maximum Likelihood (OLS).
 
@@ -101,7 +102,6 @@ class AutoREG(_StatsModelsAdapter):
         cov_kwds=None,
         use_t=True,
         dynamic=False,
-        exog_oos=None
     ):
         # Model Params
         self.lags = lags
@@ -117,10 +117,9 @@ class AutoREG(_StatsModelsAdapter):
         self.cov_type = cov_type
         self.cov_kwds = cov_kwds
         self.use_t = use_t
-        
+
         # Predcit Params
         self.dynamic = dynamic
-        self.exog_oos = exog_oos
 
         super(AutoREG, self).__init__()
 
@@ -178,7 +177,7 @@ class AutoREG(_StatsModelsAdapter):
         )
 
         return self
-    
+
     # todo: implement this, mandatory
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -205,7 +204,6 @@ class AutoREG(_StatsModelsAdapter):
         y_pred : pd.Series
             Point predictions
         """
-
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
 
@@ -215,7 +213,7 @@ class AutoREG(_StatsModelsAdapter):
         valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(
-            start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos
+            start=start, end=end, exog=self._X, exog_oos=X, dynamic=self.dynamic
         )
         y_pred.name = self._y.name
         return y_pred.loc[valid_indices]
