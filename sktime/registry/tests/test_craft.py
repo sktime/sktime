@@ -6,7 +6,7 @@ __author__ = ["fkiraly"]
 
 import pytest
 
-from sktime.registry._craft import craft, deps
+from sktime.registry._craft import craft, deps, imports
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 simple_spec = "NaiveForecaster()"
@@ -77,3 +77,20 @@ def test_deps(spec):
 
     # example with two dependencies, should be identified, order does not matter
     assert set(deps(dunder_spec)) == set(["statsmodels", "pmdarima"])
+
+
+def test_imports():
+    """Check that imports produces the correct import blocks."""
+    simple_spec_imports = "from sktime.forecasting.naive import NaiveForecaster"
+    assert imports(simple_spec) == simple_spec_imports
+
+    pipe_imports = (
+        "from sktime.forecasting.compose._pipeline import TransformedTargetForecast"
+        "er\nfrom sktime.forecasting.exp_smoothing import ExponentialSmoothing\nfrom"
+        " sktime.forecasting.model_selection._split import ExpandingWindowSplitter\nf"
+        "rom sktime.forecasting.model_selection._tune import ForecastingGridSearch"
+        "CV\nfrom sktime.forecasting.naive import NaiveForecaster\nfrom sktime.fore"
+        "casting.naive import NaiveForecaster\nfrom sktime.forecasting.theta impor"
+        "t ThetaForecaster\nfrom sktime.transformations.series.impute import Imputer"
+    )
+    assert imports(pipe_spec) == pipe_imports

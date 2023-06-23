@@ -102,7 +102,7 @@ def deps(spec):
         each str is PEP 440 compatible requirement string for craft(spec)
         if spec has no requirements, return is [], the length 0 list
     """
-    register = dict(all_estimators())  # noqa: F841
+    register = dict(all_estimators())
 
     dep_strs = []
 
@@ -124,3 +124,45 @@ def deps(spec):
         reqs = list(set(dep_strs))
 
     return reqs
+
+
+def imports(spec):
+    """Get import code block for a craft spec.
+
+    Parameters
+    ----------
+    spec : str, sktime/skbase compatible object specification
+        i.e., a string that executes to construct an object if all imports were present
+        imports inferred are of any classes in the scope of ``all_estimators``
+        option 1: a string that evaluates to an estimator
+        option 2: a sequence of assignments in valid python code,
+            with the object to be defined preceded by a "return"
+            assignments can use names of classes as if all imports were present
+
+    Returns
+    -------
+    import_str : str
+        python code consisting of all import statements required for spec
+        imports cover object/estimator classes found as sub-strings of spec
+    """
+    register = dict(all_estimators())
+
+    import_strs = []
+
+    for x in _extract_class_names(spec):
+        if x not in register.keys():
+            raise RuntimeError(
+                f"class {x} is required to build spec, but was not found "
+                "in all_estimators scope"
+            )
+        cls = register[x]
+
+        import_str = f"from {cls.__module__} import {x}"
+        import_strs += [import_str]
+
+    if len(import_strs) == 0:
+        imports_str = ""
+    else:
+        imports_str = "\n".join(sorted(import_strs))
+
+    return imports_str
