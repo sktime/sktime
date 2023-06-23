@@ -102,7 +102,6 @@ class AutoREG(_StatsModelsAdapter):
         cov_kwds=None,
         use_t=True,
         dynamic=False,
-        exog_oos=None,
     ):
         # Model Params
         self.lags = lags
@@ -121,7 +120,6 @@ class AutoREG(_StatsModelsAdapter):
 
         # Predcit Params
         self.dynamic = dynamic
-        self.exog_oos = exog_oos
 
         super(AutoREG, self).__init__()
 
@@ -220,7 +218,7 @@ class AutoREG(_StatsModelsAdapter):
         valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(
-            start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos
+            start=start, end=end, exog=self._X, exog_oos=X, dynamic=self.dynamic
         )
         y_pred.name = self._y.name
         return y_pred.loc[valid_indices]
