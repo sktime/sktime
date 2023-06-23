@@ -193,9 +193,8 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
         ):
             # Dataset is not already present in the datasets directory provided.
             # If it is not there, download and install it.
-            url = (
-                f"https://github.com/sktime/sktime-datasets/raw/main/TSC/{name}.zip"
-            )
+            url = f"https://github.com/sktime/sktime-datasets/raw/main/TSC/{name}.zip"
+
             # This also tests the validitiy of the URL, can't rely on the html
             # status code as it always returns 200
             try:
