@@ -15,7 +15,6 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 if _check_estimator_deps(DateTimeFeatures, severity="none"):
-
     # Load multivariate dataset longley and apply calendar extraction
 
     y, X = load_longley()
@@ -201,8 +200,8 @@ all_args = [
 def test_eval(test_input, expected):
     """Tests which columns are returned for different arguments.
 
-    For a detailed description what these arguments do,
-    and how they interact see docstring of DateTimeFeatures.
+    For a detailed description what these arguments do, and how they interact see
+    docstring of DateTimeFeatures.
     """
     assert len(test_input) == len(expected)
     assert all([a == b for a, b in zip(test_input, expected)])

@@ -141,11 +141,11 @@ def distance_predefined_params(distance_measure, **params):
 def numba_wrapper(distance_measure):
     """Wrap a numba distance measure with numpy conversion.
 
-     Converts to 1 column per dimension format. Really would be better if the whole
-     thing worked directly with numpy arrays.
+    Converts to 1 column per dimension format. Really would be better if the whole thing
+    worked directly with numpy arrays.
     :param distance_measure: distance measure to wrap
-    :returns: a distance measure which automatically formats data for numba
-    distance measures
+    :returns: a distance measure which automatically formats data for numba distance
+        measures
     """
 
     def distance(instance_a, instance_b, **params):
@@ -582,8 +582,8 @@ def setup_all_distance_measure_getter(proximity):
     def pick_rand_distance_measure(proximity):
         """Generate a distance measure from a range of parameters.
 
-        :param proximity: proximity object containing distance measures,
-        ranges and dataset
+        :param proximity: proximity object containing distance measures, ranges and
+            dataset
         :returns: a distance measure with no parameters
         """
         random_state = check_random_state(proximity.random_state)
@@ -804,8 +804,7 @@ class ProximityStump(BaseClassifier):
 
         :param exemplars: the exemplars to use
         :param instance: the instance to compare to each exemplar
-        :param distance_measure: the distance measure to provide similarity
-        values
+        :param distance_measure: the distance measure to provide similarity values
         :returns: list of distances to each exemplar
         """
         n_exemplars = len(exemplars)
@@ -853,8 +852,7 @@ class ProximityStump(BaseClassifier):
         return distances
 
     def _fit(self, X, y):
-        """
-        Build the classifier on the training set (X, y).
+        """Build the classifier on the training set (X, y).
 
         Parameters
         ----------
@@ -1512,6 +1510,7 @@ class ProximityForest(BaseClassifier):
 
 
 # start of util functions
+
 
 # find the index of the best value in the array
 def arg_bests(array, comparator):

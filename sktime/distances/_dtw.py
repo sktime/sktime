@@ -60,7 +60,7 @@ class _DtwDistance(NumbaDistance):
         window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceAlignmentPathCallable:
         """Create a no_python compiled dtw path distance callable.
 
@@ -142,7 +142,7 @@ class _DtwDistance(NumbaDistance):
         window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled dtw distance callable.
 

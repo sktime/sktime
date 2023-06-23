@@ -110,7 +110,6 @@ class ClearSky(BaseTransformer):
         n_jobs=None,
         backend="loky",
     ):
-
         self.quantile_prob = quantile_prob
         self.bw_diurnal = bw_diurnal
         self.bw_annual = bw_annual
@@ -340,7 +339,6 @@ def _check_index(X):
     -------
     freq_ind : str or None
         Frequency of data in string format
-
     """
     if not (isinstance(X.index, pd.DatetimeIndex)) | (
         isinstance(X.index, pd.PeriodIndex)

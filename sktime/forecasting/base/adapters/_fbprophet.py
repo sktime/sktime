@@ -108,7 +108,6 @@ class _ProphetAdapter(BaseForecaster):
 
         # Add floor and bottom when growth is logistic
         if self.growth == "logistic":
-
             if self.growth_cap is None:
                 raise ValueError(
                     "Since `growth` param is set to 'logistic', expecting `growth_cap`"

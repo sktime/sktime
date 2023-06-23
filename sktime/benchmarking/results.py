@@ -59,7 +59,6 @@ class RAMResults(BaseResults):
             timestamp when the estimator began making predictions
         predict_estimator_end_time : pandas timestamp (default=None)
             timestamp when the estimator finished making predictions
-
         """
         key = self._generate_key(strategy_name, dataset_name, cv_fold, train_or_test)
         index = np.asarray(index)
@@ -107,7 +106,10 @@ class RAMResults(BaseResults):
         return False
 
     def save(self):
-        """Save self. Method present for interface consistency."""
+        """Save self.
+
+        Method present for interface consistency.
+        """
         # in-memory results are currently not persisted (i.e saved to the disk)
         pass
 

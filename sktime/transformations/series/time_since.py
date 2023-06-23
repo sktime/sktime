@@ -17,7 +17,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class TimeSince(BaseTransformer):
-    """Computes element-wise time elapsed between the time index and a reference start time.
+    """Compute element-wise time elapsed between time index and a reference start time.
 
     Creates a column(s) which represents: `t` - `start`, where `start` is
     a reference time and `t` is the time index. The type of `start` must be

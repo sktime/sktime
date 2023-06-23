@@ -21,7 +21,7 @@ _Pair = co.namedtuple("Pair", ("start", "end"))
 def _window_getter(
     window_name, window_depth=None, window_length=None, window_step=None
 ):
-    """Get the window method correspondent to the given string and initialises with specified parameters.
+    """Get window method correspondent to given string and initialises with parameters.
 
     Parameters
     ----------
@@ -63,12 +63,12 @@ def _window_getter(
 class _Window:
     """Abstract base class for windows.
 
-    Each subclass must implement a __call__ method that returns a list of lists
-    of 2-tuples. Each 2-tuple specifies the start and end of each window.
+    Each subclass must implement a __call__ method that returns a list of lists of
+    2-tuples. Each 2-tuple specifies the start and end of each window.
 
-    These windows are grouped into a list that will (usually) cover the full
-    time series. These lists are grouped into another list for situations
-    where we consider windows of multiple scales.
+    These windows are grouped into a list that will (usually) cover the full time
+    series. These lists are grouped into another list for situations where we consider
+    windows of multiple scales.
     """
 
     def num_windows(self, length):
@@ -125,16 +125,17 @@ class _ExpandingSliding(_Window):
 
 
 class _Sliding(_ExpandingSliding):
-    """A window starting at zero and going to some point that increases between windows."""  # noqa: E501
+    """Build a Sliding object.
+
+    A window starting at zero and going to some point that increases between windows.
+
+    Parameters
+    ----------
+    length: int, The length of the window.
+    step: int, The sliding step size.
+    """
 
     def __init__(self, length, step):
-        """Build a Sliding object.
-
-        Parameters
-        ----------
-        length: int, The length of the window.
-        step: int, The sliding step size.
-        """
         super(_Sliding, self).__init__(
             initial_length=length, start_step=step, end_step=step
         )

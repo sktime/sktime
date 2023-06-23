@@ -109,9 +109,9 @@ def test_multiplex_with_grid_search():
 def test_multiplex_or_dunder():
     """Test that the MultiplexForecaster magic "|" dunder methodbahves as expected.
 
-    A MultiplexForecaster can be created by using the "|" dunder method on
-    either forecaster or MultiplexForecaster objects. Here we test that it performs
-    as expected on all the use cases, and raises the expected error in some others.
+    A MultiplexForecaster can be created by using the "|" dunder method on either
+    forecaster or MultiplexForecaster objects. Here we test that it performs as expected
+    on all the use cases, and raises the expected error in some others.
     """
     # test a simple | example with two forecasters:
     multiplex_two_forecaster = AutoETS() | NaiveForecaster()

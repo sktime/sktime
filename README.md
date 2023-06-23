@@ -4,7 +4,7 @@
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.19.1 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
+:rocket: **Version 0.19.2 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation and forecasting. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
 
@@ -90,6 +90,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [time series clustering]: https://github.com/sktime/sktime/tree/main/sktime/clustering
 [annotation]: https://github.com/sktime/sktime/tree/main/sktime/annotation
 [time series distances/kernels]: https://github.com/sktime/sktime/tree/main/sktime/dists_kernels
+[time series alignment]: https://github.com/sktime/sktime/tree/main/sktime/alignment
 [transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
 [distributions and simulation]: https://github.com/sktime/sktime/tree/main/sktime/proba
 [parameter fitting]: https://github.com/sktime/sktime/tree/main/sktime/param_est
@@ -99,7 +100,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 For trouble shooting and detailed installation instructions, see the [documentation](https://www.sktime.net/en/latest/installation.html).
 
 - **Operating system**: macOS X · Linux · Windows 8.1 or higher
-- **Python version**: Python 3.7, 3.8, 3.9, 3.10, and 3.11 (only 64 bit)
+- **Python version**: Python 3.8, 3.9, 3.10, and 3.11 (only 64 bit)
 - **Package managers**: [pip] · [conda] (via `conda-forge`)
 
 [pip]: https://pip.pypa.io/en/stable/

@@ -31,7 +31,6 @@ class BaseDistribution(BaseObject):
     }
 
     def __init__(self, index=None, columns=None):
-
         self.index = index
         self.columns = columns
 
@@ -42,15 +41,15 @@ class BaseDistribution(BaseObject):
     def loc(self):
         """Location indexer.
 
-        Use `my_distribution.loc[index]` for `pandas`-like row/column subsetting
-        of `BaseDistribution` descendants.
+        Use `my_distribution.loc[index]` for `pandas`-like row/column subsetting of
+        `BaseDistribution` descendants.
 
         `index` can be any `pandas` `loc` compatible index subsetter.
 
         `my_distribution.loc[index]` or `my_distribution.loc[row_index, col_index]`
-        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`,
-        to exactly the same/cols rows as `pandas` `loc` would subset
-        rows in `my_distribution.index` and columns in `my_distribution.columns`.
+        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`, to
+        exactly the same/cols rows as `pandas` `loc` would subset rows in
+        `my_distribution.index` and columns in `my_distribution.columns`.
         """
         return _Indexer(ref=self, method="_loc")
 
@@ -58,15 +57,15 @@ class BaseDistribution(BaseObject):
     def iloc(self):
         """Integer location indexer.
 
-        Use `my_distribution.iloc[index]` for `pandas`-like row/column subsetting
-        of `BaseDistribution` descendants.
+        Use `my_distribution.iloc[index]` for `pandas`-like row/column subsetting of
+        `BaseDistribution` descendants.
 
         `index` can be any `pandas` `iloc` compatible index subsetter.
 
         `my_distribution.iloc[index]` or `my_distribution.iloc[row_index, col_index]`
-        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`,
-        to exactly the same/cols rows as `pandas` `iloc` would subset
-        rows in `my_distribution.index` and columns in `my_distribution.columns`.
+        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`, to
+        exactly the same/cols rows as `pandas` `iloc` would subset rows in
+        `my_distribution.index` and columns in `my_distribution.columns`.
         """
         return _Indexer(ref=self, method="_iloc")
 
@@ -87,7 +86,6 @@ class BaseDistribution(BaseObject):
         return self._iloc(rowidx=row_iloc, colidx=col_iloc)
 
     def _subset_params(self, rowidx, colidx):
-
         params = self._get_dist_params()
 
         subset_param_dict = {}
@@ -126,7 +124,6 @@ class BaseDistribution(BaseObject):
         )
 
     def _get_dist_params(self):
-
         params = self.get_params(deep=False)
         paramnames = params.keys()
         reserved_names = ["index", "columns"]
@@ -345,7 +342,7 @@ class BaseDistribution(BaseObject):
         return spl.groupby(level=1).mean()
 
     def pdfnorm(self, a=2):
-        r"""a-norm of pdf, defaults to 2-norm.
+        r"""A-norm of pdf, defaults to 2-norm.
 
         computes a-norm of the entry marginal pdf, i.e.,
         :math:`\mathbb{E}[p_X(X)^{a-1}] = \int p(x)^a dx`,
@@ -510,13 +507,11 @@ class _BaseTFDistribution(BaseDistribution):
     }
 
     def __init__(self, index=None, columns=None, distr=None):
-
         self.distr = distr
 
         super(_BaseTFDistribution, self).__init__(index=index, columns=columns)
 
     def __str__(self):
-
         return self.to_str()
 
     def pdf(self, x):

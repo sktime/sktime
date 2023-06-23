@@ -15,7 +15,6 @@ class BaseMetric(BaseObject):
     """
 
     def __init__(self):
-
         super(BaseMetric, self).__init__()
 
     def __call__(self, y_true, y_pred, **kwargs):

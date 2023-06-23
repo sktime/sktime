@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Registry of mtypes for Hierarchical scitype. See datatypes._registry for API."""
+"""Registry of mtypes for Hierarchical scitype.
+
+See datatypes._registry for API.
+"""
 
 import pandas as pd
 

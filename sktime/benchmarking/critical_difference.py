@@ -14,8 +14,7 @@ _check_soft_dependencies("matplotlib", severity="warning")
 
 
 def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):
-    """
-    Check whether Friedman test is significant.
+    """Check whether Friedman test is significant.
 
     Larger parts of code copied from scipy.
 
@@ -71,8 +70,7 @@ def plot_critical_difference(
     textspace=2.5,
     reverse=True,
 ):
-    """
-    Draw critical difference diagram.
+    """Draw critical difference diagram.
 
     Step 1 & 2: Calculate average ranks from data
     Step 3: Use Friedman test to check whether
@@ -122,8 +120,7 @@ def plot_critical_difference(
         return [a[n] for a in lst]
 
     def _lloc(lst, n):
-        """
-        List location in list of list structure.
+        """List location in list of list structure.
 
         Enable the use of negative locations:
         -1 is the last element, -2 second last...

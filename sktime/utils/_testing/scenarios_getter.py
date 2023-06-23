@@ -137,7 +137,7 @@ def _check_tag_cond(obj, filter_tags=None):
 
     cond_sat = True
 
-    for (key, value) in filter_tags.items():
+    for key, value in filter_tags.items():
         if not isinstance(value, list):
             value = [value]
         cond_sat = cond_sat and obj.get_class_tag(key) in set(value)

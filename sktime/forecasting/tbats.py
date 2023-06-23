@@ -3,8 +3,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements TBATS algorithm.
 
-TBATS refers to Exponential smoothing state space model with Trigonometric
-Seasonality, Box-Cox transformation, ARMA errors, Trend and Seasonal components.
+TBATS refers to Exponential smoothing state space model with Trigonometric Seasonality,
+Box-Cox transformation, ARMA errors, Trend and Seasonal components.
 
 Wrapping implementation in [1]_ of method proposed in [2]_.
 """

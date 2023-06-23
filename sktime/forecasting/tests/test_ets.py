@@ -27,8 +27,7 @@ inf_ic_ts = pd.Series(
     reason="skip test if required soft dependency not available",
 )
 def test_airline_default():
-    """
-    Default condition.
+    """Default condition.
 
     fit <- ets(AirPassengers, model = "ZZZ")
     components: "M" "A" "M" "TRUE" (error, trend, season, damped)
@@ -54,8 +53,7 @@ def test_airline_default():
 )
 @pytest.mark.xfail(reason="flaky results on linux")
 def test_airline_allow_multiplicative_trend():
-    """
-    Allow multiplicative trend.
+    """Allow multiplicative trend.
 
     fit <- ets(AirPassengers, model = "ZZZ",
     allow.multiplicative.trend = TRUE)

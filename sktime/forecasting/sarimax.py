@@ -143,7 +143,6 @@ class SARIMAX(_StatsModelsAdapter):
         validate_specification=True,
         random_state=None,
     ):
-
         self.order = order
         self.seasonal_order = seasonal_order
         self.trend = trend

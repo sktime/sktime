@@ -72,7 +72,6 @@ class TransformByLevel(_DelegatedTransformer):
     _delegate_name = "transformer_"
 
     def __init__(self, transformer, groupby="local", raise_warnings=True):
-
         self.transformer = transformer
         self.groupby = groupby
         self.raise_warnings = raise_warnings

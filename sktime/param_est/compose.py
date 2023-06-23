@@ -97,7 +97,6 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     # no default tag values - these are set dynamically below
 
     def __init__(self, param_est, transformers):
-
         self.param_est = param_est
         self.param_est_ = param_est.clone()
         self.transformers = transformers
@@ -296,7 +295,6 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
 
         # test case 2 depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
-
             p = SeasonalityACF()
 
             # construct without names

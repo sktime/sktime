@@ -38,7 +38,6 @@ class TFNormal(_BaseTFDistribution):
     }
 
     def __init__(self, mu, sigma, index=None, columns=None):
-
         self.mu = mu
         self.sigma = sigma
         self.index = index

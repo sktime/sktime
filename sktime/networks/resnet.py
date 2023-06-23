@@ -8,8 +8,7 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class ResNetNetwork(BaseDeepNetwork):
-    """
-    Establish the network structure for a ResNet.
+    """Establish the network structure for a ResNet.
 
     Adapted from the implementations used in [1]
 
@@ -34,7 +33,6 @@ class ResNetNetwork(BaseDeepNetwork):
     Zhiguang and Yan, Weizhong and Oates, Tim}, booktitle={2017
     International joint conference on neural networks (IJCNN)}, pages={
     1578--1585}, year={2017}, organization={IEEE} }
-
     """
 
     _tags = {"python_dependencies": ["tensorflow", "keras-self-attention"]}
@@ -45,8 +43,7 @@ class ResNetNetwork(BaseDeepNetwork):
         self.random_state = random_state
 
     def build_network(self, input_shape, **kwargs):
-        """
-        Construct a network and return its input and output layers.
+        """Construct a network and return its input and output layers.
 
         Arguments
         ---------
