@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pytest
 
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
@@ -45,15 +46,15 @@ def test_add_steps(steps):
 
 def test_failed_add_steps():
     # Check usefullness of error message
-    assert False
+    raise AssertionError()
 
 
 def test_add_steps_name_conflict():
-    assert False
+    raise AssertionError()
 
 
 def test_add_step_cloned():
-    assert False
+    raise AssertionError()
 
 
 @pytest.mark.parametrize(
@@ -103,7 +104,7 @@ def test_transform_not_available(steps):
     for step in steps:
         pipeline.add_step(**step)
     # Plus because of the two start steps
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="TODO"):
         pipeline.transform()
 
 

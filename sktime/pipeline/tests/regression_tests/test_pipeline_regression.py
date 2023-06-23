@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_arrow_head, load_longley
@@ -53,13 +55,23 @@ def test_classifier_regression():
     np.testing.assert_array_equal(result, result_general)
 
 
-def test_forecaster_regression():
+@pytest.mark.parametrize(
+    "method",
+    [
+        "predict",
+        "predict_interval",
+        "predict_proba",
+        "predict_quantiles",
+        "predict_var",
+        "predict_residuals",
+    ],
+)
+def test_forecaster_regression(method):
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     pipe = Differencer() * SARIMAX()
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
-    result = pipe.predict(X=X_test)
-    result_pi = pipe.predict_interval(X=X_test)
+    result = getattr(pipe, method)(X=X_test)
     general_pipeline = Pipeline()
     differencer = Differencer()
     for step in [
@@ -78,10 +90,8 @@ def test_forecaster_regression():
     ]:
         general_pipeline.add_step(**step)
     general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
-    result_general = general_pipeline.predict(X=X_test)
-    result_pi_general = general_pipeline.predict_interval(X=X_test)
+    result_general = getattr(general_pipeline, method)(X=X_test)
     np.testing.assert_array_equal(result, result_general)
-    np.testing.assert_array_equal(result_pi, result_pi_general)
 
 
 def test_exogenous_transform_regression():

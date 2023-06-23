@@ -1,8 +1,7 @@
+# -*- coding: utf-8 -*-
 import inspect
 
 import pandas as pd
-
-from sktime.pipeline.computation_setting import ComputationSetting
 
 
 class StepResult:
@@ -18,41 +17,40 @@ class Step:
         name,
         input_edges,
         params,
-        compuatation_setting: ComputationSetting,
     ):
         self.buffer = None
         self.skobject = skobject
         self.name = name
         self.input_edges = input_edges
         self.params = params
-        self.computation_setting = compuatation_setting
 
     def get_allowed_method(self):
         if self.skobject is None:
             return ["transform"]  # TODO very hacky
         return dir(self.skobject)
 
-    def get_result(self, fit=False):
+    def get_result(self, fit, required_method, mro, kwargs):
         if self.input_edges is None:
             # If the input_edges are none that the step is a first step.
             return StepResult(self.buffer, "")
         # 1. Get results from all previous steps!
 
-        input_data, mode, all_none = self._fetch_input_data(fit)
+        input_data, mode, all_none = self._fetch_input_data(
+            fit, required_method, mro, kwargs
+        )
         if all_none:
             return StepResult(None, "")
 
         # 2. Get the method that should be called on skobject
-        mro = self.computation_setting.method_resolution_order
         if "method" in self.params:
             mro = [self.params["method"]]
         if hasattr(self.skobject, "fit") and fit and not self.skobject.is_fitted:
-            kwargs = self._extract_kwargs("fit")
+            kwargs = self._extract_kwargs("fit", kwargs)
             self.skobject.fit(**input_data, **kwargs)
 
         for method in mro:
             if hasattr(self.skobject, method):
-                kwargs = self._extract_kwargs(method)
+                kwargs = self._extract_kwargs(method, kwargs)
                 if "fh" in kwargs and fit:
                     # TODO check this if it works with numpy. Check if this
                     #      can be done more generalized!
@@ -100,13 +98,21 @@ class Step:
 
                 mode = (
                     "proba"
-                    if ("predict_interval" == method) or (mode == "proba")
+                    if (
+                        method
+                        in [
+                            "predict_interval",
+                            "predict_quantiles",
+                            "predict_proba",
+                        ]
+                    )
+                    or (mode == "proba")
                     else ""
                 )
                 return StepResult(result, mode)
             # TODO fill buffer to save
 
-    def _fetch_input_data(self, fit):
+    def _fetch_input_data(self, fit, required_method, mro, kwargs):
         # TODO enable different mtypes
         all_none = True
         mode = ""
@@ -118,7 +124,9 @@ class Step:
             results = []
             for step in steps:
                 transformer_names.append(step.name)
-                result = step.get_result(fit=fit)
+                result = step.get_result(
+                    fit=fit, required_method=required_method, mro=mro, kwargs=kwargs
+                )
                 results.append(result.result)
                 if result.mode != "":
                     mode = result.mode
@@ -133,12 +141,12 @@ class Step:
                     input_data[step_name] = results[0]
         return input_data, mode, all_none
 
-    def _extract_kwargs(self, method_name):
+    def _extract_kwargs(self, method_name, kwargs):
         use_kwargs = {}
         method = getattr(self.skobject, method_name)
         method_signature = inspect.signature(method).parameters
 
-        for name, param in method_signature.items():
-            if name in self.computation_setting.kwargs:
-                use_kwargs[name] = self.computation_setting.kwargs[name]
+        for name, _param in method_signature.items():
+            if name in kwargs:
+                use_kwargs[name] = kwargs[name]
         return use_kwargs

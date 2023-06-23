@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
+"""class that implements a graph pipeline."""
 from sktime.base import BaseEstimator
-from sktime.pipeline.computation_setting import ComputationSetting
 from sktime.pipeline.step import Step
 from sktime.transformations.series.subset import ColumnSelect
 
@@ -7,16 +8,11 @@ from sktime.transformations.series.subset import ColumnSelect
 class Pipeline(BaseEstimator):
     def __init__(self, step_informations=None):
         super().__init__()
-        self.computation_setting = ComputationSetting()
 
         # Initialise the method
         self.steps = {
-            "X": Step(
-                None, "X", None, {}, compuatation_setting=self.computation_setting
-            ),
-            "y": Step(
-                None, "y", None, {}, compuatation_setting=self.computation_setting
-            ),
+            "X": Step(None, "X", None, {}),
+            "y": Step(None, "y", None, {}),
         }
         self.model_dict = {}
         if step_informations is not None:
@@ -56,7 +52,6 @@ class Pipeline(BaseEstimator):
             name,
             input_steps,
             kwargs,
-            compuatation_setting=self.computation_setting,
         )
         if name in self.steps:
             raise Exception("Name Conflict")
@@ -67,15 +62,17 @@ class Pipeline(BaseEstimator):
 
     def fit(self, X, y=None, **kwargs):
         # Fits the pipeline
+        self.kwargs = kwargs
         self.steps["X"].buffer = X
         self.steps["y"].buffer = y
 
-        self.computation_setting.method_resolution_order = ["transform", "predict"]
-        self.computation_setting.kwargs.update(kwargs)
-        # TODO Store additional kwargs
-
         # 4. call get_result or something similar on last step!
-        self.steps[self._last_step_name].get_result(fit=True)
+        self.steps[self._last_step_name].get_result(
+            fit=True,
+            required_method=None,
+            mro=["transform", "predict"],
+            kwargs=self.kwargs,
+        )
         return self
 
     def fit_transform(self, X, y=None, **kwargs):
@@ -88,17 +85,22 @@ class Pipeline(BaseEstimator):
         if not self._method_allowed("transform"):
             raise Exception("TODO")
 
-        # 2. Set transform as global method as well as provide all kwargs to step
-        self.computation_setting.required_method = "transform"
-        self.computation_setting.method_resolution_order = ["transform"]
-        self.computation_setting.kwargs.update(kwargs)
-
         # 3. set data into start steps buffer!
         self.steps["X"].buffer = X
         self.steps["y"].buffer = y
+        self.kwargs.update(kwargs)
 
         # 4. call get_result or something similar on last step!
-        return self.steps[self._last_step_name].get_result(fit=False).result
+        return (
+            self.steps[self._last_step_name]
+            .get_result(
+                fit=False,
+                required_method="transform",
+                mro=["transform"],
+                kwargs=self.kwargs,
+            )
+            .result
+        )
 
     def predict(self, X, y=None, **kwargs):
         # Implementation of transform, such methods also are required for predict, ...
@@ -108,59 +110,140 @@ class Pipeline(BaseEstimator):
         if not self._method_allowed("predict"):
             raise Exception("TODO")
 
-        # 2. Set transform as global method as well as provide all kwargs to step
-        self.computation_setting.required_method = "predict"
-        self.computation_setting.method_resolution_order = ["predict", "transform"]
-        self.computation_setting.kwargs.update(kwargs)  # TODO Update or overwrite?
-
         # 3. set data into start steps buffer!
         self.steps["X"].buffer = X
         self.steps["y"].buffer = y
+        self.kwargs.update(kwargs)
 
         # 4. call get_result or something similar on last step!
-        return self.steps[self._last_step_name].get_result(fit=False).result
+        return (
+            self.steps[self._last_step_name]
+            .get_result(
+                fit=False,
+                required_method="predict",
+                mro=["predict", "transform"],
+                kwargs=self.kwargs,
+            )
+            .result
+        )
 
     def predict_interval(self, X, y=None, **kwargs):
         if not self._method_allowed("predict_interval"):
             raise Exception("TODO")
 
         # 2. Set transform as global method as well as provide all kwargs to step
-        self.computation_setting.required_method = "predict_interval"
-        self.computation_setting.method_resolution_order = [
-            "predict_interval",
-            "predict",
-            "transform",
-        ]
-        self.computation_setting.kwargs.update(kwargs)  # TODO Update or overwrite?
 
         # 3. set data into start steps buffer!
         self.steps["X"].buffer = X
         self.steps["y"].buffer = y
+        self.kwargs.update(kwargs)
 
         # 4. call get_result or something similar on last step!
-        return self.steps[self._last_step_name].get_result(fit=False).result
+        return (
+            self.steps[self._last_step_name]
+            .get_result(
+                fit=False,
+                required_method="predict_interval",
+                mro=["predict_interval", "predict", "transform"],
+                kwargs=self.kwargs,
+            )
+            .result
+        )
 
-    def predict_quantiles(self, *args, **kwargs):
-        # Implementation of transform, such methods also are required for predict, ...
-        # 1. Check if transform is allowed. I.e., Check method needs to check if all
-        #    steps implement transform or predict / predict_quantiles? + If all required
-        #    params are passed
-        # 2. Set predict/transform as global methods
-        pass
+    def predict_quantiles(self, X, y=None, **kwargs):
+        if not self._method_allowed("predict_quantiles"):
+            raise Exception("TODO")
 
-    def predict_proba(self, *args, **kwargs):
-        # Implementation of transform, such methods also are required for predict, ...
-        pass
+        # 2. Set transform as global method as well as provide all kwargs to step
 
-    def predict_var(self, *args, **kwargs):
-        pass
+        # 3. set data into start steps buffer!
+        self.steps["X"].buffer = X
+        self.steps["y"].buffer = y
+        self.kwargs.update(kwargs)
 
-    def predict_residuals(self, *args, **kwargs):
-        pass
+        # 4. call get_result or something similar on last step!
+        return (
+            self.steps[self._last_step_name]
+            .get_result(
+                fit=False,
+                required_method="predict_quantiles",
+                mro=["predict_quantiles", "predict", "transform"],
+                kwargs=self.kwargs,
+            )
+            .result
+        )
+
+    def predict_proba(self, X, y=None, **kwargs):
+        if not self._method_allowed("predict_proba"):
+            raise Exception("TODO")
+
+        # 2. Set transform as global method as well as provide all kwargs to step
+
+        # 3. set data into start steps buffer!
+        self.steps["X"].buffer = X
+        self.steps["y"].buffer = y
+        self.kwargs.update(kwargs)
+
+        # 4. call get_result or something similar on last step!
+        return (
+            self.steps[self._last_step_name]
+            .get_result(
+                fit=False,
+                required_method="predict_proba",
+                mro=["predict_proba", "predict", "transform"],
+                kwargs=self.kwargs,
+            )
+            .result
+        )
+
+    def predict_var(self, X, y=None, **kwargs):
+        if not self._method_allowed("predict_var"):
+            raise Exception("TODO")
+
+        # 2. Set transform as global method as well as provide all kwargs to step
+
+        # 3. set data into start steps buffer!
+        self.steps["X"].buffer = X
+        self.steps["y"].buffer = y
+        self.kwargs.update(kwargs)
+
+        # 4. call get_result or something similar on last step!
+        return (
+            self.steps[self._last_step_name]
+            .get_result(
+                fit=False,
+                required_method="predict_proba",
+                mro=["predict_var", "predict", "transform"],
+                kwargs=self.kwargs,
+            )
+            .result
+        )
+
+    def predict_residuals(self, X, y=None, **kwargs):
+        if not self._method_allowed("predict_residuals"):
+            raise Exception("TODO")
+
+        # 2. Set transform as global method as well as provide all kwargs to step
+
+        # 3. set data into start steps buffer!
+        self.steps["X"].buffer = X
+        self.steps["y"].buffer = y
+        self.kwargs.update(kwargs)
+
+        # 4. call get_result or something similar on last step!
+        return (
+            self.steps[self._last_step_name]
+            .get_result(
+                fit=False,
+                required_method="predict_proba",
+                mro=["predict_residuals", "predict", "transform"],
+                kwargs=self.kwargs,
+            )
+            .result
+        )
 
     def _method_allowed(self, method):
-        for step_name, step in self.steps.items():
-            print(step.get_allowed_method())
+        for _step_name, step in self.steps.items():
             if "transform" in step.get_allowed_method():
                 pass  # This would be okay
             elif method in step.get_allowed_method():
