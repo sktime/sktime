@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Inception Time."""
-__author__ = "James Large, Withington"
+__author__ = ["JamesLarge", "Withington"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
