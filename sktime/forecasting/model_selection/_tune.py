@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements grid search functionality to tune forecasters."""
 
@@ -57,7 +56,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.return_n_best_forecasters = return_n_best_forecasters
         self.update_behaviour = update_behaviour
         self.error_score = error_score
-        super(BaseGridSearch, self).__init__()
+        super().__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
             "capability:pred_int",
@@ -191,8 +190,8 @@ class BaseGridSearch(_DelegatedForecaster):
                 n_candidates = len(candidate_params)
                 n_splits = cv.get_n_splits(y)
                 print(  # noqa
-                    "Fitting {0} folds for each of {1} candidates,"
-                    " totalling {2} fits".format(
+                    "Fitting {} folds for each of {} candidates,"
+                    " totalling {} fits".format(
                         n_splits, n_candidates, n_candidates * n_splits
                     )
                 )
@@ -464,7 +463,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         update_behaviour="full_refit",
         error_score=np.nan,
     ):
-        super(ForecastingGridSearchCV, self).__init__(
+        super().__init__(
             forecaster=forecaster,
             scoring=scoring,
             n_jobs=n_jobs,
@@ -492,15 +491,15 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
                 if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
                     raise ValueError(
-                        "Parameter grid for parameter ({0}) needs to"
-                        " be a list or numpy array, but got ({1})."
+                        "Parameter grid for parameter ({}) needs to"
+                        " be a list or numpy array, but got ({})."
                         " Single values need to be wrapped in a list"
                         " with one element.".format(name, type(v))
                     )
 
                 if len(v) == 0:
                     raise ValueError(
-                        "Parameter values for parameter ({0}) need "
+                        "Parameter values for parameter ({}) need "
                         "to be a non-empty sequence.".format(name)
                     )
 
@@ -657,7 +656,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         update_behaviour="full_refit",
         error_score=np.nan,
     ):
-        super(ForecastingRandomizedSearchCV, self).__init__(
+        super().__init__(
             forecaster=forecaster,
             scoring=scoring,
             strategy=strategy,

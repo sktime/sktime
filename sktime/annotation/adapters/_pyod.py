@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements outlier detection from pyOD."""
 
@@ -37,7 +36,7 @@ class PyODAnnotator(BaseSeriesAnnotator):
 
     def __init__(self, estimator, fmt="dense", labels="indicator"):
         self.estimator = estimator  # pyod estimator
-        super(PyODAnnotator, self).__init__(fmt=fmt, labels=labels)
+        super().__init__(fmt=fmt, labels=labels)
 
     def _fit(self, X, Y=None):
         """Fit to training data.

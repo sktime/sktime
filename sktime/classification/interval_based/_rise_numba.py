@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Random Interval Spectral Ensemble (RISE)."""
 
 __author__ = ["TonyBagnall"]

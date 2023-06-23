@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module exports for dist_kernels module."""
 
 from sktime.dists_kernels._base import (

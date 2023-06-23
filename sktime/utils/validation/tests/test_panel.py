@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """Unit tests for sktime.utils.validation.panel check functions."""
 
 __author__ = ["mloning", "TonyBagnall"]

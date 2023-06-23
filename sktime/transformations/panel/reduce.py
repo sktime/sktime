@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tabularizer transform, for pipelining."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -131,7 +130,7 @@ class TimeBinner(BaseTransformer):
             self._aggfunc = self.aggfunc
         self.idx = idx
 
-        super(TimeBinner, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

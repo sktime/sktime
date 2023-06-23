@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BaseEstimator interface to sktime dtw distances in distances module."""
 
 __author__ = ["fkiraly"]
@@ -167,7 +166,7 @@ class DtwDist(BasePairwiseTransformerPanel):
 
         self.kwargs = kwargs
 
-        super(DtwDist, self).__init__()
+        super().__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.

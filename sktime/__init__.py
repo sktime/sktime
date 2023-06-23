@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """sktime."""
 
 __version__ = "0.20.0"

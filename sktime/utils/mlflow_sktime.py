@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """The ``mlflow_sktime`` module provides an MLflow API for ``sktime`` forecasters.
 
 This module exports ``sktime`` models in the following formats:

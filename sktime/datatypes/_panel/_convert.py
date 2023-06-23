@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type converters for Panel scitype.
 
 Exports conversion and mtype dictionary for Panel scitype:

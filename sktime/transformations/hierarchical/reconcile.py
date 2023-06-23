@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements hierarchical reconciliation transformers.
 
@@ -100,7 +99,7 @@ class Reconciler(BaseTransformer):
     def __init__(self, method="bu"):
         self.method = method
 
-        super(Reconciler, self).__init__()
+        super().__init__()
 
     def _add_totals(self, X):
         """Add total levels to X, using Aggregate."""

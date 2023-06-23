@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for regression."""
 
 __author__ = ["AurumnPegasus", "achieveordie"]
@@ -73,7 +72,7 @@ class CNNRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(CNNRegressor, self).__init__(
+        super().__init__(
             batch_size=batch_size,
         )
         self.n_conv_layers = n_conv_layers

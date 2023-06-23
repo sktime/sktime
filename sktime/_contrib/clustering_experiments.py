@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Classifier Experiments: code to run experiments as an alternative to orchestration.
 
 This file is configured for runs of the main method with command line arguments, or for

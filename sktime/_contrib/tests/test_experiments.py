@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test Experiments.
 
 tests the experiments code works with all current valid classifiers. Loops through all

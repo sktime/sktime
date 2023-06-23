@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for sktime annotators."""
 
 __author__ = ["miraep8", "fkiraly", "klam-data", "pyyim", "mgorlin"]

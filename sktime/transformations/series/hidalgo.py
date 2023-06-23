@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Hidalgo (Heterogeneous Intrinsic Dimensionality Algorithm) Segmentation."""
 
 __author__ = ["KatieBuc"]
@@ -130,7 +129,7 @@ class Hidalgo(BaseTransformer):
         self.f = f
         self.seed = seed
 
-        super(Hidalgo, self).__init__()
+        super().__init__()
 
     def _get_neighbourhood_params(self, X):
         """Neighbourhood information from input data X.

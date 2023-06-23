@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type converters for Table scitype.
 
 Exports conversion and mtype dictionary for Table scitype:

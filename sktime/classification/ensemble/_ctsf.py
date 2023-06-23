@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Composable time series forest."""
 
 __author__ = ["mloning", "AyushmaanSeth"]
@@ -212,7 +211,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         self.max_samples = max_samples
 
         # Pass on params.
-        super(ComposableTimeSeriesForestClassifier, self).__init__(
+        super().__init__(
             base_estimator=None,
             n_estimators=n_estimators,
             estimator_params=None,
@@ -226,14 +225,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             max_samples=max_samples,
         )
         BaseClassifier.__init__(self)
-
-        # todo: remove in 0.20.0
-        warn(
-            "ComposableTimeSeriesClassifier has moved to classification.ensemble, "
-            "and will no longer be importable from classification.compose "
-            "from 0.20.0 on. To safely deprecate the old location, "
-            "replace the import with an import from classification.ensemble."
-        )
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
@@ -263,13 +254,13 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
                 "n_estimators must be an integer, "
-                "got {0}.".format(type(self.n_estimators))
+                "got {}.".format(type(self.n_estimators))
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
                 "n_estimators must be greater than zero, "
-                "got {0}.".format(self.n_estimators)
+                "got {}.".format(self.n_estimators)
             )
 
         # Set base estimator

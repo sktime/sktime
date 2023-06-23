@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformations to deseasonalize a timeseries."""
 
@@ -89,7 +88,7 @@ class Deseasonalizer(BaseTransformer):
         self.model = model
         self._X = None
         self.seasonal_ = None
-        super(Deseasonalizer, self).__init__()
+        super().__init__()
 
     def _align_seasonal(self, X):
         """Align seasonal components with X's time index."""
@@ -295,7 +294,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     def __init__(self, seasonality_test=None, sp=1, model="additive"):
         self.seasonality_test = seasonality_test
         self.is_seasonal_ = None
-        super(ConditionalDeseasonalizer, self).__init__(sp=sp, model=model)
+        super().__init__(sp=sp, model=model)
 
     def _check_condition(self, y):
         """Check if y meets condition."""
@@ -498,7 +497,7 @@ class STLTransformer(BaseTransformer):
         self.low_pass_jump = low_pass_jump
         self.return_components = return_components
         self._X = None
-        super(STLTransformer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Arithmetics with distances/kernels, e.g., addition, multiplication."""
 
 __author__ = ["fkiraly"]
@@ -73,7 +72,7 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
         self.operation = operation
         self._operation = self._resolve_operation(operation)
 
-        super(CombinedDistance, self).__init__()
+        super().__init__()
 
         # abbreviate for readability
         ests = self.pw_trafos_

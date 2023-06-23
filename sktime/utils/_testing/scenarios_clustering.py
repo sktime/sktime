@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for clustering.
 
 Contains TestScenario concrete children to run in tests for clusterers.
@@ -42,9 +41,7 @@ class ClustererTestScenario(TestScenario, BaseObject):
         if key in ["predict_proba"]:
             key = "predict"
 
-        return super(ClustererTestScenario, self).get_args(
-            key=key, obj=obj, deepcopy_args=deepcopy_args
-        )
+        return super().get_args(key=key, obj=obj, deepcopy_args=deepcopy_args)
 
 
 class ClustererFitPredict(ClustererTestScenario):

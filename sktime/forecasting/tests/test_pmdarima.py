@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for the ARIMA estimator and _PmdArimaAdapter."""
 
 import pytest

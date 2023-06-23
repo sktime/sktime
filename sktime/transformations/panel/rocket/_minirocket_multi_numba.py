@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Isolated numba imports for _minirocket_multivariate."""
 
 __author__ = ["angus924"]

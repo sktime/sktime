@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Proximity Forest time series classifier.
 
 A decision tree forest which uses distance measures to partition data. B. Lucas and A.
@@ -106,7 +105,7 @@ class _CachedTransformer(_PanelToPanelTransformer):
     def __init__(self, transformer):
         self.cache = {}
         self.transformer = transformer
-        super(_CachedTransformer, self).__init__()
+        super().__init__()
 
     def clear(self):
         """Clear the cache."""
@@ -827,7 +826,7 @@ class ProximityStump(BaseClassifier):
         self.classes_ = dict()
         self.label = label
         self.entropy = None
-        super(ProximityStump, self).__init__()
+        super().__init__()
 
     def set_X(self, X):
         """Set X."""
@@ -1405,7 +1404,7 @@ class ProximityForest(BaseClassifier):
                     distance_measure=self.distance_measure,
                 )
             )
-        super(ProximityForest, self).__init__()
+        super().__init__()
 
     def _fit_tree(self, X, y, index, random_state=0):
         self.trees[index].fit(X, y, random_state)

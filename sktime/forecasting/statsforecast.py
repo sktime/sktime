@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from statsforecast by Nixtla."""
 
@@ -244,7 +243,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         self.biasadj = biasadj
         self.parallel = parallel
 
-        super(StatsForecastAutoARIMA, self).__init__()
+        super().__init__()
 
     def _instantiate_model(self):
         # import inside method to avoid hard dependency

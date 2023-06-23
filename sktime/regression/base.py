@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Abstract base class for time series regressors.
 
@@ -80,7 +79,7 @@ class BaseRegressor(BaseEstimator, ABC):
         # i.e. CalibratedRegressorCV
         self._estimator_type = "regressor"
 
-        super(BaseRegressor, self).__init__()
+        super().__init__()
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
