@@ -26,6 +26,8 @@ Contents
 
 * python 3.7 is no longer supported by ``sktime``, as python 3.7 end-of-life is
   imminent (June 27), with ``sktime`` dependencies already having dropped support.
+* pre-commit and coding style upgrades (3.8 plus)
+* scheduled 0.20.0 deprecation actions
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -54,6 +56,12 @@ importable in their original locations.
 List of PR
 ~~~~~~~~~~
 
+* [MNT] 0.20.0 deprecation actions (:pr:`4733`) :user:`fkiraly`
+* [MNT] 0.20.0 release action - remove python 3.7 support (:pr:`4717`) :user:`fkiraly`
+* [MNT] 0.20.0 release action - increase ``scikit-base`` bound to ``<0.6.0`` (:pr:`4735`) :user:`fkiraly`
+* [MNT] 0.20.0 release action - support for ``numpy 1.25`` (:pr:`4720`) :user:`jorenham`
+* [MNT] 0.20.0 release action - remove initial utf comments in all python modules which are unnecessary in python 3 (:pr:`4725`) :user:`yarnabrina`
+* [MNT] 0.20.0 release action - upgrade to coding style of python 3.8 and above using ``pyupgrade`` (:pr:`4726`) :user:`yarnabrina`
 
 Contributors
 ~~~~~~~~~~~~
@@ -61,6 +69,7 @@ Contributors
 :user:`fkiraly`,
 :user:`jorenham`,
 :user:`yarnabrina`
+
 
 Version 0.19.2 - 2023-06-19
 ---------------------------
