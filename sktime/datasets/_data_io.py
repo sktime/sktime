@@ -194,8 +194,8 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
             # Dataset is not already present in the datasets directory provided.
             # If it is not there, download and install it.
             url = (
-                "https://timeseriesclassification.com/"
-                f"ClassificationDownloads/{name}.zip"
+                "https://github.com/sktime/sktime-datasets/raw/main/TSC/"
+                f"{name}.zip"
             )
             # This also tests the validitiy of the URL, can't rely on the html
             # status code as it always returns 200
@@ -206,9 +206,9 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
                 )
             except zipfile.BadZipFile as e:
                 raise ValueError(
-                    f"Invalid dataset name ={name} is not available on extract path ="
-                    f"{extract_path}. Nor is it available on "
-                    f"https://timeseriesclassification.com/.",
+                    f"Error, dataset of name ={name} not available on extract path ="
+                    f"{extract_path}. Please raise an issue on the sktime GitHub "
+                    "if you think this should work."
                 ) from e
 
     return _load_provided_dataset(
