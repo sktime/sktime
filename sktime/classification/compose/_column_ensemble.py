@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ColumnEnsembleClassifier: For Multivariate Time Series Classification.
 
 Builds classifiers on each dimension (column) independently.

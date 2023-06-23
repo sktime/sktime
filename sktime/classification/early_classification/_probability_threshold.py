@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Probability Threshold Early Classifier.
 
 An early classifier using a prediction probability threshold with a time series

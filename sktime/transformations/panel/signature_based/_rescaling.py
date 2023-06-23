@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Signature rescaling methods.
 
 rescaling.py ========================= This implements the pre- and post- signature

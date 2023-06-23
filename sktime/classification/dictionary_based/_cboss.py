@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ContractableBOSS classifier.
 
 Dictionary based cBOSS classifier based on SFA transform. Improves the ensemble

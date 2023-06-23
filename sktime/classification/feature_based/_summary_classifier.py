@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Summary Classifier.
 
 Pipeline classifier using the basic summary statistics and an estimator.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Hybrid time series classifiers."""
 __all__ = [
     "HIVECOTEV1",

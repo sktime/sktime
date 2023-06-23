@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Frequency filters."""
 
 __author__ = ["sveameyer13"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Extension template for series annotation.
 
 Purpose of this implementation template:

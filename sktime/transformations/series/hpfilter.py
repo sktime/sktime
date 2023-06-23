@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interface to Hodrick-Prescott filter from `statsmodels`.
 
 Please see the original library

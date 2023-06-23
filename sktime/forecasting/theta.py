@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Theta forecasters."""
 
 __all__ = ["ThetaForecaster", "ThetaModularForecaster"]

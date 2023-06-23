@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """HMM Annotation Estimator.
 
 Implements a basic Hidden Markov Model (HMM) as an annotation estimator. To read more

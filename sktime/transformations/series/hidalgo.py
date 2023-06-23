@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Hidalgo (Heterogeneous Intrinsic Dimensionality Algorithm) Segmentation."""
 
 __author__ = ["KatieBuc"]

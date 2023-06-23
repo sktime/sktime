@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """KNN time series classification.
 
 This class is a KNN classifier which supports time series distance measures. The class

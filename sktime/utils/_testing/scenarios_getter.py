@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Retrieval utility for test scenarios."""
 
 __author__ = ["fkiraly"]

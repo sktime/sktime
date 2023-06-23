@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interface module to dtw-python package.
 
 Exposes basic interface, excluding multivariate case.

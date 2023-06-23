@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Weighted ensemble of classifiers."""
 
 __author__ = ["fkiraly"]

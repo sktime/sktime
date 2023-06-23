@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for regression."""
 
 __author__ = ["AurumnPegasus", "achieveordie"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Recurrent Neural Network (RNN) (minus the final output layer)."""
 
 __authors__ = ["JamesLarge", "Withington", "TonyBagnall", "achieveordie"]

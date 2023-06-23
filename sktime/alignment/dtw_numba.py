@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BaseAligner interface to sktime dtw aligners in distances module."""
 
 __author__ = ["fkiraly"]

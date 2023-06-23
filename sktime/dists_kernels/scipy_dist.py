@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interface module to scipy.
 
 Interface module to scipy.spatial's pairwise distance function cdist     exposes

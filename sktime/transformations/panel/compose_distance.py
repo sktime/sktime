@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Compositors that use pairwise transformers for an ordinary transformstion."""
 
 __author__ = ["fkiraly"]

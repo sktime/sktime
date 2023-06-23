@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Fully Connected Neural Network (FCN) (minus the final output layer)."""
 
 __author__ = ["James-Large", "AurumnPegasus"]

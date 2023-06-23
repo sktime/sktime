@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Benchmarking orchestration module."""
 __all__ = ["Orchestrator"]
 __author__ = ["viktorkaz", "mloning"]

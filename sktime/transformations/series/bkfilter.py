@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interface to Baxter-King bandpass filter from `statsmodels`.
 
 Interfaces `bk_filter` from `statsmodels.tsa.filters`.

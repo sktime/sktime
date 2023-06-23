@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DrCIF classifier.
 
 interval based DrCIF classifier extracting catch22 features from random intervals on

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Dummy distances/kernels."""
 
 __author__ = ["fkiraly"]

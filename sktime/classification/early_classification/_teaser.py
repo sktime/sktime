@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """TEASER early classifier.
 
 An early classifier using a one class SVM's to determine decision safety with a time

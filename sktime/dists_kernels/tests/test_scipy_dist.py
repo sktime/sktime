@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for scipy interface."""
 import numpy as np
 

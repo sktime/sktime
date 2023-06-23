@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Fully Connected Neural Network (CNN) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus"]

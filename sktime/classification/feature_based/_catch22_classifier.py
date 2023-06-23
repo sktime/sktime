@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Catch22 Classifier.
 
 Pipeline classifier using the Catch22 transformer and an estimator.

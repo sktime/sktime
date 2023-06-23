@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Use index or hierarchy values as features transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 

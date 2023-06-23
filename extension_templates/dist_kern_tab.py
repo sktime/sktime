@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Extension template for pairwise distance or kernel on tabular data.
 
 How to use this:

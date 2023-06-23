@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __author__ = ["ltsaprounis"]
 
 import pandas as pd

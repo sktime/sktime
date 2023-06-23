@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for clustering.
 
 Contains TestScenario concrete children to run in tests for clusterers.

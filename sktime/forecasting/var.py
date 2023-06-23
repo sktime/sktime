@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implements VAR Model as interface to statsmodels."""
 
 __all__ = ["VAR"]

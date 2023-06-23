@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for the show_versions utility."""
 
 from sktime.utils._maint._show_versions import (

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Abstract base class for the Keras neural network classifiers.
 
 The reason for this class between BaseClassifier and deep_learning classifiers is

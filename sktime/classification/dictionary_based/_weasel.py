@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WEASEL classifier.
 
 Dictionary based classifier based on SFA transform, BOSS and linear regression.

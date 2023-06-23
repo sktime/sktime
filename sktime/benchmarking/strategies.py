@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unified high-level interface for various time series related learning strategies."""
 
 __all__ = ["TSCStrategy", "TSRStrategy"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Composition involving parameter estimators."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.base import _HeterogenousMetaEstimator

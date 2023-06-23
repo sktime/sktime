@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ETS tests."""
 
 __author__ = ["Hongyi Yang"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Extension template for pairwise distance or kernel between time series.
 
 How to use this:

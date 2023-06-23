@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Conditional transformation based on fitted parameters."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 

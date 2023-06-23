@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BaseEstimator interface to sktime dtw distances in distances module."""
 
 __author__ = ["fkiraly"]

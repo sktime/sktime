@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multi-scale Attention Convolutional Neural Network (MACNN)."""
 
 __author__ = ["jnrusson1"]

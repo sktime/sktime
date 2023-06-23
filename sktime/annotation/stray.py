@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for STRAY (Search TRace AnomalY) outlier estimator."""
 
 import warnings

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V2.
 
 Upgraded hybrid ensemble of classifiers from 4 separate time series classification

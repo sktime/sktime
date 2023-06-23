@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for probabilistic metrics for distribution predictions."""
 import warnings
 

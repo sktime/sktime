@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interface for MrSQM classifier."""
 
 __authors__ = ["lnthach", "heerme"]  # fkiraly for the wrapper

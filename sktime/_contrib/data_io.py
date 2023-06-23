@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for loading datasets that are unapproved of in the main repo.
 
 Old code, delete.

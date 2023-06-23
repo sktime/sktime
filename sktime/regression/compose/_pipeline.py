@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipeline with a regressor."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np

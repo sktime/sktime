@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Use endogeneous as exogeneous features transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 

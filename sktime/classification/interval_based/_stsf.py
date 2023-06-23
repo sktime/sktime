@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Supervised Time Series Forest Classifier (STSF).
 
 Interval based STSF classifier extracting summary features from intervals selected

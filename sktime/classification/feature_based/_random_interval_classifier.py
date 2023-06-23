@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Random Interval Classifier.
 
 Pipeline classifier using summary statistics extracted from random intervals and an

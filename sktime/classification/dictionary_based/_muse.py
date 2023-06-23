@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WEASEL+MUSE classifier.
 
 multivariate dictionary based classifier based on SFA transform, dictionaries and

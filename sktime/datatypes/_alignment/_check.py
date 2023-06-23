@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type checkers for Alignment scitype.
 
 Exports checkers for Alignment scitype:

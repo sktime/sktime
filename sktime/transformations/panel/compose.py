@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Meta Transformers module.
 
 This module has meta-transformations that is build using the pre-existing
