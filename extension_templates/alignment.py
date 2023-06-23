@@ -86,7 +86,7 @@ class MyAligner(BaseAligner):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyAligner" to the name of the class
+        # leave this as is
         super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here

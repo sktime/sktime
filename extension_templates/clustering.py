@@ -85,7 +85,7 @@ class MyClusterer(BaseClusterer):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyClusterer" to the name of the class
+        # leave this as is
         super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here

@@ -93,7 +93,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTimeSeriesClassifier" to the name of the class
+        # leave this as is
         super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here

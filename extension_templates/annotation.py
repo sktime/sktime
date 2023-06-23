@@ -89,7 +89,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MySeriesAnnotator" to the name of the class
+        # leave this as is
         super().__init__(fmt=fmt, labels=labels)
 
         # todo: optional, parameter checking logic (if applicable) should happen here
