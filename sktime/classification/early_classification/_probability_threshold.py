@@ -111,7 +111,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         self._estimators = []
         self._classification_points = []
 
-        super(ProbabilityThresholdEarlyClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)

@@ -49,9 +49,8 @@ class Shapelet:
 
     def __str__(self):
         """Print."""
-        return (
-            "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3},"
-            " ".format(self.series_id, self.start_pos, self.length, self.info_gain)
+        return "Series ID: {}, start_pos: {}, length: {}, info_gain: {}," " ".format(
+            self.series_id, self.start_pos, self.length, self.info_gain
         )
 
 
@@ -154,7 +153,7 @@ class ShapeletTransform(BaseTransformer):
         self.remove_self_similar = remove_self_similar
         self.predefined_ig_rejection_level = 0.05
         self.shapelets = None
-        super(ShapeletTransform, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit the shapelet transform to a specified X and y.
@@ -507,7 +506,7 @@ class ShapeletTransform(BaseTransformer):
                         if self.verbose > 0:
                             if candidate_rejected is False:
                                 print(  # noqa
-                                    "Candidate finished. {0:02d}:{1:02} "
+                                    "Candidate finished. {:02d}:{:02} "
                                     "remaining".format(
                                         int(
                                             round(
@@ -540,7 +539,7 @@ class ShapeletTransform(BaseTransformer):
                                 )
                             else:
                                 print(  # noqa
-                                    "Candidate rejected. {0:02d}:{1:02} "
+                                    "Candidate rejected. {:02d}:{:02} "
                                     "remaining".format(
                                         int(
                                             round(
@@ -1125,7 +1124,7 @@ class RandomShapeletTransform(BaseTransformer):
         self._class_dictionary = {}
         self._sorted_indicies = []
 
-        super(RandomShapeletTransform, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit the shapelet transform to a specified X and y.

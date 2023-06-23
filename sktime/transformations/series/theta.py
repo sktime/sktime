@@ -75,7 +75,7 @@ class ThetaLinesTransformer(BaseTransformer):
 
     def __init__(self, theta=(0, 2)):
         self.theta = theta
-        super(ThetaLinesTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

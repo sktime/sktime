@@ -41,7 +41,7 @@ class TruncationTransformer(BaseTransformer):
         self.lower = lower
         self.upper = upper
         self.min_length = lower
-        super(TruncationTransformer, self).__init__()
+        super().__init__()
 
     @staticmethod
     def _get_min_length(X):

@@ -36,7 +36,7 @@ class PyODAnnotator(BaseSeriesAnnotator):
 
     def __init__(self, estimator, fmt="dense", labels="indicator"):
         self.estimator = estimator  # pyod estimator
-        super(PyODAnnotator, self).__init__(fmt=fmt, labels=labels)
+        super().__init__(fmt=fmt, labels=labels)
 
     def _fit(self, X, Y=None):
         """Fit to training data.

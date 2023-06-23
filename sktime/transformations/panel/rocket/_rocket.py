@@ -74,7 +74,7 @@ class Rocket(BaseTransformer):
         self.normalise = normalise
         self.n_jobs = n_jobs
         self.random_state = random_state if isinstance(random_state, int) else None
-        super(Rocket, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Generate random kernels adjusted to time series shape.

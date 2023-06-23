@@ -132,7 +132,7 @@ class HIVECOTEV1(BaseClassifier):
         self._rise = None
         self._cboss = None
 
-        super(HIVECOTEV1, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit HIVE-COTE 1.0 to training data.

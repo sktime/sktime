@@ -101,7 +101,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ParamFitterPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both estimator and all transformers can
         multivariate = param_est.get_tag("capability:multivariate", False)

@@ -72,7 +72,7 @@ class RandomIntervals(BaseTransformer):
         self._intervals = []
         self._dims = []
 
-        super(RandomIntervals, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit the random interval transform.

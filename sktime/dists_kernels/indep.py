@@ -69,7 +69,7 @@ class IndepDist(BasePairwiseTransformerPanel):
         self.dist = dist
         self.aggfun = aggfun
 
-        super(IndepDist, self).__init__()
+        super().__init__()
 
         # set property tags based on tags of components
         missing = True

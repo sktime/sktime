@@ -216,7 +216,7 @@ class Catch22(BaseTransformer):
         self._ac = None
         self._acfz = None
 
-        super(Catch22, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform data into the Catch22 features.

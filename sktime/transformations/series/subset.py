@@ -52,7 +52,7 @@ class IndexSubset(BaseTransformer):
 
     def __init__(self, index_treatment="keep"):
         self.index_treatment = index_treatment
-        super(IndexSubset, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -166,7 +166,7 @@ class ColumnSelect(BaseTransformer):
         self.columns = columns
         self.integer_treatment = integer_treatment
         self.index_treatment = index_treatment
-        super(ColumnSelect, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

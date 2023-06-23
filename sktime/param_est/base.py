@@ -67,7 +67,7 @@ class BaseParamFitter(BaseEstimator):
 
         self._X = None
 
-        super(BaseParamFitter, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):

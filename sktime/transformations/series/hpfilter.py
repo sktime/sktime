@@ -81,7 +81,7 @@ class HPFilter(BaseTransformer):
         lamb=1600,
     ):
         self.lamb = lamb
-        super(HPFilter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

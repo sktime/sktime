@@ -62,7 +62,7 @@ class TFNormal(_BaseTFDistribution):
         if columns is None:
             columns = pd.RangeIndex(shape[1])
 
-        super(TFNormal, self).__init__(index=index, columns=columns, distr=distr)
+        super().__init__(index=index, columns=columns, distr=distr)
 
     def _get_bc_params(self):
         """Fully broadcast parameters of self, given param shapes and index, columns."""

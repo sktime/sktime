@@ -72,7 +72,7 @@ class HampelFilter(BaseTransformer):
         self.n_sigma = n_sigma
         self.k = k
         self.return_bool = return_bool
-        super(HampelFilter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

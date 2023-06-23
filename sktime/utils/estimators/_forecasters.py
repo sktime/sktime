@@ -41,7 +41,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
 
     def __init__(self, prediction_constant: float = 10):
         self.prediction_constant = prediction_constant
-        super(MockUnivariateForecasterLogger, self).__init__()
+        super().__init__()
 
     @_method_logger
     def _fit(self, y, X=None, fh=None):
@@ -220,7 +220,7 @@ class MockForecaster(BaseForecaster):
 
     def __init__(self, prediction_constant: float = 10):
         self.prediction_constant = prediction_constant
-        super(MockForecaster, self).__init__()
+        super().__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.

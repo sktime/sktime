@@ -146,7 +146,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
 
-        super(KNeighborsTimeSeriesClassifier, self).__init__()
+        super().__init__()
 
         # input check for supported distance strings
         if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:

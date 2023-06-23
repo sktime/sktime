@@ -103,7 +103,7 @@ class FunctionTransformer(BaseTransformer):
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
         self.X_type = X_type
-        super(FunctionTransformer, self).__init__()
+        super().__init__()
 
         if X_type is not None:
             self.set_tags(X_inner_mtype=X_type)

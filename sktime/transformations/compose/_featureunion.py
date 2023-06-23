@@ -86,7 +86,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         self.transformer_weights = transformer_weights
         self.flatten_transform_index = flatten_transform_index
 
-        super(FeatureUnion, self).__init__()
+        super().__init__()
 
         # todo: check for transform-input, transform-output
         #   for now, we assume it's always Series/Series or Series/Panel

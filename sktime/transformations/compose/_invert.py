@@ -52,7 +52,7 @@ class InvertTransform(_DelegatedTransformer):
     def __init__(self, transformer):
         self.transformer = transformer
 
-        super(InvertTransform, self).__init__()
+        super().__init__()
 
         self.transformer_ = transformer.clone()
 

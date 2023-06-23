@@ -43,7 +43,7 @@ class _DistrDefaultMethodTester(BaseDistribution):
         if columns is None:
             columns = pd.RangeIndex(shape[1])
 
-        super(_DistrDefaultMethodTester, self).__init__(index=index, columns=columns)
+        super().__init__(index=index, columns=columns)
 
     def ppf(self, p):
         """Quantile function = percent point function = inverse cdf."""

@@ -34,7 +34,7 @@ class DWTTransformer(BaseTransformer):
 
     def __init__(self, num_levels=3):
         self.num_levels = num_levels
-        super(DWTTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

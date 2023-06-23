@@ -277,7 +277,7 @@ class VARMAX(_StatsModelsAdapter):
         self.signal_only = signal_only
         self.suppress_warnings = suppress_warnings
 
-        super(VARMAX, self).__init__()
+        super().__init__()
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.

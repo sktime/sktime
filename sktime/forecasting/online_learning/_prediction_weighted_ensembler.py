@@ -30,7 +30,7 @@ class _PredictionWeightedEnsembler:
         self.n_estimators = n_estimators
         self.weights = np.ones(n_estimators) / n_estimators
         self.loss_func = loss_func
-        super(_PredictionWeightedEnsembler, self).__init__()
+        super().__init__()
 
     def _predict(self, y_pred):
         """Make predictions by taking weighted average of forecaster predictions.

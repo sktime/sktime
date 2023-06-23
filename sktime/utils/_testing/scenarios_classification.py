@@ -50,9 +50,7 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         if key in ["predict_proba", "decision_function"]:
             key = "predict"
 
-        return super(ClassifierTestScenario, self).get_args(
-            key=key, obj=obj, deepcopy_args=deepcopy_args
-        )
+        return super().get_args(key=key, obj=obj, deepcopy_args=deepcopy_args)
 
     def is_applicable(self, obj):
         """Check whether scenario is applicable to obj.

@@ -242,7 +242,7 @@ class AutoETS(_StatsModelsAdapter):
         self.ignore_inf_ic = ignore_inf_ic
         self.n_jobs = n_jobs
 
-        super(AutoETS, self).__init__(random_state=random_state)
+        super().__init__(random_state=random_state)
 
         if self.auto:
             # If auto=True, check if trend, damped_trend, seasonal, or error are not set

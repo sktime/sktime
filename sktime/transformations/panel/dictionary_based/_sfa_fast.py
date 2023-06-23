@@ -207,7 +207,7 @@ class SFAFast(BaseTransformer):
         else:
             n_jobs = self.n_jobs
 
-        super(SFAFast, self).__init__()
+        super().__init__()
         # super raises numba import exception if not available
         # so now we know we can use numba
 

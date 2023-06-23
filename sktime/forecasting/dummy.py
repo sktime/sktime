@@ -68,7 +68,7 @@ class ForecastKnownValues(BaseForecaster):
         self.fill_value = fill_value
         self.limit = limit
 
-        super(ForecastKnownValues, self).__init__()
+        super().__init__()
 
         PANDAS_DF_TYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 

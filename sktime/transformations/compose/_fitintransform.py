@@ -61,7 +61,7 @@ class FitInTransform(BaseTransformer):
     def __init__(self, transformer, skip_inverse_transform=True):
         self.transformer = transformer
         self.skip_inverse_transform = skip_inverse_transform
-        super(FitInTransform, self).__init__()
+        super().__init__()
         self.clone_tags(transformer, None)
         self.set_tags(
             **{

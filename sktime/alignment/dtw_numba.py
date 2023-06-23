@@ -162,7 +162,7 @@ class AlignerDtwNumba(BaseAligner):
 
         self.kwargs = kwargs
 
-        super(AlignerDtwNumba, self).__init__()
+        super().__init__()
 
     def _fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.

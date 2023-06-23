@@ -93,7 +93,7 @@ class EAgglo(BaseTransformer):
         self.member = member
         self.alpha = alpha
         self.penalty = penalty
-        super(EAgglo, self).__init__()
+        super().__init__()
 
     def _fit(self, X: pd.DataFrame, y=None):
         """Find optimally clustered segments.

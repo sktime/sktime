@@ -199,7 +199,7 @@ class TSCTask(BaseTask):
 
     def __init__(self, target, features=None, metadata=None):
         self._case = "TSC"
-        super(TSCTask, self).__init__(target, features=features, metadata=metadata)
+        super().__init__(target, features=features, metadata=metadata)
 
 
 class TSRTask(BaseTask):
@@ -224,4 +224,4 @@ class TSRTask(BaseTask):
 
     def __init__(self, target, features=None, metadata=None):
         self._case = "TSR"
-        super(TSRTask, self).__init__(target, features=features, metadata=metadata)
+        super().__init__(target, features=features, metadata=metadata)

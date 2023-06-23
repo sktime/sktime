@@ -14,7 +14,7 @@ class BaseMetric(BaseObject):
     """
 
     def __init__(self):
-        super(BaseMetric, self).__init__()
+        super().__init__()
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.

@@ -89,7 +89,7 @@ class BaseTimeSeriesForest(BaseForest):
         class_weight=None,
         max_samples=None,
     ):
-        super(BaseTimeSeriesForest, self).__init__(
+        super().__init__(
             base_estimator, n_estimators=n_estimators, estimator_params=estimator_params
         )
         self.bootstrap = bootstrap

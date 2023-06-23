@@ -44,7 +44,7 @@ class BaseAligner(BaseEstimator):
         self._is_fitted = False
         self._X = None
 
-        super(BaseAligner, self).__init__()
+        super().__init__()
 
     def fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.

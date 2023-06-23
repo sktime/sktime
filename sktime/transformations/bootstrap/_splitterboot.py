@@ -122,7 +122,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
         self.replace = replace
         self.random_state = random_state
 
-        super(SplitterBootstrapTransformer, self).__init__()
+        super().__init__()
 
         self._rng = check_random_state(random_state)
 

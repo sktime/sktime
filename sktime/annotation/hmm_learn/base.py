@@ -27,7 +27,7 @@ class BaseHMMLearn(BaseSeriesAnnotator):
     _hmm_estimator = None
 
     def __init__(self):
-        super(BaseHMMLearn, self).__init__()
+        super().__init__()
 
     @staticmethod
     def _fix_input(X):

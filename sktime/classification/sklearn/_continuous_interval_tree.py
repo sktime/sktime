@@ -91,7 +91,7 @@ class ContinuousIntervalTree(BaseEstimator):
         self.thresholds = thresholds
         self.random_state = random_state
 
-        super(ContinuousIntervalTree, self).__init__()
+        super().__init__()
 
     def fit(self, X, y):
         """Fit a tree on cases (X,y), where y is the target variable.

@@ -195,7 +195,7 @@ class TagAliaserMixin:
     """
 
     def __init__(self):
-        super(TagAliaserMixin, self).__init__()
+        super().__init__()
 
     @classmethod
     def get_class_tags(cls):
@@ -208,7 +208,7 @@ class TagAliaserMixin:
             class attribute via nested inheritance. NOT overridden by dynamic
             tags set by set_tags or mirror_tags.
         """
-        collected_tags = super(TagAliaserMixin, cls).get_class_tags()
+        collected_tags = super().get_class_tags()
         collected_tags = cls._complete_dict(collected_tags)
         return collected_tags
 
@@ -230,7 +230,7 @@ class TagAliaserMixin:
             `tag_value_default`.
         """
         cls._deprecate_tag_warn([tag_name])
-        return super(TagAliaserMixin, cls).get_class_tag(
+        return super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
 
@@ -244,7 +244,7 @@ class TagAliaserMixin:
             class attribute via nested inheritance and then any overrides
             and new tags from _tags_dynamic object attribute.
         """
-        collected_tags = super(TagAliaserMixin, self).get_tags()
+        collected_tags = super().get_tags()
         collected_tags = self._complete_dict(collected_tags)
         return collected_tags
 
@@ -272,7 +272,7 @@ class TagAliaserMixin:
         ).keys()
         """
         self._deprecate_tag_warn([tag_name])
-        return super(TagAliaserMixin, self).get_tag(
+        return super().get_tag(
             tag_name=tag_name,
             tag_value_default=tag_value_default,
             raise_error=raise_error,
@@ -299,7 +299,7 @@ class TagAliaserMixin:
         self._deprecate_tag_warn(tag_dict.keys())
 
         tag_dict = self._complete_dict(tag_dict)
-        super(TagAliaserMixin, self).set_tags(**tag_dict)
+        super().set_tags(**tag_dict)
         return self
 
     @classmethod
@@ -359,7 +359,7 @@ class BaseEstimator(BaseObject):
 
     def __init__(self):
         self._is_fitted = False
-        super(BaseEstimator, self).__init__()
+        super().__init__()
 
     @property
     def is_fitted(self):

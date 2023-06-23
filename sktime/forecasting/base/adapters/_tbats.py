@@ -52,7 +52,7 @@ class _TbatsAdapter(BaseForecaster):
         self._forecaster = None
         self._yname = None  # .fit(y) -> y.name
 
-        super(_TbatsAdapter, self).__init__()
+        super().__init__()
 
     def _create_model_class(self):
         """Instantiate (T)BATS model.

@@ -205,7 +205,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
 
         self.base_estimator = DecisionTreeClassifier(random_state=random_state)
 
-        super(RandomIntervalSpectralEnsemble, self).__init__()
+        super().__init__()
 
     @property
     def feature_importances_(self):

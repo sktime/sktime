@@ -56,7 +56,7 @@ class BasePairwiseTransformer(BaseEstimator):
     }
 
     def __init__(self):
-        super(BasePairwiseTransformer, self).__init__()
+        super().__init__()
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -190,7 +190,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     }
 
     def __init__(self):
-        super(BasePairwiseTransformerPanel, self).__init__()
+        super().__init__()
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.

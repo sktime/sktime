@@ -254,8 +254,8 @@ class MyTransformer(BaseTransformer):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTransformer" to the name of the class
-        super(MyTransformer, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

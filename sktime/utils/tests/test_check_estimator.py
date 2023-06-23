@@ -54,6 +54,6 @@ def test_check_estimator_subset_tests():
         tests_to_run=tests_to_run,
         tests_to_exclude=tests_to_exclude,
     )
-    results_tests = set(x.split("[")[0] for x in results.keys())
+    results_tests = {x.split("[")[0] for x in results.keys()}
 
     assert results_tests == expected_tests

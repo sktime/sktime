@@ -108,7 +108,7 @@ class TimeSince(BaseTransformer):
         self.freq = freq
         self.keep_original_columns = keep_original_columns
         self.positive_only = positive_only
-        super(TimeSince, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

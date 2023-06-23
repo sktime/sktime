@@ -54,7 +54,7 @@ class MatrixProfileTransformer(BaseTransformer):
 
     def __init__(self, window_length=3):
         self.window_length = window_length
-        super(MatrixProfileTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

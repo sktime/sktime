@@ -166,7 +166,7 @@ class DtwDist(BasePairwiseTransformerPanel):
 
         self.kwargs = kwargs
 
-        super(DtwDist, self).__init__()
+        super().__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
