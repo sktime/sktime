@@ -201,11 +201,11 @@ class WindowSummarizer(BaseTransformer):
     }
 
     def __init__(
-        self,
-        lag_feature=None,
-        n_jobs=-1,
-        target_cols=None,
-        truncate=None,
+            self,
+            lag_feature=None,
+            n_jobs=-1,
+            target_cols=None,
+            truncate=None,
     ):
         self.lag_feature = lag_feature
         self.n_jobs = n_jobs
@@ -474,11 +474,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         else:
             feat = Z.shift(lag).fillna(method="bfill")
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-            summarizer
+                summarizer
         ):
             feat = feat.rolling(window_length).apply(summarizer, raw=True)
         elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-            summarizer
+                summarizer
         ):
             feat = feat.apply(
                 lambda x: x.rolling(
@@ -582,7 +582,7 @@ def _check_quantiles(quantiles):
         quantiles = [quantiles]
     elif isinstance(quantiles, (list, tuple)):
         if len(quantiles) == 0 or not all(
-            [isinstance(q, (int, float)) and 0.0 <= q <= 1.0 for q in quantiles]
+                [isinstance(q, (int, float)) and 0.0 <= q <= 1.0 for q in quantiles]
         ):
             raise ValueError(msg)
     elif quantiles is not None:
@@ -646,10 +646,10 @@ class SummaryTransformer(BaseTransformer):
     }
 
     def __init__(
-        self,
-        summary_function=("mean", "std", "min", "max"),
-        quantiles=(0.1, 0.25, 0.5, 0.75, 0.9),
-        flatten_transform_index=True,
+            self,
+            summary_function=("mean", "std", "min", "max"),
+            quantiles=(0.1, 0.25, 0.5, 0.75, 0.9),
+            flatten_transform_index=True,
     ):
         self.summary_function = summary_function
         self.quantiles = quantiles
@@ -750,3 +750,109 @@ class SummaryTransformer(BaseTransformer):
         params4 = {"summary_function": None, "quantiles": (0.1, 0.2, 0.25)}
 
         return [params1, params2, params3, params4]
+
+
+class SplitterSummarizer(BaseTransformer):
+    """
+    A series-to-series transformer that applies a series-to-primitives transformer to each series' train split.
+
+    It splits the series using a specified splitter and transforms each resulting split using the provided transformer.
+
+    This transformer aims to provide a summarization of the series based on the transformer and splitter given.
+
+    Attributes
+    ----------
+    transformer : series-to-primitives transformer used to convert series to primitives.
+
+    splitter : splitter used to divide the series.
+
+    Methods
+    -------
+    transform(X)
+        Transforms the series according to the specified series-to-primitives transformer and splitter.
+
+    See Also
+    --------
+    SummaryTransformer:
+        Calculates summary value of a time series.
+
+    Notes
+    -----
+    Empty
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.summarize import SplitterSummarizer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = SplitterSummarizer(transformer=PCA(), splitter=ExpandingWindowSplitter())
+    >>> y_splitsummarized = transformer.fit_transform(y)
+    """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,
+    }
+
+    def __init__(
+            self,
+            transformer,
+            splitter
+    ):
+        self.transformer = transformer
+        self.splitter = splitter
+
+        super(SplitterSummarizer, self).__init__()
+
+    def _transform(self, X, y=None):
+        """Transforms the series `X` into a new series `Xt` by applying the series-to-primitives transformer `t`
+        on each train split of `X`, which is created using the splitter `cv`.
+
+        The `i-th` row of `Xt` is equivalent to `t.fit_transform(cv.split_series(X)[i][0])`.
+
+        private _transform containing the core logic, called from transform
+
+        Parameters
+        ----------
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        Xt : pd.DataFrame
+            The transformed Data
+        """
+
+        if not hasattr(self.transformer, 'fit_transform'):
+            raise ValueError("Transformer should have a fit_transform method")
+        if not hasattr(self.splitter, 'split_series'):
+            raise ValueError("Splitter should have a split_series method")
+
+        Xt = pd.DataFrame()
+        for i in range(len(X)):
+            tf = self.transformer.clone()
+            train, _ = self.splitter.split_series(X[i])
+            transformed_train = tf.fit_transform(train)
+            Xt = Xt.append(transformed_train)
+
+        Xt = Xt.reset_index(drop=True)
+
+        return Xt
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        from sklearn.decomposition import PCA
+        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+        params1 = {"transformer": PCA(), "splitter": ExpandingWindowSplitter()}
+
+        return [params1]
