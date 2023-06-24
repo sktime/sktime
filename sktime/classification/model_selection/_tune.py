@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Tuning for time series classifiers."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "achieveordie"]
 
 import numpy as np
 from sklearn.model_selection import GridSearchCV
@@ -258,7 +257,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
         self.error_score = error_score
         self.return_train_score = return_train_score
 
-        super(TSCGridSearchCV, self).__init__()
+        super().__init__()
 
         gcsvargs = {k: getattr(self, k) for k in self.get_param_names()}
 
