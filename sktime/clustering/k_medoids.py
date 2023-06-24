@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series kmedoids."""
 __author__ = ["chrisholder", "TonyBagnall"]
 
@@ -76,7 +75,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     ):
         self._precomputed_pairwise = None
 
-        super(TimeSeriesKMedoids, self).__init__(
+        super().__init__(
             n_clusters,
             init_algorithm,
             metric,

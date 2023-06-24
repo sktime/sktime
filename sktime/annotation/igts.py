@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Information Gain-based Temporal Segmentation.
+"""Information Gain-based Temporal Segmentation.
 
 Information Gain Temporal Segmentation (IGTS) is a method for segmenting
 multivariate time series based off reducing the entropy in each segment [1]_.
@@ -15,7 +13,6 @@ References
     "Information gain-based metric for recognizing transitions in human activities.",
     Pervasive and Mobile Computing, 38, 92-109, (2017).
     https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
-
 """
 
 from dataclasses import dataclass
@@ -110,8 +107,7 @@ def get_IGTS():
 
     @define
     class IGTS:
-        """
-        Information Gain based Temporal Segmentation (IGTS).
+        """Information Gain based Temporal Segmentation (IGTS).
 
         IGTS is a n unsupervised method for segmenting multivariate time series
         into non-overlapping segments by locating change points that for which
@@ -172,7 +168,6 @@ def get_IGTS():
         >>> from sktime.annotation.igts import InformationGainSegmentation
         >>> igts = InformationGainSegmentation(k_max=3, step=2)
         >>> y = igts.fit_predict(X_scaled)
-
         """
 
         # init attributes
@@ -404,7 +399,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         self.step = step
 
         _check_estimator_deps(self)
-        super(InformationGainSegmentation, self).__init__()
+        super().__init__()
 
         self._adaptee_class = get_IGTS()
         self._adaptee = self._adaptee_class(

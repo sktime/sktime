@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Main configuration file for pytest.
 
 Contents:

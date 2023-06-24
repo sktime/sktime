@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements Bagging Forecaster."""
 
@@ -11,7 +10,6 @@ import numpy as np
 import pandas as pd
 from sklearn import clone
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import set_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
@@ -22,6 +20,7 @@ from sktime.transformations.bootstrap import (
     STLBootstrapTransformer,
 )
 from sktime.utils.estimators import MockForecaster
+from sktime.utils.random_state import set_random_state
 
 
 class BaggingForecaster(BaseForecaster):
@@ -121,7 +120,7 @@ class BaggingForecaster(BaseForecaster):
             # done before the super call to trigger exceptions
             self.set_tags(**{"python_dependencies": "statsmodels"})
 
-        super(BaggingForecaster, self).__init__()
+        super().__init__()
 
         # set the tags based on forecaster
         tags_to_clone = [

@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Abstract base class for time series classifiers.
+"""Abstract base class for time series classifiers.
 
     class name: BaseClassifier
 
@@ -90,7 +88,7 @@ class BaseClassifier(BaseEstimator, ABC):
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
 
-        super(BaseClassifier, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):

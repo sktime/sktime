@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for KNeighborsTimeSeriesClassifier."""
 import numpy as np
 import pandas as pd

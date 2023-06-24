@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
 __author__ = ["danbartl", "KishManani"]
@@ -140,14 +139,13 @@ class DateTimeFeatures(BaseTransformer):
         manual_selection=None,
         keep_original_columns=False,
     ):
-
         self.ts_freq = ts_freq
         self.feature_scope = feature_scope
         self.manual_selection = manual_selection
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         self.keep_original_columns = keep_original_columns
 
-        super(DateTimeFeatures, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -321,9 +319,8 @@ def _get_supported_calendar(ts_freq, DUMMIES):
 def _prep_dummies(DUMMIES):
     """Use to prepare dummy data.
 
-    Includes defining function call names and ranking
-    of date information based on frequency (e.g. year
-    has a lower frequency than week).
+    Includes defining function call names and ranking of date information based on
+    frequency (e.g. year has a lower frequency than week).
     """
     DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
 

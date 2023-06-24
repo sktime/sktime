@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements matrix profile transformation."""
 
@@ -55,7 +54,7 @@ class MatrixProfileTransformer(BaseTransformer):
 
     def __init__(self, window_length=3):
         self.window_length = window_length
-        super(MatrixProfileTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __author__ = ["mloning"]
 __all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
@@ -33,6 +31,12 @@ EXCLUDE_ESTIMATORS = [
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
+    # DL classifier suspected to cause hangs and memouts, see #4610
+    "FCNClassifier",
+    "MACNNClassifier",
+    "SimpleRNNClassifier",
+    "SimpleRNNRegressor",
+    "EditDist",
 ]
 
 
@@ -86,6 +90,9 @@ EXCLUDED_TESTS = {
     "ResNetClassifier": [
         "test_fit_idempotent",
     ],
+    "ResNetRegressor": [
+        "test_fit_idempotent",
+    ],
     "CNNClassifier": [
         "test_fit_idempotent",
     ],
@@ -113,6 +120,9 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
+    ],
+    "MACNNClassifier": [
+        "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370

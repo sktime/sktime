@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for forecasters, SIMPLE version.
+"""Extension template for forecasters, SIMPLE version.
 
 Contains only bare minimum of implementation requirements for a functional forecaster.
 Also assumes *no composition*, i.e., no forecaster or other estimator components.
@@ -113,14 +111,13 @@ class MyForecaster(BaseForecaster):
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, parama, paramb="default", paramc=None):
-
         # todo: write any hyper-parameters to self
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyForecaster" to the name of the class
-        super(MyForecaster, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

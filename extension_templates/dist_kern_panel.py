@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Extension template for pairwise distance or kernel between time series.
+"""Extension template for pairwise distance or kernel between time series.
 
 How to use this:
 - this is meant as a "fill in" template for easy extension
@@ -76,8 +74,8 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTrafoPwPanel" to the name of the class
-        super(MyTrafoPwPanel, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

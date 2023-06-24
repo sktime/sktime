@@ -78,7 +78,7 @@ Composition
 
     DistFromAligner
 
-.. currentmodule:: sktime.dists_to_kern
+.. currentmodule:: sktime.dists_kernels.dist_to_kern
 
 .. autosummary::
     :toctree: auto_generated/

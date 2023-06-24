@@ -1,10 +1,9 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for model evaluation module.
 
-In particular, function `evaluate`, that performs time series
-cross-validation, is tested with various configurations for correct output.
+In particular, function `evaluate`, that performs time series cross-validation, is
+tested with various configurations for correct output.
 """
 
 __author__ = ["aiwalter", "mloning", "fkiraly"]
@@ -101,7 +100,7 @@ def _check_evaluate_output(out, cv, y, scoring):
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", [7, 10])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
-@pytest.mark.parametrize("strategy", ["refit", "update"])
+@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize(
     "scoring",
     [
@@ -216,7 +215,7 @@ def test_evaluate_no_exog_against_with_exog():
 )
 @pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
 @pytest.mark.parametrize("return_data", [True, False])
-@pytest.mark.parametrize("strategy", ["refit", "update"])
+@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_error_score(error_score, return_data, strategy, backend):
     """Test evaluate to raise warnings and exceptions according to error_score value."""

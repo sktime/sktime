@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Isolated numba imports for shapelet."""
 
 __author__ = ["MatthewMiddlehurst", "jasonlines", "dguijo"]

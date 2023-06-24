@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for Facebook prophet to be used in sktime framework."""
@@ -108,7 +107,6 @@ class _ProphetAdapter(BaseForecaster):
 
         # Add floor and bottom when growth is logistic
         if self.growth == "logistic":
-
             if self.growth_cap is None:
                 raise ValueError(
                     "Since `growth` param is set to 'logistic', expecting `growth_cap`"
@@ -348,7 +346,7 @@ def _merge_X(df, X):
     return df, X
 
 
-class _suppress_stdout_stderr(object):
+class _suppress_stdout_stderr:
     """Context manager for doing  a "deep suppression" of stdout and stderr.
 
     A context manager for doing a "deep suppression" of stdout and stderr in

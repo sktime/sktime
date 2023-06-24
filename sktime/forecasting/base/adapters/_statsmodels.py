@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for statsmodels forecasters to be used in sktime framework."""
@@ -30,7 +29,7 @@ class _StatsModelsAdapter(BaseForecaster):
         self._forecaster = None
         self.random_state = random_state
         self._fitted_forecaster = None
-        super(_StatsModelsAdapter, self).__init__()
+        super().__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -188,8 +187,18 @@ class _StatsModelsAdapter(BaseForecaster):
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
+        get_prediction_arguments = {"start": start, "end": end}
+
+        if hasattr(self, "random_state"):
+            get_prediction_arguments["random_state"] = self.random_state
+
+        if inspect.signature(self._fitted_forecaster.get_prediction).parameters.get(
+            "exog"
+        ):
+            get_prediction_arguments["exog"] = X
+
         prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end, exog=X
+            **get_prediction_arguments
         )
 
         columns = pd.MultiIndex.from_product(
