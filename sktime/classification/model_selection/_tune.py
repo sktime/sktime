@@ -245,7 +245,6 @@ class TSCGridSearchCV(_DelegatedClassifier):
         error_score=np.nan,
         return_train_score=False,
     ):
-
         self.estimator = estimator
         self.param_grid = param_grid
         self.scoring = scoring
