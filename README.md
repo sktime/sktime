@@ -51,7 +51,7 @@ We welcome questions and feedback and appreciate your understanding that we are 
 | :sparkles: **Feature Requests & Ideas** | [GitHub Issue Tracker]                       |
 | :woman_technologist: **Usage Questions**          | [GitHub Discussions] · [Stack Overflow] |
 | :speech_balloon: **General Discussion**        | [GitHub Discussions] |
-| :factory: **Contribution & Development** | Contributors channel · [Discord] |
+| :factory: **Contribution & Development** | `dev-chat` channel · [Discord] |
 | :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 3 pm UTC, dev/meet-ups channel |
 
 [github issue tracker]: https://github.com/sktime/sktime/issues
