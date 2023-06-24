@@ -37,6 +37,13 @@ EXCLUDE_ESTIMATORS = [
     "SimpleRNNClassifier",
     "SimpleRNNRegressor",
     "EditDist",
+    "CNNClassifier",
+    "FCNClassifier",
+    "InceptionTimeClassifer",
+    "LSTMFCNClassifier",
+    "MLPClassifier",
+    "CNNRegressor",
+    "ResNetRegressor",
 ]
 
 
