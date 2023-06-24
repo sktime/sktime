@@ -211,10 +211,8 @@ class DynamicFactor(_StatsModelsAdapter):
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
-            y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
-        else:
-            y_pred = self._fitted_forecaster.predict(start=start, end=end)
+        y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
+
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
 
