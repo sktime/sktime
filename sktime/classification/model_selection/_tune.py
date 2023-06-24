@@ -54,7 +54,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
     refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
-        dataset.
+        dataset. If ``False``, the ``predict`` and ``predict_probab`` will not work.
 
         For multiple metric evaluation, this needs to be a `str` denoting the
         scorer that would be used to find the best parameters for refitting
@@ -78,10 +78,6 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
-
-        See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
-        to see how to design a custom selection strategy using a callable
-        via `refit`.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -314,48 +310,6 @@ class TSCGridSearchCV(_DelegatedClassifier):
                 setattr(self, p, val)
 
         return self
-
-    def _predict_proba(self, X):
-        """Predicts labels probabilities for sequences in X.
-
-        private _predict_proba containing the core logic, called from predict_proba
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-
-        Parameters
-        ----------
-        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
-
-        Returns
-        -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
-        """
-        if not self.refit:
-            return self.estimator._predict_proba(X)
-        else:
-            estimator = self._get_delegate()
-            return estimator.predict_proba(X=X)
-
-    def _predict(self, X):
-        """Predicts labels for sequences in X."""
-        if not self.refit:
-            return self.estimator._predict(X)
-        else:
-            estimator = self._get_delegate()
-            return estimator.predict(X=X)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
