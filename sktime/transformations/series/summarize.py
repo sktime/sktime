@@ -2,8 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implement transformers for summarizing a time series."""
 
-__author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut"]
-__all__ = ["SummaryTransformer", "WindowSummarizer"]
+__author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut", "BensHamza"]
+__all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 
 import pandas as pd
 from joblib import Parallel, delayed
@@ -201,11 +201,11 @@ class WindowSummarizer(BaseTransformer):
     }
 
     def __init__(
-            self,
-            lag_feature=None,
-            n_jobs=-1,
-            target_cols=None,
-            truncate=None,
+        self,
+        lag_feature=None,
+        n_jobs=-1,
+        target_cols=None,
+        truncate=None,
     ):
         self.lag_feature = lag_feature
         self.n_jobs = n_jobs
@@ -474,11 +474,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         else:
             feat = Z.shift(lag).fillna(method="bfill")
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-                summarizer
+            summarizer
         ):
             feat = feat.rolling(window_length).apply(summarizer, raw=True)
         elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-                summarizer
+            summarizer
         ):
             feat = feat.apply(
                 lambda x: x.rolling(
@@ -582,7 +582,7 @@ def _check_quantiles(quantiles):
         quantiles = [quantiles]
     elif isinstance(quantiles, (list, tuple)):
         if len(quantiles) == 0 or not all(
-                [isinstance(q, (int, float)) and 0.0 <= q <= 1.0 for q in quantiles]
+            [isinstance(q, (int, float)) and 0.0 <= q <= 1.0 for q in quantiles]
         ):
             raise ValueError(msg)
     elif quantiles is not None:
@@ -646,10 +646,10 @@ class SummaryTransformer(BaseTransformer):
     }
 
     def __init__(
-            self,
-            summary_function=("mean", "std", "min", "max"),
-            quantiles=(0.1, 0.25, 0.5, 0.75, 0.9),
-            flatten_transform_index=True,
+        self,
+        summary_function=("mean", "std", "min", "max"),
+        quantiles=(0.1, 0.25, 0.5, 0.75, 0.9),
+        flatten_transform_index=True,
     ):
         self.summary_function = summary_function
         self.quantiles = quantiles
@@ -850,9 +850,9 @@ class SplitterSummarizer(BaseTransformer):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        from sklearn.decomposition import PCA
+        from sktime.transformations.panel.pca import PCATransformer
         from sktime.forecasting.model_selection import ExpandingWindowSplitter
 
-        params1 = {"transformer": PCA(), "splitter": ExpandingWindowSplitter()}
+        params1 = {"transformer": PCATransformer(), "splitter": ExpandingWindowSplitter()}
 
         return [params1]
