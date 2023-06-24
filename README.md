@@ -1,6 +1,6 @@
 <a href="https://www.sktime.net"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.svg" width="175" align="right" /></a>
 
-# Welcome to sktime :hugs:
+# Welcome to sktime :dizzy:
 
 > A unified interface for machine learning with time series
 
