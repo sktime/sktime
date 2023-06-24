@@ -41,7 +41,7 @@ sktime is a library for time series analysis in Python. It provides a unified in
 [roadmap]: https://www.sktime.net/en/latest/roadmap.html
 [related software]: https://www.sktime.net/en/latest/related_software.html
 
-## :speech_balloon: Where to ask questions!
+## :speech_balloon: Where to ask questions
 
 We welcome questions and feedback and appreciate your understanding that we are unable to offer personalized assistance via email. We strongly believe in the value of sharing help publicly, as it allows a wider audience to benefit from it.
 
