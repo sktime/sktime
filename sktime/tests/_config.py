@@ -47,6 +47,7 @@ EXCLUDED_TESTS = {
         "test_predict_time_index",
         "test_predict_residuals",
         "test_predict_interval",
+        "predict_time_index_with_X",  # separate than above comment - refer to #4765
     ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
@@ -154,6 +155,15 @@ EXCLUDED_TESTS = {
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAX": "test_fit_transform_output",
+    "DynamicFactor": [
+        "predict_time_index_in_sample_full",  # refer to #4765
+    ],
+    "ARIMA": [
+        "predict_time_index_in_sample_full",  # refer to #4765
+    ],
+    "VECM": [
+        "hierarchical_with_exogeneous",  # refer to #4765
+    ],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
