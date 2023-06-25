@@ -753,28 +753,32 @@ class SummaryTransformer(BaseTransformer):
 
 
 class SplitterSummarizer(BaseTransformer):
-    """
-    A series-to-series transformer that applies a series-to-primitives transformer to each series' train split.
+    """Create summary values of a time series' splits.
 
-    It splits the series using a specified splitter and transforms each resulting split using the provided transformer.
+    A series-to-series transformer that applies a series-to-primitives transformer
+    to each series' train split.
 
-    This transformer aims to provide a summarization of the series based on the transformer and splitter given.
+    It splits the series using a specified splitter and transforms each resulting
+    split using the provided transformer.
+
+    This transformer aims to provide a summarization of the series based on the
+    transformer and splitter given.
 
     Attributes
     ----------
-    transformer : series-to-primitives transformer used to convert series to primitives.
+    transformer : series-to-primitives transformer used to convert series
+        to primitives.
 
     splitter : splitter used to divide the series.
 
     Methods
     -------
-    transform(X)
-        Transforms the series according to the specified series-to-primitives transformer and splitter.
+    transform(X) : Transforms the series according to the specified
+        series-to-primitives transformer and splitter.
 
     See Also
     --------
-    SummaryTransformer:
-        Calculates summary value of a time series.
+    SummaryTransformer: Calculates summary value of a time series.
 
     Notes
     -----
@@ -783,9 +787,13 @@ class SplitterSummarizer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.series.summarize import SplitterSummarizer
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.transformations.panel.pca import PCATransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = SplitterSummarizer(transformer=PCA(), splitter=ExpandingWindowSplitter())
+    >>> transformer = SplitterSummarizer(
+    >>>     transformer=PCATransformer(),
+    >>>     splitter=ExpandingWindowSplitter())
     >>> y_splitsummarized = transformer.fit_transform(y)
     """
 
@@ -801,21 +809,21 @@ class SplitterSummarizer(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    def __init__(
-            self,
-            transformer,
-            splitter
-    ):
+    def __init__(self, transformer, splitter):
         self.transformer = transformer
         self.splitter = splitter
 
-        super(SplitterSummarizer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
-        """Transforms the series `X` into a new series `Xt` by applying the series-to-primitives transformer `t`
-        on each train split of `X`, which is created using the splitter `cv`.
+        """Transform X and return a transformed version.
 
-        The `i-th` row of `Xt` is equivalent to `t.fit_transform(cv.split_series(X)[i][0])`.
+        Transforms the series `X` into a new series `Xt` by applying the
+        series-to-primitives transformer `t` on each train split of `X`,
+         which is created using the splitter `cv`.
+
+         The `i-th` row of `Xt` is equivalent to
+         `t.fit_transform(cv.split_series(X)[i][0])`.
 
         private _transform containing the core logic, called from transform
 
@@ -831,10 +839,9 @@ class SplitterSummarizer(BaseTransformer):
         Xt : pd.DataFrame
             The transformed Data
         """
-
-        if not hasattr(self.transformer, 'fit_transform'):
+        if not hasattr(self.transformer, "fit_transform"):
             raise ValueError("Transformer should have a fit_transform method")
-        if not hasattr(self.splitter, 'split_series'):
+        if not hasattr(self.splitter, "split_series"):
             raise ValueError("Splitter should have a split_series method")
 
         Xt = pd.DataFrame()
@@ -850,9 +857,28 @@ class SplitterSummarizer(BaseTransformer):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        from sktime.transformations.panel.pca import PCATransformer
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        """Return testing parameter settings for the transformer.
 
-        params1 = {"transformer": PCATransformer(), "splitter": ExpandingWindowSplitter()}
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.transformations.panel.pca import PCATransformer
+
+        params1 = {
+            "transformer": PCATransformer(),
+            "splitter": ExpandingWindowSplitter(),
+        }
 
         return [params1]
