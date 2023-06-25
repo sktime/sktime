@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
 __author__ = [
@@ -79,7 +78,7 @@ class TapNetNetwork(BaseDeepNetwork):
         )
         _check_dl_dependencies(severity="error")
 
-        super(TapNetNetwork, self).__init__()
+        super().__init__()
 
         self.random_state = random_state
         self.kernel_size = kernel_size
@@ -175,7 +174,6 @@ class TapNetNetwork(BaseDeepNetwork):
         self.rp_group, self.rp_dim = self.rp_params
 
         if self.use_lstm:
-
             self.lstm_dim = 128
 
             x_lstm = keras.layers.LSTM(self.lstm_dim, return_sequences=True)(
@@ -195,7 +193,6 @@ class TapNetNetwork(BaseDeepNetwork):
                 self.conv_1_models = keras.Sequential()
 
                 for i in range(self.rp_group):
-
                     self.idx = np.random.permutation(input_shape[1])[0 : self.rp_dim]
                     channel = keras.layers.Lambda(
                         lambda x: tf.gather(x, indices=self.idx, axis=2)
@@ -250,7 +247,6 @@ class TapNetNetwork(BaseDeepNetwork):
                 x_conv = x_conv_sum
 
             else:
-
                 x_conv = keras.layers.Conv1D(
                     self.filter_sizes[0],
                     kernel_size=self.kernel_size[0],

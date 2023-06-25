@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing machine type checkers for scitypes."""
 
 __author__ = ["fkiraly"]
@@ -37,7 +36,6 @@ def _generate_scitype_mtype_combinations():
     sci_mtype_tuples = []
 
     for scitype in SCITYPES:
-
         mtypes = scitype_to_mtype(scitype)
 
         for mtype in mtypes:
@@ -85,7 +83,7 @@ def pytest_generate_tests(metafunc):
 
     fixturenames = set(metafunc.fixturenames)
 
-    if set(["scitype", "mtype", "fixture_index"]).issubset(fixturenames):
+    if {"scitype", "mtype", "fixture_index"}.issubset(fixturenames):
         keys = _generate_scitype_mtype_fixtureindex_combinations()
 
         ids = []
@@ -95,7 +93,7 @@ def pytest_generate_tests(metafunc):
         # parameterize test with from-mtpes
         metafunc.parametrize("scitype,mtype,fixture_index", keys, ids=ids)
 
-    elif set(["scitype", "mtype"]).issubset(fixturenames):
+    elif {"scitype", "mtype"}.issubset(fixturenames):
         keys = _generate_scitype_mtype_combinations()
 
         ids = []
@@ -310,8 +308,7 @@ def test_check_negative(scitype, mtype):
 
     for i in range(n_fixtures):
         # if mtype is not ambiguous, other mtypes are negative examples
-        for wrong_mtype in list(set(mtypes).difference(set([mtype]))):
-
+        for wrong_mtype in list(set(mtypes).difference({mtype})):
             # retrieve fixture for checking
             fixture_wrong_type = fixtures[wrong_mtype].get(i)
 

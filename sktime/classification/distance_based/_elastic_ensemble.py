@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The Elastic Ensemble (EE).
 
 An ensemble of elastic nearest neighbour classifiers.
@@ -91,6 +90,7 @@ class ElasticEnsemble(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "distance",
     }
 
@@ -129,7 +129,7 @@ class ElasticEnsemble(BaseClassifier):
         self.train = None
         self.constituent_build_times = None
 
-        super(ElasticEnsemble, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Build an ensemble of 1-NN classifiers from the training set (X, y).
@@ -266,7 +266,6 @@ class ElasticEnsemble(BaseClassifier):
             # If 100 parameter options are being considered per measure,
             # use a GridSearchCV
             if self.proportion_of_param_options == 1:
-
                 grid = GridSearchCV(
                     estimator=KNeighborsTimeSeriesClassifier(
                         distance=this_measure, n_neighbors=1

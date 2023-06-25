@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __author__ = ["mloning"]
 __all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
@@ -33,13 +31,30 @@ EXCLUDE_ESTIMATORS = [
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
+    # DL classifier suspected to cause hangs and memouts, see #4610
+    "FCNClassifier",
+    "MACNNClassifier",
+    "SimpleRNNClassifier",
+    "SimpleRNNRegressor",
+    "EditDist",
+    "CNNClassifier",
+    "FCNClassifier",
+    "InceptionTimeClassifer",
+    "LSTMFCNClassifier",
+    "MLPClassifier",
+    "CNNRegressor",
+    "ResNetRegressor",
 ]
 
 
 EXCLUDED_TESTS = {
-    # issue when predicting residuals, see #3479
+    # issue when prediction intervals, see #3479 and #4504
     # known issue with prediction intervals that needs fixing, tracked in #4181
-    "SquaringResiduals": ["test_predict_residuals", "test_predict_interval"],
+    "SquaringResiduals": [
+        "test_predict_time_index",
+        "test_predict_residuals",
+        "test_predict_interval",
+    ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
@@ -82,6 +97,9 @@ EXCLUDED_TESTS = {
     "ResNetClassifier": [
         "test_fit_idempotent",
     ],
+    "ResNetRegressor": [
+        "test_fit_idempotent",
+    ],
     "CNNClassifier": [
         "test_fit_idempotent",
     ],
@@ -98,6 +116,19 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "InceptionTimeClassifier": [
+        "test_fit_idempotent",
+    ],
+    "SimpleRNNClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "SimpleRNNRegressor": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "MACNNClassifier": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,

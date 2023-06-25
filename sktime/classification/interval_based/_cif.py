@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """CIF classifier.
 
 Interval based CIF classifier extracting catch22 features from random intervals.
@@ -120,6 +119,7 @@ class CanonicalIntervalForest(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "interval",
         "python_dependencies": "numba",
     }
@@ -160,7 +160,7 @@ class CanonicalIntervalForest(BaseClassifier):
         self._min_interval = min_interval
         self._base_estimator = base_estimator
 
-        super(CanonicalIntervalForest, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape

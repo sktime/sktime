@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Kernel based time series regressors."""
 __all__ = ["RocketRegressor"]
 

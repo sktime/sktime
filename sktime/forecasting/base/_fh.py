@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functionality for specifying forecast horizons in sktime."""
@@ -61,8 +60,8 @@ DELEGATED_METHODS = (
 def _delegator(method):
     """Automatically decorate ForecastingHorizon class with pandas.Index methods.
 
-    Also delegates method calls to wrapped pandas.Index object.
-    methods from pandas.Index and delegate method calls to wrapped pandas.Index
+    Also delegates method calls to wrapped pandas.Index object. methods from
+    pandas.Index and delegate method calls to wrapped pandas.Index
     """
 
     def delegated(obj, *args, **kwargs):
@@ -79,7 +78,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
 
     Parameters
     ----------
-    values : int, list, array, certain pd.Index types
+    values : int, range, list of int, array of int, certain pd.Index types
         Forecasting horizon with steps ahead to predict.
 
     Raises
@@ -106,6 +105,11 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     elif is_int(values):
         values = pd.Index([values], dtype=int)
 
+    # convert range object to pandas.RangeIndex
+    # range has to be for integers, no need to separate check
+    elif isinstance(values, range):
+        values = pd.Index(values)
+
     elif is_timedelta_or_date_offset(values):
         values = pd.Index([values])
 
@@ -120,9 +124,10 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     else:
         valid_types = (
             "int",
+            "range",
             "1D np.ndarray of type int",
             "1D np.ndarray of type timedelta or dateoffset",
-            "list",
+            "list of type int",
             *[f"pd.{index_type.__name__}" for index_type in VALID_INDEX_TYPES],
         )
         raise TypeError(
@@ -476,6 +481,30 @@ class ForecastingHorizon:
         cutoff = self._coerce_cutoff_to_index(cutoff)
         return _to_absolute(fh=self, cutoff=cutoff)
 
+    def to_absolute_index(self, cutoff=None):
+        """Return absolute values of the horizon as a pandas.Index.
+
+        For a forecaster `f` that has `fh` being `self`,
+        the return of this method with `cutoff=f.cutoff` is the same
+        as the expected index of the return of the forecaster's predict methods,
+        e.g., `f.predict` or `f.predict_interval`
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index
+            Cutoff value is required to convert a relative forecasting
+            horizon to an absolute one (and vice versa).
+            If pd.Index, last/latest value is considered the cutoff
+
+        Returns
+        -------
+        fh : ForecastingHorizon
+            Absolute representation of forecasting horizon.
+        """
+        cutoff = self._coerce_cutoff_to_index_element(cutoff)
+        fh_abs = _to_absolute(fh=self, cutoff=cutoff)
+        return fh_abs.to_pandas()
+
     def to_absolute_int(self, start, cutoff=None):
         """Return absolute values as zero-based integer index starting from `start`.
 
@@ -497,7 +526,8 @@ class ForecastingHorizon:
         cutoff = self._coerce_cutoff_to_index(cutoff)
         freq = self.freq
 
-        absolute = self.to_absolute(cutoff).to_pandas()
+        absolute = self.to_absolute_index(cutoff)
+
         if isinstance(absolute, pd.DatetimeIndex):
             # coerce to pd.Period for reliable arithmetics and computations of
             # time deltas
@@ -672,7 +702,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        # TODO: 0.18.0:
+        # TODO: 0.21.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #

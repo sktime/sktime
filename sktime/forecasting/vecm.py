@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """VECM Forecaster."""
 
 
@@ -14,8 +12,7 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VECM(_StatsModelsAdapter):
-    r"""
-    A VECM model, or Vector Error Correction Model, is a restricted.
+    r"""A VECM model, or Vector Error Correction Model, is a restricted.
 
     VAR model used for nonstationary series that are cointegrated.r
 
@@ -85,6 +82,7 @@ class VECM(_StatsModelsAdapter):
         "univariate-only": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
@@ -101,7 +99,6 @@ class VECM(_StatsModelsAdapter):
         exog_coint=None,
         exog_coint_fc=None,
     ):
-
         self.dates = dates
         self.freq = freq
         self.missing = missing
@@ -114,11 +111,10 @@ class VECM(_StatsModelsAdapter):
         self.exog_coint = exog_coint
         self.exog_coint_fc = exog_coint_fc
 
-        super(VECM, self).__init__()
+        super().__init__()
 
     def _fit(self, y, fh=None, X=None):
-        """
-        Fit forecaster to training data.
+        """Fit forecaster to training data.
 
         Wrapper for statsmodel's VECM (_VECM) fit method
 
@@ -157,8 +153,7 @@ class VECM(_StatsModelsAdapter):
         return self
 
     def _predict(self, fh, X=None):
-        """
-        Forecast time series at future horizon.
+        """Forecast time series at future horizon.
 
         Wrapper for statsmodel's VECM (_VECM) predict method
 
@@ -191,7 +186,6 @@ class VECM(_StatsModelsAdapter):
 
         # in-sample prediction by means of residuals
         if fh_int.min() <= 0:
-
             # .resid returns np.ndarray
             # both values need to be pd DataFrame for subtraction
             y_pred_insample = self._y - pd.DataFrame(self._fitted_forecaster.resid)
@@ -204,7 +198,7 @@ class VECM(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        index = fh.to_absolute(self.cutoff).to_pandas()
+        index = fh.to_absolute_index(self.cutoff)
         index.name = self._y.index.name
         y_pred = pd.DataFrame(
             y_pred[fh.to_indexer(self.cutoff), :],
@@ -215,8 +209,7 @@ class VECM(_StatsModelsAdapter):
         return y_pred
 
     def _predict_interval(self, fh, X=None, coverage=None):
-        """
-        Compute/return prediction quantiles for a forecast.
+        """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
             called from predict_interval and possibly predict_quantiles
@@ -252,7 +245,7 @@ class VECM(_StatsModelsAdapter):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         exog_fc = X.values if X is not None else None
-        fh_oos = fh.to_out_of_sample(self.cutoff)
+        fh_int = fh.to_relative(self.cutoff)
         var_names = (
             self._y.index.name
             if self._y.index.name is not None
@@ -264,7 +257,7 @@ class VECM(_StatsModelsAdapter):
         for c in coverage:
             alpha = 1 - c
             _, y_lower, y_upper = self._fitted_forecaster.predict(
-                steps=fh_oos[-1],
+                steps=fh_int[-1],
                 exog_fc=exog_fc,
                 exog_coint_fc=self.exog_coint_fc,
                 alpha=alpha,
@@ -277,7 +270,7 @@ class VECM(_StatsModelsAdapter):
             all_values.extend(values)
 
         pred_int = pd.DataFrame(
-            [all_values], index=fh.to_absolute(self.cutoff).to_pandas(), columns=int_idx
+            [all_values], index=fh.to_absolute_index(self.cutoff), columns=int_idx
         )
 
         return pred_int

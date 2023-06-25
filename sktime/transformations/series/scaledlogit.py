@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements the scaled logit transformation."""
 
@@ -109,7 +108,7 @@ class ScaledLogitTransformer(BaseTransformer):
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
 
-        super(ScaledLogitTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

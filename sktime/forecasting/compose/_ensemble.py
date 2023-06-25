@@ -1,10 +1,9 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements ensemble forecasters.
 
-Creates univariate (optionally weighted)
-combination of the predictions from underlying forecasts.
+Creates univariate (optionally weighted) combination of the predictions from underlying
+forecasts.
 """
 
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
@@ -120,7 +119,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         random_state=None,
         n_jobs=None,
     ):
-        super(AutoEnsembleForecaster, self).__init__(
+        super().__init__(
             forecasters=forecasters,
             n_jobs=n_jobs,
         )
@@ -161,7 +160,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
         if self.method == "feature-importance":
-
             self.regressor_ = check_regressor(
                 regressor=self.regressor, random_state=self.random_state
             )
@@ -321,7 +319,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
 

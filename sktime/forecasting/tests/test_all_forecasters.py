@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for BaseForecaster API points.
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -223,21 +222,38 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         cutoff = get_cutoff(y_train, return_index=True)
         fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
+        fh_is_oos = fh.is_all_out_of_sample(cutoff)
 
-        try:
-            estimator_instance.fit(y_train, fh=fh)
-            y_pred = estimator_instance.predict()
-            _assert_correct_pred_time_index(y_pred.index, cutoff, fh=fh_int)
-            _assert_correct_columns(y_pred, y_train)
+        # if estimator cannot forecast in-sample and fh is in-sample, terminate
+        # if the tag correctly states this, we consider this fine as per contract
+        # todo: check that estimator raises error message when fitting instead
+        if not fh_is_oos and not estimator_instance.get_tag("capability:insample"):
+            return None
 
-            y_test = _make_series(
-                n_columns=n_columns, index_type=index_type, n_timepoints=len(y_pred)
-            )
-            y_test.index = y_pred.index
-            y_res = estimator_instance.predict_residuals(y_test)
-            _assert_correct_pred_time_index(y_res.index, cutoff, fh=fh)
-        except NotImplementedError:
-            pass
+        estimator_instance.fit(y_train, fh=fh)
+        y_pred = estimator_instance.predict()
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh=fh_int)
+        _assert_correct_columns(y_pred, y_train)
+
+        y_test = _make_series(
+            n_columns=n_columns, index_type=index_type, n_timepoints=len(y_pred)
+        )
+        y_test.index = y_pred.index
+        y_res = estimator_instance.predict_residuals(y_test)
+        _assert_correct_pred_time_index(y_res.index, cutoff, fh=fh)
+
+        # if cannot forecast in-sample probabilistically, and fh is in-sample, terminate
+        # if the tag correctly states this, we consider this fine as per contract
+        # todo: check that estimator raises error message when fitting instead
+        if not fh_is_oos:
+            if not estimator_instance.get_tag("capability:pred_int:insample"):
+                return None
+
+        if estimator_instance.get_tag("capability:pred_int"):
+            y_pred_int = estimator_instance.predict_interval()
+            _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh=fh_int)
+            y_pred_q = estimator_instance.predict_quantiles()
+            _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh=fh_int)
 
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
@@ -379,7 +395,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
-
             pred_ints = estimator_instance.predict_interval(
                 fh_int_oos, coverage=coverage
             )
@@ -481,7 +496,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             assert (pred_cols == y_train.columns).all()
 
-    # todo 0.18.0 or 0.19.0: remove legacy_interface parameter below
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
@@ -505,13 +519,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         if estimator_instance.get_tag("capability:pred_int"):
             try:
-                pred_dist = estimator_instance.predict_proba(legacy_interface=False)
+                pred_dist = estimator_instance.predict_proba()
                 self._check_predict_proba(pred_dist, y_train, fh_int_oos)
             except NotImplementedError:
                 pass
         else:
             with pytest.raises(NotImplementedError, match="probabilistic predictions"):
-                estimator_instance.predict_proba(legacy_interface=False)
+                estimator_instance.predict_proba()
 
     def test_pred_int_tag(self, estimator_instance):
         """Checks whether the capability:pred_int tag is correctly set.
@@ -531,6 +545,20 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # we skip the _DelegatedForecaster, since it implements delegation methods
         #   which may look like the method is implemented, but in fact it is not
         if isinstance(f, _DelegatedForecaster):
+            return None
+
+        # PR #4465 adds base ``_predict_interval`` in ``_StatsModelsAdapter``.
+        # This leads to existence of that non-functional method in all subclasses.
+        # It causes failure in ``test_pred_int_tag`` tests, which are skipped below.
+        # The following skips this test for all subclasses of ``_StatsModelsAdapter``.
+        # This weakens coverage for valid subclasses with probabilistic capability.
+        # This should be addressed in future and is being tracked in issue #4482.
+        contains_interval_adapter = hasattr(f, "_extract_conf_int") and callable(
+            f._extract_conf_int
+        )
+        implements_interval_adapter = f._has_implementation_of("_extract_conf_int")
+
+        if contains_interval_adapter and not implements_interval_adapter:
             return None
 
         # check which methods are implemented

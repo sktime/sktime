@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for Facebook prophet to be used in sktime framework."""
@@ -19,6 +18,7 @@ class _ProphetAdapter(BaseForecaster):
     _tags = {
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "y_inner_mtype": "pd.DataFrame",
@@ -107,7 +107,6 @@ class _ProphetAdapter(BaseForecaster):
 
         # Add floor and bottom when growth is logistic
         if self.growth == "logistic":
-
             if self.growth_cap is None:
                 raise ValueError(
                     "Since `growth` param is set to 'logistic', expecting `growth_cap`"
@@ -127,7 +126,7 @@ class _ProphetAdapter(BaseForecaster):
 
     def _get_prophet_fh(self):
         """Get a prophet compatible fh, in datetime, even if fh was int."""
-        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        fh = self.fh.to_absolute_index(cutoff=self.cutoff)
         if isinstance(fh, pd.PeriodIndex):
             fh = fh.to_timestamp()
         if not isinstance(fh, pd.DatetimeIndex):
@@ -142,7 +141,7 @@ class _ProphetAdapter(BaseForecaster):
             return None
         elif isinstance(X.index, pd.PeriodIndex):
             X = X.copy()
-            X = X.loc[self.fh.to_absolute(self.cutoff).to_pandas()]
+            X = X.loc[self.fh.to_absolute_index(self.cutoff)]
             X.index = X.index.to_timestamp()
         elif pd.api.types.is_integer_dtype(X.index):
             X = X.copy()
@@ -202,7 +201,7 @@ class _ProphetAdapter(BaseForecaster):
         y_pred.columns = self._y.columns
 
         if self.y_index_was_int_ or self.y_index_was_period_:
-            y_pred.index = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+            y_pred.index = self.fh.to_absolute_index(cutoff=self.cutoff)
 
         return y_pred
 
@@ -276,7 +275,7 @@ class _ProphetAdapter(BaseForecaster):
             pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
 
         if self.y_index_was_int_ or self.y_index_was_period_:
-            pred_int.index = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+            pred_int.index = self.fh.to_absolute_index(cutoff=self.cutoff)
 
         return pred_int
 
@@ -347,7 +346,7 @@ def _merge_X(df, X):
     return df, X
 
 
-class _suppress_stdout_stderr(object):
+class _suppress_stdout_stderr:
     """Context manager for doing  a "deep suppression" of stdout and stderr.
 
     A context manager for doing a "deep suppression" of stdout and stderr in

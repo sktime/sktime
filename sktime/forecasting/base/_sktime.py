@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""sktime window forecaster base class."""
+"""Sktime window forecaster base class."""
 
 __author__ = ["mloning", "big-o", "fkiraly"]
 __all__ = ["_BaseWindowForecaster"]
@@ -18,7 +17,7 @@ class _BaseWindowForecaster(BaseForecaster):
     """Base class for forecasters that use sliding windows."""
 
     def __init__(self, window_length=None):
-        super(_BaseWindowForecaster, self).__init__()
+        super().__init__()
         self.window_length = window_length
         self.window_length_ = None
 
@@ -74,7 +73,7 @@ class _BaseWindowForecaster(BaseForecaster):
         if isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             return y_pred
         else:
-            index = fh.to_absolute(self.cutoff).to_pandas()
+            index = fh.to_absolute_index(self.cutoff)
             return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(

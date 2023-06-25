@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for datetime functions."""
 
 __author__ = ["xiaobenbenecho", "khrapovs"]

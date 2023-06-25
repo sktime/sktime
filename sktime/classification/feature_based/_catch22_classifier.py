@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Catch22 Classifier.
 
 Pipeline classifier using the Catch22 transformer and an estimator.
@@ -84,6 +83,7 @@ class Catch22Classifier(_DelegatedClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "feature",
         "python_dependencies": "numba",
     }
@@ -103,7 +103,7 @@ class Catch22Classifier(_DelegatedClassifier):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        super(Catch22Classifier, self).__init__()
+        super().__init__()
 
         transformer = Catch22(
             outlier_norm=self.outlier_norm, replace_nans=self.replace_nans

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for pmdarima forecasters to be used in sktime framework."""
@@ -19,6 +18,7 @@ class _PmdArimaAdapter(BaseForecaster):
     _tags = {
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "python_dependencies": "pmdarima",
@@ -26,7 +26,7 @@ class _PmdArimaAdapter(BaseForecaster):
 
     def __init__(self):
         self._forecaster = None
-        super(_PmdArimaAdapter, self).__init__()
+        super().__init__()
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")

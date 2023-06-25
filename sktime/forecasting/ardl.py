@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements ARDL Model as interface to statsmodels."""
 import warnings
@@ -231,7 +230,6 @@ class ARDL(_StatsModelsAdapter):
         X_oos=None,
         dynamic=False,
     ):
-
         # Model Params
         self.lags = lags
         self.order = order
@@ -267,7 +265,7 @@ class ARDL(_StatsModelsAdapter):
         if self.auto_ardl and self.lags is not None:
             raise ValueError("lags should not be specified if auto_ardl is True")
 
-        super(ARDL, self).__init__()
+        super().__init__()
 
     def check_param_validity(self, X):
         """Check for the validity of entered parameter combination."""
@@ -413,7 +411,7 @@ class ARDL(_StatsModelsAdapter):
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos

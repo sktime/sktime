@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Dummy forecasters."""
 
@@ -64,13 +63,12 @@ class ForecastKnownValues(BaseForecaster):
     }
 
     def __init__(self, y_known, method=None, fill_value=None, limit=None):
-
         self.y_known = y_known
         self.method = method
         self.fill_value = fill_value
         self.limit = limit
 
-        super(ForecastKnownValues, self).__init__()
+        super().__init__()
 
         PANDAS_DF_TYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
@@ -145,7 +143,7 @@ class ForecastKnownValues(BaseForecaster):
         if self.fill_value is not None:
             reindex_params["fill_value"] = self.fill_value
 
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        fh_abs = fh.to_absolute_index(self.cutoff)
 
         try:
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)

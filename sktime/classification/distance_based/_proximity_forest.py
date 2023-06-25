@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Proximity Forest time series classifier.
 
 A decision tree forest which uses distance measures to partition data.
@@ -53,7 +52,7 @@ class _CachedTransformer(_PanelToPanelTransformer):
     def __init__(self, transformer):
         self.cache = {}
         self.transformer = transformer
-        super(_CachedTransformer, self).__init__()
+        super().__init__()
 
     def clear(self):
         """Clear the cache."""
@@ -141,11 +140,11 @@ def distance_predefined_params(distance_measure, **params):
 def numba_wrapper(distance_measure):
     """Wrap a numba distance measure with numpy conversion.
 
-     Converts to 1 column per dimension format. Really would be better if the whole
-     thing worked directly with numpy arrays.
+    Converts to 1 column per dimension format. Really would be better if the whole thing
+    worked directly with numpy arrays.
     :param distance_measure: distance measure to wrap
-    :returns: a distance measure which automatically formats data for numba
-    distance measures
+    :returns: a distance measure which automatically formats data for numba distance
+        measures
     """
 
     def distance(instance_a, instance_b, **params):
@@ -582,8 +581,8 @@ def setup_all_distance_measure_getter(proximity):
     def pick_rand_distance_measure(proximity):
         """Generate a distance measure from a range of parameters.
 
-        :param proximity: proximity object containing distance measures,
-        ranges and dataset
+        :param proximity: proximity object containing distance measures, ranges and
+            dataset
         :returns: a distance measure with no parameters
         """
         random_state = check_random_state(proximity.random_state)
@@ -796,7 +795,7 @@ class ProximityStump(BaseClassifier):
         self.entropy = None
         self._random_object = None
         self._get_distance_measure = None
-        super(ProximityStump, self).__init__()
+        super().__init__()
 
     @staticmethod
     def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
@@ -804,8 +803,7 @@ class ProximityStump(BaseClassifier):
 
         :param exemplars: the exemplars to use
         :param instance: the instance to compare to each exemplar
-        :param distance_measure: the distance measure to provide similarity
-        values
+        :param distance_measure: the distance measure to provide similarity values
         :returns: list of distances to each exemplar
         """
         n_exemplars = len(exemplars)
@@ -853,8 +851,7 @@ class ProximityStump(BaseClassifier):
         return distances
 
     def _fit(self, X, y):
-        """
-        Build the classifier on the training set (X, y).
+        """Build the classifier on the training set (X, y).
 
         Parameters
         ----------
@@ -1041,6 +1038,7 @@ class ProximityTree(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": "nested_univ",
         "python_dependencies": "numba",
     }
@@ -1082,7 +1080,7 @@ class ProximityTree(BaseClassifier):
         self.y = None
         self._random_object = None
 
-        super(ProximityTree, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Build the classifier on the training set (X, y).
@@ -1283,6 +1281,7 @@ class ProximityForest(BaseClassifier):
     _tags = {
         "X_inner_mtype": "nested_univ",
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "distance",
         "python_dependencies": "numba",
     }
@@ -1323,7 +1322,7 @@ class ProximityForest(BaseClassifier):
         self.y = None
         self._random_object = None
 
-        super(ProximityForest, self).__init__()
+        super().__init__()
 
     def _fit_tree(self, X, y, index, random_state):
         """Build the classifierr on the training set (X, y).
@@ -1510,6 +1509,7 @@ class ProximityForest(BaseClassifier):
 
 
 # start of util functions
+
 
 # find the index of the best value in the array
 def arg_bests(array, comparator):
