@@ -8,6 +8,7 @@ import numpy as np
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 # copy-pasted from scipy 1.7.3 since it moved in 1.8.0 and broke this estimator
@@ -152,10 +153,24 @@ class BoxCoxTransformer(BaseTransformer):
         self: a fitted instance of the estimator
         """
         X = X.flatten()
-        if self.method != "guerrero":
-            self.lambda_ = _boxcox_normmax(X, bounds=self.bounds, method=self.method)
+
+        bounds = self.bounds
+        method = self.method
+        sp = self.sp
+
+        if _check_soft_dependencies("scipy<1.7.0", severity="none"):
+            box_norm = _boxcox_normmax
+            brack_name = "bounds"
         else:
-            self.lambda_ = _guerrero(X, self.sp, self.bounds)
+            from scipy.stats import boxcox_normmax
+
+            box_norm = boxcox_normmax
+            brack_name = "brack"
+
+        if self.method != "guerrero":
+            self.lambda_ = box_norm(X,  method=method, **{brack_name: bounds})
+        else:
+            self.lambda_ = _guerrero(X, sp, bounds)
 
         return self
 
@@ -335,7 +350,8 @@ def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):
     return optimizer
 
 
-# TODO replace with scipy version once PR for adding bounds is merged
+# needed for scipy < 1.7.0
+# TODO remove in a case where the lower bound is 1.7.0 or higher
 def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
     optimizer = _make_boxcox_optimizer(bounds, brack)
 
@@ -497,8 +513,17 @@ def _boxcox(x, lmbda=None, bounds=None):
 
         return boxcox(x, lmbda)
 
+    if _check_soft_dependencies("scipy<1.7.0", severity="none"):
+        box_norm = _boxcox_normmax
+        brack_name = "bounds"
+    else:
+        from scipy.stats import boxcox_normmax
+
+        box_norm = boxcox_normmax
+        brack_name = "brack"
+
     # If lmbda=None, find the lmbda that maximizes the log-likelihood function.
-    lmax = _boxcox_normmax(x, bounds=bounds, method="mle")
+    lmax = box_norm(x, method="mle", **{brack_name: bounds})
     y = _boxcox(x, lmax)
 
     return y, lmax
