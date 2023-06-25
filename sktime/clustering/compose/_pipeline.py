@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipeline with a clusterer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
@@ -109,7 +108,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ClustererPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both clusterer and all transformers can
         multivariate = clusterer.get_tag("capability:multivariate", False)

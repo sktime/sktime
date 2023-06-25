@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interval and window segmenter transformers."""
 import math
 
@@ -53,7 +52,7 @@ class IntervalSegmenter(BaseTransformer):
     def __init__(self, intervals=10):
         self.intervals = intervals
         self._time_index = []
-        super(IntervalSegmenter, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer, generating random interval indices.
@@ -216,7 +215,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         self.min_length = min_length
         self.max_length = max_length
         self.random_state = random_state
-        super(RandomIntervalSegmenter, self).__init__()
+        super().__init__()
 
         self.interval_segmenter_ = IntervalSegmenter()
 
@@ -421,7 +420,7 @@ class SlidingWindowSegmenter(BaseTransformer):
 
     def __init__(self, window_length=5):
         self.window_length = window_length
-        super(SlidingWindowSegmenter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform time series.

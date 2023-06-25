@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Wrappers to convert distance to kernel or kernel to distance."""
 
 __author__ = ["fkiraly"]
@@ -70,7 +69,7 @@ class IndepDist(BasePairwiseTransformerPanel):
         self.dist = dist
         self.aggfun = aggfun
 
-        super(IndepDist, self).__init__()
+        super().__init__()
 
         # set property tags based on tags of components
         missing = True

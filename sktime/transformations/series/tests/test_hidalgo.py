@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test for hidalgo segmentation."""
 import numpy as np
 from sklearn.utils.validation import check_random_state

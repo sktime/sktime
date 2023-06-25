@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Extension template for clusterers.
 
 Purpose of this implementation template:
@@ -86,8 +85,8 @@ class MyClusterer(BaseClusterer):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyClusterer" to the name of the class
-        super(MyClusterer, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

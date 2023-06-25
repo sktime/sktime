@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series clustering module."""
 __all__ = [
     "BaseClusterer",

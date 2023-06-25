@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Kinematic transformers."""
 
@@ -90,7 +89,7 @@ class KinematicFeatures(BaseTransformer):
         else:
             self._features = features
 
-        super(KinematicFeatures, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

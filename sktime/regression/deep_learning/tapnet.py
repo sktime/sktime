@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for classification."""
 
 __author__ = [
@@ -105,7 +104,7 @@ class TapNetRegressor(BaseDeepRegressor):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super(TapNetRegressor, self).__init__()
+        super().__init__()
 
         self.batch_size = batch_size
         self.random_state = random_state

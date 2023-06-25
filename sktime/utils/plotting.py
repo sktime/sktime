@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common timeseries plotting functionality."""
 
@@ -446,5 +445,5 @@ def plot_windows(cv, y, title=""):
         xticklabels=y.index,
     )
     # remove duplicate labels/handles
-    handles, labels = [(leg[:2]) for leg in ax.get_legend_handles_labels()]
+    handles, labels = ((leg[:2]) for leg in ax.get_legend_handles_labels())
     ax.legend(handles, labels)

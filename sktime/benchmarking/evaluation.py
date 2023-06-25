@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Evaluator class for analyzing results of a machine learning experiment."""
 __author__ = ["viktorkaz", "mloning", "Aaron Bostrom"]
 __all__ = ["Evaluator"]

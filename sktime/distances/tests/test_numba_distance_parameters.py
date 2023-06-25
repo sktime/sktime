@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test suite for numba distances with parameters."""
 from typing import Callable, Dict, List
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
 __author__ = ["fkiraly", "mloning"]

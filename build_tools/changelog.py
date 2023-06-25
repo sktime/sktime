@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """RestructuredText changelog generator."""
 
 import os

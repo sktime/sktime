@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Dummy distances/kernels."""
 
 __author__ = ["fkiraly"]
@@ -29,7 +28,7 @@ class ConstantPwTrafoPanel(BasePairwiseTransformerPanel):
     def __init__(self, constant=0):
         self.constant = constant
 
-        super(ConstantPwTrafoPanel, self).__init__()
+        super().__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.

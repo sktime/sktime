@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
 
 __author__ = ["jnrusson1", "solen0id"]
@@ -61,7 +60,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         self.dropout = dropout
         self.attention = attention
 
-        super(LSTMFCNNetwork, self).__init__()
+        super().__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Hidden Markov Model based annotation from hmmlearn.
 
 This code provides a base interface template for models
@@ -28,7 +27,7 @@ class BaseHMMLearn(BaseSeriesAnnotator):
     _hmm_estimator = None
 
     def __init__(self):
-        super(BaseHMMLearn, self).__init__()
+        super().__init__()
 
     @staticmethod
     def _fix_input(X):

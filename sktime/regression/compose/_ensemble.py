@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements a composite Time series Forest Regressor that accepts a pipeline."""
 
@@ -205,7 +204,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         self.max_samples = max_samples
 
         # Pass on params.
-        super(ComposableTimeSeriesForestRegressor, self).__init__(
+        super().__init__(
             base_estimator=None,
             n_estimators=n_estimators,
             estimator_params=None,
@@ -247,13 +246,13 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
                 "n_estimators must be an integer, "
-                "got {0}.".format(type(self.n_estimators))
+                "got {}.".format(type(self.n_estimators))
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
                 "n_estimators must be greater than zero, "
-                "got {0}.".format(self.n_estimators)
+                "got {}.".format(self.n_estimators)
             )
 
         # Set base estimator

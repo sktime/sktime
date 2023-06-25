@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for BaseForecaster API points.
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)

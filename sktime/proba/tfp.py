@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Probability distribution objects with tensorflow-probability back-end."""
 
@@ -63,7 +62,7 @@ class TFNormal(_BaseTFDistribution):
         if columns is None:
             columns = pd.RangeIndex(shape[1])
 
-        super(TFNormal, self).__init__(index=index, columns=columns, distr=distr)
+        super().__init__(index=index, columns=columns, distr=distr)
 
     def _get_bc_params(self):
         """Fully broadcast parameters of self, given param shapes and index, columns."""

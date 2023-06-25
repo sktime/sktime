@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type converters for Series to Panel.
 
 Exports conversion functions for conversions between series scitypes:

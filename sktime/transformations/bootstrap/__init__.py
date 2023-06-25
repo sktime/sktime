@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Bootstrapping methods for time series.
 
 Transforms take a series as input and return a panel of synthetic time series generated

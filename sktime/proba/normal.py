@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Normal/Gaussian probability distribution."""
 
@@ -55,7 +54,7 @@ class Normal(BaseDistribution):
         if columns is None:
             columns = pd.RangeIndex(shape[1])
 
-        super(Normal, self).__init__(index=index, columns=columns)
+        super().__init__(index=index, columns=columns)
 
     def _get_bc_params(self):
         """Fully broadcast parameters of self, given param shapes and index, columns."""

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements ensemble forecasters.
 
@@ -120,7 +119,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         random_state=None,
         n_jobs=None,
     ):
-        super(AutoEnsembleForecaster, self).__init__(
+        super().__init__(
             forecasters=forecasters,
             n_jobs=n_jobs,
         )
@@ -320,7 +319,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
 

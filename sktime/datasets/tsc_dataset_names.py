@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """List of datasets available from the timeseriesclassification.com archive.
 
 There are four main distinctions: univariate/multivariate equal/unequal length.

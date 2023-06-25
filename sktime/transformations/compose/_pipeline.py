@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Transformer pipeline."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -134,7 +133,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         self.steps = steps
         self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
 
-        super(TransformerPipeline, self).__init__()
+        super().__init__()
 
         # abbreviate for readability
         ests = self.steps_
