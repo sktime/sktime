@@ -501,7 +501,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
+        cutoff = self._coerce_cutoff_to_index(cutoff)
         fh_abs = _to_absolute(fh=self, cutoff=cutoff)
         return fh_abs.to_pandas()
 
