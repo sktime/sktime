@@ -263,9 +263,9 @@ class BoxCoxTransformer(BaseTransformer):
         params1 = {"method": "pearsonr"}
         params2 = {"method": "mle"}
         params3 = {"method": "guerrero", "sp": 2}
-        params4 = {"method": "fixed", "lambda_fixed" : 1}
-        params5 = {"method": "fixed", "lambda_fixed" : 0}
-        params6 = {"method": "fixed", "lambda_fixed" : -1}
+        params4 = {"method": "fixed", "lambda_fixed": 1}
+        params5 = {"method": "fixed", "lambda_fixed": 0}
+        params6 = {"method": "fixed", "lambda_fixed": -1}
 
         return [params1, params2, params3, params4, params5, params6]
 
