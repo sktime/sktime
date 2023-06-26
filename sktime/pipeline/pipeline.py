@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """class that implements a graph pipeline."""
+import weakref
+
 from sktime.base import BaseEstimator
 from sktime.pipeline.step import Step
 from sktime.transformations.series.subset import ColumnSelect
@@ -9,7 +11,9 @@ class Pipeline(BaseEstimator):
     def __init__(self, step_informations=None):
         super().__init__()
 
-        # Initialise the method
+        self.id_to_true_id = {}
+        self.id_to_obj = {}
+        self.counter = 0
         self.steps = {
             "X": Step(None, "X", None, {}),
             "y": Step(None, "y", None, {}),
@@ -20,23 +24,31 @@ class Pipeline(BaseEstimator):
                 self.add_step(**step_info)
 
     def _get_unique_id(self, skobject):
-        return -1
+        self.counter += 1
+        # Check if not already an skobject cloned from the provided skobject is part of the pipeline
+        if (id(skobject) not in self.id_to_obj) or self.id_to_obj[
+            id(skobject)
+        ]() is None:
+            # In this case set a weakref of that skobject to id_to_obj to prevent that the garbage collector
+            # reassigns the id.
+            self.id_to_obj[id(skobject)] = weakref.ref(skobject)
+            self.id_to_true_id[id(skobject)] = self.counter
+        return self.id_to_true_id[id(skobject)]
 
     def _get_step(self, name):
-        # TODO do here subsetting using Subsetter
-        #   ColumnSelect Transformer
         if name in self.steps:
             return self.steps[name]
-
         raise Exception("Required Input does not exist")
 
     def add_step(self, skobject, name, edges, **kwargs):
         """
         TODO
         """
+
         unique_id = self._get_unique_id(skobject)
         if unique_id not in self.model_dict:
             self.model_dict[unique_id] = skobject.clone()
+        skobject = self.model_dict[unique_id]
 
         input_steps = {}
         for key, edge in edges.items():

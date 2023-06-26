@@ -54,7 +54,15 @@ def test_add_steps_name_conflict():
 
 
 def test_add_step_cloned():
-    raise AssertionError()
+    exponent = ExponentTransformer()
+    pipe = Pipeline()
+    pipe.add_step(exponent, "exponent-1", {"X": "X"})
+    pipe.add_step(exponent, "exponent-again", {"X": "X"})
+
+    assert id(pipe.steps["exponent-1"].skobject) == id(
+        pipe.steps["exponent-again"].skobject
+    )
+    assert id(exponent) != id(pipe.steps["exponent-1"].skobject)
 
 
 @pytest.mark.parametrize(
