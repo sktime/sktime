@@ -95,10 +95,12 @@ class BoxCoxTransformer(BaseTransformer):
 
     Parameters
     ----------
-    bounds : 2-tuple of float
+    bounds : 2-tuple of finite float
         Initial bracket (lower, upper) for the optimization range
         when fitting the value of lambda. Default = unbounded.
         Ignored if ``method == "fixed"``.
+        For half-open bounds pass a large bound value, e.g., (0, 1e12) for positive
+        lambda. Infinity and nan as bound values are not supported.
     method : {"pearsonr", "mle", "guerrero", "fixed"}, default="mle"
         The optimization approach used to determine the lambda value used
         in the Box-Cox transformation.
@@ -282,8 +284,8 @@ class BoxCoxTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {"method": "pearsonr"}
-        params2 = {"method": "mle"}
+        params1 = {"method": "mle"}
+        params2 = {"method": "pearsonr"}
         params3 = {"method": "guerrero", "sp": 2}
         params4 = {"method": "fixed", "lambda_fixed": 1}
         params5 = {"method": "fixed", "lambda_fixed": 0}
