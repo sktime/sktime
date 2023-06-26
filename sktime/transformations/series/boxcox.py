@@ -135,7 +135,6 @@ class BoxCoxTransformer(BaseTransformer):
     def __init__(self, bounds=None, method="mle", sp=None, lambda_fixed=0.0):
         self.bounds = bounds
         self.method = method
-        self.lambda_ = None
         self.sp = sp
         self.lambda_fixed = lambda_fixed
         super().__init__()
@@ -147,6 +146,12 @@ class BoxCoxTransformer(BaseTransformer):
                 f"BoxCoxTransformer method must be one of the strings {VALID_METHODS},"
                 f" but found {method}"
             )
+
+        if method == "fixed":
+            self.set_tags(**{"fit_is_empty": True})
+            self.lambda_ = lambda_fixed
+        else:
+            self.lambda_ = None
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
