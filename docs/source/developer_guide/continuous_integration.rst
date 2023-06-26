@@ -125,19 +125,19 @@ the following command:
 (for ``UNIX`` based OS)
   .. code:: bash
 
-      find . -name "*.py" -print0 | xargs -0 python -m doctest -v
+      find . -name "*.py" -print0 | xargs -0 python -m doctest -v -o=ELLIPSIS
 
 (for windows)
   .. code:: bash
 
-      for /r %G in (*.py) do python -m doctest -v "%G"
+      for /r %G in (*.py) do python -m doctest -v "%G" -o=ELLIPSIS
 
 To run doctest on a specific module, navigate to the directory where the
 module is located and execute the following command:
 
    .. code:: bash
 
-      python -m doctest -v {filename}
+      python -m doctest -v -o=ELLIPSIS {filename}
 
 
 Executing this command will display the test results for all the docstrings
