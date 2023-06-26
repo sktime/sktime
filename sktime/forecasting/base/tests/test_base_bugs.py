@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Regression tests for bugfixes related to base class related functionality."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 

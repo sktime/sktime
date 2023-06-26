@@ -1,8 +1,6 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for annotator base type for time series stream.
+"""Base class template for annotator base type for time series stream.
 
     class name: BaseSeriesAnnotator
 
@@ -69,7 +67,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         self._X = None
         self._Y = None
 
-        super(BaseSeriesAnnotator, self).__init__()
+        super().__init__()
 
     def fit(self, X, Y=None):
         """Fit to training data.

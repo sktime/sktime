@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Wrappers to convert distance to kernel or kernel to distance."""
 
 __author__ = ["fkiraly"]
@@ -52,11 +51,10 @@ class KernelFromDist(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, dist, dist_diag=None):
-
         self.dist = dist
         self.dist_diag = dist_diag
 
-        super(KernelFromDist, self).__init__()
+        super().__init__()
 
         # set property tags based on tags of components
         missing = True
@@ -183,10 +181,9 @@ class DistFromKernel(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, kernel):
-
         self.kernel = kernel
 
-        super(DistFromKernel, self).__init__()
+        super().__init__()
 
         # set property tags based on tags of components
         tags_to_clone = [

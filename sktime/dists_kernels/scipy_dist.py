@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """Interface module to scipy.
 
-Interface module to scipy.spatial's pairwise distance function cdist
-    exposes parameters as scikit-learn hyper-parameters
+Interface module to scipy.spatial's pairwise distance function cdist     exposes
+parameters as scikit-learn hyper-parameters
 """
 
 __author__ = ["fkiraly"]
@@ -64,14 +63,13 @@ class ScipyDist(BasePairwiseTransformer):
         var_weights=None,
         metric_kwargs=None,
     ):
-
         self.metric = metric
         self.p = p
         self.colalign = colalign
         self.var_weights = var_weights
         self.metric_kwargs = metric_kwargs
 
-        super(ScipyDist, self).__init__()
+        super().__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implemenents Box-Cox and Log Transformations."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
@@ -134,11 +133,10 @@ class BoxCoxTransformer(BaseTransformer):
         self.method = method
         self.lambda_ = None
         self.sp = sp
-        super(BoxCoxTransformer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
         private _fit containing the core logic, called from fit
 
@@ -267,7 +265,7 @@ class LogTransformer(BaseTransformer):
     def __init__(self, offset=0, scale=1):
         self.offset = offset
         self.scale = scale
-        super(LogTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -315,7 +313,6 @@ class LogTransformer(BaseTransformer):
 
 
 def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):
-
     from scipy import optimize
 
     # bounds is None, use simple Brent optimisation

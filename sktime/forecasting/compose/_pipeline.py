@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements pipelines for forecasting."""
 
@@ -109,7 +108,6 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         return estimator_tuples
 
     def _iter_transformers(self, reverse=False, fc_idx=-1):
-
         # exclude final forecaster
         steps = self.steps_[:fc_idx]
 
@@ -395,7 +393,7 @@ class ForecastingPipeline(_Pipeline):
     def __init__(self, steps):
         self.steps = steps
         self.steps_ = self._check_steps(steps, allow_postproc=False)
-        super(ForecastingPipeline, self).__init__()
+        super().__init__()
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
@@ -411,7 +409,10 @@ class ForecastingPipeline(_Pipeline):
 
     @property
     def forecaster_(self):
-        """Return reference to the forecaster in the pipeline. Valid after _fit."""
+        """Return reference to the forecaster in the pipeline.
+
+        Valid after _fit.
+        """
         return self.steps_[-1][1]
 
     def __rpow__(self, other):
@@ -804,7 +805,7 @@ class TransformedTargetForecaster(_Pipeline):
     def __init__(self, steps):
         self.steps = steps
         self.steps_ = self._check_steps(steps, allow_postproc=True)
-        super(TransformedTargetForecaster, self).__init__()
+        super().__init__()
 
         # set the tags based on forecaster
         tags_to_clone = [
@@ -1227,6 +1228,7 @@ class ForecastX(BaseForecaster):
     _tags = {
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
+        "scitype:y": "both",
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
         "ignores-exogeneous-X": False,
@@ -1237,7 +1239,6 @@ class ForecastX(BaseForecaster):
     def __init__(
         self, forecaster_y, forecaster_X, fh_X=None, behaviour="update", columns=None
     ):
-
         if behaviour not in ["update", "refit"]:
             raise ValueError('behaviour must be one of "update", "refit"')
 
@@ -1253,7 +1254,7 @@ class ForecastX(BaseForecaster):
         self.behaviour = behaviour
         self.columns = columns
 
-        super(ForecastX, self).__init__()
+        super().__init__()
 
         tags_to_clone_from_forecaster_y = [
             "capability:pred_int",
@@ -1654,7 +1655,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self.permutation = permutation
         self.steps_arg = steps_arg
 
-        super(Permute, self).__init__()
+        super().__init__()
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:insample",
@@ -1678,7 +1679,6 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self.estimator_ = estimator.clone()
 
         if permutation is not None:
-
             inner_estimators = getattr(estimator, steps_arg)
             estimator_tuples = self._get_estimator_tuples(inner_estimators)
 

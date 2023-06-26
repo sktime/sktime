@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements forecaster for applying different univariates by column."""
 
@@ -101,7 +100,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
     def __init__(self, forecasters):
         self.forecasters = forecasters
-        super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
+        super().__init__(forecasters=forecasters)
 
         # set requires-fh-in-fit depending on forecasters
         if isinstance(forecasters, BaseForecaster):
@@ -123,10 +122,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     def _forecasters(self):
         """Make internal list of forecasters.
 
-        The list only contains the name and forecasters, dropping
-        the columns. This is for the implementation of get_params
-        via _HeterogenousMetaEstimator._get_params which expects
-        lists of tuples of len 2.
+        The list only contains the name and forecasters, dropping the columns. This is
+        for the implementation of get_params via _HeterogenousMetaEstimator._get_params
+        which expects lists of tuples of len 2.
         """
         forecasters = self.forecasters
         if isinstance(forecasters, BaseForecaster):
@@ -169,7 +167,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         self.forecasters_ = []
         self.y_columns = list(y.columns)
 
-        for (name, forecaster, index) in forecasters:
+        for name, forecaster, index in forecasters:
             forecaster_ = forecaster.clone()
 
             pd_index = self._coerce_to_pd_index(index)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast forecasters to be used in sktime framework."""
 
@@ -31,7 +30,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
     def __init__(self):
         self._forecaster = None
-        super(_StatsForecastAdapter, self).__init__()
+        super().__init__()
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")

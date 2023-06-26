@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test functions for loose loaers."""
 
 __author__ = ["fkiraly"]

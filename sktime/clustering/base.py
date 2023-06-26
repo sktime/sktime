@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Base class for clustering."""
 __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["BaseClusterer"]
@@ -43,7 +42,7 @@ class BaseClusterer(BaseEstimator):
         self._class_dictionary = {}
         self._threads_to_use = 1
         self.n_clusters = n_clusters
-        super(BaseClusterer, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):

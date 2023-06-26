@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
 from abc import ABC, abstractmethod

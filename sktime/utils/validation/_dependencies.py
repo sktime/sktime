@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
 __author__ = ["fkiraly", "mloning"]
@@ -109,7 +108,6 @@ def _check_soft_dependencies(
         )
 
     for package in packages:
-
         try:
             req = Requirement(package)
         except InvalidRequirement:

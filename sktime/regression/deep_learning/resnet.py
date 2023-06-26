@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Residual Network (ResNet) for regression."""
 
 __author__ = ["James-Large", "Withington"]
@@ -13,8 +12,7 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class ResNetRegressor(BaseDeepRegressor):
-    """
-    Residual Neural Network Regressor adopted from [1].
+    """Residual Neural Network Regressor adopted from [1].
 
     Parameters
     ----------
@@ -77,7 +75,7 @@ class ResNetRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(ResNetRegressor, self).__init__()
+        super().__init__()
 
         self.n_epochs = n_epochs
         self.callbacks = callbacks

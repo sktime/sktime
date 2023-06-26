@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""sktime window forecaster base class."""
+"""Sktime window forecaster base class."""
 
 __author__ = ["mloning", "big-o", "fkiraly"]
 __all__ = ["_BaseWindowForecaster"]
@@ -18,7 +17,7 @@ class _BaseWindowForecaster(BaseForecaster):
     """Base class for forecasters that use sliding windows."""
 
     def __init__(self, window_length=None):
-        super(_BaseWindowForecaster, self).__init__()
+        super().__init__()
         self.window_length = window_length
         self.window_length_ = None
 

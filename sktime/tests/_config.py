@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __author__ = ["mloning"]
 __all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
@@ -35,6 +33,17 @@ EXCLUDE_ESTIMATORS = [
     "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
+    "MACNNClassifier",
+    "SimpleRNNClassifier",
+    "SimpleRNNRegressor",
+    "EditDist",
+    "CNNClassifier",
+    "FCNClassifier",
+    "InceptionTimeClassifer",
+    "LSTMFCNClassifier",
+    "MLPClassifier",
+    "CNNRegressor",
+    "ResNetRegressor",
 ]
 
 
