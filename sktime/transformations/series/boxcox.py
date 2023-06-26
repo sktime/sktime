@@ -39,6 +39,33 @@ def _calc_uniform_order_statistic_medians(n):
     return v
 
 
+def _box_norm(X, bounds, method):
+    """Adapter for boxcox_normmax pre and post scipy 1.7.0."""
+    if _check_soft_dependencies("scipy<1.7.0", severity="none"):
+        box_norm = _boxcox_normmax
+        args = {"bounds": bounds}
+    else:
+        from scipy import optimize
+        from scipy.stats import boxcox_normmax
+
+        options = {'xatol': 1e-12}  # absolute tolerance on `x`
+
+        def optimizer(fun):
+
+            return optimize.minimize_scalar(
+                fun, bounds=bounds, method="bounded", options=options
+            )
+
+        box_norm = boxcox_normmax
+
+        if bounds is not None:
+            args = {"optimizer": optimizer}
+        else:
+            args = {"brack": bounds}
+
+    return box_norm(X, method=method, **args)
+
+
 class BoxCoxTransformer(BaseTransformer):
     r"""Box-Cox power transform.
 
@@ -71,7 +98,7 @@ class BoxCoxTransformer(BaseTransformer):
     ----------
     bounds : 2-tuple of float
         Initial bracket (lower, upper) for the optimization range
-        when fitting the value of lambda. Default = (-2.0, 2.0).
+        when fitting the value of lambda. Default = unbounded.
         Ignored if ``method == "fixed"``.
     method : {"pearsonr", "mle", "guerrero", "fixed"}, default="mle"
         The optimization approach used to determine the lambda value used
@@ -175,17 +202,8 @@ class BoxCoxTransformer(BaseTransformer):
         method = self.method
         sp = self.sp
 
-        if _check_soft_dependencies("scipy<1.7.0", severity="none"):
-            box_norm = _boxcox_normmax
-            brack_name = "bounds"
-        else:
-            from scipy.stats import boxcox_normmax
-
-            box_norm = boxcox_normmax
-            brack_name = "brack"
-
         if self.method in ["pearsonr", "mle", "all"]:
-            self.lambda_ = box_norm(X, method=method, **{brack_name: bounds})
+            self.lambda_ = _box_norm(X, bounds, method)
         elif method == "guerrero":
             self.lambda_ = _guerrero(X, sp, bounds)
         elif method == "fixed":
@@ -565,17 +583,8 @@ def _boxcox(x, lmbda=None, bounds=None):
 
         return boxcox(x, lmbda)
 
-    if _check_soft_dependencies("scipy<1.7.0", severity="none"):
-        box_norm = _boxcox_normmax
-        brack_name = "bounds"
-    else:
-        from scipy.stats import boxcox_normmax
-
-        box_norm = boxcox_normmax
-        brack_name = "brack"
-
     # If lmbda=None, find the lmbda that maximizes the log-likelihood function.
-    lmax = box_norm(x, method="mle", **{brack_name: bounds})
+    lmax = _box_norm(x, method="mle", bounds=bounds)
     y = _boxcox(x, lmax)
 
     return y, lmax
