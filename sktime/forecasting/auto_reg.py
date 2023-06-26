@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 """Interfaces AutoReg Forecaster from statsmodels.
@@ -70,7 +69,6 @@ class AutoREG(_StatsModelsAdapter):
            released. You must update any code reliant on the old variable
            names to use the new names.
 
-    # to do:  update Example with an SKTime specific example
     Examples
     --------
     Use AutoREG to forecast univariate data.
@@ -145,7 +143,7 @@ class AutoREG(_StatsModelsAdapter):
         # setup for get_fitted_params
         self._fitted_param_names = ("aic", "aicc", "bic", "hqic")
 
-        super(AutoREG, self).__init__()
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
