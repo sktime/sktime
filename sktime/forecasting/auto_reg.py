@@ -73,10 +73,31 @@ class AutoREG(_StatsModelsAdapter):
     # to do:  update Example with an SKTime specific example
     Examples
     --------
-    >>> import statsmodels.api as sm
-    >>> from statsmodels.tsa.ar_model import AutoReg
-    >>> data = sm.datasets.sunspots.load_pandas().data['SUNACTIVITY']
-    >>> out = 'AIC: {0:0.3f}, HQIC: {1:0.3f}, BIC: {2:0.3f}'
+    Use AutoREG to forecast univariate data.
+    >>> from sktime.forecasting.auto_reg import AutoREG
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> data = load_airline()
+    >>> autoreg_sktime = AutoREG(lags=2, trend="c")
+    >>> autoreg_sktime.fit(y=data, fh=None)
+    AutoREG(lags=2)
+    >>> fh = ForecastingHorizon([x for x in range(1, 13)])
+    >>> y_pred = autoreg_sktime.predict(fh=fh)
+
+
+    Use AutoREG to forecast with exogenous data.
+    >>> from sktime.forecasting.auto_reg import AutoREG
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> y, X_og = load_longley()
+    >>> X_oos = X_og.iloc[-5:, :]
+    >>> y, X = y.iloc[:-5], X_og.iloc[:-5, :]
+    >>> X, X_oos = X[["GNPDEFL", "GNP"]], X_oos[["GNPDEFL", "GNP"]]
+    >>> autoreg_sktime = AutoREG(lags=2, trend="c")
+    >>> autoreg_sktime.fit(y=y, X=X, fh=None)
+    AutoREG(lags=2)
+    >>> fh = ForecastingHorizon([x for x in range(1, 4)])
+    >>> y_pred = autoreg_sktime.predict(X=X_oos, fh=fh)
     """
 
     _tags = {
