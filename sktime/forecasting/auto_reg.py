@@ -121,6 +121,9 @@ class AutoREG(_StatsModelsAdapter):
         # Predcit Params
         self.dynamic = dynamic
 
+        # setup for get_fitted_params
+        self._fitted_param_names = ("aic", "aicc", "bic", "hqic")
+
         super(AutoREG, self).__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
@@ -166,7 +169,7 @@ class AutoREG(_StatsModelsAdapter):
             seasonal=self.seasonal,
             exog=X,
             hold_back=self.hold_back,
-            peroid=self.period,
+            period=self.period,
             missing=self.missing,
             deterministic=self.deterministic,
             old_names=self.old_names,
@@ -175,11 +178,6 @@ class AutoREG(_StatsModelsAdapter):
         self._fitted_forecaster = self._forecaster.fit(
             cov_type=self.cov_type, cov_kwds=self.cov_kwds, use_t=self.use_t
         )
-
-        # Post-fit params
-        self.sigma2_ = self._fitted_forecaster.sigma2()
-        self.fpe_ = self._fitted_forecaster.fpe()
-        self.resid_ = self._fitted_forecaster.resid()
 
         return self
 
@@ -225,6 +223,17 @@ class AutoREG(_StatsModelsAdapter):
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
+    def get_fitted_params(self):
+        """Get fitted params.
+
+        Returns
+        -------
+        _StatsModelsAdapter._get_fitted_params() : dict
+        """
+        # get_fitted_params is taken care of in _StatsModelsAdapter
+        # since self._fitted_params_names was declared in __init__
+        return self._get_fitted_params()
+
     # todo: implement this if this is an estimator contributed to sktime
     #   or to run local automated unit and integration testing of estimator
     #   method should return default parameters, so that a test instance can be created
@@ -247,34 +256,9 @@ class AutoREG(_StatsModelsAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries.
-        # Testing parameter choice should cover internal cases well.
-        #   for "simple" extension, ignore the parameter_set argument.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # A good parameter set should primarily satisfy two criteria,
-        #   1. Chosen set of parameters should have a low testing time,
-        #      ideally in the magnitude of few seconds for the entire test suite.
-        #       This is vital for the cases where default values result in
-        #       "big" models which not only increases test time but also
-        #       run into the risk of test workers crashing.
-        #   2. There should be a minimum two such parameter sets with different
-        #      sets of values to ensure a wide range of code coverage is provided.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        #
-        # return params
+        params = [
+            {"lags": 2, "trend": "c"},
+            {"lags": 2, "trend": "ct"},
+            {"lags": 2, "trend": "t", "seasonal": True, "period": 12},
+        ]
+        return params
