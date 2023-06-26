@@ -50,6 +50,9 @@ def _box_norm(X, bounds, method):
 
         options = {"xatol": 1e-12}
 
+        if bounds is None:
+            bounds = (-1e12, 1e12)
+
         def optimizer(fun):
             return optimize.minimize_scalar(
                 fun, bounds=bounds, method="bounded", options=options
