@@ -65,7 +65,7 @@ class BoxCoxTransformer(BaseTransformer):
     * ``"guerrero"`` - Guerrero's method with seasonal periodicity, see [2]_.
       this requires the seasonality parameter to be passed as ``sp``.
     * ``"fixed"`` - fixed, pre-specified :math:`\lambda`,
-      which is passed as ``lambda``.
+      which is passed as ``lambda_fixed``.
 
     Parameters
     ----------
