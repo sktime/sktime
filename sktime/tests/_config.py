@@ -169,7 +169,7 @@ EXCLUDED_TESTS = {
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
     "VECM": [
-        "test_hierarchical_with_exogeneous",  # refer to #4765
+        "test_hierarchical_with_exogeneous",  # refer to #4743
     ],
 }
 
