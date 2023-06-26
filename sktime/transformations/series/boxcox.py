@@ -58,10 +58,10 @@ class BoxCoxTransformer(BaseTransformer):
 
     * ``"personr"`` - maximization of Pearson correlation between transformed
       and normalized untransformed. Direct interface to ``scipy.stats.boxcox_normmax``
-      with ``method="pearsonr"`` and otherwise defaults.
+      with ``method="pearsonr"``, with ``bracket=bounds``,  and otherwise defaults.
     * ``"mle"`` - maximization of the Box-Cox log-likelihood.
       Direct interface to ``scipy.stats.boxcox_normmax`` with ``method="mle"``
-      and otherwise defaults.
+      with ``bracket=bounds``, and otherwise defaults.
     * ``"guerrero"`` - Guerrero's method with seasonal periodicity, see [2]_.
       this requires the seasonality parameter to be passed as ``sp``.
     * ``"fixed"`` - fixed, pre-specified :math:`\lambda`,
