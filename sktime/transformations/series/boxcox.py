@@ -48,10 +48,9 @@ def _box_norm(X, bounds, method):
         from scipy import optimize
         from scipy.stats import boxcox_normmax
 
-        options = {'xatol': 1e-12}  # absolute tolerance on `x`
+        options = {"xatol": 1e-12}
 
         def optimizer(fun):
-
             return optimize.minimize_scalar(
                 fun, bounds=bounds, method="bounded", options=options
             )
