@@ -50,9 +50,6 @@ def _box_norm(X, bounds, method):
 
         options = {"xatol": 1e-12}
 
-        if bounds is None:
-            bounds = (-1e12, 1e12)
-
         def optimizer(fun):
             return optimize.minimize_scalar(
                 fun, bounds=bounds, method="bounded", options=options
@@ -80,7 +77,8 @@ class BoxCoxTransformer(BaseTransformer):
 
     The Box-Cox-transform is defined as
     :math:`y\mapsto \frac{y^{\lambda}-1}{\lambda}, \lambda
-    \ne 0 \text{ and } ln(y), \lambda = 0`.
+    \ne 0 \text{ and } ln(y), \lambda = 0`,
+    for positive :math:`y`.
 
     The :math:`\lambda` parameter is fitted per time series and instance and variable,
     by a method depending on the ``method`` parameter:
@@ -95,6 +93,11 @@ class BoxCoxTransformer(BaseTransformer):
       this requires the seasonality parameter to be passed as ``sp``.
     * ``"fixed"`` - fixed, pre-specified :math:`\lambda`,
       which is passed as ``lambda_fixed``.
+
+    If non-positive `:math:y` are present, they are by default replaced with their
+    absolute values in ``fit``.
+    In ``transform``, the signed Box-Cox-transform is applied, i.e., the sign is kept
+    while the transform is applied to the value.
 
     Parameters
     ----------
@@ -113,6 +116,12 @@ class BoxCoxTransformer(BaseTransformer):
     lambda_fixed : float, optional, default = 0.0
         must be provided (only) if method="fixed"
         default means that BoxCoxTransformer behaves like logarithm
+    enforce_positive : bool, optional, default = True
+        If ``True`, in ``fit`` negative entries of ``X``
+        are replaced by their absolute values. In ``transform``, the transform
+        is applied to the absolute value while the sign is kept.
+        If ``False``, any negative values will be passed unchanged to the
+        underlying functions (possibly causing error).
 
     Attributes
     ----------
@@ -163,11 +172,19 @@ class BoxCoxTransformer(BaseTransformer):
         "python_dependencies": "scipy",
     }
 
-    def __init__(self, bounds=None, method="mle", sp=None, lambda_fixed=0.0):
+    def __init__(
+        self,
+        bounds=None,
+        method="mle",
+        sp=None,
+        lambda_fixed=0.0,
+        enforce_positive=True,
+    ):
         self.bounds = bounds
         self.method = method
         self.sp = sp
         self.lambda_fixed = lambda_fixed
+        self.enforce_positive = enforce_positive
         super().__init__()
 
         VALID_METHODS = ["pearsonr", "mle", "all", "guerrero", "fixed"]
@@ -200,11 +217,15 @@ class BoxCoxTransformer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        X = X.flatten()
-
         bounds = self.bounds
         method = self.method
         sp = self.sp
+        enforce_positive = self.enforce_positive
+
+        X = X.flatten()
+
+        if enforce_positive:
+            X = np.abs(X)
 
         if self.method in ["pearsonr", "mle", "all"]:
             self.lambda_ = _box_norm(X, bounds, method)
@@ -239,8 +260,20 @@ class BoxCoxTransformer(BaseTransformer):
         """
         from scipy.special import boxcox
 
+        enforce_positive = self.enforce_positive
+        lambda_ = self.lambda_
+
         X_shape = X.shape
-        Xt = boxcox(X.flatten(), self.lambda_)
+        X = X.flatten()
+
+        if enforce_positive:
+            X_sign = np.sign(X)
+
+        Xt = boxcox(np.abs(X), lambda_)
+
+        if enforce_positive:
+            Xt = Xt * X_sign
+
         Xt = Xt.reshape(X_shape)
         return Xt
 
