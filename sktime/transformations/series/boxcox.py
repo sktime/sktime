@@ -85,7 +85,7 @@ class BoxCoxTransformer(BaseTransformer):
     The :math:`\lambda` parameter is fitted per time series and instance and variable,
     by a method depending on the ``method`` parameter:
 
-    * ``"personr"`` - maximization of Pearson correlation between transformed
+    * ``"pearsonr"`` - maximization of Pearson correlation between transformed
       and normalized untransformed. Direct interface to ``scipy.stats.boxcox_normmax``
       with ``method="pearsonr"``, with ``bracket=bounds``,  and otherwise defaults.
     * ``"mle"`` - maximization of the Box-Cox log-likelihood.
