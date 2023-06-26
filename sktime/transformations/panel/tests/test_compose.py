@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for panel compositors."""
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier

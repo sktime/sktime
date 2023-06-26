@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BaseEstimator interface to sktime edit distances in distances module."""
 
 __author__ = ["fkiraly"]
@@ -144,7 +143,7 @@ class EditDist(BasePairwiseTransformerPanel):
         self.nu = nu
         self.p = p
 
-        super(EditDist, self).__init__()
+        super().__init__()
 
         kwargs = {
             "window": window,

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Validations for use with forecasting module."""
 
 __all__ = [

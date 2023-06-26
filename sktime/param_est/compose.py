@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Composition involving parameter estimators."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.base import _HeterogenousMetaEstimator
@@ -102,7 +101,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ParamFitterPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both estimator and all transformers can
         multivariate = param_est.get_tag("capability:multivariate", False)

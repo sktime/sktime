@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipelines for pairwise panel transformers."""
 
 __author__ = ["fkiraly"]
@@ -71,7 +70,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(PwTrafoPanelPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = pw_trafo.get_tag("capability:multivariate", False)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """Time Recurrent Neural Network (RNN) for regression."""
 
 __author__ = ["mloning"]
@@ -66,7 +65,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(SimpleRNNRegressor, self).__init__()
+        super().__init__()
         self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.verbose = verbose

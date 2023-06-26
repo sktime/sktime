@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Synthetic data generating functions."""
 
 from typing import Union

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Compositors that control stream and refitting behaviour of update."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -67,7 +66,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self.refit_window_size = refit_window_size
         self.refit_window_lag = refit_window_lag
 
-        super(UpdateRefitsEvery, self).__init__()
+        super().__init__()
 
         self.clone_tags(forecaster, TAGS_TO_CLONE)
 
@@ -248,7 +247,7 @@ class UpdateEvery(_DelegatedForecaster):
 
         self.update_interval = update_interval
 
-        super(UpdateEvery, self).__init__()
+        super().__init__()
 
         self.clone_tags(forecaster, TAGS_TO_KEEP)
 
@@ -411,7 +410,7 @@ class DontUpdate(_DelegatedForecaster):
         self.forecaster = forecaster
         self.forecaster_ = forecaster.clone()
 
-        super(DontUpdate, self).__init__()
+        super().__init__()
 
         self.clone_tags(forecaster, TAGS_TO_CLONE)
 

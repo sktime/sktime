@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Base utils and classes for Mock Estimators."""
 
 __author__ = ["ltsaprounis"]

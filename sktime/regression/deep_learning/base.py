@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Abstract base class for the Keras neural network regressors.
 
 The reason for this class between BaseClassifier and deep_learning classifiers is
@@ -40,7 +39,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
     }
 
     def __init__(self, batch_size=40):
-        super(BaseDeepRegressor, self).__init__()
+        super().__init__()
 
         self.batch_size = batch_size
         self.model_ = None

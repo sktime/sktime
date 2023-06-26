@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unit tests for classifier/regressor input output."""
 
 __author__ = ["mloning", "TonyBagnall", "fkiraly"]

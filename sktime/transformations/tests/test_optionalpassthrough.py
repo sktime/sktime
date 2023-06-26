@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for using OptionalPassthrough."""
 
 import pytest

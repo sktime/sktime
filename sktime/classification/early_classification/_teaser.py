@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """TEASER early classifier.
 
 An early classifier using a one class SVM's to determine decision safety with a time
@@ -140,7 +139,7 @@ class TEASER(BaseEarlyClassifier):
         self._svm_nu = 0.05
         self._svm_tol = 1e-4
 
-        super(TEASER, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)

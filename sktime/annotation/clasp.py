@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ClaSP (Classification Score Profile) Segmentation.
 
 Notes
@@ -229,7 +228,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         self.period_length = int(period_length)
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
-        super(ClaSPSegmentation, self).__init__(fmt)
+        super().__init__(fmt)
 
     def _fit(self, X, Y=None):
         """Do nothing, as there is no need to fit a model for ClaSP.

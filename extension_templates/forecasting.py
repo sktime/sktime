@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extension template for forecasters.
 
@@ -170,8 +169,8 @@ class MyForecaster(BaseForecaster):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyForecaster" to the name of the class
-        super(MyForecaster, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

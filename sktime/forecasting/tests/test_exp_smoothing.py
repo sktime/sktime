@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test exponential smoothing forecasters."""
 
 __author__ = ["mloning", "big-o"]

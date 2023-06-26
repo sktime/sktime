@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test for distance path functionality."""
 import numpy as np
 import pytest

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Lower bounding enum."""
 __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["LowerBounding", "resolve_bounding_matrix"]

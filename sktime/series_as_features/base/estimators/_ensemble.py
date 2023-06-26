@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements base class for time series forests."""
 
@@ -90,7 +89,7 @@ class BaseTimeSeriesForest(BaseForest):
         class_weight=None,
         max_samples=None,
     ):
-        super(BaseTimeSeriesForest, self).__init__(
+        super().__init__(
             base_estimator, n_estimators=n_estimators, estimator_params=estimator_params
         )
         self.bootstrap = bootstrap

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements DynamicFactor Model as interface to statsmodels."""
 
@@ -189,7 +188,7 @@ class DynamicFactor(_StatsModelsAdapter):
         self.flags = flags
         self.low_memory = low_memory
 
-        super(DynamicFactor, self).__init__()
+        super().__init__()
 
     def _predict(self, fh, X=None):
         """Make forecasts.

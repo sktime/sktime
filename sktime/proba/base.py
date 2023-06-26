@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base classes for probability distribution objects."""
 
@@ -34,7 +33,7 @@ class BaseDistribution(BaseObject):
         self.index = index
         self.columns = columns
 
-        super(BaseDistribution, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     @property
@@ -509,7 +508,7 @@ class _BaseTFDistribution(BaseDistribution):
     def __init__(self, index=None, columns=None, distr=None):
         self.distr = distr
 
-        super(_BaseTFDistribution, self).__init__(index=index, columns=columns)
+        super().__init__(index=index, columns=columns)
 
     def __str__(self):
         return self.to_str()

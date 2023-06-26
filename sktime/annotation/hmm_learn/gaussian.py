@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Hidden Markov Model with Gaussian emissions.
 
 Please see the original library
@@ -139,7 +138,7 @@ class GaussianHMM(BaseHMMLearn):
         self.params = params
         self.init_params = init_params
         self.implementation = implementation
-        super(GaussianHMM, self).__init__()
+        super().__init__()
 
     def _fit(self, X, Y=None):
         """Create a new instance of wrapped hmmlearn estimator.
@@ -176,7 +175,7 @@ class GaussianHMM(BaseHMMLearn):
             self.init_params,
             self.implementation,
         )
-        return super(GaussianHMM, self)._fit(X, Y)
+        return super()._fit(X, Y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
