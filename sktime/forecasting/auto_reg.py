@@ -83,7 +83,7 @@ class AutoREG(_StatsModelsAdapter):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": True,
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
     }
 
@@ -178,7 +178,9 @@ class AutoREG(_StatsModelsAdapter):
         self._fitted_forecaster = self._forecaster.fit(
             cov_type=self.cov_type, cov_kwds=self.cov_kwds, use_t=self.use_t
         )
-
+        for param, value in self._fitted_forecaster.params.items():
+            setattr(self, param + "_", value)
+            self._fitted_param_names = self._fitted_param_names + (param,)
         return self
 
     # todo: implement this, mandatory
@@ -219,20 +221,10 @@ class AutoREG(_StatsModelsAdapter):
             start=start, end=end, exog=self._X, exog_oos=X, dynamic=self.dynamic
         )
         y_pred.name = self._y.name
+
         return y_pred.loc[valid_indices]
         # implement here
         # IMPORTANT: avoid side effects to X, fh
-
-    def get_fitted_params(self):
-        """Get fitted params.
-
-        Returns
-        -------
-        _StatsModelsAdapter._get_fitted_params() : dict
-        """
-        # get_fitted_params is taken care of in _StatsModelsAdapter
-        # since self._fitted_params_names was declared in __init__
-        return self._get_fitted_params()
 
     # todo: implement this if this is an estimator contributed to sktime
     #   or to run local automated unit and integration testing of estimator
