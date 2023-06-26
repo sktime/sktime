@@ -898,7 +898,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         self.n_points = n_points
         self.random_state = random_state
         self.optimizer_kwargs = optimizer_kwargs
-        super(ForecastingSkoptSearchCV, self).__init__(
+        super().__init__(
             forecaster=forecaster,
             scoring=scoring,
             strategy=strategy,
@@ -1016,8 +1016,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             n_candidates = self.n_iter
             n_splits = self.cv.get_n_splits(y)
             print(  # noqa
-                "Fitting {0} folds for each of {1} candidates,"
-                " totalling {2} fits".format(
+                "Fitting {} folds for each of {} candidates,"
+                " totalling {} fits".format(
                     n_splits, n_candidates, n_candidates * n_splits
                 )
             )
