@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Composers that create panel pairwise transformers from table pairwise transformers.
 
 Currently implemented composers in this module:
@@ -73,7 +72,7 @@ class AggrDist(BasePairwiseTransformerPanel):
         self.aggfunc_is_symm = aggfunc_is_symm
         self.transformer = transformer
 
-        super(AggrDist, self).__init__()
+        super().__init__()
 
         if self.aggfunc_is_symm:
             self.set_tags(**{"symmetric": True})
@@ -199,7 +198,7 @@ class FlatDist(BasePairwiseTransformerPanel):
     def __init__(self, transformer):
         self.transformer = transformer
 
-        super(FlatDist, self).__init__()
+        super().__init__()
 
         if isinstance(transformer, BasePairwiseTransformer):
             tags_to_clone = ["capability:missing_values"]

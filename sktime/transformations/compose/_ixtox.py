@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Use index or hierarchy values as features transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -79,7 +78,7 @@ class IxToX(BaseTransformer):
         self.level = level
         self.ix_source = ix_source
 
-        super(IxToX, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

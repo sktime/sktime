@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Attention Layers used in by the LSTM-FCN Network.
 
 Ported over from sktime-dl.
@@ -182,7 +181,7 @@ def make_attention_lstm():
             implementation=1,
             **kwargs,
         ):
-            super(AttentionLSTMCell, self).__init__(**kwargs)
+            super().__init__(**kwargs)
             self.input_spec = [InputSpec(ndim=2)]
             self.units = units
             self.activation = activations.get(activation)
@@ -683,7 +682,7 @@ def make_attention_lstm():
                 return_attention=return_attention,
                 implementation=implementation,
             )
-            super(AttentionLSTM, self).__init__(
+            super().__init__(
                 cell,
                 return_sequences=return_sequences,
                 return_state=return_state,
@@ -703,7 +702,7 @@ def make_attention_lstm():
             """Call the AttentionLSTM object."""
             self.cell._generate_dropout_mask(inputs, training=training)
             self.cell._generate_recurrent_dropout_mask(inputs, training=training)
-            return super(AttentionLSTM, self).call(
+            return super().call(
                 inputs, mask=mask, training=training, initial_state=initial_state
             )
 
@@ -861,7 +860,7 @@ def make_attention_lstm():
                 "recurrent_dropout": self.recurrent_dropout,
                 "return_attention": self.return_attention,
             }
-            base_config = super(AttentionLSTM, self).get_config()
+            base_config = super().get_config()
             del base_config["cell"]
             return dict(list(base_config.items()) + list(config.items()))
 

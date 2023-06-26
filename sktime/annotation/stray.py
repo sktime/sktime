@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for STRAY (Search TRace AnomalY) outlier estimator."""
 
 import warnings
@@ -99,7 +98,7 @@ class STRAY(BaseTransformer):
         self.p = p
         self.size_threshold = size_threshold
         self.outlier_tail = outlier_tail
-        super(STRAY, self).__init__()
+        super().__init__()
 
     def _find_threshold(self, outlier_score: npt.ArrayLike, n: int) -> npt.ArrayLike:
         """Find Outlier Threshold.

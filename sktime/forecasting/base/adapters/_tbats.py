@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for using tbats forecasters in sktime framework."""
@@ -53,7 +52,7 @@ class _TbatsAdapter(BaseForecaster):
         self._forecaster = None
         self._yname = None  # .fit(y) -> y.name
 
-        super(_TbatsAdapter, self).__init__()
+        super().__init__()
 
     def _create_model_class(self):
         """Instantiate (T)BATS model.

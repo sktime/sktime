@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Bagging time series classifiers."""
 
 __author__ = ["fkiraly"]
@@ -97,7 +96,7 @@ class BaggingClassifier(BaseClassifier):
         self.bootstrap_features = bootstrap_features
         self.random_state = random_state
 
-        super(BaggingClassifier, self).__init__()
+        super().__init__()
 
         tags_to_clone = ["capability:multivariate", "capability:missing_values"]
         self.clone_tags(estimator, tags_to_clone)

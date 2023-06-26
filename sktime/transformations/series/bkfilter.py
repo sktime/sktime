@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interface to Baxter-King bandpass filter from `statsmodels`.
 
 Interfaces `bk_filter` from `statsmodels.tsa.filters`.
@@ -96,7 +95,7 @@ class BKFilter(BaseTransformer):
         self.low = low
         self.high = high
         self.K = K
-        super(BKFilter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

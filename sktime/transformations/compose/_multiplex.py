@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multiplexer transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -117,7 +116,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
         transformers: list,
         selected_transformer=None,
     ):
-        super(MultiplexTransformer, self).__init__()
+        super().__init__()
         self.selected_transformer = selected_transformer
 
         self.transformers = transformers

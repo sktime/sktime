@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for HMM annotation estimator."""
 
 __author__ = ["miraep8"]

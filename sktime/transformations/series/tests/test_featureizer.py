@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test YtoX."""
 __author__ = ["aiwalter", "fkiraly"]
 

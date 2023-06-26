@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Series Forest Regressor (TSF)."""
 
 __author__ = ["TonyBagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"]
@@ -80,7 +79,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         n_jobs=1,
         random_state=None,
     ):
-        super(TimeSeriesForestRegressor, self).__init__(
+        super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,
             n_jobs=n_jobs,

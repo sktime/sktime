@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Metrics for evaluating performance of segmentation estimators.
 
 Metrics are suitable for comparing predicted change point sets against true change

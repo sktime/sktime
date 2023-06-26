@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Support vector classifier using time series kernels..
 
 Direct wrap of sklearn SVC with added functionality that allows time series kernel to be
@@ -156,7 +155,7 @@ class TimeSeriesSVC(BaseClassifier):
         for key, val in delegated_param_dict.items():
             setattr(self, key, val)
 
-        super(TimeSeriesSVC, self).__init__()
+        super().__init__()
 
         self.svc_estimator_ = SVC(kernel="precomputed", **delegated_param_dict)
 

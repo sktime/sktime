@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Identity transformer.
 
 Note to developers: this is used as a component in many other transformers, therefore

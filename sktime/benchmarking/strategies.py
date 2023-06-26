@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unified high-level interface for various time series related learning strategies."""
 
 __all__ = ["TSCStrategy", "TSRStrategy"]
@@ -172,7 +171,7 @@ class BaseStrategy(BaseEstimator):
     def __repr__(self):
         strategy_name = self.__class__.__name__
         estimator_name = self.estimator.__class__.__name__
-        return "%s(%s(%s))" % (
+        return "{}({}({}))".format(
             strategy_name,
             estimator_name,
             repr(self.get_params(deep=False)),
@@ -243,7 +242,7 @@ class TSCStrategy(BaseSupervisedLearningStrategy):
     def __init__(self, estimator, name=None):
         self._case = "TSC"
         self._traits = {"required_estimator_type": CLASSIFIER_TYPES}
-        super(TSCStrategy, self).__init__(estimator, name=name)
+        super().__init__(estimator, name=name)
 
 
 class TSRStrategy(BaseSupervisedLearningStrategy):
@@ -260,4 +259,4 @@ class TSRStrategy(BaseSupervisedLearningStrategy):
     def __init__(self, estimator, name=None):
         self._case = "TSR"
         self._traits = {"required_estimator_type": REGRESSOR_TYPES}
-        super(TSRStrategy, self).__init__(estimator, name=name)
+        super().__init__(estimator, name=name)

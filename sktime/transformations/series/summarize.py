@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implement transformers for summarizing a time series."""
 
@@ -213,7 +212,7 @@ class WindowSummarizer(BaseTransformer):
         self.target_cols = target_cols
         self.truncate = truncate
 
-        super(WindowSummarizer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -656,7 +655,7 @@ class SummaryTransformer(BaseTransformer):
         self.quantiles = quantiles
         self.flatten_transform_index = flatten_transform_index
 
-        super(SummaryTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

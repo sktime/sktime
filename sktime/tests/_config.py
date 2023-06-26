@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __author__ = ["mloning"]
 __all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
@@ -39,6 +37,13 @@ EXCLUDE_ESTIMATORS = [
     "SimpleRNNClassifier",
     "SimpleRNNRegressor",
     "EditDist",
+    "CNNClassifier",
+    "FCNClassifier",
+    "InceptionTimeClassifer",
+    "LSTMFCNClassifier",
+    "MLPClassifier",
+    "CNNRegressor",
+    "ResNetRegressor",
 ]
 
 

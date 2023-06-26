@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base class template for parameter estimator scitype.
 
@@ -68,7 +67,7 @@ class BaseParamFitter(BaseEstimator):
 
         self._X = None
 
-        super(BaseParamFitter, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):

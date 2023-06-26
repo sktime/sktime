@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Isolated numba imports for lower_bounding."""
 
 __author__ = ["chrisholder", "TonyBagnall"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements the probabilistic Squaring Residuals forecaster."""
 
@@ -111,7 +110,7 @@ class SquaringResiduals(BaseForecaster):
         self.initial_window = initial_window
         self.distr = distr
         self.distr_kwargs = distr_kwargs
-        super(SquaringResiduals, self).__init__()
+        super().__init__()
 
         assert self.distr in ["norm", "laplace", "t", "cauchy"]
         assert self.strategy in ["square", "abs"]

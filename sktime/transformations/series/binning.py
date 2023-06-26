@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time binning for turning series equally spaced."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -95,7 +94,7 @@ class TimeBinAggregate(BaseTransformer):
                 )
             self._aggfunc = self.aggfunc
 
-        super(TimeBinAggregate, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

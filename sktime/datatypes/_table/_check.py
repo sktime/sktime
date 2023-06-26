@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type checkers for Table scitype.
 
 Exports checkers for Table scitype:
