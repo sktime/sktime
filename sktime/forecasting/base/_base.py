@@ -37,6 +37,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
+from inspect import getfullargspec
 from itertools import product
 from warnings import warn
 
@@ -554,11 +555,18 @@ class BaseForecaster(BaseEstimator):
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
+        # todo 0.23.0: remove logic for adapting legacy_interface
+        # this is needed since user implemented estimators might not have the
+        # legacy_interface argument
+        has_li_arg = "legacy_interface" in getfullargspec(self._predict_quantiles).args
+        if has_li_arg:
+            kwargs = {"legacy_interface": legacy_interface}
+        else:
+            kwargs = {}
+
         # we call the ordinary _predict_quantiles if no looping/vectorization needed
         if not self._is_vectorized:
-            quantiles = self._predict_quantiles(
-                fh=fh, X=X_inner, alpha=alpha, legacy_interface=legacy_interface
-            )
+            quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha, **kwargs)
         else:
             # otherwise we call the vectorized version of predict_quantiles
             quantiles = self._vectorize(
@@ -566,7 +574,7 @@ class BaseForecaster(BaseEstimator):
                 fh=fh,
                 X=X_inner,
                 alpha=alpha,
-                legacy_interface=legacy_interface,
+                **kwargs,
             )
 
         return quantiles
@@ -640,10 +648,19 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
+        # todo 0.23.0: remove logic for adapting legacy_interface
+        # this is needed since user implemented estimators might not have the
+        # legacy_interface argument
+        has_li_arg = "legacy_interface" in getfullargspec(self._predict_interval).args
+        if has_li_arg:
+            kwargs = {"legacy_interface": legacy_interface}
+        else:
+            kwargs = {}
+
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
             pred_int = self._predict_interval(
-                fh=fh, X=X_inner, coverage=coverage, legacy_interface=legacy_interface
+                fh=fh, X=X_inner, coverage=coverage, **kwargs
             )
         else:
             # otherwise we call the vectorized version of predict_interval
@@ -652,7 +669,7 @@ class BaseForecaster(BaseEstimator):
                 fh=fh,
                 X=X_inner,
                 coverage=coverage,
-                legacy_interface=legacy_interface,
+                **kwargs,
             )
 
         return pred_int
