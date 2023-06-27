@@ -3,6 +3,11 @@
 
 * @achieveordie @benheid @fkiraly @yarnabrina
 
+sktime/annotation/hmm_learn/ @miraep8
+sktime/annotation/clasp.py @patrickzib @ermshaua
+sktime/annotation/eagglo.py @KatieBuc
+sktime/annotation/stray.py @KatieBuc
+
 sktime/classification/dictionary_based/_boss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_cboss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_muse.py @patrickzib @MatthewMiddlehurst @TonyBagnall
@@ -37,6 +42,7 @@ sktime/forecasting/arima.py @HYang1996
 sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
 sktime/forecasting/bats.py @aiwalter
 sktime/forecasting/compose/_ensemble.py @aiwalter
+sktime/forecasting/compose/_hierarchy_ensemble.py @VyomkeshVyas
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/fbprophet.py @aiwalter
 sktime/forecasting/model_selection/_split @koralturkk
@@ -65,6 +71,7 @@ sktime/transformations/panel/signature_based/ @jambo6
 sktime/transformations/panel/shapelet_transform.py @ABostrom @MatthewMiddlehurst @TonyBagnall
 sktime/transformations/panel/supervised_intervals.py @MatthewMiddlehurst
 
+sktime/transformations/series/clear_sky.py @ciaran-g
 sktime/transformations/series/clasp.py @patrickzib @ermshaua
 sktime/transformations/series/date.py @danbartl @KishManani
 sktime/transformations/series/difference.py @rnkuhns
@@ -76,7 +83,5 @@ sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/scaledlogit.py @ltsaprounis
 sktime/transformations/series/time_since.py @KishManani
 sktime/transformations/series/theta.py @GuzalBulatova
-
-sktime/annotation/clasp.py @patrickzib @ermshaua
 
 sktime/utils/mlflow_sktime.py @benjaminbluhm
