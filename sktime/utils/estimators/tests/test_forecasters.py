@@ -58,4 +58,5 @@ def test_mock_univariate_forecaster_log(y, X_train, X_pred, fh):
         ),
     ]
 
-    assert deep_equals(forecaster.log, expected_log)
+    equals, msg = deep_equals(forecaster.log, expected_log, return_msg=True)
+    assert equals, msg
