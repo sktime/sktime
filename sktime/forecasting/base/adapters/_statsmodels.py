@@ -207,9 +207,7 @@ class _StatsModelsAdapter(BaseForecaster):
             default="Coverage", legacy_interface=legacy_interface
         )
         var_name = var_names[0]
-        columns = pd.MultiIndex.from_product(
-            [var_names, coverage, ["lower", "upper"]]
-        )
+        columns = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=valid_indices, columns=columns)
 
         for c in coverage:

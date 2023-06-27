@@ -2329,7 +2329,11 @@ class BaseForecaster(BaseEstimator):
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
     def _get_varnames(self, default=None, legacy_interface=True):
+        """Return variable column for DataFrame-like returns.
 
+        Developer note: currently a helper for predict_interval, predict_quantiles,
+        valid only in the univariate case. Can be extended later.        
+        """
         if legacy_interface:
             var_name = default
         else:
