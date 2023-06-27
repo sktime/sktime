@@ -2337,7 +2337,13 @@ class BaseForecaster(BaseEstimator):
         if legacy_interface:
             var_name = default
         else:
-            var_name = self._y.name
+            y = self._y
+            if isinstance(y, pd.Series):
+                var_name = self._y.name
+            elif isinstance(y, pd.DataFrame):
+                return y.columns
+            else:
+                var_name = 0
             if var_name is None:
                 var_name = 0
 
