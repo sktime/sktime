@@ -2332,7 +2332,7 @@ class BaseForecaster(BaseEstimator):
         """Return variable column for DataFrame-like returns.
 
         Developer note: currently a helper for predict_interval, predict_quantiles,
-        valid only in the univariate case. Can be extended later.        
+        valid only in the univariate case. Can be extended later.
         """
         if legacy_interface:
             var_name = default
