@@ -153,3 +153,16 @@ def test_pipeline_call_not_available(steps, method, expected_message):
         pipeline.add_step(**step)
     with pytest.raises(MethodNotImplementedError, match=expected_message):
         getattr(pipeline, method)(None, None)
+
+def test_get_params():
+    exponent = ExponentTransformer()
+    pipe = Pipeline()
+    pipe.add_step(exponent, "exponent-1", {"X": "X"})
+    pipe.add_step(exponent, "exponent-again", {"X": "X"})
+
+    params = pipe.get_params()
+
+    assert len(params["step_informations"]) == 2
+
+    # TODO ensure that with params an equivalent pipeline can be constructed.
+    assert False

@@ -26,7 +26,6 @@ class Pipeline(BaseEstimator):
     is not linear. I.e., the each element of the pipeline can be the input of multiple
     other steps and not only one sucessors.
 
-    Describe methods!
     `fit(y, X, *args)` - changes state by running `fit` on all sktime estimators and
         transformers in the pipeline. Note that depending on the sktime estimators and
         transformers that are added to the pipeline, different keywords are required.
@@ -53,7 +52,7 @@ class Pipeline(BaseEstimator):
     Parameters
     ----------
     # TODO
-    param name : what it is, what it does
+    param step_informations : what it is, what it does
 
     Attributes
     ----------
@@ -81,6 +80,7 @@ class Pipeline(BaseEstimator):
         }
         self.model_dict = {}
         self.kwargs = {}
+        self.step_informations = [] if step_informations is None else step_informations
         if step_informations is not None:
             for step_info in step_informations:
                 self.add_step(**step_info)
@@ -111,7 +111,7 @@ class Pipeline(BaseEstimator):
         unique_id = self._get_unique_id(skobject)
         if unique_id not in self.model_dict:
             self.model_dict[unique_id] = skobject.clone()
-        skobject = self.model_dict[unique_id]
+        cloned_skobject = self.model_dict[unique_id]
 
         input_steps = {}
         for key, edge in edges.items():
@@ -122,12 +122,7 @@ class Pipeline(BaseEstimator):
                     self._create_subsetter(edg)
                 input_steps[key] = [self._get_step(edg) for edg in edge]
 
-        step = Step(
-            skobject,
-            name,
-            input_steps,
-            kwargs,
-        )
+        step = Step(cloned_skobject, name, input_steps, kwargs)
         if name in self.steps:
             raise ValueError(
                 f"You try to add a step with a name '{name}' to the pipeline"
@@ -136,6 +131,13 @@ class Pipeline(BaseEstimator):
 
         self.steps[name] = step
         self._last_step_name = name
+        new_step_info = {key: value for key, value in kwargs.items()}
+        new_step_info.update({
+            "skobject": skobject,
+            "name": name,
+            "edges": edges,
+        })
+        self.step_informations.append(new_step_info)
         return step
 
     def fit(self, X, y=None, **kwargs):
