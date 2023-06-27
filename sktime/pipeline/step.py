@@ -17,7 +17,7 @@ class Step:
     """
     Step of a graphpipeline.
 
-    #TODO
+    TODO
     """
 
     def __init__(

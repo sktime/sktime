@@ -92,8 +92,7 @@ def test_forecaster_regression(method):
 
 
 def test_forecaster_regression_predict_residuals():
-    # TODO could be integrated in to parametrize of the
-    #  test_forecaster_regression if issue 4766 is fixed
+    # TODO integrate in test_forecaster_regression if issue 4766 is fixed
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     pipe = Differencer() * SARIMAX()

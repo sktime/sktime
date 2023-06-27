@@ -35,7 +35,7 @@ from sktime.transformations.series.exponent import ExponentTransformer
                 "name": "BoxCOX",
                 "edges": {"X": "exponent"},
             },
-        ],  # TODO Add more examples
+        ],
     ],
 )
 def test_add_steps(steps):

@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-"""Regression tests of the graph pipeline."""
+"""Regression tests for the graph pipeline."""

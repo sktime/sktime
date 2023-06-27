@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-"""Graphpipeline tests."""
+"""Unittests for the graph pipeline."""

@@ -242,7 +242,8 @@ class Pipeline(BaseEstimator):
         )
 
     def predict_quantiles(self, X, y=None, **kwargs):
-        """
+        """Compute/return quantile forecasts.
+
         TODO
         """
         self._method_allowed("predict_quantiles")
