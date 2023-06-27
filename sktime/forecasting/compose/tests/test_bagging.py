@@ -17,7 +17,7 @@ y = load_airline()
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="skip test if required soft dependency is not available",
 )
 @pytest.mark.parametrize("transformer", [LogTransformer, NaiveForecaster])
 def test_bagging_forecaster_transformer_type_error(transformer):
@@ -36,7 +36,7 @@ def test_bagging_forecaster_transformer_type_error(transformer):
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="skip test if required soft dependency is not available",
 )
 @pytest.mark.parametrize("forecaster", [LogTransformer])
 def test_bagging_forecaster_forecaster_type_error(forecaster):
@@ -69,5 +69,8 @@ def test_calculate_data_quantiles():
         index=pd.Index(data=fh, name="time"),
     )
 
-    calc_output = BaggingForecaster._calculate_data_quantiles(None, df, alpha)
+    f = BaggingForecaster.create_test_instance()
+    f.fit(y)
+
+    calc_output = y._calculate_data_quantiles(df, alpha)
     pd.testing.assert_frame_equal(calc_output, output_df)
