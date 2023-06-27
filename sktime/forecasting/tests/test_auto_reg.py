@@ -36,6 +36,10 @@ def test_against_statsmodels():
     return assert_allclose(y_pred, y_pred_stats)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoREG, severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_against_statsmodels_fit_results():
     """Compare fit stats of sktime's AutoREG interface with statsmodels AutoREG,
     without exog data"""
@@ -61,6 +65,10 @@ def test_against_statsmodels_fit_results():
     return assert_allclose(list(stats_dict.values()), list(sm_stats_dict.values()))
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoREG, severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_against_statsmodels_exog():
     """Compare sktime's autoReg interface with statsmodels autoReg, with exog data."""
     from statsmodels.tsa.ar_model import AutoReg as _AutoReg
