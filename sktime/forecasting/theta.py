@@ -195,7 +195,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X=None, alpha=None, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -219,7 +219,11 @@ class ThetaForecaster(ExponentialSmoothing):
                 at quantile probability in second col index, for the row index.
         """
         # prepare return data frame
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        var_names = self._get_varnames(
+            default="Quantiles", legacy_interface=legacy_interface
+        )
+        var_name = var_names[0]
+        index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)
 
         sem = self.sigma_ * np.sqrt(
@@ -230,7 +234,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         # we assume normal additive noise with sem variance
         for a in alpha:
-            pred_quantiles[("Quantiles", a)] = y_pred + norm.ppf(a) * sem
+            pred_quantiles[(var_name, a)] = y_pred + norm.ppf(a) * sem
         # todo: should this not increase with the horizon?
         # i.e., sth like norm.ppf(a) * sem * fh.to_absolute(cutoff) ?
         # I've just refactored this so will leave it for now

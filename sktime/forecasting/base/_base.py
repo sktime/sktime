@@ -1932,6 +1932,8 @@ class BaseForecaster(BaseEstimator):
         self.update(y=y, X=X, update_params=update_params)
         return self.predict(fh=fh, X=X)
 
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
     def _predict_interval(self, fh, X=None, coverage=0.90, legacy_interface=True):
         """Compute/return prediction interval forecasts.
 
