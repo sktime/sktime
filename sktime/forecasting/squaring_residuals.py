@@ -315,7 +315,6 @@ class SquaringResiduals(BaseForecaster):
 
         errors = [pred_var * z for z in z_scores]
 
-
         var_names = self._get_varnames(
             default="Quantiles", legacy_interface=legacy_interface
         )
