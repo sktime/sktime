@@ -8,8 +8,11 @@ from sktime.transformations.series.subset import ColumnSelect
 
 
 class MethodNotImplementedError(Exception):
-    """Exception class to raise if the required method is not supported by the current pipeline instance
-    since there is at least one skobject in the pipeline that do not support transform and the required method
+    """MethodNotImplementedError.
+
+    Exception class to raise if the required method is not supported
+    by the current pipeline instance since there is at least one skobject
+    in the pipeline that do not support transform and the required method.
     """
 
     def __init__(self, message):
@@ -17,19 +20,23 @@ class MethodNotImplementedError(Exception):
 
 
 class Pipeline(BaseEstimator):
-    """This class is a generalized graph pipeline. Generalized means that it can contain
-    forecasters, classifiers, etc. The graph pipeline mean that the structure is not linear.
-    I.e., the each element of the pipeline can be the input of multiple other steps and not only one
-    sucessors.
+    """Implementation of a Graphpipeline.
+
+    This class is a generalized graph pipeline. Generalized means that it can
+    contain forecasters, classifiers, etc. The graph pipeline mean that the structure
+    is not linear. I.e., the each element of the pipeline can be the input of multiple
+    other steps and not only one sucessors.
 
     Describe methods!
-    `fit(y, X, *args)` - changes state by running `fit` on all sktime estimators and transformers
-        in the pipeline. Note that depending on the sktime estimators and transformers that are added
-        to the pipeline, different keywords are required. E.g., if a forecaster is part of the pipeline,
-        a forecast horizon (fh) should be provided.
-    `predict(X, *args)` - Results in calling predict on the estimators in the pipeline and transform
-        or the specified method on the other skobjects in the pipeline. Depending on the skobject added
-        to the pipeline, you might need to pass additional parameters to predict.
+    `fit(y, X, *args)` - changes state by running `fit` on all sktime estimators and
+        transformers in the pipeline. Note that depending on the sktime estimators and
+        transformers that are added to the pipeline, different keywords are required.
+        E.g., if a forecaster is part of the pipeline, a forecast horizon (fh) should be
+        provided.
+    `predict(X, *args)` - Results in calling predict on the estimators in the pipeline
+        and transform or the specified method on the other skobjects in the pipeline.
+        Depending on the skobject added to the pipeline, you might need to pass
+        additional parameters to predict.
     `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`,
         with `predict_interval` or `predict_quantiles` substituted for `predict`.
     `predict_var`, `predict_proba` - are currently not supported
@@ -40,8 +47,9 @@ class Pipeline(BaseEstimator):
             where `i` is the total count of occurrence of a non-unique string
             inside the list of names leading up to it (inclusive)
 
-    `add_step(skobject, name, edges, **kwargs)` - adds a skobject to the pipeline and setting the name as
-        identifier and the steps specified with edges as input. # TODO Finalize this description
+    `add_step(skobject, name, edges, **kwargs)` - adds a skobject to the pipeline and
+        setting the name as identifier and the steps specified with edges as input.
+        TODO Finalize this description
 
     Parameters
     ----------
@@ -80,12 +88,13 @@ class Pipeline(BaseEstimator):
 
     def _get_unique_id(self, skobject):
         self.counter += 1
-        # Check if not already an skobject cloned from the provided skobject is part of the pipeline
+        # Check if not already an skobject cloned from the provided
+        # skobject is part of the pipeline
         if (id(skobject) not in self.id_to_obj) or self.id_to_obj[
             id(skobject)
         ]() is None:
-            # In this case set a weakref of that skobject to id_to_obj to prevent that the garbage collector
-            # reassigns the id.
+            # In this case set a weakref of that skobject to id_to_obj to prevent that
+            # the garbage collector reassigns the id.
             self.id_to_obj[id(skobject)] = weakref.ref(skobject)
             self.id_to_true_id[id(skobject)] = self.counter
         return self.id_to_true_id[id(skobject)]
@@ -121,7 +130,10 @@ class Pipeline(BaseEstimator):
             kwargs,
         )
         if name in self.steps:
-            raise Exception("Name Conflict")
+            raise ValueError(
+                f"You try to add a step with a name '{name}' to the pipeline"
+                f" that already exists. Try to use an other name."
+            )
 
         self.steps[name] = step
         self._last_step_name = name
@@ -256,6 +268,8 @@ class Pipeline(BaseEstimator):
 
     def predict_residuals(self, X, y=None, **kwargs):
         """
+        Return residuals of time series forecasts.
+
         TODO
         """
         self._method_allowed("predict_residuals")
@@ -289,7 +303,8 @@ class Pipeline(BaseEstimator):
             else:
                 raise MethodNotImplementedError(
                     f"Step {_step_name} does not support the methods: `transform` "
-                    f"or `{method}`. Thus calling `{method}` on pipeline is not allowed."
+                    f"or `{method}`. Thus calling `{method}` on pipeline is not "
+                    "allowed."
                 )
         return True
 

@@ -1,16 +1,25 @@
 # -*- coding: utf-8 -*-
+"""Implementation of the graphpipeline step."""
 import inspect
 
 import pandas as pd
 
 
 class StepResult:
+    """Result of a Step of the graphpipeline."""
+
     def __init__(self, result, mode):
         self.result = result
         self.mode = mode
 
 
 class Step:
+    """
+    Step of a graphpipeline.
+
+    #TODO
+    """
+
     def __init__(
         self,
         skobject,
@@ -25,11 +34,21 @@ class Step:
         self.params = params
 
     def get_allowed_method(self):
+        """
+        Get the methods that are callable on the step's skobject.
+
+        #TODO
+        """
         if self.skobject is None:
             return ["transform"]  # TODO very hacky
         return dir(self.skobject)
 
     def get_result(self, fit, required_method, mro, kwargs):
+        """
+        Get the results of the pipeline step.
+
+        #TODO
+        """
         if self.input_edges is None:
             # If the input_edges are none that the step is a first step.
             return StepResult(self.buffer, "")

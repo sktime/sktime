@@ -46,13 +46,16 @@ def test_add_steps(steps):
     assert len(steps) + 2 == len(pipeline.steps)
 
 
-def test_failed_add_steps():
-    # Check usefullness of error message
-    raise AssertionError()
-
-
 def test_add_steps_name_conflict():
-    raise AssertionError()
+    exponent = ExponentTransformer()
+    pipe = Pipeline()
+    pipe.add_step(exponent, "exponent", {"X": "X"})
+    expected_message = (
+        "You try to add a step with a name 'exponent' to the pipeline "
+        "that already exists. Try to use an other name."
+    )
+    with pytest.raises(ValueError, match=expected_message):
+        pipe.add_step(exponent, "exponent", {"X": "X"})
 
 
 def test_add_step_cloned():
@@ -114,8 +117,9 @@ def test_method(method, mro):
                 }
             ],
             "predict_quantiles",
-            f"Step classifier does not support the methods: `transform` "
-            + f"or `predict_quantiles`. Thus calling `predict_quantiles` on pipeline is not allowed.",
+            "Step classifier does not support the methods: `transform` "
+            "or `predict_quantiles`. Thus calling `predict_quantiles` on"
+            " pipeline is not allowed.",
         ),
         (
             [
@@ -126,8 +130,9 @@ def test_method(method, mro):
                 }
             ],
             "predict_interval",
-            f"Step classifier does not support the methods: `transform` "
-            + f"or `predict_interval`. Thus calling `predict_interval` on pipeline is not allowed.",
+            "Step classifier does not support the methods: `transform` "
+            "or `predict_interval`. Thus calling `predict_interval` on pipeline is "
+            "not allowed.",
         ),
         (
             [
@@ -138,8 +143,8 @@ def test_method(method, mro):
                 }
             ],
             "transform",
-            f"Step classifier does not support the methods: `transform` "
-            + f"or `transform`. Thus calling `transform` on pipeline is not allowed.",
+            "Step classifier does not support the methods: `transform` "
+            "or `transform`. Thus calling `transform` on pipeline is not allowed.",
         ),
     ],
 )
