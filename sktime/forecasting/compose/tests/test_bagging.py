@@ -72,5 +72,5 @@ def test_calculate_data_quantiles():
     f = BaggingForecaster.create_test_instance()
     f.fit(y)
 
-    calc_output = y._calculate_data_quantiles(df, alpha)
+    calc_output = f._calculate_data_quantiles(df, alpha)
     pd.testing.assert_frame_equal(calc_output, output_df)
