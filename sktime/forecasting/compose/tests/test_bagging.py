@@ -7,7 +7,6 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.compose import BaggingForecaster
-from sktime.forecasting.compose._bagging import _calculate_data_quantiles
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.bootstrap import STLBootstrapTransformer
 from sktime.transformations.series.boxcox import LogTransformer
@@ -70,4 +69,5 @@ def test_calculate_data_quantiles():
         index=pd.Index(data=fh, name="time"),
     )
 
-    pd.testing.assert_frame_equal(_calculate_data_quantiles(df, alpha), output_df)
+    calc_output = BaggingForecaster._calculate_data_quantiles(None, df, alpha)
+    pd.testing.assert_frame_equal(calc_output, output_df)
