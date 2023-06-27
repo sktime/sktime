@@ -42,7 +42,7 @@ def test_add_steps(steps):
     pipeline = Pipeline()
     for step in steps:
         pipeline.add_step(**step)
-    # Plus because of the two start steps
+    # Plus 2 because of the two start steps
     assert len(steps) + 2 == len(pipeline.steps)
 
 
@@ -152,7 +152,6 @@ def test_pipeline_call_not_available(steps, method, expected_message):
     pipeline = Pipeline()
     for step in steps:
         pipeline.add_step(**step)
-    # Plus because of the two start steps
     with pytest.raises(MethodNotImplementedError, match=expected_message):
         print(method)
         getattr(pipeline, method)(None, None)

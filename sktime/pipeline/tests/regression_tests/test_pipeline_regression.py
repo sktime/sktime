@@ -22,6 +22,7 @@ def test_transformer_regression():
     trafo_pipe = ExponentTransformer() * BoxCoxTransformer()
     trafo_pipe.fit(X=X)
     result = trafo_pipe.transform(X)
+
     np.random.seed(42)
     general_pipeline = Pipeline()
     for step in [
@@ -40,6 +41,7 @@ def test_classifier_regression():
     clf_pipe = ExponentTransformer() * KNeighborsTimeSeriesClassifier()
     clf_pipe.fit(X, y)
     result = clf_pipe.predict(X)
+
     general_pipeline = Pipeline()
     for step in [
         {"skobject": ExponentTransformer(), "name": "exponent", "edges": {"X": "X"}},
@@ -69,6 +71,7 @@ def test_forecaster_regression(method):
     pipe = Differencer() * SARIMAX()
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = getattr(pipe, method)(X=X_test)
+
     general_pipeline = Pipeline()
     differencer = Differencer()
     for step in [
@@ -98,6 +101,7 @@ def test_forecaster_regression_predict_residuals():
     pipe = Differencer() * SARIMAX()
     pipe.fit(y=y_train.to_frame(), X=X_train, fh=[1, 2, 3, 4])
     result = pipe.predict_residuals()
+
     general_pipeline = Pipeline()
     differencer = Differencer()
     for step in [
@@ -127,6 +131,7 @@ def test_exogenous_transform_regression():
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = pipe.predict(X=X_test)
     result_pi = pipe.predict_interval(X=X_test)
+
     general_pipeline = Pipeline()
     for step in [
         {"skobject": ExponentTransformer(), "name": "exponent", "edges": {"X": "X"}},
@@ -151,6 +156,7 @@ def test_endogenous_exogenous_transform_regression():
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = pipe.predict(X=X_test)
     result_pi = pipe.predict_interval(X=X_test)
+
     general_pipeline = Pipeline()
     differencer = Differencer()
     for step in [
@@ -180,6 +186,7 @@ def test_feature_union_regression():
     X = _bottom_hier_datagen(no_levels=1, no_bottom_nodes=2)
     pipe = Id() + Differencer() + Lag([1, 2], index_out="original")
     result = pipe.fit_transform(X)
+
     general_pipeline = Pipeline()
     for step in [
         {"skobject": Id(), "name": "id", "edges": {"X": "X"}},
@@ -205,7 +212,6 @@ def test_feature_union_subsetting_regression():
         hierarchy_levels=(2, 2), n_columns=2, min_timepoints=3, max_timepoints=3
     )
     pipe = Id() + Differencer()["c0"] + Lag([1, 2], index_out="original")[["c1", "c0"]]
-
     result = pipe.fit_transform(X)
 
     general_pipeline = Pipeline()

@@ -6,7 +6,10 @@ import pandas as pd
 
 
 class StepResult:
-    """Result of a Step of the graphpipeline."""
+    """Result of a Step of the graphpipeline.
+
+    TODO explain parameters
+    """
 
     def __init__(self, result, mode):
         self.result = result
