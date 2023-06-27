@@ -203,7 +203,9 @@ class ConformalIntervals(BaseForecaster):
                 update=True,
             )
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X=None, coverage=None, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -258,7 +260,11 @@ class ConformalIntervals(BaseForecaster):
 
         ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
 
-        cols = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
+        var_names = self._get_varnames(
+            default="Coverage", legacy_interface=legacy_interface
+        )
+
+        cols = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
         for fh_ind, offset in zip(fh_absolute, fh_relative):
             resids = np.diagonal(residuals_matrix, offset=offset)

@@ -492,7 +492,9 @@ class BaseForecaster(BaseEstimator):
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
 
-    def predict_quantiles(self, fh=None, X=None, alpha=None):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    def predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=True):
         """Compute/return quantile forecasts.
 
         If alpha is iterable, multiple quantiles will be calculated.
@@ -554,20 +556,29 @@ class BaseForecaster(BaseEstimator):
 
         # we call the ordinary _predict_quantiles if no looping/vectorization needed
         if not self._is_vectorized:
-            quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
+            quantiles = self._predict_quantiles(
+                fh=fh, X=X_inner, alpha=alpha, legacy_interface=legacy_interface
+            )
         else:
             # otherwise we call the vectorized version of predict_quantiles
             quantiles = self._vectorize(
-                "predict_quantiles", fh=fh, X=X_inner, alpha=alpha
+                "predict_quantiles",
+                fh=fh,
+                X=X_inner,
+                alpha=alpha,
+                legacy_interface=legacy_interface,
             )
 
         return quantiles
 
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
     def predict_interval(
         self,
         fh=None,
         X=None,
         coverage=0.90,
+        legacy_interface=True,
     ):
         """Compute/return prediction interval forecasts.
 
@@ -631,11 +642,17 @@ class BaseForecaster(BaseEstimator):
 
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
-            pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
+            pred_int = self._predict_interval(
+                fh=fh, X=X_inner, coverage=coverage, legacy_interface=legacy_interface
+            )
         else:
             # otherwise we call the vectorized version of predict_interval
             pred_int = self._vectorize(
-                "predict_interval", fh=fh, X=X_inner, coverage=coverage
+                "predict_interval",
+                fh=fh,
+                X=X_inner,
+                coverage=coverage,
+                legacy_interface=legacy_interface,
             )
 
         return pred_int
@@ -1915,7 +1932,7 @@ class BaseForecaster(BaseEstimator):
         self.update(y=y, X=X, update_params=update_params)
         return self.predict(fh=fh, X=X)
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X=None, coverage=0.90, legacy_interface=True):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -1975,9 +1992,12 @@ class BaseForecaster(BaseEstimator):
         idx = pred_int.columns
         # variable names (unique, in same order)
         var_names = idx.get_level_values(0).unique()
-        # if was univariate & unnamed variable, replace default
-        if len(var_names) == 1 and var_names == ["Quantiles"]:
-            var_names = ["Coverage"]
+
+        # todo 0.23.0 - predict_interval new interface - remove this
+        if legacy_interface:
+            # if was univariate & unnamed variable, replace default
+            if len(var_names) == 1 and var_names == ["Quantiles"]:
+                var_names = ["Coverage"]
         # idx returned by _predict_interval should be
         #   3-level MultiIndex with variable names, coverage, lower/upper
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
@@ -1986,7 +2006,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_int
 
-    def _predict_quantiles(self, fh, X, alpha):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -2050,9 +2070,12 @@ class BaseForecaster(BaseEstimator):
             idx = pred_int.columns
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
-            # if was univariate & unnamed variable, replace default
-            if len(var_names) == 1 and var_names == ["Coverage"]:
-                var_names = ["Quantiles"]
+
+            # todo 0.23.0 - predict_interval new interface - remove this
+            if legacy_interface:
+                # if was univariate & unnamed variable, replace default
+                if len(var_names) == 1 and var_names == ["Coverage"]:
+                    var_names = ["Quantiles"]
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
             int_idx = pd.MultiIndex.from_product([var_names, alpha])
@@ -2152,9 +2175,9 @@ class BaseForecaster(BaseEstimator):
             #   the indices and column names are already correct
             pred_var = pd.DataFrame(vars_dict)
 
-            # check whether column format was "nameless", set it to RangeIndex then
+            # check whether column format was "nameless", set it to expected vars
             if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
-                pred_var.columns = pd.RangeIndex(1)
+                pred_var.columns = self._get_varnames(default=0, legacy_interface=False)
 
         return pred_var
 
@@ -2304,6 +2327,17 @@ class BaseForecaster(BaseEstimator):
                     store_behaviour="freeze",
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
+
+    def _get_varnames(self, default=None, legacy_interface=True):
+
+        if legacy_interface:
+            var_name = default
+        else:
+            var_name = self._y.name
+            if var_name is None:
+                var_name = 0
+
+        return [var_name]
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
