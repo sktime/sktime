@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from unittest.mock import MagicMock
 
 import pytest
@@ -153,5 +152,4 @@ def test_pipeline_call_not_available(steps, method, expected_message):
     for step in steps:
         pipeline.add_step(**step)
     with pytest.raises(MethodNotImplementedError, match=expected_message):
-        print(method)
         getattr(pipeline, method)(None, None)

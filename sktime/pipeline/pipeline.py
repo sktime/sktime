@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """class that implements a graph pipeline."""
 import weakref
 
