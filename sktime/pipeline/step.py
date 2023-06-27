@@ -43,6 +43,7 @@ class Step:
 
         # 2. Get the method that should be called on skobject
         if "method" in self.params:
+            # TODO can we make method to an explicit parameter?
             mro = [self.params["method"]]
         if hasattr(self.skobject, "fit") and fit and not self.skobject.is_fitted:
             kwargs = self._extract_kwargs("fit", kwargs)
@@ -113,6 +114,8 @@ class Step:
             # TODO fill buffer to save
 
     def _fetch_input_data(self, fit, required_method, mro, kwargs):
+        # TODO can we get rid off required_method?
+
         # TODO enable different mtypes
         all_none = True
         mode = ""

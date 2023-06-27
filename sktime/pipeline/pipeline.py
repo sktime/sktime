@@ -7,7 +7,61 @@ from sktime.pipeline.step import Step
 from sktime.transformations.series.subset import ColumnSelect
 
 
+class MethodNotImplementedError(Exception):
+    """Exception class to raise if the required method is not supported by the current pipeline instance
+    since there is at least one skobject in the pipeline that do not support transform and the required method
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
 class Pipeline(BaseEstimator):
+    """This class is a generalized graph pipeline. Generalized means that it can contain
+    forecasters, classifiers, etc. The graph pipeline mean that the structure is not linear.
+    I.e., the each element of the pipeline can be the input of multiple other steps and not only one
+    sucessors.
+
+    Describe methods!
+    `fit(y, X, *args)` - changes state by running `fit` on all sktime estimators and transformers
+        in the pipeline. Note that depending on the sktime estimators and transformers that are added
+        to the pipeline, different keywords are required. E.g., if a forecaster is part of the pipeline,
+        a forecast horizon (fh) should be provided.
+    `predict(X, *args)` - Results in calling predict on the estimators in the pipeline and transform
+        or the specified method on the other skobjects in the pipeline. Depending on the skobject added
+        to the pipeline, you might need to pass additional parameters to predict.
+    `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`,
+        with `predict_interval` or `predict_quantiles` substituted for `predict`.
+    `predict_var`, `predict_proba` - are currently not supported
+
+    `get_params`, `set_params` uses `sklearn` compatible nesting interface
+        if list is unnamed, names are generated as names of classes
+        if names are non-unique, `f"_{str(i)}"` is appended to each name string
+            where `i` is the total count of occurrence of a non-unique string
+            inside the list of names leading up to it (inclusive)
+
+    `add_step(skobject, name, edges, **kwargs)` - adds a skobject to the pipeline and setting the name as
+        identifier and the steps specified with edges as input. # TODO Finalize this description
+
+    Parameters
+    ----------
+    # TODO
+    param name : what it is, what it does
+
+    Attributes
+    ----------
+    # TODO
+    attribute name : what it is, what it does
+
+    Examples
+    --------
+    # TODO examples: Classifier, Forecaster, ForecasterX?
+    >>> Do all import
+
+        Example 1: string/estimator pairs
+    >>> Different examples
+    """
+
     def __init__(self, step_informations=None):
         super().__init__()
 
@@ -19,6 +73,7 @@ class Pipeline(BaseEstimator):
             "y": Step(None, "y", None, {}),
         }
         self.model_dict = {}
+        self.kwargs = {}
         if step_informations is not None:
             for step_info in step_informations:
                 self.add_step(**step_info)
@@ -44,7 +99,7 @@ class Pipeline(BaseEstimator):
         """
         TODO
         """
-
+        # TODO revise kwargs. E.g. method should be an explicit parameter.
         unique_id = self._get_unique_id(skobject)
         if unique_id not in self.model_dict:
             self.model_dict[unique_id] = skobject.clone()
@@ -73,6 +128,9 @@ class Pipeline(BaseEstimator):
         return step
 
     def fit(self, X, y=None, **kwargs):
+        """
+        TODO
+        """
         # Fits the pipeline
         self.kwargs = kwargs
         self.steps["X"].buffer = X
@@ -88,14 +146,19 @@ class Pipeline(BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None, **kwargs):
-        return self.fit(X, y).transform(X, y)
+        """
+        TODO
+        """
+        return self.fit(X, y, **kwargs).transform(X, y, **kwargs)
 
     def transform(self, X, y=None, **kwargs):
+        """
+        TODO
+        """
         # Implementation of transform, such methods also are required for predict, ...
         # 1. Check if transform is allowed. I.e., Check method needs to check if
         #    all steps implement transform + If all required params are passed
-        if not self._method_allowed("transform"):
-            raise Exception("TODO")
+        self._method_allowed("transform")
 
         # 3. set data into start steps buffer!
         self.steps["X"].buffer = X
@@ -115,12 +178,14 @@ class Pipeline(BaseEstimator):
         )
 
     def predict(self, X, y=None, **kwargs):
+        """
+        TODO
+        """
         # Implementation of transform, such methods also are required for predict, ...
         # 1. Check if transform is allowed. I.e., Check method needs to check if all
         #    steps implement transform or predict + If all required params are passed
         # 2. Set predict/transform as global methods
-        if not self._method_allowed("predict"):
-            raise Exception("TODO")
+        self._method_allowed("predict")
 
         # 3. set data into start steps buffer!
         self.steps["X"].buffer = X
@@ -140,8 +205,10 @@ class Pipeline(BaseEstimator):
         )
 
     def predict_interval(self, X, y=None, **kwargs):
-        if not self._method_allowed("predict_interval"):
-            raise Exception("TODO")
+        """
+        TODO
+        """
+        self._method_allowed("predict_interval")
 
         # 2. Set transform as global method as well as provide all kwargs to step
 
@@ -163,8 +230,10 @@ class Pipeline(BaseEstimator):
         )
 
     def predict_quantiles(self, X, y=None, **kwargs):
-        if not self._method_allowed("predict_quantiles"):
-            raise Exception("TODO")
+        """
+        TODO
+        """
+        self._method_allowed("predict_quantiles")
 
         # 2. Set transform as global method as well as provide all kwargs to step
 
@@ -185,59 +254,16 @@ class Pipeline(BaseEstimator):
             .result
         )
 
-    def predict_proba(self, X, y=None, **kwargs):
-        if not self._method_allowed("predict_proba"):
-            raise Exception("TODO")
-
-        # 2. Set transform as global method as well as provide all kwargs to step
-
-        # 3. set data into start steps buffer!
-        self.steps["X"].buffer = X
-        self.steps["y"].buffer = y
-        self.kwargs.update(kwargs)
-
-        # 4. call get_result or something similar on last step!
-        return (
-            self.steps[self._last_step_name]
-            .get_result(
-                fit=False,
-                required_method="predict_proba",
-                mro=["predict_proba", "predict", "transform"],
-                kwargs=self.kwargs,
-            )
-            .result
-        )
-
-    def predict_var(self, X, y=None, **kwargs):
-        if not self._method_allowed("predict_var"):
-            raise Exception("TODO")
-
-        # 2. Set transform as global method as well as provide all kwargs to step
-
-        # 3. set data into start steps buffer!
-        self.steps["X"].buffer = X
-        self.steps["y"].buffer = y
-        self.kwargs.update(kwargs)
-
-        # 4. call get_result or something similar on last step!
-        return (
-            self.steps[self._last_step_name]
-            .get_result(
-                fit=False,
-                required_method="predict_proba",
-                mro=["predict_var", "predict", "transform"],
-                kwargs=self.kwargs,
-            )
-            .result
-        )
-
     def predict_residuals(self, X, y=None, **kwargs):
-        if not self._method_allowed("predict_residuals"):
-            raise Exception("TODO")
+        """
+        TODO
+        """
+        self._method_allowed("predict_residuals")
 
         # 2. Set transform as global method as well as provide all kwargs to step
 
         # 3. set data into start steps buffer!
+        # TODO get rid of this boilerplate
         self.steps["X"].buffer = X
         self.steps["y"].buffer = y
         self.kwargs.update(kwargs)
@@ -247,7 +273,7 @@ class Pipeline(BaseEstimator):
             self.steps[self._last_step_name]
             .get_result(
                 fit=False,
-                required_method="predict_proba",
+                required_method="predict_residuals",
                 mro=["predict_residuals", "predict", "transform"],
                 kwargs=self.kwargs,
             )
@@ -261,11 +287,10 @@ class Pipeline(BaseEstimator):
             elif method in step.get_allowed_method():
                 pass  # This would be okay
             else:
-                # TODO for now raise an exception. However
-                #   if PI based postprocessing or an Ensemble
-                #   exist after a forecaster. There might be the
-                #   case that predict could be possible.
-                return False
+                raise MethodNotImplementedError(
+                    f"Step {_step_name} does not support the methods: `transform` "
+                    f"or `{method}`. Thus calling `{method}` on pipeline is not allowed."
+                )
         return True
 
     def _create_subsetter(self, edg):

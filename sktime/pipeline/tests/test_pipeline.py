@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+from unittest.mock import MagicMock
+
 import pytest
 
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.pipeline.pipeline import Pipeline
+from sktime.pipeline.pipeline import MethodNotImplementedError, Pipeline
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 
@@ -66,75 +68,86 @@ def test_add_step_cloned():
 
 
 @pytest.mark.parametrize(
-    "steps",
+    "method,mro",
     [
-        [
-            {
-                "skobject": ExponentTransformer(),
-                "name": "exponent",
-                "edges": {"X": "X"},
-            },
-            {
-                "skobject": BoxCoxTransformer(),
-                "name": "BoxCOX",
-                "edges": {"X": "exponent"},
-            },
-        ],
+        ("fit", ["transform", "predict"]),
+        ("predict", ["predict", "transform"]),
+        ("predict_interval", ["predict_interval", "predict", "transform"]),
+        ("predict_quantiles", ["predict_quantiles", "predict", "transform"]),
+        ("predict_residuals", ["predict_residuals", "predict", "transform"]),
     ],
 )
-def test_transform(steps):
+def test_method(method, mro):
+    # Test if the correct methods are called on the underlying steps. Use mocking here?
     pipeline = Pipeline()
-    for step in steps:
-        pipeline.add_step(**step)
-    # Plus because of the two start steps
-    pipeline.transform()
+    step_mock = MagicMock()
+    step_mock.get_allowed_method.return_value = [method]
+
+    pipeline.steps.update({"name": step_mock})
+    pipeline._last_step_name = "name"
+
+    x_data = MagicMock()
+    y_data = MagicMock()
+
+    getattr(pipeline, method)(X=x_data, y=y_data, additional_kwarg=42)
+
+    assert pipeline.steps["X"].buffer == x_data
+    assert pipeline.steps["y"].buffer == y_data
+
+    step_mock.get_result.assert_called_with(
+        fit=True if method == "fit" else False,
+        mro=mro,
+        required_method=None if method == "fit" else method,
+        kwargs={"additional_kwarg": 42},
+    )
 
 
 @pytest.mark.parametrize(
-    "steps",
+    "steps,method,expected_message",
     [
-        [
-            {
-                "skobject": ExponentTransformer(),
-                "name": "exponent",
-                "edges": {"X": "X"},
-            },
-            {
-                "skobject": KNeighborsTimeSeriesClassifier(),
-                "name": "BoxCOX",
-                "edges": {"X": "exponent"},
-            },
-        ],
+        (
+            [
+                {
+                    "skobject": KNeighborsTimeSeriesClassifier(),
+                    "name": "classifier",
+                    "edges": {"X": "X"},
+                }
+            ],
+            "predict_quantiles",
+            f"Step classifier does not support the methods: `transform` "
+            + f"or `predict_quantiles`. Thus calling `predict_quantiles` on pipeline is not allowed.",
+        ),
+        (
+            [
+                {
+                    "skobject": KNeighborsTimeSeriesClassifier(),
+                    "name": "classifier",
+                    "edges": {"X": "X"},
+                }
+            ],
+            "predict_interval",
+            f"Step classifier does not support the methods: `transform` "
+            + f"or `predict_interval`. Thus calling `predict_interval` on pipeline is not allowed.",
+        ),
+        (
+            [
+                {
+                    "skobject": KNeighborsTimeSeriesClassifier(),
+                    "name": "classifier",
+                    "edges": {"X": "X"},
+                }
+            ],
+            "transform",
+            f"Step classifier does not support the methods: `transform` "
+            + f"or `transform`. Thus calling `transform` on pipeline is not allowed.",
+        ),
     ],
 )
-def test_transform_not_available(steps):
+def test_pipeline_call_not_available(steps, method, expected_message):
     pipeline = Pipeline()
     for step in steps:
         pipeline.add_step(**step)
     # Plus because of the two start steps
-    with pytest.raises(Exception, match="TODO"):
-        pipeline.transform()
-
-
-def test_predict():
-    pytest.fail()
-
-
-def test_predict_not_available():
-    pytest.fail()
-
-
-def test_predict_proba():
-    pytest.fail()
-
-
-def test_predict_proba_not_available():
-    pytest.fail()
-
-
-def test_predict_quantile():
-    pytest.fail()
-
-
-def test_predict_quantile_not_available():
-    pytest.fail()
+    with pytest.raises(MethodNotImplementedError, match=expected_message):
+        print(method)
+        getattr(pipeline, method)(None, None)
