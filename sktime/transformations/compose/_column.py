@@ -40,6 +40,18 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
         If transformer, clones of transformer are applied to all columns.
         If list of tuples, transformer in tuple is applied to column with int/str index
 
+    remainder : {"drop", "passthrough"} or estimator, default "drop"
+        By default, only the specified columns in `transformations` are
+        transformed and combined in the output, and the non-specified
+        columns are dropped. (default of ``"drop"``).
+        By specifying ``remainder="passthrough"``, all remaining columns that
+        were not specified in `transformations` will be automatically passed
+        through. This subset of columns is concatenated with the output of
+        the transformations.
+        By setting ``remainder`` to be an estimator, the remaining
+        non-specified columns will use the ``remainder`` estimator. The
+        estimator must support `fit` and `transform`.
+
     Attributes
     ----------
     transformers_ : list
@@ -74,9 +86,19 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "transformers_"
 
-    def __init__(self, transformers):
+    def __init__(self, transformers, remainder=None):
         self.transformers = transformers
+        self.remainder = remainder
         super().__init__()
+
+        # check remainder argument
+        if remainder not in ["drop", "passthrough", None]:
+            if not isinstance(remainder, BaseTransformer):
+                raise ValueError(
+                    "the remainder parameter of ColumnEnsembletransformer "
+                    ' must be one of the strings "drop", "passthrough", None,'
+                    "or an sktime transformer inheriting from BaseTransformer"
+                )
 
         # set requires-fh-in-fit depending on transformers
         if isinstance(transformers, BaseTransformer):
@@ -167,14 +189,36 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
 
         self.transformers_ = []
         self._Xcolumns = list(X.columns)
+        indices = []
 
         for name, transformer, index in transformers:
             transformer_ = transformer.clone()
 
             pd_index = self._coerce_to_pd_index(index)
+            indices += [pd_index]
 
             transformer_.fit(X.loc[:, pd_index], y)
             self.transformers_.append((name, transformer_, index))
+
+        # handle remainder
+        remainder = self.remainder
+
+        if remainder == "passthrough" or isinstance(remainder, BaseTransformer):
+            if isinstance(remainder, BaseTransformer):
+                rem_t = self.remainder.clone()
+            elif remainder == "passthrough":
+                from sktime.transformations.compose import Id
+
+                rem_t = Id()
+
+            remain_idx = {}
+            for idx in indices:
+                remain_idx = remain_idx.union(set(idx))
+            remain_idx = set(X.columns).difference(remain_idx)
+            remain_idx = self._coerce_to_pd_index(remain_idx)
+
+            rem_t.fit(X.lod[:, remain_idx], y)
+            self.transformers_.append(("remainder", rem_t, remain_idx))
 
         return self
 
@@ -220,16 +264,29 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer
 
         TRANSFORMERS = [
             ("transformer1", ExponentTransformer()),
-            ("transformer2", ExponentTransformer()),
+            ("transformer2", BoxCoxTransformer()),
         ]
 
-        return {
+        params1 = {
             "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
         }
+
+        params2 = {
+            "transformers": [("transformer1", ExponentTransformer(), [0])],
+            "remainder": BoxCoxTransformer(),
+        }
+
+        params3 = {
+            "transformers": [("transformer1", BoxCoxTransformer(), [0])],
+            "remainder": "passthrough",
+        }
+
+        return [params1, params2, params3]
 
 
 class ColumnwiseTransformer(BaseTransformer):

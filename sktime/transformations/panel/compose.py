@@ -83,7 +83,6 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         If True, pandas dataframe is returned.
         If False, numpy array is returned.
 
-
     Attributes
     ----------
     transformers_ : list
