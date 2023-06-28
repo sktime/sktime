@@ -2,13 +2,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
-__all__ = ["ColumnwiseTransformer"]
+__all__ = ["ColumnwiseTransformer", "ColumnEnsembleTransformer"]
 
 import pandas as pd
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.series import check_series
 
 # mtypes that are native pandas
@@ -16,7 +17,9 @@ from sktime.utils.validation.series import check_series
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
 
-class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
+class ColumnEnsembleTransformer(
+    _HeterogenousMetaEstimator, _ColumnEstimator, BaseTransformer
+):
     """Column-wise application of transformers.
 
     Applies transformations to columns of an array or pandas DataFrame. Simply
@@ -52,6 +55,11 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.
 
+    flatten_transform_index : bool, optional (default=True)
+        if True, columns of return DataFrame are flat, by "transformer__variablename"
+        if False, columns are MultiIndex (transformer, variablename)
+        has no effect if return mtype is one without column names
+
     Attributes
     ----------
     transformers_ : list
@@ -86,9 +94,10 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "transformers_"
 
-    def __init__(self, transformers, remainder=None):
+    def __init__(self, transformers, remainder=None, flatten_transform_index=True):
         self.transformers = transformers
         self.remainder = remainder
+        self.flatten_transform_index = flatten_transform_index
         super().__init__()
 
         # check remainder argument
@@ -117,7 +126,7 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
             self.clone_tags(transformers, tags_to_clone)
         else:
             l_transformers = [(x[0], x[1]) for x in transformers]
-            self._anytagis_then_set("fit_is_empty", False, True, l_transformers)
+            # self._anytagis_then_set("fit_is_empty", False, True, l_transformers)
             self._anytagis_then_set("requires_y", True, False, l_transformers)
             self._anytagis_then_set(
                 "X-y-must-have-same-index", True, False, l_transformers
@@ -168,6 +177,42 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
                 )
             ]
 
+    def _check_transformers(self, X):
+        transformers = self.transformers
+
+        if isinstance(transformers, BaseTransformer):
+            for col in X.columns:
+                transformers = [(str(col), transformers, pd.Index([col]))]
+
+        coerced_trafo = []
+        indices = []
+        for name, transformer, index in transformers:
+            c_index = self._coerce_to_pd_index(index, X)
+            indices += [c_index]
+            coerced_trafo += [(name, transformer, c_index)]
+        transformers = coerced_trafo
+
+        # handle remainder
+        remainder = self.remainder
+
+        if remainder == "passthrough" or isinstance(remainder, BaseTransformer):
+            if isinstance(remainder, BaseTransformer):
+                rem_t = self.remainder.clone()
+            elif remainder == "passthrough":
+                from sktime.transformations.compose import Id
+
+                rem_t = Id()
+
+            remain_idx = set()
+            for idx in indices:
+                remain_idx = remain_idx.union(set(idx))
+            remain_idx = set(X.columns).difference(remain_idx)
+            remain_idx = self._coerce_to_pd_index(remain_idx, X)
+
+            transformers.append(("remainder", rem_t, remain_idx))
+
+        return transformers
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -185,40 +230,16 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
         -------
         self: reference to self
         """
-        transformers = self._check_transformers(y)
+        transformers = self._check_transformers(X)
 
         self.transformers_ = []
         self._Xcolumns = list(X.columns)
-        indices = []
 
         for name, transformer, index in transformers:
             transformer_ = transformer.clone()
 
-            pd_index = self._coerce_to_pd_index(index)
-            indices += [pd_index]
-
-            transformer_.fit(X.loc[:, pd_index], y)
+            transformer_.fit(X.loc[:, index], y)
             self.transformers_.append((name, transformer_, index))
-
-        # handle remainder
-        remainder = self.remainder
-
-        if remainder == "passthrough" or isinstance(remainder, BaseTransformer):
-            if isinstance(remainder, BaseTransformer):
-                rem_t = self.remainder.clone()
-            elif remainder == "passthrough":
-                from sktime.transformations.compose import Id
-
-                rem_t = Id()
-
-            remain_idx = {}
-            for idx in indices:
-                remain_idx = remain_idx.union(set(idx))
-            remain_idx = set(X.columns).difference(remain_idx)
-            remain_idx = self._coerce_to_pd_index(remain_idx)
-
-            rem_t.fit(X.lod[:, remain_idx], y)
-            self.transformers_.append(("remainder", rem_t, remain_idx))
 
         return self
 
@@ -241,15 +262,14 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
         """
         Xts = []
         keys = []
-        for _, est, index in getattr(self, self._steps_fitted_attr):
-            pd_index = self._coerce_to_pd_index(index)
+        for name, est, index in getattr(self, self._steps_fitted_attr):
+            Xts += [est.transform(X.loc[:, index], y)]
+            keys += [name]
 
-            Xts += [est.transform(X.loc[:, pd_index], y)]
-            keys += [index]
+        Xt = pd.concat(Xts, axis=1, keys=keys)
+        if self.flatten_transform_index:
+            Xt.columns = flatten_multiindex(Xt.columns)
 
-        keys = self._get_indices(self._Xcolumns, keys)
-
-        Xt = pd.concat(Xts, axis=1)
         return Xt
 
     @classmethod
