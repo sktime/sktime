@@ -109,14 +109,20 @@ Time Series Classification
 Time Series Regression
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-   The regression API for time series data is stable, but the addition of 
-   an example dataset to showcase its features is still underway.
-
 .. code-block:: python
 
-    >>> from sktime.regression.compose import ComposableTimeSeriesForestRegressor
+    >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.metrics import mean_squared_error
 
+    >>> X_train, y_train = load_covid_3month(split="train")
+    >>> y_train = y_train.astype("float")
+    >>> X_test, _ = load_covid_3month(split="test")
+    >>> regressor = KNeighborsTimeSeriesRegressor()
+    >>> regressor.fit(X_train, y_train)
+    >>> y_pred = regressor.predict(X_test)
+    >>> mean_squared_error(y_test, y_pred)
+ 
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -139,8 +145,8 @@ Time Series Annotation
 
 .. warning::
 
-   The API for annotating time series data is experimental and its 
-   features may change in future releases.
+   The time series annotation API is experimental,
+   and may change in future releases.
 
 .. code-block:: python
 
