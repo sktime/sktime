@@ -111,6 +111,7 @@ Time Series Regression
 
 .. code-block:: python
 
+    >>> from sktime.datasets import load_covid_3month
     >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
     >>> from sklearn.metrics import mean_squared_error
 
