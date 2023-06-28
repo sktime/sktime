@@ -786,11 +786,30 @@ class _ColumnEstimator:
     """Mixin class with utilities for by-column applicates."""
 
     def _coerce_to_pd_index(self, obj, ref=None):
-        """Coerce obj to pandas Index."""
-        if ref is None:
-            ref = self._y
-        # replace ints by column names
-        obj = self._get_indices(ref, obj)
+        """Coerce obj to pandas Index, replacing ints by index elements.
+
+        Parameters
+        ----------
+        obj : iterable of pandas compatible index elements or int
+        ref : reference index, coercible to pd.Index, optional, default=None
+
+        Returns
+        -------
+        obj coerced to pd.Index
+            if ref was passed, and
+            if obj had int or np.integer elements which do not occur in ref,
+            then each int-like element is replaced by the i-th element of ref
+        """
+        if ref is not None:
+            # coerce ref to pd.Index
+            if not isinstance(ref, pd.Index):
+                if hasattr(ref, "index") and isinstance(ref.index, pd.Index):
+                    ref = ref.index
+            else:
+                ref = pd.Index(ref)
+
+            # replace ints by column names
+            obj = self._get_indices(ref, obj)
 
         # deal with numpy int by coercing to python int
         if np.issubdtype(type(obj), np.integer):
