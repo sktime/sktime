@@ -26,6 +26,9 @@ class BaggingClassifier(BaseClassifier):
     Direct generalization of ``sklearn``'s ``BaggingClassifier``
     to the time series classification task.
 
+    Note: if n_features=1, BaggingClassifier turns a univariate classifier into
+    a multivariate classifier (as slices seen by ``estimator`` are all univariate).
+
     Parameters
     ----------
     estimator : sktime classifier, descendant of BaseClassifier
