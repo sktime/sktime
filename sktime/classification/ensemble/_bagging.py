@@ -98,7 +98,11 @@ class BaggingClassifier(BaseClassifier):
 
         super().__init__()
 
-        tags_to_clone = ["capability:multivariate", "capability:missing_values"]
+        if n_features == 1:
+            # if n_features == 1, this turns a univariate classifier into multivariate
+            tags_to_clone = ["capability:missing_values"]
+        else:
+            tags_to_clone = ["capability:multivariate", "capability:missing_values"]
         self.clone_tags(estimator, tags_to_clone)
 
     def _fit(self, X, y):
