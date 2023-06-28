@@ -112,7 +112,6 @@ Time Series Regression
 .. code-block:: python
 
     >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
-    >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.metrics import mean_squared_error
 
     >>> X_train, y_train = load_covid_3month(split="train")
