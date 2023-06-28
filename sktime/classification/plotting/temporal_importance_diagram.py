@@ -5,6 +5,9 @@ __author__ = ["MatthewMiddlehurst"]
 import numpy as np
 
 from sktime.classification.interval_based import CanonicalIntervalForest
+from sktime.series_as_features.base.estimators.interval_based import (
+    BaseTimeSeriesForest,
+)
 from sktime.transformations.panel import catch22
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -75,3 +78,25 @@ def plot_cif(cif, normalise_time_points=False, top_curves_shown=None, plot_mean=
         top_curves_shown=top_curves_shown,
         plot_mean=plot_mean,
     )
+
+
+def plot_TSF_temporal_importance_curve(tsf, file_name):
+    """Temporal Importance curve diagram generator for TSF."""
+    import matplotlib.pyplot as plt
+
+    if not isinstance(tsf, BaseTimeSeriesForest) or not tsf._is_fitted:
+        raise ValueError("Input must be a fitted object that inherits from BaseTSF")
+
+    curves = {
+        "Mean": tsf.mean_curve_,
+        "StDev": tsf.stdev_curve_,
+        "Slope": tsf.slope_curve_,
+    }
+
+    for curve_name, curve in curves.items():
+        plt.plot(curve, label=curve_name)
+
+    plt.legend()
+
+    plt.savefig(file_name)
+    plt.clf()
