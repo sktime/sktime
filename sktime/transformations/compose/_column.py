@@ -95,7 +95,7 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
         if remainder not in ["drop", "passthrough", None]:
             if not isinstance(remainder, BaseTransformer):
                 raise ValueError(
-                    "the remainder parameter of ColumnEnsembletransformer "
+                    "the remainder parameter of ColumnEnsembleTransformer "
                     ' must be one of the strings "drop", "passthrough", None,'
                     "or an sktime transformer inheriting from BaseTransformer"
                 )
