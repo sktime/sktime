@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for seasonality tansformers."""
+"""Tests for seasonality parameter estimators."""
 
 __author__ = ["fkiraly"]
 

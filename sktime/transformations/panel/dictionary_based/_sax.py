@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Symbolic Aggregate approXimation (SAX) transformer."""
 
 import sys
@@ -16,7 +15,7 @@ from sktime.transformations.panel.dictionary_based import PAA
 # from numba import types
 # from numba.experimental import jitclass
 
-__author__ = "MatthewMiddlehurst"
+__author__ = ["MatthewMiddlehurst"]
 
 
 class SAX(BaseTransformer):
@@ -89,7 +88,8 @@ class SAX(BaseTransformer):
         self.return_pandas_data_series = return_pandas_data_series
         self.words = []
 
-        super(SAX, self).__init__(_output_convert="off")
+        super().__init__()
+        self.set_config(**{"output_conversion": "off"})
 
     # todo: looks like this just loops over series instances
     # so should be refactored to work on Series directly

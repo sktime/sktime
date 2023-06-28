@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-"""Attention Layers used in by the LSTM-FCN Network. Ported over from sktime-dl."""
+"""Attention Layers used in by the LSTM-FCN Network.
 
-
-from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
+Ported over from sktime-dl.
+"""
 
 
 def make_attention_lstm():
@@ -182,9 +179,9 @@ def make_attention_lstm():
             recurrent_dropout=0.0,
             return_attention=False,
             implementation=1,
-            **kwargs
+            **kwargs,
         ):
-            super(AttentionLSTMCell, self).__init__(**kwargs)
+            super().__init__(**kwargs)
             self.input_spec = [InputSpec(ndim=2)]
             self.units = units
             self.activation = activations.get(activation)
@@ -634,7 +631,7 @@ def make_attention_lstm():
             go_backwards=False,
             stateful=False,
             unroll=False,
-            **kwargs
+            **kwargs,
         ):
             import warnings
 
@@ -642,7 +639,8 @@ def make_attention_lstm():
                 warnings.warn(
                     "`implementation=0` has been deprecated, "
                     "and now defaults to `implementation=1`."
-                    "Please update your layer call."
+                    "Please update your layer call.",
+                    stacklevel=2,
                 )
                 implementation = 1
 
@@ -653,7 +651,8 @@ def make_attention_lstm():
                         "when using dynamic RNNs (i.e. non-unrolled). "
                         "You can either set `unroll=True`, "
                         "set `dropout` and `recurrent_dropout` to 0, "
-                        "or use a different backend."
+                        "or use a different backend.",
+                        stacklevel=2,
                     )
                     dropout = 0.0
                     recurrent_dropout = 0.0
@@ -683,14 +682,14 @@ def make_attention_lstm():
                 return_attention=return_attention,
                 implementation=implementation,
             )
-            super(AttentionLSTM, self).__init__(
+            super().__init__(
                 cell,
                 return_sequences=return_sequences,
                 return_state=return_state,
                 go_backwards=go_backwards,
                 stateful=stateful,
                 unroll=unroll,
-                **kwargs
+                **kwargs,
             )
             self.return_attention = return_attention
 
@@ -703,7 +702,7 @@ def make_attention_lstm():
             """Call the AttentionLSTM object."""
             self.cell._generate_dropout_mask(inputs, training=training)
             self.cell._generate_recurrent_dropout_mask(inputs, training=training)
-            return super(AttentionLSTM, self).call(
+            return super().call(
                 inputs, mask=mask, training=training, initial_state=initial_state
             )
 
@@ -861,7 +860,7 @@ def make_attention_lstm():
                 "recurrent_dropout": self.recurrent_dropout,
                 "return_attention": self.return_attention,
             }
-            base_config = super(AttentionLSTM, self).get_config()
+            base_config = super().get_config()
             del base_config["cell"]
             return dict(list(base_config.items()) + list(config.items()))
 

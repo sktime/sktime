@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Compute medoids from time series."""
 __author__ = ["chrisholder", "TonyBagnall"]
 

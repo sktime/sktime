@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adaptor for applying Scikit-learn-like transformers to time series."""
 
@@ -23,12 +22,12 @@ class TabularToSeriesAdaptor(BaseTransformer):
     If fit_in_transform = False and X is a series (pd.DataFrame, pd.Series, np.ndarray):
         ``fit(X)`` fits a clone of ``transformer`` to X (considered as a table)
         ``transform(X)`` applies transformer.transform to X and returns the result
-        ``inverse_transform(X)`` applies tansformer.inverse_transform to X
+        ``inverse_transform(X)`` applies transformer.inverse_transform to X
     If fit_in_transform = True and X is a series (pd.DataFrame, pd.Series, np.ndarray):
         ``fit`` is empty
-        ``transform(X)`` applies transformer.fit(X).transform.(X) to X,
+        ``transform(X)`` applies transformer.fit(X).transform(X) to X,
             considered as a table, and returns the result
-        ``inverse_transform(X)`` applies tansformer(X).inverse_transform(X) to X
+        ``inverse_transform(X)`` applies transformer.fit(X).inverse_transform(X) to X
 
     If fit_in_transform = False, and X is of a panel/hierarchical type:
         ``fit(X)`` fits a clone of ``transformer`` for each individual series x in X
@@ -102,7 +101,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         self.transformer_ = clone(self.transformer)
         self.fit_in_transform = fit_in_transform
 
-        super(TabularToSeriesAdaptor, self).__init__()
+        super().__init__()
 
         if hasattr(transformer, "inverse_transform"):
             self.set_tags(**{"capability:inverse_transform": True})
@@ -288,7 +287,7 @@ class PandasTransformAdaptor(BaseTransformer):
                 f'but found "{apply_to}"'
             )
 
-        super(PandasTransformAdaptor, self).__init__()
+        super().__init__()
 
         if apply_to in ["all", "all_subset"]:
             self.set_tags(**{"remember_data": True})

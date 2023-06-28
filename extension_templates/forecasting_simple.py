@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for forecasters, SIMPLE version.
+"""Extension template for forecasters, SIMPLE version.
 
 Contains only bare minimum of implementation requirements for a functional forecaster.
 Also assumes *no composition*, i.e., no forecaster or other estimator components.
@@ -24,13 +22,14 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting         - _fit(self, y, X=None, fh=None)
     forecasting     - _predict(self, fh=None, X=None)
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 """
 # todo: write an informative docstring for the file or module, remove the above
@@ -112,14 +111,13 @@ class MyForecaster(BaseForecaster):
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, parama, paramb="default", paramc=None):
-
         # todo: write any hyper-parameters to self
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyForecaster" to the name of the class
-        super(MyForecaster, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

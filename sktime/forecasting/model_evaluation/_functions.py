@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
@@ -118,7 +117,6 @@ def _evaluate_window(
     error_score,
     cutoff_dtype,
 ):
-
     # set default result values in case estimator fitting fails
     score = error_score
     fit_time = np.nan
@@ -145,25 +143,29 @@ def _evaluate_window(
         fit_time = time.perf_counter() - start_fit
 
         pred_type = {
-            "pred_quantiles": "forecaster.predict_quantiles",
-            "pred_intervals": "forecaster.predict_interval",
-            "pred_proba": "forecaster.predict_proba",
-            None: "forecaster.predict",
+            "pred_quantiles": "predict_quantiles",
+            "pred_interval": "predict_interval",
+            "pred_proba": "predict_proba",
+            None: "predict",
         }
         # predict
         start_pred = time.perf_counter()
 
         if hasattr(scoring, "metric_args"):
             metric_args = scoring.metric_args
-
-        try:
-            scitype = scoring.get_tag("scitype:y_pred")
-        except ValueError:
-            # If no scitype exists then metric is not proba and no args needed
-            scitype = None
+        else:
             metric_args = {}
 
-        y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
+        if hasattr(scoring, "get_tag"):
+            scitype = scoring.get_tag("scitype:y_pred", raise_error=False)
+        else:
+            # If no scitype exists then metric is not proba and no args needed
+            scitype = None
+
+        methodname = pred_type[scitype]
+        method = getattr(forecaster, methodname)
+
+        y_pred = method(fh, X_test, **metric_args)
         pred_time = time.perf_counter() - start_pred
         # score
         score = scoring(y_test, y_pred, y_train=y_train)
@@ -176,12 +178,14 @@ def _evaluate_window(
         else:
             warnings.warn(
                 f"""
-                Fitting of forecaster failed, you can set error_score='raise' to see
+                In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
+                you can set error_score='raise' in evaluate to see
                 the exception message. Fit failed for len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
-                Failed forecaster: {forecaster}.
+                Failed forecaster with parameters: {forecaster}.
                 """,
                 FitFailedWarning,
+                stacklevel=2,
             )
 
     if pd.isnull(cutoff):
@@ -203,7 +207,7 @@ def _evaluate_window(
     ).astype({"cutoff": cutoff_dtype})
 
     # Return forecaster if "update"
-    if strategy == "update":
+    if strategy == "update" or (strategy == "no-update_params" and i == 0):
         return result, forecaster
     else:
         return result
@@ -305,7 +309,7 @@ def evaluate(
         Optionally, users may select other metrics that can be supplied
         by `scoring` argument. These can be forecast metrics of any kind,
         i.e., point forecast metrics, interval metrics, quantile foreast metrics.
-        https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
+        https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics
         To evaluate estimators using a specific metric, provide them to the scoring arg.
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
@@ -393,7 +397,7 @@ def evaluate(
         # Run temporal cross-validation sequentially
         results = []
         for i, (train, test) in enumerate(cv.split(y)):
-            if strategy == "update":
+            if strategy == "update" or (strategy == "no-update_params" and i == 0):
                 result, forecaster = _evaluate_window(
                     y,
                     X,
@@ -466,18 +470,19 @@ def evaluate(
         )
         results = pd.concat(results)
 
+    results = results.reset_index(drop=True)
     if isinstance(scoring, List):
         for s in scoring[1:]:
             results[f"test_{s.name}"] = np.nan
-            for row in range(len(results)):
-                results[f"test_{s.name}"].iloc[row] = s(
-                    results["y_test"].iloc[row],
-                    results["y_pred"].iloc[row],
-                    y_train=results["y_train"].iloc[row],
+            for row in results.index:
+                results.loc[row, f"test_{s.name}"] = s(
+                    results["y_test"].loc[row],
+                    results["y_pred"].loc[row],
+                    y_train=results["y_train"].loc[row],
                 )
 
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])
-    results = results.astype({"len_train_window": int}).reset_index(drop=True)
+    results = results.astype({"len_train_window": int})
 
     return results

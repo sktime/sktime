@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for selecting among different model classes."""
 
@@ -108,7 +107,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         forecasters: list,
         selected_forecaster=None,
     ):
-        super(MultiplexForecaster, self).__init__()
+        super().__init__()
         self.selected_forecaster = selected_forecaster
 
         self.forecasters = forecasters

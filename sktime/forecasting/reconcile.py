@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements reconciled forecasters for hierarchical data."""
@@ -109,11 +108,10 @@ class ReconcilerForecaster(BaseForecaster):
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
 
     def __init__(self, forecaster, method="mint_shrink"):
-
         self.forecaster = forecaster
         self.method = method
 
-        super(ReconcilerForecaster, self).__init__()
+        super().__init__()
 
     def _add_totals(self, y):
         """Add total levels to y, using Aggregate."""
@@ -344,7 +342,7 @@ class ReconcilerForecaster(BaseForecaster):
             # higherorder var (only diags)
             resid_corseries = resid**2
             hovar_mat = (resid_corseries.transpose().dot(resid_corseries)) - scale_hovar
-            hovar_mat = (nobs / ((nobs - 1)) ** 3) * hovar_mat
+            hovar_mat = (nobs / (nobs - 1) ** 3) * hovar_mat
 
             # set diagonals to zero
             for i in resid.columns:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test extraction of features across (shifted) windows."""
 __author__ = ["danbartl"]
 
@@ -34,15 +33,10 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 y = load_airline()
 y_multi = get_examples(mtype="pd-multiindex", as_scitype="Panel")[0]
 
-# y Train will be univariate data set
+# y train will be univariate data set
 y_train, y_test = temporal_train_test_split(y)
 
-# y_int = y.copy()
-# y_int.index = [i for i in range(len(y_int))]
-
-# y_train_int, y_test_int = temporal_train_test_split(y_int)
-
-# Create traina nd test panel sample data
+# Create train and test panel sample data
 mi = pd.MultiIndex.from_product([[0], y_train.index], names=["instances", "timepoints"])
 y_group1 = pd.DataFrame(y_train.values, index=mi, columns=["y"])
 
@@ -62,7 +56,7 @@ y_test_grp = pd.concat([y_group1, y_group2])
 # Get hierachical data
 y_train_hier = get_examples(mtype="pd_multiindex_hier")[0]
 
-# Create unbalanced hierachical data
+# Create unbalanced hierachical data, i.e. not a full tree with all branches.
 X = y_train_hier.reset_index().copy()
 X = X[~((X["bar"] == 2) & (X["foo"] == "b"))]
 X = X[["foo", "bar"]].drop_duplicates()
@@ -100,11 +94,7 @@ kwargs_variant = WindowSummarizer.get_test_params()[2]
 
 
 def check_eval(test_input, expected):
-    """Test which columns are returned for different arguments.
-
-    For a detailed description what these arguments do,
-    and how theyinteract see docstring of DateTimeFeatures.
-    """
+    """Test which columns are returned for different arguments."""
     if test_input is not None:
         assert len(test_input) == len(expected)
         assert all([a == b for a, b in zip(test_input, expected)])
@@ -134,7 +124,7 @@ def check_eval(test_input, expected):
     ],
 )
 def test_recursive_reduction(y, index_names):
-    """Test index columns match input."""
+    """Test index column names match input names for recursive reduction."""
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )
@@ -175,7 +165,7 @@ def test_recursive_reduction(y, index_names):
     ],
 )
 def test_direct_reduction(y, index_names):
-    """Test index columns match input."""
+    """Test index column names match input names for direct reduction."""
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )
@@ -215,7 +205,7 @@ def test_direct_reduction(y, index_names):
     ],
 )
 def test_list_reduction(y, index_names):
-    """Test index columns match input."""
+    """Test index column names match input names for recursive reduction."""
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )

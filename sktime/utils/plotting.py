@@ -1,10 +1,9 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common timeseries plotting functionality."""
 
 __all__ = ["plot_series", "plot_correlations", "plot_windows"]
-__author__ = ["mloning", "RNKuhns", "Drishti Bhasin", "chillerobscuro"]
+__author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro"]
 
 import math
 from warnings import simplefilter, warn
@@ -118,7 +117,6 @@ def plot_series(
 
     # plot series
     for x, y, color, label, marker in zip(xs, series, colors, labels, markers):
-
         # scatter if little data is available or index is not complete
         if len(x) <= 3 or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
             plot_func = sns.scatterplot
@@ -447,5 +445,5 @@ def plot_windows(cv, y, title=""):
         xticklabels=y.index,
     )
     # remove duplicate labels/handles
-    handles, labels = [(leg[:2]) for leg in ax.get_legend_handles_labels()]
+    handles, labels = ((leg[:2]) for leg in ax.get_legend_handles_labels())
     ax.legend(handles, labels)

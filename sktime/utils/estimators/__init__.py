@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utility estimator classes for testing and debugging."""
 
 __author__ = ["ltsaprounis"]

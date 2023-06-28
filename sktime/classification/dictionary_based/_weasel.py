@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WEASEL classifier.
 
 Dictionary based classifier based on SFA transform, BOSS and linear regression.
@@ -11,7 +10,6 @@ import math
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import set_num_threads
 from scipy.sparse import hstack
 from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
@@ -114,16 +112,18 @@ class WEASEL(BaseClassifier):
     >>> from sktime.classification.dictionary_based import WEASEL
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = WEASEL(window_inc=4)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = WEASEL(window_inc=4) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     WEASEL(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "dictionary",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -139,7 +139,6 @@ class WEASEL(BaseClassifier):
         support_probabilities=False,
         random_state=None,
     ):
-
         self.alphabet_size = alphabet_size
 
         # feature selection is applied based on the chi-squared test.
@@ -170,9 +169,11 @@ class WEASEL(BaseClassifier):
         self.n_jobs = n_jobs
         self.support_probabilities = support_probabilities
 
-        set_num_threads(n_jobs)
+        super().__init__()
 
-        super(WEASEL, self).__init__()
+        from numba import set_num_threads
+
+        set_num_threads(n_jobs)
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -231,7 +232,7 @@ class WEASEL(BaseClassifier):
         if type(all_words[0]) is np.ndarray:
             all_words = np.concatenate(all_words, axis=1)
         else:
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         # Ridge Classifier does not give probabilities
         if not self.support_probabilities:
@@ -298,7 +299,7 @@ class WEASEL(BaseClassifier):
         if type(all_words[0]) is np.ndarray:
             all_words = np.concatenate(all_words, axis=1)
         else:
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         return all_words
 
