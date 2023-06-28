@@ -40,6 +40,8 @@ class BaggingClassifier(BaseClassifier):
         The number of features/variables drawn from ``X`` in ``fit`` to train each clone
         If int, then indicates number of instances precisely
         If float, interpreted as a fraction, and rounded by ``ceil``
+        Note: if n_features=1, BaggingClassifier turns a univariate classifier into
+        a multivariate classifier (as slices seen by ``estimator`` are all univariate).
     bootstrap : boolean, default=True
         whether samples/instances are drawn with replacement (True) or not (False)
     bootstrap_features : boolean, default=False
