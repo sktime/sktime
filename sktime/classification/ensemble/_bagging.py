@@ -247,7 +247,16 @@ class BaggingClassifier(BaseClassifier):
             "bootstrap_features": True,
         }
 
-        return [params1, params2, params3]
+        # force-create a classifier that cannot handle multivariate
+        univariate_dummy = DummyClassifier()
+        univariate_dummy.set_tags(**{"capability:multivariate": False})
+        # this should still result in a multivariate classifier
+        params4 = {
+            "estimator": univariate_dummy,
+            "n_features": 1,
+        }
+
+        return [params1, params2, params3, params4]
 
 
 def _random_ss_ix(ix, size, replace=True):
