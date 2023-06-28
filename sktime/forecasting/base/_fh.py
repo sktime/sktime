@@ -5,6 +5,7 @@
 __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
+from functools import lru_cache
 from typing import Optional, Union
 
 import numpy as np
@@ -461,7 +462,7 @@ class ForecastingHorizon:
             Relative representation of forecasting horizon.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
-        return _to_relative(fh=self, cutoff=cutoff)
+        return _to_relative(fh=self, cutoff=_HashIndex(cutoff))
 
     def to_absolute(self, cutoff):
         """Return absolute version of forecasting horizon values.
@@ -479,7 +480,7 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
-        return _to_absolute(fh=self, cutoff=cutoff)
+        return _to_absolute(fh=self, cutoff=_HashIndex(cutoff))
 
     def to_absolute_index(self, cutoff=None):
         """Return absolute values of the horizon as a pandas.Index.
@@ -502,7 +503,7 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
-        fh_abs = _to_absolute(fh=self, cutoff=cutoff)
+        fh_abs = _to_absolute(fh=self, cutoff=_HashIndex(cutoff))
         return fh_abs.to_pandas()
 
     def to_absolute_int(self, start, cutoff=None):
@@ -674,13 +675,30 @@ class ForecastingHorizon:
         return f"{class_name}({pandas_repr}, is_relative={self.is_relative})"
 
 
+class _HashIndex:
+    """Helper to make cutoff: pd.Index hashable via lru_cache."""
+
+    def __init__(self, index):
+        self.index = index
+
+    def __hash__(self):
+        return pd.util.hash_pandas_object(self.idx)
+
+
+# This function needs to be outside ForecastingHorizon
+# since the lru_cache decorator has known, problematic interactions
+# with object methods, see B019 error of flake8-bugbear for a detail explanation.
+# See more here: https://github.com/sktime/sktime/issues/2338
+# We cache the results from `to_relative()` and `to_absolute()` calls to speed up
+# computations, as these are the basic methods and often required internally when
+# calling different methods.
 def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
     """Return forecasting horizon values relative to a cutoff.
 
     Parameters
     ----------
     fh : ForecastingHorizon
-    cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+    cutoff : _HashIndex wrapping pd.Index, optional (default=None)
         Cutoff value required to convert a relative forecasting
         horizon to an absolute one (and vice versa).
 
@@ -693,6 +711,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         return fh._new()
 
     else:
+        cutoff = cutoff.index  # unwrap cutoff from _HashIndex
         absolute = fh.to_pandas()
         _check_cutoff(cutoff, absolute)
 
@@ -737,13 +756,18 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         return fh._new(relative, is_relative=True, freq=fh.freq)
 
 
+# This function needs to be outside ForecastingHorizon
+# since the lru_cache decorator has known, problematic interactions
+# with object methods, see B019 error of flake8-bugbear for a detail explanation.
+# See more here: https://github.com/sktime/sktime/issues/2338
+@lru_cache(typed=True)
 def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
     """Return absolute version of forecasting horizon values.
 
     Parameters
     ----------
     fh : ForecastingHorizon
-    cutoff : pd.Period, pd.Timestamp, int
+    cutoff : _HashIndex wrapping pd.Index
         Cutoff value is required to convert a relative forecasting
         horizon to an absolute one (and vice versa).
 
@@ -756,6 +780,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         return fh._new()
 
     else:
+        cutoff = cutoff.index
         relative = fh.to_pandas()
         _check_cutoff(cutoff, relative)
         is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
