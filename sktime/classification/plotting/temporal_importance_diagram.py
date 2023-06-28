@@ -1,7 +1,8 @@
 """Temporal importance curve diagram generators for interval forests."""
 
-__author__ = ["MatthewMiddlehurst"]
+__author__ = ["MatthewMiddlehurst", "mgazian000", "CTFallon"]
 
+__all__ = ["plot_curves", "plot_cif", "plot_TSF_temporal_importance_curve"]
 import numpy as np
 
 from sktime.classification.interval_based import CanonicalIntervalForest

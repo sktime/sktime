@@ -7,6 +7,8 @@ __author__ = [
     "kanand77",
     "mloning",
     "Oleksii Kachaiev",
+    "CTFallon",
+    "mgazian000",
 ]
 __all__ = [
     "BaseTimeSeriesForest",
