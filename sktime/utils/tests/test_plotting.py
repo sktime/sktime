@@ -74,6 +74,10 @@ def test_plot_series_runs_without_error(series_to_plot):
 
 
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="skip test if required soft dependency for matplotlib not available",
+)
 def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_types):
     """Tests whether plot_series raises error for invalid input types."""
     series_type = type(series_to_plot)
