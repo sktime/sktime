@@ -69,22 +69,22 @@ class CNNNetwork(BaseDeepNetwork):
         input_layer : a keras layer
         output_layer : a keras layer
         """
-        # not sure of the whole padding thing
+
         from tensorflow import keras
 
         padding = "valid"
         input_layer = keras.layers.Input(input_shape)
-        # sort this out, why hard coded to 60?
-        if input_shape[0] < 60:
+
+        # Avoid hard-code
+        output_length = input_shape[0] - self.kernel_size + 1
+
+        if output_length < input_shape[0]:
             padding = "same"
 
-        # this does what?
-        if len(self.filter_sizes) > self.n_conv_layers:
-            self.filter_sizes = self.filter_sizes[: self.n_conv_layers]
-        elif len(self.filter_sizes) < self.n_conv_layers:
-            self.filter_sizes = self.filter_sizes + [self.filter_sizes[-1]] * (
-                self.n_conv_layers - len(self.filter_sizes)
-            )
+        # Extends filter_sizes to match n_conv_layers length
+        self.filter_sizes.extend([self.filter_sizes[-1]] *
+                                 (self.n_conv_layers - len(self.filter_sizes)))
+
         conv = keras.layers.Conv1D(
             filters=self.filter_sizes[0],
             kernel_size=self.kernel_size,
