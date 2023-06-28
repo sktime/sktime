@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Testing of crafting functionality."""
 
@@ -76,7 +75,7 @@ def test_deps(spec):
     assert deps(pipe_spec) == ["statsmodels"]
 
     # example with two dependencies, should be identified, order does not matter
-    assert set(deps(dunder_spec)) == set(["statsmodels", "pmdarima"])
+    assert set(deps(dunder_spec)) == {"statsmodels", "pmdarima"}
 
 
 def test_imports():
