@@ -122,7 +122,7 @@ Time Series Regression
     >>> regressor.fit(X_train, y_train)
     >>> y_pred = regressor.predict(X_test)
     >>> mean_squared_error(y_test, y_pred)
- 
+
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~
 
