@@ -32,6 +32,9 @@ class ColumnEnsembleTransformer(
     This is useful for heterogeneous or columnar data, to combine several
     feature extraction mechanisms or transformations into a single transformer.
 
+    Note: this estimator has the same effect as combining
+    ``FeatureUnion`` with ``ColumnSelect``, but can be more convenient or compact.
+
     Parameters
     ----------
     transformers : sktime trafo, or list of tuples (str, estimator, int or pd.index)
