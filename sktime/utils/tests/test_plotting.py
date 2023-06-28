@@ -93,6 +93,10 @@ def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_
 @pytest.mark.parametrize(
     "series_to_plot", [(y_airline_true, y_airline_test.reset_index(drop=True))]
 )
+@pytest.mark.skipif(
+    not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="skip test if required soft dependency for matplotlib not available",
+)
 def test_plot_series_with_unequal_index_type_raises_error(
     series_to_plot, valid_data_types
 ):
@@ -103,6 +107,10 @@ def test_plot_series_with_unequal_index_type_raises_error(
 
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="skip test if required soft dependency for matplotlib not available",
+)
 def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
     """Tests whether plot_series raises error for inconsistent series/markers."""
     match = """There must be one marker for each time series,
@@ -120,6 +128,10 @@ def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
 
 
 @pytest.mark.parametrize("series_to_plot", series_to_test)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="skip test if required soft dependency for matplotlib not available",
+)
 def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
     """Tests whether plot_series raises error for inconsistent series/labels."""
     match = """There must be one label for each time series,
@@ -221,6 +233,10 @@ def test_univariate_plots_run_without_error(series_to_plot, plot_func):
 # raise an error when invalid input type is found
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
 @pytest.mark.parametrize("plot_func", univariate_plots)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="skip test if required soft dependency for matplotlib not available",
+)
 def test_univariate_plots_invalid_input_type_raises_error(
     series_to_plot, plot_func, valid_data_types
 ):
