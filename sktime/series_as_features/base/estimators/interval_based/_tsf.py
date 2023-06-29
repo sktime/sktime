@@ -140,6 +140,14 @@ class BaseTimeSeriesForest:
         Creates four curves: three feature temporal importance curves
         (mean, stdev, slope) and one curve containing the number of times a
         timestamp appears in a tree's intervals.
+
+        Follows procedure outlined in section 4.4 of [1]
+
+        References
+        ----------
+        .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
+        classification and feature extraction",Information Sciences, 239, 2013
+
         """
         self.mean_curve_ = np.zeros(self.series_length)
         self.stdev_curve_ = np.zeros(self.series_length)
