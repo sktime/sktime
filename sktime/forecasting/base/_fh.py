@@ -682,7 +682,7 @@ class _HashIndex:
         self.index = index
 
     def __hash__(self):
-        return pd.util.hash_pandas_object(self.index)
+        return int(pd.util.hash_pandas_object(self.index).sum())
 
 
 # This function needs to be outside ForecastingHorizon
