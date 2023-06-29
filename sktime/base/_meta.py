@@ -803,8 +803,8 @@ class _ColumnEstimator:
         if ref is not None:
             # coerce ref to pd.Index
             if not isinstance(ref, pd.Index):
-                if hasattr(ref, "index") and isinstance(ref.index, pd.Index):
-                    ref = ref.index
+                if hasattr(ref, "columns") and isinstance(ref.index, pd.Index):
+                    ref = ref.columns
             else:
                 ref = pd.Index(ref)
 
@@ -823,14 +823,16 @@ class _ColumnEstimator:
 
     def _get_indices(self, y, idx):
         """Convert integer indices if necessary."""
+        if hasattr(y, "columns"):
+            y = y.columns
 
         def _get_index(y, ix):
             # deal with numpy int by coercing to python int
             if np.issubdtype(type(ix), np.integer):
                 ix = int(ix)
 
-            if isinstance(ix, int) and ix not in y.columns and ix < len(y.columns):
-                return y.columns[ix]
+            if isinstance(ix, int) and ix not in y and ix < len(y):
+                return y[ix]
             else:
                 return ix
 
