@@ -191,7 +191,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         self : an instance of self.
         """
         for _, forecaster, index in self.forecasters_:
-            pd_index = self._coerce_to_pd_index(index, self._y.index)
+            pd_index = self._coerce_to_pd_index(index, self._y.columns)
             forecaster.update(y.loc[:, pd_index], X, update_params=update_params)
         return self
 
