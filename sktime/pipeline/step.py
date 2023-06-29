@@ -1,5 +1,6 @@
 """Implementation of the graphpipeline step."""
 import inspect
+from copy import deepcopy
 
 import pandas as pd
 
@@ -27,11 +28,13 @@ class Step:
         skobject,
         name,
         input_edges,
+        method,
         params,
     ):
         self.buffer = None
         self.skobject = skobject
         self.name = name
+        self.method = method
         self.input_edges = input_edges
         self.params = params
 
@@ -63,22 +66,21 @@ class Step:
             return StepResult(None, "")
 
         # 2. Get the method that should be called on skobject
-        if "method" in self.params:
-            # TODO can we make method to an explicit parameter?
-            mro = [self.params["method"]]
+        if self.method is not None:
+            mro = [self.method]
         if hasattr(self.skobject, "fit") and fit and not self.skobject.is_fitted:
-            kwargs = self._extract_kwargs("fit", kwargs)
-            self.skobject.fit(**input_data, **kwargs)
+            kwargs_ = self._extract_kwargs("fit", kwargs)
+            self.skobject.fit(**input_data, **kwargs_)
 
         for method in mro:
             if hasattr(self.skobject, method):
-                kwargs = self._extract_kwargs(method, kwargs)
-                if "fh" in kwargs and fit:
-                    # TODO check this if it works with numpy. Check if this
-                    #      can be done more generalized!
-                    #      Here should be nothing that is only focusing on
-                    #      a specific estimator/...
-                    kwargs["fh"] = (
+                kwargs_ = self._extract_kwargs("fit", kwargs)
+                if "fh" in kwargs_ and fit:
+                    # Perform in sample prediction if the get_result is called
+                    # during fitting the pipeline. In the case a provided,
+                    # fh should be replaced with the length of the time series.
+                    # TODO Test for numpy etc.
+                    kwargs_["fh"] = (
                         input_data["y"].index
                         if hasattr(input_data["y"], "index")
                         else range(len(input_data["y"]))
@@ -94,14 +96,8 @@ class Step:
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = input_data["X"][ix]
-                        # deal with the "Coverage" case, we need to get rid of this
-                        #   i.d., special 1st level name of prediction objet
-                        #   in the case where there is only one variable
-                        # if len(yt[ix].columns) == 1:
-                        #    temp = yt[ix].columns
-                        #    yt[ix].columns = input_data["X"].result.columns
                         yt[ix] = getattr(self.skobject, method)(
-                            X=yt[ix], **kwargs
+                            X=yt[ix], **kwargs_
                         ).to_frame()
                     result = pd.concat(yt.values(), axis=1)
                 else:
@@ -115,7 +111,7 @@ class Step:
                                 input_data.items(),
                             )
                         ),
-                        **kwargs,
+                        **kwargs_,
                     )
 
                 mode = (
@@ -166,6 +162,8 @@ class Step:
         return input_data, mode, all_none
 
     def _extract_kwargs(self, method_name, kwargs):
+        kwargs_ = deepcopy(kwargs)
+        kwargs_.update(self.params)
         use_kwargs = {}
         method = getattr(self.skobject, method_name)
         method_signature = inspect.signature(method).parameters

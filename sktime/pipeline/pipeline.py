@@ -46,26 +46,81 @@ class Pipeline(BaseEstimator):
             inside the list of names leading up to it (inclusive)
 
     `add_step(skobject, name, edges, **kwargs)` - adds a skobject to the pipeline and
-        setting the name as identifier and the steps specified with edges as input.
+        setting the name as identifier and the steps specified with edges as input steps
+        (predecessors).
         TODO Finalize this description
 
     Parameters
     ----------
-    # TODO
     param step_informations : what it is, what it does
 
     Attributes
     ----------
-    # TODO
-    attribute name : what it is, what it does
+    attribute id_to_true_id : a dict with integer keys and values,
+        mapping the python object id to skobject ids.
+    attribute id_to_obj : a dict with integer keys and weak references of
+        skobjects as values. The values are the weak references of the skobjects
+        provided to the `add_step` method. We store the weak references to
+        avoid that the id of the object is reassigned if the user deletes all it
+        references to the object.
+    attribute model_dict : a dict with integer keys and skobject values.
+        This is a mapping of the id of the skobjects provided to `add_step`
+        to the cloned skobject.
+    attribute counter : integer, counts the number of steps in the pipeline.
+    attribute steps : a dict with string keys and step object values.
+        The key is the name that is specified if a skobject is added to the pipeline.
+    attribute kwargs : a dict with str keys and object values. Stores all kwargs
+        that are specified and might be passed to skobjects in the pipeline.
 
     Examples
     --------
-    # TODO examples: Classifier, Forecaster, ForecasterX?
-    >>> Do all import
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.datasets import load_arrow_head, load_longley
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.forecasting.sarimax import SARIMAX
+    >>> from sktime.pipeline.pipeline import Pipeline
+    >>> from sktime.transformations.compose import Id
+    >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
+    >>> from sktime.transformations.series.exponent import ExponentTransformer
 
-        Example 1: string/estimator pairs
-    >>> Different examples
+        Example 1: Simple sequential pipeline of transformers using the generalized
+        non-sequential pipeline implementation
+    >>>     y, X = load_longley()
+    >>>     general_pipeline = Pipeline()
+    >>>     for step in [
+    ...         {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
+    ...         {"skobject": BoxCoxTransformer(), "name": "box", "edges": {"X": "exp"}},
+    ...         ]:
+    >>>         general_pipeline.add_step(**step)
+    >>>     general_pipeline.fit(X=X)
+    >>>     result_general = general_pipeline.transform(X)
+
+        Example 2: Classification sequential pipeline using the generalized
+         non-sequential pipeline implementation
+    >>>     X, y = load_arrow_head(split="train", return_X_y=True)
+    >>>     general_pipeline = Pipeline()
+    >>>     for step in [
+    ...         {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
+    ...         {"skobject": KNeighborsTimeSeriesClassifier(),
+    ...          "name": "knnclassifier",
+    ...          "edges": {"X": "exp", "y": "y"}}]:
+    >>>         general_pipeline.add_step(**step)
+    >>>     general_pipeline.fit(X=X, y=y)
+    >>>     result_general = general_pipeline.predict(X)
+        Example 3: Forecasting pipeline with exogenous features using the
+        generalized non-sequential pipeline implementation
+
+    >>>     y, X = load_longley()
+    >>>     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+    >>>     general_pipeline = Pipeline()
+    >>>     for step in [
+    ...         {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
+    ...         {"skobject": SARIMAX(),
+    ...          "name": "SARIMAX",
+    ...          "edges": {"X": "exp", "y": "y"}}]:
+    >>>         general_pipeline.add_step(**step)
+    >>>     general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
+    >>>     result_general = general_pipeline.predict(X=X_test)
     """
 
     def __init__(self, step_informations=None):
@@ -75,8 +130,8 @@ class Pipeline(BaseEstimator):
         self.id_to_obj = {}
         self.counter = 0
         self.steps = {
-            "X": Step(None, "X", None, {}),
-            "y": Step(None, "y", None, {}),
+            "X": Step(None, "X", None, None, {}),
+            "y": Step(None, "y", None, None, {}),
         }
         self.model_dict = {}
         self.kwargs = {}
@@ -103,7 +158,7 @@ class Pipeline(BaseEstimator):
             return self.steps[name]
         raise Exception("Required Input does not exist")
 
-    def add_step(self, skobject, name, edges, **kwargs):
+    def add_step(self, skobject, name, edges, method=None, **kwargs):
         """
         TODO
         """
@@ -122,7 +177,7 @@ class Pipeline(BaseEstimator):
                     self._create_subsetter(edg)
                 input_steps[key] = [self._get_step(edg) for edg in edge]
 
-        step = Step(cloned_skobject, name, input_steps, kwargs)
+        step = Step(cloned_skobject, name, input_steps, method=method, params=kwargs)
         if name in self.steps:
             raise ValueError(
                 f"You try to add a step with a name '{name}' to the pipeline"
@@ -132,11 +187,13 @@ class Pipeline(BaseEstimator):
         self.steps[name] = step
         self._last_step_name = name
         new_step_info = {key: value for key, value in kwargs.items()}
-        new_step_info.update({
-            "skobject": skobject,
-            "name": name,
-            "edges": edges,
-        })
+        new_step_info.update(
+            {
+                "skobject": skobject,
+                "name": name,
+                "edges": edges,
+            }
+        )
         self.step_informations.append(new_step_info)
         return step
 

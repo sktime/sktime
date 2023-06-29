@@ -46,7 +46,7 @@ def test_classifier_regression():
         {"skobject": ExponentTransformer(), "name": "exponent", "edges": {"X": "X"}},
         {
             "skobject": KNeighborsTimeSeriesClassifier(),
-            "name": "BoxCOX",
+            "name": "knnclassifier",
             "edges": {"X": "exponent", "y": "y"},
         },
     ]:

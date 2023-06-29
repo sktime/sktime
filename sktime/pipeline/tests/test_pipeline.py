@@ -154,6 +154,7 @@ def test_pipeline_call_not_available(steps, method, expected_message):
     with pytest.raises(MethodNotImplementedError, match=expected_message):
         getattr(pipeline, method)(None, None)
 
+
 def test_get_params():
     exponent = ExponentTransformer()
     pipe = Pipeline()
