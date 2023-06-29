@@ -59,12 +59,6 @@ class BaseTimeSeriesForest:
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-        # temporal importance curves, set inside fit
-        self.mean_curve_ = None
-        self.stdev_curve_ = None
-        self.slope_curve_ = None
-        self.n_intervals_wts_curve_ = None
-
     @property
     def _estimator(self):
         """Access first parameter in self, self inheriting from sklearn BaseForest.
@@ -134,14 +128,23 @@ class BaseTimeSeriesForest:
             "estimators": self.estimators_,
         }
 
-    def temporal_curves_(self):
+    def calc_temporal_curves(self, normalize=False):
         """Create temporal importance curves.
 
         Creates four curves: three feature temporal importance curves
         (mean, stdev, slope) and one curve containing the number of times a
         timestamp appears in a tree's intervals.
 
-        Follows procedure outlined in section 4.4 of [1]
+        Follows procedure outlined in section 4.4 of [1].
+
+        Parameters
+        ----------
+        normalized : bool
+        `False` (default) follows outline in paper exactly.
+        `True` will split feature importances evenly over the interval which they're
+        associated with. This preserves that the sum of the intergral of all importance
+        curves is equal to the number of trees in the forest.
+
 
         References
         ----------
@@ -149,25 +152,37 @@ class BaseTimeSeriesForest:
         classification and feature extraction",Information Sciences, 239, 2013
 
         """
-        self.mean_curve_ = np.zeros(self.series_length)
-        self.stdev_curve_ = np.zeros(self.series_length)
-        self.slope_curve_ = np.zeros(self.series_length)
-        self.n_intervals_wts_curve_ = np.zeros(self.series_length)
+        self.mean_curve = np.zeros(self.series_length)
+        self.stdev_curve = np.zeros(self.series_length)
+        self.slope_curve = np.zeros(self.series_length)
+        self.n_intervals_wts_curve = np.zeros(self.series_length)
+        # flag for checking normalization status of existsing curves
+        self.tic_norm = normalize
 
         for estimator, intervals in zip(self.estimators_, self.intervals_):
             for i_int, interval in enumerate(intervals):
                 interval_mask = np.zeros(self.series_length)
                 np.put(interval_mask, range(interval[0], interval[1]), 1)
 
-                self.n_intervals_wts_curve_ += np.where(interval_mask, 1, 0)
-                self.mean_curve_ += np.where(
-                    interval_mask, estimator.feature_importances_[3 * i_int], 0
+                if normalize:
+                    norm_factor = interval[1] - interval[0]
+                else:
+                    norm_factor = 1
+                self.n_intervals_wts_curve += np.where(interval_mask, 1, 0)
+                self.mean_curve += np.where(
+                    interval_mask,
+                    estimator.feature_importances_[3 * i_int] / norm_factor,
+                    0,
                 )
-                self.stdev_curve_ += np.where(
-                    interval_mask, estimator.feature_importances_[3 * i_int + 1], 0
+                self.stdev_curve += np.where(
+                    interval_mask,
+                    estimator.feature_importances_[3 * i_int + 1] / norm_factor,
+                    0,
                 )
-                self.slope_curve_ += np.where(
-                    interval_mask, estimator.feature_importances_[3 * i_int + 2], 0
+                self.slope_curve += np.where(
+                    interval_mask,
+                    estimator.feature_importances_[3 * i_int + 2] / norm_factor,
+                    0,
                 )
 
 

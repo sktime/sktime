@@ -81,20 +81,49 @@ def plot_cif(cif, normalise_time_points=False, top_curves_shown=None, plot_mean=
     )
 
 
-def plot_TSF_temporal_importance_curve(tsf):
-    """Temporal Importance curve diagram generator for TSF."""
+def plot_TSF_temporal_importance_curve(tsf, normalize=False):
+    """Temporal Importance curve diagram generator for TSF.
+
+    Parameters
+    ----------
+    normalize : bool = False
+    whether or not to normalize importance contribution to interval length. False
+    matches design from [1], True is more informative of high importance
+    timestamps/features.
+
+    References
+    ----------
+    .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
+    classification and feature extraction",Information Sciences, 239, 2013
+
+    Example
+    -------
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sktime.classification.plotting.temporal_importance_diagram import
+    ... plot_TSF_temporal_importance_curve
+    >>> from sktime.datasets import load_gunpoint
+    >>> X_train, y_train = load_gunpoint(split="train", return_X_y=True)
+    >>> clf = TimeSeriesForestClassifier(n_estimators=50)
+    >>> clf.fit(X_train, y_train)
+    >>> fig = plot_TSF_temporal_importance_curve(clf, True)
+    >>> fig.title(label="normalized")
+    >>> fig.savefig("test_norm")
+    """
     import matplotlib.pyplot as plt
 
     if not isinstance(tsf, BaseTimeSeriesForest) or not tsf._is_fitted:
         raise ValueError("Input must be a fitted object that inherits from BaseTSF")
 
-    if tsf.mean_curve_ is None:
-        tsf.temporal_curves_()
+    try:
+        if not (tsf.tic_norm == normalize):
+            tsf.calc_temporal_curves(normalize)
+    except AttributeError:
+        tsf.calc_temporal_curves(normalize)
 
     curves = {
-        "Mean": tsf.mean_curve_,
-        "StDev": tsf.stdev_curve_,
-        "Slope": tsf.slope_curve_,
+        "Mean": tsf.mean_curve,
+        "StDev": tsf.stdev_curve,
+        "Slope": tsf.slope_curve,
     }
 
     for curve_name, curve in curves.items():
