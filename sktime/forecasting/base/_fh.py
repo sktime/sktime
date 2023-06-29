@@ -692,6 +692,7 @@ class _HashIndex:
 # We cache the results from `to_relative()` and `to_absolute()` calls to speed up
 # computations, as these are the basic methods and often required internally when
 # calling different methods.
+@lru_cache(typed=True)
 def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
     """Return forecasting horizon values relative to a cutoff.
 
