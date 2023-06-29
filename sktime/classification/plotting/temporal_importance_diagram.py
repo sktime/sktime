@@ -81,12 +81,15 @@ def plot_cif(cif, normalise_time_points=False, top_curves_shown=None, plot_mean=
     )
 
 
-def plot_TSF_temporal_importance_curve(tsf, file_name):
+def plot_TSF_temporal_importance_curve(tsf):
     """Temporal Importance curve diagram generator for TSF."""
     import matplotlib.pyplot as plt
 
     if not isinstance(tsf, BaseTimeSeriesForest) or not tsf._is_fitted:
         raise ValueError("Input must be a fitted object that inherits from BaseTSF")
+
+    if tsf.mean_curve_ is None:
+        tsf.temporal_curves_()
 
     curves = {
         "Mean": tsf.mean_curve_,
@@ -99,5 +102,4 @@ def plot_TSF_temporal_importance_curve(tsf, file_name):
 
     plt.legend()
 
-    plt.savefig(file_name)
-    plt.clf()
+    return plt

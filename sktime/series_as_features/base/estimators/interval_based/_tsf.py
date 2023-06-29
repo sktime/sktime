@@ -125,7 +125,6 @@ class BaseTimeSeriesForest:
         )
 
         self._is_fitted = True
-        self._temporal_curves()
         return self
 
     def _get_fitted_params(self):
@@ -135,7 +134,7 @@ class BaseTimeSeriesForest:
             "estimators": self.estimators_,
         }
 
-    def _temporal_curves(self):
+    def temporal_curves_(self):
         """Create temporal importance curves.
 
         Creates four curves: three feature temporal importance curves
@@ -149,15 +148,19 @@ class BaseTimeSeriesForest:
 
         for estimator, intervals in zip(self.estimators_, self.intervals_):
             for i_int, interval in enumerate(intervals):
-                for t_i in range(interval[0], interval[1] + 1):
-                    self.n_intervals_wts_curve_[t_i] += 1
-                    self.mean_curve_[t_i] += estimator.feature_importances_[3 * i_int]
-                    self.stdev_curve_[t_i] += estimator.feature_importances_[
-                        3 * i_int + 1
-                    ]
-                    self.slope_curve_[t_i] += estimator.feature_importances_[
-                        3 * i_int + 2
-                    ]
+                interval_mask = np.zeros(self.series_length)
+                np.put(interval_mask, range(interval[0], interval[1] + 1), 1)
+
+                self.n_intervals_wts_curve_ += np.where(interval_mask, 1, 0)
+                self.mean_curve_ += np.where(
+                    interval_mask, estimator.feature_importances_[3 * i_int], 0
+                )
+                self.stdev_curve_ += np.where(
+                    interval_mask, estimator.feature_importances_[3 * i_int + 1], 0
+                )
+                self.slope_curve_ += np.where(
+                    interval_mask, estimator.feature_importances_[3 * i_int + 2], 0
+                )
 
 
 def _transform(X, intervals):
