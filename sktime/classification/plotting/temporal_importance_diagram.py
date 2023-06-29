@@ -109,6 +109,8 @@ def plot_TSF_temporal_importance_curve(tsf, normalize=False):
     >>> fig.title(label="normalized")
     >>> fig.savefig("test_norm")
     """
+    _check_soft_dependencies("matplotlib")
+
     import matplotlib.pyplot as plt
 
     if not isinstance(tsf, BaseTimeSeriesForest) or not tsf._is_fitted:
