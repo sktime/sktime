@@ -157,7 +157,7 @@ class BaseTimeSeriesForest:
         for estimator, intervals in zip(self.estimators_, self.intervals_):
             for i_int, interval in enumerate(intervals):
                 interval_mask = np.zeros(self.series_length)
-                np.put(interval_mask, range(interval[0], interval[1] + 1), 1)
+                np.put(interval_mask, range(interval[0], interval[1]), 1)
 
                 self.n_intervals_wts_curve_ += np.where(interval_mask, 1, 0)
                 self.mean_curve_ += np.where(
