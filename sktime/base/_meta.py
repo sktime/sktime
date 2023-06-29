@@ -131,8 +131,8 @@ class _HeterogenousMetaEstimator:
         # 2. Step replacement
         items = getattr(self, attr)
         names = []
-        if items:
-            names, _ = zip(*items)
+        if items and isinstance(items, (list, tuple)):
+            names = list(zip(*items))[0]
         for name in list(params.keys()):
             if "__" not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
@@ -143,9 +143,12 @@ class _HeterogenousMetaEstimator:
     def _replace_estimator(self, attr, name, new_val):
         # assumes `name` is a valid estimator name
         new_estimators = list(getattr(self, attr))
-        for i, (estimator_name, _) in enumerate(new_estimators):
+        for i, est_tpl in enumerate(new_estimators):
+            estimator_name = est_tpl[0]
             if estimator_name == name:
-                new_estimators[i] = (name, new_val)
+                new_tpl = list(est_tpl)
+                new_tpl[1] = new_val
+                new_estimators[i] = tuple(new_tpl)
                 break
         setattr(self, attr, new_estimators)
 
