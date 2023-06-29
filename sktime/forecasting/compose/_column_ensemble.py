@@ -170,7 +170,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         for name, forecaster, index in forecasters:
             forecaster_ = forecaster.clone()
 
-            pd_index = self._coerce_to_pd_index(index, self._y.index)
+            pd_index = self._coerce_to_pd_index(index, self._y.columns)
 
             forecaster_.fit(y.loc[:, pd_index], X, fh)
             self.forecasters_.append((name, forecaster_, index))
