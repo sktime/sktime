@@ -397,6 +397,7 @@ observers <https://www.sktime.net/en/stable/about/team.html>`__ .
 
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 CC observers have a full view of reserved CC proceedings, the private CC
 channels and the sktime email account. CC observers can participate in
 discussions on private CC channels to ensure that more members of the community
@@ -410,6 +411,7 @@ CC members.
 
 Eligibility
 ^^^^^^^^^^^
+
 Only core developers are eligible for appointment as CC observers.
 Non-core-developers can be nominated, but this must be accompanied
 by a nomination for core developer, and a core developer appointment vote
@@ -419,12 +421,122 @@ by a nomination for core developer, and a core developer appointment vote
 
 Appointment
 ^^^^^^^^^^^
+
 Membership of the CC observers is by nomination by a core developer and a vote
 by CC members. A nomination will result in a vote by the CC members which will
 stay open for 5 days excluding weekends. CC observer membership votes are
 subject to a simple majority approval of all the current CC committee members.
 
 In case of ties, the CC member with shortest tenure breaks the tie.
+
+.. _executive:
+
+Special operational role: treasurer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The treasurer is an appointed role on the ``sktime`` project.
+This is primarily a supportive and transparency enhancing role.
+
+If the treasurer role remains unfilled for longer than a month,
+the CC must exercise the responsibilities of the treasurer role, as a committee.
+
+Rights and responsibilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The treasurer's responsibilities are as follows.
+
+Budgeting and fiscal management:
+
+* works with the CC to establish financial goals and allocation of resources
+* works with the CC to ensure that fiscal assets are managed
+  effectively, responsibly, and ethically
+* works with the CC on financial planning, especially fundraising activities,
+  finances for event planning, and upskilling/mentoring programme
+
+Fiscal reporting and book-keeping:
+
+* compiling budgets and statements, to be published on the
+  ``sktime`` community GitHub repo.
+* The monthly and yearly statements should include:
+  * a summary of assets and liabilities. This should include assets and liabilities
+    directly of the ``sktime`` project, as well as clearly associated assets and
+    liabilities, such as funding pots administered on behalf of ``sktime``.
+  * a report on income and expenditures in the last monthly period, with
+    associated decisions for expenditures.
+  * reports for any accounts held by or administered on behalf of the ``sktime``
+    project.
+* The monthly and yearly budgets should include:
+  * projected income and planned expenses, at least for the coming period
+  * status of approvals with respect to planned expenses, references to decisions.
+* The statements should be published no later than
+  one calendar month after the reporting period has ended, or two months after
+  the appointment of the treasurer, whichever is later.
+* The budgets should be published no later than two weeks before the budgeted period
+  
+Controls and compliance:
+
+* ensuring that decision making on funding and expenditures are carried out according to
+  internal policy by the decision making commitees.
+  They should recuse themselves from any decision making on funding and expenditures.
+* complies with the ``sktime`` code of conduct at any time,
+  especially provisions on fiscal transparency, and ensures the code of conduct
+  is upheld in fiscal reporting and decision making
+* ensures ``sktime`` is compliant with external requirements,
+  e.g., tax regulations, charitable purpose, where applicable
+* conducts regular audit reviews with regards to the above or ensures
+  they are conducted by independent external parties where applicable
+
+Banking and cash management:
+
+* handles bank accounts and assets directly controlled by the ``sktime`` project,
+  on behalf of the ``sktime`` project as represented by the CC
+* handles sponsoring and donation pipelines directly controlled by the ``sktime``
+  project, on behalf of the ``sktime`` project as represented by the CC
+* ensures fully transparent views of the above are shared with all individual
+  members of the CC and the CC as a committee
+
+Eligibility
+^^^^^^^^^^^
+
+Only core developers are eligible for appointment as treasurers.
+Non-core-developers can be nominated, but this must be accompanied
+by a nomination for core developer, and a core developer appointment vote
+(see below).
+
+Appointment
+^^^^^^^^^^^
+
+The treasurer is appointed by a simple majority of CC votes.
+
+An appointment vote is held at the earliest possibility in a situation where
+the treasurer role is unfilled.
+
+The vote starts with a 2 calendar week period in which prospective candidates can
+register. A core developer needs a proposer and a seconder (both core developers)
+to register as a candidate.
+
+The CC appoints the treasurer among the candidates with a simple majority, subject
+to standard decision making procedures of the CC.
+
+End of tenure
+^^^^^^^^^^^^^
+
+Appointment as a treasurer is for a term of one calendar year.
+Re-appointment is possible, except in the case of removal due to inactivity (see below).
+
+The treasurer can resign voluntarily at any point in time, by informing
+the CC in writing.
+
+The treasurer can be removed due to inactivity if both the following conditions are met:
+
+* the treasurer fails to compile a budget or statement within one calendar month
+  of when it is due (e.g., two months after the reporting period for statements)
+* at least one member of the CC requests removal of the treasurer on grounds
+  of inactivity
+
+The treasurer can also be removed by the CoC committee upon a violation of the
+CoC provisions on resource allocation and fiscal transparency. Standard
+CoC procedures must be respected in such a case.
 
 .. _decision-making:
 
