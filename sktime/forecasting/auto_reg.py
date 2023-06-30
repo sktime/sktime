@@ -77,7 +77,7 @@ class AutoREG(_StatsModelsAdapter):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> data = load_airline()
     >>> autoreg_sktime = AutoREG(lags=2, trend="c")  # doctest: +SKIP
-    >>> autoreg_sktime.fit(y=data, fh=None)  # doctest: +SKIP
+    >>> autoreg_sktime.fit(y=data)  # doctest: +SKIP
     AutoREG(lags=2)
     >>> fh = ForecastingHorizon([x for x in range(1, 13)])
     >>> y_pred = autoreg_sktime.predict(fh=fh)  # doctest: +SKIP
@@ -92,7 +92,7 @@ class AutoREG(_StatsModelsAdapter):
     >>> y, X = y.iloc[:-5], X_og.iloc[:-5, :]
     >>> X, X_oos = X[["GNPDEFL", "GNP"]], X_oos[["GNPDEFL", "GNP"]]
     >>> autoreg_sktime = AutoREG(lags=2, trend="c")  # doctest: +SKIP
-    >>> autoreg_sktime.fit(y=y, X=X, fh=None)  # doctest: +SKIP
+    >>> autoreg_sktime.fit(y=y, X=X)  # doctest: +SKIP
     AutoREG(lags=2)
     >>> fh = ForecastingHorizon([x for x in range(1, 4)])
     >>> y_pred = autoreg_sktime.predict(X=X_oos, fh=fh)  # doctest: +SKIP
@@ -152,10 +152,10 @@ class AutoREG(_StatsModelsAdapter):
         # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
+    def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
 
-        private _fit containing the core logic, called from fit
+        private _fit_forecaster containing the core logic, called from fit
 
         Writes to self:
             Sets fitted model attributes ending in "_".
@@ -169,10 +169,6 @@ class AutoREG(_StatsModelsAdapter):
             if self.get_tag("scitype:y")=="multivariate":
                 guaranteed to have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
