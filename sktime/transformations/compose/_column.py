@@ -152,6 +152,30 @@ class ColumnEnsembleTransformer(
             tags_to_clone = ["scitype:transform-output", "scitype:transform-labels"]
             self.clone_tags(transformers[0][1], tags_to_clone)
 
+    def __add__(self, other):
+        """Magic + method, return (right) concatenated ColumnEnsembleTransformer.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        ColumnEnsembleTransformer object,
+            concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-ColumnEnsembleTransformer transformers
+        """
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=ColumnEnsembleTransformer,
+            attr_name="transformers",
+            concat_order="left",
+        )
+
     @property
     def _transformers(self):
         """Make internal list of transformers.

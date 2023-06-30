@@ -168,6 +168,32 @@ class ColumnSelect(BaseTransformer):
         self.index_treatment = index_treatment
         super().__init__()
 
+    def __mul__(self, other):
+        """Magic * method, return ColumnEnsembleTransformer.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        ColumnEnsembleTransformer, other[self.columns], if self has default params
+            otherwise, returns NotImplemented
+        """
+        if self.integer_treatment != "col" or self.index_treatment != "remove":
+            return NotImplemented
+
+        if not isinstance(other, BaseTransformer):
+            return NotImplemented
+
+        from sktime.transformations.compose import ColumnEnsembleTransformer
+
+        name = f"{other.__class__.__name}[{self.columns}]"
+        return ColumnEnsembleTransformer([name, other, self.columns])
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
