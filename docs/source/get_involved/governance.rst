@@ -449,7 +449,7 @@ avoiding deadlocks when no consensus can be found.
   changes to this document, take place primarily in the council meetings and
   associated decisions procedures. Minutes are published weekly in the
   `community-org repository <https://github.com/sktime/community-org/tree/main/community_council/previous_meetings>`__.
-  
+
 Some sensitive discussions may occur on private chats, but outcomes and the fact that
 a decision took place must be reported publicly unless under exceptional circumstance.
 
