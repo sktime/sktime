@@ -476,7 +476,7 @@ Fiscal reporting and book-keeping:
 Controls and compliance:
 
 * ensuring that decision making on funding and expenditures are carried out according to
-  internal policy by the decision making commitees.
+  internal policy by the decision making committees.
   They should recuse themselves from any decision making on funding and expenditures.
 * complies with the ``sktime`` code of conduct at any time,
   especially provisions on fiscal transparency, and ensures the code of conduct
