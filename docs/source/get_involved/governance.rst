@@ -472,7 +472,7 @@ Fiscal reporting and book-keeping:
   one calendar month after the reporting period has ended, or two months after
   the appointment of the treasurer, whichever is later.
 * The budgets should be published no later than two weeks before the budgeted period
-  
+
 Controls and compliance:
 
 * ensuring that decision making on funding and expenditures are carried out according to
