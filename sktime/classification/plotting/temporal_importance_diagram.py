@@ -106,7 +106,7 @@ def plot_TSF_temporal_importance_curve(tsf, normalize=False):
     ... ) #doctest: +SKIP
     >>> from sktime.datasets import load_gunpoint   #doctest: +SKIP
     >>> X_train, y_train = load_gunpoint(split="train", return_X_y=True) #doctest: +SKIP
-    >>> clf = TimeSeriesForestClassifier(n_estimators=50)  #doctest: +doctest
+    >>> clf = TimeSeriesForestClassifier(n_estimators=50)  #doctest: +SKIP
     >>> clf.fit(X_train, y_train)  #doctest: +SKIP
     >>> fig = plot_TSF_temporal_importance_curve(clf, True)  #doctest: +SKIP
     >>> fig.title(label="normalized")  #doctest: +SKIP
