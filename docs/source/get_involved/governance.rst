@@ -429,7 +429,7 @@ subject to a simple majority approval of all the current CC committee members.
 
 In case of ties, the CC member with shortest tenure breaks the tie.
 
-.. _executive:
+.. _treasurer:
 
 Special operational role: treasurer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
