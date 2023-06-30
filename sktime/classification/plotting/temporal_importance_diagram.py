@@ -98,16 +98,19 @@ def plot_TSF_temporal_importance_curve(tsf, normalize=False):
 
     Example
     -------
-    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
-    >>> from sktime.classification.plotting.temporal_importance_diagram import
-    ... plot_TSF_temporal_importance_curve
-    >>> from sktime.datasets import load_gunpoint
-    >>> X_train, y_train = load_gunpoint(split="train", return_X_y=True)
-    >>> clf = TimeSeriesForestClassifier(n_estimators=50)
-    >>> clf.fit(X_train, y_train)
-    >>> fig = plot_TSF_temporal_importance_curve(clf, True)
-    >>> fig.title(label="normalized")
-    >>> fig.savefig("test_norm")
+    >>> from sktime.classification.interval_based import (
+    ...     TimeSeriesForestClassifier
+    ... )  #docstep: +SKIP
+    >>> from sktime.classification.plotting.temporal_importance_diagram import (
+    ...     plot_TSF_temporal_importance_curve
+    ... ) #docstep: +SKIP
+    >>> from sktime.datasets import load_gunpoint   #docstep: +SKIP
+    >>> X_train, y_train = load_gunpoint(split="train", return_X_y=True) #docstep: +SKIP
+    >>> clf = TimeSeriesForestClassifier(n_estimators=50)  #docstep: +SKIP
+    >>> clf.fit(X_train, y_train)  #docstep: +SKIP
+    >>> fig = plot_TSF_temporal_importance_curve(clf, True)  #docstep: +SKIP
+    >>> fig.title(label="normalized")  #docstep: +SKIP
+    >>> fig.savefig("test_norm") #docstep: +SKIP
     """
     _check_soft_dependencies("matplotlib")
 
