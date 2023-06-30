@@ -472,6 +472,9 @@ corresponding decision making process is described in more detail below.
    * - Changes to sktime's governance (including this document and the CoC)
      - Proposal, reading, vote, via council meeting (or equivalent async process);
        Directly starts with CC decision making (stage 3)
+   * - Operational, non-technical decision making, e.g., budgets & expenditures
+     - Proposal, reading, vote, via council meeting (or equivalent async process);
+       Directly starts with CC decision making (stage 3)
    * - Appointment
      - Directly starts with core developer voting (stage 2)
 
