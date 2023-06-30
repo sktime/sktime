@@ -503,10 +503,16 @@ Non-core-developers can be nominated, but this must be accompanied
 by a nomination for core developer, and a core developer appointment vote
 (see below).
 
+A person previously removed from the role of treasurer due to inactivity
+is not eligible for appointment within a calendar year after removal.
+
+A person previously removed from the role of treasurer due to code of conduct
+violations is not eligible for appointment.
+
 Appointment
 ^^^^^^^^^^^
 
-The treasurer is appointed by a simple majority of CC votes.
+The treasurer is appointed by the CC, as below.
 
 An appointment vote is held at the earliest possibility in a situation where
 the treasurer role is unfilled.
@@ -515,8 +521,8 @@ The vote starts with a 2 calendar week period in which prospective candidates ca
 register. A core developer needs a proposer and a seconder (both core developers)
 to register as a candidate.
 
-The CC appoints the treasurer among the candidates with a simple majority, subject
-to standard decision making procedures of the CC.
+The CC appoints the treasurer among the candidates with a simple relative majority
+among all candidates, subject to standard decision making procedures of the CC.
 
 End of tenure
 ^^^^^^^^^^^^^
@@ -535,8 +541,10 @@ The treasurer can be removed due to inactivity if both the following conditions 
   of inactivity
 
 The treasurer can also be removed by the CoC committee upon a violation of the
-CoC provisions on resource allocation and fiscal transparency. Standard
-CoC procedures must be respected in such a case.
+CoC provisions on resource allocation and fiscal transparency.
+Any investigation of the CoC committee that results in potential removal of the
+treasurer must have been upon request or complaint by at least two members of the CC.
+The investigation is subject to standard CoC investigation procedures.
 
 .. _decision-making:
 
