@@ -442,12 +442,16 @@ sktime's decision-making process is designed to take into account
 feedback from all community members and strives to find consensus, while
 avoiding deadlocks when no consensus can be found.
 
-All discussion and votes takes place on the project's `issue
-tracker <https://github.com/sktime/sktime/issues>`__,
-`pull requests <https://github.com/sktime/sktime/pulls>`__ or an :ref:`steps`. Some
-sensitive discussions and appointment votes occur on private chats.
-
-The CC reserves the right to overrule decisions.
+* Decisions on technical matters takes place on the project's `issue
+  tracker <https://github.com/sktime/sktime/issues>`__ or in
+  `pull requests <https://github.com/sktime/sktime/pulls>`__.
+* Decisions on governance, such as project operations, finances, appointments,
+  changes to this document, take place primarily in the council meetings and
+  associated decisions procedures. Minutes are published weekly in the
+  `community-org repository <https://github.com/sktime/community-org/tree/main/community_council/previous_meetings>`__.
+  
+Some sensitive discussions may occur on private chats, but outcomes and the fact that
+a decision took place must be reported publicly unless under exceptional circumstance.
 
 We distinguish between the following types of proposed changes. The
 corresponding decision making process is described in more detail below.
@@ -465,10 +469,11 @@ corresponding decision making process is described in more detail below.
      - Lazy consensus
    * - Changes to the API design, hard dependencies, or supported versions
      - Lazy consensus, requires a :ref:`steps`
-   * - Changes to sktime's governance (this document and the CoC)
-     - Lazy consensus, requires a :ref:`steps`
+   * - Changes to sktime's governance (including this document and the CoC)
+     - Proposal, reading, vote, via council meeting (or equivalent async process);
+       Directly starts with CC decision making (stage 3)
    * - Appointment
-     - Directly starts with voting (stage 2)
+     - Directly starts with core developer voting (stage 2)
 
 .. _stage-1:
 
@@ -509,8 +514,8 @@ When no consensus can be found, the decision is escaled to :ref:`stage-2`.
 
 .. _stage-2:
 
-Stage 2: voting
-~~~~~~~~~~~~~~~
+Stage 2: core developer decisions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Voting takes place:
 
@@ -539,8 +544,8 @@ rejected.
 
 .. _stage-3:
 
-Stage 3: conflict resolution
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Stage 3: commmunity council decisions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the proposed change cannot gather a 2/3 majority of the votes cast,
 the CC tries to resolve the deadlock.
