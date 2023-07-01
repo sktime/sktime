@@ -192,7 +192,7 @@ class ColumnSelect(BaseTransformer):
         from sktime.transformations.compose import ColumnEnsembleTransformer
 
         name = f"{other.__class__.__name__}[{self.columns}]"
-        return ColumnEnsembleTransformer([name, other, self.columns])
+        return ColumnEnsembleTransformer([(name, other, self.columns)])
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
