@@ -8,10 +8,11 @@ __all__ = [
     "StatsForecastAutoCES",
     "StatsForecastAutoETS",
     "StatsForecastAutoTheta",
+    "StatsForecastMSTL",
 ]
 
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     _GeneralisedStatsForecastAdapter,
@@ -550,5 +551,90 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
         params = [{}, {"season_length": 4, "model": "Z"}]
+
+        return params
+
+
+class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
+    """StatsForecast Multiple Seasonal-Trend decomposition using LOESS model.
+
+    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+
+    The MSTL (Multiple Seasonal-Trend decomposition using LOESS) decomposes the time
+    series in multiple seasonalities using LOESS. Then forecasts the trend using
+    a custom non-seaonal model and each seasonality using a SeasonalNaive model.
+
+    Parameters
+    ----------
+    season_length : Union[int, List[int]]
+        Number of observations per unit of time. For multiple seasonalities use a list.
+    autoets_kwargs : dict
+        Extra arguments to pass to [`statsforecast.models.AutoETS`]
+        (https://nixtla.github.io/statsforecast/src/core/models.html#autoets).
+    alias : str
+        Custom name of the model.
+
+    References
+    ----------
+    .. [1]
+        https://nixtla.github.io/statsforecast/src/core/models.html#multiple-seasonalities
+    """
+
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+    }
+
+    def __init__(
+        self,
+        season_length: Union[int, List[int]],
+        *,
+        autoets_kwargs: Optional[Dict] = None,
+        alias: str = "MSTL",
+    ):
+        self.season_length = season_length
+        self.autoets_kwargs = autoets_kwargs
+        self.alias = alias
+
+        super().__init__()
+
+    def _instantiate_model(self):
+        """Create underlying forecaster instance."""
+        from statsforecast.models import MSTL, AutoETS
+
+        if self.autoets_kwargs:
+            trend_forecaster = AutoETS(self.autoets_kwargs)
+        else:
+            trend_forecaster = AutoETS(model="ZZN")
+
+        return MSTL(
+            season_length=self.season_length,
+            trend_forecaster=trend_forecaster,
+            alias=self.alias,
+        )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        params = {"season_length": 4}
 
         return params
