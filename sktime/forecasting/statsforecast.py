@@ -578,6 +578,21 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     ----------
     .. [1]
         https://nixtla.github.io/statsforecast/src/core/models.html#multiple-seasonalities
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastMSTL
+
+    >>> y = load_airline()
+    >>> model = StatsForecastMSTL(season_length=[3,12])
+    >>> fitted_model = model.fit(y=y)
+    >>> y_pred = fitted_model.predict(fh=[1,2,3])
+    >>> y_pred
+    1961-01    454.507079
+    1961-02    419.341442
+    1961-03    477.373918
+    Freq: M, Name: Number of airline passengers, dtype: float64
     """
 
     _tags = {
