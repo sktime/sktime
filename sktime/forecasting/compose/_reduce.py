@@ -2119,12 +2119,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self._lags = list(range(window_length))
         super().__init__()
 
-        warn(
-            "RecursiveReductionForecaster is experimental, and interfaces may change. "
-            "user feedback is appreciated in issue #3224 here: "
-            "https://github.com/alan-turing-institute/sktime/issues/3224"
-        )
-
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2168,17 +2162,20 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         impute_method = self.impute_method
 
+        cfg_fast = {"input_conversion": "off", "output_conversion": "off"}
+
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend")
+        lagger_y_to_X = Lag(lags=lags, index_out="extend").set_config(**cfg_fast)
+        imputer = Imputer(method=impute_method).set_config(**cfg_fast)
         if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+            lagger_y_to_X = lagger_y_to_X * imputer
         self.lagger_y_to_X_ = lagger_y_to_X
 
         Xt = lagger_y_to_X.fit_transform(y)
 
         # lag is 1, since we want to do recursive forecasting with 1 step ahead
-        lag_plus = Lag(lags=1, index_out="extend")
+        lag_plus = Lag(lags=1, index_out="extend").set_config(**cfg_fast)
         Xtt = lag_plus.fit_transform(Xt)
         Xtt_notna_idx = _get_notna_idx(Xtt)
         notna_idx = Xtt_notna_idx.intersection(y.index)
@@ -2330,7 +2327,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         Xt = lagger_y_to_X.transform(y)
 
-        lag_plus = Lag(lags=1, index_out="extend")
+        cfg_fast = {"input_conversion": "off", "output_conversion": "off"}
+        lag_plus = Lag(lags=1, index_out="extend").set_config(**cfg_fast)
         if self.impute_method is not None:
             lag_plus = lag_plus * Imputer(method=self.impute_method)
 
