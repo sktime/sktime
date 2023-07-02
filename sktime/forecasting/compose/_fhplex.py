@@ -83,10 +83,12 @@ class FhPlexForecaster(BaseForecaster):
         fh_params = self.fh_params
 
         if fh_params is None:
+
             def ret_param(ix):
                 return {}
 
         elif isinstance(fh_params, (list, dict)):
+
             def ret_param(ix):
                 return fh_params[ix]
 
@@ -355,8 +357,8 @@ class FhPlexForecaster(BaseForecaster):
         y_pred = self._get_preds(fh, "predict_var", X=X, cov=cov)
         return y_pred
 
-    # todo - implement concat
-    # def _predict_proba(self, fh, X, marginal=True):
+        # todo - implement concat
+        # def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
