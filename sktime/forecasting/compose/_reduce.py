@@ -2162,12 +2162,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         impute_method = self.impute_method
 
-        cfg_fast = {"input_conversion": "off", "output_conversion": "off"}
-
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend").set_config(**cfg_fast)
-        imputer = Imputer(method=impute_method).set_config(**cfg_fast)
+        lagger_y_to_X = Lag(lags=lags, index_out="extend")
+        imputer = Imputer(method=impute_method)
         if impute_method is not None:
             lagger_y_to_X = lagger_y_to_X * imputer
         self.lagger_y_to_X_ = lagger_y_to_X
@@ -2175,7 +2173,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = lagger_y_to_X.fit_transform(y)
 
         # lag is 1, since we want to do recursive forecasting with 1 step ahead
-        lag_plus = Lag(lags=1, index_out="extend").set_config(**cfg_fast)
+        lag_plus = Lag(lags=1, index_out="extend")
         Xtt = lag_plus.fit_transform(Xt)
         Xtt_notna_idx = _get_notna_idx(Xtt)
         notna_idx = Xtt_notna_idx.intersection(y.index)
@@ -2269,7 +2267,23 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_plus_preds = self._y
         y_pred_list = []
 
-        for _ in y_lags_no_gaps:
+        Xt = lagger_y_to_X.transform(y_plus_preds)
+
+        lag_plus = Lag(lags=1, index_out="extend")
+        if self.impute_method is not None:
+            imputer = Imputer(method=self.impute_method)
+            lag_plus = lag_plus * imputer
+
+        Xtt = lag_plus.fit_transform(Xt)
+
+        print(y_abs_no_gaps)
+
+        for predict_idx in y_abs_no_gaps:
+
+            import time
+
+            a = time.time()
+
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
                 y_plus_preds = y_plus_preds.asfreq(self.fh.freq)
 
@@ -2277,11 +2291,14 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
             lag_plus = Lag(lags=1, index_out="extend")
             if self.impute_method is not None:
-                lag_plus = lag_plus * Imputer(method=self.impute_method)
+                imputer = Imputer(method=self.impute_method)
+                lag_plus = lag_plus * imputer
 
             Xtt = lag_plus.fit_transform(Xt)
-            y_plus_one = lag_plus.fit_transform(y_plus_preds)
-            predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
+
+            b = time.time()
+            # print(b-a)
+
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             if X_pool is not None:
                 Xtt_predrow = pd.concat(
