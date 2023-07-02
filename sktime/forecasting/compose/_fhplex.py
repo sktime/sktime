@@ -425,9 +425,9 @@ class FhPlexForecaster(BaseForecaster):
 
         naive_m = ["last", "last", "last"]
         naive_list = [{"strategy": x} for x in naive_m * 20]
-        naive_dict = {k: naive_list[k % 3] for k in range(-10, 10)}
+        naive_dict = {k: naive_list[k % 3] for k in range(-50, 10)}
 
-        naive_str = "lambda ix: {'strategy': naive_m[ix % 3p]}"
+        naive_str = "lambda ix: {'strategy': naive_m[ix % 3]}"
 
         f = NaiveForecaster()
 
