@@ -50,7 +50,7 @@ dependencies = [
     "packaging",
     "scikit-base<0.6.0",
     "scikit-learn>=0.24.0,<1.3.0",
-    "scipy<1.11.0,>=1.2.0",
+    "scipy<2.0.0,>=1.2.0",
 ]
 
 [project.optional-dependencies]
