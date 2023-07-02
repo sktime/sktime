@@ -135,7 +135,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.initialization_method = "known" if self.initial_level else "estimated"
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
-        super()._fit(y, fh=fh)
+        super()._fit(y, X=None, fh=fh)
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute and store historical residual standard error
