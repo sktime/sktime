@@ -124,7 +124,7 @@ class _TbatsAdapter(BaseForecaster):
         if update_params:
             # update model state and refit parameters
             # _fit re-runs model instantiation which triggers refit
-            self._fit(y=self._y)
+            self._fit(y=self._y, X=None, fh=self._fh)
 
         else:
             # update model state without refitting parameters
