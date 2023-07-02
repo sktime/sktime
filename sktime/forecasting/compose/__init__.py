@@ -2,8 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements composite forecasters."""
 
-__author__ = ["mloning"]
-
 __all__ = [
     "HierarchyEnsembleForecaster",
     "ColumnEnsembleForecaster",
@@ -27,6 +25,8 @@ __all__ = [
     "ForecastByLevel",
     "Permute",
     "YfromX",
+    "DirectReductionForecaster",
+    "RecursiveReductionForecaster",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -45,12 +45,14 @@ from sktime.forecasting.compose._pipeline import (
     TransformedTargetForecaster,
 )
 from sktime.forecasting.compose._reduce import (
+    DirectReductionForecaster,
     DirectTabularRegressionForecaster,
     DirectTimeSeriesRegressionForecaster,
     DirRecTabularRegressionForecaster,
     DirRecTimeSeriesRegressionForecaster,
     MultioutputTabularRegressionForecaster,
     MultioutputTimeSeriesRegressionForecaster,
+    RecursiveReductionForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
     YfromX,
