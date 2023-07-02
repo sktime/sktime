@@ -21,11 +21,12 @@ class FhPlexForecaster(BaseForecaster):
     Parameters
     ----------
     forecaster : sktime compatible forecaster
-    fh_params : dict, list, or callable
+    fh_params : dict, list, callable, or str that eval-defines a callable
         specifies forecaster to use per fh element
         dict: keys = fh elements, values = param dict for forecaster
         list: i-th entry is forecaster param dict for i-th fh element
         callable: maps fh element to forecaster param dict
+        str: eval(fh_params) must define a lambda that maps fh element to param dict
         param dict need not be complete, only overrides for ``forecaster`` params
     fh_lookup : str, one of "relative" (default), "absolute", or "as-is"
         specifies fh elements used in dict or callable
@@ -69,6 +70,18 @@ class FhPlexForecaster(BaseForecaster):
 
         super().__init__()
 
+    @property
+    def _forecasters(self):
+        """Forecasters turned into name/est tuples."""
+        fh_keys = self._get_fh_keys(self._fh)
+        f_tupl = [(str(k), self.forecasters_[k]) for k in fh_keys]
+        return f_tupl
+
+    @property
+    def _plexfun(self):
+        """Get function that returns parameter dict given fh key index."""
+        fh_params = self.fh_params
+
         if fh_params is None:
             def ret_param(ix):
                 return {}
@@ -77,17 +90,12 @@ class FhPlexForecaster(BaseForecaster):
             def ret_param(ix):
                 return fh_params[ix]
 
+        elif isinstance(fh_params, str):
+            ret_param = eval(fh_params)
         else:
             ret_param = fh_params
 
-        self._plexfun = ret_param
-
-    @property
-    def _forecasters(self):
-        """Forecasters turned into name/est tuples."""
-        fh_keys = self._get_fh_keys(self._fh)
-        f_tupl = [(str(k), self.forecasters_[k]) for k in fh_keys]
-        return f_tupl
+        return ret_param
 
     def _get_fh_keys(self, fh):
         """Get keys used for self.forecasters_, from fh, given fh_lookup."""
@@ -143,7 +151,7 @@ class FhPlexForecaster(BaseForecaster):
 
             params_ix = self._plexfun(ix)
             f_ix = self.forecaster.clone().set_params(**params_ix)
-            self.forecasters_[fh_key] = f_ix.fit(y=y, X=X, fh=fh)
+            self.forecasters_[fh_key] = f_ix.fit(y=y, X=X, fh=[fh[i]])
 
         return self
 
@@ -158,7 +166,7 @@ class FhPlexForecaster(BaseForecaster):
             y_preds += [fh_method(**kwargs)]
 
         y_pred = pd.concat(y_preds, axis=0)
-        return y_pred
+        return y_pred.sort_index()
 
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
@@ -185,7 +193,7 @@ class FhPlexForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        y_pred = self._get_preds(fh, "predict", fh=fh, X=X)
+        y_pred = self._get_preds(fh, "predict", X=X)
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -237,9 +245,7 @@ class FhPlexForecaster(BaseForecaster):
         be overwritten by subclasses to implement more efficient updating algorithms
         when available.
         """
-        y_pred = self._get_preds(
-            fh, "predict", y=y, fh=fh, X=X, update_params=update_params
-        )
+        y_pred = self._get_preds(fh, "predict", y=y, X=X, update_params=update_params)
         return y_pred
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -274,7 +280,7 @@ class FhPlexForecaster(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        y_pred = self._get_preds(fh, "predict_quantiles", fh=fh, X=X, alpha=alpha)
+        y_pred = self._get_preds(fh, "predict_quantiles", X=X, alpha=alpha)
         return y_pred
 
     def _predict_interval(self, fh, X, coverage):
@@ -313,7 +319,7 @@ class FhPlexForecaster(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        y_pred = self._get_preds(fh, "predict_interval", fh=fh, X=X, coverage=coverage)
+        y_pred = self._get_preds(fh, "predict_interval", X=X, coverage=coverage)
         return y_pred
 
     def _predict_var(self, fh, X=None, cov=False):
@@ -346,7 +352,7 @@ class FhPlexForecaster(BaseForecaster):
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
         """
-        y_pred = self._get_preds(fh, "predict_var", fh=fh, X=X, cov=cov)
+        y_pred = self._get_preds(fh, "predict_var", X=X, cov=cov)
         return y_pred
 
     # todo - implement concat
@@ -412,17 +418,19 @@ class FhPlexForecaster(BaseForecaster):
         """
         from sktime.forecasting.naive import NaiveForecaster
 
-        naive_m = ["last", "mean", "drift"]
-        naive_list = [{"strategy": x} for x in naive_m]
+        # mean and drift are inefficient, for now use last only
+        # naive_m = ["last", "mean", "drift"]
+
+        naive_m = ["last", "last", "last"]
+        naive_list = [{"strategy": x} for x in naive_m * 20]
         naive_dict = {k: naive_list[k % 3] for k in range(-10, 10)}
 
-        def naive_fun(ix):
-            return naive_m[ix % 3]
+        naive_str = "lambda ix: {'strategy': naive_m[ix % 3p]}"
 
         f = NaiveForecaster()
 
         params1 = {"forecaster": f, "fh_params": naive_list}
         params2 = {"forecaster": f, "fh_params": naive_dict, "fh_lookup": "relative"}
-        params3 = {"forecaster": f, "fh_params": naive_fun, "fh_lookup": "relative"}
+        params3 = {"forecaster": f, "fh_params": naive_str, "fh_lookup": "relative"}
 
         return [params1, params2, params3]
