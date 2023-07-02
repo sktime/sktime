@@ -189,7 +189,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
         super().__init__()
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -221,7 +221,7 @@ class DynamicFactor(_StatsModelsAdapter):
             )
         return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
-    def _predict_interval(self, fh, X=None, coverage: Union[float, List[float]] = None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

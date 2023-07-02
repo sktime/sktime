@@ -21,7 +21,7 @@ class _BaseWindowForecaster(BaseForecaster):
         self.window_length = window_length
         self.window_length_ = None
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Predict core logic."""
         kwargs = {"X": X}
 

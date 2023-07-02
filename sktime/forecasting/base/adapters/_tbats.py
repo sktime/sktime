@@ -79,7 +79,7 @@ class _TbatsAdapter(BaseForecaster):
             context=self.context,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -133,7 +133,7 @@ class _TbatsAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters
