@@ -60,14 +60,6 @@ class AutoREG(_StatsModelsAdapter):
     deterministic : DeterministicProcess
         A deterministic process.  If provided, trend and seasonal are ignored.
         A warning is raised if trend is not "n" and seasonal is not False.
-    old_names : bool
-        Flag indicating whether to use the v0.11 names or the v0.12+ names.
-
-        .. deprecated:: 0.13.0
-
-           old_names is deprecated and will be removed after 0.14 is
-           released. You must update any code reliant on the old variable
-           names to use the new names.
 
     Examples
     --------
@@ -118,7 +110,6 @@ class AutoREG(_StatsModelsAdapter):
         period=None,
         missing="none",
         deterministic=None,
-        old_names=False,
         cov_type="nonrobust",
         cov_kwds=None,
         use_t=True,
@@ -132,7 +123,6 @@ class AutoREG(_StatsModelsAdapter):
         self.period = period
         self.missing = missing
         self.deterministic = deterministic
-        self.old_names = old_names
 
         # Fit Params
         self.cov_type = cov_type
@@ -189,7 +179,6 @@ class AutoREG(_StatsModelsAdapter):
             period=self.period,
             missing=self.missing,
             deterministic=self.deterministic,
-            old_names=self.old_names,
         )
 
         self._fitted_forecaster = self._forecaster.fit(
