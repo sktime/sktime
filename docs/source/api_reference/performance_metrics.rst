@@ -79,7 +79,7 @@ Point forecasts - functions
 Quantile and interval forecasts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.performance_metrics.forecasting
+.. currentmodule:: sktime.performance_metrics.forecasting.probabilistic
 
 .. autosummary::
     :toctree: auto_generated/
@@ -92,7 +92,7 @@ Quantile and interval forecasts
 Distribution forecasts
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.performance_metrics.forecasting
+.. currentmodule:: sktime.performance_metrics.forecasting.probabilistic
 
 .. autosummary::
     :toctree: auto_generated/
