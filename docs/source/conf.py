@@ -19,7 +19,7 @@ if not ON_READTHEDOCS:
 
 # -- Project information -----------------------------------------------------
 project = "sktime"
-copyright = "2019 - 2021 (BSD-3-Clause License)"
+copyright = "2019 - present (BSD-3-Clause License)"
 author = "sktime developers"
 
 # The full version, including alpha/beta/rc tags
