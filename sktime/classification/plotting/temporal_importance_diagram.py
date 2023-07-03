@@ -81,11 +81,17 @@ def plot_cif(cif, normalise_time_points=False, top_curves_shown=None, plot_mean=
     )
 
 
-def plot_TSF_temporal_importance_curve(tsf, normalize=False):
+def plot_TSF_temporal_importance_curve(ax, tsf, param_dict=None, normalize=False):
     """Temporal Importance curve diagram generator for TSF.
 
     Parameters
     ----------
+    ax : matplotlib.pyplot.axes
+    the axes (plot) to draw the curves on
+    tsf : BaseTimeSeriesForest
+    fitted TSF to compute & draw temportal curves of
+    param_dict : dict
+    dictoanry of parametes to pass to plotting function
     normalize : bool = False
     whether or not to normalize importance contribution to interval length. False
     matches design from [1], True is more informative of high importance
@@ -104,17 +110,18 @@ def plot_TSF_temporal_importance_curve(tsf, normalize=False):
     >>> from sktime.classification.plotting.temporal_importance_diagram import (
     ...     plot_TSF_temporal_importance_curve
     ... ) #doctest: +SKIP
+    >>> import matplotlib.pyplot as plt   #doctest: +SKIP
     >>> from sktime.datasets import load_gunpoint   #doctest: +SKIP
     >>> X_train, y_train = load_gunpoint(split="train", return_X_y=True) #doctest: +SKIP
     >>> clf = TimeSeriesForestClassifier(n_estimators=50)  #doctest: +SKIP
     >>> clf.fit(X_train, y_train)  #doctest: +SKIP
-    >>> fig = plot_TSF_temporal_importance_curve(clf, True)  #doctest: +SKIP
-    >>> fig.title(label="normalized")  #doctest: +SKIP
+    TimeSeriesForestClassifier(n_estimators=50)
+    >>> fig, ax = plt.subplots(1,1)  #doctest: +SKIP
+    >>> plot_TSF_temporal_importance_curve(ax, clf, normalize=True)  #doctest: +SKIP
+    >>> ax.set_title("normalized")  #doctest: +SKIP
     >>> fig.savefig("test_norm") #doctest: +SKIP
     """
     _check_soft_dependencies("matplotlib")
-
-    import matplotlib.pyplot as plt
 
     if not isinstance(tsf, BaseTimeSeriesForest) or not tsf._is_fitted:
         raise ValueError("Input must be a fitted object that inherits from BaseTSF")
@@ -132,8 +139,9 @@ def plot_TSF_temporal_importance_curve(tsf, normalize=False):
     }
 
     for curve_name, curve in curves.items():
-        plt.plot(curve, label=curve_name)
-
-    plt.legend()
-
-    return plt
+        if param_dict is not None:
+            return_plot = ax.plot(curve, label=curve_name, **param_dict)
+        else:
+            return_plot = ax.plot(curve, label=curve_name)
+    ax.legend()
+    return return_plot
