@@ -18,6 +18,9 @@ class FhPlexForecaster(BaseForecaster):
     will fit forecaster with fh=f1 and parameters fh_params[f1] to forecast f1,
     forecaster with fh=f2 and parameters fh_params[f1] to forecast f2, etc.
 
+    To use different estimators per horizon, combine ``FhPlexForecaster`` with
+    one of ``MultiplexForecaster`` and ``MultiplexTransformer``.
+
     Parameters
     ----------
     forecaster : sktime compatible forecaster
@@ -427,7 +430,7 @@ class FhPlexForecaster(BaseForecaster):
         naive_list = [{"strategy": x} for x in naive_m * 20]
         naive_dict = {k: naive_list[k % 3] for k in range(-50, 10)}
 
-        naive_str = "lambda ix: {'strategy': naive_m[ix % 3]}"
+        naive_str = "lambda ix: {'strategy': ['last', 'last', 'last'][ix % 3]}"
 
         f = NaiveForecaster()
 
