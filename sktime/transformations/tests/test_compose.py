@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sktime.datasets import load_airline
 from sktime.datatypes import get_examples
 from sktime.transformations.compose import (
+    ColumnEnsembleTransformer,
     FeatureUnion,
     InvertTransform,
     OptionalPassthrough,
@@ -214,8 +215,8 @@ def test_subset_getitem():
     t_both = t[["a", "b"], ["b__0", "b__2", "c__0", "c__2"]]
     t_none = t[:, :]
 
-    assert isinstance(t_before, TransformerPipeline)
-    assert isinstance(t_after_with_colon, TransformerPipeline)
+    assert isinstance(t_before, ColumnEnsembleTransformer)
+    assert isinstance(t_after_with_colon, ColumnEnsembleTransformer)
     assert isinstance(t_before_with_colon, TransformerPipeline)
     assert isinstance(t_both, TransformerPipeline)
     assert isinstance(t_none, ThetaLinesTransformer)
