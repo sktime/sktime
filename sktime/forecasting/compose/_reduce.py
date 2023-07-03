@@ -129,11 +129,6 @@ def _sliding_window_transform(
     if pooling == "global":
         n_cut = -window_length
 
-        # Do not truncate data if the NA handling strategy is specified in transformers.
-        truncate = any(tr.truncate is None for tr in transformers)
-        if not truncate:
-            n_cut = 0
-
         if len(transformers) == 1:
             tf_fit = transformers[0].fit(y)
         else:
