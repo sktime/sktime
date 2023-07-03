@@ -257,6 +257,6 @@ class AutoREG(_StatsModelsAdapter):
         params = [
             {"lags": 2, "trend": "c"},
             {"lags": 2, "trend": "ct"},
-            {"lags": 2, "trend": "t", "seasonal": True, "period": 12},
+            {"lags": 2, "trend": "t", "seasonal": True, "period": 2},
         ]
         return params
