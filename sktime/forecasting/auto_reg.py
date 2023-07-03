@@ -185,8 +185,8 @@ class AutoREG(_StatsModelsAdapter):
             cov_type=self.cov_type, cov_kwds=self.cov_kwds, use_t=self.use_t
         )
         for param, value in self._fitted_forecaster.params.items():
-            setattr(self, param + "_", value)
-            self._fitted_param_names = self._fitted_param_names + (param,)
+            setattr(self, str(param) + "_", value)
+            self._fitted_param_names = self._fitted_param_names + (str(param),)
         return self
 
     # todo: implement this, mandatory
