@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing mtype/scitypes lookup."""
 
 __author__ = ["fkiraly"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Adapter for using HCrystalBall forecastsers in sktime."""
@@ -114,9 +113,8 @@ class HCrystalBallAdapter(BaseForecaster):
     }
 
     def __init__(self, model):
-
         self.model = model
-        super(HCrystalBallAdapter, self).__init__()
+        super().__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.

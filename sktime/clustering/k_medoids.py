@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series kmedoids."""
 __author__ = ["chrisholder", "TonyBagnall"]
 
@@ -58,6 +57,17 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         the sample weights if provided.
     n_iter_: int
         Number of iterations run.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_arrow_head
+    >>> from sktime.clustering.k_medoids import TimeSeriesKMedoids
+    >>> X_train, y_train = load_arrow_head(split="train")
+    >>> X_test, y_test = load_arrow_head(split="test")
+    >>> clusterer = TimeSeriesKMedoids(n_clusters=3)  # doctest: +SKIP
+    >>> clusterer.fit(X_train)  # doctest: +SKIP
+    TimeSeriesKMedoids(n_clusters=3)
+    >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {"python_dependencies": "numba"}
@@ -76,7 +86,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     ):
         self._precomputed_pairwise = None
 
-        super(TimeSeriesKMedoids, self).__init__(
+        super().__init__(
             n_clusters,
             init_algorithm,
             metric,

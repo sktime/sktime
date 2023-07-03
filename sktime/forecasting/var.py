@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implements VAR Model as interface to statsmodels."""
 
 __all__ = ["VAR"]
@@ -14,8 +13,7 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VAR(_StatsModelsAdapter):
-    """
-    A VAR model is a generalisation of the univariate autoregressive.
+    """A VAR model is a generalisation of the univariate autoregressive.
 
     Direct interface for `statsmodels.tsa.vector_ar`
     A model for forecasting a vector of time series[1].
@@ -105,7 +103,7 @@ class VAR(_StatsModelsAdapter):
         self.freq = freq
         self.ic = ic
 
-        super(VAR, self).__init__(random_state=random_state)
+        super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
@@ -139,8 +137,7 @@ class VAR(_StatsModelsAdapter):
         return self
 
     def _predict(self, fh, X=None):
-        """
-        Wrap Statmodel's VAR forecast method.
+        """Wrap Statmodel's VAR forecast method.
 
         Parameters
         ----------
@@ -240,7 +237,6 @@ class VAR(_StatsModelsAdapter):
         df_list = []
 
         for cov in coverage:
-
             alpha = 1 - cov
 
             fcast_interval = model.forecast_interval(

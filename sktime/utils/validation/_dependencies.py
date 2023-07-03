@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
 __author__ = ["fkiraly", "mloning"]
@@ -109,7 +108,6 @@ def _check_soft_dependencies(
         )
 
     for package in packages:
-
         try:
             req = Requirement(package)
         except InvalidRequirement:
@@ -235,13 +233,11 @@ def _check_dl_dependencies(msg=None, severity="error"):
     """
     if not isinstance(msg, str):
         msg = (
-            "tensorflow and tensorflow-probability are required for "
-            "deep learning and probabilistic functionality in `sktime`. "
+            "tensorflow is required for deep learning functionality in `sktime`. "
             "To install these dependencies, run: `pip install sktime[dl]`"
         )
     try:
         import_module("tensorflow")
-        import_module("tensorflow_probability")
         return True
     except ModuleNotFoundError as e:
         if severity == "error":

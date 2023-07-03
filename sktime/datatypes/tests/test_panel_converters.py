@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing panel converters - internal functions and more extensive fixtures."""
 import numpy as np
 import pandas as pd
@@ -261,13 +260,10 @@ def test_from_multiindex_to_listdataset(n_instances, n_columns, n_timepoints):
     ):
         """Generate random pd Datetime in the start to end range.
 
-        unix timestamp is in ns by default.
-        Divide the unix time value by 10**9 to make it seconds
-        (or 24*60*60*10**9 to make it days).
-        The corresponding unit variable is passed to the pd.to_datetime function.
-        Values for the (divide_by, unit) pair to select is defined by the out_format
-        parameter.
-        for 1 -> out_format='datetime'
+        unix timestamp is in ns by default. Divide the unix time value by 10**9 to make
+        it seconds (or 24*60*60*10**9 to make it days). The corresponding unit variable
+        is passed to the pd.to_datetime function. Values for the (divide_by, unit) pair
+        to select is defined by the out_format parameter. for 1 -> out_format='datetime'
         for 2 -> out_format=anything else.
         """
         np.random.seed(random_seed)
@@ -285,7 +281,6 @@ def test_from_multiindex_to_listdataset(n_instances, n_columns, n_timepoints):
     def _make_example_multiindex(
         n_instances, n_columns, n_timepoints, random_seed=42
     ) -> pd.DataFrame:
-
         import numpy as np
 
         start = pd.to_datetime("1750-01-01")

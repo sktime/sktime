@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Machine type checkers for scitypes.
 
@@ -49,7 +48,7 @@ check_dict.update(check_dict_Proba)
 
 def _check_scitype_valid(scitype: str = None):
     """Check validity of scitype."""
-    valid_scitypes = list(set([x[1] for x in check_dict.keys()]))
+    valid_scitypes = list({x[1] for x in check_dict.keys()})
 
     if not isinstance(scitype, str):
         raise TypeError(f"scitype should be a str but found {type(scitype)}")
@@ -352,14 +351,9 @@ def check_is_scitype(
     Returns
     -------
     valid: bool - whether obj is a valid object of mtype/scitype
-    msg:
-        if legacy_interface=False:
-        dict[str, str] or None - error messages if object is not valid, otherwise None
+    msg: dict[str, str] or None
+        error messages if object is not valid, otherwise None
         keys are all mtypes tested, value for key is error message for that key
-        if legacy_interface=True:
-        str or list of str - error messages if object is not valid, otherwise None
-        str if mtype is str; list of len(mtype) with message per mtype if list
-        returned only if return_metadata is True
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True
         Fields depend on scitpe.

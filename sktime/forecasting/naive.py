@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements simple forecasts based on naive assumptions."""
@@ -118,7 +117,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
-        super(NaiveForecaster, self).__init__()
+        super().__init__()
         self.strategy = strategy
         self.sp = sp
         self.window_length = window_length
@@ -325,7 +324,6 @@ class NaiveForecaster(_BaseWindowForecaster):
         return y_pred[fh_idx]
 
     def _predict_naive(self, fh=None, X=None):
-
         from sktime.transformations.series.lag import Lag
 
         strategy = self.strategy
@@ -353,7 +351,6 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred = y_pred.iloc[:, 0]
 
         elif strategy == "last" and sp > 1:
-
             y_old = _pivot_sp(_y, sp, anchor_side="end")
             y_old = lagger.fit_transform(y_old)
 
@@ -390,7 +387,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         if strategy in NEW_PREDICT:
             return self._predict_naive(fh=fh, X=X)
 
-        y_pred = super(NaiveForecaster, self)._predict(fh=fh, X=X)
+        y_pred = super()._predict(fh=fh, X=X)
 
         # test_predict_time_index_in_sample_full[ForecastingPipeline-0-int-int-True]
         #   causes a pd.DataFrame to appear as y_pred, which upsets the next lines
@@ -655,11 +652,10 @@ class NaiveVariance(BaseForecaster):
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
-
         self.forecaster = forecaster
         self.initial_window = initial_window
         self.verbose = verbose
-        super(NaiveVariance, self).__init__()
+        super().__init__()
 
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -673,7 +669,6 @@ class NaiveVariance(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
-
         self.fh_early_ = fh is not None
         self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y, X=X, fh=fh)

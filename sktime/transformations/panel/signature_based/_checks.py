@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 """Input conversions for the SignatureClassifier.
 
-_checks.py
-====================
-Contains a reusable decorator function to handle the sklearn signature checks.
+_checks.py ==================== Contains a reusable decorator function to handle the
+sklearn signature checks.
 """
 import functools
 

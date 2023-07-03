@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Fully Connected Neural Network (CNN) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus"]
@@ -75,7 +74,7 @@ class FCNClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(FCNClassifier, self).__init__()
+        super().__init__()
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size

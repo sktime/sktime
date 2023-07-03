@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base classes for probability distribution objects."""
 
@@ -31,26 +30,25 @@ class BaseDistribution(BaseObject):
     }
 
     def __init__(self, index=None, columns=None):
-
         self.index = index
         self.columns = columns
 
-        super(BaseDistribution, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     @property
     def loc(self):
         """Location indexer.
 
-        Use `my_distribution.loc[index]` for `pandas`-like row/column subsetting
-        of `BaseDistribution` descendants.
+        Use `my_distribution.loc[index]` for `pandas`-like row/column subsetting of
+        `BaseDistribution` descendants.
 
         `index` can be any `pandas` `loc` compatible index subsetter.
 
         `my_distribution.loc[index]` or `my_distribution.loc[row_index, col_index]`
-        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`,
-        to exactly the same/cols rows as `pandas` `loc` would subset
-        rows in `my_distribution.index` and columns in `my_distribution.columns`.
+        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`, to
+        exactly the same/cols rows as `pandas` `loc` would subset rows in
+        `my_distribution.index` and columns in `my_distribution.columns`.
         """
         return _Indexer(ref=self, method="_loc")
 
@@ -58,15 +56,15 @@ class BaseDistribution(BaseObject):
     def iloc(self):
         """Integer location indexer.
 
-        Use `my_distribution.iloc[index]` for `pandas`-like row/column subsetting
-        of `BaseDistribution` descendants.
+        Use `my_distribution.iloc[index]` for `pandas`-like row/column subsetting of
+        `BaseDistribution` descendants.
 
         `index` can be any `pandas` `iloc` compatible index subsetter.
 
         `my_distribution.iloc[index]` or `my_distribution.iloc[row_index, col_index]`
-        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`,
-        to exactly the same/cols rows as `pandas` `iloc` would subset
-        rows in `my_distribution.index` and columns in `my_distribution.columns`.
+        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`, to
+        exactly the same/cols rows as `pandas` `iloc` would subset rows in
+        `my_distribution.index` and columns in `my_distribution.columns`.
         """
         return _Indexer(ref=self, method="_iloc")
 
@@ -87,7 +85,6 @@ class BaseDistribution(BaseObject):
         return self._iloc(rowidx=row_iloc, colidx=col_iloc)
 
     def _subset_params(self, rowidx, colidx):
-
         params = self._get_dist_params()
 
         subset_param_dict = {}
@@ -126,7 +123,6 @@ class BaseDistribution(BaseObject):
         )
 
     def _get_dist_params(self):
-
         params = self.get_params(deep=False)
         paramnames = params.keys()
         reserved_names = ["index", "columns"]
@@ -193,7 +189,7 @@ class BaseDistribution(BaseObject):
             warn(self._method_error_msg("pdf", fill_in=approx_method))
             return self.log_pdf(x=x).applymap(np.exp)
 
-        raise NotImplementedError(self._method_err_msg("pdf", "error"))
+        raise NotImplementedError(self._method_error_msg("pdf", "error"))
 
     def log_pdf(self, x):
         r"""Logarithmic probability density function.
@@ -233,11 +229,11 @@ class BaseDistribution(BaseObject):
 
             return self.pdf(x=x).applymap(np.log)
 
-        raise NotImplementedError(self._method_err_msg("log_pdf", "error"))
+        raise NotImplementedError(self._method_error_msg("log_pdf", "error"))
 
     def cdf(self, x):
         """Cumulative distribution function."""
-        N = self.APPROX_SPL
+        N = self.get_tag("approx_spl")
         approx_method = (
             "by approximating the expected value by the indicator function on "
             f"{N} samples"
@@ -252,7 +248,7 @@ class BaseDistribution(BaseObject):
 
     def ppf(self, p):
         """Quantile function = percent point function = inverse cdf."""
-        raise NotImplementedError(self._method_err_msg("cdf", "error"))
+        raise NotImplementedError(self._method_error_msg("ppf", "error"))
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -285,7 +281,7 @@ class BaseDistribution(BaseObject):
         )
         warn(self._method_error_msg("energy", fill_in=approx_method))
 
-        # splx, sply = i.i.d. samples of X - Y of size N = self.APPROX_ENERGY_SPL
+        # splx, sply = i.i.d. samples of X - Y of size N = approx_spl_size
         N = approx_spl_size
         if x is None:
             splx = self.sample(N)
@@ -345,7 +341,7 @@ class BaseDistribution(BaseObject):
         return spl.groupby(level=1).mean()
 
     def pdfnorm(self, a=2):
-        r"""a-norm of pdf, defaults to 2-norm.
+        r"""A-norm of pdf, defaults to 2-norm.
 
         computes a-norm of the entry marginal pdf, i.e.,
         :math:`\mathbb{E}[p_X(X)^{a-1}] = \int p(x)^a dx`,
@@ -423,7 +419,9 @@ class BaseDistribution(BaseObject):
 
         qres = pd.concat(qdfs, axis=1, keys=alpha)
         qres = qres.reorder_levels([1, 0], axis=1)
-        quantiles = qres.sort_index(axis=1)
+
+        cols = pd.MultiIndex.from_product([self.columns, alpha])
+        quantiles = qres.loc[:, cols]
         return quantiles
 
     def sample(self, n_samples=None):
@@ -457,7 +455,7 @@ class BaseDistribution(BaseObject):
                 df_spl = pd.concat(pd_smpl, keys=range(n_samples))
                 return df_spl
 
-        raise NotImplementedError(self._method_err_msg("sample", "error"))
+        raise NotImplementedError(self._method_error_msg("sample", "error"))
 
 
 class _Indexer:
@@ -508,13 +506,11 @@ class _BaseTFDistribution(BaseDistribution):
     }
 
     def __init__(self, index=None, columns=None, distr=None):
-
         self.distr = distr
 
-        super(_BaseTFDistribution, self).__init__(index=index, columns=columns)
+        super().__init__(index=index, columns=columns)
 
     def __str__(self):
-
         return self.to_str()
 
     def pdf(self, x):

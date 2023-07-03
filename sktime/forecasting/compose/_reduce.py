@@ -1,7 +1,5 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Composition functionality for reduction approaches to forecasting."""
 
 __author__ = [
@@ -217,7 +215,7 @@ class _Reducer(_BaseWindowForecaster):
         transformers=None,
         pooling="local",
     ):
-        super(_Reducer, self).__init__(window_length=window_length)
+        super().__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
@@ -334,7 +332,6 @@ class _Reducer(_BaseWindowForecaster):
         -------
         y, X: A pandas dataframe or series
             contains the y and X data prepared for the respective windows, see above.
-
         """
         if hasattr(self._timepoints, "freq"):
             if self._timepoints.freq is None:
@@ -409,7 +406,7 @@ class _DirectReducer(_Reducer):
         windows_identical=True,
     ):
         self.windows_identical = windows_identical
-        super(_DirectReducer, self).__init__(
+        super().__init__(
             estimator=estimator,
             window_length=window_length,
             transformers=transformers,
@@ -1065,7 +1062,6 @@ class _DirRecReducer(_Reducer):
         y_pred = np.zeros(len(fh))
 
         for i in range(len(self.fh)):
-
             # Slice data using expanding window.
             X_pred = X_full[:, :, : window_length + i]
 
@@ -1796,7 +1792,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
-        super(DirectReductionForecaster, self).__init__()
+        super().__init__()
 
         warn(
             "DirectReductionForecaster is experimental, and interfaces may change. "
@@ -1937,7 +1933,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.estimators_ = []
 
         for lag in y_lags:
-
             t = Lag(lags=lag, index_out="original", keep_column_names=True)
             lagger_y_to_y[lag] = t
 
@@ -2003,7 +1998,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred_list = []
 
         for i, lag in enumerate(y_lags):
-
             predict_idx = y_abs[i]
 
             lag_plus = Lag(lag, index_out="extend", keep_column_names=True)
@@ -2132,7 +2126,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
-        super(RecursiveReductionForecaster, self).__init__()
+        super().__init__()
 
         warn(
             "RecursiveReductionForecaster is experimental, and interfaces may change. "
@@ -2288,7 +2282,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred_list = []
 
         for _ in y_lags_no_gaps:
-
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
                 y_plus_preds = y_plus_preds.asfreq(self.fh.freq)
 
@@ -2466,10 +2459,9 @@ class YfromX(BaseForecaster, _ReducerMixin):
     }
 
     def __init__(self, estimator, pooling="local"):
-
         self.estimator = estimator
         self.pooling = pooling
-        super(YfromX, self).__init__()
+        super().__init__()
 
         if pooling == "local":
             mtypes = "pd.DataFrame"

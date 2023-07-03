@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module exports: data type definitions, checks, validation, fixtures, converters."""
 
 __author__ = ["fkiraly"]
