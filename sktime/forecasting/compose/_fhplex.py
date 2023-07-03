@@ -250,7 +250,9 @@ class FhPlexForecaster(BaseForecaster):
         be overwritten by subclasses to implement more efficient updating algorithms
         when available.
         """
-        y_pred = self._get_preds(fh, "predict", y=y, X=X, update_params=update_params)
+        y_pred = self._get_preds(
+            fh, "update_predict_single", y=y, X=X, update_params=update_params
+        )
         return y_pred
 
     def _predict_quantiles(self, fh, X, alpha):
