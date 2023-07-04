@@ -186,7 +186,7 @@ jobs:
         run: conda install -c anaconda libpython
 
       - name: Install sktime and dependencies
-        run: python -m pip install .[all_extras,dev]
+        run: python -m pip install .[all_extras_pandas2,dev]
 
       - name: Show dependencies
         run: python -m pip list
@@ -220,7 +220,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev] --no-cache-dir
+          python -m pip install .[all_extras_pandas2,dev] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list
