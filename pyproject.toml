@@ -157,11 +157,11 @@ docs = [
     "nbsphinx>=0.8.6",
     "numpydoc",
     "pydata-sphinx-theme",
-    "sphinx_issues<4.0.0",
+    "sphinx-issues<4.0.0",
     "sphinx-gallery<0.14.0",
     "sphinx-design<0.5.0",
     "sphinx-version-warning",
-    "sphinx<8.0.0",
+    "Sphinx<8.0.0",
     "tabulate",
 ]
 
