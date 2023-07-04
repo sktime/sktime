@@ -50,7 +50,7 @@ dependencies = [
     "packaging",
     "scikit-base<0.6.0",
     "scikit-learn>=0.24.0,<1.3.0",
-    "scipy<1.11.0,>=1.2.0",
+    "scipy<2.0.0,>=1.2.0",
 ]
 
 [project.optional-dependencies]
@@ -82,7 +82,7 @@ all_extras = [
     "tbats>=1.1.0",
     "tensorflow; python_version < '3.11'",
     "tsfresh>=0.17.0",
-    "tslearn>=0.5.2; python_version < '3.11'",
+    "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
     "seasonal",
 ]
@@ -128,6 +128,7 @@ docs = [
     "sphinx_issues==1.2.0",
     "sphinx-gallery==0.6.0",
     "sphinx-design==0.3.0",
+    "sphinx-version-warning",
     "sphinx==4.1.1",
     "tabulate",
 ]

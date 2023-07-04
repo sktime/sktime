@@ -2210,6 +2210,17 @@
         "doc",
         "code"
       ]
+    },
+
+    {
+      "login": "felipeangelimvieira",
+      "name": "Felipe Angelim",
+      "avatar_url": "https://avatars.githubusercontent.com/felipeangelimvieira",
+      "profile": "https://github.com/felipeangelimvieira",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }
