@@ -18,6 +18,7 @@ __all__ = [
     "ConstraintViolation",
     "CRPS",
     "LogLoss",
+    "SquaredDistrLoss",
 ]
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
@@ -26,5 +27,6 @@ from sktime.performance_metrics.forecasting.probabilistic._classes import (
     EmpiricalCoverage,
     LogLoss,
     PinballLoss,
+    SquaredDistrLoss,
     _BaseProbaForecastingErrorMetric,
 )
