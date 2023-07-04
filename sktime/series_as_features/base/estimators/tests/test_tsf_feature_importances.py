@@ -68,14 +68,18 @@ def test_gen_data_importance_differences():
 
     # tests:
     # average mean importance in [10,19] > ([0,9],[20,69])
-    # average slope imporatnce in [50,59] > ([0,49],[60,69])
+    # average slope imporatnce in ([10,19],[50,59]) > ([0,49],[60,69])
     # average stdev imporatnce in ([30,39],[50,59]) > ([0,29],[40,49],[60,69])
 
     avg_mean_int = np.mean(clf.mean_curve[10:19])
     avg_mean_ext = np.mean(clf.mean_curve[0:9]) + np.mean(clf.mean_curve[20:69])
 
-    avg_slope_int = np.mean(clf.slope_curve[50:59])
-    avg_slope_ext = np.mean(clf.slope_curve[0:49]) + np.mean(clf.slope_curve[60:69])
+    avg_slope_int = np.mean(clf.slope_curve[10:19]) + np.mean(clf.slope_curve[50:59])
+    avg_slope_ext = (
+        np.mean(clf.slope_curve[0:9])
+        + np.mean(clf.slope_curve[20:49])
+        + np.mean(clf.slope_curve[60:69])
+    )
 
     avg_stdev_int = np.mean(clf.stdev_curve[30:39]) + np.mean(clf.stdev_curve[50:59])
     avg_stdev_ext = (
