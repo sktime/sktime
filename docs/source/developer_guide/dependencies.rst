@@ -20,8 +20,8 @@ There are three types of dependencies in ``sktime``: **core**, **soft**, or **de
 
 We try to keep the number of core dependencies to a minimum and rely on other packages as soft dependencies when feasible.
 
-Handling soft dependencies of estimators
-----------------------------------------
+Handling soft dependencies
+--------------------------
 
 This section explains how to handle existing soft depencies.
 For adding a new soft dependency, see the section "adding a new soft dependency".
@@ -31,8 +31,8 @@ Soft dependencies in ``sktime`` should usually be isolated to estimators.
 Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
 This is handled through our ``_check_soft_dependencies`` utility
 `here <https://github.com/sktime/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
-
 There are specific conventions to add such warnings in estimators, as below.
+
 Estimators with a soft dependency need to ensure the following:
 
 *  imports of the soft dependency only happen inside the estimator,
