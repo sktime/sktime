@@ -108,6 +108,7 @@ def test_linex_function():
         mean_linex_error(y_true, y_pred, multioutput=[0.3, 0.7]), 0.30917568000716666
     )
 
+
 def test_make_scorer():
     """Test make_forecasting_scorer and the failure case in #4827."""
     import functools
