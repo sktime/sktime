@@ -66,7 +66,7 @@ the following need to be updated:
    add the dependency or version bounds in the ``all_extras`` dependency set.
    Following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention, all dependencies
    including build time dependencies and optional dependencies are specified in ``pyproject.toml``.
-*  Soft dependencies compatible with ``pandas 2`` should also be added in the
+*  Soft dependencies compatible with ``pandas 2`` should also be added/updated in the
    ``all_extras_pandas2`` dependency set in ``pyproject.toml``. This dependency set
    is used only in testing.
 
