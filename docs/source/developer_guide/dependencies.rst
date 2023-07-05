@@ -63,7 +63,7 @@ When adding a new soft dependency or changing the version of an existing one,
 the following need to be updated:
 
 *  in `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__,
-   add the dependency or version bounds in the ``all_extras`` dependency set.
+   add the dependency or update version bounds in the ``all_extras`` dependency set.
    Following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention, all dependencies
    including build time dependencies and optional dependencies are specified in ``pyproject.toml``.
 *  Soft dependencies compatible with ``pandas 2`` should also be added/updated in the
