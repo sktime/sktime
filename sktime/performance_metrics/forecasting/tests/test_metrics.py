@@ -112,6 +112,7 @@ def test_linex_function():
 def test_make_scorer():
     """Test make_forecasting_scorer and the failure case in #4827."""
     import functools
+
     from sklearn.metrics import mean_squared_log_error
 
     from sktime.performance_metrics.forecasting import make_forecasting_scorer
