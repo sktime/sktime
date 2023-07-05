@@ -100,7 +100,6 @@ class AutoREG(_StatsModelsAdapter):
         "python_dependencies": "statsmodels>=0.13.0",
     }
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
         lags=None,
@@ -137,11 +136,6 @@ class AutoREG(_StatsModelsAdapter):
 
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
-
-    # todo: implement this, mandatory
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
 
@@ -189,7 +183,6 @@ class AutoREG(_StatsModelsAdapter):
             self._fitted_param_names = self._fitted_param_names + (str(param),)
         return self
 
-    # todo: implement this, mandatory
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
@@ -232,9 +225,6 @@ class AutoREG(_StatsModelsAdapter):
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
