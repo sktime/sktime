@@ -20,9 +20,8 @@ There are three types of dependencies in ``sktime``: **core**, **soft**, or **de
 
 We try to keep the number of core dependencies to a minimum and rely on other packages as soft dependencies when feasible.
 
-
-Handling soft dependencies
---------------------------
+Handling soft dependencies of estimators
+----------------------------------------
 
 This section explains how to handle existing soft depencies.
 For adding a new soft dependency, see the section "adding a new soft dependency".
