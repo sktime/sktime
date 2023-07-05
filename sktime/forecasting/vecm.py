@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """VECM Forecaster."""
 
@@ -112,7 +111,7 @@ class VECM(_StatsModelsAdapter):
         self.exog_coint = exog_coint
         self.exog_coint_fc = exog_coint_fc
 
-        super(VECM, self).__init__()
+        super().__init__()
 
     def _fit(self, y, fh=None, X=None):
         """Fit forecaster to training data.

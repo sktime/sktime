@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for some metrics."""
 # currently this consists entirely of doctests from _classes and _functions

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 def convert_gluonts_result_to_multiindex(gluonts_result):
     """Back Convert from Gluonts to sktime.
 

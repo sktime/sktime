@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Composition functionality for reduction approaches to forecasting."""
 
@@ -128,6 +127,8 @@ def _sliding_window_transform(
     window_length = check_window_length(window_length, n_timepoints)
 
     if pooling == "global":
+        n_cut = -window_length
+
         if len(transformers) == 1:
             tf_fit = transformers[0].fit(y)
         else:
@@ -135,11 +136,11 @@ def _sliding_window_transform(
             tf_fit = FeatureUnion(feat).fit(y)
         X_from_y = tf_fit.transform(y)
 
-        X_from_y_cut = _cut_df(X_from_y, n_obs=n_timepoints - window_length)
-        yt = _cut_df(y, n_obs=n_timepoints - window_length)
+        X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
+        yt = _cut_df(y, n_obs=n_cut)
 
         if X is not None:
-            X_cut = _cut_df(X, n_obs=n_timepoints - window_length)
+            X_cut = _cut_df(X, n_obs=n_cut)
             Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
         else:
             Xt = X_from_y_cut
@@ -209,7 +210,7 @@ class _Reducer(_BaseWindowForecaster):
         transformers=None,
         pooling="local",
     ):
-        super(_Reducer, self).__init__(window_length=window_length)
+        super().__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
@@ -400,7 +401,7 @@ class _DirectReducer(_Reducer):
         windows_identical=True,
     ):
         self.windows_identical = windows_identical
-        super(_DirectReducer, self).__init__(
+        super().__init__(
             estimator=estimator,
             window_length=window_length,
             transformers=transformers,
@@ -1513,7 +1514,9 @@ def _get_forecaster(scitype, strategy):
 
 
 def _cut_df(X, n_obs=1, type="tail"):
-    """Cut input at tail or tail, supports grouping."""
+    """Cut input at tail or head, supports grouping."""
+    if n_obs == 0:
+        return X.copy()
     if isinstance(X.index, pd.MultiIndex):
         Xi_grp = X.index.names[0:-1]
         if type == "tail":
@@ -1784,7 +1787,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
-        super(DirectReductionForecaster, self).__init__()
+        super().__init__()
 
         warn(
             "DirectReductionForecaster is experimental, and interfaces may change. "
@@ -2118,7 +2121,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
-        super(RecursiveReductionForecaster, self).__init__()
+        super().__init__()
 
         warn(
             "RecursiveReductionForecaster is experimental, and interfaces may change. "
@@ -2453,7 +2456,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     def __init__(self, estimator, pooling="local"):
         self.estimator = estimator
         self.pooling = pooling
-        super(YfromX, self).__init__()
+        super().__init__()
 
         if pooling == "local":
             mtypes = "pd.DataFrame"

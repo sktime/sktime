@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Series Forest (TSF) Classifier."""
 
 __author__ = [
@@ -38,7 +37,7 @@ class BaseTimeSeriesForest:
         n_jobs=1,
         random_state=None,
     ):
-        super(BaseTimeSeriesForest, self).__init__(
+        super().__init__(
             self._base_estimator,
             n_estimators=n_estimators,
         )

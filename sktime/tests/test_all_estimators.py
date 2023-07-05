@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Suite of tests for all estimators.
 
@@ -1126,7 +1125,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         fitted_estimator = scenario.run(estimator_instance, method_sequence=["fit"])
 
-        # Check 0s_fitted attribute is updated correctly to False after calling fit
+        # Check is_fitted attributes are updated correctly to True after calling fit
         for attr in attrs:
             assert getattr(
                 fitted_estimator, attr

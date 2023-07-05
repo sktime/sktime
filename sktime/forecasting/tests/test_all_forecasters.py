@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for BaseForecaster API points.
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -290,6 +289,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             cutoff = get_cutoff(y_train, return_index=True)
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
             _assert_correct_columns(y_pred, y_train)
+
+            if estimator_instance.get_tag("capability:pred_int"):
+                y_pred_int = estimator_instance.predict_interval(X=X_test)
+                _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
+                y_pred_q = estimator_instance.predict_quantiles(X=X_test)
+                _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
         except NotImplementedError:
             pass
 
@@ -317,6 +322,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+
+            if estimator_instance.get_tag("capability:pred_int:insample"):
+                y_pred_int = estimator_instance.predict_interval()
+                _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
+                y_pred_q = estimator_instance.predict_quantiles()
+                _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
         except NotImplementedError:
             pass
 
@@ -724,6 +735,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             with pytest.raises(ValueError):
                 f.predict()
 
+            if f.get_tag("capability:pred_int"):
+                with pytest.raises(ValueError):
+                    f.predict_interval()
+                with pytest.raises(ValueError):
+                    f.predict_quantiles()
+
     def test_different_fh_in_fit_and_predict_error_handling(
         self, estimator_instance, n_columns
     ):
@@ -738,6 +755,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # changing fh during predict should raise error
         with pytest.raises(ValueError):
             f.predict(fh=FH0 + 1)
+
+        if f.get_tag("capability:pred_int"):
+            with pytest.raises(ValueError):
+                f.predict_interval(fh=FH0 + 1)
+            with pytest.raises(ValueError):
+                f.predict_quantiles(fh=FH0 + 1)
 
     def test_hierarchical_with_exogeneous(self, estimator_instance, n_columns):
         """Check that hierarchical forecasting works, also see bug #3961.
@@ -796,3 +819,24 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             # if levels are added, all expected levels and times should be contained
             assert set(X_test.index).issubset(y_pred.index)
+
+        if estimator_instance.get_tag("capability:pred_int"):
+            y_pred_int = estimator_instance.predict_interval(X=X_test)
+
+            assert isinstance(y_pred_int, pd.DataFrame)
+            assert check_is_mtype(y_pred_int, "pd_multiindex_hier")
+
+            if len(y_pred_int.index) == len(X_test.index):
+                assert np.all(y_pred_int.index == X_test.index)
+            else:
+                assert set(X_test.index).issubset(y_pred_int.index)
+
+            y_pred_q = estimator_instance.predict_quantiles(X=X_test)
+
+            assert isinstance(y_pred_q, pd.DataFrame)
+            assert check_is_mtype(y_pred_q, "pd_multiindex_hier")
+
+            if len(y_pred_q.index) == len(X_test.index):
+                assert np.all(y_pred_q.index == X_test.index)
+            else:
+                assert set(X_test.index).issubset(y_pred_q.index)

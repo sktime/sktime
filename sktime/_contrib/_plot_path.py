@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Alignment path plotting utilities."""
 import numpy as np
 

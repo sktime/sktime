@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """A transformer to compute the time elapsed since a reference time."""
 from __future__ import annotations
@@ -109,7 +108,7 @@ class TimeSince(BaseTransformer):
         self.freq = freq
         self.keep_original_columns = keep_original_columns
         self.positive_only = positive_only
-        super(TimeSince, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

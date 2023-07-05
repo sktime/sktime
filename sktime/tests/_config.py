@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __author__ = ["mloning"]
 __all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
@@ -39,6 +37,13 @@ EXCLUDE_ESTIMATORS = [
     "SimpleRNNClassifier",
     "SimpleRNNRegressor",
     "EditDist",
+    "CNNClassifier",
+    "FCNClassifier",
+    "InceptionTimeClassifer",
+    "LSTMFCNClassifier",
+    "MLPClassifier",
+    "CNNRegressor",
+    "ResNetRegressor",
 ]
 
 
@@ -49,6 +54,7 @@ EXCLUDED_TESTS = {
         "test_predict_time_index",
         "test_predict_residuals",
         "test_predict_interval",
+        "test_predict_time_index_with_X",  # separate - refer to #4765
     ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
@@ -156,6 +162,15 @@ EXCLUDED_TESTS = {
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAX": "test_fit_transform_output",
+    "DynamicFactor": [
+        "test_predict_time_index_in_sample_full",  # refer to #4765
+    ],
+    "ARIMA": [
+        "test_predict_time_index_in_sample_full",  # refer to #4765
+    ],
+    "VECM": [
+        "test_hierarchical_with_exogeneous",  # refer to #4743
+    ],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

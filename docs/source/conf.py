@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Configuration file for the Sphinx documentation builder."""
 
 import os
@@ -50,6 +49,7 @@ extensions = [
     "myst_parser",
     "sphinx_design",
     "sphinx_issues",
+    "versionwarning.extension",
 ]
 
 # Recommended by sphinx_design when using the MyST Parser
@@ -167,7 +167,7 @@ def linkcode_resolve(domain, info):
         filename = "sktime/%s#L%d-L%d" % find_source()
     except Exception:
         filename = info["module"].replace(".", "/") + ".py"
-    return "https://github.com/sktime/sktime/blob/%s/%s" % (
+    return "https://github.com/sktime/sktime/blob/{}/{}".format(
         CURRENT_VERSION,
         filename,
     )
@@ -424,7 +424,7 @@ Generated using nbsphinx_. The Jupyter notebook can be found here_.
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
+    "python": (f"https://docs.python.org/{sys.version_info.major}", None),
     "numpy": ("https://docs.scipy.org/doc/numpy/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
     "matplotlib": ("https://matplotlib.org/", None),
@@ -436,3 +436,15 @@ intersphinx_mapping = {
 
 # -- Options for _todo extension ----------------------------------------------
 todo_include_todos = False
+
+# sphinx-version-warning config
+versionwarning_messages = {
+    "latest": (
+        "This document is for the development version. "
+        'For the stable version documentation, see <a href="/en/stable/">here</a>.'
+    )
+}
+
+# Show warning at top of page
+versionwarning_body_selector = "div.document"
+versionwarning_banner_title = ""

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for feature importances in time series forests."""
 import numpy as np
 import pytest

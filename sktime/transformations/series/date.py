@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
 __author__ = ["danbartl", "KishManani", "VyomkeshVyas"]
@@ -147,6 +146,8 @@ class DateTimeFeatures(BaseTransformer):
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         self.keep_original_columns = keep_original_columns
 
+        # todo 0.22.0: change logic for comprehensive to include "hour_of_week"
+        # and remove this warning
         if self.feature_scope == "comprehensive":
             warnings.warn(
                 "From 0.22.0 onwards, 'comprehensive' will contain "
@@ -154,7 +155,7 @@ class DateTimeFeatures(BaseTransformer):
                 stacklevel=2,
             )
 
-        super(DateTimeFeatures, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

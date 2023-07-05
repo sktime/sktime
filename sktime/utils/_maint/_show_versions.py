@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # License: BSD 3 clause
 """Utility methods to print system info for debugging.
 
@@ -111,8 +110,8 @@ def show_versions():
 
     print("\nSystem:")  # noqa: T001, T201
     for k, stat in sys_info.items():
-        print("{k:>10}: {stat}".format(k=k, stat=stat))  # noqa: T001, T201
+        print(f"{k:>10}: {stat}")  # noqa: T001, T201
 
     print("\nPython dependencies:")  # noqa: T001, T201
     for k, stat in deps_info.items():
-        print("{k:>13}: {stat}".format(k=k, stat=stat))  # noqa: T001, T201
+        print(f"{k:>13}: {stat}")  # noqa: T001, T201

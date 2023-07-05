@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements pipelines for forecasting."""
 
@@ -394,7 +393,7 @@ class ForecastingPipeline(_Pipeline):
     def __init__(self, steps):
         self.steps = steps
         self.steps_ = self._check_steps(steps, allow_postproc=False)
-        super(ForecastingPipeline, self).__init__()
+        super().__init__()
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
@@ -806,7 +805,7 @@ class TransformedTargetForecaster(_Pipeline):
     def __init__(self, steps):
         self.steps = steps
         self.steps_ = self._check_steps(steps, allow_postproc=True)
-        super(TransformedTargetForecaster, self).__init__()
+        super().__init__()
 
         # set the tags based on forecaster
         tags_to_clone = [
@@ -1229,6 +1228,7 @@ class ForecastX(BaseForecaster):
     _tags = {
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
+        "scitype:y": "both",
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
         "ignores-exogeneous-X": False,
@@ -1254,7 +1254,7 @@ class ForecastX(BaseForecaster):
         self.behaviour = behaviour
         self.columns = columns
 
-        super(ForecastX, self).__init__()
+        super().__init__()
 
         tags_to_clone_from_forecaster_y = [
             "capability:pred_int",
@@ -1655,7 +1655,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self.permutation = permutation
         self.steps_arg = steps_arg
 
-        super(Permute, self).__init__()
+        super().__init__()
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:insample",

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Estimator checker for extension."""
 
 __author__ = ["fkiraly"]

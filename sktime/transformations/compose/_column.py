@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
 """Columnwise transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
-__all__ = ["ColumnwiseTransformer"]
+__all__ = ["ColumnEnsembleTransformer", "ColumnwiseTransformer"]
 
 import pandas as pd
-from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
@@ -77,7 +75,7 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
 
     def __init__(self, transformers):
         self.transformers = transformers
-        super(ColumnEnsembleTransformer, self).__init__()
+        super().__init__()
 
         # set requires-fh-in-fit depending on transformers
         if isinstance(transformers, BaseTransformer):
@@ -286,7 +284,7 @@ class ColumnwiseTransformer(BaseTransformer):
     def __init__(self, transformer, columns=None):
         self.transformer = transformer
         self.columns = columns
-        super(ColumnwiseTransformer, self).__init__()
+        super().__init__()
 
         tags_to_clone = [
             "y_inner_mtype",
@@ -398,7 +396,6 @@ class ColumnwiseTransformer(BaseTransformer):
 
         return X
 
-    @if_delegate_has_method(delegate="transformer")
     def update(self, X, y=None, update_params=True):
         """Update parameters.
 

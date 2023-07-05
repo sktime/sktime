@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Class for signature computation over windows."""
 import numpy as np
 

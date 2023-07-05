@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base class template for forecaster scitype.
 
@@ -111,7 +110,7 @@ class BaseForecaster(BaseEstimator):
 
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
-        super(BaseForecaster, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __mul__(self, other):
@@ -1130,10 +1129,7 @@ class BaseForecaster(BaseEstimator):
         y_pred = self.predict(fh=fh, X=X)
 
         if not type(y_pred) == type(y):
-            raise TypeError(
-                "y must have same type, dims, index as expected predict return. "
-                f"expected type {type(y_pred)}, but found {type(y)}"
-            )
+            y = convert_to(y, self._y_mtype_last_seen)
 
         y_res = y - y_pred
 
@@ -1212,7 +1208,7 @@ class BaseForecaster(BaseEstimator):
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super(BaseForecaster, self).get_fitted_params(deep=deep)
+            return super().get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys

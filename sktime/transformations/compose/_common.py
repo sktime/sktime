@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Common components and constants for transformer compositors."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 

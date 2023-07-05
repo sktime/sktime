@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Residual Network (ResNet) for regression."""
 
 __author__ = ["James-Large", "Withington"]
@@ -55,7 +54,7 @@ class ResNetRegressor(BaseDeepRegressor):
     >>> from sktime.regression.deep_learning.resnet import ResNetRegressor
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
-    >>> clf = ResNetRegressor(n_epochs=20, bacth_size=4) # doctest: +SKIP
+    >>> clf = ResNetRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
     >>> clf.fit(X_train, Y_train) # doctest: +SKIP
     ResNetRegressor(...)
     """
@@ -76,7 +75,7 @@ class ResNetRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(ResNetRegressor, self).__init__()
+        super().__init__()
 
         self.n_epochs = n_epochs
         self.callbacks = callbacks
