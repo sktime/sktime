@@ -22,6 +22,8 @@ class CNNNetwork(BaseDeepNetwork):
     filter_sizes    : array of int, shape = (nb_conv_layers)
     activation      : string, default = sigmoid
         keras activation function
+    padding         : string, default = valid
+        padding type for convolution layers
     random_state    : int, default = 0
         seed to any needed random actions
 
@@ -44,10 +46,12 @@ class CNNNetwork(BaseDeepNetwork):
         avg_pool_size=3,
         n_conv_layers=2,
         activation="sigmoid",
+        padding="valid",
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
+        self.padding = padding
         self.kernel_size = kernel_size
         self.avg_pool_size = avg_pool_size
         self.n_conv_layers = n_conv_layers
@@ -72,23 +76,18 @@ class CNNNetwork(BaseDeepNetwork):
 
         from tensorflow import keras
 
-        padding = "valid"
         input_layer = keras.layers.Input(input_shape)
 
-        # Avoid hard-code
-        output_length = input_shape[0] - self.kernel_size + 1
-
-        if output_length < input_shape[0]:
-            padding = "same"
-
         # Extends filter_sizes to match n_conv_layers length
-        self.filter_sizes.extend([self.filter_sizes[-1]] *
-                                 (self.n_conv_layers - len(self.filter_sizes)))
+        self.filter_sizes = self.filter_sizes[:self.n_conv_layers] + \
+                           [self.filter_sizes[-1]] * \
+                            max(0, self.n_conv_layers - len(self.filter_sizes))
+
 
         conv = keras.layers.Conv1D(
             filters=self.filter_sizes[0],
             kernel_size=self.kernel_size,
-            padding=padding,
+            padding=self.padding,
             activation=self.activation,
         )(input_layer)
         conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(conv)
@@ -97,7 +96,7 @@ class CNNNetwork(BaseDeepNetwork):
             conv = keras.layers.Conv1D(
                 filters=self.filter_sizes[i],
                 kernel_size=self.kernel_size,
-                padding=padding,
+                padding=self.padding,
                 activation=self.activation,
             )(conv)
             conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(conv)
