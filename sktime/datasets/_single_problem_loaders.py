@@ -1274,7 +1274,11 @@ def load_covid_3month(split=None, return_X_y=True):
 
 
 def fetch_forecastingorg(
-    name, replace_missing_vals, value_column_name, return_type, extract_path=None
+    name,
+    replace_missing_vals="NAN",
+    value_column_name="series_value",
+    return_type="default_tsf",
+    extract_path=None,
 ):
     """Fetch forecasting datasets from Monash Time Series Forecasting Archive.
 
@@ -1293,11 +1297,11 @@ def fetch_forecastingorg(
     value_column_name: str, default="series_value"
         Any name that is preferred to have as the name of the column containing series
         values in the returning dataframe.
-    return_type : str - "pd_multiindex_hier" (default), "tsf_default", or valid sktime
+    return_type : str - "pd_multiindex_hier" (default), "default_tsf", or valid sktime
         mtype string for in-memory data container format specification of the
         return type:
         - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`
-        - "tsf_default" = container that faithfully mirrors tsf format from the original
+        - "default_tsf" = container that faithfully mirrors tsf format from the original
             implementation in: https://github.com/rakshitha123/TSForecasting/
             blob/master/utils/data_loader.py.
         - other valid mtype strings are Panel or Hierarchical mtypes in
@@ -1323,14 +1327,16 @@ def fetch_forecastingorg(
     if extract_path is not None:
         local_module = os.path.dirname(extract_path)
         local_dirname = extract_path
-    else:  # this is the default path
+    else:  # this is the default path for downloaded dataset
         local_module = MODULE
         local_dirname = DIRNAME
 
     if not os.path.exists(os.path.join(local_module, local_dirname)):
         os.makedirs(os.path.join(local_module, local_dirname))
+
+    path_to_data_dir = os.path.join(local_module, local_dirname)
     # TODO should create a function to check if dataset exists
-    if name not in _list_available_datasets(os.path.join(local_module, local_dirname)):
+    if name not in _list_available_datasets(path_to_data_dir, "forecastingorg"):
         # Dataset is not already present in the datasets directory provided.
         # If it is not there, download and install it.
 
@@ -1345,12 +1351,13 @@ def fetch_forecastingorg(
             )
 
         url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
+
         # This also tests the validitiy of the URL, can't rely on the html
         # status code as it always returns 200
         try:
             _download_and_extract(
                 url,
-                extract_path=extract_path,
+                extract_path=path_to_data_dir,
             )
         except zipfile.BadZipFile as e:
             raise ValueError(
@@ -1359,8 +1366,7 @@ def fetch_forecastingorg(
                 f"https://forecastingdata.org/.",
             ) from e
 
-    # TODO: create a registry function to lookup
-    path = name + "something, dir where data is stored"
+    path_to_file = os.path.join(path_to_data_dir, f"{name}/{name}.tsf")
     return load_tsf_to_dataframe(
-        path, replace_missing_vals, value_column_name, return_type
+        path_to_file, replace_missing_vals, value_column_name, return_type
     )

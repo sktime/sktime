@@ -2,8 +2,10 @@
 import numpy as np
 import pandas as pd
 import pytest
+import requests
 
 from sktime.datasets import (  # Univariate; Unequal length; Multivariate
+    fetch_forecastingorg,
     load_acsf1,
     load_arrow_head,
     load_basic_motions,
@@ -14,6 +16,7 @@ from sktime.datasets import (  # Univariate; Unequal length; Multivariate
     load_UCR_UEA_dataset,
     load_unit_test,
 )
+from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 
 UNIVARIATE_PROBLEMS = [
     load_acsf1,
@@ -93,3 +96,33 @@ def test_load_UEA():
 
     for mult_name in mult_names:
         load_UCR_UEA_dataset(mult_name)
+
+
+def test_fetch_forecastingorg():
+    """Test loading downloaded dataset from forecasting.org."""
+    file = "UnitTest"
+    loaded_datasets, metadata = fetch_forecastingorg(name=file)
+    assert len(loaded_datasets) == 1
+    assert metadata["frequency"] == "yearly"
+    assert metadata["forecast_horizon"] == 4
+    assert metadata["contain_missing_values"] is False
+    assert metadata["contain_equal_length"] is False
+
+
+@pytest.mark.parametrize("name", tsf_all_datasets)
+def test_check_link_downloadable(name):
+    """Test dataset URL from forecasting.org is downloadable and exits."""
+    url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
+
+    # Send a GET request to check if the link exists
+    response = requests.head(url)
+
+    # Check if the response status code is 200 (OK)
+    assert response.status_code == 200, "URL is not valid or does not exist."
+
+    # Check if the response headers indicate that the content is downloadable
+    content_type = response.headers.get("Content-Type")
+    content_disposition = response.headers.get("Content-Disposition")
+
+    assert "application/octet-stream" in content_type, "URL is not downloadable."
+    assert "attachment" in content_disposition, "URL is not downloadable."
