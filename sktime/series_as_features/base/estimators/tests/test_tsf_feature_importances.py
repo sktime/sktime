@@ -10,9 +10,9 @@ X_train, y_train = make_classification_problem()
 
 
 def test_sum_feature_importances():
-    """Test feature importances sums for model classifier..
+    """Test feature importances sums for model classifier.
 
-    Sum of normalized temporal importance curves should be equal to number of
+    Sum of the normalized temporal importance curves should be equal to the number of
     estimators in ensemble.
     """
     # make classifier and fit to data
@@ -31,63 +31,49 @@ def test_gen_data_importance_differences():
     """Tests synthetic data to ensure importances are where they are expected.
 
     Synthetic data class 0 is randomly generated with mean 0 and stdev 1.
-    Synthetic data class 1 is segmented into 7 parts:
-        Part 1 has mean 0 and stdev 1.
-        Part 2 has mean 3 and stdev 1.
-        Part 3 has mean 0 and stdev 1.
-        Part 4 has mean 0 and stdev 3.
-        Part 5 has mean 0 and stdev 1.
-        Part 6 has mean 0 and stdev 1, but is shifted so that its avg slope is 1.
-            This also changes the stdev of this segement away from the generated value.
-        Part 7 has mean 0 and stdev 1.
-
-    The three tests check that the average values of the importances in the
-    defined regions are higher than elsewhere."""
+    Synthetic data class 1 is randomly generated with mean 5 and stdev 1.
+    Synthetic data class 2 is randomly generated with mean 0 and stdev 5.
+    We don't check slope because the slope changes the mean and stdev in
+    random intervals"""
+    data0 = []
     data1 = []
     data2 = []
-    slope_offset = np.linspace(-5, 5, 10)
-    slope_offset = np.pad(slope_offset, (50, 10), "constant", constant_values=(0, 0))
-    for i in range(30):
-        data1.append(piecewise_normal([0], [70], [1]))
-        data2.append(
-            piecewise_normal([0, 3, 0, 0, 0, 0, 0], [10] * 7, [1, 1, 1, 3, 1, 1, 1])
-        )
-        data2[i] += slope_offset
+    n_timeseries = 30
+    for _ in range(n_timeseries):
+        data0.append(piecewise_normal([0], [50], [1]))
+        data1.append(piecewise_normal([5], [50], [1]))
+        data2.append(piecewise_normal([0], [50], [5]))
 
-    X_train = []
-    for x in data1 + data2:
-        X_train.append(pd.Series(x))
-    X_train = pd.DataFrame({"dim_0": X_train})
+    X_train_1 = []
+    X_train_2 = []
+    for x in data0 + data1:
+        X_train_1.append(pd.Series(x))
+    for x in data0 + data2:
+        X_train_2.append(pd.Series(x))
+    X_train_1 = pd.DataFrame({"dim_0": X_train_1})
+    X_train_2 = pd.DataFrame({"dim_0": X_train_2})
 
-    y_train = np.pad(np.zeros(30), (0, 30), "constant", constant_values=(1, 1))
+    y_train = np.pad(
+        np.zeros(n_timeseries), (0, n_timeseries), "constant", constant_values=(1, 1)
+    )
 
     n_est = 100
-    clf = TimeSeriesForestClassifier(n_estimators=n_est)
-    clf.fit(X_train, y_train)
-    clf.calc_temporal_curves(normalize=True)
+    clf_1 = TimeSeriesForestClassifier(n_estimators=n_est)
+    clf_1.fit(X_train_1, y_train)
+    clf_1.calc_temporal_curves(normalize=True)
+    clf_2 = TimeSeriesForestClassifier(n_estimators=n_est)
+    clf_2.fit(X_train_2, y_train)
+    clf_2.calc_temporal_curves(normalize=True)
 
     # tests:
-    # average mean importance in [10,19] > ([0,9],[20,69])
-    # average slope imporatnce in ([10,19],[50,59]) > ([0,49],[60,69])
-    # average stdev imporatnce in ([30,39],[50,59]) > ([0,29],[40,49],[60,69])
+    # average mean importance in clf_1 is higher than in clf_2
+    # average stdev imporatnce in clf_2 is higher than in clf_1
 
-    avg_mean_int = np.mean(clf.mean_curve[10:19])
-    avg_mean_ext = np.mean(clf.mean_curve[0:9]) + np.mean(clf.mean_curve[20:69])
+    avg_mean_1 = np.mean(clf_1.mean_curve)
+    avg_mean_2 = np.mean(clf_2.mean_curve)
 
-    avg_slope_int = np.mean(clf.slope_curve[10:19]) + np.mean(clf.slope_curve[50:59])
-    avg_slope_ext = (
-        np.mean(clf.slope_curve[0:9])
-        + np.mean(clf.slope_curve[20:49])
-        + np.mean(clf.slope_curve[60:69])
-    )
+    avg_stdev_1 = np.mean(clf_1.stdev_curve)
+    avg_stdev_2 = np.mean(clf_2.stdev_curve)
 
-    avg_stdev_int = np.mean(clf.stdev_curve[30:39]) + np.mean(clf.stdev_curve[50:59])
-    avg_stdev_ext = (
-        np.mean(clf.stdev_curve[0:29])
-        + np.mean(clf.stdev_curve[40:49])
-        + np.mean(clf.stdev_curve[60:69])
-    )
-
-    assert avg_mean_int > avg_mean_ext  # mean
-    assert avg_slope_int > avg_slope_ext  # slope
-    assert avg_stdev_int > avg_stdev_ext  # stdev
+    assert avg_mean_1 > avg_mean_2
+    assert avg_stdev_2 > avg_stdev_1

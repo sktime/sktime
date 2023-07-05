@@ -81,7 +81,7 @@ def plot_cif(cif, normalise_time_points=False, top_curves_shown=None, plot_mean=
     )
 
 
-def plot_TSF_temporal_importance_curve(ax, tsf, param_dict=None, normalize=False):
+def plot_TSF_temporal_importance_curve(tsf, param_dict=None, ax=None, normalize=False):
     """Temporal Importance curve diagram generator for TSF.
 
     Parameters
@@ -117,11 +117,13 @@ def plot_TSF_temporal_importance_curve(ax, tsf, param_dict=None, normalize=False
     >>> clf.fit(X_train, y_train)  #doctest: +SKIP
     TimeSeriesForestClassifier(n_estimators=50)
     >>> fig, ax = plt.subplots(1,1)  #doctest: +SKIP
-    >>> plot_TSF_temporal_importance_curve(ax, clf, normalize=True)  #doctest: +SKIP
+    >>> plot_TSF_temporal_importance_curve(clf, ax=ax, normalize=True)  #doctest: +SKIP
     >>> ax.set_title("normalized")  #doctest: +SKIP
     >>> fig.savefig("test_norm") #doctest: +SKIP
     """
     _check_soft_dependencies("matplotlib")
+
+    import matplotlib.pyplot as plt
 
     if not isinstance(tsf, BaseTimeSeriesForest) or not tsf._is_fitted:
         raise ValueError("Input must be a fitted object that inherits from BaseTSF")
@@ -132,6 +134,11 @@ def plot_TSF_temporal_importance_curve(ax, tsf, param_dict=None, normalize=False
     except AttributeError:
         tsf.calc_temporal_curves(normalize)
 
+    _ax_kwarg_is_none = True if ax is None else False
+
+    if _ax_kwarg_is_none:
+        fig, ax = plt.subplots(1)
+
     curves = {
         "Mean": tsf.mean_curve,
         "StDev": tsf.stdev_curve,
@@ -140,8 +147,11 @@ def plot_TSF_temporal_importance_curve(ax, tsf, param_dict=None, normalize=False
 
     for curve_name, curve in curves.items():
         if param_dict is not None:
-            return_plot = ax.plot(curve, label=curve_name, **param_dict)
+            ax.plot(curve, label=curve_name, **param_dict)
         else:
-            return_plot = ax.plot(curve, label=curve_name)
+            ax.plot(curve, label=curve_name)
     ax.legend()
-    return return_plot
+    if _ax_kwarg_is_none:
+        return fig, ax
+    else:
+        return ax
