@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Probability Threshold Early Classifier.
 
 An early classifier using a prediction probability threshold with a time series
@@ -112,7 +111,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         self._estimators = []
         self._classification_points = []
 
-        super(ProbabilityThresholdEarlyClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)
@@ -269,7 +268,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
     def _fit_estimator(self, X, y, i):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (i + 1)
+        rs = None if self.random_state is None else rs * 37 * (i + 1) % 2**31
         rng = check_random_state(rs)
 
         estimator = _clone_estimator(
@@ -301,12 +300,14 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
+        from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params = {
-            "classification_points": [3],
-            "estimator": Catch22Classifier(
-                estimator=RandomForestClassifier(n_estimators=2)
-            ),
-        }
+        if _check_soft_dependencies("numba", severity="none"):
+            est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
+        else:
+            est = DummyClassifier()
+
+        params = {"classification_points": [3], "estimator": est}
         return params

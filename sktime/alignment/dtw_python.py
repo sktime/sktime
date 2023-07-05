@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interface module to dtw-python package.
 
 Exposes basic interface, excluding multivariate case.
@@ -11,14 +10,6 @@ import pandas as pd
 
 from sktime.alignment.base import BaseAligner
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies(
-    "dtw-python",
-    package_import_alias={"dtw-python": "dtw"},
-    severity="warning",
-    obj="AlignerDTW or AlignerDTWfromDist",
-    suppress_import_stdout=True,
-)
 
 
 class AlignerDTW(BaseAligner):
@@ -81,7 +72,7 @@ class AlignerDTW(BaseAligner):
             obj=self,
             suppress_import_stdout=True,
         )
-        super(AlignerDTW, self).__init__()
+        super().__init__()
 
         self.dist_method = dist_method
         self.step_pattern = step_pattern
@@ -257,7 +248,7 @@ class AlignerDTWfromDist(BaseAligner):
             obj=self,
             suppress_import_stdout=True,
         )
-        super(AlignerDTWfromDist, self).__init__()
+        super().__init__()
 
         self.dist_trafo = dist_trafo
         self.dist_trafo_ = self.dist_trafo.clone()

@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
-__author__ = ["James-Large, Withington, TonyBagnall"]
+__author__ = ["James-Large", "Withington", "TonyBagnall"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class CNNNetwork(BaseDeepNetwork):
@@ -57,7 +54,7 @@ class CNNNetwork(BaseDeepNetwork):
         self.filter_sizes = [6, 12]
         self.activation = activation
 
-        super(CNNNetwork, self).__init__()
+        super().__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.

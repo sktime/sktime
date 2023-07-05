@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing utility to compare equality in value for nested objects.
 
 Objects compared can have one of the following valid types:
@@ -120,10 +119,8 @@ def deep_equals(x, y, return_msg=False):
         return ret(*_tuple_equals(x, y, return_msg=True))
     elif isinstance(x, dict):
         return ret(*_dict_equals(x, y, return_msg=True))
-    elif isinstance(x, type(np.nan)):
-        return ret(
-            isinstance(y, type(np.nan)), f"type(x)={type(x)} != type(y)={type(y)}"
-        )
+    elif _is_np_nan(x):
+        return ret(_is_np_nan(y), f"type(x)={type(x)} != type(y)={type(y)}")
     elif isclass(x):
         return ret(x == y, f".class, x={x.__name__} != y={y.__name__}")
     elif type(x).__name__ == "ForecastingHorizon":
@@ -137,6 +134,10 @@ def deep_equals(x, y, return_msg=False):
     elif np.any(x != y):
         return ret(False, f" !=, {x} != {y}")
     return ret(True, "")
+
+
+def _is_np_nan(x):
+    return isinstance(x, float) and np.isnan(x)
 
 
 def _tuple_equals(x, y, return_msg=False):

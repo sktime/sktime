@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type checkers for Alignment scitype.
 
 Exports checkers for Alignment scitype:
@@ -17,6 +16,7 @@ obj - object to check
 return_metadata - bool, optional, default=False
     if False, returns only "valid" return
     if True, returns all three return objects
+    if str, list of str, metadata return dict is subset to keys in return_metadata
 var_name: str, optional, default="obj" - name of input in error messages
 
 Returns
@@ -36,6 +36,8 @@ __all__ = ["check_dict"]
 
 import numpy as np
 import pandas as pd
+
+from sktime.datatypes._common import _ret
 
 check_dict = dict()
 
@@ -66,7 +68,7 @@ def check_align(align_df, name="align_df", index="iloc"):
     cols = align_df.columns
     n = len(cols)
 
-    correctcols = set([f"ind{i}" for i in range(n)])
+    correctcols = {f"ind{i}" for i in range(n)}
 
     if not set(cols) == set(correctcols):
         msg = f"{name} index columns must be named 'ind0', 'ind1', ... 'ind{n}'"
@@ -108,10 +110,7 @@ def check_alignment_alignment(obj, return_metadata=False, var_name="obj"):
     """Check whether object has mtype `alignment` for scitype `Alignment`."""
     valid, msg = check_align(obj, name=var_name, index="iloc")
 
-    if return_metadata:
-        return valid, msg, dict()
-    else:
-        return valid
+    return _ret(valid, msg, {}, return_metadata)
 
 
 check_dict[("alignment", "Alignment")] = check_alignment_alignment
@@ -121,10 +120,7 @@ def check_alignment_loc_alignment(obj, return_metadata=False, var_name="obj"):
     """Check whether object has mtype `alignment_loc` for scitype `Alignment`."""
     valid, msg = check_align(obj, name=var_name, index="loc")
 
-    if return_metadata:
-        return valid, msg, dict()
-    else:
-        return valid
+    return _ret(valid, msg, {}, return_metadata)
 
 
 check_dict[("alignment_loc", "Alignment")] = check_alignment_loc_alignment

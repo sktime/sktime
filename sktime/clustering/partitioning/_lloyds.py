@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
 from abc import ABC, abstractmethod
@@ -246,7 +245,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         if distance_params is None:
             self._distance_params = {}
 
-        super(TimeSeriesLloyds, self).__init__(n_clusters=n_clusters)
+        super().__init__(n_clusters=n_clusters)
 
     def _check_params(self, X: np.ndarray) -> None:
         """Check parameters are valid and initialized.
@@ -398,7 +397,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
 
             if np.array_equal(labels, old_labels):
                 if self.verbose:
-                    print(  # noqa: T001
+                    print(  # noqa: T201
                         f"Converged at iteration {i}: strict convergence."
                     )
                 break
@@ -407,7 +406,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             cluster_centres = self._compute_new_cluster_centers(X, labels)
 
             if self.verbose is True:
-                print(f"Iteration {i}, inertia {inertia}.")  # noqa: T001
+                print(f"Iteration {i}, inertia {inertia}.")  # noqa: T201
 
         labels, inertia = self._assign_clusters(X, cluster_centres)
         centres = cluster_centres

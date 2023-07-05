@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implement dataset splitting for model evaluation and selection."""
 
@@ -341,7 +340,7 @@ class BaseSplitter(BaseObject):
         self.window_length = window_length
         self.fh = fh
 
-        super(BaseSplitter, self).__init__()
+        super().__init__()
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`.
@@ -627,7 +626,6 @@ class BaseSplitter(BaseObject):
         Returns
         -------
         np.ndarray with integer indices of the train window
-
         """
         if split_point > max(0, train_start):
             return np.argwhere(
@@ -690,7 +688,7 @@ class CutoffSplitter(BaseSplitter):
     ) -> None:
         _check_inputs_for_compatibility([fh, cutoffs, window_length])
         self.cutoffs = cutoffs
-        super(CutoffSplitter, self).__init__(fh, window_length)
+        super().__init__(fh, window_length)
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -708,9 +706,8 @@ class CutoffSplitter(BaseSplitter):
             null = 0 if is_int(cutoff) else pd.Timestamp(0)
             if cutoff >= null:
                 train_end = y[cutoff] if is_int(cutoff) else cutoff
-                training_window = get_window(
-                    pd.Series(index=y[y <= train_end]), window_length=window_length
-                ).index
+                y_train = pd.Series(index=y[y <= train_end], dtype=y.dtype)
+                training_window = get_window(y_train, window_length=window_length).index
             else:
                 training_window = []
             training_window = y.get_indexer(training_window)
@@ -798,7 +795,7 @@ class BaseWindowSplitter(BaseSplitter):
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
-        super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
+        super().__init__(fh=fh, window_length=window_length)
 
     @property
     def _initial_window(self):
@@ -826,8 +823,7 @@ class BaseWindowSplitter(BaseSplitter):
         if self._initial_window is not None:
             yield self._split_for_initial_window(y)
 
-        for train, test in self._split_windows(window_length=window_length, y=y, fh=fh):
-            yield train, test
+        yield from self._split_windows(window_length=window_length, y=y, fh=fh)
 
     def _split_for_initial_window(self, y: pd.Index) -> SPLIT_ARRAY_TYPE:
         """Get train/test splits for non-empty initial window.
@@ -841,7 +837,6 @@ class BaseWindowSplitter(BaseSplitter):
         -------
         (np.ndarray, np.ndarray)
             Integer indices of the train/test windows
-
         """
         fh = _check_fh(self.fh)
         if not self.start_with_window:
@@ -948,9 +943,7 @@ class BaseWindowSplitter(BaseSplitter):
         # If we start with a full window, the first split point depends on the window
         # length.
         if hasattr(self, "start_with_window") and self.start_with_window:
-
             if self._initial_window not in [None, 0]:
-
                 if is_timedelta_or_date_offset(x=self._initial_window):
                     start = y.get_loc(
                         y[start] + self._initial_window + self.step_length
@@ -1085,7 +1078,6 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     >>> splitter = SlidingWindowSplitter(fh=[2, 4], window_length=3, step_length=2)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([0, 1, 2]), array([4, 6])), (array([2, 3, 4]), array([6, 8]))]
-
     """
 
     def __init__(
@@ -1096,7 +1088,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         initial_window: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
         start_with_window: bool = True,
     ) -> None:
-        super(SlidingWindowSplitter, self).__init__(
+        super().__init__(
             fh=fh,
             window_length=window_length,
             initial_window=initial_window,
@@ -1151,7 +1143,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     >>> splitter = ExpandingWindowSplitter(fh=[2, 4], initial_window=5, step_length=2)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     '[(array([0, 1, 2, 3, 4]), array([6, 8]))]'
-
     """
 
     def __init__(
@@ -1160,13 +1151,12 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
     ) -> None:
-
         start_with_window = initial_window != 0
 
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
         # time expose the more intuitive name for the ExpandingWindowSplitter.
-        super(ExpandingWindowSplitter, self).__init__(
+        super().__init__(
             fh=fh,
             window_length=initial_window,
             initial_window=None,
@@ -1215,7 +1205,6 @@ class SingleWindowSplitter(BaseSplitter):
     >>> splitter = SingleWindowSplitter(fh=[2, 4], window_length=3)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([3, 4, 5]), array([7, 9]))]
-
     """
 
     def __init__(
@@ -1224,7 +1213,7 @@ class SingleWindowSplitter(BaseSplitter):
         window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
     ) -> None:
         _check_inputs_for_compatibility(args=[fh, window_length])
-        super(SingleWindowSplitter, self).__init__(fh=fh, window_length=window_length)
+        super().__init__(fh=fh, window_length=window_length)
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -1315,8 +1304,8 @@ class SingleWindowSplitter(BaseSplitter):
 def temporal_train_test_split(
     y: ACCEPTED_Y_TYPES,
     X: Optional[pd.DataFrame] = None,
-    test_size: Optional[Union[int, float]] = None,
-    train_size: Optional[Union[int, float]] = None,
+    test_size: Optional[float] = None,
+    train_size: Optional[float] = None,
     fh: Optional[FORECASTING_HORIZON_TYPES] = None,
 ) -> SPLIT_TYPE:
     """Split arrays or matrices into sequential train and test subsets.
@@ -1329,10 +1318,25 @@ def temporal_train_test_split(
 
     Parameters
     ----------
-    y : pd.Series
-        Target series
-    X : pd.DataFrame, optional (default=None)
-        Exogenous data
+    y : time series in sktime compatible data container format
+    X : time series in sktime compatible data container format, optional, default=None
+        y and X can be in one of the following formats:
+        Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            for vanilla forecasting, one time series
+        Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+            3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            for global or panel forecasting
+        Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            for hierarchical forecasting
+        Number of columns admissible depend on the "scitype:y" tag:
+            if self.get_tag("scitype:y")=="univariate":
+                y must have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                y must have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+        For further details:
+            on usage, see forecasting tutorial examples/01_forecasting.ipynb
+            on specification of formats, examples/AA_datatypes_and_datasets.ipynb
     test_size : float, int or None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the

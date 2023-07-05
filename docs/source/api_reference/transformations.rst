@@ -10,7 +10,7 @@ transformations.
    :no-members:
    :no-inherited-members:
 
-All (simple) transformers in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+All (simple) transformers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="regressor"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
@@ -57,6 +57,7 @@ Pipeline building
 
     TransformerPipeline
     FeatureUnion
+    ColumnEnsembleTransformer
     ColumnwiseTransformer
     FitInTransform
     MultiplexTransformer
@@ -64,6 +65,9 @@ Pipeline building
     InvertTransform
     Id
     YtoX
+    IxToX
+    TransformByLevel
+    TransformIf
 
 .. currentmodule:: sktime.transformations.panel.compose
 
@@ -323,6 +327,38 @@ Detrending
 Filtering and denoising
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.transformations.series.filter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Filter
+
+.. currentmodule:: sktime.transformations.series.bkfilter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BKFilter
+
+.. currentmodule:: sktime.transformations.series.cffilter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CFFilter
+
+.. currentmodule:: sktime.transformations.series.hpfilter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HPFilter
+
 .. currentmodule:: sktime.transformations.series.kalman_filter
 
 .. autosummary::
@@ -340,8 +376,8 @@ Filtering and denoising
 
     ThetaLinesTransformer
 
-Differencing and slope
-~~~~~~~~~~~~~~~~~~~~~~
+Differencing, slope, kinematics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.difference
 
@@ -358,6 +394,14 @@ Differencing and slope
     :template: class.rst
 
     SlopeTransformer
+
+.. currentmodule:: sktime.transformations.series.kinematic
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KinematicFeatures
 
 Binning and segmentation
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -424,6 +468,14 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     FourierFeatures
+
+.. currentmodule:: sktime.transformations.series.fourier
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FourierTransform
 
 Auto-correlation series
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -575,8 +627,9 @@ Bootstrap transformations
     :toctree: auto_generated/
     :template: class.rst
 
-    STLBootstrapTransformer
     MovingBlockBootstrapTransformer
+    SplitterBootstrapTransformer
+    STLBootstrapTransformer
 
 Outlier detection, changepoint detection
 ----------------------------------------

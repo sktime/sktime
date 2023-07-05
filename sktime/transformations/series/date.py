@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
 __author__ = ["danbartl", "KishManani"]
@@ -33,8 +32,6 @@ _RAW_DUMMIES = [
 ]
 
 
-# TODO: Change the default value of `keep_original_columns` from True to False
-# and remove the warning in v0.17.0
 class DateTimeFeatures(BaseTransformer):
     """DateTime feature extraction for use in e.g. tree based models.
 
@@ -83,7 +80,7 @@ class DateTimeFeatures(BaseTransformer):
         * day_of_quarter
         * is_weekend
         * year (special case with no lower frequency).
-    keep_original_columns :  boolean, optional, default=True
+    keep_original_columns :  boolean, optional, default=False
         Keep original columns in X passed to `.transform()`.
 
     Examples
@@ -140,22 +137,15 @@ class DateTimeFeatures(BaseTransformer):
         ts_freq=None,
         feature_scope="minimal",
         manual_selection=None,
-        keep_original_columns=True,
+        keep_original_columns=False,
     ):
-
         self.ts_freq = ts_freq
         self.feature_scope = feature_scope
         self.manual_selection = manual_selection
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         self.keep_original_columns = keep_original_columns
-        warnings.warn(
-            "Currently the default value of `keep_original_columns\n"
-            " is `True`. In future releases this will be changed \n"
-            " to `False`. To keep the current behaviour explicitly \n"
-            " set `keep_original_columns=True`.",
-            FutureWarning,
-        )
-        super(DateTimeFeatures, self).__init__()
+
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -209,7 +199,8 @@ class DateTimeFeatures(BaseTransformer):
                 ):
                     warnings.warn(
                         "Level of selected dummy variable "
-                        + " lower level than base ts_frequency."
+                        + " lower level than base ts_frequency.",
+                        stacklevel=2,
                     )
                 calendar_dummies = self.dummies.loc[
                     self.dummies["dummy"].isin(self.manual_selection),
@@ -274,7 +265,7 @@ def _calendar_dummies(x, funcs):
     elif funcs == "week_of_month":
         cd = (date_sequence.day - 1) // 7 + 1
     elif funcs == "month_of_quarter":
-        cd = (np.floor(date_sequence.month / 4) + 1).astype(np.int64)
+        cd = (date_sequence.month.astype(np.int64) + 2) % 3 + 1
     elif funcs == "week_of_quarter":
         col_names = x.columns
         x_columns = col_names.intersection(["year", "quarter", "week"]).to_list()
@@ -328,9 +319,8 @@ def _get_supported_calendar(ts_freq, DUMMIES):
 def _prep_dummies(DUMMIES):
     """Use to prepare dummy data.
 
-    Includes defining function call names and ranking
-    of date information based on frequency (e.g. year
-    has a lower frequency than week).
+    Includes defining function call names and ranking of date information based on
+    frequency (e.g. year has a lower frequency than week).
     """
     DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
 

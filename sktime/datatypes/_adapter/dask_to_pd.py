@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Converter utilities between dask and pandas, with multiindex convention.
 
@@ -15,6 +14,9 @@ MultiIndex columns to DataFrame columns with the name:
 index is replaced by a string index where tuples are replaced with str coerced elements
 """
 import pandas as pd
+
+from sktime.datatypes._common import _req
+from sktime.datatypes._common import _ret as ret
 
 
 def _is_mi_col(x):
@@ -132,11 +134,6 @@ def check_dask_frame(
 
     metadata = {}
 
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        return valid
-
     if not isinstance(obj, dask.dataframe.core.DataFrame):
         msg = f"{var_name} must be a dask DataFrame, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
@@ -174,8 +171,10 @@ def check_dask_frame(
         # dask series should have at most one __index__ col
         return ret(False, cols_msg, None, return_metadata)
 
-    metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
-    metadata["is_univariate"] = len(obj.columns) == 1
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
+    if _req("is_univariate", return_metadata):
+        metadata["is_univariate"] = len(obj.columns) == 1
 
     # check that columns are unique
     if not obj.columns.is_unique:
@@ -205,17 +204,20 @@ def check_dask_frame(
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
-    if return_metadata:
+    if _req("is_equally_spaced", return_metadata):
         # todo: logic for equal spacing
         metadata["is_equally_spaced"] = True
+    if _req("has_nans", return_metadata):
         metadata["has_nans"] = obj.isnull().values.any().compute()
 
-    if return_metadata and scitype in ["Panel", "Hierarchical"]:
-        instance_cols = index_cols[:-1]
-        metadata["n_instances"] = len(obj[instance_cols].drop_duplicates())
+    if scitype in ["Panel", "Hierarchical"]:
+        if _req("n_instances", return_metadata):
+            instance_cols = index_cols[:-1]
+            metadata["n_instances"] = len(obj[instance_cols].drop_duplicates())
 
-    if return_metadata and scitype in ["Hierarchical"]:
-        panel_cols = index_cols[:-2]
-        metadata["n_panels"] = len(obj[panel_cols].drop_duplicates())
+    if scitype in ["Hierarchical"]:
+        if _req("n_panels", return_metadata):
+            panel_cols = index_cols[:-2]
+            metadata["n_panels"] = len(obj[panel_cols].drop_duplicates())
 
     return ret(True, None, metadata, return_metadata)

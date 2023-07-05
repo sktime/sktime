@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implement transformers for summarizing a time series."""
 
@@ -208,13 +207,12 @@ class WindowSummarizer(BaseTransformer):
         target_cols=None,
         truncate=None,
     ):
-
         self.lag_feature = lag_feature
         self.n_jobs = n_jobs
         self.target_cols = target_cols
         self.truncate = truncate
 
-        super(WindowSummarizer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -657,7 +655,7 @@ class SummaryTransformer(BaseTransformer):
         self.quantiles = quantiles
         self.flatten_transform_index = flatten_transform_index
 
-        super(SummaryTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -685,7 +683,25 @@ class SummaryTransformer(BaseTransformer):
         quantiles = _check_quantiles(self.quantiles)
 
         if summary_function is not None:
-            summary_value = X.agg(summary_function)
+            # pandas has deprecated "mad"
+            # so we need to replicate the functionality here
+            if "mad" in summary_function:
+                mad_value = (X - X.mean()).abs().mean()
+                mad_value = type(X)(mad_value)
+                if isinstance(X, pd.DataFrame):
+                    mad_value = mad_value.T
+                mad_value.index = ["mad"]
+                non_mad = set(summary_function).difference(["mad"])
+                non_mad = list(non_mad)
+            else:
+                non_mad = summary_function
+            if len(non_mad) > 0:
+                summary_value = X.agg(non_mad)
+                if "mad" in summary_function:
+                    summary_value = pd.concat([summary_value, mad_value])
+                    summary_value = summary_value.loc[list(summary_function)]
+            else:
+                summary_value = mad_value
 
         if quantiles is not None:
             quantile_value = X.quantile(quantiles)
@@ -729,7 +745,8 @@ class SummaryTransformer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {}
-        params2 = {"summary_function": ["mean", "std", "skew"], "quantiles": None}
-        params3 = {"summary_function": None, "quantiles": (0.1, 0.2, 0.25)}
+        params2 = {"summary_function": ["mean", "mad", "skew"], "quantiles": None}
+        params3 = {"summary_function": ["mad"], "quantiles": (0.7,)}
+        params4 = {"summary_function": None, "quantiles": (0.1, 0.2, 0.25)}
 
-        return [params1, params2, params3]
+        return [params1, params2, params3, params4]

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Implements meta forecaster for forecasters composed of other estimators."""
 
 __author__ = ["mloning"]
@@ -19,14 +17,14 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "forecasters"
 
     def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
         self.forecasters_ = None
         self.n_jobs = n_jobs
-        super(_HeterogenousEnsembleForecaster, self).__init__()
+        super().__init__()
 
     def _check_forecasters(self):
         if (

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Sequence feature extraction transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -45,7 +44,7 @@ class PlateauFinder(BaseTransformer):
     def __init__(self, value=np.nan, min_length=2):
         self.value = value
         self.min_length = min_length
-        super(PlateauFinder, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X.
@@ -97,7 +96,7 @@ class PlateauFinder(BaseTransformer):
 
         # put into dataframe
         Xt = pd.DataFrame()
-        column_prefix = "%s_%s" % (
+        column_prefix = "{}_{}".format(
             column_name,
             "nan" if np.isnan(self.value) else str(self.value),
         )
@@ -217,11 +216,10 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         self.max_length = max_length
         self.random_state = random_state
         self.features = features
-        super(RandomIntervalFeatureExtractor, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer, generating random interval indices.
+        """Fit transformer, generating random interval indices.
 
         Parameters
         ----------
@@ -243,7 +241,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         )
         self._interval_segmenter.fit(X, y)
         self.intervals_ = self._interval_segmenter.intervals_
-        self.input_shape_ = self._interval_segmenter.input_shape_
+        self.input_shape_ = X.shape
         self._time_index = self._interval_segmenter._time_index
         return self
 
@@ -366,7 +364,7 @@ class FittedParamExtractor(BaseTransformer):
         self.forecaster = forecaster
         self.param_names = param_names
         self.n_jobs = n_jobs
-        super(FittedParamExtractor, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X.

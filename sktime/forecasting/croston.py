@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Croston's Forecasting Method."""
@@ -78,7 +77,7 @@ class Croston(BaseForecaster):
         # hyperparameter
         self.smoothing = smoothing
         self._f = None
-        super(Croston, self).__init__()
+        super().__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -151,8 +150,8 @@ class Croston(BaseForecaster):
         # Predicting future forecasts:to_numpy()
         y_pred = np.full(len_fh, f[-1])
 
-        index = self.fh.to_absolute(self.cutoff)
-        return pd.Series(y_pred, index=index)
+        index = self.fh.to_absolute_index(self.cutoff)
+        return pd.Series(y_pred, index=index, name=self._y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

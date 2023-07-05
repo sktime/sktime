@@ -1,10 +1,11 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements SARIMAX."""
 
 __all__ = ["SARIMAX"]
-__author__ = ["TNTran92"]
+__author__ = ["TNTran92", "yarnabrina"]
+
+import pandas as pd
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -116,6 +117,8 @@ class SARIMAX(_StatsModelsAdapter):
 
     _tags = {
         "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
@@ -139,7 +142,6 @@ class SARIMAX(_StatsModelsAdapter):
         validate_specification=True,
         random_state=None,
     ):
-
         self.order = order
         self.seasonal_order = seasonal_order
         self.trend = trend
@@ -193,3 +195,29 @@ class SARIMAX(_StatsModelsAdapter):
         https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_structural_harvey_jaeger.html
         """
         return self._fitted_forecaster.summary()
+
+    @staticmethod
+    def _extract_conf_int(prediction_results, alpha) -> pd.DataFrame:
+        """Construct confidence interval at specified `alpha` for each timestep.
+
+        Parameters
+        ----------
+        prediction_results : PredictionResults
+            results class, as returned by ``self._fitted_forecaster.get_prediction``
+        alpha : float
+            one minus nominal coverage
+
+        Returns
+        -------
+        pd.DataFrame
+            confidence intervals at each timestep
+
+            The dataframe must have at least two columns ``lower`` and ``upper``, and
+            the row indices must be integers relative to ``self.cutoff``. Order of
+            columns do not matter, and row indices must be a superset of relative
+            integer horizon of ``fh``.
+        """
+        conf_int = prediction_results.conf_int(alpha=alpha)
+        conf_int.columns = ["lower", "upper"]
+
+        return conf_int

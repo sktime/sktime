@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __author__ = ["mloning"]
 __all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
@@ -32,12 +30,32 @@ EXCLUDE_ESTIMATORS = [
     "TapNetClassifier",
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
+    "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
+    # DL classifier suspected to cause hangs and memouts, see #4610
+    "FCNClassifier",
+    "MACNNClassifier",
+    "SimpleRNNClassifier",
+    "SimpleRNNRegressor",
+    "EditDist",
+    "CNNClassifier",
+    "FCNClassifier",
+    "InceptionTimeClassifer",
+    "LSTMFCNClassifier",
+    "MLPClassifier",
+    "CNNRegressor",
+    "ResNetRegressor",
 ]
 
 
 EXCLUDED_TESTS = {
-    # issue when predicting residuals, see #3479
-    "SquaringResiduals": ["test_predict_residuals"],
+    # issue when prediction intervals, see #3479 and #4504
+    # known issue with prediction intervals that needs fixing, tracked in #4181
+    "SquaringResiduals": [
+        "test_predict_time_index",
+        "test_predict_residuals",
+        "test_predict_interval",
+        "test_predict_time_index_with_X",  # separate - refer to #4765
+    ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
@@ -80,6 +98,9 @@ EXCLUDED_TESTS = {
     "ResNetClassifier": [
         "test_fit_idempotent",
     ],
+    "ResNetRegressor": [
+        "test_fit_idempotent",
+    ],
     "CNNClassifier": [
         "test_fit_idempotent",
     ],
@@ -94,7 +115,22 @@ EXCLUDED_TESTS = {
     ],
     "MLPClassifier": [
         "test_fit_idempotent",
-        "test_methods_have_no_side_effects",  # unknown cause, see bug report #4033
+    ],
+    "InceptionTimeClassifier": [
+        "test_fit_idempotent",
+    ],
+    "SimpleRNNClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "SimpleRNNRegressor": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "MACNNClassifier": [
+        "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
@@ -123,10 +159,18 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
-    "SAX": "test_fit_transform_output",  # SAX returns strange output format
+    # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
-    "Prophet": ":test_hierarchical_with_exogeneous",
-    # Prophet does not support datetime indices, see #2475 for the known issue
+    "SAX": "test_fit_transform_output",
+    "DynamicFactor": [
+        "test_predict_time_index_in_sample_full",  # refer to #4765
+    ],
+    "ARIMA": [
+        "test_predict_time_index_in_sample_full",  # refer to #4765
+    ],
+    "VECM": [
+        "test_hierarchical_with_exogeneous",  # refer to #4743
+    ],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

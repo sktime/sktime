@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Martrix Profile classifier.
 
 Pipeline classifier using the Matrix Profile transformer and an estimator.
@@ -67,6 +66,7 @@ class MatrixProfileClassifier(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "distance",
     }
 
@@ -86,7 +86,7 @@ class MatrixProfileClassifier(BaseClassifier):
         self._transformer = None
         self._estimator = None
 
-        super(MatrixProfileClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.

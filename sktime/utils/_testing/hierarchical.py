@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Hierarchical Data Generators."""
 
@@ -149,7 +148,6 @@ def _bottom_hier_datagen(
         df.index.rename("timepoints", inplace=True)
         return df
     else:
-
         df.columns = ["l1_node01"]
 
         intercept = np.arange(0, intercept_max, 0.01)
@@ -164,16 +162,17 @@ def _bottom_hier_datagen(
         node_lookup.columns = ["l1_agg"]
 
         if no_levels >= 2:
-
             # create index from bottom up, sampling node names
             for i in range(2, no_levels + 1):
                 node_lookup["l" + str(i) + "_agg"] = node_lookup.groupby(
                     ["l" + str(i - 1) + "_agg"]
                 )["l1_agg"].transform(
                     lambda x: "l"
-                    + str(i)
+                    + str(i)  # noqa B023
                     + "_node"
-                    + "{:02d}".format(_sample_node(node_lookup.index, i, rng))
+                    + "{:02d}".format(
+                        _sample_node(node_lookup.index, i, rng)  # noqa B023
+                    )
                 )
 
         node_lookup = node_lookup.set_index("l1_agg", drop=True)
