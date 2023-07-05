@@ -1,8 +1,9 @@
 """Test single problem loaders with varying return types."""
+from urllib.request import Request, urlopen
+
 import numpy as np
 import pandas as pd
 import pytest
-import requests
 
 from sktime.datasets import (  # Univariate; Unequal length; Multivariate
     fetch_forecastingorg,
@@ -115,12 +116,14 @@ def test_check_link_downloadable(name):
     url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
 
     # Send a GET request to check if the link exists without downloading the file
-    response = requests.get(url, stream=True)
+    # response = requests.get(url, stream=True)
+    req = Request(url, method="HEAD")
+    response = urlopen(req)
 
     # Check if the response status code is 200 (OK)
     assert (
-        response.status_code == 200
-    ), f"URL is not valid or does not exist. Error code {response.status_code}."
+        response.status == 200
+    ), f"URL is not valid or does not exist. Error code {response.status}."
 
     # Check if the response headers indicate that the content is downloadable
     content_type = response.headers.get("Content-Type")
