@@ -4,7 +4,7 @@
 Contains only bare minimum of implementation requirements for a functional transformer.
 Also assumes *no composition*, i.e., no transformer or other estimator components.
 For advanced cases (inverse transform, composition, etc),
-    see extension templates in forecasting.py or forecasting_simple.py
+    see full extension template in forecasting.py
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
