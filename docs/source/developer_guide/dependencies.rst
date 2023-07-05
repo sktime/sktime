@@ -21,24 +21,20 @@ There are three types of dependencies in ``sktime``: **core**, **soft**, or **de
 We try to keep the number of core dependencies to a minimum and rely on other packages as soft dependencies when feasible.
 
 
-Adding a soft dependency
-------------------------
+Handling soft dependencies
+--------------------------
 
-Soft dependencies in ``sktime`` should usually be restricted to estimators.
+This section explains how to handle existing soft depencies.
+For adding a new soft dependency, see the section "adding a new soft dependency".
 
-When adding a new soft dependency or changing the version of an existing one, the following files need to be updated:
-
-*  `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__,
-   adding the dependency or version bounds in the ``all_extras`` dependency set.
-   Following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention, all dependencies
-   including build time dependencies and optional dependencies are specified in this file.
+Soft dependencies in ``sktime`` should usually be isolated to estimators.
 
 Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
 This is handled through our ``_check_soft_dependencies`` utility
 `here <https://github.com/sktime/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
 
 There are specific conventions to add such warnings in estimators, as below.
-To add an estimator with a soft dependency, ensure the following:
+Estimators with a soft dependency need to ensure the following:
 
 *  imports of the soft dependency only happen inside the estimator,
    e.g., in ``_fit`` or ``__init__`` methods of the estimator.
@@ -60,6 +56,25 @@ To add an estimator with a soft dependency, ensure the following:
    rather than for the whole module!  This decorator will then skip your test unless the system has the required packages installed.  Doing this is
    helpful for any users running ``check_estimator`` on all estimators, or a full local `pytest` run without the required soft dependency.
    Again, see the tests for pydarima (in forecasting) for a concrete example.
+
+Adding a new soft dependency
+----------------------------
+
+When adding a new soft dependency or changing the version of an existing one,
+the following need to be updated:
+
+*  in `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__,
+   add the dependency or version bounds in the ``all_extras`` dependency set.
+   Following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention, all dependencies
+   including build time dependencies and optional dependencies are specified in ``pyproject.toml``.
+*  Soft dependencies compatible with ``pandas 2`` should also be added in the
+   ``all_extras_pandas2`` dependency set in ``pyproject.toml``. This dependency set
+   is used only in testing.
+
+It should be checked that new soft dependencies do not imply
+upper bounds on ``sktime`` core dependencies, or severe limitations to the user
+installation workflow.
+In such a case, it is strongly suggested not to add the soft dependency.
 
 Adding a core or developer dependency
 -------------------------------------
