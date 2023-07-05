@@ -101,6 +101,7 @@ dev = [
     "pytest-timeout",
     "pytest-xdist",
     "wheel",
+    "requests",
 ]
 
 mlflow = [

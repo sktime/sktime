@@ -114,11 +114,13 @@ def test_check_link_downloadable(name):
     """Test dataset URL from forecasting.org is downloadable and exits."""
     url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
 
-    # Send a GET request to check if the link exists
-    response = requests.head(url)
+    # Send a GET request to check if the link exists without downloading the file
+    response = requests.get(url, stream=True)
 
     # Check if the response status code is 200 (OK)
-    assert response.status_code == 200, "URL is not valid or does not exist."
+    assert (
+        response.status_code == 200
+    ), f"URL is not valid or does not exist. Error code {response.status_code}."
 
     # Check if the response headers indicate that the content is downloadable
     content_type = response.headers.get("Content-Type")
