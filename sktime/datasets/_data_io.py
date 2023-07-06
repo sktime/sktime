@@ -124,9 +124,9 @@ def _list_available_datasets(extract_path, origin_repo=None):
     extract_path: string
         root directory where to look for files, if None defaults to sktime/datasets/data
     origin_repo: string, optional (default=None)
-        if None, returns all available datasets from classification,
-        if string (must be "forecastingorg"), returns downloaded datasets
-        from forecastingorg repo.
+        if None, returns all available classification datasets in extract_path,
+        if string (must be "forecastingorg"), returns all available
+        forecastingorg datasets in extract_path.
 
     Returns
     -------
