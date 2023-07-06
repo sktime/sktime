@@ -37,6 +37,7 @@ from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLo
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.estimator_checks import check_estimator
 from sktime.utils.validation._dependencies import (
     _check_estimator_deps,
     _check_soft_dependencies,
@@ -305,3 +306,20 @@ def test_skoptcv_multiple_forecaster():
     )
     sscv.fit(y)
     assert len(sscv.cv_results_) == 5
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none")
+    or not _check_soft_dependencies(
+        "scikit-optimize",
+        severity="none",
+        package_import_alias={"scikit-optimize": "skopt"},
+    ),
+    reason="skip test if required soft dependency not compatible",
+)
+def test_check_estimator_skoptcv():
+    check_estimator(
+        ForecastingSkoptSearchCV,
+        raise_exceptions=True,
+        tests_to_exclude=["test_multiprocessing_idempotent"],
+    )
