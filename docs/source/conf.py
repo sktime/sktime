@@ -49,6 +49,7 @@ extensions = [
     "myst_parser",
     "sphinx_design",
     "sphinx_issues",
+    "versionwarning.extension",
 ]
 
 # Recommended by sphinx_design when using the MyST Parser
@@ -435,3 +436,15 @@ intersphinx_mapping = {
 
 # -- Options for _todo extension ----------------------------------------------
 todo_include_todos = False
+
+# sphinx-version-warning config
+versionwarning_messages = {
+    "latest": (
+        "This document is for the development version. "
+        'For the stable version documentation, see <a href="/en/stable/">here</a>.'
+    )
+}
+
+# Show warning at top of page
+versionwarning_body_selector = "div.document"
+versionwarning_banner_title = ""
