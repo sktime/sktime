@@ -85,6 +85,7 @@ all_extras = [
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
     "seasonal",
+    "scikit-optimize; python_version < '3.11'",
 ]
 
 all_extras_pandas2 = [
