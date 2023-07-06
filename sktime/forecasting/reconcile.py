@@ -119,7 +119,7 @@ class ReconcilerForecaster(BaseForecaster):
 
         return Aggregator().fit_transform(y)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         Parameters
@@ -189,7 +189,7 @@ class ReconcilerForecaster(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters

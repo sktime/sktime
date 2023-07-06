@@ -152,7 +152,7 @@ class VECM(_StatsModelsAdapter):
         self._fitted_forecaster = self._forecaster.fit(method=self.method)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Wrapper for statsmodel's VECM (_VECM) predict method
@@ -208,7 +208,7 @@ class VECM(_StatsModelsAdapter):
 
         return y_pred
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
