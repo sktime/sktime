@@ -22,8 +22,13 @@ class CNNNetwork(BaseDeepNetwork):
     filter_sizes    : array of int, shape = (nb_conv_layers)
     activation      : string, default = sigmoid
         keras activation function
-    padding         : string, default = valid
-        padding type for convolution layers
+    padding         : string, default = "valid"
+        The padding type for the convolutional layers.
+
+        - 'valid': No padding is applied. The input is not padded, and the output size is reduced.
+        - 'same': The input is padded with zeros so that the output size is the same as the input size.
+
+        Note: This parameter determines how the input is padded or not padded during the convolution operation. It affects the output size of the convolution layers.
     random_state    : int, default = 0
         seed to any needed random actions
 
