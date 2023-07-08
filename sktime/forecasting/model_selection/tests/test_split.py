@@ -29,7 +29,6 @@ from sktime.forecasting.tests._config import (
     TEST_YS,
     VALID_INDEX_FH_COMBINATIONS,
 )
-from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
@@ -587,10 +586,14 @@ def test_same_loc_splitter():
     split_template_iloc = list(cv_tpl.split(y_template))
     split_templated_iloc = list(splitter.split(y))
 
-    assert deep_equals(split_template_iloc, split_templated_iloc)
+    for (t1, tt1), (t2, tt2) in zip(split_template_iloc, split_templated_iloc):
+        assert np.all(t1 == t2)
+        assert np.all(tt1 == tt2)
 
     # these should be in general the same
     split_template_loc = list(cv_tpl.split_loc(y_template))
     split_templated_loc = list(splitter.split_loc(y))
 
-    assert deep_equals(split_template_loc, split_templated_loc)
+    for (t1, tt1), (t2, tt2) in zip(split_template_loc, split_templated_loc):
+        assert np.all(t1 == t2)
+        assert np.all(tt1 == tt2)
