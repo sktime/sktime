@@ -52,11 +52,10 @@ class SeasonalReducer(BaseForecaster):
     }
 
     def __init__(self, forecaster, sp):
-
         self.forecaster = forecaster
         self.sp = sp
 
-        super(SeasonalReducer, self).__init__()
+        super().__init__()
 
         self.forecaster_ = forecaster.clone()
 
