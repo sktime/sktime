@@ -368,7 +368,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             if isinstance(y_train, pd.Series):
                 if legacy_interface:
                     return ["Coverage"]
-                elif hasattr(y_train, "name"):
+                elif hasattr(y_train, "name") and y_train.name is not None:
                     return [y_train.name]
                 else:
                     return [0]
@@ -463,7 +463,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             if isinstance(y_train, pd.Series):
                 if legacy_interface:
                     return ["Quantiles"]
-                elif hasattr(y_train, "name"):
+                elif hasattr(y_train, "name") and y_train.name is not None:
                     return [y_train.name]
                 else:
                     return [0]
