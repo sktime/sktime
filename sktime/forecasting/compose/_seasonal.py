@@ -132,6 +132,7 @@ class SeasonalReducer(BaseForecaster):
 
         if X is not None:
             X_pivot = _pivot_sp(X, sp=sp, anchor=_y)
+            X_pivot.columns = pd.RangeIndex(len(X_pivot.columns))
         else:
             X_pivot = None
 
@@ -288,8 +289,7 @@ class SeasonalReducer(BaseForecaster):
         """
         return self._predict_method(fh=fh, X=X, cov=cov, method="predict_var")
 
-    # todo 0.19.0 - remove legacy_interface
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=None):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -321,7 +321,7 @@ class SeasonalReducer(BaseForecaster):
                 i-th (event dim 1) distribution is forecast for i-th entry of fh
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
-        kwargs = {"marginal": marginal, "legacy_interface": legacy_interface}
+        kwargs = {"marginal": marginal}
         return self._predict_method(fh=fh, X=X, method="predict_proba", **kwargs)
 
     @classmethod
