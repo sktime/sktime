@@ -9,7 +9,7 @@ import pandas as pd
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.multiindex import rename_multiindex
 from sktime.utils.validation.series import check_series
 
 # mtypes that are native pandas
@@ -58,10 +58,15 @@ class ColumnEnsembleTransformer(
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.
 
-    flatten_transform_index : bool, optional (default=True)
-        if True, columns of return DataFrame are flat, by "transformer__variablename"
-        if False, columns are MultiIndex (transformer, variablename)
+    feature_names_out : str, one of "auto" (default), "flat", "multiindex", "original"
+        determines how return columns of return DataFrame-s are named
         has no effect if return mtype is one without column names
+        "flat": columns are flat, e.g., "transformername__variablename"
+        "multiindex": columns are MultiIndex, e.g., (transformername, variablename)
+        "original: columns are as produced by transformers, e.g., variablename
+            if this results in non-unique index, ValueError exception is raised
+        "auto": as "original" for any unique columns under "original",
+            column names as "flat" otherwise
 
     Attributes
     ----------
@@ -97,10 +102,10 @@ class ColumnEnsembleTransformer(
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "transformers_"
 
-    def __init__(self, transformers, remainder=None, flatten_transform_index=True):
+    def __init__(self, transformers, remainder=None, feature_names_out="auto"):
         self.transformers = transformers
         self.remainder = remainder
-        self.flatten_transform_index = flatten_transform_index
+        self.feature_names_out = feature_names_out
         super().__init__()
 
         # check remainder argument
@@ -270,8 +275,13 @@ class ColumnEnsembleTransformer(
             keys += [name]
 
         Xt = pd.concat(Xts, axis=1, keys=keys)
-        if self.flatten_transform_index:
-            Xt.columns = flatten_multiindex(Xt.columns)
+
+        # set output column names according to feature_names_out param
+        feature_names_out = self.feature_names_out
+        msg = f"resulting column index in {self.__class__.__name__}"
+        Xt.columns = rename_multiindex(
+            Xt.columns, feature_names_out=feature_names_out, idx_name=msg
+        )
 
         return Xt
 
