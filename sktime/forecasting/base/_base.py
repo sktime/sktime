@@ -493,9 +493,8 @@ class BaseForecaster(BaseEstimator):
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=True):
+    def predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=None):
         """Compute/return quantile forecasts.
 
         If alpha is iterable, multiple quantiles will be calculated.
@@ -541,6 +540,27 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # todo 0.22.0 - switch legacy_interface default to False
+        if legacy_interface is None:
+            _legacy_interface = True
+
+        if _legacy_interface:
+            warn(
+                "In 0.22.0, predict_quantiles return default column level 0 name will "
+                "change for univariate probabilistic quantile forecasts "
+                "from 'Quantiles' to variable name. The old behaviour can be "
+                "retained by setting the legacy_interface argument to True, "
+                "until 0.23.0 when the legacy_interface argument will be removed."
+            )
+        elif legacy_interface is not None:
+            warn(
+                "Until 0.23.0, the predict_quantiles legacy_interface argument "
+                "can be used for facilitating deprecation and change to the new "
+                "predict_quantiles interface. It will be removed in 0.23.0, "
+                "from when passing the legacy_interface argument will raise an "
+                "exception."
+            )
+
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
@@ -579,14 +599,13 @@ class BaseForecaster(BaseEstimator):
 
         return quantiles
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg and logic using it
     def predict_interval(
         self,
         fh=None,
         X=None,
         coverage=0.90,
-        legacy_interface=True,
+        legacy_interface=None,
     ):
         """Compute/return prediction interval forecasts.
 
@@ -637,6 +656,27 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
+
+        # todo 0.22.0 - switch legacy_interface default to False
+        if legacy_interface is None:
+            _legacy_interface = True
+
+        if _legacy_interface:
+            warn(
+                "In 0.22.0, predict_interval return default column level 0 name will "
+                "change for univariate probabilistic interval forecasts "
+                "from 'Intervals' to variable name. The old behaviour can be "
+                "retained by setting the legacy_interface argument to True, "
+                "until 0.23.0 when the legacy_interface argument will be removed."
+            )
+        elif legacy_interface is not None:
+            warn(
+                "Until 0.23.0, the predict_interval legacy_interface argument "
+                "can be used for facilitating deprecation and change to the new "
+                "predict_interval interface. It will be removed in 0.23.0, "
+                "from when passing the legacy_interface argument will raise an "
+                "exception."
+            )
 
         # input checks and conversions
 
