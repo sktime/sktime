@@ -427,7 +427,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 pred_ints = estimator_instance.predict_interval(
                     fh=fh_int_oos, coverage=coverage, legacy_interface=legacy_interface
                 )
-                self._check_predict_interval(
+                self._check_predict_intervals(
                     pred_ints,
                     y_train,
                     fh_int_oos,
