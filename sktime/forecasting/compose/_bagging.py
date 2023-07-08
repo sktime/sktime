@@ -130,7 +130,7 @@ class BaggingForecaster(BaseForecaster):
         if forecaster is not None:
             self.clone_tags(self.forecaster, tags_to_clone)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -200,7 +200,7 @@ class BaggingForecaster(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -230,7 +230,7 @@ class BaggingForecaster(BaseForecaster):
         y_pred.name = self._y.name
         return y_pred
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,

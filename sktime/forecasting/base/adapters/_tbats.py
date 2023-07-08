@@ -79,7 +79,7 @@ class _TbatsAdapter(BaseForecaster):
             context=self.context,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -124,7 +124,7 @@ class _TbatsAdapter(BaseForecaster):
         if update_params:
             # update model state and refit parameters
             # _fit re-runs model instantiation which triggers refit
-            self._fit(y=self._y)
+            self._fit(y=self._y, X=None, fh=self._fh)
 
         else:
             # update model state without refitting parameters
@@ -133,7 +133,7 @@ class _TbatsAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters
