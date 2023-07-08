@@ -493,7 +493,8 @@ class BaseForecaster(BaseEstimator):
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    # todo 0.22.0 - update default of legacy_interface arg in docstring
+    # todo 0.23.0 - remove legacy_interface arg and logic using it, update docstring
     def predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=None):
         """Compute/return quantile forecasts.
 
@@ -520,6 +521,12 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
+        legacy_interface : bool, default=True
+            controls legacy behaviour for level 0 naming of quantiles reuturn
+            If "True", in univariate case level 0 will be named "Quantiles" and not
+            according to the variable name.
+            If "False", return is as described.
+            Default will change to False in 0.22.0, argument will be removed in 0.23.0.
 
         Returns
         -------
@@ -599,6 +606,7 @@ class BaseForecaster(BaseEstimator):
 
         return quantiles
 
+    # todo 0.22.0 - update default of legacy_interface arg in docstring
     # todo 0.23.0 - remove legacy_interface arg and logic using it
     def predict_interval(
         self,
@@ -632,6 +640,12 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         coverage : float or list of float of unique values, optional (default=0.90)
            nominal coverage(s) of predictive interval(s)
+        legacy_interface : bool, default=True
+            controls legacy behaviour for level 0 naming of pred_int return
+            If "True", in univariate case level 0 will be named "Coverage" and not
+            according to the variable name.
+            If "False", return is as described.
+            Default will change to False in 0.22.0, argument will be removed in 0.23.0.
 
         Returns
         -------
@@ -665,7 +679,7 @@ class BaseForecaster(BaseEstimator):
             warn(
                 "In 0.22.0, predict_interval return default column level 0 name will "
                 "change for univariate probabilistic interval forecasts "
-                "from 'Intervals' to variable name. The old behaviour can be "
+                "from 'Coverage' to variable name. The old behaviour can be "
                 "retained by setting the legacy_interface argument to True, "
                 "until 0.23.0 when the legacy_interface argument will be removed."
             )
