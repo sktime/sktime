@@ -136,7 +136,7 @@ class VAR(_StatsModelsAdapter):
         )
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Wrap Statmodel's VAR forecast method.
 
         Parameters
@@ -191,7 +191,7 @@ class VAR(_StatsModelsAdapter):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X=None, coverage=None, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

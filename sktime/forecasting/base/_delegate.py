@@ -38,7 +38,7 @@ class _DelegatedForecaster(BaseForecaster):
     def _get_delegate(self):
         return getattr(self, self._delegate_name)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -71,7 +71,7 @@ class _DelegatedForecaster(BaseForecaster):
         estimator.fit(y=y, fh=fh, X=X)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -151,7 +151,7 @@ class _DelegatedForecaster(BaseForecaster):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X=None, alpha=None, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -190,7 +190,7 @@ class _DelegatedForecaster(BaseForecaster):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X=None, coverage=None, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

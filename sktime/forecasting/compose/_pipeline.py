@@ -459,7 +459,7 @@ class ForecastingPipeline(_Pipeline):
         else:
             return ForecastingPipeline(steps=list(zip(new_names, new_ests)))
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -511,7 +511,7 @@ class ForecastingPipeline(_Pipeline):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X=None, alpha=None, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -550,7 +550,7 @@ class ForecastingPipeline(_Pipeline):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X=None, coverage=None, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -951,7 +951,7 @@ class TransformedTargetForecaster(_Pipeline):
         else:
             return TransformedTargetForecaster(steps=list(zip(new_names, new_ests)))
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1079,7 +1079,7 @@ class TransformedTargetForecaster(_Pipeline):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X=None, alpha=None, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1119,7 +1119,7 @@ class TransformedTargetForecaster(_Pipeline):
         )
         return pred_int_transformed
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -1282,7 +1282,7 @@ class ForecastX(BaseForecaster):
         # }
         # self.set_tags(**tag_translate_dict)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1405,7 +1405,7 @@ class ForecastX(BaseForecaster):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X=None, coverage=0.90, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
-__author__ = ["danbartl", "KishManani"]
+__author__ = ["danbartl", "KishManani", "VyomkeshVyas"]
 __all__ = ["DateTimeFeatures"]
 
 import warnings
@@ -25,6 +25,7 @@ _RAW_DUMMIES = [
     ["day", "month", "day", "efficient"],
     ["day", "week", "weekday", "minimal"],
     ["hour", "day", "hour", "minimal"],
+    ["hour", "week", "hour_of_week", "comprehensive"],
     ["minute", "hour", "minute", "minimal"],
     ["second", "minute", "second", "minimal"],
     ["millisecond", "second", "millisecond", "minimal"],
@@ -144,6 +145,15 @@ class DateTimeFeatures(BaseTransformer):
         self.manual_selection = manual_selection
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         self.keep_original_columns = keep_original_columns
+
+        # todo 0.22.0: change logic for comprehensive to include "hour_of_week"
+        # and remove this warning
+        if self.feature_scope == "comprehensive":
+            warnings.warn(
+                "From 0.22.0 onwards, 'comprehensive' will contain "
+                + "a new feature, 'hour_of_week'.",
+                stacklevel=2,
+            )
 
         super().__init__()
 
@@ -298,6 +308,8 @@ def _calendar_dummies(x, funcs):
             (x["date_sequence"] - quarter_start) / pd.to_timedelta("1D") + 1
         ).astype(int)
         cd = values
+    elif funcs == "hour_of_week":
+        cd = date_sequence.day_of_week * 24 + date_sequence.hour
     elif funcs == "is_weekend":
         cd = date_sequence.day_of_week > 4
     else:

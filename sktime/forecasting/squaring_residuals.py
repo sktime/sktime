@@ -123,7 +123,7 @@ class SquaringResiduals(BaseForecaster):
         if self.residual_forecaster is None:
             self.residual_forecaster = NaiveForecaster()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -198,7 +198,7 @@ class SquaringResiduals(BaseForecaster):
             self._res_forecasters[step_ahead] = res_step_forecaster_
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -271,7 +271,7 @@ class SquaringResiduals(BaseForecaster):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X=None, alpha=None, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,

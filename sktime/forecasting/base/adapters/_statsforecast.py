@@ -35,7 +35,7 @@ class _StatsForecastAdapter(BaseForecaster):
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -69,7 +69,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -200,7 +200,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X=None, coverage=0.90, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

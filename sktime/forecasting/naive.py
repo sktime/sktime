@@ -127,7 +127,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         if self.strategy in ("last", "mean"):
             self.set_tags(**{"handles-missing-data": True})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -408,7 +408,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_quantiles(self, fh, X=None, alpha=0.5, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
@@ -674,7 +674,7 @@ class NaiveVariance(BaseForecaster):
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         self.fh_early_ = fh is not None
         self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -686,7 +686,7 @@ class NaiveVariance(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
@@ -702,7 +702,7 @@ class NaiveVariance(BaseForecaster):
 
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X=None, alpha=0.5, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
