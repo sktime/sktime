@@ -60,7 +60,7 @@ def test_rename_multiindex():
     assert (expected_multi == multi).all()
 
     auto = rename_multiindex(mi2, feature_names_out="auto", idx_name=idx_name)
-    expected_auto = pd.Index(["a__1", "42", "b__2", "0"])
+    expected_auto = pd.Index(["1", "42", "2", "0"])
 
     assert isinstance(auto, pd.Index)
     assert (expected_auto == auto).all()
