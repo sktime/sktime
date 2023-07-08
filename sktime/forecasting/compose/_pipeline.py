@@ -1119,7 +1119,9 @@ class TransformedTargetForecaster(_Pipeline):
         )
         return pred_int_transformed
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -1155,7 +1157,9 @@ class TransformedTargetForecaster(_Pipeline):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
+        pred_int = self.forecaster_.predict_interval(
+            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
+        )
         pred_int_transformed = self._get_inverse_transform(
             self.transformers_pre_, pred_int, mode="proba"
         )
