@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Fourier features for time series with long/complex seasonality."""
 
@@ -6,7 +5,7 @@ __author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
 from distutils.log import warn
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -38,7 +37,7 @@ class FourierFeatures(BaseTransformer):
 
     Parameters
     ----------
-    sp_list : List[Union[int, float]]
+    sp_list : List[float]
         list of seasonal periods
     fourier_terms_list : List[int]
         list of number of fourier terms (K) for each seasonal period.
@@ -110,7 +109,7 @@ class FourierFeatures(BaseTransformer):
 
     def __init__(
         self,
-        sp_list: List[Union[int, float]],
+        sp_list: List[float],
         fourier_terms_list: List[int],
         freq: Optional[str] = None,
         keep_original_columns: Optional[bool] = False,
@@ -132,7 +131,7 @@ class FourierFeatures(BaseTransformer):
                 "needs to be lower from the corresponding element of the sp_list"
             )
 
-        super(FourierFeatures, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -290,7 +289,7 @@ class FourierTransform(BaseTransformer):
     }
 
     def __init__(self):
-        super(FourierTransform, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

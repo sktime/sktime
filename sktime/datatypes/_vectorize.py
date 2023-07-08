@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Wrapper for easy vectorization/iteration of time series data.
 
@@ -12,7 +11,6 @@ import itertools
 
 import numpy as np
 import pandas as pd
-from deprecated.sphinx import deprecated
 
 from sktime.datatypes._check import check_is_scitype, mtype
 from sktime.datatypes._convert import convert_to
@@ -64,7 +62,6 @@ class VectorizedDF:
     def __init__(
         self, X, y=None, iterate_as="Series", is_scitype="Panel", iterate_cols=False
     ):
-
         self.X = X
 
         if is_scitype is None:
@@ -188,33 +185,6 @@ class VectorizedDF:
             use to reconstruct data frame after iteration
         """
         return self.iter_indices
-
-    # TODO: remove in v0.18.0
-    @deprecated(
-        version="0.16.2",
-        reason="get_iloc_indexer will be removed in v0.18.0",
-        category=FutureWarning,
-    )
-    def get_iloc_indexer(self, i: int):
-        """Get iloc row/column indexer for i-th list element.
-
-        Returns
-        -------
-        pair of int, indexes into get_iter_indices
-            1st element is iloc index for 1st element of get_iter_indices
-            2nd element is iloc index for 2nd element of get_iter_indices
-            together, indicate iloc index of self[i] within get_iter_indices index sets
-        """
-        row_ix, col_ix = self.get_iter_indices()
-        if row_ix is None and col_ix is None:
-            return (0, 0)
-        elif row_ix is None:
-            return (0, i)
-        elif col_ix is None:
-            return (i, 0)
-        else:
-            col_n = len(col_ix)
-            return (i // col_n, i % col_n)
 
     def __len__(self):
         """Return number of indices to iterate over."""
@@ -599,7 +569,7 @@ class VectorizedDF:
 
         ret = []
 
-        for ((group_name, col_name, group), args_i, args_i_rowvec, est_i) in zip(
+        for (group_name, col_name, group), args_i, args_i_rowvec, est_i in zip(
             self.items(),
             explode(args, iterate_as=self.iterate_as, iterate_cols=self.iterate_cols),
             explode(args_rowvec, iterate_as=self.iterate_as, iterate_cols=False),
@@ -621,7 +591,18 @@ class VectorizedDF:
             ret.append((group_name, col_name, est_i_result))
 
         if return_type == "pd.DataFrame":
-            df = pd.DataFrame(ret).pivot(index=0, columns=1, values=2)
+            df_long = pd.DataFrame(ret)
+            cols_right_order = df_long.loc[:, 1].unique()
+
+            df = df_long.pivot(index=0, columns=1, values=2)
+            # DataFrame.pivot sorts the columns (is this a bug? see #4683)
+            # either way, we need to fix this:
+            df = df.reindex(cols_right_order, axis=1)
+
+            # remove "0" and "1" from index/columns name
+            df.index.names = [None] * len(df.index.names)
+            df.columns.name = None
+
             # TODO: add test case for tuple index
             try:
                 df.index = pd.MultiIndex.from_tuples(df.index)

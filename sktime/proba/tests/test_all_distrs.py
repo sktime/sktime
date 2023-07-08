@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for BaseDistribution API points."""
 
@@ -8,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes import check_is_mtype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
 
@@ -107,6 +107,26 @@ class TestAllDistributions(DistributionFixtureGenerator, QuickTester):
         res = getattr(estimator_instance, method)(p)
 
         _check_output_format(res, d, method)
+
+    @pytest.mark.parametrize("q", [0.7, [0.1, 0.3, 0.9]])
+    def test_quantile(self, estimator_instance, q):
+        """Test expected return of quantile method."""
+        if not _has_capability(estimator_instance, "ppf"):
+            return None
+
+        d = estimator_instance
+
+        def _check_quantile_output(obj, q):
+            assert check_is_mtype(obj, "pred_quantiles", "Proba")
+            assert (obj.index == d.index).all()
+
+            if not isinstance(q, list):
+                q = [q]
+            expected_columns = pd.MultiIndex.from_product([d.columns, q])
+            assert (obj.columns == expected_columns).all()
+
+        res = d.quantile(q)
+        _check_quantile_output(res, q)
 
 
 def _check_output_format(res, dist, method):

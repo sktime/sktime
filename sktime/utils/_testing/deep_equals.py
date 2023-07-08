@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing utility to compare equality in value for nested objects.
 
 Objects compared can have one of the following valid types:
@@ -138,7 +137,6 @@ def deep_equals(x, y, return_msg=False):
 
 
 def _is_np_nan(x):
-
     return isinstance(x, float) and np.isnan(x)
 
 

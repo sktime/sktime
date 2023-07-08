@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements composite forecasters."""
 
@@ -28,6 +27,7 @@ __all__ = [
     "ForecastByLevel",
     "Permute",
     "SeasonalReducer",
+    "YfromX",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -54,6 +54,7 @@ from sktime.forecasting.compose._reduce import (
     MultioutputTimeSeriesRegressionForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
+    YfromX,
     make_reduction,
 )
 from sktime.forecasting.compose._seasonal import SeasonalReducer

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements meta estimator for estimators composed of other estimators."""
 
@@ -97,12 +96,13 @@ class _HeterogenousMetaEstimator:
         return True
 
     def _get_params(self, attr, deep=True, fitted=False):
-
         if fitted:
             method = "_get_fitted_params"
+            methodd = "get_fitted_params"
             deepkw = {}
         else:
             method = "get_params"
+            methodd = "get_params"
             deepkw = {"deep": deep}
 
         out = getattr(super(), method)(**deepkw)
@@ -111,9 +111,16 @@ class _HeterogenousMetaEstimator:
             estimators = [(x[0], x[1]) for x in estimators]
             out.update(estimators)
             for name, estimator in estimators:
-                if hasattr(estimator, "get_params"):
-                    for key, value in getattr(estimator, method)(**deepkw).items():
-                        out["%s__%s" % (name, key)] = value
+                # checks estimator has the method we want to call
+                cond1 = hasattr(estimator, methodd)
+                # checks estimator is fitted if calling get_fitted_params
+                is_fitted = hasattr(estimator, "is_fitted") and estimator.is_fitted
+                # if we call get_params and not get_fitted_params, this is True
+                cond2 = not fitted or is_fitted
+                # check both conditions together
+                if cond1 and cond2:
+                    for key, value in getattr(estimator, methodd)(**deepkw).items():
+                        out[f"{name}__{key}"] = value
         return out
 
     def _set_params(self, attr, **params):
@@ -144,18 +151,17 @@ class _HeterogenousMetaEstimator:
 
     def _check_names(self, names):
         if len(set(names)) != len(names):
-            raise ValueError("Names provided are not unique: {0!r}".format(list(names)))
+            raise ValueError(f"Names provided are not unique: {list(names)!r}")
         invalid_names = set(names).intersection(self.get_params(deep=False))
         if invalid_names:
             raise ValueError(
                 "Estimator names conflict with constructor "
-                "arguments: {0!r}".format(sorted(invalid_names))
+                "arguments: {!r}".format(sorted(invalid_names))
             )
         invalid_names = [name for name in names if "__" in name]
         if invalid_names:
             raise ValueError(
-                "Estimator names must not contain __: got "
-                "{0!r}".format(invalid_names)
+                "Estimator names must not contain __: got " "{!r}".format(invalid_names)
             )
 
     def _subset_dict_keys(self, dict_to_subset, keys, prefix=None):
@@ -193,7 +199,7 @@ class _HeterogenousMetaEstimator:
         if prefix is not None:
             keys = [f"{prefix}__{key}" for key in keys]
         keys_in_both = set(keys).intersection(dict_to_subset.keys())
-        subsetted_dict = dict((rem_prefix(k), dict_to_subset[k]) for k in keys_in_both)
+        subsetted_dict = {rem_prefix(k): dict_to_subset[k] for k in keys_in_both}
         return subsetted_dict
 
     @staticmethod

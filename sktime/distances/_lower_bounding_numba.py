@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Isolated numba imports for lower_bounding."""
 
 __author__ = ["chrisholder", "TonyBagnall"]
@@ -244,7 +243,7 @@ def numba_create_bounding_matrix(
     x: np.ndarray,
     y: np.ndarray,
     window: float = -1.0,
-    itakura_max_slope: Union[float, int] = -1.0,
+    itakura_max_slope: float = -1.0,
 ) -> np.ndarray:
     """Numba compiled way of creating bounding matrix.
 

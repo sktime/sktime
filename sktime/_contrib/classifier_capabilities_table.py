@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Auto-generate a classifier capabilites summary."""
 import pandas as pd
 

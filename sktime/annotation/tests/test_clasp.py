@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Simple ClaSP test."""
 
 __author__ = ["patrickzib"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Testing of registry lookup functionality."""
 
@@ -59,7 +58,6 @@ def _get_type_tuple(estimator_scitype):
         corresponding to scitype strings in estimator_scitypes
     """
     if estimator_scitype is not None:
-
         estimator_classes = tuple(
             BASE_CLASS_LOOKUP[scitype] for scitype in _to_list(estimator_scitype)
         )
@@ -227,8 +225,27 @@ def _get_bad_return_tags():
 @pytest.mark.parametrize("return_tags", _get_bad_return_tags())
 def test_all_estimators_return_tags_bad_arg(return_tags):
     """Test ability to catch bad arguments of return_tags."""
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, ValueError)):
         _ = all_estimators(return_tags=return_tags)
+
+
+@pytest.mark.parametrize("pred_int", [True, False])
+def test_all_estimators_tag_filter(pred_int):
+    """Test that tag filtering returns estimators as expected."""
+    NOPROBA_EXAMPLE = "TrendForecaster"
+    PROBA_EXAMPLE = "ARIMA"
+
+    res = all_estimators("forecaster", filter_tags={"capability:pred_int": pred_int})
+    names, ests = zip(*res)
+
+    if pred_int:
+        assert PROBA_EXAMPLE in names
+        assert NOPROBA_EXAMPLE not in names
+        assert [est.get_class_tag("capability:pred_int") for est in ests]
+    else:
+        assert PROBA_EXAMPLE not in names
+        assert NOPROBA_EXAMPLE in names
+        assert [not est.get_class_tag("capability:pred_int") for est in ests]
 
 
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)

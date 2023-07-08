@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing utility to play back usage scenarios for estimators.
 
 Contains TestScenario class which applies method/args subsequently

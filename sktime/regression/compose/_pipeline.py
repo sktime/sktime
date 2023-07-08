@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipeline with a regressor."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
@@ -102,13 +101,12 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     # no default tag values - these are set dynamically below
 
     def __init__(self, regressor, transformers):
-
         self.regressor = regressor
         self.regressor_ = regressor.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(RegressorPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both regressor and all transformers can
         multivariate = regressor.get_tag("capability:multivariate", False)
@@ -392,7 +390,6 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     # no default tag values - these are set dynamically below
 
     def __init__(self, regressor, transformers):
-
         from sklearn.base import clone
 
         self.regressor = regressor
@@ -400,7 +397,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(SklearnRegressorPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for BaseForecaster API points.
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -226,7 +225,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         fh_is_oos = fh.is_all_out_of_sample(cutoff)
 
         # if estimator cannot forecast in-sample and fh is in-sample, terminate
-        # if the tag correctly state this, we consider this fine as per contract
+        # if the tag correctly states this, we consider this fine as per contract
         # todo: check that estimator raises error message when fitting instead
         if not fh_is_oos and not estimator_instance.get_tag("capability:insample"):
             return None
@@ -242,6 +241,19 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_test.index = y_pred.index
         y_res = estimator_instance.predict_residuals(y_test)
         _assert_correct_pred_time_index(y_res.index, cutoff, fh=fh)
+
+        # if cannot forecast in-sample probabilistically, and fh is in-sample, terminate
+        # if the tag correctly states this, we consider this fine as per contract
+        # todo: check that estimator raises error message when fitting instead
+        if not fh_is_oos:
+            if not estimator_instance.get_tag("capability:pred_int:insample"):
+                return None
+
+        if estimator_instance.get_tag("capability:pred_int"):
+            y_pred_int = estimator_instance.predict_interval()
+            _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh=fh_int)
+            y_pred_q = estimator_instance.predict_quantiles()
+            _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh=fh_int)
 
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
@@ -277,6 +289,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             cutoff = get_cutoff(y_train, return_index=True)
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
             _assert_correct_columns(y_pred, y_train)
+
+            if estimator_instance.get_tag("capability:pred_int"):
+                y_pred_int = estimator_instance.predict_interval(X=X_test)
+                _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
+                y_pred_q = estimator_instance.predict_quantiles(X=X_test)
+                _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
         except NotImplementedError:
             pass
 
@@ -304,6 +322,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+
+            if estimator_instance.get_tag("capability:pred_int:insample"):
+                y_pred_int = estimator_instance.predict_interval()
+                _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
+                y_pred_q = estimator_instance.predict_quantiles()
+                _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
         except NotImplementedError:
             pass
 
@@ -383,7 +407,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
-
             pred_ints = estimator_instance.predict_interval(
                 fh_int_oos, coverage=coverage
             )
@@ -485,7 +508,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             assert (pred_cols == y_train.columns).all()
 
-    # todo 0.18.0 or 0.19.0: remove legacy_interface parameter below
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
@@ -509,13 +531,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         if estimator_instance.get_tag("capability:pred_int"):
             try:
-                pred_dist = estimator_instance.predict_proba(legacy_interface=False)
+                pred_dist = estimator_instance.predict_proba()
                 self._check_predict_proba(pred_dist, y_train, fh_int_oos)
             except NotImplementedError:
                 pass
         else:
             with pytest.raises(NotImplementedError, match="probabilistic predictions"):
-                estimator_instance.predict_proba(legacy_interface=False)
+                estimator_instance.predict_proba()
 
     def test_pred_int_tag(self, estimator_instance):
         """Checks whether the capability:pred_int tag is correctly set.
@@ -713,6 +735,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             with pytest.raises(ValueError):
                 f.predict()
 
+            if f.get_tag("capability:pred_int"):
+                with pytest.raises(ValueError):
+                    f.predict_interval()
+                with pytest.raises(ValueError):
+                    f.predict_quantiles()
+
     def test_different_fh_in_fit_and_predict_error_handling(
         self, estimator_instance, n_columns
     ):
@@ -727,6 +755,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # changing fh during predict should raise error
         with pytest.raises(ValueError):
             f.predict(fh=FH0 + 1)
+
+        if f.get_tag("capability:pred_int"):
+            with pytest.raises(ValueError):
+                f.predict_interval(fh=FH0 + 1)
+            with pytest.raises(ValueError):
+                f.predict_quantiles(fh=FH0 + 1)
 
     def test_hierarchical_with_exogeneous(self, estimator_instance, n_columns):
         """Check that hierarchical forecasting works, also see bug #3961.
@@ -785,3 +819,24 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             # if levels are added, all expected levels and times should be contained
             assert set(X_test.index).issubset(y_pred.index)
+
+        if estimator_instance.get_tag("capability:pred_int"):
+            y_pred_int = estimator_instance.predict_interval(X=X_test)
+
+            assert isinstance(y_pred_int, pd.DataFrame)
+            assert check_is_mtype(y_pred_int, "pd_multiindex_hier")
+
+            if len(y_pred_int.index) == len(X_test.index):
+                assert np.all(y_pred_int.index == X_test.index)
+            else:
+                assert set(X_test.index).issubset(y_pred_int.index)
+
+            y_pred_q = estimator_instance.predict_quantiles(X=X_test)
+
+            assert isinstance(y_pred_q, pd.DataFrame)
+            assert check_is_mtype(y_pred_q, "pd_multiindex_hier")
+
+            if len(y_pred_q.index) == len(X_test.index):
+                assert np.all(y_pred_q.index == X_test.index)
+            else:
+                assert set(X_test.index).issubset(y_pred_q.index)

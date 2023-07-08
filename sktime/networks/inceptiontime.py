@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """Inception Time."""
-__author__ = "James Large, Withington"
+__author__ = ["JamesLarge", "Withington"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies("tensorflow", severity="warning")
 
 
 class InceptionTimeNetwork(BaseDeepNetwork):
@@ -51,7 +48,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         :param random_state: int, seed to any needed random actions
         """
         _check_dl_dependencies(severity="error")
-        super(InceptionTimeNetwork, self).__init__()
+        super().__init__()
 
         self.n_filters = n_filters
         self.use_residual = use_residual

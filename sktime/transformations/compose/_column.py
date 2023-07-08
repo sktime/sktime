@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
 """Columnwise transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
-__all__ = ["ColumnwiseTransformer"]
+__all__ = ["ColumnEnsembleTransformer", "ColumnwiseTransformer"]
 
 import pandas as pd
-from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
@@ -77,7 +75,7 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
 
     def __init__(self, transformers):
         self.transformers = transformers
-        super(ColumnEnsembleTransformer, self).__init__()
+        super().__init__()
 
         # set requires-fh-in-fit depending on transformers
         if isinstance(transformers, BaseTransformer):
@@ -123,10 +121,9 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
     def _transformers(self):
         """Make internal list of transformers.
 
-        The list only contains the name and transformers, dropping
-        the columns. This is for the implementation of get_params
-        via _HeterogenousMetaEstimator._get_params which expects
-        lists of tuples of len 2.
+        The list only contains the name and transformers, dropping the columns. This is
+        for the implementation of get_params via _HeterogenousMetaEstimator._get_params
+        which expects lists of tuples of len 2.
         """
         transformers = self.transformers
         if isinstance(transformers, BaseTransformer):
@@ -170,7 +167,7 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
         self.transformers_ = []
         self._Xcolumns = list(X.columns)
 
-        for (name, transformer, index) in transformers:
+        for name, transformer, index in transformers:
             transformer_ = transformer.clone()
 
             pd_index = self._coerce_to_pd_index(index)
@@ -287,7 +284,7 @@ class ColumnwiseTransformer(BaseTransformer):
     def __init__(self, transformer, columns=None):
         self.transformer = transformer
         self.columns = columns
-        super(ColumnwiseTransformer, self).__init__()
+        super().__init__()
 
         tags_to_clone = [
             "y_inner_mtype",
@@ -399,7 +396,6 @@ class ColumnwiseTransformer(BaseTransformer):
 
         return X
 
-    @if_delegate_has_method(delegate="transformer")
     def update(self, X, y=None, update_params=True):
         """Update parameters.
 

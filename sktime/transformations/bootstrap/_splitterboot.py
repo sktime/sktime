@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Bootstrapping method based on any sktime splitter."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -123,7 +122,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
         self.replace = replace
         self.random_state = random_state
 
-        super(SplitterBootstrapTransformer, self).__init__()
+        super().__init__()
 
         self._rng = check_random_state(random_state)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for E-Agglo (agglomerative clustering algorithm)."""
 
 __author__ = ["KatieBuc"]
@@ -12,13 +11,11 @@ from sktime.annotation.eagglo import EAgglo
 def test_fit_default_params_univariate():
     """Test univariate data and defualt parameters.
 
-    These numbers are generated from the original implemention
-    in R, with the following code:
+    These numbers are generated from the original implemention in R, with the following
+    code:
 
-    set.seed(1234)
-    X <- c(rnorm(15, mean = -6), 0, rnorm(16, mean = 6))
-    X <- as.matrix(X[c(1,2,17,18)])
-    ret = e.agglo(X)
+    set.seed(1234) X <- c(rnorm(15, mean = -6), 0, rnorm(16, mean = 6)) X <-
+    as.matrix(X[c(1,2,17,18)]) ret = e.agglo(X)
     """
     X = pd.DataFrame([-7.207066, -5.722571, 5.889715, 5.488990])
 

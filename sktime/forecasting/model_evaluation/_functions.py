@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
@@ -118,7 +117,6 @@ def _evaluate_window(
     error_score,
     cutoff_dtype,
 ):
-
     # set default result values in case estimator fitting fails
     score = error_score
     fit_time = np.nan
@@ -167,10 +165,6 @@ def _evaluate_window(
         methodname = pred_type[scitype]
         method = getattr(forecaster, methodname)
 
-        # todo 0.19.0: remove this patch
-        if methodname == "predict_proba":
-            metric_args["legacy_interface"] = False
-
         y_pred = method(fh, X_test, **metric_args)
         pred_time = time.perf_counter() - start_pred
         # score
@@ -184,10 +178,11 @@ def _evaluate_window(
         else:
             warnings.warn(
                 f"""
-                Fitting of forecaster failed, you can set error_score='raise' to see
+                In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
+                you can set error_score='raise' in evaluate to see
                 the exception message. Fit failed for len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
-                Failed forecaster: {forecaster}.
+                Failed forecaster with parameters: {forecaster}.
                 """,
                 FitFailedWarning,
                 stacklevel=2,
@@ -212,7 +207,7 @@ def _evaluate_window(
     ).astype({"cutoff": cutoff_dtype})
 
     # Return forecaster if "update"
-    if strategy == "update":
+    if strategy == "update" or (strategy == "no-update_params" and i == 0):
         return result, forecaster
     else:
         return result
@@ -402,7 +397,7 @@ def evaluate(
         # Run temporal cross-validation sequentially
         results = []
         for i, (train, test) in enumerate(cv.split(y)):
-            if strategy == "update":
+            if strategy == "update" or (strategy == "no-update_params" and i == 0):
                 result, forecaster = _evaluate_window(
                     y,
                     X,

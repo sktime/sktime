@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, macOS-11]
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
       - uses: actions/checkout@v3
@@ -51,7 +51,7 @@ jobs:
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $GITHUB_ENV
 
       - name: Install wheel and extras
-        run: python -m pip install "${{ env.WHEELNAME }}[all_extras,dev]"
+        run: python -m pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
 
       - name: Run tests
         run: make test
@@ -64,11 +64,6 @@ jobs:
       matrix:
         include:
           # Window 64 bit
-          - os: windows-2019
-            python: 37
-            python-version: '3.7'
-            bitness: 64
-            platform_id: win_amd64
           - os: windows-2019
             python: 38
             python-version: '3.8'
@@ -120,7 +115,7 @@ jobs:
         run: conda activate test
 
       - name: Install wheel and extras
-        run: python -m pip install "${env:WHEELNAME}[all_extras,dev]"
+        run: python -m pip install "${env:WHEELNAME}[all_extras_pandas2,dev]"
 
       - name: Show conda packages
         run: conda list -n test
@@ -146,6 +141,5 @@ jobs:
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          user: ${{ secrets.PYPI_USERNAME }}
-          password: ${{ secrets.PYPI_PASSWORD }}
+          password: ${{ secrets.PYPI_API_TOKEN }}
           packages_dir: wheelhouse/
