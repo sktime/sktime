@@ -343,12 +343,14 @@ class SeasonalReducer(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sklearn.ensemble import HistGradientBoostingRegressor
+
+        from sktime.forecasting.compose._reduce import YfromX
         from sktime.forecasting.trend import TrendForecaster
 
         params1 = {"forecaster": TrendForecaster(), "sp": 3}
         params2 = {
-            "forecaster": DirectReductionForecaster.create_test_instance(),
+            "forecaster": YfromX(HistGradientBoostingRegressor()),
             "sp": 2,
         }
 
