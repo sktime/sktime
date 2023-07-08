@@ -311,7 +311,7 @@ class ColumnEnsembleTransformer(
 
         params2 = {
             "transformers": [("transformer1", ExponentTransformer(), [0])],
-            "remainder": BoxCoxTransformer(),
+            "remainder": BoxCoxTransformer(method="fixed"),
         }
 
         params3 = {
