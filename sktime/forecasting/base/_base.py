@@ -550,6 +550,8 @@ class BaseForecaster(BaseEstimator):
         # todo 0.22.0 - switch legacy_interface default to False
         if legacy_interface is None:
             _legacy_interface = True
+        else:
+            _legacy_interface = legacy_interface
 
         if _legacy_interface:
             warn(
@@ -674,6 +676,8 @@ class BaseForecaster(BaseEstimator):
         # todo 0.22.0 - switch legacy_interface default to False
         if legacy_interface is None:
             _legacy_interface = True
+        else:
+            _legacy_interface = legacy_interface
 
         if _legacy_interface:
             warn(
