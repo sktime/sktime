@@ -373,7 +373,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 else:
                     return [0]
             else:
-                return y_train.columns
+                if legacy_interface and len(y_train.columns) == 1:
+                    return ["Coverage"]
+                else:
+                    return y_train.columns
 
         # Forecasters where name of variables do not exist
         # In this cases y_train is series - the upper level in dataframe == 'Coverage'
@@ -468,7 +471,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 else:
                     return [0]
             else:
-                return y_train.columns
+                if legacy_interface and len(y_train.columns) == 1:
+                    return ["Quantiles"]
+                else:
+                    return y_train.columns
 
         expected_columns = get_expected_columns()
         expected_quantiles = [alpha] if isinstance(alpha, float) else alpha

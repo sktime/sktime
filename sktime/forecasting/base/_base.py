@@ -589,7 +589,7 @@ class BaseForecaster(BaseEstimator):
         # legacy_interface argument
         has_li_arg = "legacy_interface" in getfullargspec(self._predict_quantiles).args
         if has_li_arg:
-            kwargs = {"legacy_interface": legacy_interface}
+            kwargs = {"legacy_interface": _legacy_interface}
         else:
             kwargs = {}
 
@@ -711,7 +711,7 @@ class BaseForecaster(BaseEstimator):
         # legacy_interface argument
         has_li_arg = "legacy_interface" in getfullargspec(self._predict_interval).args
         if has_li_arg:
-            kwargs = {"legacy_interface": legacy_interface}
+            kwargs = {"legacy_interface": _legacy_interface}
         else:
             kwargs = {}
 
@@ -2058,7 +2058,9 @@ class BaseForecaster(BaseEstimator):
             alphas.extend([0.5 - 0.5 * float(c), 0.5 + 0.5 * float(c)])
 
         # compute quantile forecasts corresponding to upper/lower
-        pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
+        pred_int = self._predict_quantiles(
+            fh=fh, X=X, alpha=alphas, legacy_interface=legacy_interface
+        )
 
         # change the column labels (multiindex) to the format for intervals
         # idx returned by _predict_quantiles is
@@ -2080,6 +2082,8 @@ class BaseForecaster(BaseEstimator):
 
         return pred_int
 
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
     def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
@@ -2126,7 +2130,9 @@ class BaseForecaster(BaseEstimator):
                 coverage = abs(1 - 2 * a)
 
                 # compute quantile forecasts corresponding to upper/lower
-                pred_a = self._predict_interval(fh=fh, X=X, coverage=[coverage])
+                pred_a = self._predict_interval(
+                    fh=fh, X=X, coverage=[coverage], legacy_interface=legacy_interface
+                )
                 pred_int = pd.concat([pred_int, pred_a], axis=1)
 
             # now we need to subset to lower/upper depending
