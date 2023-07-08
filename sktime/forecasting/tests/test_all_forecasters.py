@@ -425,9 +425,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             # simply remove the arg
             for legacy_interface in [True, False]:
                 pred_ints = estimator_instance.predict_interval(
-                    fh=fh_int_oos,
-                    coverage=coverage,
-                    legacy_interface=legacy_interface
+                    fh=fh_int_oos, coverage=coverage, legacy_interface=legacy_interface
                 )
                 self._check_predict_interval(
                     pred_ints,
