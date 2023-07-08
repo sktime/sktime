@@ -7,9 +7,10 @@ __all__ = [
     "SlidingWindowSplitter",
     "CutoffSplitter",
     "SingleWindowSplitter",
+    "SameLocSplitter",
     "temporal_train_test_split",
 ]
-__author__ = ["mloning", "kkoralturk", "khrapovs", "chillerobscuro"]
+__author__ = ["mloning", "kkoralturk", "khrapovs", "chillerobscuro", "fkiraly"]
 
 from typing import Iterator, Optional, Tuple, Union
 
@@ -1298,6 +1299,109 @@ class SingleWindowSplitter(BaseSplitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = {"fh": 3}
+        return params
+
+
+class SameLocSplitter(BaseSplitter):
+    r"""Splitter that replicates loc indices from another splitter.
+
+    Takes a splitter ``cv`` and a time series ``y_template``.
+    Splits ``y`` in ``split`` and ``split_loc`` such that ``loc`` indices of splits
+    are identical to loc indices of ``cv`` applied to ``y_template``.
+
+    Parameters
+    ----------
+    cv : BaseSplitter
+        splitter for which to replicate splits by ``loc`` index
+    y_template : time series container of ``Series`` scitype, optional
+        template used in ``cv`` to determine ``loc`` indices
+        if None, ``y_template=y`` will be used in methods
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import (
+    ...    ExpandingWindowSplitter,
+    ...    SameLocSplitter,
+    ... )
+
+    >>> y = load_airline()
+    >>> y_template = y[:60]
+    >>> cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+
+    >>> splitter = SameLocSplitter(cv_tpl, y_template)
+
+    these two are the same:
+    >>> list(cv_tpl.split(y_template)) # doctest: +SKIP
+    >>> list(splitter.split(y)) # doctest: +SKIP
+    """
+
+    def __init__(self, cv, y_template=None):
+        self.cv = cv
+        self.y_template = y_template
+        super().__init__()
+
+    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        cv = self.cv
+        if self.y_template is None:
+            y_template = y
+        else:
+            y_template = self.y_template
+
+        for y_train_loc, y_test_loc in cv.split_loc(y_template):
+            y_train_iloc = y.get_indexer(y_train_loc)
+            y_test_iloc = y.get_indexer(y_test_loc)
+            yield y_train_iloc, y_test_iloc
+
+    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+        """Return the number of splits.
+
+        Since this splitter returns a single train/test split,
+        this number is trivially 1.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
+
+        Returns
+        -------
+        n_splits : int
+            The number of splits.
+        """
+        if self.y_template is None:
+            y_template = y
+        else:
+            y_template = self.y_template
+        return self.cv.get_n_splits(y_template)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.datasets import load_airline
+        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+        y = load_airline()
+        y_template = y[:60]
+        cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+
+        params = {"cv": cv_tpl, "y_template": y_template}
+
         return params
 
 

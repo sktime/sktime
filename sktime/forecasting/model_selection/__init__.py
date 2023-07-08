@@ -5,6 +5,7 @@
 __author__ = ["mloning", "kkoralturk"]
 __all__ = [
     "CutoffSplitter",
+    "SameLocSplitter",
     "SingleWindowSplitter",
     "SlidingWindowSplitter",
     "temporal_train_test_split",
@@ -16,6 +17,7 @@ __all__ = [
 from sktime.forecasting.model_selection._split import (
     CutoffSplitter,
     ExpandingWindowSplitter,
+    SameLocSplitter,
     SingleWindowSplitter,
     SlidingWindowSplitter,
     temporal_train_test_split,
