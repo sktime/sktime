@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extension template for forecasters, SIMPLE version.
 
 Contains only bare minimum of implementation requirements for a functional forecaster.
 Also assumes *no composition*, i.e., no forecaster or other estimator components.
-For advanced cases (probabilistic, composition, etc),
+Assumes pd.DataFrame used internally, and no hierarchical functionality.
+For advanced cases (probabilistic, composition, hierarchical, etc),
     see full extension template in forecasting.py
 
 Purpose of this implementation template:
@@ -62,51 +64,21 @@ class MyForecaster(BaseForecaster):
     and so on
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    # tag values are "safe defaults" which can usually be left as-is
+    # todo: fill in the scitype:y tag for univariate/multivariate
     _tags = {
-        # to list all valid tags with description, use sktime.registry.all_tags
-        #   all_tags(estimator_types="forecaster", as_dataframe=True)
-        #
-        # behavioural tags: internal type
-        # -------------------------------
-        #
-        # y_inner_mtype, X_inner_mtype control which format X/y appears in
-        # in the inner functions _fit, _predict, etc
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
-        # valid values: str and list of str
-        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
-        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
-        #   in that case, all inputs are converted to that one type
-        # if list of str, must be a list of valid str specifiers
-        #   in that case, X/y are passed through without conversion if on the list
-        #   if not on the list, converted to the first entry of the same scitype
-        #
         # scitype:y controls whether internal y can be univariate/multivariate
         # if multivariate is not valid, applies vectorization over variables
         "scitype:y": "univariate",
-        # valid values: "univariate", "multivariate", "both"
-        #   "univariate": inner _fit, _predict, etc, receive only univariate series
-        #   "multivariate": inner methods receive only series with 2 or more variables
-        #   "both": inner methods can see series with any number of variables
+        # fill in "univariate" or "both"
+        #   "univariate": inner _fit, _predict, receives only single-column DataFrame
+        #   "both": inner _predict gets pd.DataFrame series with any number of columns
         #
-        # capability tags: properties of the estimator
-        # --------------------------------------------
-        #
-        # ignores-exogeneous-X = does estimator ignore the exogeneous X?
+        # do not change these:
+        # (look at advanced templates if you think these should change)
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": False,
-        # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
-        # CAVEAT: if tag is set to True, inner methods always see X=None
-        #
-        # requires-fh-in-fit = is forecasting horizon always required in fit?
         "requires-fh-in-fit": True,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception in fit if fh has not been passed
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -116,15 +88,15 @@ class MyForecaster(BaseForecaster):
         self.paramb = paramb
         self.paramc = paramc
 
-        # leave this as is
-        super().__init__()
+        # todo: change "MyForecaster" to the name of the class
+        super(MyForecaster, self).__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
         # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -134,31 +106,30 @@ class MyForecaster(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
+        y : pd.DataFrame
             if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
+                guaranteed to have a single column
             if self.get_tag("scitype:y")=="both": no restrictions apply
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Required (non-optional) here.
+        X : pd.DataFrame, optional (default=None)
             Exogeneous time series to fit to.
 
         Returns
         -------
         self : reference to self
         """
-
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-        #
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
+        #
+        # todo:
+        # insert logic here
+        # self.fitted_model_param_ = sthsth
+        #
+        return self
+
+        # IMPORTANT: avoid side effects to y, X, fh
         #
         # Note: when interfacing a model that has fit, with parameters
         #   that are not data (y, X) or forecasting-horizon-like,
@@ -167,7 +138,7 @@ class MyForecaster(BaseForecaster):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, fh, X):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -183,18 +154,30 @@ class MyForecaster(BaseForecaster):
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
 
         Returns
         -------
-        y_pred : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
+        y_pred : pd.DataFrame
             Point predictions
         """
+        # todo
+        # to get fitted model params set in fit, do this:
+        #
+        # fitted_model_param = self.fitted_model_param_
 
-        # implement here
+        # todo: add logic to compute values
+        # values = sthsthsth
+
+        # then return as pd.DataFrame
+        # below code guarantees the right row and column index
+        #
+        # row_idx = fh.to_absolute_index(self.cutoff)
+        # col_idx = self._y.index
+        #
+        # y_pred = pd.DataFrame(values, index=row_ind, columns=col_idx)
+
         # IMPORTANT: avoid side effects to X, fh
 
     # todo: implement this if this is an estimator contributed to sktime

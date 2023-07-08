@@ -109,7 +109,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         #   think about how to deal with vectorization later
         self.set_tags(**{"y_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"]})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
