@@ -323,6 +323,70 @@ class SeasonalReducer(BaseForecaster):
         kwargs = {"marginal": marginal}
         return self._predict_method(fh=fh, X=X, method="predict_proba", **kwargs)
 
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Writes to self:
+            Sets fitted model attributes ending in "_", if update_params=True.
+            Does not write to self if update_params=False.
+
+        Parameters
+        ----------
+        y : sktime time series object
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        f = self.forecaster_
+        sp = self.sp
+
+        y = self._y
+        fh = self._fh
+
+        y_pivot = _pivot_sp(y, sp=sp, anchor_side="end")
+
+        if X is not None:
+            X_pivot = _pivot_sp(self._X, sp=sp, anchor=y, anchor_side="end")
+            X_pivot.columns = pd.RangeIndex(len(X_pivot.columns))
+        else:
+            X_pivot = None
+
+        fh_ix = fh.to_absolute(self.cutoff).to_pandas()
+        fh_df = pd.DataFrame(index=fh_ix, columns=self._y.columns)
+        fh_df_pivot = _pivot_sp(fh_df, sp=sp, anchor=y, anchor_side="end")
+        fh_pivot = ForecastingHorizon(fh_df_pivot.index, is_relative=False)
+
+        if not f.get_tag("handles-missing-data"):
+            y_pivot = y_pivot.fillna(method="bfill")
+            if X is not None:
+                X_pivot = X_pivot.fillna(method="bfill").fillna(method="ffill")
+
+        f.update(y=y_pivot, X=X_pivot, fh=fh_pivot)
+
+        return self
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
