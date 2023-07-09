@@ -240,7 +240,7 @@ class ThetaForecaster(ExponentialSmoothing):
         )
 
         return pred_int
-    
+
     # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg and logic using it
     def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
