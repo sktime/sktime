@@ -1395,7 +1395,6 @@ class TestPlusTrainSplitter(BaseSplitter):
         from sktime.forecasting.model_selection import ExpandingWindowSplitter
 
         y = load_airline()
-        y_template = y[:60]
         cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
 
         params = {"cv": cv_tpl}
