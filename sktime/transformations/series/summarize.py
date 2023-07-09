@@ -787,12 +787,12 @@ class SplitterSummarizer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.series.summarize import SplitterSummarizer
+    >>> from sktime.transformations.series.summarize import SummaryTransformer
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
-    >>> from sktime.transformations.panel.pca import PCATransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = SplitterSummarizer(
-    >>>     transformer=PCATransformer(),
+    >>>     transformer=SummaryTransformer(),
     >>>     splitter=ExpandingWindowSplitter())
     >>> y_splitsummarized = transformer.fit_transform(y)
     """
@@ -802,16 +802,17 @@ class SplitterSummarizer(BaseTransformer):
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
     }
 
-    def __init__(self, transformer, splitter):
+    def __init__(self, transformer, splitter, index="last"):
         self.transformer = transformer
         self.splitter = splitter
+        self.index = index
 
         super().__init__()
 
@@ -844,14 +845,19 @@ class SplitterSummarizer(BaseTransformer):
         if not hasattr(self.splitter, "split_series"):
             raise ValueError("Splitter should have a split_series method")
 
-        Xt = pd.DataFrame()
-        for i in range(len(X)):
-            tf = self.transformer.clone()
-            train, _ = self.splitter.split_series(X[i])
-            transformed_train = tf.fit_transform(train)
-            Xt = Xt.append(transformed_train)
+        transformed_series = []
+        splits = self.splitter.split_series(X)
 
-        Xt = Xt.reset_index(drop=True)
+        for split in splits:
+            tf = self.transformer.clone()
+            transformed_split = tf.fit_transform(split[0])
+            transformed_split.index = [split[0].index[-1]]
+            transformed_series.append(transformed_split)
+
+        Xt = pd.concat(transformed_series)
+
+        if self.index != "last":
+            Xt = Xt.reset_index(drop=True)
 
         return Xt
 
@@ -874,10 +880,9 @@ class SplitterSummarizer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.model_selection import ExpandingWindowSplitter
-        from sktime.transformations.panel.pca import PCATransformer
 
         params1 = {
-            "transformer": PCATransformer(),
+            "transformer": SummaryTransformer(),
             "splitter": ExpandingWindowSplitter(),
         }
 
