@@ -32,18 +32,18 @@ EXCLUDE_ESTIMATORS = [
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
     # DL classifier suspected to cause hangs and memouts, see #4610
-    "FCNClassifier",
-    "MACNNClassifier",
-    "SimpleRNNClassifier",
-    "SimpleRNNRegressor",
-    "EditDist",
-    "CNNClassifier",
-    "FCNClassifier",
-    "InceptionTimeClassifer",
-    "LSTMFCNClassifier",
-    "MLPClassifier",
-    "CNNRegressor",
-    "ResNetRegressor",
+    # "FCNClassifier",
+    # "MACNNClassifier",
+    # "SimpleRNNClassifier",
+    # "SimpleRNNRegressor",
+    # "EditDist",
+    # "CNNClassifier",
+    # "FCNClassifier",
+    # "InceptionTimeClassifer",
+    # "LSTMFCNClassifier",
+    # "MLPClassifier",
+    # "CNNRegressor",
+    # "ResNetRegressor",
 ]
 
 
