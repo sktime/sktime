@@ -257,7 +257,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
                 at quantile probability in second-level col index, for each row index.
         """
         out = self._by_column(
-            "predict_quantiles", fh=fh, X=X, alpha=alpha, col_multiindex=True
+            "predict_quantiles",
+            fh=fh,
+            X=X,
+            alpha=alpha,
+            col_multiindex=True,
+            legacy_interface=legacy_interface,
         )
         if len(out.columns.get_level_values(0).unique()) == 1:
             out.columns = out.columns.droplevel(level=0)
@@ -304,7 +309,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         out = self._by_column(
-            "predict_interval", fh=fh, X=X, coverage=coverage, col_multiindex=True
+            "predict_interval",
+            fh=fh,
+            X=X,
+            coverage=coverage,
+            col_multiindex=True,
+            legacy_interface=legacy_interface,
         )
         if len(out.columns.get_level_values(0).unique()) == 1:
             out.columns = out.columns.droplevel(level=0)
