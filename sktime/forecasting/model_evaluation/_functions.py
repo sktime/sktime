@@ -102,13 +102,12 @@ def _select_fh_from_y(y):
 
 
 def _evaluate_window(
-    y,
-    X,
-    train,
-    test,
+    y_train,
+    y_test,
+    X_train,
+    X_test,
     i,
     fh,
-    freq,
     forecaster,
     strategy,
     scoring,
@@ -124,10 +123,6 @@ def _evaluate_window(
     cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
     y_pred = pd.NA
 
-    # split data
-    y_train, y_test, X_train, X_test = _split(
-        y=y, X=X, train=train, test=test, freq=freq
-    )
     if fh is None:
         fh = _select_fh_from_y(y_test)
 
@@ -356,15 +351,6 @@ def evaluate(
 
     y = convert_to(y, to_type=PANDAS_MTYPES)
 
-    freq = None
-    try:
-        if y.index.nlevels == 1:
-            freq = y.index.freq
-        else:
-            freq = y.index.levels[0].freq
-    except AttributeError:
-        pass
-
     if X is not None:
         X_valid, _, _ = check_is_scitype(
             X, scitype=ALLOWED_SCITYPES, return_metadata=True
@@ -383,7 +369,6 @@ def evaluate(
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
         "fh": cv.fh,
-        "freq": freq,
         "forecaster": forecaster,
         "scoring": scoring if not isinstance(scoring, List) else scoring[0],
         "strategy": strategy,
@@ -393,27 +378,42 @@ def evaluate(
         "cutoff_dtype": cutoff_dtype,
     }
 
+    def gen_y_X_train_test(y, X, cv):
+        geny = cv.split_series(y)
+        if X is None:
+            for y_train, y_test in geny:
+                yield y_train, y_test, None, None
+        else:
+            from sktime.forecasting.model_selection import SameLocSplitter
+
+            cv_X = SameLocSplitter(cv, y)
+            genx = cv_X.split_series(X)
+
+            for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
+                yield y_train, y_test, X_train, X_test
+
     if backend is None or strategy in ["update", "no-update_params"]:
         # Run temporal cross-validation sequentially
         results = []
-        for i, (train, test) in enumerate(cv.split(y)):
+        yx_splits = gen_y_X_train_test()
+
+        for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             if strategy == "update" or (strategy == "no-update_params" and i == 0):
                 result, forecaster = _evaluate_window(
-                    y,
-                    X,
-                    train,
-                    test,
+                    y_train,
+                    y_test,
+                    X_train,
+                    X_test,
                     i,
                     **_evaluate_window_kwargs,
                 )
                 _evaluate_window_kwargs["forecaster"] = forecaster
             else:
                 result = _evaluate_window(
-                    y,
-                    X,
-                    train,
-                    test,
-                    i,
+                    y_train,
+                    y_test,
+                    X_train,
+                    X_test,
                     **_evaluate_window_kwargs,
                 )
             results.append(result)
@@ -426,13 +426,15 @@ def evaluate(
         from dask import delayed as dask_delayed
 
         results = []
-        for i, (train, test) in enumerate(cv.split(y)):
+        yx_splits = gen_y_X_train_test()
+
+        for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             results.append(
                 dask_delayed(_evaluate_window)(
-                    y,
-                    X,
-                    train,
-                    test,
+                    y_train,
+                    y_test,
+                    X_train,
+                    X_test,
                     i,
                     **_evaluate_window_kwargs,
                 )
@@ -459,14 +461,14 @@ def evaluate(
 
         results = Parallel(backend=backend, **kwargs)(
             delayed(_evaluate_window)(
-                y,
-                X,
-                train,
-                test,
+                y_train,
+                y_test,
+                X_train,
+                X_test,
                 i,
                 **_evaluate_window_kwargs,
             )
-            for i, (train, test) in enumerate(cv.split(y))
+            for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits)
         )
         results = pd.concat(results)
 
