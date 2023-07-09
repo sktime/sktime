@@ -395,7 +395,7 @@ def evaluate(
     if backend is None or strategy in ["update", "no-update_params"]:
         # Run temporal cross-validation sequentially
         results = []
-        yx_splits = gen_y_X_train_test()
+        yx_splits = gen_y_X_train_test(y, X, cv)
 
         for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             if strategy == "update" or (strategy == "no-update_params" and i == 0):
@@ -426,7 +426,7 @@ def evaluate(
         from dask import delayed as dask_delayed
 
         results = []
-        yx_splits = gen_y_X_train_test()
+        yx_splits = gen_y_X_train_test(y, X, cv)
 
         for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             results.append(
@@ -458,6 +458,8 @@ def evaluate(
     else:
         # Otherwise use joblib
         from joblib import Parallel, delayed
+
+        yx_splits = gen_y_X_train_test(y, X, cv)
 
         results = Parallel(backend=backend, **kwargs)(
             delayed(_evaluate_window)(
