@@ -203,21 +203,25 @@ class ColumnEnsembleTransformer(
         # handle remainder
         remainder = self.remainder
 
-        if remainder == "passthrough" or isinstance(remainder, BaseTransformer):
-            if isinstance(remainder, BaseTransformer):
-                rem_t = self.remainder.clone()
-            elif remainder == "passthrough":
-                from sktime.transformations.compose import Id
+        # in the None / "drop" case, we are already done
+        if remainder != "passthrough" and not isinstance(remainder, BaseTransformer):
+            return transformers
 
-                rem_t = Id()
+        # if remainder == "passthrough" or isinstance(remainder, BaseTransformer)
+        if isinstance(remainder, BaseTransformer):
+            rem_t = self.remainder.clone()
+        elif remainder == "passthrough":
+            from sktime.transformations.compose import Id
 
-            remain_idx = set()
-            for idx in indices:
-                remain_idx = remain_idx.union(set(idx))
-            remain_idx = set(X.columns).difference(remain_idx)
-            remain_idx = self._coerce_to_pd_index(remain_idx, X)
+            rem_t = Id()
 
-            transformers.append(("remainder", rem_t, remain_idx))
+        remain_idx = set()
+        for idx in indices:
+            remain_idx = remain_idx.union(set(idx))
+        remain_idx = set(X.columns).difference(remain_idx)
+        remain_idx = self._coerce_to_pd_index(remain_idx, X)
+
+        transformers.append(("remainder", rem_t, remain_idx))
 
         return transformers
 
