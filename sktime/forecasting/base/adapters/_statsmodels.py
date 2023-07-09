@@ -31,7 +31,7 @@ class _StatsModelsAdapter(BaseForecaster):
         self._fitted_forecaster = None
         super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -78,7 +78,7 @@ class _StatsModelsAdapter(BaseForecaster):
                     y = y.loc[index_diff]
                 self._fitted_forecaster = self._fitted_forecaster.append(y)
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -147,7 +147,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
         raise NotImplementedError("abstract method")
 
-    def _predict_interval(self, fh, X=None, coverage=0.95):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,

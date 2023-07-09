@@ -26,6 +26,9 @@ class BaggingClassifier(BaseClassifier):
     Direct generalization of ``sklearn``'s ``BaggingClassifier``
     to the time series classification task.
 
+    Note: if n_features=1, BaggingClassifier turns a univariate classifier into
+    a multivariate classifier (as slices seen by ``estimator`` are all univariate).
+
     Parameters
     ----------
     estimator : sktime classifier, descendant of BaseClassifier
@@ -40,6 +43,8 @@ class BaggingClassifier(BaseClassifier):
         The number of features/variables drawn from ``X`` in ``fit`` to train each clone
         If int, then indicates number of instances precisely
         If float, interpreted as a fraction, and rounded by ``ceil``
+        Note: if n_features=1, BaggingClassifier turns a univariate classifier into
+        a multivariate classifier (as slices seen by ``estimator`` are all univariate).
     bootstrap : boolean, default=True
         whether samples/instances are drawn with replacement (True) or not (False)
     bootstrap_features : boolean, default=False
@@ -98,7 +103,11 @@ class BaggingClassifier(BaseClassifier):
 
         super().__init__()
 
-        tags_to_clone = ["capability:multivariate", "capability:missing_values"]
+        if n_features == 1:
+            # if n_features == 1, this turns a univariate classifier into multivariate
+            tags_to_clone = ["capability:missing_values"]
+        else:
+            tags_to_clone = ["capability:multivariate", "capability:missing_values"]
         self.clone_tags(estimator, tags_to_clone)
 
     def _fit(self, X, y):
@@ -238,7 +247,16 @@ class BaggingClassifier(BaseClassifier):
             "bootstrap_features": True,
         }
 
-        return [params1, params2, params3]
+        # force-create a classifier that cannot handle multivariate
+        univariate_dummy = DummyClassifier()
+        univariate_dummy.set_tags(**{"capability:multivariate": False})
+        # this should still result in a multivariate classifier
+        params4 = {
+            "estimator": univariate_dummy,
+            "n_features": 1,
+        }
+
+        return [params1, params2, params3, params4]
 
 
 def _random_ss_ix(ix, size, replace=True):

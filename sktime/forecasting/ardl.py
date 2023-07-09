@@ -292,7 +292,7 @@ class ARDL(_StatsModelsAdapter):
         return inner_order, inner_auto_ardl
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -379,7 +379,7 @@ class ARDL(_StatsModelsAdapter):
         self.check_is_fitted()
         return self._fitted_forecaster.summary()
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
