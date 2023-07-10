@@ -414,6 +414,7 @@ def evaluate(
                     y_test,
                     X_train,
                     X_test,
+                    i,
                     **_evaluate_window_kwargs,
                 )
             results.append(result)
