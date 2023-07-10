@@ -43,7 +43,7 @@ Estimators with a soft dependency need to ensure the following:
    in an environment without the required packages.
 *  In a case where the package import differs from the package name, i.e., ``import package_string`` is different from
    ``pip install different-package-string`` (usually the case for packages containing a dash in the name), the ``python_dependecies_alias`` tag
-   should also be populated to pass the information on package and import strings as ``dict`` such as ``{"scikit-learn":sklearn}``.
+   should be populated to pass the information on package and import strings as ``dict`` such as ``{"scikit-learn":"sklearn"}``.
 *  If the soft dependencies require specific python versions, the ``python_version``
    tag should also be populated, with a PEP 440 compliant version specification ``str`` such as ``"<3.10"`` or ``">3.6,~=3.8"``.
 *  If including docstring examples that use soft dependencies, ensure to skip doctest. To do this add a ``# doctest: +SKIP`` to the end of each
