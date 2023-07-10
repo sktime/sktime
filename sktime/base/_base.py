@@ -73,6 +73,9 @@ class BaseObject(_BaseObject):
     Extends skbase BaseObject with additional features.
     """
 
+    # global dependency alias tag for sklearn dependency management
+    _tags = {"python_dependecies_alias": {"scikit-learn": "sklearn"}}
+
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
