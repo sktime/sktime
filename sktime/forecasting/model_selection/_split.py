@@ -9,6 +9,7 @@ __all__ = [
     "SingleWindowSplitter",
     "SameLocSplitter",
     "temporal_train_test_split",
+    "TestPlusTrainSplitter",
 ]
 __author__ = ["mloning", "kkoralturk", "khrapovs", "chillerobscuro", "fkiraly"]
 
@@ -1401,6 +1402,104 @@ class SameLocSplitter(BaseSplitter):
         cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
 
         params = {"cv": cv_tpl, "y_template": y_template}
+
+        return params
+
+
+class TestPlusTrainSplitter(BaseSplitter):
+    r"""Splitter that adds the train sets to the test sets.
+
+    Takes a splitter ``cv`` and modifies it in the following way:
+    The i-th train sets is identical to the i-th train set of ``cv``.
+    The i-th test set is the union of the i-th train set and i-th test set of ``cv``.
+
+    Parameters
+    ----------
+    cv : BaseSplitter
+        splitter to modify as above
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+    >>> y = load_airline()
+    >>> y_template = y[:60]
+    >>> cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+
+    >>> splitter = TestPlusTrainSplitter(cv_tpl)
+    """
+
+    def __init__(self, cv):
+        self.cv = cv
+        super().__init__()
+
+    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Get iloc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split
+
+        Parameters
+        ----------
+        y : pd.Index or time series in sktime compatible time series format
+            Time series to split, or index of time series to split
+
+        Yields
+        ------
+        train : 1D np.ndarray of dtype int
+            Training window indices, iloc references to training indices in y
+        test : 1D np.ndarray of dtype int
+            Test window indices, iloc references to test indices in y
+        """
+        cv = self.cv
+
+        for y_train_inner, y_test_inner in cv.split(y):
+            y_train_self = y_train_inner
+            y_test_self = set(y_train_inner).union(y_test_inner)
+            y_test_self = np.array(list(y_test_self))
+            yield y_train_self, y_test_self
+
+    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+        """Return the number of splits.
+
+        Since this splitter returns a single train/test split,
+        this number is trivially 1.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
+
+        Returns
+        -------
+        n_splits : int
+            The number of splits.
+        """
+        return self.cv.get_n_splits(y)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+        cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+
+        params = {"cv": cv_tpl}
 
         return params
 
