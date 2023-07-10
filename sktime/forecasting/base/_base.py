@@ -233,17 +233,17 @@ class BaseForecaster(BaseEstimator):
         First index does subsetting of exogeneous input data.
         Second index does subsetting of the forecast (but not of endogeneous data).
 
-        Keys must be valid inputs for `columns` in `ColumnSubset`.
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following composite pipeline object:
-            ColumnSubset(columns1) ** self * ColumnSubset(columns2)
+            ColumnSelect(columns1) ** self * ColumnSelect(columns2)
             where `columns1` is first or only item in `key`, and `columns2` is the last
             if only one item is passed in `key`, only `columns1` is applied to input
         """
