@@ -8,6 +8,7 @@ __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 import pandas as pd
 from joblib import Parallel, delayed
 
+from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
 
@@ -755,21 +756,28 @@ class SummaryTransformer(BaseTransformer):
 class SplitterSummarizer(BaseTransformer):
     """Create summary values of a time series' splits.
 
-    A series-to-series transformer that applies a series-to-primitives transformer
-    to each series' train split.
+    A series-to-series transformer that applies a series-to-primitives transformer t
+    to each series' train split created using the splitter `s`.
 
-    It splits the series using a specified splitter and transforms each resulting
-    split using the provided transformer.
+    The i-th row of the resulting series is equivalent to
+    t.fit_transform(s.split_series(X)[i][0]).
 
-    This transformer aims to provide a summarization of the series based on the
-    transformer and splitter given.
+    The output series aims to provide a summarization of the input series based on the
+    given transformer and splitter.
 
-    Attributes
+    Parameters
     ----------
-    transformer : series-to-primitives transformer used to convert series
-        to primitives.
+    transformer : `sktime` transformer inheriting from `BaseTransformer`
+    series-to-primitives transformer used to convert series to primitives.
 
-    splitter : splitter used to divide the series.
+    splitter : `sktime` splitter inheriting from `BaseSplitter`, optional (default=None)
+    splitter used to divide the series.
+    If None, it takes `ExpandingWindowSplitter` with default parameters.
+
+    index : str, optional (default="last")
+    Determines the indexing approach for the resulting series.
+    If "last", the index of each series' row is used.
+    If anything else, the row's number becomes the index.
 
     Methods
     -------
@@ -809,22 +817,18 @@ class SplitterSummarizer(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    def __init__(self, transformer, splitter, index="last"):
+    def __init__(self, transformer, splitter=None, index="last"):
         self.transformer = transformer
-        self.splitter = splitter
         self.index = index
+        if splitter is None:
+            self.splitter = ExpandingWindowSplitter()
+        else:
+            self.splitter = splitter
 
         super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
-
-        Transforms the series `X` into a new series `Xt` by applying the
-        series-to-primitives transformer `t` on each train split of `X`,
-         which is created using the splitter `cv`.
-
-         The `i-th` row of `Xt` is equivalent to
-         `t.fit_transform(cv.split_series(X)[i][0])`.
 
         private _transform containing the core logic, called from transform
 
@@ -879,11 +883,33 @@ class SplitterSummarizer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.forecasting.model_selection import SlidingWindowSplitter
+        from sktime.transformations.panel.catch22 import Catch22
 
         params1 = {
             "transformer": SummaryTransformer(),
             "splitter": ExpandingWindowSplitter(),
+            "index": "last",
         }
 
-        return [params1]
+        params2 = {
+            "transformer": SummaryTransformer(
+                summary_function=["mad"], quantiles=(0.7,)
+            ),
+            "splitter": ExpandingWindowSplitter(),
+            "index": None,
+        }
+
+        params3 = {
+            "transformer": SummaryTransformer(),
+        }
+
+        params4 = {
+            "transformer": Catch22(),
+            "splitter": SlidingWindowSplitter(
+                window_length=10, step_length=10, fh=1, start_with_window=True
+            ),
+            "index": "last",
+        }
+
+        return [params1, params2, params3, params4]
