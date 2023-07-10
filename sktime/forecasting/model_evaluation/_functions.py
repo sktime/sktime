@@ -384,9 +384,12 @@ def evaluate(
             for y_train, y_test in geny:
                 yield y_train, y_test, None, None
         else:
-            from sktime.forecasting.model_selection import SameLocSplitter
+            from sktime.forecasting.model_selection import (
+                SameLocSplitter,
+                TestPlusTrainSplitter,
+            )
 
-            cv_X = SameLocSplitter(cv, y)
+            cv_X = SameLocSplitter(TestPlusTrainSplitter(cv), y)
             genx = cv_X.split_series(X)
 
             for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
