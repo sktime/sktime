@@ -74,7 +74,7 @@ class BaseObject(_BaseObject):
     """
 
     # global dependency alias tag for sklearn dependency management
-    _tags = {"python_dependecies_alias": {"scikit-learn": "sklearn"}}
+    _tags = {"python_dependencies_alias": {"scikit-learn": "sklearn"}}
 
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
