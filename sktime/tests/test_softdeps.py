@@ -18,7 +18,10 @@ import pytest
 from sktime.registry import all_estimators
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
-from sktime.utils.validation._dependencies import _check_python_version
+from sktime.utils.validation._dependencies import (
+    _check_python_version,
+    _check_soft_dependencies,
+)
 
 # list of soft dependencies used
 # excludes estimators, only for soft dependencies used in non-estimator modules
@@ -88,7 +91,8 @@ modules = [x for x in modules if not (_is_test(x) or _is_ignored(x) or _is_priva
 def is_soft_dep_missing_message(msg):
     """Check whether message is one of multiple missing softdep messages."""
     # message if PEP 440 string is specified
-    cond1 = "requires soft dependencies" in msg
+    missing_version_msg = "to be present in the python environment, with version"
+    cond1 = missing_version_msg in msg
     # message if dependency is missing entirely
     missing_dep_entirely_msg = (
         "is a soft dependency and not included in the base sktime installation"
@@ -151,8 +155,9 @@ def _coerce_list_of_str(obj):
 
 
 def _get_soft_deps(est):
-    """Return soft dependencies of an estimator, as list of str."""
+    """Return soft dependencies of an estimator, as list of str and its alias."""
     softdeps = est.get_class_tag("python_dependencies", None)
+    softdeps_aliases = est.get_class_tag("python_dependencies_aliases", None)
     softdeps = _coerce_list_of_str(softdeps)
     if softdeps is None:
         raise RuntimeError(
@@ -160,15 +165,14 @@ def _get_soft_deps(est):
             f" but {est.__name__} has {softdeps}"
         )
     else:
-        return softdeps
+        return softdeps, softdeps_aliases
 
 
-def _is_in_env(modules):
+def _is_in_env(modules, module_aliases):
     """Return whether all modules in list of str modules are installed in env."""
     modules = _coerce_list_of_str(modules)
     try:
-        for module in modules:
-            import_module(module)
+        _check_soft_dependencies(modules, package_import_alias=module_aliases)
         return True
     except ModuleNotFoundError:
         return False
@@ -226,8 +230,8 @@ def test_python_error(estimator):
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_softdep_error(estimator):
     """Test that estimators raise error if required soft dependencies are missing."""
-    softdeps = _get_soft_deps(estimator)
-    if not _is_in_env(softdeps):
+    softdeps, softdeps_alias = _get_soft_deps(estimator)
+    if not _is_in_env(softdeps, softdeps_alias):
         try:
             estimator.create_test_instance()
         except ModuleNotFoundError as e:
@@ -246,8 +250,8 @@ def test_softdep_error(estimator):
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_est_construct_if_softdep_available(estimator):
     """Test that estimators construct if required soft dependencies are there."""
-    softdeps = _get_soft_deps(estimator)
-    if _is_in_env(softdeps):
+    softdeps, softdeps_alias = _get_soft_deps(estimator)
+    if _is_in_env(softdeps, softdeps_alias):
         try:
             estimator.create_test_instance()
         except ModuleNotFoundError as e:
