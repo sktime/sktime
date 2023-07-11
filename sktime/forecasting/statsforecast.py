@@ -11,10 +11,11 @@ __all__ = [
     "StatsForecastMSTL",
 ]
 
-
 from typing import Dict, List, Optional, Union
 
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
+    StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
 
@@ -568,11 +569,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     ----------
     season_length : Union[int, List[int]]
         Number of observations per unit of time. For multiple seasonalities use a list.
-    autoets_kwargs : dict
-        Extra arguments to pass to [`statsforecast.models.AutoETS`]
-        (https://nixtla.github.io/statsforecast/src/core/models.html#autoets).
-    alias : str
-        Custom name of the model.
+    trend_forecaster : estimator, optional, default=StatsForecastAutoETS()
 
     References
     ----------
@@ -601,32 +598,43 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "capability:pred_int:insample": True,
     }
 
+    default_trend_forecaster = (StatsForecastAutoETS(model="ZZN"),)
+
     def __init__(
         self,
         season_length: Union[int, List[int]],
-        *,
-        autoets_kwargs: Optional[Dict] = None,
-        alias: str = "MSTL",
+        trend_forecaster=default_trend_forecaster,
     ):
         self.season_length = season_length
-        self.autoets_kwargs = autoets_kwargs
-        self.alias = alias
+        self.trend_forecaster = trend_forecaster
 
         super().__init__()
 
     def _instantiate_model(self):
         """Create underlying forecaster instance."""
-        from statsforecast.models import MSTL, AutoETS
+        from statsforecast.models import _TS, MSTL
 
-        if self.autoets_kwargs:
-            trend_forecaster = AutoETS(self.autoets_kwargs)
-        else:
-            trend_forecaster = AutoETS(model="ZZN")
+        # checks if trend_forecaster is already wrapped with
+        # StatsForecastBackAdapterMSTL
+        if isinstance(self.trend_forecaster, StatsForecastBackAdapter):
+            return MSTL(
+                season_length=self.season_length,
+                trend_forecaster=self.trend_forecaster,
+            )
+        # if trend_forecaster is sktime forecaster
+        elif isinstance(self.trend_forecaster, BaseForecaster):
+            self.trend_forecaster = StatsForecastBackAdapter(self.trend_forecaster)
+        # if trend_forecaster is not StatsForecast forecaster
+        elif not isinstance(self.trend_forecaster, _TS):
+            raise Exception(
+                "The provided forecaster is not compatible with MSTL. Please ensure "
+                "that the forecaster you pass into the model is a sktime forecaster or "
+                "statsforecast forecaster."
+            )
 
         return MSTL(
             season_length=self.season_length,
-            trend_forecaster=trend_forecaster,
-            alias=self.alias,
+            trend_forecaster=self.trend_forecaster,
         )
 
     @classmethod
@@ -648,8 +656,23 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.var import VAR
+
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        params = {"season_length": 4}
+        params = [
+            {
+                "season_length": [3, 12],
+                "trend_forecaster": ThetaForecaster(),
+            },
+            {
+                "season_length": 4,
+            },
+            {
+                "season_length": 4,
+                "trend_forecaster": VAR(),
+            },
+        ]
 
         return params

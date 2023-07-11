@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
+import numpy as np
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
@@ -254,3 +255,148 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         final_interval_predictions = pandas.concat(interval_predictions, copy=False)
 
         return final_interval_predictions
+
+
+class StatsForecastBackAdapter(BaseForecaster):
+    """StatsForecast Back Adapter.
+
+    StatsForecastBackAdapter is a wrapper for sktime forecasters to be used in
+    StatsForecast composite models.
+
+    Parameters
+    ----------
+    estimator : sktime estimator
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastMSTL
+    >>> from sktime.forecasting.statsforecast import StatsForecastBackAdapterMSTL
+    >>> from sktime.forecasting.theta import ThetaForecaster
+
+    >>> y = load_airline()
+    >>> trend_forecaster = StatsForecastBackAdapterMSTL(ThetaForecaster())
+    >>> model = StatsForecastMSTL(
+            season_length=[3,12],
+            trend_forecaster=trend_forecaster
+        )
+    >>> fitted_model = model.fit(y=y)
+    >>> y_pred = fitted_model.predict(fh=[1,2,3])
+    >>> y_pred
+    1961-01    454.507079
+    1961-02    419.341442
+    1961-03    477.373918
+    Freq: M, Name: Number of airline passengers, dtype: float64
+    """
+
+    def __init__(self, estimator):
+        self.estimator = estimator
+        self.in_sample_fh = None
+        self.in_sample_X = None
+
+        super().__init__()
+
+    def __repr__(self):
+        return "StatsForecastBackAdapter"
+
+    def fit(self, y, X=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : ndarray
+            Clean time series of shape (t, ).
+        X : typing.Optional[numpy.ndarray], default=None
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self.estimator.fit(y=y, X=X)
+        self.in_sample_fh = np.flip(-np.arange(len(y)))
+        return self
+
+    def predict(self, h, X=None, level=None):
+        """Make forecasts.
+
+        Parameters
+        ----------
+        h : int
+            Forecast horizon.
+        X : typing.Optional[numpy.ndarray], default=None
+            Optional exogenous of shape (h, n_x).
+        level : typing.Optional[typing.Tuple[int]], default=None
+            Confidence levels (0-100) for prediction intervals.
+
+        Returns
+        -------
+        y_pred : dict
+            Dictionary with entries mean for point predictions and level_* for
+            probabilistic predictions.
+        """
+        mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
+        if level is None:
+            return {"mean": mean}
+
+        level = sorted(level)
+        coverage = [round(1 - (_l / 100), 2) for _l in level]
+
+        pred_int = self.estimator.predict_interval(
+            fh=range(1, h + 1), X=X, coverage=coverage
+        )
+
+        return {
+            "mean": mean,
+            **{
+                f"lo-{_l}": pred_int[("Coverage", c, "lower")].values
+                for c, _l in zip(reversed(coverage), reversed(level))
+            },
+            **{
+                f"hi-{_l}": pred_int[("Coverage", c, "upper")].values
+                for c, _l in zip(coverage, level)
+            },
+        }
+
+    def predict_in_sample(self, level=None):
+        """Access fitted MSTL insample predictions.
+
+        Parameters
+        ----------
+        level : typing.Optional[typing.Tuple[int]]
+            Confidence levels (0-100) for prediction intervals.
+
+        Returns
+        -------
+        y_pred : dict
+            Dictionary with entries mean for point predictions and level_* for
+            probabilistic predictions.
+        """
+        if level and not hasattr(self.estimator, "predict_interval"):
+            raise Exception(
+                "The provided trend_forecaster does not support interval prediction."
+                "Please remove the 'level' parameter or use a different model that"
+                "supports it."
+            )
+
+        fitted = self.estimator.predict(fh=self.in_sample_fh, X=self.in_sample_X)[:, 0]
+
+        if level is None:
+            return {"fitted": fitted}
+
+        level = sorted(level)
+        coverage = [round(1 - (_l / 100), 2) for _l in level]
+        pred_int = self.estimator.predict_interval(
+            fh=self.in_sample_fh, X=self.in_sample_X, coverage=coverage
+        )
+
+        return {
+            "fitted": fitted,
+            **{
+                f"fitted-lo-{_l}": pred_int[("Coverage", c, "lower")].values
+                for c, _l in zip(reversed(coverage), reversed(level))
+            },
+            **{
+                f"fitted-hi-{_l}": pred_int[("Coverage", c, "upper")].values
+                for c, _l in zip(coverage, level)
+            },
+        }
