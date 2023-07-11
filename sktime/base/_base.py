@@ -73,9 +73,6 @@ class BaseObject(_BaseObject):
     Extends skbase BaseObject with additional features.
     """
 
-    # global dependency alias tag for sklearn dependency management
-    _tags = {"python_dependencies_alias": {"scikit-learn": "sklearn"}}
-
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
@@ -359,6 +356,9 @@ class BaseEstimator(BaseObject):
 
     Extends sktime's BaseObject to include basic functionality for fittable estimators.
     """
+
+    # global dependency alias tag for sklearn dependency management
+    _tags = {"python_dependencies_alias": {"scikit-learn": "sklearn"}}
 
     def __init__(self):
         self._is_fitted = False
