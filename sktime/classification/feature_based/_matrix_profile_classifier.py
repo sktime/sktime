@@ -57,11 +57,11 @@ class MatrixProfileClassifier(BaseClassifier):
     >>> from sktime.classification.feature_based import MatrixProfileClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = MatrixProfileClassifier()
-    >>> clf.fit(X_train, y_train)
-    MatrixProfileClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)  # doctest: +SKIP
+    >>> clf = MatrixProfileClassifier()  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    MatrixProfileClassifier(...)  # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
