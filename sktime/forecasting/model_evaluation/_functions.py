@@ -219,6 +219,7 @@ def evaluate(
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
     compute: bool = True,
+    cv_X=None,
     **kwargs,
 ):
     """Evaluate forecaster using timeseries cross-validation.
@@ -228,7 +229,10 @@ def evaluate(
     forecaster : sktime BaseForecaster descendant
         sktime forecaster (concrete BaseForecaster descendant)
     cv : sktime BaseSplitter descendant
-        Splitter of how to split the data into test data and train data
+        determines split of ``y`` and possibly ``X`` into test and train folds
+        y is always split according to ``cv``, see above
+        if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
+        if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
     y : sktime time series container
         Target (endogeneous) time series used in the evaluation experiment
     X : sktime time series container, of same mtype as y
@@ -261,6 +265,10 @@ def evaluate(
     compute : bool, default=True
         If backend="dask", whether returned DataFrame is computed.
         If set to True, returns `pd.DataFrame`, otherwise `dask.dataframe.DataFrame`.
+    cv_X : sktime BaseSplitter descendant, optional
+        determines split of ``X`` into test and train folds
+        default is ``X`` being split to identical ``loc`` indices as ``y``
+        if passed, must have same number of splits as ``cv``
     **kwargs : Keyword arguments
         Only relevant if backend is specified. Additional kwargs are passed into
         `dask.distributed.get_client` or `dask.distributed.Client` if backend is
@@ -378,28 +386,47 @@ def evaluate(
         "cutoff_dtype": cutoff_dtype,
     }
 
-    def gen_y_X_train_test(y, X, cv):
+    def gen_y_X_train_test(y, X, cv, cv_X):
+        """Generate joint splits of y, X as per cv, cv_X.
+
+        If X is None, train/test splits of X are also None.
+
+        If cv_X is None, will default to
+        SameLocSplitter(TestPlusTrainSplitter(cv), y)
+        i.e., X splits have same loc index as y splits.
+
+        Yields
+        ------
+        y_train : i-th train split of y as per cv
+        y_test : i-th test split of y as per cv
+        X_train : i-th train split of y as per cv_X. None if X was None.
+        X_test : i-th test split of y as per cv_X. None if X was None.
+        """
         geny = cv.split_series(y)
         if X is None:
             for y_train, y_test in geny:
                 yield y_train, y_test, None, None
         else:
-            from sktime.forecasting.model_selection import (
-                SameLocSplitter,
-                TestPlusTrainSplitter,
-            )
+            if cv_X is None:
+                from sktime.forecasting.model_selection import (
+                    SameLocSplitter,
+                    TestPlusTrainSplitter,
+                )
 
-            cv_X = SameLocSplitter(TestPlusTrainSplitter(cv), y)
+                cv_X = SameLocSplitter(TestPlusTrainSplitter(cv), y)
+
             genx = cv_X.split_series(X)
 
             for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
                 yield y_train, y_test, X_train, X_test
 
+    # generator for y and X splits to iterate over below
+    yx_splits = gen_y_X_train_test(y, X, cv, cv_X)
+
+    # dispatch by backend and strategy
     if backend is None or strategy in ["update", "no-update_params"]:
         # Run temporal cross-validation sequentially
         results = []
-        yx_splits = gen_y_X_train_test(y, X, cv)
-
         for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             if strategy == "update" or (strategy == "no-update_params" and i == 0):
                 result, forecaster = _evaluate_window(
@@ -430,8 +457,6 @@ def evaluate(
         from dask import delayed as dask_delayed
 
         results = []
-        yx_splits = gen_y_X_train_test(y, X, cv)
-
         for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             results.append(
                 dask_delayed(_evaluate_window)(
@@ -463,8 +488,6 @@ def evaluate(
         # Otherwise use joblib
         from joblib import Parallel, delayed
 
-        yx_splits = gen_y_X_train_test(y, X, cv)
-
         results = Parallel(backend=backend, **kwargs)(
             delayed(_evaluate_window)(
                 y_train,
@@ -478,6 +501,7 @@ def evaluate(
         )
         results = pd.concat(results)
 
+    # final formatting of results DataFrame
     results = results.reset_index(drop=True)
     if isinstance(scoring, List):
         for s in scoring[1:]:
@@ -489,6 +513,7 @@ def evaluate(
                     y_train=results["y_train"].loc[row],
                 )
 
+    # drop pointer to data if not requested
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])
     results = results.astype({"len_train_window": int})
