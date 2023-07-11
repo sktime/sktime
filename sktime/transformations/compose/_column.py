@@ -2,10 +2,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
-__all__ = ["ColumnwiseTransformer"]
+__all__ = ["ColumnEnsembleTransformer", "ColumnwiseTransformer"]
 
 import pandas as pd
-from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
@@ -397,7 +396,6 @@ class ColumnwiseTransformer(BaseTransformer):
 
         return X
 
-    @if_delegate_has_method(delegate="transformer")
     def update(self, X, y=None, update_params=True):
         """Update parameters.
 

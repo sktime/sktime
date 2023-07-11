@@ -171,7 +171,7 @@ class ConformalIntervals(BaseForecaster):
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         self.fh_early_ = fh is not None
         self.forecaster_ = clone(self.forecaster)
         self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -187,7 +187,7 @@ class ConformalIntervals(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
@@ -203,7 +203,7 @@ class ConformalIntervals(BaseForecaster):
                 update=True,
             )
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

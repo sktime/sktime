@@ -352,17 +352,17 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         Pairwise transformer (e.g., distance kernel) subsetted to the index.
 
-        Keys must be valid inputs for `columns` in `ColumnSubset`.
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following TransformerPipeline object:
-            ColumnSubset(columns) * self
+            ColumnSelect(columns) * self
             where `columns` only item in `key`
         """
         from sktime.transformations.series.subset import ColumnSelect
