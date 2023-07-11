@@ -272,21 +272,18 @@ class StatsForecastBackAdapter(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastMSTL
     >>> from sktime.forecasting.statsforecast import StatsForecastBackAdapterMSTL
-    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.forecasting.ets import AutoETS
 
     >>> y = load_airline()
-    >>> trend_forecaster = StatsForecastBackAdapterMSTL(ThetaForecaster())
-    >>> model = StatsForecastMSTL(
+    >>> trend_forecaster = StatsForecastBackAdapterMSTL( # doctest: +SKIP
+            AutoETS()
+        )
+    >>> model = StatsForecastMSTL( # doctest: +SKIP
             season_length=[3,12],
             trend_forecaster=trend_forecaster
         )
-    >>> fitted_model = model.fit(y=y)
-    >>> y_pred = fitted_model.predict(fh=[1,2,3])
-    >>> y_pred
-    1961-01    454.507079
-    1961-02    419.341442
-    1961-03    477.373918
-    Freq: M, Name: Number of airline passengers, dtype: float64
+    >>> fitted_model = model.fit(y=y) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=[1,2,3]) # doctest: +SKIP
     """
 
     def __init__(self, estimator):

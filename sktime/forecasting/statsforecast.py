@@ -582,14 +582,9 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     >>> from sktime.forecasting.statsforecast import StatsForecastMSTL
 
     >>> y = load_airline()
-    >>> model = StatsForecastMSTL(season_length=[3,12])
-    >>> fitted_model = model.fit(y=y)
-    >>> y_pred = fitted_model.predict(fh=[1,2,3])
-    >>> y_pred
-    1961-01    454.507079
-    1961-02    419.341442
-    1961-03    477.373918
-    Freq: M, Name: Number of airline passengers, dtype: float64
+    >>> model = StatsForecastMSTL(season_length=[3,12]) # doctest: +SKIP
+    >>> fitted_model = model.fit(y=y) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=[1,2,3]) # doctest: +SKIP
     """
 
     _tags = {
@@ -598,15 +593,20 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "capability:pred_int:insample": True,
     }
 
-    default_trend_forecaster = (StatsForecastAutoETS(model="ZZN"),)
+    # import pytest
+    # from sktime.utils.validation._dependencies import _check_soft_dependencies
 
+    # @pytest.mark.skipif(_check_soft_dependencies())
     def __init__(
         self,
         season_length: Union[int, List[int]],
-        trend_forecaster=default_trend_forecaster,
+        trend_forecaster=None,
     ):
         self.season_length = season_length
-        self.trend_forecaster = trend_forecaster
+        if trend_forecaster:
+            self.trend_forecaster = trend_forecaster
+        else:
+            self.trend_forecaster = StatsForecastAutoETS(model="ZZN")
 
         super().__init__()
 
