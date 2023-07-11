@@ -222,12 +222,50 @@ def evaluate(
     cv_X=None,
     **kwargs,
 ):
-    """Evaluate forecaster using timeseries cross-validation.
+    r"""Evaluate forecaster using timeseries cross-validation.
+
+    All-in-one statistical performance benchmarking utility for forecasters
+    which runs a simple backtest experiment and returns a summary pd.DataFrame.
+
+    The experiment run is the following:
+
+    Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
+    the train/test folds produced by the generator ``cv.split_series(y)``.
+    Denote by :math:`X_{train, 1}, X_{test, 1}, \dots, X_{train, K}, X_{test, K}`
+    the train/test folds produced by the generator ``cv_X.split_series(X)``
+    (if ``X`` is ``None``, consider these to be ``None`` as well).
+
+    0. set ``i = 1``.
+    1. ``fit`` the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
+      with a ``fh`` to forecast :math:`y_{test, 1}`.
+    2. ``y_pred = forecaster.predict``
+      (or ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``)
+      with exogeneous data :math:`X_{test, i}`
+    3. Compute ``scoring`` on ``y_pred``versus :math:`y_{test, 1}`.
+    4. if ``i == K``, terminate, otherwise
+    5. set ``i = i + 1``
+    6. ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
+      how depends on ``strategy``:
+      * if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
+        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+      * if ``strategy == "update"``, update ``forecaster`` via ``update``,
+        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+      * if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
+        with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
+    7. goto 2
+
+    Results returned in this function's return are:
+    * results of ``scoring`` calculations, from 3,  in the `i`-th loop
+    * runtimes for fitting and/or predicting, from 1, 2, 6, in the `i`-th loop
+    * cutoff state of ``forecaster``, at 2, in the `i`-th loop
+    * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
+
+    A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
 
     Parameters
     ----------
-    forecaster : sktime BaseForecaster descendant
-        sktime forecaster (concrete BaseForecaster descendant)
+    forecaster : sktime BaseForecaster descendant (concrete forecaster)
+        sktime forecaster to benchmark
     cv : sktime BaseSplitter descendant
         determines split of ``y`` and possibly ``X`` into test and train folds
         y is always split according to ``cv``, see above
