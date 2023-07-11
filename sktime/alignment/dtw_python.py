@@ -51,7 +51,7 @@ class AlignerDTW(BaseAligner):
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "python_dependencies": "dtw-python",
-        "python_dependecies_alias": {"dtw-python": "dtw"},
+        "python_dependencies_alias": {"dtw-python": "dtw"},
     }
 
     def __init__(
