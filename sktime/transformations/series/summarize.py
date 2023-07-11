@@ -884,7 +884,6 @@ class SplitterSummarizer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.model_selection import SlidingWindowSplitter
-        from sktime.transformations.panel.catch22 import Catch22
 
         params1 = {
             "transformer": SummaryTransformer(),
@@ -905,7 +904,7 @@ class SplitterSummarizer(BaseTransformer):
         }
 
         params4 = {
-            "transformer": Catch22(),
+            "transformer": SummaryTransformer(),
             "splitter": SlidingWindowSplitter(
                 window_length=10, step_length=10, fh=1, start_with_window=True
             ),
