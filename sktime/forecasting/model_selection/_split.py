@@ -333,6 +333,10 @@ class BaseSplitter(BaseObject):
         Single step ahead or array of steps ahead to forecast.
     """
 
+    _tags = {"split_hierarchical": False}
+    # split_hierarchical: whether _split supports hierarchical types natively
+    # if not, splitter broadcasts over instances
+
     def __init__(
         self,
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
@@ -364,6 +368,8 @@ class BaseSplitter(BaseObject):
         y_index = self._coerce_to_index(y)
 
         if not isinstance(y_index, pd.MultiIndex):
+            split = self._split
+        elif self.get_tag("split_hierarchical", False, raise_error=False):
             split = self._split
         else:
             split = self._split_vectorized
@@ -1335,6 +1341,9 @@ class SameLocSplitter(BaseSplitter):
     >>> list(cv_tpl.split(y_template)) # doctest: +SKIP
     >>> list(splitter.split(y)) # doctest: +SKIP
     """
+
+    _tags = {"split_hierarchical": True}
+    # SameLocSplitter supports hierarchical pandas index
 
     def __init__(self, cv, y_template=None):
         self.cv = cv

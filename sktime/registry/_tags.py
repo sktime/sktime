@@ -396,6 +396,12 @@ ESTIMATOR_TAG_REGISTER = [
         "parameters reserved by the base class and present in all child estimators",
     ),
     (
+        "split_hierarchical",
+        "splitter",
+        "bool",
+        "whether _split is natively implemented for hierarchical y types",
+    ),
+    (
         "capabilities:exact",
         "distribution",
         ("list", "str"),
