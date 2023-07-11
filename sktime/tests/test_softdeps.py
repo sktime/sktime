@@ -85,6 +85,22 @@ modules = [x[1] for x in modules]
 modules = [x for x in modules if not (_is_test(x) or _is_ignored(x) or _is_private(x))]
 
 
+def is_soft_dep_missing_message(msg):
+    """Check whether message is one of multiple missing softdep messages."""
+    # message if PEP 440 string is specified
+    cond1 = "requires soft dependencies" in msg
+    # message if dependency is missing entirely
+    missing_dep_entirely_msg = (
+        "is a soft dependency and not included in the base sktime installation"
+    )
+    cond2 = missing_dep_entirely_msg in msg
+    # special message for deep learning dependencies
+    error_msg_dl = "required for deep learning"
+    cond3 = error_msg_dl in msg
+
+    return cond1 or cond2 or cond3
+
+
 @pytest.mark.parametrize("module", modules)
 def test_module_softdeps(module):
     """Test soft dependency imports in sktime modules."""
@@ -94,21 +110,13 @@ def test_module_softdeps(module):
     except ModuleNotFoundError as e:
         error_msg = str(e)
 
-        # Check if appropriate exception with useful error message is raised as
-        # defined in the `_check_soft_dependencies` function
-        expected_error_msg = (
-            "is a soft dependency and not included in the base sktime installation"
-        )
-        # message is different for deep learning deps tensorflow, tensorflow-proba
-        error_msg_alt = "required for deep learning"
-
-        if expected_error_msg not in error_msg and error_msg_alt not in error_msg:
+        if not is_soft_dep_missing_message(error_msg):
             raise RuntimeError(
-                f"The module: {module} seems to require a soft "
-                f"dependency, but does not raise an appropriate error "
-                f"message when the soft dependency is missing. Please "
-                f"use our `_check_soft_dependencies` function to "
-                f"raise a more appropriate error message."
+                f"The module: {module} seems to have unsatisfied soft "
+                f"dependency requirements, but does not raise an appropriate error "
+                f"message when the soft dependency requirement is not satisfied. "
+                f"Please use our `_check_soft_dependencies` function to "
+                f"raise an appropriate error with one of the predefined messages."
             ) from e
 
         # If the error is raised in a module which does depend on a soft dependency,
@@ -211,7 +219,7 @@ def test_python_error(estimator):
                 f"Estimator {estimator.__name__} has python version bound "
                 f"{pyspec} according to tags, but does not raise an appropriate "
                 f"error message on __init__ for incompatible python environments. "
-                f"Likely reason is that __init__ does not call super(cls).__init__."
+                f"Likely reason is that __init__ does not call super().__init__."
             ) from e
 
 
@@ -225,21 +233,13 @@ def test_softdep_error(estimator):
         except ModuleNotFoundError as e:
             error_msg = str(e)
 
-            # Check if appropriate exception with useful error message is raised as
-            # defined in the `_check_soft_dependencies` function
-            expected_error_msg = (
-                "is a soft dependency and not included in the base sktime installation"
-            )
-            # message is different for deep learning deps tensorflow, tensorflow-proba
-            error_msg_alt = "required for deep learning"
-
-            if expected_error_msg not in error_msg and error_msg_alt not in error_msg:
+            if not is_soft_dep_missing_message(error_msg):
                 raise RuntimeError(
-                    f"Estimator {estimator.__name__} requires soft dependencies "
+                    f"Estimator {estimator.__name__} has soft dependency requirements, "
                     f"{softdeps} according to tags, but does not raise an appropriate "
-                    f"error message on __init__, when the soft dependency is missing. "
-                    f"Likely reason is that __init__ does not call super(cls).__init__,"
-                    f" or imports super(cls).__init__ only after an attempted import."
+                    f"error message on __init__, when those requirements are unmet. "
+                    f"Likely reason is that __init__ does not call super().__init__,"
+                    f" or imports super().__init__ only after an attempted import."
                 ) from e
 
 
