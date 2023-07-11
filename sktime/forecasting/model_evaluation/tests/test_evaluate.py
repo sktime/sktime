@@ -374,5 +374,5 @@ def test_evaluate_hierarchical_unequal_X_y():
     assert isinstance(res, pd.DataFrame)
     assert res.shape == (5, 5)
 
-    expected_cols = np.array([1/2, 1/3, 1/4, 1/5, 1/6])
+    expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
     _assert_array_almost_equal(res.iloc[:, 0].values, expected_cols)
