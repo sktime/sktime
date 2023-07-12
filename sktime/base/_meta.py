@@ -785,10 +785,12 @@ def is_flat(obj):
 class _ColumnEstimator:
     """Mixin class with utilities for by-column applicates."""
 
-    def _coerce_to_pd_index(self, obj):
+    def _coerce_to_pd_index(self, obj, ref=None):
         """Coerce obj to pandas Index."""
+        if ref is None:
+            ref = self._y
         # replace ints by column names
-        obj = self._get_indices(self._y, obj)
+        obj = self._get_indices(ref, obj)
 
         # deal with numpy int by coercing to python int
         if np.issubdtype(type(obj), np.integer):
