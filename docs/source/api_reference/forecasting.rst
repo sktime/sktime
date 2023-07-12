@@ -149,6 +149,14 @@ Trend forecasters
     PolynomialTrendForecaster
     STLForecaster
 
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastMSTL
+
 Exponential smoothing based forecasters
 ---------------------------------------
 
@@ -221,7 +229,6 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
     StatsForecastAutoCES
     StatsForecastAutoETS
     StatsForecastAutoTheta
-    StatsForecastMSTL
 
 .. currentmodule:: sktime.forecasting.sarimax
 
