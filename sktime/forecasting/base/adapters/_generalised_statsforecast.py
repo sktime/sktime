@@ -286,6 +286,10 @@ class StatsForecastBackAdapter(BaseForecaster):
     >>> y_pred = fitted_model.predict(fh=[1,2,3]) # doctest: +SKIP
     """
 
+    _tags = {
+        "python_dependencies": ["statsforecast", "statsmodels"],
+    }
+
     def __init__(self, estimator):
         self.estimator = estimator
         self.in_sample_fh = None
