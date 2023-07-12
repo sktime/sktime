@@ -23,10 +23,6 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
-from sktime.utils.validation._dependencies import (
-    _check_python_version,
-    _check_soft_dependencies,
-)
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -863,8 +859,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": "numpy<1.24",
-        "python_version": "<3.11",
+        "python_dependencies": ["numpy<1.24", "scikit-optimize"],
+        "python_version": ">= 3.6",
+        "python_dependencies_alias": {"scikit-optimize": "skopt"},
     }
 
     def __init__(
@@ -887,12 +884,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         update_behaviour: str = "full_refit",
         error_score=np.nan,
     ):
-        _check_python_version(self)
-        _check_soft_dependencies(
-            "scikit-optimize",
-            severity="error",
-            package_import_alias={"scikit-optimize": "skopt"},
-        )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.n_points = n_points
@@ -1255,7 +1246,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             "cv": SingleWindowSplitter(fh=1),
             "param_distributions": {"window_length": [2, 5]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
-            "n_iter": 2,
+            "n_iter": 1,
         }
 
         params2 = {
@@ -1264,7 +1255,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             "param_distributions": {"degree": [1, 2]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
-            "n_iter": 2,
+            "n_iter": 1,
         }
 
         return [params, params2]

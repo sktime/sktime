@@ -44,7 +44,6 @@ EXCLUDE_ESTIMATORS = [
     "MLPClassifier",
     "CNNRegressor",
     "ResNetRegressor",
-    "ForecastingSkoptSearchCV",
 ]
 
 
