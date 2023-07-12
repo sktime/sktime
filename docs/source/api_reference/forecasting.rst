@@ -204,6 +204,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 (V)AR(I)MAX models
 ~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.forecasting.auto_reg
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AutoREG
+
 .. currentmodule:: sktime.forecasting.arima
 
 .. autosummary::
