@@ -13,6 +13,8 @@ __all__ = [
 
 from typing import Dict, List, Optional, Union
 
+from statsforecast.models import _TS
+
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
@@ -556,7 +558,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         return params
 
 
-class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
+class StatsForecastMSTL(_TS):
     """StatsForecast Multiple Seasonal-Trend decomposition using LOESS model.
 
     This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
