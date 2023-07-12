@@ -593,10 +593,6 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "capability:pred_int:insample": True,
     }
 
-    # import pytest
-    # from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-    # @pytest.mark.skipif(_check_soft_dependencies())
     def __init__(
         self,
         season_length: Union[int, List[int]],
