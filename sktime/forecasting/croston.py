@@ -79,7 +79,7 @@ class Croston(BaseForecaster):
         self._f = None
         super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters

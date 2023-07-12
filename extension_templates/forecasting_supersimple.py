@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extension template for forecasters, SIMPLE version.
 
@@ -6,7 +5,7 @@ Contains only bare minimum of implementation requirements for a functional forec
 Also assumes *no composition*, i.e., no forecaster or other estimator components.
 Assumes pd.DataFrame used internally, and no hierarchical functionality.
 For advanced cases (probabilistic, composition, hierarchical, etc),
-    see full extension template in forecasting.py
+    see extension templates in forecasting.py or forecasting_simple.py
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -88,8 +87,8 @@ class MyForecaster(BaseForecaster):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyForecaster" to the name of the class
-        super(MyForecaster, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

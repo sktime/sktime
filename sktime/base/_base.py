@@ -357,6 +357,9 @@ class BaseEstimator(BaseObject):
     Extends sktime's BaseObject to include basic functionality for fittable estimators.
     """
 
+    # global dependency alias tag for sklearn dependency management
+    _tags = {"python_dependencies_alias": {"scikit-learn": "sklearn"}}
+
     def __init__(self):
         self._is_fitted = False
         super().__init__()

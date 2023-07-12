@@ -83,7 +83,7 @@ class ForecastKnownValues(BaseForecaster):
             self.set_tags(**{"y_inner_mtype": mtypes})
             self.set_tags(**{"X_inner_mtype": mtypes})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -115,7 +115,7 @@ class ForecastKnownValues(BaseForecaster):
         # no fitting, we already know the forecast values
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
