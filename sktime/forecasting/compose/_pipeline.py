@@ -1234,6 +1234,7 @@ class ForecastX(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "handles-missing-data": True,
     }
 
     def __init__(
