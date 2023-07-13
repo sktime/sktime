@@ -788,10 +788,6 @@ class SplitterSummarizer(BaseTransformer):
     --------
     SummaryTransformer: Calculates summary value of a time series.
 
-    Notes
-    -----
-    Empty
-
     Examples
     --------
     >>> from sktime.transformations.series.summarize import SplitterSummarizer
@@ -800,8 +796,8 @@ class SplitterSummarizer(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = SplitterSummarizer(
-    >>>     transformer=SummaryTransformer(),
-    >>>     splitter=ExpandingWindowSplitter())
+    ...     transformer=SummaryTransformer(),
+    ...     splitter=ExpandingWindowSplitter())
     >>> y_splitsummarized = transformer.fit_transform(y)
     """
 
