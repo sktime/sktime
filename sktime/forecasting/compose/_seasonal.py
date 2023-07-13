@@ -363,7 +363,6 @@ class SeasonalReducer(BaseForecaster):
         sp = self.sp
 
         y = self._y
-        fh = self._fh
 
         y_pivot = _pivot_sp(y, sp=sp, anchor_side="end")
 
@@ -373,17 +372,12 @@ class SeasonalReducer(BaseForecaster):
         else:
             X_pivot = None
 
-        fh_ix = fh.to_absolute(self.cutoff).to_pandas()
-        fh_df = pd.DataFrame(index=fh_ix, columns=self._y.columns)
-        fh_df_pivot = _pivot_sp(fh_df, sp=sp, anchor=y, anchor_side="end")
-        fh_pivot = ForecastingHorizon(fh_df_pivot.index, is_relative=False)
-
         if not f.get_tag("handles-missing-data"):
             y_pivot = y_pivot.fillna(method="bfill")
             if X is not None:
                 X_pivot = X_pivot.fillna(method="bfill").fillna(method="ffill")
 
-        f.update(y=y_pivot, X=X_pivot, fh=fh_pivot)
+        f.update(y=y_pivot, X=X_pivot, update_params=update_params)
 
         return self
 
