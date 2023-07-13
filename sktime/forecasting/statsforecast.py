@@ -11,15 +11,27 @@ __all__ = [
     "StatsForecastMSTL",
 ]
 
+import warnings
 from typing import Dict, List, Optional, Union
-
-from statsforecast.models import _TS
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("statsforecast", severity="none"):
+    from statsforecast.models import _TS
+else:
+
+    class _TS:
+        def __init__(self):
+            warnings.warn(
+                "The 'statsforecast' module is not available. Please ensure that"
+                f"'statsforecast' is installed to use {type(self)}.",
+                stacklevel=1,
+            )
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
@@ -561,7 +573,8 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 class StatsForecastMSTL(_TS):
     """StatsForecast Multiple Seasonal-Trend decomposition using LOESS model.
 
-    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+    This implementation is a wrapper over Nixtla implementation in
+    statsforecast [1]_.
 
     The MSTL (Multiple Seasonal-Trend decomposition using LOESS) decomposes the time
     series in multiple seasonalities using LOESS. Then forecasts the trend using
@@ -570,7 +583,8 @@ class StatsForecastMSTL(_TS):
     Parameters
     ----------
     season_length : Union[int, List[int]]
-        Number of observations per unit of time. For multiple seasonalities use a list.
+        Number of observations per unit of time. For multiple seasonalities use a
+        list.
     trend_forecaster : estimator, optional, default=StatsForecastAutoETS()
 
     References
@@ -628,9 +642,9 @@ class StatsForecastMSTL(_TS):
         # if trend_forecaster is not StatsForecast forecaster
         elif not isinstance(self.trend_forecaster, _TS):
             raise Exception(
-                "The provided forecaster is not compatible with MSTL. Please ensure "
-                "that the forecaster you pass into the model is a sktime forecaster or "
-                "statsforecast forecaster."
+                "The provided forecaster is not compatible with MSTL. Please ensure"
+                " that the forecaster you pass into the model is a sktime "
+                "forecaster or statsforecast forecaster."
             )
 
         return MSTL(
@@ -653,9 +667,10 @@ class StatsForecastMSTL(_TS):
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            Each dict are parameters to construct an "interesting" test instance,
+            i.e., `MyClass(**params)` or `MyClass(**params[i])` creates a valid
+            test instance. `create_test_instance` uses the first (or only)
+            dictionary in `params`
         """
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -691,4 +706,4 @@ class StatsForecastMSTL(_TS):
                 },
             ]
 
-        return params
+            return params
