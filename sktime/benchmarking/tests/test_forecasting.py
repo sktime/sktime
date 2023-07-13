@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from sktime.benchmarking import forecasting
+from sktime.benchmarking.forecasting import ForecastingBenchmark
 from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.performance_metrics.forecasting import (
@@ -62,7 +62,7 @@ def data_loader_simple() -> pd.DataFrame:
 )
 def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     """Test benchmarking a forecaster estimator."""
-    benchmark = forecasting.ForecastingBenchmark()
+    benchmark = ForecastingBenchmark()
 
     benchmark.add_estimator(NaiveForecaster(strategy="last"))
 
