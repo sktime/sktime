@@ -45,10 +45,10 @@ class Pipeline(BaseEstimator):
             where `i` is the total count of occurrence of a non-unique string
             inside the list of names leading up to it (inclusive)
 
-    `add_step(skobject, name, edges, **kwargs)` - adds a skobject to the pipeline and
+    `add_step(skobject, name, edges, method, **kwargs)` - adds a skobject to the pipeline and
         setting the name as identifier and the steps specified with edges as input steps
-        (predecessors).
-        TODO Finalize this description
+        (predecessors). Therby the method that should be called can be overriden using the method kwarg.
+        Further provided kwargs are directly provided to the skobject if it is called.
 
     Parameters
     ----------
@@ -159,10 +159,30 @@ class Pipeline(BaseEstimator):
         raise Exception("Required Input does not exist")
 
     def add_step(self, skobject, name, edges, method=None, **kwargs):
+        """Add a new skobject to the pipeline.
+
+        This method changes the structure of the pipeline. It looks up if
+        the cloned skobject already exists. If not it clones the skobject.
+        Atfterwards, with the cloned skobject a new pipeline step is created,
+        with the provided name. The input of this new step is specified by the
+        edges dict.
+
+        Parameters
+        ----------
+        skobject: `sktime` object, the skobject that should be added to the pipeline
+        name: str, the name of the step that is created
+        edges: dict, a dict with string keys to string values. Identifying the
+            predcessors.  The keys of the edges dict specify to which argument
+             of fit/predict/.. the output of the predessors (the value of the
+             dict specifies the predessors name) shuold be passed.
+        method: str, an optional argument allowing to determine the method that
+            should be executed when the pipeline calls the provided skobject.
+            If not specified, the pipeline selects the method based on the method
+            that is called on the pipeline (e.g., predict, transform, ..)
+        kwargs: additional kwargs are parameters that are provided to the
+            skobject if fit/predict/.. is called.
+
         """
-        TODO
-        """
-        # TODO revise kwargs. E.g. method should be an explicit parameter.
         unique_id = self._get_unique_id(skobject)
         if unique_id not in self.model_dict:
             self.model_dict[unique_id] = skobject.clone()
@@ -198,8 +218,17 @@ class Pipeline(BaseEstimator):
         return step
 
     def fit(self, X, y=None, **kwargs):
-        """
-        TODO
+        """Fit graph pipeline to training data.
+
+        Parameters
+        ----------
+        X : TODO What types are really allowed here?
+        y : TODO what types are really allowed?
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" in the skobjects of the pipeline and sets is_fitted flag to True.
         """
         # Fits the pipeline
         self.kwargs = kwargs
