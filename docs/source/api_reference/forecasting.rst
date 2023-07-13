@@ -386,6 +386,7 @@ Model selection and tuning
 
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
+    ForecastingSkoptSearchCV
 
 Model Evaluation (Backtesting)
 ------------------------------
