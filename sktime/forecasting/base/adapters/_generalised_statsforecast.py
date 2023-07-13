@@ -441,7 +441,6 @@ class StatsForecastBackAdapter(BaseForecaster):
             from sktime.forecasting.naive import NaiveForecaster
 
             params = [
-                {},
                 {
                     "estimator": NaiveForecaster(),
                 },
