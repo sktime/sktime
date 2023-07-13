@@ -1358,8 +1358,8 @@ class TestPlusTrainSplitter(BaseSplitter):
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
 
-        Since this splitter returns a single train/test split,
-        this number is trivially 1.
+        This will always be equal to the number of splits
+        of ``self.cv`` on ``y``.
 
         Parameters
         ----------
