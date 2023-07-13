@@ -155,8 +155,8 @@ class BaseObject(_BaseObject):
         from warnings import warn
 
         warn(
-            "`load_from_serial()` will be deprecated in 0.20.2 in the favor of load() "
-            "which is the standard way of deserializing estimators.",
+            "`load_from_serial` is deprecated in favour of sktime.base.load "
+            "and will be removed as a public interface in 0.22.0",
             category=DeprecationWarning,
             stacklevel=2,
         )
@@ -196,8 +196,8 @@ class BaseObject(_BaseObject):
         from zipfile import ZipFile
 
         warn(
-            "`load_from_path()` will be deprecated in 0.20.2 in the favor of load() "
-            "which is the standard way of deserializing estimators.",
+            "`load_from_path` is deprecated in favour of sktime.base.load "
+            "and will be removed as a public interface in 0.22.0",
             category=DeprecationWarning,
             stacklevel=2,
         )
