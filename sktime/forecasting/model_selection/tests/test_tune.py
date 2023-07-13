@@ -294,15 +294,3 @@ def test_skoptcv_multiple_forecaster():
     )
     sscv.fit(y)
     assert len(sscv.cv_results_) == 5
-
-
-# @pytest.mark.skipif(
-#     not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none"),
-#     reason="skip test if required soft dependency not compatible",
-# )
-# def test_check_estimator_skoptcv():
-#     check_estimator(
-#         ForecastingSkoptSearchCV,
-#         raise_exceptions=True,
-#         tests_to_exclude=["test_multiprocessing_idempotent"],
-#     )
