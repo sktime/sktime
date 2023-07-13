@@ -729,7 +729,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
 class ForecastingSkoptSearchCV(BaseGridSearch):
     """Bayesian search over hyperparameters for a forecaster.
 
-    Experimental: This feature is under active development and is likely to change
+    Experimental: This feature is under development and interface may likely to change.
 
     Parameters
     ----------

@@ -39,8 +39,6 @@ from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
-# from sktime.utils.estimator_checks import check_estimator
-
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 TEST_METRICS_PROBA = [CRPS(), PinballLoss()]
 
@@ -268,7 +266,7 @@ def test_skoptcv_multiple_forecaster():
         {
             "forecaster": [NaiveForecaster(sp=12)],
             "forecaster__strategy": ["drift", "last", "mean"],
-        },
+        },  # iterate twice
         (
             {
                 "imputer__method": ["mean", "median"],
@@ -276,7 +274,7 @@ def test_skoptcv_multiple_forecaster():
                 "forecaster__trend": ["add", "mul"],
             },
             3,
-        ),
+        ),  # iterate thrice custom iteration
     ]
     cv = CVs[-1]
     y, X = load_longley()
@@ -292,5 +290,5 @@ def test_skoptcv_multiple_forecaster():
         n_points=2,
         n_iter=2,
     )
-    sscv.fit(y)
+    sscv.fit(y, X)
     assert len(sscv.cv_results_) == 5
