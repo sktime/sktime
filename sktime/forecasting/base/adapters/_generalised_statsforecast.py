@@ -271,13 +271,10 @@ class StatsForecastBackAdapter(BaseForecaster):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastMSTL
-    >>> from sktime.forecasting.statsforecast import StatsForecastBackAdapterMSTL
     >>> from sktime.forecasting.ets import AutoETS
 
     >>> y = load_airline()
-    >>> trend_forecaster = StatsForecastBackAdapterMSTL( # doctest: +SKIP
-            AutoETS()
-        )
+    >>> trend_forecaster = AutoETS() # doctest: +SKIP
     >>> model = StatsForecastMSTL( # doctest: +SKIP
             season_length=[3,12],
             trend_forecaster=trend_forecaster
