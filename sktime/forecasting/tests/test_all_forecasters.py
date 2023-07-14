@@ -5,6 +5,8 @@
 
 __author__ = ["mloning", "kejsitake", "fkiraly"]
 
+from inspect import getfullargspec
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -426,7 +428,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("capability:pred_int"):
             # todo 0.23.0: remove legacy_interface arg and logic
             # simply remove the arg
-            for legacy_interface in [True, False]:
+            pi_args = getfullargspec(estimator_instance._predict_interval).args
+            has_li_arg = "legacy_interface" in pi_args
+            if has_li_arg:
+                test_for = [True, False]
+            else:
+                test_for = [True]
+
+            for legacy_interface in test_for:
                 pred_ints = estimator_instance.predict_interval(
                     fh=fh_int_oos, coverage=coverage, legacy_interface=legacy_interface
                 )
@@ -527,7 +536,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("capability:pred_int"):
             # todo 0.23.0: remove legacy_interface arg and logic
             # simply remove the arg
-            for legacy_interface in [True, False]:
+            pi_args = getfullargspec(estimator_instance._predict_quantiles).args
+            has_li_arg = "legacy_interface" in pi_args
+            if has_li_arg:
+                test_for = [True, False]
+            else:
+                test_for = [True]
+
+            for legacy_interface in test_for:
                 quantiles = estimator_instance.predict_quantiles(
                     fh=fh_int_oos, alpha=alpha, legacy_interface=legacy_interface
                 )
