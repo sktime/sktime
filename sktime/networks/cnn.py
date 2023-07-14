@@ -22,13 +22,12 @@ class CNNNetwork(BaseDeepNetwork):
     filter_sizes : array of int, shape = (nb_conv_layers)
     activation : string, default = sigmoid
         keras activation function
-    padding         : string, default = "auto"
+    padding : string, default = "auto"
         Controls padding logic for the convolutional layers,
         i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
-        - auto: as per original implementation, ``'valid'`` is passed if
-          ``input_shape[0] < 60`` in the input layer, and ``'same'`` otherwise.
-        - valid: we always pass ``"valid"``
-        - same: we always pass ``"same"``
+        - "auto": as per original implementation, ``"valid"`` is passed if
+          ``input_shape[0] < 60`` in the input layer, and ``"same"`` otherwise.
+        - "valid", "same", and other values are passed directly to ``Conv1D``
     random_state    : int, default = 0
         seed to any needed random actions
 
