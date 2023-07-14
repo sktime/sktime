@@ -84,7 +84,7 @@ class CNNNetwork(BaseDeepNetwork):
         """
         from tensorflow import keras
 
-        fs = self.filter_sizes
+        fs = self._filter_sizes
         nconv = self.n_conv_layers
 
         # Extends filter_sizes to match n_conv_layers length
