@@ -50,6 +50,8 @@ Deep learning
     InceptionTimeClassifier
     MACNNClassifier
     MLPClassifier
+    MCDCNNClassifier
+    SimpleRNNClassifier
     TapNetClassifier
 
 Dictionary-based
