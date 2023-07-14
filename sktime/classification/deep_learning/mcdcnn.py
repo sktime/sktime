@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multi Channel Deep Convolutional Neural Classifier (MCDCNN)."""
 
 __author__ = [
@@ -103,7 +102,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super(MCDCNNClassifier, self).__init__()
+        super().__init__()
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size

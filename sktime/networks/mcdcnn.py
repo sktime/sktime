@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multi Channel Deep Convolution Neural Network (MCDCNN)."""
 
 __author__ = ["James Large", "Withington"]
@@ -49,7 +48,7 @@ class MCDCNNNetwork(BaseDeepNetwork):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super(MCDCNNNetwork, self).__init__()
+        super().__init__()
 
         self.kernel_size = kernel_size
         self.pool_size = pool_size

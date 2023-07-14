@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multi Channel Deep Convolutional Neural Regressor (MCDCNN)."""
 
 __author__ = [
@@ -102,7 +101,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super(MCDCNNRegressor, self).__init__()
+        super().__init__()
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size
