@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
 
@@ -2399,10 +2398,8 @@ _METRIC_INFOS = [
 ]
 
 _METRICS = {info.canonical_name: info for info in _METRIC_INFOS}
-_METRIC_ALIAS = dict((alias, info) for info in _METRIC_INFOS for alias in info.aka)
-_METRIC_CALLABLES = dict(
-    (info.canonical_name, info.dist_func) for info in _METRIC_INFOS
-)
+_METRIC_ALIAS = {alias: info for info in _METRIC_INFOS for alias in info.aka}
+_METRIC_CALLABLES = {info.canonical_name: info.dist_func for info in _METRIC_INFOS}
 _METRICS_NAMES = list(_METRICS.keys())
 
 ALL_DISTANCES = (

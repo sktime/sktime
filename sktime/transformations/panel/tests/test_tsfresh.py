@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for TSFreshFeatureExtractor."""
 __author__ = ["AyushmannSeth", "mloning"]
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for pmdarima forecasters to be used in sktime framework."""
@@ -27,12 +26,12 @@ class _PmdArimaAdapter(BaseForecaster):
 
     def __init__(self):
         self._forecaster = None
-        super(_PmdArimaAdapter, self).__init__()
+        super().__init__()
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -74,7 +73,7 @@ class _PmdArimaAdapter(BaseForecaster):
             self._forecaster.update(y, X=X)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -245,7 +244,7 @@ class _PmdArimaAdapter(BaseForecaster):
             result.index = fh_abs.to_pandas()
             return result
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

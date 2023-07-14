@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """MiniRocketMultivariateVariable test code."""
 import numpy as np
 import pytest

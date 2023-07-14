@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for transformers.
+"""Base class template for transformers.
 
     class name: BaseTransformer
 
@@ -166,10 +164,9 @@ class BaseTransformer(BaseEstimator):
     ]
 
     def __init__(self):
-
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
 
-        super(BaseTransformer, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __mul__(self, other):
@@ -329,17 +326,17 @@ class BaseTransformer(BaseEstimator):
 
         First index does input subsetting, second index does output subsetting.
 
-        Keys must be valid inputs for `columns` in `ColumnSubset`.
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following TransformerPipeline object:
-            ColumnSubset(columns1) * self * ColumnSubset(columns2)
+            ColumnSelect(columns1) * self * ColumnSelect(columns2)
             where `columns1` is first or only item in `key`, and `columns2` is the last
             if only one item is passed in `key`, only `columns1` is applied to input
         """
@@ -788,7 +785,7 @@ class BaseTransformer(BaseEstimator):
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super(BaseTransformer, self).get_fitted_params(deep=deep)
+            return super().get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys
@@ -970,7 +967,6 @@ class BaseTransformer(BaseEstimator):
         # end checking X
 
         if y_inner_mtype != ["None"] and y is not None:
-
             if "Table" in y_inner_scitype:
                 y_possible_scitypes = "Table"
             elif X_scitype == "Series":

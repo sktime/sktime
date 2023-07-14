@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Functions to test the functions in experiments.py."""
 import pytest
 

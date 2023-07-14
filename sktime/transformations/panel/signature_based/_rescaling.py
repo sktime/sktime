@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
 """Signature rescaling methods.
 
-rescaling.py
-=========================
-This implements the pre- and post- signature
-rescaling methods along with generic scaling methods along feature
-dimensions of 3D tensors.
-Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
+rescaling.py ========================= This implements the pre- and post- signature
+rescaling methods along with generic scaling methods along feature dimensions of 3D
+tensors. Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
 import math
 

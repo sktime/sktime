@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Symbolic Aggregate approXimation (SAX) transformer."""
 
 import sys
@@ -89,7 +88,7 @@ class SAX(BaseTransformer):
         self.return_pandas_data_series = return_pandas_data_series
         self.words = []
 
-        super(SAX, self).__init__()
+        super().__init__()
         self.set_config(**{"output_conversion": "off"})
 
     # todo: looks like this just loops over series instances

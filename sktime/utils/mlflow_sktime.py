@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """The ``mlflow_sktime`` module provides an MLflow API for ``sktime`` forecasters.
 
 This module exports ``sktime`` models in the following formats:
@@ -323,8 +322,7 @@ def log_model(
     serialization_format=SERIALIZATION_FORMAT_PICKLE,
     **kwargs,
 ):  # TODO: can we specify a type for fitted instance of sktime model below?
-    """
-    Log a sktime model as an MLflow artifact for the current run.
+    """Log a sktime model as an MLflow artifact for the current run.
 
     Parameters
     ----------
@@ -448,8 +446,7 @@ def log_model(
 
 
 def load_model(model_uri, dst_path=None):
-    """
-    Load a sktime model from a local file or a run.
+    """Load a sktime model from a local file or a run.
 
     Parameters
     ----------
@@ -522,7 +519,6 @@ def load_model(model_uri, dst_path=None):
 
 
 def _save_model(model, path, serialization_format):
-
     _check_soft_dependencies("mlflow", severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.protos.databricks_pb2 import INTERNAL_ERROR
@@ -546,7 +542,6 @@ def _save_model(model, path, serialization_format):
 
 
 def _load_model(path, serialization_format):
-
     _check_soft_dependencies("mlflow", severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
@@ -630,7 +625,6 @@ class _SktimeModelWrapper:
         self.sktime_model = sktime_model
 
     def predict(self, X):
-
         from mlflow.exceptions import MlflowException
         from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
 
@@ -641,7 +635,6 @@ class _SktimeModelWrapper:
             raw_predictions[SKTIME_PREDICT] = self.sktime_model.predict(X=X)
 
         else:
-
             if not isinstance(self.sktime_model.pyfunc_predict_conf, dict):
                 raise MlflowException(
                     f"Attribute {PYFUNC_PREDICT_CONF} must be of type dict.",
@@ -741,12 +734,9 @@ class _SktimeModelWrapper:
                     ]["marginal"]
                 )
 
-                y_pred_dist = self.sktime_model.predict_proba(
-                    X=X, marginal=marginal, legacy_interface=True
-                )
-                y_pred_dist_quantiles = pd.DataFrame(y_pred_dist.quantile(quantiles))
+                y_pred_dist = self.sktime_model.predict_proba(X=X, marginal=marginal)
+                y_pred_dist_quantiles = y_pred_dist.quantile(quantiles)
                 y_pred_dist_quantiles.columns = [f"Quantiles_{q}" for q in quantiles]
-                y_pred_dist_quantiles.index = y_pred_dist.parameters["loc"].index
 
                 raw_predictions[SKTIME_PREDICT_PROBA] = y_pred_dist_quantiles
 

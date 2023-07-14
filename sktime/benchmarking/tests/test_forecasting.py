@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Forecasting benchmarks tests."""
 
 import pandas as pd

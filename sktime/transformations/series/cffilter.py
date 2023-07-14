@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Interface to Christiano Fitzgerald asymmetric, random walk filter from `statsmodels`.
+"""Interface to Christiano Fitzgerald asymmetric, random walk filter from `statsmodels`.
 
 Interfaces `cf_filter` from `statsmodels.tsa.filters`.
 """
@@ -85,7 +83,7 @@ class CFFilter(BaseTransformer):
         self.low = low
         self.high = high
         self.drift = drift
-        super(CFFilter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

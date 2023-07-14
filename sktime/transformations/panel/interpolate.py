@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series interpolator/re-sampler."""
 import numpy as np
 import pandas as pd
@@ -47,7 +46,7 @@ class TSInterpolator(BaseTransformer):
             raise ValueError("resizing length must be integer and > 0")
 
         self.length = length
-        super(TSInterpolator, self).__init__()
+        super().__init__()
 
     def _resize_cell(self, cell):
         """Resize a single array.
