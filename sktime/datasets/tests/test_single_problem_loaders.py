@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import (  # Univariate; Unequal length; Multivariate
-    fetch_forecastingorg,
+    load_forecastingdata,
     load_acsf1,
     load_arrow_head,
     load_basic_motions,
@@ -99,10 +99,10 @@ def test_load_UEA():
         load_UCR_UEA_dataset(mult_name)
 
 
-def test_fetch_forecastingorg():
+def test_load_forecastingdata():
     """Test loading downloaded dataset from forecasting.org."""
     file = "UnitTest"
-    loaded_datasets, metadata = fetch_forecastingorg(name=file)
+    loaded_datasets, metadata = load_forecastingdata(name=file)
     assert len(loaded_datasets) == 1
     assert metadata["frequency"] == "yearly"
     assert metadata["forecast_horizon"] == 4

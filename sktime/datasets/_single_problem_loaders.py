@@ -1273,7 +1273,7 @@ def load_covid_3month(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def fetch_forecastingorg(
+def load_forecastingdata(
     name,
     replace_missing_vals="NAN",
     value_column_name="series_value",
