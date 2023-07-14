@@ -31,7 +31,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -142,7 +142,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return in_sample_horizon, out_of_sample_horizon
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -192,7 +192,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_point_predictions
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

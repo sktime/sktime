@@ -290,7 +290,7 @@ class ElasticEnsemble(BaseClassifier):
                     param_distributions=ElasticEnsemble._get_100_param_options(
                         self.distance_measures[dm], X
                     ),
-                    n_iter=100 * self.proportion_of_param_options,
+                    n_iter=int(100 * self.proportion_of_param_options),
                     cv=LeaveOneOut(),
                     scoring="accuracy",
                     n_jobs=self._threads_to_use,

@@ -51,7 +51,7 @@ class _ProphetAdapter(BaseForecaster):
         self.y_index_was_period_ = type(y.index) is pd.PeriodIndex
         self.y_index_was_int_ = pd.api.types.is_integer_dtype(y.index)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -205,7 +205,7 @@ class _ProphetAdapter(BaseForecaster):
 
         return y_pred
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
