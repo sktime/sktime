@@ -16,12 +16,24 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.20.1 - 2023-07-14
 ---------------------------
 
+Highlights
+~~~~~~~~~~
+
+* ``SkoptForecastingCV`` - hyperparameter tuning for forecasters using ``scikit-optimize`` (:pr:`4580`) :user:`hazrulakmal`
+* new forecaster - ``statsmodels`` ``AutoReg`` interface (:pr:`4774`) :user:`CTFallon`, :user:`mgazian000`, :user:`JonathanBechtel`
+* new forecaster - by-horizon ``FhPlexForecaster``, for different estimator/parameter per horizon (:pr:`4811`) :user:`fkiraly`
+* ``ColumnEnsembleTransformer`` - ``remainder`` argument (:pr:`4789`) :user:`fkiraly`
+* new classifier and regressor - MCDCNN estimators migrated from ``sktime-dl`` (:pr:`4637`) :user:`achieveordie`
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Forecasting
-^^^^^^^^^^^
+BaseObject
+^^^^^^^^^^
+
+* the tag ``python_dependencies_alias`` was added to manage estimator specific
+  dependencies where the package name differs from the import name.
+  See the estimator developer guide for further details.
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -42,25 +54,17 @@ BaseObject
 * [ENH] Improve handling of dependencies with alias (:pr:`4832`) :user:`hazrulakmal`
 * [ENH] Add an explicit context manager during estimator dump (:pr:`4859`) :user:`achieveordie`, :user:`yarnabrina`
 
-Benchmarking
-^^^^^^^^^^^^
-
 Forecasting
 ^^^^^^^^^^^
 
 * [ENH] refactoring of ``ForecastingHorizon`` to use ``Index`` based ``cutoff`` in private methods (:pr:`4463`) :user:`fkiraly`
 * [ENH] ``SkoptForecastingCV`` - hyperparameter tuning using ``scikit-optimize`` (:pr:`4580`) :user:`hazrulakmal`
+* [ENH] add more contract tests for ``predict_interval``, ``predict_quantiles`` (:pr:`4763`) :user:`yarnabrina`
 * [ENH] ``statsmodels`` ``AutoReg`` interface (:pr:`4774`) :user:`CTFallon`, :user:`mgazian000`, :user:`JonathanBechtel`
 * [ENH] remove private defaults in forecasting module (:pr:`4810`) :user:`fkiraly`
 * [ENH] by-horizon forecaster, for different estimator/parameter per horizon (:pr:`4811`) :user:`fkiraly`
 * [ENH] test-plus-train splitter compositor (:pr:`4862`) :user:`fkiraly`
 * [ENH] set ``ForecastX`` missing data handling tag to ``True`` to properly cope with future unknown variables (:pr:`4876`) :user:`fkiraly`
-
-Probability distributions
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Time series alignment
-^^^^^^^^^^^^^^^^^^^^^
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -73,10 +77,6 @@ Time series regression
 
 * [ENH] migrate MCDCNN classifier, regressor, network from ``sktime-dl`` (:pr:`4637`) :user:`achieveordie`
 
-Time series distances and kernels
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
 Transformations
 ^^^^^^^^^^^^^^^
 
@@ -84,19 +84,17 @@ Transformations
 * [ENH] Add ``hour_of_week`` option to ``DateTimeFeatures`` transformer (:pr:`4724`) :user:`VyomkeshVyas`
 * [ENH] ``ColumnEnsembleTransformer`` - ``remainder`` argument (:pr:`4789`) :user:`fkiraly`
 
-Testing framework
-^^^^^^^^^^^^^^^^^
-
 Visualisations
 ^^^^^^^^^^^^^^
 
 * [ENH] remove assumption about column names from ``plot_series`` / ``plot_interval`` (:pr:`4779`) :user:`fkiraly`
 
-
-
 Maintenance
 ~~~~~~~~~~~
 
+* [MNT] Temporarily skip all DL Estimators (:pr:`4760`) :user:`achieveordie`
+* [MNT] remove verbose flag on windows CI (:pr:`4761`) :user:`fkiraly`
+* [MNT] address deprecation of ``sklearn`` ``if_delegate_has_method`` in 1.3 (:pr:`4764`) :user:`fkiraly`
 * [MNT] bound ``tslearn<0.6.0`` due to bad dependency handling and massive imports (:pr:`4819`) :user:`fkiraly`
 * [MNT] ensure CI for python 3.8-3.10 runs on ``pandas 2`` (:pr:`4795`) :user:`fkiraly`
 * [MNT] also restrict ``tslearn`` on the ``pandas 2`` testing dependency set (:pr:`4825`) :user:`fkiraly`
@@ -115,13 +113,18 @@ Maintenance
 Documentation
 ~~~~~~~~~~~~~
 
+* [DOC] Update Get Started docs, add regression vignette (:pr:`4216`) :user:`GargiChakraverty-yb`
 * [DOC] adds a banner for non-latest branches in read-the-docs (:pr:`4681`) :user:`yarnabrina`
+* [DOC] greatly simplified forecaster and transformer extension templates (:pr:`4729`) :user:`fkiraly`
+* [DOC] Added examples to docstrings for K-Means and K-Medoids (:pr:`4736`) :user:`CTFallon`
+* [DOC] Improvements to formulations in the README  (:pr:`4757`) :user:`mswat5`
+* [DOC] testing guide: add ellipsis flag to doctest command (:pr:`4768`) :user:`mdsaad2305`
+* [DOC] Examples added to docstrings for Time Series Forest Regressor and Dummy Regressor (:pr:`4775`) :user:`mgazian000`
 * [DOC] add missing metrics to API reference (:pr:`4813`) :user:`fkiraly`
 * [DOC] update date/year in LICENSE and readthedocs license constant (:pr:`4816`) :user:`fkiraly`, :user:`yarnabrina`
 * [DOC] improved guide for soft dependencies (:pr:`4831`) :user:`fkiraly`
 * [DOC] sort slightly disordered forecasting API reference (:pr:`4815`) :user:`fkiraly`
 * [DOC] fix ``ColumnSelect`` typos in documentation (:pr:`4800`) :user:`fkiraly`
-* [MNT] update readthedocs env to python 3.11 and ubuntu 22.04 (:pr:`4821`) :user:`fkiraly`
 * [DOC] minor improvements to forecasting and transformer extension templates (:pr:`4828`) :user:`fkiraly`
 
 Fixes
@@ -137,40 +140,36 @@ Forecasting
 
 * [BUG] Add temporary fix to ``_BaseWindowForecaster`` to handle simultaneous in and out-of-sample forecasts (:pr:`4812`) :user:`felipeangelimvieira`
 * [BUG] fix for ``make_reduction`` with unequal panels time index for ``global`` pooling (:pr:`4644`) :user:`kbpk`
-
-Probability distributions
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Time series alignment
-^^^^^^^^^^^^^^^^^^^^^
-
-Time series classification
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Time series distances and kernels
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+* [BUG] allows probabilistic predictions in ``DynamicFactor`` in presence of exogenous variables by (:pr:`4758`) :user:`yarnabrina`
+* [BUG] Fix ``predict_residuals`` internal data type conversion (:pr:`4772`) :user:`fkiraly`, :user:`benHeid`
 
 Transformations
 ^^^^^^^^^^^^^^^
 
+* [BUG] fix ``BoxCoxTransformer`` failure after ``scipy`` 1.11.0 (:pr:`4770`) :user:`fkiraly`
 * [BUG] ``ColumnEnsembleTransformer`` - bugfixing broken logic (:pr:`4789`) :user:`fkiraly`
 
 Testing framework
 ^^^^^^^^^^^^^^^^^
 
+* [BUG] fix sporadic failures in ``utils.plotting`` tests - set the ``matplotlib``
+  backend to ``agg`` to avoid that a GUI is triggered (:pr:`4781`) :user:`benHeid`
 
 Contributors
 ~~~~~~~~~~~~
 
 :user:`achieveordie`,
+:user:`benHeid`,
 :user:`CTFallon`,
 :user:`felipeangelimvieira`,
 :user:`fkiraly`,
+:user:`GargiChakraverty-yb`,
 :user:`hazrulakmal`,
 :user:`JonathanBechtel`,
 :user:`kbpk`,
+:user:`mdsaad2305`,
 :user:`mgazian000`,
+:user:`mswat5`,
 :user:`VyomkeshVyas`,
 :user:`yarnabrina`
 
