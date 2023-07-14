@@ -541,7 +541,9 @@ class BaseTransformer(BaseEstimator):
         output_conv = configs["output_conversion"]
 
         # convert to output mtype
-        if input_conv and output_conv:
+        if X is None:
+            X_out = Xt
+        elif input_conv and output_conv:
             X_out = self._convert_output(Xt, metadata=metadata)
         else:
             X_out = Xt
@@ -677,7 +679,13 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        configs = self.get_config()
+        output_conv = configs["output_conversion"]
+
+        if output_conv != "off":
+            X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        else:
+            X_out = Xt
 
         return X_out
 
@@ -868,7 +876,10 @@ class BaseTransformer(BaseEstimator):
         ValueError if self.get_tag("requires_y")=True but y is None
         """
         if X is None:
-            raise TypeError("X cannot be None, but found None")
+            if return_metadata:
+                return X, y, {}
+            else:
+                return X, y
 
         # skip conversion if it is turned off
         if self.get_config()["input_conversion"] != "on":

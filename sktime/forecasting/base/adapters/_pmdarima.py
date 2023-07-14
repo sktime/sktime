@@ -244,7 +244,9 @@ class _PmdArimaAdapter(BaseForecaster):
             result.index = fh_abs.to_pandas()
             return result
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -287,7 +289,11 @@ class _PmdArimaAdapter(BaseForecaster):
         fh_is_oosample = fh.is_all_out_of_sample(cutoff)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = ["Coverage"]
+        var_names = self._get_varnames(
+            default="Coverage", legacy_interface=legacy_interface
+        )
+        var_name = var_names[0]
+
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
@@ -305,8 +311,8 @@ class _PmdArimaAdapter(BaseForecaster):
         if fh_is_in_sample or fh_is_oosample:
             # needs to be replaced, also seems duplicative, identical to part A
             for intervals, a in zip(y_pred_int, coverage):
-                pred_int[("Coverage", a, "lower")] = intervals["lower"]
-                pred_int[("Coverage", a, "upper")] = intervals["upper"]
+                pred_int[(var_name, a, "lower")] = intervals["lower"]
+                pred_int[(var_name, a, "upper")] = intervals["upper"]
             return pred_int
 
         # both in-sample and out-of-sample values (we reach this line only then)
@@ -314,8 +320,8 @@ class _PmdArimaAdapter(BaseForecaster):
         _, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
         _, y_oos_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
         for ins_int, oos_int, a in zip(y_ins_pred_int, y_oos_pred_int, coverage):
-            pred_int[("Coverage", a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
-            pred_int[("Coverage", a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
+            pred_int[(var_name, a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
+            pred_int[(var_name, a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
 
         return pred_int
 
