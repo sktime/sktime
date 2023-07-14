@@ -772,7 +772,8 @@ class SplitterSummarizer(BaseTransformer):
 
     splitter : `sktime` splitter inheriting from `BaseSplitter`, optional (default=None)
     splitter used to divide the series.
-    If None, it takes `ExpandingWindowSplitter` with default parameters.
+    If None, it takes `ExpandingWindowSplitter` with `start_with_window=False`
+    and otherwise default parameters.
 
     index : str, optional (default="last")
     Determines the indexing approach for the resulting series.
@@ -817,9 +818,9 @@ class SplitterSummarizer(BaseTransformer):
         self.transformer = transformer
         self.index = index
         if splitter is None:
-            self.splitter = ExpandingWindowSplitter()
+            self._splitter = ExpandingWindowSplitter(start_with_window=False)
         else:
-            self.splitter = splitter
+            self._splitter = splitter
 
         super().__init__()
 
@@ -846,7 +847,7 @@ class SplitterSummarizer(BaseTransformer):
             raise ValueError("Splitter should have a split_series method")
 
         transformed_series = []
-        splits = self.splitter.split_series(X)
+        splits = self._splitter.split_series(X)
 
         for split in splits:
             tf = self.transformer.clone()
