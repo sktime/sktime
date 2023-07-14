@@ -19,6 +19,7 @@ Version 0.20.1 - 2023-07-14
 Highlights
 ~~~~~~~~~~
 
+* data loader for Monash Forecasting Repository (:pr:`4826`) :user:`hazrulakmal`
 * ``SkoptForecastingCV`` - hyperparameter tuning for forecasters using ``scikit-optimize`` (:pr:`4580`) :user:`hazrulakmal`
 * new forecaster - ``statsmodels`` ``AutoReg`` interface (:pr:`4774`) :user:`CTFallon`, :user:`mgazian000`, :user:`JonathanBechtel`
 * new forecaster - by-horizon ``FhPlexForecaster``, for different estimator/parameter per horizon (:pr:`4811`) :user:`fkiraly`
@@ -53,6 +54,11 @@ BaseObject
 * [ENH] ``_HeterogenousMetaEstimator`` to accept list of tuples of any length (:pr:`4793`) :user:`fkiraly`
 * [ENH] Improve handling of dependencies with alias (:pr:`4832`) :user:`hazrulakmal`
 * [ENH] Add an explicit context manager during estimator dump (:pr:`4859`) :user:`achieveordie`, :user:`yarnabrina`
+
+Data loaders
+^^^^^^^^^^^^
+
+* [ENH] data loader for Monash Forecasting Repository (:pr:`4826`) :user:`hazrulakmal`
 
 Forecasting
 ^^^^^^^^^^^
