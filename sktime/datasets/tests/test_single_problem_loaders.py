@@ -6,10 +6,10 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import (  # Univariate; Unequal length; Multivariate
-    load_forecastingdata,
     load_acsf1,
     load_arrow_head,
     load_basic_motions,
+    load_forecastingdata,
     load_italy_power_demand,
     load_japanese_vowels,
     load_osuleaf,

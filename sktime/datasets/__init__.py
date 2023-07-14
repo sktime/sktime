@@ -56,13 +56,13 @@ from sktime.datasets._data_io import (
     write_tabular_transformation_to_arff,
 )
 from sktime.datasets._single_problem_loaders import (
-    load_forecastingdata,
     load_acsf1,
     load_airline,
     load_arrow_head,
     load_basic_motions,
     load_covid_3month,
     load_electric_devices_segmentation,
+    load_forecastingdata,
     load_gun_point_segmentation,
     load_gunpoint,
     load_italy_power_demand,
