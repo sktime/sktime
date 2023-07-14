@@ -1022,7 +1022,7 @@ class BaseWindowSplitter(BaseSplitter):
         else:
             offset = step_length if start == 0 else pd.Timedelta(0)
             start_date = y[y < y[start] + offset][-1]
-            end_date = y[end - 1] - step_length if end <= len(y) else y[-1]
+            end_date = y[end - 1] if end <= len(y) else y[-1]
             date_cutoffs = pd.date_range(
                 start=start_date, end=end_date, freq=step_length
             )
