@@ -230,9 +230,7 @@ class BaggingForecaster(BaseForecaster):
         y_pred.name = self._y.name
         return y_pred
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -265,9 +263,7 @@ class BaggingForecaster(BaseForecaster):
         """
         # X is ignored
         y_pred = self.forecaster_.predict(fh=fh, X=None)
-        return self._calculate_data_quantiles(
-            y_pred, alpha, legacy_interface=legacy_interface
-        )
+        return _calculate_data_quantiles(y_pred, alpha)
 
     def _update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -323,34 +319,26 @@ class BaggingForecaster(BaseForecaster):
 
         return params
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _calculate_data_quantiles(
-        self, df: pd.DataFrame, alpha: List[float], legacy_interface=True
-    ) -> pd.DataFrame:
-        """Generate quantiles for each time point.
 
-        Parameters
-        ----------
-        df : pd.DataFrame
-            A dataframe of mtype pd-multiindex or hierarchical
-        alpha : List[float]
-            list of the desired quantiles
+def _calculate_data_quantiles(df: pd.DataFrame, alpha: List[float]) -> pd.DataFrame:
+    """Generate quantiles for each time point.
 
-        Returns
-        -------
-        pd.DataFrame
-            The specified quantiles
-        """
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
-        var_name = var_names[0]
+    Parameters
+    ----------
+    df : pd.DataFrame
+        A dataframe of mtype pd-multiindex or hierarchical
+    alpha : List[float]
+        list of the desired quantiles
 
-        index = pd.MultiIndex.from_product([var_names, alpha])
-        pred_quantiles = pd.DataFrame(columns=index)
-        for a in alpha:
-            quant_a = df.groupby(level=-1, as_index=True).quantile(a)
-            pred_quantiles[[(var_name, a)]] = quant_a
+    Returns
+    -------
+    pd.DataFrame
+        The specified quantiles
+    """
+    index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+    pred_quantiles = pd.DataFrame(columns=index)
+    for a in alpha:
+        quant_a = df.groupby(level=-1, as_index=True).quantile(a)
+        pred_quantiles[[("Quantiles", a)]] = quant_a
 
-        return pred_quantiles
+    return pred_quantiles
