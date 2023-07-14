@@ -38,7 +38,7 @@ def coer_estimator_and_id(estimators, estimator_id=None):
         return {estimator_id: estimators}
     else:
         raise ValueError(
-            f"estimator must be of a type a dict, list or  \
+            f"estimator must be of a type a dict, list or\
             BaseEstimator object but received {type(estimators)}"
         )
 
@@ -66,8 +66,12 @@ class BaseBenchmark:
 
         Parameters
         ----------
-        estimator : BaseEstimator object
+        estimator : Dict, List or BaseEstimator object
             Estimator to add to the benchmark.
+            If Dict, keys are estimator_ids and values are estimators, use to customise
+            the identifier ID.
+            If List, each element is an estimator. estimator_ids are generated
+            automatically using the estimator's class name.
         estimator_id : str, optional (default=None)
             Identifier for estimator. If none given then uses estimator's class name.
         """

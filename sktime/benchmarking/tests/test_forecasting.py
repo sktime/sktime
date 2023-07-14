@@ -3,9 +3,11 @@
 import pandas as pd
 import pytest
 
+from sktime.benchmarking.benchmarks import coer_estimator_and_id
 from sktime.benchmarking.forecasting import ForecastingBenchmark
 from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.trend import TrendForecaster
 from sktime.performance_metrics.forecasting import (
     MeanAbsoluteError,
     MeanAbsolutePercentageError,
@@ -13,7 +15,7 @@ from sktime.performance_metrics.forecasting import (
 )
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-expected_results_df_1 = pd.DataFrame(
+EXPECTED_RESULTS_1 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_simple]_"
         + "[cv_splitter=ExpandingWindowSplitter]-v1",
@@ -25,8 +27,7 @@ expected_results_df_1 = pd.DataFrame(
     },
     index=[0],
 )
-
-expected_results_df_2 = pd.DataFrame(
+EXPECTED_RESULTS_2 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_simple]_"
         + "[cv_splitter=ExpandingWindowSplitter]-v1",
@@ -43,6 +44,28 @@ expected_results_df_2 = pd.DataFrame(
     index=[0],
 )
 
+COER_CASES = [
+    (
+        NaiveForecaster(),
+        "NaiveForecaster-v1",
+        {"NaiveForecaster-v1": NaiveForecaster()},
+    ),
+    (NaiveForecaster(), None, {"NaiveForecaster-v1": NaiveForecaster()}),
+    (
+        [NaiveForecaster(), TrendForecaster()],
+        None,
+        {
+            "NaiveForecaster-v1": NaiveForecaster(),
+            "TrendForecaster-v1": TrendForecaster(),
+        },
+    ),
+    (
+        {"estimator_1-v1": NaiveForecaster()},
+        None,
+        {"estimator_1-v1": NaiveForecaster()},
+    ),
+]
+
 
 def data_loader_simple() -> pd.DataFrame:
     """Return simple data for use in testing."""
@@ -56,8 +79,8 @@ def data_loader_simple() -> pd.DataFrame:
 @pytest.mark.parametrize(
     "expected_results_df, scorers",
     [
-        (expected_results_df_1, [MeanSquaredPercentageError()]),
-        (expected_results_df_2, [MeanAbsolutePercentageError(), MeanAbsoluteError()]),
+        (EXPECTED_RESULTS_1, [MeanSquaredPercentageError()]),
+        (EXPECTED_RESULTS_2, [MeanAbsolutePercentageError(), MeanAbsoluteError()]),
     ],
 )
 def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
@@ -81,3 +104,11 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     pd.testing.assert_frame_equal(
         expected_results_df, results_df, check_exact=False, atol=0, rtol=0.001
     )
+
+
+@pytest.mark.parametrize("estimator, estimator_id, expected_output", COER_CASES)
+def test_coer_estimator_and_id(estimator, estimator_id, expected_output):
+    """Test coer_estimator_and_id return expected output."""
+    assert (
+        coer_estimator_and_id(estimator, estimator_id) == expected_output
+    ), "coer_estimator_and_id does not return the expected output."
