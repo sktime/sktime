@@ -817,6 +817,8 @@ class SplitterSummarizer(BaseTransformer):
     def __init__(self, transformer, splitter=None, index="last"):
         self.transformer = transformer
         self.index = index
+        self.splitter = splitter
+
         if splitter is None:
             self._splitter = ExpandingWindowSplitter(start_with_window=False)
         else:
