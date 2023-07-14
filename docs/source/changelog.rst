@@ -13,8 +13,166 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
-Version 0.20.1 - 2023-07-12
+Version 0.20.1 - 2023-07-14
 ---------------------------
+
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* the transformations base interface, i.e., estimators inheriting From
+  ``BaseTransformer``, now allow ``X=None`` in ``transform`` without raising an
+  exception.
+  Individual transformers may now implement their own logic to deal with ``X=None``.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject
+^^^^^^^^^^
+
+* [ENH] estimator crafter aka deserialization of estimator spec from string (:pr:`4738`) :user:`fkiraly`
+* [ENH] ``_HeterogenousMetaEstimator`` to accept list of tuples of any length (:pr:`4793`) :user:`fkiraly`
+* [ENH] Improve handling of dependencies with alias (:pr:`4832`) :user:`hazrulakmal`
+* [ENH] Add an explicit context manager during estimator dump (:pr:`4859`) :user:`achieveordie`, :user:`yarnabrina`
+
+Benchmarking
+^^^^^^^^^^^^
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] refactoring of ``ForecastingHorizon`` to use ``Index`` based ``cutoff`` in private methods (:pr:`4463`) :user:`fkiraly`
+* [ENH] ``SkoptForecastingCV`` - hyperparameter tuning using ``scikit-optimize`` (:pr:`4580`) :user:`hazrulakmal`
+* [ENH] ``statsmodels`` ``AutoReg`` interface (:pr:`4774`) :user:`CTFallon`, :user:`mgazian000`, :user:`JonathanBechtel`
+* [ENH] remove private defaults in forecasting module (:pr:`4810`) :user:`fkiraly`
+* [ENH] by-horizon forecaster, for different estimator/parameter per horizon (:pr:`4811`) :user:`fkiraly`
+* [ENH] test-plus-train splitter compositor (:pr:`4862`) :user:`fkiraly`
+* [ENH] set ``ForecastX`` missing data handling tag to ``True`` to properly cope with future unknown variables (:pr:`4876`) :user:`fkiraly`
+
+Probability distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ensure ``BaggingClassifier`` can be used as univariate-to-multivariate compositor (:pr:`4788`) :user:`fkiraly`
+* [ENH] migrate MCDCNN classifier, regressor, network from ``sktime-dl`` (:pr:`4637`) :user:`achieveordie`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] migrate MCDCNN classifier, regressor, network from ``sktime-dl`` (:pr:`4637`) :user:`achieveordie`
+
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] allow ``X=None`` in ``BaseTransformer.transform`` (:pr:`4112`) :user:`fkiraly`
+* [ENH] Add ``hour_of_week`` option to ``DateTimeFeatures`` transformer (:pr:`4724`) :user:`VyomkeshVyas`
+* [ENH] ``ColumnEnsembleTransformer`` - ``remainder`` argument (:pr:`4789`) :user:`fkiraly`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+Visualisations
+^^^^^^^^^^^^^^
+
+* [ENH] remove assumption about column names from ``plot_series`` / ``plot_interval`` (:pr:`4779`) :user:`fkiraly`
+
+
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] bound ``tslearn<0.6.0`` due to bad dependency handling and massive imports (:pr:`4819`) :user:`fkiraly`
+* [MNT] ensure CI for python 3.8-3.10 runs on ``pandas 2`` (:pr:`4795`) :user:`fkiraly`
+* [MNT] also restrict ``tslearn`` on the ``pandas 2`` testing dependency set (:pr:`4825`) :user:`fkiraly`
+* [MNT] clean-up of ``CODEOWNERS`` (:pr:`4782`) :user:`fkiraly`
+* [MNT] skip failing ``test_transform_and_smooth_fp`` on ``main`` (:pr:`4836`) :user:`fkiraly`
+* [MNT] unpin ``sphinx`` and plugins, with defensive upper bounds (:pr:`4823`) :user:`fkiraly`
+* [MNT] Dependabot Setup (:pr:`4852`) :user:`yarnabrina`
+* [MNT] update readthedocs env to python 3.11 and ubuntu 22.04 (:pr:`4821`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Bump actions/download-artifact from 2 to 3 (:pr:`4854`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Bump styfle/cancel-workflow-action from 0.9.1 to 0.11.0 (:pr:`4855`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Bump actions/upload-artifact from 2 to 3 (:pr:`4856`) :user:`dependabot[bot]`
+* [MNT] fix remaining ``sklearn 1.3.0`` compatibility issues (:pr:`4860`) :user:`fkiraly`, :user:`hazrulakmal`
+* [MNT] remove forgotten ``deprecated`` import from 0.13.0 (:pr:`4824`) :user:`fkiraly`
+* [MNT] Extend softdep error message tests support for packages with version speciefier and alias (:pr:`4867`) :user:`hazrulakmal`, :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] adds a banner for non-latest branches in read-the-docs (:pr:`4681`) :user:`yarnabrina`
+* [DOC] add missing metrics to API reference (:pr:`4813`) :user:`fkiraly`
+* [DOC] update date/year in LICENSE and readthedocs license constant (:pr:`4816`) :user:`fkiraly`, :user:`yarnabrina`
+* [DOC] improved guide for soft dependencies (:pr:`4831`) :user:`fkiraly`
+* [DOC] sort slightly disordered forecasting API reference (:pr:`4815`) :user:`fkiraly`
+* [DOC] fix ``ColumnSelect`` typos in documentation (:pr:`4800`) :user:`fkiraly`
+* [MNT] update readthedocs env to python 3.11 and ubuntu 22.04 (:pr:`4821`) :user:`fkiraly`
+* [DOC] minor improvements to forecasting and transformer extension templates (:pr:`4828`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+Benchmarking and Metrics
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] allow unused parameters in metric when using ``make_forecasting_scorer`` (:pr:`4833`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] Add temporary fix to ``_BaseWindowForecaster`` to handle simultaneous in and out-of-sample forecasts (:pr:`4812`) :user:`felipeangelimvieira`
+* [BUG] fix for ``make_reduction`` with unequal panels time index for ``global`` pooling (:pr:`4644`) :user:`kbpk`
+
+Probability distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] ``ColumnEnsembleTransformer`` - bugfixing broken logic (:pr:`4789`) :user:`fkiraly`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`achieveordie`,
+:user:`CTFallon`,
+:user:`felipeangelimvieira`,
+:user:`fkiraly`,
+:user:`hazrulakmal`,
+:user:`JonathanBechtel`,
+:user:`kbpk`,
+:user:`mgazian000`,
+:user:`VyomkeshVyas`,
+:user:`yarnabrina`
 
 
 Version 0.20.0 - 2023-06-21
