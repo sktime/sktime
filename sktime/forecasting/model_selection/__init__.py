@@ -9,8 +9,10 @@ __all__ = [
     "SlidingWindowSplitter",
     "temporal_train_test_split",
     "ExpandingWindowSplitter",
+    "TestPlusTrainSplitter",
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
+    "ForecastingSkoptSearchCV",
 ]
 
 from sktime.forecasting.model_selection._split import (
@@ -18,9 +20,11 @@ from sktime.forecasting.model_selection._split import (
     ExpandingWindowSplitter,
     SingleWindowSplitter,
     SlidingWindowSplitter,
+    TestPlusTrainSplitter,
     temporal_train_test_split,
 )
 from sktime.forecasting.model_selection._tune import (
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
+    ForecastingSkoptSearchCV,
 )

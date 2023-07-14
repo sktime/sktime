@@ -50,6 +50,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ForecastByLevel
     Permute
     HierarchyEnsembleForecaster
+    FhPlexForecaster
 
 Reduction
 ---------
@@ -202,6 +203,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
 (V)AR(I)MAX models
 ~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.auto_reg
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AutoREG
 
 .. currentmodule:: sktime.forecasting.arima
 
@@ -377,6 +386,7 @@ Model selection and tuning
 
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
+    ForecastingSkoptSearchCV
 
 Model Evaluation (Backtesting)
 ------------------------------
