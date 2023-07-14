@@ -68,8 +68,8 @@ class BaseBenchmark:
         ----------
         estimator : Dict, List or BaseEstimator object
             Estimator to add to the benchmark.
-            If Dict, keys are estimator_ids and values are estimators, use to customise
-            the identifier ID.
+            If Dict, keys are estimator_ids and values are estimators,
+            use to customise the identifier ID.
             If List, each element is an estimator. estimator_ids are generated
             automatically using the estimator's class name.
         estimator_id : str, optional (default=None)
