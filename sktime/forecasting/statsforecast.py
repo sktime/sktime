@@ -11,7 +11,6 @@ __all__ = [
     "StatsForecastMSTL",
 ]
 
-import warnings
 from typing import Dict, List, Optional, Union
 
 from sktime.forecasting.base import BaseForecaster
@@ -19,19 +18,6 @@ from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("statsforecast", severity="none"):
-    from statsforecast.models import _TS
-else:
-
-    class _TS:
-        def __init__(self):
-            warnings.warn(
-                "The 'statsforecast' module is not available. Please ensure that"
-                f"'statsforecast' is installed to use {type(self)}.",
-                stacklevel=1,
-            )
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
@@ -570,7 +556,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         return params
 
 
-class StatsForecastMSTL(_TS):
+class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     """StatsForecast Multiple Seasonal-Trend decomposition using LOESS model.
 
     This implementation is a wrapper over Nixtla implementation in
@@ -617,11 +603,11 @@ class StatsForecastMSTL(_TS):
     ):
         self.season_length = season_length
         if trend_forecaster:
-            self.trend_forecaster = trend_forecaster
+            self._trend_forecaster = trend_forecaster
             if trend_forecaster.get_tag("scitype:y") == "multivariate":
-                self.set_tags(**{"scitype:y": "multivariate"})
+                self.set_tags("scitype:y", "multivariate")
         else:
-            self.trend_forecaster = StatsForecastAutoETS(model="ZZN")
+            self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
 
         super().__init__()
 
@@ -631,16 +617,16 @@ class StatsForecastMSTL(_TS):
 
         # checks if trend_forecaster is already wrapped with
         # StatsForecastBackAdapterMSTL
-        if isinstance(self.trend_forecaster, StatsForecastBackAdapter):
+        if isinstance(self._trend_forecaster, StatsForecastBackAdapter):
             return MSTL(
                 season_length=self.season_length,
-                trend_forecaster=self.trend_forecaster,
+                trend_forecaster=self._trend_forecaster,
             )
         # if trend_forecaster is sktime forecaster
-        elif isinstance(self.trend_forecaster, BaseForecaster):
-            self.trend_forecaster = StatsForecastBackAdapter(self.trend_forecaster)
+        elif isinstance(self._trend_forecaster, BaseForecaster):
+            self._trend_forecaster = StatsForecastBackAdapter(self._trend_forecaster)
         # if trend_forecaster is not StatsForecast forecaster
-        elif not isinstance(self.trend_forecaster, _TS):
+        elif not isinstance(self._trend_forecaster, _TS):
             raise Exception(
                 "The provided forecaster is not compatible with MSTL. Please ensure"
                 " that the forecaster you pass into the model is a sktime "
@@ -649,7 +635,7 @@ class StatsForecastMSTL(_TS):
 
         return MSTL(
             season_length=self.season_length,
-            trend_forecaster=self.trend_forecaster,
+            trend_forecaster=self._trend_forecaster,
         )
 
     @classmethod

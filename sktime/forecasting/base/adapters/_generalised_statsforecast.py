@@ -8,6 +8,22 @@ from sktime.forecasting.base import BaseForecaster
 __all__ = ["_GeneralisedStatsForecastAdapter"]
 __author__ = ["yarnabrina"]
 
+import warnings
+
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("statsforecast", severity="none"):
+    from statsforecast.models import _TS
+else:
+
+    class _TS:
+        def __init__(self):
+            warnings.warn(
+                "The 'statsforecast' module is not available. Please ensure that"
+                f"'statsforecast' is installed to use {type(self)}.",
+                stacklevel=1,
+            )
+
 
 class _GeneralisedStatsForecastAdapter(BaseForecaster):
     """Base adapter class for StatsForecast models."""
@@ -257,7 +273,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         return final_interval_predictions
 
 
-class StatsForecastBackAdapter(BaseForecaster):
+class StatsForecastBackAdapter(_TS):
     """StatsForecast Back Adapter.
 
     StatsForecastBackAdapter is a wrapper for sktime forecasters to be used in
@@ -310,9 +326,11 @@ class StatsForecastBackAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self.estimator.fit(y=y, X=X)
+        from sklearn.base import clone
+
         self.in_sample_fh = np.flip(-np.arange(len(y)))
-        return self
+        estimator = clone(self.estimator)
+        return estimator.fit(y=y, X=X)
 
     def predict(self, h, X=None, level=None):
         """Make forecasts.
