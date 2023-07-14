@@ -1464,15 +1464,14 @@ class TestPlusTrainSplitter(BaseSplitter):
 
         for y_train_inner, y_test_inner in cv.split(y):
             y_train_self = y_train_inner
-            y_test_self = set(y_train_inner).union(y_test_inner)
-            y_test_self = np.array(list(y_test_self))
+            y_test_self = np.union1d(y_train_inner, y_test_inner)
             yield y_train_self, y_test_self
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
 
-        Since this splitter returns a single train/test split,
-        this number is trivially 1.
+        This will always be equal to the number of splits
+        of ``self.cv`` on ``y``.
 
         Parameters
         ----------
