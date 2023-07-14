@@ -222,9 +222,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         """
         return self._by_column("predict", fh=fh, X=X)
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=True):
+    def _predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -257,12 +255,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
                 at quantile probability in second-level col index, for each row index.
         """
         out = self._by_column(
-            "predict_quantiles",
-            fh=fh,
-            X=X,
-            alpha=alpha,
-            col_multiindex=True,
-            legacy_interface=legacy_interface,
+            "predict_quantiles", fh=fh, X=X, alpha=alpha, col_multiindex=True
         )
         if len(out.columns.get_level_values(0).unique()) == 1:
             out.columns = out.columns.droplevel(level=0)
@@ -270,9 +263,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             out.columns = out.columns.droplevel(level=1)
         return out
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh=None, X=None, coverage=None, legacy_interface=True):
+    def _predict_interval(self, fh=None, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -309,12 +300,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         out = self._by_column(
-            "predict_interval",
-            fh=fh,
-            X=X,
-            coverage=coverage,
-            col_multiindex=True,
-            legacy_interface=legacy_interface,
+            "predict_interval", fh=fh, X=X, coverage=coverage, col_multiindex=True
         )
         if len(out.columns.get_level_values(0).unique()) == 1:
             out.columns = out.columns.droplevel(level=0)
