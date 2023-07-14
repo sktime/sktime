@@ -255,7 +255,9 @@ class FhPlexForecaster(BaseForecaster):
         )
         return y_pred
 
-    def _predict_quantiles(self, fh, X, alpha):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -287,10 +289,14 @@ class FhPlexForecaster(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        y_pred = self._get_preds(fh, "predict_quantiles", X=X, alpha=alpha)
+        y_pred = self._get_preds(
+            fh, "predict_quantiles", X=X, alpha=alpha, legacy_interface=legacy_interface
+        )
         return y_pred
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -326,7 +332,13 @@ class FhPlexForecaster(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        y_pred = self._get_preds(fh, "predict_interval", X=X, coverage=coverage)
+        y_pred = self._get_preds(
+            fh,
+            "predict_interval",
+            X=X,
+            coverage=coverage,
+            legacy_interface=legacy_interface,
+        )
         return y_pred
 
     def _predict_var(self, fh, X=None, cov=False):
