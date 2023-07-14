@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functionality for selecting forecasting models."""
 
@@ -12,6 +11,7 @@ __all__ = [
     "ExpandingWindowSplitter",
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
+    "ForecastingSkoptSearchCV",
 ]
 
 from sktime.forecasting.model_selection._split import (
@@ -24,4 +24,5 @@ from sktime.forecasting.model_selection._split import (
 from sktime.forecasting.model_selection._tune import (
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
+    ForecastingSkoptSearchCV,
 )

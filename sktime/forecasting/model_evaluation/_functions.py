@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
@@ -118,7 +117,6 @@ def _evaluate_window(
     error_score,
     cutoff_dtype,
 ):
-
     # set default result values in case estimator fitting fails
     score = error_score
     fit_time = np.nan
@@ -209,7 +207,7 @@ def _evaluate_window(
     ).astype({"cutoff": cutoff_dtype})
 
     # Return forecaster if "update"
-    if strategy == "update":
+    if strategy == "update" or (strategy == "no-update_params" and i == 0):
         return result, forecaster
     else:
         return result
@@ -399,7 +397,7 @@ def evaluate(
         # Run temporal cross-validation sequentially
         results = []
         for i, (train, test) in enumerate(cv.split(y)):
-            if strategy == "update":
+            if strategy == "update" or (strategy == "no-update_params" and i == 0):
                 result, forecaster = _evaluate_window(
                     y,
                     X,

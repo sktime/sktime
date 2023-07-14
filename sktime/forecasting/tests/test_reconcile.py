@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """Tests for hierarchical reconciler forecasters."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 

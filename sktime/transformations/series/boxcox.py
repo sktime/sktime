@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implemenents Box-Cox and Log Transformations."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
@@ -9,6 +8,7 @@ import numpy as np
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 # copy-pasted from scipy 1.7.3 since it moved in 1.8.0 and broke this estimator
@@ -39,6 +39,32 @@ def _calc_uniform_order_statistic_medians(n):
     return v
 
 
+def _box_norm(X, bounds, method):
+    """Adapter for boxcox_normmax pre and post scipy 1.7.0."""
+    if _check_soft_dependencies("scipy<1.7.0", severity="none"):
+        box_norm = _boxcox_normmax
+        args = {"bounds": bounds}
+    else:
+        from scipy import optimize
+        from scipy.stats import boxcox_normmax
+
+        options = {"xatol": 1e-12}
+
+        def optimizer(fun):
+            return optimize.minimize_scalar(
+                fun, bounds=bounds, method="bounded", options=options
+            )
+
+        box_norm = boxcox_normmax
+
+        if bounds is not None:
+            args = {"optimizer": optimizer}
+        else:
+            args = {"brack": bounds}
+
+    return box_norm(X, method=method, **args)
+
+
 class BoxCoxTransformer(BaseTransformer):
     r"""Box-Cox power transform.
 
@@ -46,35 +72,61 @@ class BoxCoxTransformer(BaseTransformer):
     make data more normally distributed and stabilize its variance based
     on the hyperparameter lambda. [1]_
 
-    The BoxCoxTransformer solves for the lambda parameter used in the Box-Cox
-    transformation given `method`, the optimization approach, and input
-    data provided to `fit`. The use of Guerrero's method for solving for lambda
-    requires the seasonal periodicity, `sp` be provided. [2]_
+    This transformer applies the Box-Cox-transform elementwise, where the lambda
+    parameter is fitted by the specified method via ``method``.
+
+    The Box-Cox-transform is defined as
+    :math:`y\mapsto \frac{y^{\lambda}-1}{\lambda}, \lambda
+    \ne 0 \text{ and } ln(y), \lambda = 0`,
+    for positive :math:`y`.
+
+    The :math:`\lambda` parameter is fitted per time series and instance and variable,
+    by a method depending on the ``method`` parameter:
+
+    * ``"pearsonr"`` - maximization of Pearson correlation between transformed
+      and normalized untransformed. Direct interface to ``scipy.stats.boxcox_normmax``
+      with ``method="pearsonr"``, with ``bracket=bounds``,  and otherwise defaults.
+    * ``"mle"`` - maximization of the Box-Cox log-likelihood.
+      Direct interface to ``scipy.stats.boxcox_normmax`` with ``method="mle"``
+      with ``bracket=bounds``, and otherwise defaults.
+    * ``"guerrero"`` - Guerrero's method with seasonal periodicity, see [2]_.
+      this requires the seasonality parameter to be passed as ``sp``.
+    * ``"fixed"`` - fixed, pre-specified :math:`\lambda`,
+      which is passed as ``lambda_fixed``.
+
+    If non-positive `:math:y` are present, they are by default replaced with their
+    absolute values in ``fit``.
+    In ``transform``, the signed Box-Cox-transform is applied, i.e., the sign is kept
+    while the transform is applied to the value.
 
     Parameters
     ----------
-    bounds : tuple
-        Lower and upper bounds used to restrict the feasible range
-        when solving for the value of lambda.
-    method : {"pearsonr", "mle", "all", "guerrero"}, default="mle"
+    bounds : 2-tuple of finite float
+        Initial bracket (lower, upper) for the optimization range
+        when fitting the value of lambda. Default = unbounded.
+        Ignored if ``method == "fixed"``.
+        For half-open bounds pass a large bound value, e.g., (0, 1e12) for positive
+        lambda. Infinity and nan as bound values are not supported.
+    method : {"pearsonr", "mle", "guerrero", "fixed"}, default="mle"
         The optimization approach used to determine the lambda value used
         in the Box-Cox transformation.
-    sp : int
+    sp : int, optional, must be provided (only) if method="guerrero"
         Seasonal periodicity of the data in integer form. Only used if
         method="guerrero" is chosen. Must be an integer >= 2.
+    lambda_fixed : float, optional, default = 0.0
+        must be provided (only) if method="fixed"
+        default means that BoxCoxTransformer behaves like logarithm
+    enforce_positive : bool, optional, default = True
+        If ``True`, in ``fit`` negative entries of ``X``
+        are replaced by their absolute values. In ``transform``, the transform
+        is applied to the absolute value while the sign is kept.
+        If ``False``, any negative values will be passed unchanged to the
+        underlying functions (possibly causing error).
 
     Attributes
     ----------
-    bounds : tuple
-        Lower and upper bounds used to restrict the feasible range when
-        solving for lambda.
-    method : str
-        Optimization approach used to solve for lambda. One of "personr",
-        "mle", "all", "guerrero".
-    sp : int
-        Seasonal periodicity of the data in integer form.
     lambda_ : float
-        The Box-Cox lambda paramter that was solved for based on the supplied
+        The Box-Cox lambda paramter that was fitted, based on the supplied
         `method` and data provided in `fit`.
 
     See Also
@@ -88,15 +140,6 @@ class BoxCoxTransformer(BaseTransformer):
     sktime.transformations.series.exponent.SqrtTransformer :
         Transform input data by taking its square root. Can help compress
         variance of input series.
-
-    Notes
-    -----
-    The Box-Cox transformation is defined as :math:`\frac{y^{\lambda}-1}{\lambda},
-    \lambda \ne 0 \text{ or } ln(y), \lambda = 0`.
-
-    Therefore, the input data must be positive. In some implementations, a positive
-    constant is added to the series prior to applying the transformation. But
-    that is not the case here.
 
     References
     ----------
@@ -129,16 +172,37 @@ class BoxCoxTransformer(BaseTransformer):
         "python_dependencies": "scipy",
     }
 
-    def __init__(self, bounds=None, method="mle", sp=None):
+    def __init__(
+        self,
+        bounds=None,
+        method="mle",
+        sp=None,
+        lambda_fixed=0.0,
+        enforce_positive=True,
+    ):
         self.bounds = bounds
         self.method = method
-        self.lambda_ = None
         self.sp = sp
-        super(BoxCoxTransformer, self).__init__()
+        self.lambda_fixed = lambda_fixed
+        self.enforce_positive = enforce_positive
+        super().__init__()
+
+        VALID_METHODS = ["pearsonr", "mle", "all", "guerrero", "fixed"]
+
+        if method not in VALID_METHODS:
+            raise ValueError(
+                f"BoxCoxTransformer method must be one of the strings {VALID_METHODS},"
+                f" but found {method}"
+            )
+
+        if method == "fixed":
+            self.set_tags(**{"fit_is_empty": True})
+            self.lambda_ = lambda_fixed
+        else:
+            self.lambda_ = None
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
         private _fit containing the core logic, called from fit
 
@@ -153,11 +217,27 @@ class BoxCoxTransformer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
+        bounds = self.bounds
+        method = self.method
+        sp = self.sp
+        enforce_positive = self.enforce_positive
+
         X = X.flatten()
-        if self.method != "guerrero":
-            self.lambda_ = _boxcox_normmax(X, bounds=self.bounds, method=self.method)
+
+        if enforce_positive:
+            X = np.abs(X)
+
+        if self.method in ["pearsonr", "mle", "all"]:
+            self.lambda_ = _box_norm(X, bounds, method)
+        elif method == "guerrero":
+            self.lambda_ = _guerrero(X, sp, bounds)
+        elif method == "fixed":
+            self.lambda_ = self.lambda_fixed
         else:
-            self.lambda_ = _guerrero(X, self.sp, self.bounds)
+            raise RuntimeError(
+                f"unreachable state, unexpected method attribute: {method}"
+                " this is likely due to method attribute being changed after init"
+            )
 
         return self
 
@@ -180,8 +260,20 @@ class BoxCoxTransformer(BaseTransformer):
         """
         from scipy.special import boxcox
 
+        enforce_positive = self.enforce_positive
+        lambda_ = self.lambda_
+
         X_shape = X.shape
-        Xt = boxcox(X.flatten(), self.lambda_)
+        X = X.flatten()
+
+        if enforce_positive:
+            X_sign = np.sign(X)
+
+        Xt = boxcox(np.abs(X), lambda_)
+
+        if enforce_positive:
+            Xt = Xt * X_sign
+
         Xt = Xt.reshape(X_shape)
         return Xt
 
@@ -208,6 +300,34 @@ class BoxCoxTransformer(BaseTransformer):
         Xt = inv_boxcox(X.flatten(), self.lambda_)
         Xt = Xt.reshape(X_shape)
         return Xt
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {"method": "mle"}
+        params2 = {"method": "pearsonr"}
+        params3 = {"method": "guerrero", "sp": 2}
+        params4 = {"method": "fixed", "lambda_fixed": 1}
+        params5 = {"method": "fixed", "lambda_fixed": 0}
+        params6 = {"method": "fixed", "lambda_fixed": -1}
+
+        return [params1, params2, params3, params4, params5, params6]
 
 
 class LogTransformer(BaseTransformer):
@@ -267,7 +387,7 @@ class LogTransformer(BaseTransformer):
     def __init__(self, offset=0, scale=1):
         self.offset = offset
         self.scale = scale
-        super(LogTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -315,7 +435,6 @@ class LogTransformer(BaseTransformer):
 
 
 def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):
-
     from scipy import optimize
 
     # bounds is None, use simple Brent optimisation
@@ -338,7 +457,8 @@ def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):
     return optimizer
 
 
-# TODO replace with scipy version once PR for adding bounds is merged
+# needed for scipy < 1.7.0
+# TODO remove in a case where the lower bound is 1.7.0 or higher
 def _boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
     optimizer = _make_boxcox_optimizer(bounds, brack)
 
@@ -501,7 +621,7 @@ def _boxcox(x, lmbda=None, bounds=None):
         return boxcox(x, lmbda)
 
     # If lmbda=None, find the lmbda that maximizes the log-likelihood function.
-    lmax = _boxcox_normmax(x, bounds=bounds, method="mle")
+    lmax = _box_norm(x, method="mle", bounds=bounds)
     y = _boxcox(x, lmax)
 
     return y, lmax

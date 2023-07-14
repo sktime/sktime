@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Lagging transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -140,7 +139,6 @@ class Lag(BaseTransformer):
         flatten_transform_index=True,
         keep_column_names=False,
     ):
-
         self.lags = lags
         self.freq = freq
         self.index_out = index_out
@@ -168,7 +166,7 @@ class Lag(BaseTransformer):
         msg = "freq must be a list of equal length to lags, or a scalar."
         assert len(self._lags) == len(self._freq), msg
 
-        super(Lag, self).__init__()
+        super().__init__()
 
         if index_out == "original":
             self.set_tags(**{"transform-returns-same-time-index": True})
@@ -442,7 +440,6 @@ class ReducerTransform(BaseTransformer):
         transformers=None,
         impute_method="bfill",
     ):
-
         self.lags = lags
         self.freq = freq
         self.shifted_vars = shifted_vars
@@ -457,7 +454,7 @@ class ReducerTransform(BaseTransformer):
         else:
             self._lags = lags
 
-        super(ReducerTransform, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

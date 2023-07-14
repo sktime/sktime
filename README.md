@@ -4,9 +4,9 @@
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.19.1 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
+:rocket: **Version 0.20.0 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
 
-sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation and forecasting. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
+sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation, and forecasting. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
 
 [scikit-learn]: https://scikit-learn.org/stable/
 
@@ -43,7 +43,7 @@ sktime is a library for time series analysis in Python. It provides a unified in
 
 ## :speech_balloon: Where to ask questions
 
-Questions and feedback are extremely welcome! Please understand that we won't be able to provide individual support via email. We also believe that help is much more valuable if it's shared publicly, so that more people can benefit from it.
+Questions and feedback are extremely welcome! We strongly believe in the value of sharing help publicly, as it allows a wider audience to benefit from it.
 
 | Type                            | Platforms                               |
 | ------------------------------- | --------------------------------------- |
@@ -51,8 +51,8 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 | :sparkles: **Feature Requests & Ideas** | [GitHub Issue Tracker]                       |
 | :woman_technologist: **Usage Questions**          | [GitHub Discussions] · [Stack Overflow] |
 | :speech_balloon: **General Discussion**        | [GitHub Discussions] |
-| :factory: **Contribution & Development** | contributors channel · [Discord] |
-| :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 3pm UTC, dev/meet-ups channel |
+| :factory: **Contribution & Development** | `dev-chat` channel · [Discord] |
+| :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 3 pm UTC, dev/meet-ups channel |
 
 [github issue tracker]: https://github.com/sktime/sktime/issues
 [github discussions]: https://github.com/sktime/sktime/discussions
@@ -60,9 +60,9 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 [discord]: https://discord.com/invite/54ACzaFsn7
 
 ## :dizzy: Features
-Our aim is to make the time series analysis ecosystem more interoperable and usable as a whole. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__ including pipelining, ensembling, tuning and reduction that enables users to apply an algorithm for one task to another.
+Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__  such as pipelining, ensembling, tuning, and reduction, empowering users to apply an algorithm designed for one task to another.
 
-sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD] and [fbprophet], among others.
+sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD], and [fbprophet], among others.
 
 For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
 
@@ -90,16 +90,17 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [time series clustering]: https://github.com/sktime/sktime/tree/main/sktime/clustering
 [annotation]: https://github.com/sktime/sktime/tree/main/sktime/annotation
 [time series distances/kernels]: https://github.com/sktime/sktime/tree/main/sktime/dists_kernels
+[time series alignment]: https://github.com/sktime/sktime/tree/main/sktime/alignment
 [transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
 [distributions and simulation]: https://github.com/sktime/sktime/tree/main/sktime/proba
 [parameter fitting]: https://github.com/sktime/sktime/tree/main/sktime/param_est
 
 
 ## :hourglass_flowing_sand: Install sktime
-For trouble shooting and detailed installation instructions, see the [documentation](https://www.sktime.net/en/latest/installation.html).
+For troubleshooting and detailed installation instructions, see the [documentation](https://www.sktime.net/en/latest/installation.html).
 
 - **Operating system**: macOS X · Linux · Windows 8.1 or higher
-- **Python version**: Python 3.7, 3.8, 3.9, 3.10, and 3.11 (only 64 bit)
+- **Python version**: Python 3.8, 3.9, 3.10, and 3.11 (only 64-bit)
 - **Package managers**: [pip] · [conda] (via `conda-forge`)
 
 [pip]: https://pip.pypa.io/en/stable/
@@ -135,7 +136,7 @@ conda install -c conda-forge sktime-all-extras
 
 ### Forecasting
 
-```python
+``` python
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import temporal_train_test_split
@@ -177,7 +178,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 | -------------------------- | --------------------------------------------------------------        |
 | :gift_heart: **[Contribute]**        | How to contribute to sktime.          |
 | :school_satchel:  **[Mentoring]** | New to open source? Apply to our mentoring program! |
-| :date: **[Meetings]** | Join our discussions, tutorials, workshops and sprints! |
+| :date: **[Meetings]** | Join our discussions, tutorials, workshops, and sprints! |
 | :woman_mechanic:  **[Developer Guides]**      | How to further develop sktime's code base.                             |
 | :construction: **[Enhancement Proposals]** | Design a new feature for sktime. |
 | :medal_sports: **[Contributors]** | A list of all contributors. |
@@ -198,10 +199,10 @@ There are many ways to join the sktime community. We follow the [all-contributor
 
 ## :bulb: Project vision
 
-* **by the community, for the community** -- developed by a friendly and collaborative community.
-* the **right tool for the right task** -- helping users to diagnose their learning problem and suitable scientific model types.
-* **embedded in state-of-art ecosystems** and **provider of interoperable interfaces** -- interoperable with [scikit-learn], [statsmodels], [tsfresh], and other community favourites.
-* **rich model composition and reduction functionality** -- build tuning and feature extraction pipelines, solve forecasting tasks with [scikit-learn] regressors.
-* **clean, descriptive specification syntax** -- based on modern object-oriented design principles for data science.
-* **fair model assessment and benchmarking** -- build your models, inspect your models, check your models, avoid pitfalls.
-* **easily extensible** -- easy extension templates to add your own algorithms compatible with sktime's API.
+* **By the community, for the community** -- developed by a friendly and collaborative community.
+* The **right tool for the right task** -- helping users to diagnose their learning problem and suitable scientific model types.
+* **Embedded in state-of-art ecosystems** and **provider of interoperable interfaces** -- interoperable with [scikit-learn], [statsmodels], [tsfresh], and other community favorites.
+* **Rich model composition and reduction functionality** -- build tuning and feature extraction pipelines, solve forecasting tasks with [scikit-learn] regressors.
+* **Clean, descriptive specification syntax** -- based on modern object-oriented design principles for data science.
+* **Fair model assessment and benchmarking** -- build your models, inspect your models, check your models, and avoid pitfalls.
+* **Easily extensible** -- easy extension templates to add your own algorithms compatible with sktime's API.

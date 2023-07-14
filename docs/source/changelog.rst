@@ -13,6 +13,157 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.20.0 - 2023-06-21
+---------------------------
+
+Maintenance release - python 3.7 end-of-life maintenance update,
+scheduled deprecations.
+
+For last non-maintenance content updates, see 0.19.2 and 0.19.1.
+
+Contents
+~~~~~~~~
+
+* python 3.7 is no longer supported by ``sktime``, as python 3.7 end-of-life is
+  imminent (June 27), with ``sktime`` dependencies already having dropped support.
+* pre-commit and coding style upgrades (3.8 plus)
+* scheduled 0.20.0 deprecation actions
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` version bounds now allow versions ``1.25.X``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Python 3.7 end-of-life
+^^^^^^^^^^^^^^^^^^^^^^
+
+``sktime`` no longer supports python 3.7 with ``sktime`` 0.20.0 and later.
+
+python reaches end-of-life on Jun 27, 2023, and core dependencies of ``sktime``
+have already dropped support for python 3.7 with their most recent versions
+(e.g., ``scikit-learn``).
+
+Time Series Classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``ComposableTimeSeriesClassifier`` and ``WeightedEnsembleClassifier``
+have finished their move to ``classification.ensemble``, they are no longer
+importable in their original locations.
+
+List of PR
+~~~~~~~~~~
+
+* [MNT] 0.20.0 deprecation actions (:pr:`4733`) :user:`fkiraly`
+* [MNT] 0.20.0 release action - remove python 3.7 support (:pr:`4717`) :user:`fkiraly`
+* [MNT] 0.20.0 release action - increase ``scikit-base`` bound to ``<0.6.0`` (:pr:`4735`) :user:`fkiraly`
+* [MNT] 0.20.0 release action - support for ``numpy 1.25`` (:pr:`4720`) :user:`jorenham`
+* [MNT] 0.20.0 release action - remove initial utf comments in all python modules which are unnecessary in python 3 (:pr:`4725`) :user:`yarnabrina`
+* [MNT] 0.20.0 release action - upgrade to coding style of python 3.8 and above using ``pyupgrade`` (:pr:`4726`) :user:`yarnabrina`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`jorenham`,
+:user:`yarnabrina`
+
+
+Version 0.19.2 - 2023-06-19
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* ``statsforecast`` ``AutoETS`` and ``AutoCES`` interfaces (:pr:`4648`, :pr:`4649`) :user:`yarnabrina`
+* developer guide on remote setup of test suite (:pr:`4689`) :user:`fkiraly`
+* update to all pre-commit hook versions, corresponding changes throughout the code base (:pr:`4680`) :user:`yarnabrina`
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+* ``ForecastingHorizon`` and forecasters' ``fit``, ``predict`` now support ``range``
+  as input. Caveat: ``range(n)`` starts at ``0`` and ends at ``n-1``.
+  For an ``n``-step-ahead forecast, including all ``n`` integer steps in the horizon, pass ``range(1, n+1)``.
+
+Enhancements
+~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] ``statsforecast`` ``AutoETS`` direct interface estimator (:pr:`4648`) :user:`yarnabrina`
+* [ENH] ``statsforecast`` ``AutoCES`` direct interface estimator (:pr:`4649`) :user:`yarnabrina`
+* [ENH] improved ``BaseForecaster`` exception messages, with reference to ``self`` class name (:pr:`4699`) :user:`fkiraly`
+* [ENH] support passing horizons as ``range`` object in ``ForecastingHorizon`` and in ``fit`` and ``predict`` methods (:pr:`4716`) :user:`yarnabrina`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] migrate ``ResNetRegressor`` from ``sktime-dl`` (:pr:`4638`) :user:`achieveordie`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] correct accidental duplication of 0.19.0 changelog (:pr:`4662`) :user:`fkiraly`
+* [DOC] developer guide on remote setup of test suite (:pr:`4689`) :user:`fkiraly`
+* [DOC] User registration link on documentation landing page (:pr:`4675`) :user:`fkiraly`
+* [DOC] correct some failing doctests (:pr:`4679`) :user:`mdsaad2305`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] resolve pre-commit issues on ``main`` (:pr:`4673`) :user:`yarnabrina`
+* [MNT] except some DL and ``numba`` based estimators from tests to prevent memory overload (:pr:`4682`) :user:`fkiraly`
+* [MNT] remove private imports from ``sklearn`` - ``set_random_state`` (:pr:`4672`) :user:`fkiraly`
+* [MNT] update pre-commit hook versions and corresponding changes (:pr:`4680`) :user:`yarnabrina`
+* [MNT] add ``skbase`` to default package version display of ``show_versions`` (:pr:`4694`) :user:`fkiraly`
+* [MNT] reduce CI test log verbosity (:pr:`4715`) :user:`fkiraly`
+* [MNT] remove python 3.7 tests from CI (:pr:`4722`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+BaseObject
+^^^^^^^^^^
+
+* [BUG] fix ``clone`` / ``set_params`` with nested ``sklearn`` objects (:pr:`4707`) :user:`fkiraly`, :user:`hazrulakmal`
+
+Benchmarking
+^^^^^^^^^^^^
+
+* [BUG] bugfix for ``no-update_params`` strategy in ``evaluate`` (:pr:`4686`) :user:`hazrulakmal`
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix dead source link for UEA datasets (:pr:`4705`) :user:`fkiraly`
+* [BUG] remove ``IOError`` dataset from TSC data registry (:pr:`4711`) :user:`fkiraly`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix conversion from ``pd-multiindex`` to ``df-list`` if not all index levels are present (:pr:`4693`) :user:`fkiraly`
+* [BUG] Fix ``vectorize_est`` returning jumbled columns for column vectorization, ``pd.DataFrame`` return, if column names were not lexicographically ordered (:pr:`4684`) :user:`fkiraly`, :user:`hoesler`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] correct ``ForecastX`` behaviour in case of multivariate ``y`` (:pr:`4719`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`achieveordie`,
+:user:`fkiraly`,
+:user:`hazrulakmal`,
+:user:`hoesler`,
+:user:`mdsaad2305`,
+:user:`yarnabrina`
+
+
 Version 0.19.1 - 2023-05-30
 ---------------------------
 
@@ -137,7 +288,6 @@ Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] `SimpleRNN` DL time series regressor, migrated from ``sktime-dl`` (:pr:`4185`) :user:`ArushikaBansal`
-
 * [ENH] move classification ensembles to ``classification.ensembles`` (:pr:`4532`) :user:`fkiraly`
 * [ENH] better documentation and test coverage for custom estimators and parameters in ``DrCIF`` (:pr:`4621`) :user:`Taise228`
 * [ENH] Add MACNN classifier and network (:pr:`4636`) :user:`achieveordie`
@@ -2828,7 +2978,7 @@ Forecasting
 Transformations
 ^^^^^^^^^^^^^^^
 
-* [ENH] extend ``ColumnSubset`` to work for scalar ``columns`` parameter (:pr:`2906`) :user:`fkiraly`
+* [ENH] extend ``ColumnSelect`` to work for scalar ``columns`` parameter (:pr:`2906`) :user:`fkiraly`
 * [ENH] transformer vectorization: ensure unique column names if unvectorized output is multivariate (:pr:`2958`) :user:`fkiraly`
 
 Fixes

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities to profile computational and memory performance of estimators."""
 
 from inspect import isclass

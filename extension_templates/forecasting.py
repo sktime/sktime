@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for forecasters.
+"""Extension template for forecasters.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -171,8 +169,8 @@ class MyForecaster(BaseForecaster):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyForecaster" to the name of the class
-        super(MyForecaster, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
@@ -195,7 +193,7 @@ class MyForecaster(BaseForecaster):
         #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -241,7 +239,7 @@ class MyForecaster(BaseForecaster):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -319,9 +317,9 @@ class MyForecaster(BaseForecaster):
     def _update_predict_single(self, y, fh, X=None, update_params=True):
         """Update forecaster and then make forecasts.
 
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
+        Implements default behaviour of calling update and predict sequentially, but can
+        be overwritten by subclasses to implement more efficient updating algorithms
+        when available.
         """
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X)
@@ -338,7 +336,7 @@ class MyForecaster(BaseForecaster):
     #
     # if implementing _predict_interval, delete _predict_quantiles
     # if not implementing either, delete both methods
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -381,7 +379,7 @@ class MyForecaster(BaseForecaster):
     #
     # if implementing _predict_quantiles, delete _predict_interval
     # if not implementing either, delete both methods
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

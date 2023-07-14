@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Shapelet transformers.
 
 A transformer from the time domain into the shapelet domain.
@@ -50,9 +49,8 @@ class Shapelet:
 
     def __str__(self):
         """Print."""
-        return (
-            "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3},"
-            " ".format(self.series_id, self.start_pos, self.length, self.info_gain)
+        return "Series ID: {}, start_pos: {}, length: {}, info_gain: {}," " ".format(
+            self.series_id, self.start_pos, self.length, self.info_gain
         )
 
 
@@ -147,7 +145,6 @@ class ShapeletTransform(BaseTransformer):
         verbose=0,
         remove_self_similar=True,
     ):
-
         self.min_shapelet_length = min_shapelet_length
         self.max_shapelet_length = max_shapelet_length
         self.max_shapelets_to_store_per_class = max_shapelets_to_store_per_class
@@ -156,7 +153,7 @@ class ShapeletTransform(BaseTransformer):
         self.remove_self_similar = remove_self_similar
         self.predefined_ig_rejection_level = 0.05
         self.shapelets = None
-        super(ShapeletTransform, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit the shapelet transform to a specified X and y.
@@ -256,7 +253,6 @@ class ShapeletTransform(BaseTransformer):
         # for every series
         case_idx = 0
         while case_idx < len(cases_to_visit):
-
             series_id = cases_to_visit[case_idx][0]
             this_class_val = cases_to_visit[case_idx][1]
 
@@ -333,7 +329,6 @@ class ShapeletTransform(BaseTransformer):
                 candidates_to_visit = [candidate_starts_and_lens[x] for x in cand_idx]
 
             for candidate_idx in range(num_candidates_per_case):
-
                 # if shapelet heap for this class is not full yet, set entry
                 # criteria to be the predetermined IG threshold
                 ig_cutoff = self.predefined_ig_rejection_level
@@ -511,7 +506,7 @@ class ShapeletTransform(BaseTransformer):
                         if self.verbose > 0:
                             if candidate_rejected is False:
                                 print(  # noqa
-                                    "Candidate finished. {0:02d}:{1:02} "
+                                    "Candidate finished. {:02d}:{:02} "
                                     "remaining".format(
                                         int(
                                             round(
@@ -544,7 +539,7 @@ class ShapeletTransform(BaseTransformer):
                                 )
                             else:
                                 print(  # noqa
-                                    "Candidate rejected. {0:02d}:{1:02} "
+                                    "Candidate rejected. {:02d}:{:02} "
                                     "remaining".format(
                                         int(
                                             round(
@@ -658,12 +653,17 @@ class ShapeletTransform(BaseTransformer):
         -------
         shapelet_list: list of Shapelet objects
         """
-        # IMPORTANT: it is assumed that shapelets are already in descending
-        # order of quality. This is preferable in the fit method as removing
-        # self-similar
-        # shapelets may be False so the sort needs to happen there in those
-        # cases, and avoids a second redundant sort here if it is set to True
+
         def is_self_similar(shapelet_one, shapelet_two):
+            """Check if two shapelets are similar.
+
+            Notes
+            -----
+            IMPORTANT: it is assumed that shapelets are already in descending order
+            of quality. This is preferable in the fit method as removing self-similar
+            shapelets may be False so the sort needs to happen there in those cases,
+            and avoids a second redundant sort here if it is set to True
+            """
             # not self similar if from different series
             if shapelet_one.series_id != shapelet_two.series_id:
                 return False
@@ -1124,7 +1124,7 @@ class RandomShapeletTransform(BaseTransformer):
         self._class_dictionary = {}
         self._sorted_indicies = []
 
-        super(RandomShapeletTransform, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit the shapelet transform to a specified X and y.

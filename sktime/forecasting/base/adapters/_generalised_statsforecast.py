@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
 import pandas
@@ -20,7 +19,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
         "handles-missing-data": False,
-        "python_version": ">=3.7",  # TODO: change to 3.8 (when?)
+        "python_version": ">=3.8",
         "python_dependencies": ["statsforecast"],
     }
 
@@ -32,7 +31,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -143,7 +142,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return in_sample_horizon, out_of_sample_horizon
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -193,7 +192,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_point_predictions
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

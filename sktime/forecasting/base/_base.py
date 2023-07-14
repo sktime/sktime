@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for forecaster scitype.
+"""Base class template for forecaster scitype.
 
     class name: BaseForecaster
 
@@ -75,11 +73,10 @@ def _coerce_to_list(obj):
 class BaseForecaster(BaseEstimator):
     """Base forecaster template class.
 
-    The base forecaster specifies the methods and method
-    signatures that all forecasters have to implement.
+    The base forecaster specifies the methods and method signatures that all forecasters
+    have to implement.
 
-    Specific implementations of these methods is deferred to concrete
-    forecasters.
+    Specific implementations of these methods is deferred to concrete forecasters.
     """
 
     # default tag values - these typically make the "safest" assumption
@@ -113,7 +110,7 @@ class BaseForecaster(BaseEstimator):
 
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
-        super(BaseForecaster, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __mul__(self, other):
@@ -236,17 +233,17 @@ class BaseForecaster(BaseEstimator):
         First index does subsetting of exogeneous input data.
         Second index does subsetting of the forecast (but not of endogeneous data).
 
-        Keys must be valid inputs for `columns` in `ColumnSubset`.
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following composite pipeline object:
-            ColumnSubset(columns1) ** self * ColumnSubset(columns2)
+            ColumnSelect(columns1) ** self * ColumnSelect(columns2)
             where `columns1` is first or only item in `key`, and `columns2` is the last
             if only one item is passed in `key`, only `columns1` is applied to input
         """
@@ -261,7 +258,10 @@ class BaseForecaster(BaseEstimator):
             if not len(key) == 2:
                 raise ValueError(
                     "there should be one or two keys when calling [] or getitem, "
-                    "e.g., mytrafo[key], or mytrafo[key1, key2]"
+                    "of a forecaster, "
+                    "e.g., mytrafo[key], or mytrafo[key1, key2]. "
+                    f"But {self.__class__.__name__} instance got tuple"
+                    f" with {len(key)} keys."
                 )
             columns1 = key[0]
             columns2 = key[1]
@@ -1129,10 +1129,7 @@ class BaseForecaster(BaseEstimator):
         y_pred = self.predict(fh=fh, X=X)
 
         if not type(y_pred) == type(y):
-            raise TypeError(
-                "y must have same type, dims, index as expected predict return. "
-                f"expected type {type(y_pred)}, but found {type(y)}"
-            )
+            y = convert_to(y, self._y_mtype_last_seen)
 
         y_res = y - y_pred
 
@@ -1211,7 +1208,7 @@ class BaseForecaster(BaseEstimator):
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super(BaseForecaster, self).get_fitted_params(deep=deep)
+            return super().get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys
@@ -1599,7 +1596,9 @@ class BaseForecaster(BaseEstimator):
         # raise error if some method tries to accessed it before it has been set
         if self._fh is None:
             raise ValueError(
-                "No `fh` has been set yet, please specify `fh` " "in `fit` or `predict`"
+                f"No `fh` has been set yet, in this instance of "
+                f"{self.__class__.__name__}, "
+                "please specify `fh` in `fit` or `predict`"
             )
 
         return self._fh
@@ -1635,8 +1634,8 @@ class BaseForecaster(BaseEstimator):
         requires_fh = self.get_tag("requires-fh-in-fit")
 
         msg = (
-            f"This is because fitting of the `"
-            f"{self.__class__.__name__}` "
+            f"This is because fitting of the "
+            f"forecaster {self.__class__.__name__} "
             f"depends on `fh`. "
         )
 
@@ -1654,8 +1653,8 @@ class BaseForecaster(BaseEstimator):
                 if not requires_fh and self._fh is None:
                     raise ValueError(
                         "The forecasting horizon `fh` must be passed "
-                        "either to `fit` or `predict`, "
-                        "but was found in neither."
+                        "either to `fit` or `predict`, but was found in neither "
+                        f"call of this {self.__class__.__name__} instance's methods."
                     )
                 # in case C. fh is not optional in fit: this is fine
                 # any error would have already been caught in fit
@@ -1666,7 +1665,7 @@ class BaseForecaster(BaseEstimator):
                 # fh must be passed in fit
                 raise ValueError(
                     "The forecasting horizon `fh` must be passed to "
-                    "`fit`, but none was found. " + msg
+                    f"`fit` of {self.__class__.__name__}, but none was found. " + msg
                 )
                 # in case C. fh is optional in fit:
                 # this is fine, nothing to check/raise
@@ -1693,8 +1692,9 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "A different forecasting horizon `fh` has been "
                     "provided from "
-                    "the one seen in `fit`. If you want to change the "
-                    "forecasting "
+                    "the one seen already in `fit`, in this instance of "
+                    f"{self.__class__.__name__}. "
+                    "If you want to change the forecasting "
                     "horizon, please re-fit the forecaster. " + msg
                 )
             # if existing one and new match, ignore new one
@@ -1746,7 +1746,6 @@ class BaseForecaster(BaseEstimator):
         # predict-like methods: return as list, then run through reconstruct
         # to obtain a pandas based container in one of the pandas mtype formats
         elif methodname in PREDICT_METHODS:
-
             if methodname == "update_predict_single":
                 self._yvec = y
 
@@ -1766,7 +1765,7 @@ class BaseForecaster(BaseEstimator):
                 y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -1797,7 +1796,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -1906,14 +1905,14 @@ class BaseForecaster(BaseEstimator):
     ):
         """Update forecaster and then make forecasts.
 
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
+        Implements default behaviour of calling update and predict sequentially, but can
+        be overwritten by subclasses to implement more efficient updating algorithms
+        when available.
         """
         self.update(y=y, X=X, update_params=update_params)
         return self.predict(fh=fh, X=X)
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -2023,7 +2022,6 @@ class BaseForecaster(BaseEstimator):
             )
 
         if implements_interval:
-
             pred_int = pd.DataFrame()
             for a in alpha:
                 # compute quantiles corresponding to prediction interval coverage
@@ -2059,7 +2057,6 @@ class BaseForecaster(BaseEstimator):
             pred_int.columns = int_idx
 
         elif implements_proba:
-
             pred_proba = self.predict_proba(fh=fh, X=X)
             pred_int = pred_proba.quantile(alpha=alpha)
 

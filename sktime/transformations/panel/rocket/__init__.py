@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Rocket transformers."""
 __all__ = [
     "Rocket",

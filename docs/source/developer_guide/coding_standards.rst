@@ -48,7 +48,7 @@ Additional configurations can be found in
 -  Avoid multiple statements on one line. Prefer a line return after a
    control flow statement (``if``/``for``).
 -  Use absolute imports for references inside sktime.
--  Don’t use ``import *`` in the source code. It is considered
+-  Don't use ``import *`` in the source code. It is considered
    harmful by the official Python recommendations. It makes the code
    harder to read as the origin of symbols is no longer explicitly
    referenced, but most important, it prevents using a static analysis
@@ -110,8 +110,8 @@ API design
 ============
 
 The general design approach of sktime is described in the
-paper `“Designing Machine Learning Toolboxes: Concepts, Principles and
-Patterns” <https://arxiv.org/abs/2101.04938>`__.
+paper `"Designing Machine Learning Toolboxes: Concepts, Principles and
+Patterns" <https://arxiv.org/abs/2101.04938>`__.
 
 .. note::
 

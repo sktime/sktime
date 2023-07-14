@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for time series utilities."""
 import numpy as np
 import pytest
