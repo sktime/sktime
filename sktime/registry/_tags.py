@@ -372,6 +372,13 @@ ESTIMATOR_TAG_REGISTER = [
         "python dependencies of estimator as str or list of str",
     ),
     (
+        "python_dependencies_alias",
+        "estimator",
+        "dict",
+        "should be provided if import name differs from package name, \
+        key-value pairs are package name, import name",
+    ),
+    (
         "requires_cython",
         "estimator",
         "bool",

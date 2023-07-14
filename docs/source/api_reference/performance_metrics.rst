@@ -13,10 +13,10 @@ The :mod:`sktime.performance_metrics` module contains metrics for evaluating and
 Forecasting
 -----------
 
-.. currentmodule:: sktime.performance_metrics.forecasting
+Point forecasts - classes
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Classes
-~~~~~~~
+.. currentmodule:: sktime.performance_metrics.forecasting
 
 .. autosummary::
     :toctree: auto_generated/
@@ -44,8 +44,10 @@ Classes
     MeanLinexError
     RelativeLoss
 
-Functions
-~~~~~~~~~
+Point forecasts - functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.performance_metrics.forecasting
 
 .. autosummary::
     :toctree: auto_generated/
@@ -74,9 +76,37 @@ Functions
     mean_linex_error
     relative_loss
 
+Quantile and interval forecasts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Segmentation
-~~~~~~~~~~~~
+.. currentmodule:: sktime.performance_metrics.forecasting.probabilistic
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    PinballLoss
+    EmpiricalCoverage
+    ConstraintViolation
+
+Distribution forecasts
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.performance_metrics.forecasting.probabilistic
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    CRPS
+    LogLoss
+    SquaredDistrLoss
+
+
+Time series segmentation
+------------------------
+
+.. currentmodule:: sktime.performance_metrics.annotation
 
 .. autosummary::
     :toctree: auto_generated/

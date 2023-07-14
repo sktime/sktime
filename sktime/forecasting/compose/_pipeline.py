@@ -458,7 +458,7 @@ class ForecastingPipeline(_Pipeline):
         else:
             return ForecastingPipeline(steps=list(zip(new_names, new_ests)))
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -508,7 +508,7 @@ class ForecastingPipeline(_Pipeline):
         X = self._transform(X=X)
         return self.forecaster_.predict(fh, X)
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -543,7 +543,7 @@ class ForecastingPipeline(_Pipeline):
         X = self._transform(X=X)
         return self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -942,7 +942,7 @@ class TransformedTargetForecaster(_Pipeline):
         else:
             return TransformedTargetForecaster(steps=list(zip(new_names, new_ests)))
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1068,7 +1068,7 @@ class TransformedTargetForecaster(_Pipeline):
         Z = check_series(Z)
         return self._get_inverse_transform(self.transformers_pre_, Z, X)
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1106,7 +1106,7 @@ class TransformedTargetForecaster(_Pipeline):
         )
         return pred_int_transformed
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -1234,6 +1234,7 @@ class ForecastX(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "handles-missing-data": True,
     }
 
     def __init__(
@@ -1269,7 +1270,7 @@ class ForecastX(BaseForecaster):
         # }
         # self.set_tags(**tag_translate_dict)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1390,7 +1391,7 @@ class ForecastX(BaseForecaster):
 
         return self
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,

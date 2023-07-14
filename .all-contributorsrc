@@ -2190,6 +2190,35 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "CTFallon",
+      "name": "Colin Fallon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19725980?v=4",
+      "profile": "https://github.com/CTFallon",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mgazian000",
+      "name": "Michael Gaziani",
+      "avatar_url": "https://avatars.githubusercontent.com/mgazian000",
+      "profile": "https://github.com/mgazian000",
+      "contributions": [
+        "doc"
+      ]
+    },
+
+    {
+      "login": "felipeangelimvieira",
+      "name": "Felipe Angelim",
+      "avatar_url": "https://avatars.githubusercontent.com/felipeangelimvieira",
+      "profile": "https://github.com/felipeangelimvieira",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }
