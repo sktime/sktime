@@ -8,7 +8,10 @@ __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 import pandas as pd
 from joblib import Parallel, delayed
 
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
+from sktime.forecasting.model_selection import (
+    ExpandingWindowSplitter,
+    SlidingWindowSplitter,
+)
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
 
@@ -820,7 +823,7 @@ class SplitterSummarizer(BaseTransformer):
         self.splitter = splitter
 
         if splitter is None:
-            self._splitter = ExpandingWindowSplitter(start_with_window=False)
+            self._splitter = SlidingWindowSplitter(start_with_window=False)
         else:
             self._splitter = splitter
 
@@ -882,19 +885,15 @@ class SplitterSummarizer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.model_selection import SlidingWindowSplitter
-
         params1 = {
             "transformer": SummaryTransformer(),
             "splitter": ExpandingWindowSplitter(),
-            "index": "last",
         }
 
         params2 = {
             "transformer": SummaryTransformer(
                 summary_function=["mad"], quantiles=(0.7,)
             ),
-            "splitter": ExpandingWindowSplitter(),
             "index": None,
         }
 
