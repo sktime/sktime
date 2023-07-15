@@ -900,11 +900,13 @@ class SplitterSummarizer(BaseTransformer):
             "transformer": SummaryTransformer(
                 summary_function=["mad"], quantiles=(0.7,)
             ),
+            "splitter": SlidingWindowSplitter(window_length=3, step_length=2),
             "index": None,
         }
 
         params3 = {
             "transformer": SummaryTransformer(),
+            "splitter": SlidingWindowSplitter(window_length=3, step_length=2),
         }
 
         params4 = {
