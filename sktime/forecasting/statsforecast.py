@@ -692,4 +692,4 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                 },
             ]
 
-            return params
+        return params
