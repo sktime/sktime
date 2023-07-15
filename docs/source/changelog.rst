@@ -91,6 +91,7 @@ Time series classification
 
 * [ENH] ensure ``BaggingClassifier`` can be used as univariate-to-multivariate compositor (:pr:`4788`) :user:`fkiraly`
 * [ENH] migrate MCDCNN classifier, regressor, network from ``sktime-dl`` (:pr:`4637`) :user:`achieveordie`
+* [ENH] in ``CNNNetwork``, add options to control ``padding`` and ``filter_size`` logic (:pr:`4784`) :user:`alan191006`
 
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -179,6 +180,7 @@ Contributors
 ~~~~~~~~~~~~
 
 :user:`achieveordie`,
+ :user:`alan191006`,
 :user:`benHeid`,
 :user:`CTFallon`,
 :user:`felipeangelimvieira`,
