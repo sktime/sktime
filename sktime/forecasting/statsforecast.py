@@ -605,7 +605,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         if trend_forecaster:
             self._trend_forecaster = trend_forecaster
             if trend_forecaster.get_tag("scitype:y") == "multivariate":
-                self.set_tags("scitype:y", "multivariate")
+                self.set_tags(**{"scitype:y": "multivariate"})
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
 
