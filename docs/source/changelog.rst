@@ -68,6 +68,11 @@ BaseObject
 * [ENH] Improve handling of dependencies with alias (:pr:`4832`) :user:`hazrulakmal`
 * [ENH] Add an explicit context manager during estimator dump (:pr:`4859`) :user:`achieveordie`, :user:`yarnabrina`
 
+Benchmarking and Metrics
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] refactored ``evaluate`` routine, use splitters internally and allow for separate ``X``-split (:pr:`4861`) :user:`fkiraly`
+
 Data loaders
 ^^^^^^^^^^^^
 
@@ -155,6 +160,7 @@ Benchmarking and Metrics
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [BUG] allow unused parameters in metric when using ``make_forecasting_scorer`` (:pr:`4833`) :user:`fkiraly`
+* [BUG] fix ``evaluate`` utility for case where ``y`` and ``X`` are not equal length (:pr:`4861`) :user:`fkiraly`
 
 Forecasting
 ^^^^^^^^^^^
@@ -180,7 +186,7 @@ Contributors
 ~~~~~~~~~~~~
 
 :user:`achieveordie`,
- :user:`alan191006`,
+:user:`alan191006`,
 :user:`benHeid`,
 :user:`CTFallon`,
 :user:`felipeangelimvieira`,
