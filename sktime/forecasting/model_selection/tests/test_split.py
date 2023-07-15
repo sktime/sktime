@@ -577,11 +577,13 @@ def test_expandingwindowsplit():
     Tests failure case of bug report #4885.
     """
     timestamp = pd.date_range("2022-07-01 00:00:00", "2022-07-7 23:00:00", freq="H")
-    y_time = pd.DataFrame({
-        "y": range(7*24),
-        "objectid": [1] * 7 * 24,
-        "timestamp": timestamp,
-    }).set_index(["objectid", "timestamp"])
+    y_time = pd.DataFrame(
+        {
+            "y": range(7 * 24),
+            "objectid": [1] * 7 * 24,
+            "timestamp": timestamp,
+        }
+    ).set_index(["objectid", "timestamp"])
 
     fh = pd.timedelta_range(start=0, end=pd.Timedelta(days=1), closed="right", freq="H")
     initial_window = pd.Timedelta(days=1)
@@ -592,11 +594,9 @@ def test_expandingwindowsplit():
 
     splits_time = list(splitter_time.split(y_time))
 
-    y_int = pd.DataFrame({
-        "y": range(7 * 24),
-        "objectid": [1] * 7 * 24,
-        "timestamp": range(7 * 24)
-    }).set_index(["objectid", "timestamp"])
+    y_int = pd.DataFrame(
+        {"y": range(7 * 24), "objectid": [1] * 7 * 24, "timestamp": range(7 * 24)}
+    ).set_index(["objectid", "timestamp"])
 
     fh = range(1, 25)
     initial_window = 24
