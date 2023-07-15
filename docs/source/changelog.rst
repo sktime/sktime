@@ -69,6 +69,7 @@ Forecasting
 * [ENH] ``statsmodels`` ``AutoReg`` interface (:pr:`4774`) :user:`CTFallon`, :user:`mgazian000`, :user:`JonathanBechtel`
 * [ENH] remove private defaults in forecasting module (:pr:`4810`) :user:`fkiraly`
 * [ENH] by-horizon forecaster, for different estimator/parameter per horizon (:pr:`4811`) :user:`fkiraly`
+* [ENH] splitter that replicates ``loc`` of another splitter (:pr:`4851`) :user:`fkiraly`
 * [ENH] test-plus-train splitter compositor (:pr:`4862`) :user:`fkiraly`
 * [ENH] set ``ForecastX`` missing data handling tag to ``True`` to properly cope with future unknown variables (:pr:`4876`) :user:`fkiraly`
 
