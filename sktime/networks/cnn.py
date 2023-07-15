@@ -112,7 +112,7 @@ class CNNNetwork(BaseDeepNetwork):
             conv = keras.layers.Conv1D(
                 filters=filter_sizes[i],
                 kernel_size=self.kernel_size,
-                padding=self.padding,
+                padding=padding,
                 activation=self.activation,
             )(conv)
             conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(conv)
