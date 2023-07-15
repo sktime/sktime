@@ -24,6 +24,7 @@ Highlights
 * ``SkoptForecastingCV`` - hyperparameter tuning for forecasters using ``scikit-optimize`` (:pr:`4580`) :user:`hazrulakmal`
 * new forecaster - ``statsmodels`` ``AutoReg`` interface (:pr:`4774`) :user:`CTFallon`, :user:`mgazian000`, :user:`JonathanBechtel`
 * new forecaster - by-horizon ``FhPlexForecaster``, for different estimator/parameter per horizon (:pr:`4811`) :user:`fkiraly`
+* new transformer - ``SplitterSummarizer`` to apply transformer by fold (:pr:`4759`) :user:`BensHamza`
 * ``ColumnEnsembleTransformer`` - ``remainder`` argument (:pr:`4789`) :user:`fkiraly`
 * new classifier and regressor - MCDCNN estimators migrated from ``sktime-dl`` (:pr:`4637`) :user:`achieveordie`
 
@@ -109,6 +110,7 @@ Transformations
 * [ENH] allow ``X=None`` in ``BaseTransformer.transform`` (:pr:`4112`) :user:`fkiraly`
 * [ENH] Add ``hour_of_week`` option to ``DateTimeFeatures`` transformer (:pr:`4724`) :user:`VyomkeshVyas`
 * [ENH] ``ColumnEnsembleTransformer`` - ``remainder`` argument (:pr:`4789`) :user:`fkiraly`
+* [ENH] ``SplitterSummarizer`` transformer to apply transformer by fold (:pr:`4759`) :user:`BensHamza`
 
 Visualisations
 ^^^^^^^^^^^^^^
@@ -188,6 +190,7 @@ Contributors
 :user:`achieveordie`,
 :user:`alan191006`,
 :user:`benHeid`,
+:user:`BensHamza`,
 :user:`CTFallon`,
 :user:`felipeangelimvieira`,
 :user:`fkiraly`,
