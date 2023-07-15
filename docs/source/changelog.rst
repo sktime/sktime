@@ -20,6 +20,7 @@ Highlights
 ~~~~~~~~~~
 
 * data loader for Monash Forecasting Repository (:pr:`4826`) :user:`hazrulakmal`
+* estimator crafter = string serialization/deserialization for all object/estimator blueprint specifications (:pr:`4738`) :user:`fkiraly`
 * ``SkoptForecastingCV`` - hyperparameter tuning for forecasters using ``scikit-optimize`` (:pr:`4580`) :user:`hazrulakmal`
 * new forecaster - ``statsmodels`` ``AutoReg`` interface (:pr:`4774`) :user:`CTFallon`, :user:`mgazian000`, :user:`JonathanBechtel`
 * new forecaster - by-horizon ``FhPlexForecaster``, for different estimator/parameter per horizon (:pr:`4811`) :user:`fkiraly`
@@ -32,6 +33,18 @@ Core interface changes
 BaseObject
 ^^^^^^^^^^
 
+* object blueprint (specification) serialization/deserialization to string has been added.
+  "blueprints" in this sense are object composites at init state, e.g., a pristine forecasting pipeline.
+  All objects serialize by ``str`` coercion, e.g., ``str(my_pipeline)``, and deserialize
+  via ``sktime.registry.craft : str -> object``. The deserializer ``craft`` is a pseudo-inverse
+  of the serializer ``str`` for a fixed python environment, so can be used for fully reproducible
+  specification storage and sharing, e.g., in reproducible science or performance benchmarking.
+* further utilities ``registry.deps`` and ``registry.imports`` complement the serialization
+  toolbox. In an environment with only core dependencies of ``sktime``, the utility
+  ``deps : str -> list[str]`` produces a list of PEP 440 soft dependency specifiers
+  required to craft the serialized object (e.g., a forecasting pipeline) which can be used
+  to set up a python environment install before crafting. The utility ``imports : str -> str``
+  produces a code block of all python compilable imports required to craft the serialized object.
 * the tag ``python_dependencies_alias`` was added to manage estimator specific
   dependencies where the package name differs from the import name.
   See the estimator developer guide for further details.
