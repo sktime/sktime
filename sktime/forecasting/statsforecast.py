@@ -638,6 +638,11 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             trend_forecaster=self._trend_forecaster,
         )
 
+    def __getattr__(self, name):
+        """Return self._trend_forecaster when self.trend_forecaster is accessed."""
+        if name == "trend_forecaster":
+            return self._trend_forecaster
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
