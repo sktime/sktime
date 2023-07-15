@@ -25,8 +25,8 @@ class CNNNetwork(BaseDeepNetwork):
     padding : string, default = "auto"
         Controls padding logic for the convolutional layers,
         i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
-        - "auto": as per original implementation, ``"valid"`` is passed if
-          ``input_shape[0] < 60`` in the input layer, and ``"same"`` otherwise.
+        - "auto": as per original implementation, ``"sam"`` is passed if
+          ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
         - "valid", "same", and other values are passed directly to ``Conv1D``
     random_state    : int, default = 0
         seed to any needed random actions
@@ -86,6 +86,14 @@ class CNNNetwork(BaseDeepNetwork):
 
         fs = self._filter_sizes
         nconv = self.n_conv_layers
+        padding = self.padding
+
+        # this is the condition from the original implementation
+        if padding == "auto":
+            if input_shape[0] < 60:
+                padding = "same"
+            else:
+                padding = "valid"
 
         # Extends filter_sizes to match n_conv_layers length
         filter_sizes = fs[:nconv] + [fs[-1]] * max(0, nconv - len(fs))
@@ -95,7 +103,7 @@ class CNNNetwork(BaseDeepNetwork):
         conv = keras.layers.Conv1D(
             filters=filter_sizes[0],
             kernel_size=self.kernel_size,
-            padding=self.padding,
+            padding=padding,
             activation=self.activation,
         )(input_layer)
         conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(conv)
