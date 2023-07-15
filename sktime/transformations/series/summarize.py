@@ -893,7 +893,7 @@ class SplitterSummarizer(BaseTransformer):
         """
         params1 = {
             "transformer": SummaryTransformer(),
-            "splitter": ExpandingWindowSplitter(),
+            "splitter": ExpandingWindowSplitter(initial_window=3),
         }
 
         params2 = {
@@ -910,7 +910,7 @@ class SplitterSummarizer(BaseTransformer):
         params4 = {
             "transformer": SummaryTransformer(),
             "splitter": SlidingWindowSplitter(
-                window_length=10, step_length=10, fh=1, start_with_window=True
+                window_length=3, step_length=2, fh=1, start_with_window=True
             ),
             "index": "last",
         }
