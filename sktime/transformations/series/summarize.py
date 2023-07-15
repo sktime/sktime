@@ -829,6 +829,17 @@ class SplitterSummarizer(BaseTransformer):
 
         super().__init__()
 
+        if not hasattr(self.transformer, "fit_transform"):
+            raise ValueError(
+                f"Error in {self.__class__.__name__}, transformer parameter "
+                "should be an estimator with a fit_transform method"
+            )
+        if not hasattr(self._splitter, "split_series"):
+            raise ValueError(
+                f"Error in {self.__class__.__name__}, splitter parameter, if passed, "
+                "should be an BaseSplitter descendant with a seplit_series method"
+            )
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -846,11 +857,6 @@ class SplitterSummarizer(BaseTransformer):
         Xt : pd.DataFrame
             The transformed Data
         """
-        if not hasattr(self.transformer, "fit_transform"):
-            raise ValueError("Transformer should have a fit_transform method")
-        if not hasattr(self.splitter, "split_series"):
-            raise ValueError("Splitter should have a split_series method")
-
         transformed_series = []
         splits = self._splitter.split_series(X)
 
