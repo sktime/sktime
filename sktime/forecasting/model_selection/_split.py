@@ -375,9 +375,6 @@ class BaseSplitter(BaseObject):
         else:
             split = self._split_vectorized
 
-        if self.__class__.__name__ == "SameLocSplitter":
-            split = self._split
-
         for train, test in split(y_index):
             yield train[train >= 0], test[test >= 0]
 
