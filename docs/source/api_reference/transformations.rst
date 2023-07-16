@@ -85,20 +85,15 @@ Pipeline building
 
     FunctionTransformer
 
-.. currentmodule:: sktime.transformations.panel.compose
+.. currentmodule:: sktime.transformations.series.subset
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    SeriesToSeriesRowTransformer
-    SeriesToPrimitivesRowTransformer
+    ColumnSelect
+    IndexSubset
 
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    make_row_transformer
 
 Sklearn and pandas adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
