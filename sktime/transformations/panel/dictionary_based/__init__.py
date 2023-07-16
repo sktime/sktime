@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Transformers."""
 __all__ = ["PAA", "SFA", "SFAFast", "SAX"]
 

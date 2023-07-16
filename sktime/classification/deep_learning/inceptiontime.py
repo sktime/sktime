@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """InceptionTime for classification."""
 __author__ = "james-large"
 __all__ = ["InceptionTimeClassifier"]
@@ -61,7 +60,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         metrics=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(InceptionTimeClassifier, self).__init__()
+        super().__init__()
 
         self.verbose = verbose
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implements simple conformal forecast intervals.
 
 Code based partially on NaiveVariance by ilyasmoutawwakil.
@@ -143,7 +142,6 @@ class ConformalIntervals(BaseForecaster):
         verbose=False,
         n_jobs=None,
     ):
-
         if not isinstance(method, str):
             raise TypeError(f"method must be a str, one of {self.ALLOWED_METHODS}")
 
@@ -160,7 +158,7 @@ class ConformalIntervals(BaseForecaster):
         self.n_jobs = n_jobs
         self.forecasters_ = []
 
-        super(ConformalIntervals, self).__init__()
+        super().__init__()
 
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -173,7 +171,7 @@ class ConformalIntervals(BaseForecaster):
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         self.fh_early_ = fh is not None
         self.forecaster_ = clone(self.forecaster)
         self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -189,7 +187,7 @@ class ConformalIntervals(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
@@ -205,7 +203,7 @@ class ConformalIntervals(BaseForecaster):
                 update=True,
             )
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -327,7 +325,6 @@ class ConformalIntervals(BaseForecaster):
         return pred_int
 
     def _parse_initial_window(self, y, initial_window=None):
-
         n_samples = len(y)
 
         if initial_window is None:
@@ -347,15 +344,13 @@ class ConformalIntervals(BaseForecaster):
             and (initial_window <= 0 or initial_window >= 1)
         ):
             raise ValueError(
-                "initial_window={0} should be either positive and smaller"
-                " than the number of samples {1} or a float in the "
+                "initial_window={} should be either positive and smaller"
+                " than the number of samples {} or a float in the "
                 "(0, 1) range".format(initial_window, n_samples)
             )
 
         if initial_window is not None and initial_window_type not in ("i", "f"):
-            raise ValueError(
-                "Invalid value for initial_window: {}".format(initial_window)
-            )
+            raise ValueError(f"Invalid value for initial_window: {initial_window}")
 
         if initial_window_type == "f":
             n_initial_window = int(floor(initial_window * n_samples))

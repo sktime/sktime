@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Wrapper for easy vectorization/iteration of time series data.
 
@@ -63,7 +62,6 @@ class VectorizedDF:
     def __init__(
         self, X, y=None, iterate_as="Series", is_scitype="Panel", iterate_cols=False
     ):
-
         self.X = X
 
         if is_scitype is None:
@@ -571,7 +569,7 @@ class VectorizedDF:
 
         ret = []
 
-        for ((group_name, col_name, group), args_i, args_i_rowvec, est_i) in zip(
+        for (group_name, col_name, group), args_i, args_i_rowvec, est_i in zip(
             self.items(),
             explode(args, iterate_as=self.iterate_as, iterate_cols=self.iterate_cols),
             explode(args_rowvec, iterate_as=self.iterate_as, iterate_cols=False),
@@ -593,7 +591,18 @@ class VectorizedDF:
             ret.append((group_name, col_name, est_i_result))
 
         if return_type == "pd.DataFrame":
-            df = pd.DataFrame(ret).pivot(index=0, columns=1, values=2)
+            df_long = pd.DataFrame(ret)
+            cols_right_order = df_long.loc[:, 1].unique()
+
+            df = df_long.pivot(index=0, columns=1, values=2)
+            # DataFrame.pivot sorts the columns (is this a bug? see #4683)
+            # either way, we need to fix this:
+            df = df.reindex(cols_right_order, axis=1)
+
+            # remove "0" and "1" from index/columns name
+            df.index.names = [None] * len(df.index.names)
+            df.columns.name = None
+
             # TODO: add test case for tuple index
             try:
                 df.index = pd.MultiIndex.from_tuples(df.index)

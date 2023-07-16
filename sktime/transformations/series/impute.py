@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Transformer to impute missing values in series."""
 
@@ -106,13 +105,12 @@ class Imputer(BaseTransformer):
         forecaster=None,
         missing_values=None,
     ):
-
         self.method = method
         self.missing_values = missing_values
         self.value = value
         self.forecaster = forecaster
         self.random_state = random_state
-        super(Imputer, self).__init__()
+        super().__init__()
 
         # these methods require self._X remembered in _fit and _update
         if method in ["drift", "forecaster", "random"]:
@@ -295,7 +293,7 @@ class Imputer(BaseTransformer):
             pass
 
     def _create_random_distribution(self, z: pd.Series):
-        """Create a uniform random distribution function within boundaries of given series.
+        """Create uniform distribution function within boundaries of given series.
 
         The distribution is discrete, if the series contains only int-like values.
 

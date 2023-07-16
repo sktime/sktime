@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests the conformal interval wrapper."""
 
@@ -70,9 +69,8 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
 def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac):
     """Test interval wrappers with different strategies and cross validators.
 
-    The wrapper does some internal sliding window cross-validation to
-    calculate the `residuals_matrix`, which means the initial cross-validation
-    can cause issues.
+    The wrapper does some internal sliding window cross-validation to calculate the
+    `residuals_matrix`, which means the initial cross-validation can cause issues.
 
     This checks refit and update strategies as well as expanding and sliding window
     splitters.

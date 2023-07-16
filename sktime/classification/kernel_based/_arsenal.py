@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Arsenal classifier.
 
 kernel based ensemble of ROCKET classifiers.
@@ -156,7 +155,7 @@ class Arsenal(BaseClassifier):
 
         self._weight_sum = 0
 
-        super(Arsenal, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit Arsenal to training data.
@@ -229,7 +228,8 @@ class Arsenal(BaseClassifier):
                             if self.random_state is None
                             else (255 if self.random_state == 0 else self.random_state)
                             * 37
-                            * (i + 1),
+                            * (i + 1)
+                            % 2**31,
                         ),
                         X,
                         y,
@@ -253,7 +253,8 @@ class Arsenal(BaseClassifier):
                         if self.random_state is None
                         else (255 if self.random_state == 0 else self.random_state)
                         * 37
-                        * (i + 1),
+                        * (i + 1)
+                        % 2**31,
                     ),
                     X,
                     y,

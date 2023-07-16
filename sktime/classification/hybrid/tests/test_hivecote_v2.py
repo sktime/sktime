@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """HIVE-COTE v2 test code."""
 import pytest
 

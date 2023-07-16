@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing panel converters - internal functions and more extensive fixtures."""
 
 import numpy as np
