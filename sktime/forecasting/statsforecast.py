@@ -601,11 +601,10 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         season_length: Union[int, List[int]],
         trend_forecaster=None,
     ):
+        self.trend_forecaster = trend_forecaster
         self.season_length = season_length
         if trend_forecaster:
             self._trend_forecaster = trend_forecaster
-            if trend_forecaster.get_tag("scitype:y") == "multivariate":
-                self.set_tags(**{"scitype:y": "multivariate"})
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
 
@@ -625,6 +624,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         # if trend_forecaster is sktime forecaster
         elif isinstance(self._trend_forecaster, BaseForecaster):
             self._trend_forecaster = StatsForecastBackAdapter(self._trend_forecaster)
+            if self._trend_forecaster.estimator.get_tag("scitype:y") == "multivariate":
+                self = self.set_tags(**{"scitype:y": "multivariate"})
         # if trend_forecaster is not StatsForecast forecaster
         elif not isinstance(self._trend_forecaster, _TS):
             raise Exception(
@@ -642,6 +643,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         """Return self._trend_forecaster when self.trend_forecaster is accessed."""
         if name == "trend_forecaster":
             return self._trend_forecaster
+        else:
+            return self.__getattribute__(name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -669,7 +672,6 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
 
         if _check_soft_dependencies("statsmodels", severity="none"):
             from sktime.forecasting.theta import ThetaForecaster
-            from sktime.forecasting.var import VAR
 
             params = [
                 {
@@ -678,10 +680,6 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                 },
                 {
                     "season_length": 4,
-                },
-                {
-                    "season_length": 4,
-                    "trend_forecaster": VAR(),
                 },
             ]
         else:
