@@ -601,6 +601,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         season_length: Union[int, List[int]],
         trend_forecaster=None,
     ):
+        from statsforecast.models import _TS
+
         self.trend_forecaster = trend_forecaster
         self.season_length = season_length
         if trend_forecaster:
@@ -608,31 +610,27 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
 
+        # checks if trend_forecaster is already wrapped with
+        # StatsForecastBackAdapterMSTL
+        if not isinstance(self._trend_forecaster, StatsForecastBackAdapter):
+            # if trend_forecaster is sktime forecaster
+            if isinstance(self._trend_forecaster, BaseForecaster):
+                self._trend_forecaster = StatsForecastBackAdapter(
+                    self._trend_forecaster
+                )
+            # if trend_forecaster is not StatsForecast forecaster
+            elif not isinstance(self._trend_forecaster, _TS):
+                raise Exception(
+                    "The provided forecaster is not compatible with MSTL. Please ensure"
+                    " that the forecaster you pass into the model is a sktime "
+                    "forecaster or statsforecast forecaster."
+                )
+
         super().__init__()
 
     def _instantiate_model(self):
         """Create underlying forecaster instance."""
-        from statsforecast.models import _TS, MSTL
-
-        # checks if trend_forecaster is already wrapped with
-        # StatsForecastBackAdapterMSTL
-        if isinstance(self._trend_forecaster, StatsForecastBackAdapter):
-            return MSTL(
-                season_length=self.season_length,
-                trend_forecaster=self._trend_forecaster,
-            )
-        # if trend_forecaster is sktime forecaster
-        elif isinstance(self._trend_forecaster, BaseForecaster):
-            self._trend_forecaster = StatsForecastBackAdapter(self._trend_forecaster)
-            if self._trend_forecaster.estimator.get_tag("scitype:y") == "multivariate":
-                self = self.set_tags(**{"scitype:y": "multivariate"})
-        # if trend_forecaster is not StatsForecast forecaster
-        elif not isinstance(self._trend_forecaster, _TS):
-            raise Exception(
-                "The provided forecaster is not compatible with MSTL. Please ensure"
-                " that the forecaster you pass into the model is a sktime "
-                "forecaster or statsforecast forecaster."
-            )
+        from statsforecast.models import MSTL
 
         return MSTL(
             season_length=self.season_length,
