@@ -85,15 +85,6 @@ Pipeline building
 
     FunctionTransformer
 
-.. currentmodule:: sktime.transformations.series.subset
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ColumnSelect
-    IndexSubset
-
 
 Sklearn and pandas adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
