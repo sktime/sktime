@@ -278,7 +278,6 @@ class FinancialHolidaysTransformer(BaseTransformer):
         else:
             raise TypeError(f"index type is unsupported: {type(Xt.index)}")
 
-        # Xt["financial_holidays"] = dates.isin(holidays_data)
         # dates.isin(holidays_data) behave surprisingly
         # it fails to detect correctly first time
         # but works correctly while using one at a time
