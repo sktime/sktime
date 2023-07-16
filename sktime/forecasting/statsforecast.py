@@ -605,11 +605,13 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         season_length: Union[int, List[int]],
         trend_forecaster=None,
     ):
+        super().__init__()
+
         if _check_soft_dependencies("statsmodels", severity="none"):
             from statsforecast.models import _TS
         else:
             raise Exception(
-                "StatsForecastMSTL requires module `statsforecast` to be installed."
+                "StatsForecastMSTL requires module `statsforecast` to be installed. "
                 "Please install `statsforecast` in your environment."
             )
 
@@ -635,8 +637,6 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                     " that the forecaster you pass into the model is a sktime "
                     "forecaster or statsforecast forecaster."
                 )
-
-        super().__init__()
 
     def _instantiate_model(self):
         """Create underlying forecaster instance."""
