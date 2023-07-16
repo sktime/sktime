@@ -48,11 +48,9 @@ class CountryHolidaysTransformer(BaseTransformer):
     >>> y = load_airline()
     >>>
     >>> y_t = CountryHolidaysTransformer("US").fit_transform(y)
-    >>> y_t.columns
-    Index(['Number of airline passengers', 'country_holidays'], dtype='object')
-    >>> y_t.dtypes.to_dict()
-    {'Number of airline passengers': dtype('float64'), 'country_holidays': dtype('bool')}  # noqa: E501
-    >>> y_t["country_holidays"].sum()
+    >>> y_t.dtype
+    dtype('bool')
+    >>> y_t.sum()
     14
     """
 
@@ -122,21 +120,23 @@ class CountryHolidaysTransformer(BaseTransformer):
             categories=self.categories,
         )
 
-        Xt = X.copy(deep=True)
-
-        if isinstance(Xt.index, pandas.DatetimeIndex):
-            dates = Xt.index
-        elif isinstance(Xt.index, pandas.PeriodIndex):
-            dates = Xt.index.to_timestamp()
+        if isinstance(X.index, pandas.DatetimeIndex):
+            dates = X.index
+        elif isinstance(X.index, pandas.PeriodIndex):
+            dates = X.index.to_timestamp()
         else:
-            raise TypeError(f"index type is unsupported: {type(Xt.index)}")
+            # should be non-reachable
+            # enforce_index_type tag is set
+            raise TypeError(
+                f"{self.__class__.__name__} does not support {type(X.index)}"
+            )
 
         # dates.isin(holidays_data) behave surprisingly
         # it fails to detect correctly first time
         # but works correctly while using one at a time
-        Xt["country_holidays"] = [date in holidays_data for date in dates]
+        country_holidays = [date in holidays_data for date in dates]
 
-        return Xt
+        return pandas.Series(country_holidays)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -208,11 +208,9 @@ class FinancialHolidaysTransformer(BaseTransformer):
     >>> y = pandas.Series(data, index=index, name="random")
     >>>
     >>> y_t = FinancialHolidaysTransformer("NYSE").fit_transform(y)
-    >>> y_t.columns
-    Index(['random', 'financial_holidays'], dtype='object')
-    >>> y_t.dtypes.to_dict()
-    {'random': dtype('float64'), 'financial_holidays': dtype('bool')}
-    >>> y_t["financial_holidays"].sum()
+    >>> y_t.dtype
+    dtype('bool')
+    >>> y_t.sum()
     10
     """
 
@@ -269,21 +267,23 @@ class FinancialHolidaysTransformer(BaseTransformer):
             language=self.language,
         )
 
-        Xt = X.copy(deep=True)
-
-        if isinstance(Xt.index, pandas.DatetimeIndex):
-            dates = Xt.index
-        elif isinstance(Xt.index, pandas.PeriodIndex):
-            dates = Xt.index.to_timestamp()
+        if isinstance(X.index, pandas.DatetimeIndex):
+            dates = X.index
+        elif isinstance(X.index, pandas.PeriodIndex):
+            dates = X.index.to_timestamp()
         else:
-            raise TypeError(f"index type is unsupported: {type(Xt.index)}")
+            # should be non-reachable
+            # enforce_index_type tag is set
+            raise TypeError(
+                f"{self.__class__.__name__} does not support {type(X.index)}"
+            )
 
         # dates.isin(holidays_data) behave surprisingly
         # it fails to detect correctly first time
         # but works correctly while using one at a time
-        Xt["financial_holidays"] = [date in holidays_data for date in dates]
+        financial_holidays = [date in holidays_data for date in dates]
 
-        return Xt
+        return pandas.Series(financial_holidays)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
