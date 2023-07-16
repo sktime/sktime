@@ -396,6 +396,24 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         assert all(expected == found), msg
 
+    # todo 0.23.0: remove this helper function and related logic
+    def _get_pred_int_test_config(self, estimator_instance):
+        """Get value of pred_int:legacy_interface:testcfg config from estimator.
+
+        If "auto", returns [False] if sktime version is 0.22.X,
+        [True] if sktime version is 0.21.X,
+        otherwise [value of the config] - should be True or False.
+        """
+        import sktime
+
+        cfg = estimator_instance.get_config().get(
+            "pred_int:legacy_interface:testcfg", "auto"
+        )
+        if cfg == "auto":
+            return [int(sktime.__version__.split(".")[1]) >= 22]
+        else:
+            return [cfg]
+
     @pytest.mark.parametrize("index_type", [None, "range"])
     @pytest.mark.parametrize(
         "coverage", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
@@ -433,7 +451,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             if has_li_arg:
                 test_for = [True, False]
             else:
-                test_for = [True]
+                test_for = self._get_pred_int_test_config(estimator_instance)
 
             for legacy_interface in test_for:
                 pred_ints = estimator_instance.predict_interval(
@@ -541,7 +559,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             if has_li_arg:
                 test_for = [True, False]
             else:
-                test_for = [True]
+                test_for = self._get_pred_int_test_config(estimator_instance)
 
             for legacy_interface in test_for:
                 quantiles = estimator_instance.predict_quantiles(
