@@ -35,7 +35,7 @@ class _StatsForecastAdapter(BaseForecaster):
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -69,7 +69,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -198,7 +198,7 @@ class _StatsForecastAdapter(BaseForecaster):
         else:
             return pd.Series(mean, index=fh_abs.to_pandas())
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

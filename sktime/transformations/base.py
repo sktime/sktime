@@ -326,17 +326,17 @@ class BaseTransformer(BaseEstimator):
 
         First index does input subsetting, second index does output subsetting.
 
-        Keys must be valid inputs for `columns` in `ColumnSubset`.
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following TransformerPipeline object:
-            ColumnSubset(columns1) * self * ColumnSubset(columns2)
+            ColumnSelect(columns1) * self * ColumnSelect(columns2)
             where `columns1` is first or only item in `key`, and `columns2` is the last
             if only one item is passed in `key`, only `columns1` is applied to input
         """
@@ -541,7 +541,9 @@ class BaseTransformer(BaseEstimator):
         output_conv = configs["output_conversion"]
 
         # convert to output mtype
-        if input_conv and output_conv:
+        if X is None:
+            X_out = Xt
+        elif input_conv and output_conv:
             X_out = self._convert_output(Xt, metadata=metadata)
         else:
             X_out = Xt
@@ -677,7 +679,13 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        configs = self.get_config()
+        output_conv = configs["output_conversion"]
+
+        if output_conv != "off":
+            X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        else:
+            X_out = Xt
 
         return X_out
 
@@ -868,7 +876,10 @@ class BaseTransformer(BaseEstimator):
         ValueError if self.get_tag("requires_y")=True but y is None
         """
         if X is None:
-            raise TypeError("X cannot be None, but found None")
+            if return_metadata:
+                return X, y, {}
+            else:
+                return X, y
 
         # skip conversion if it is turned off
         if self.get_config()["input_conversion"] != "on":

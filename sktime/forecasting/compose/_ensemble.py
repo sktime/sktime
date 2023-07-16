@@ -128,7 +128,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.test_size = test_size
         self.random_state = random_state
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -198,7 +198,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Return the predicted reduction.
 
         Parameters
@@ -327,7 +327,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         # iff any of the component forecasters require fh in fit
         self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -347,7 +347,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Return the predicted reduction.
 
         Parameters

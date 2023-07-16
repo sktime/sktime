@@ -2208,6 +2208,25 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "alan191006",
+      "name": "Alan Huynh",
+      "avatar_url": "https://avatars.githubusercontent.com/alan191006",
+      "profile": "https://github.com/alan191006",
+      "contributions": [
+        "code"
+    ]
+    },
+    {
+      "login": "felipeangelimvieira",
+      "name": "Felipe Angelim",
+      "avatar_url": "https://avatars.githubusercontent.com/felipeangelimvieira",
+      "profile": "https://github.com/felipeangelimvieira",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }

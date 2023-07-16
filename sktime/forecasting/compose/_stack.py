@@ -77,7 +77,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         self._anytagis_then_set("handles-missing-data", False, True, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters

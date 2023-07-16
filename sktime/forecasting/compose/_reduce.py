@@ -127,6 +127,8 @@ def _sliding_window_transform(
     window_length = check_window_length(window_length, n_timepoints)
 
     if pooling == "global":
+        n_cut = -window_length
+
         if len(transformers) == 1:
             tf_fit = transformers[0].fit(y)
         else:
@@ -134,11 +136,11 @@ def _sliding_window_transform(
             tf_fit = FeatureUnion(feat).fit(y)
         X_from_y = tf_fit.transform(y)
 
-        X_from_y_cut = _cut_df(X_from_y, n_obs=n_timepoints - window_length)
-        yt = _cut_df(y, n_obs=n_timepoints - window_length)
+        X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
+        yt = _cut_df(y, n_obs=n_cut)
 
         if X is not None:
-            X_cut = _cut_df(X, n_obs=n_timepoints - window_length)
+            X_cut = _cut_df(X, n_obs=n_cut)
             Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
         else:
             Xt = X_from_y_cut
@@ -419,7 +421,7 @@ class _DirectReducer(_Reducer):
             windows_identical=self.windows_identical,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -626,7 +628,7 @@ class _MultioutputReducer(_Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -727,7 +729,7 @@ class _RecursiveReducer(_Reducer):
             pooling=self.pooling,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -957,7 +959,7 @@ class _DirRecReducer(_Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1512,7 +1514,9 @@ def _get_forecaster(scitype, strategy):
 
 
 def _cut_df(X, n_obs=1, type="tail"):
-    """Cut input at tail or tail, supports grouping."""
+    """Cut input at tail or head, supports grouping."""
+    if n_obs == 0:
+        return X.copy()
     if isinstance(X.index, pd.MultiIndex):
         Xi_grp = X.index.names[0:-1]
         if type == "tail":
@@ -1811,7 +1815,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # therefore this is commented out until sktime and sklearn are better aligned
         # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit dispatcher based on X_treatment."""
         methodname = f"_fit_{self.X_treatment}"
         return getattr(self, methodname)(y=y, X=X, fh=fh)
@@ -2140,7 +2144,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -2469,7 +2473,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit

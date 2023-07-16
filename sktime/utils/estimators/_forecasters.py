@@ -44,7 +44,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         super().__init__()
 
     @_method_logger
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -76,7 +76,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         return self
 
     @_method_logger
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -142,7 +142,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         return self
 
     @_method_logger
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -222,7 +222,7 @@ class MockForecaster(BaseForecaster):
         self.prediction_constant = prediction_constant
         super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -253,7 +253,7 @@ class MockForecaster(BaseForecaster):
         """
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -319,7 +319,7 @@ class MockForecaster(BaseForecaster):
         """
         return self
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,

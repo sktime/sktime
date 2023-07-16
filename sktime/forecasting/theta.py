@@ -108,7 +108,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.se_ = None
         super().__init__(initial_level=initial_level, sp=sp)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -135,7 +135,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.initialization_method = "known" if self.initial_level else "estimated"
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
-        super()._fit(y, fh=fh)
+        super()._fit(y, X=None, fh=fh)
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute and store historical residual standard error
@@ -146,7 +146,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -195,7 +195,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -424,7 +424,7 @@ class ThetaModularForecaster(BaseForecaster):
             _forecasters = forecasters
         return _forecasters
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         self.pipe_.fit(y=y, X=X, fh=fh)
         return self
 

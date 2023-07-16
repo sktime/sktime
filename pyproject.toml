@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.20.0"
+version = "0.20.1"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
@@ -50,7 +50,7 @@ dependencies = [
     "packaging",
     "scikit-base<0.6.0",
     "scikit-learn>=0.24.0,<1.3.0",
-    "scipy<1.11.0,>=1.2.0",
+    "scipy<2.0.0,>=1.2.0",
 ]
 
 [project.optional-dependencies]
@@ -82,7 +82,40 @@ all_extras = [
     "tbats>=1.1.0",
     "tensorflow; python_version < '3.11'",
     "tsfresh>=0.17.0",
-    "tslearn>=0.5.2; python_version < '3.11'",
+    "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
+    "xarray",
+    "seasonal",
+    "scikit-optimize",
+]
+
+all_extras_pandas2 = [
+    "attrs",
+    "cloudpickle",
+    "dash!=2.9.0",
+    "dask",
+    "dtw-python",
+    "esig==0.9.7; python_version < '3.10'",
+    "filterpy>=1.4.5; python_version < '3.11'",
+    "h5py",
+    "hmmlearn>=0.2.7; python_version < '3.11'",
+    "gluonts>=0.9.0",
+    "keras-self-attention; python_version < '3.11'",
+    "kotsu>=0.3.1",
+    "matplotlib>=3.3.2",
+    "mne",
+    "numba>=0.53; python_version < '3.11'",
+    "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
+    "prophet>=1.1",
+    "pykalman>=0.9.5; python_version < '3.11'",
+    "pyod>=0.8.0; python_version < '3.11'",
+    "scikit_posthocs>=0.6.5",
+    "seaborn>=0.11.0",
+    "statsmodels>=0.12.1",
+    "stumpy>=1.5.1; python_version < '3.11'",
+    "tbats>=1.1.0",
+    "tensorflow; python_version < '3.11'",
+    "tsfresh>=0.17.0",
+    "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
     "seasonal",
 ]
@@ -125,10 +158,11 @@ docs = [
     "nbsphinx>=0.8.6",
     "numpydoc",
     "pydata-sphinx-theme",
-    "sphinx_issues==1.2.0",
-    "sphinx-gallery==0.6.0",
-    "sphinx-design==0.3.0",
-    "sphinx==4.1.1",
+    "sphinx-issues<4.0.0",
+    "sphinx-gallery<0.14.0",
+    "sphinx-design<0.5.0",
+    "sphinx-version-warning",
+    "Sphinx<8.0.0",
     "tabulate",
 ]
 
