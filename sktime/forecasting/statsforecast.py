@@ -564,7 +564,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
 
     The MSTL (Multiple Seasonal-Trend decomposition using LOESS) decomposes the time
     series in multiple seasonalities using LOESS. Then forecasts the trend using
-    a custom non-seaonal model and each seasonality using a SeasonalNaive model.
+    a custom non-seasonal model (`trend_forecaster`) and each seasonality using a
+    SeasonalNaive model. MSTL requires the input time series data to be univariate.
 
     Parameters
     ----------
@@ -572,6 +573,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         Number of observations per unit of time. For multiple seasonalities use a
         list.
     trend_forecaster : estimator, optional, default=StatsForecastAutoETS()
+        Sktime estimator used to make univariate forecasts. Multivariate estimators are
+        not supported.
 
     References
     ----------
