@@ -67,7 +67,7 @@ class CountryHolidaysTransformer(BaseTransformer):
         "fit_is_empty": True,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
         "python_version": ">=3.8",
         "python_dependencies": ["holidays"],
     }
@@ -226,7 +226,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
         "fit_is_empty": True,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
         "python_version": ">=3.8",
         "python_dependencies": ["holidays"],
     }
