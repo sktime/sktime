@@ -18,6 +18,7 @@ from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
@@ -604,7 +605,13 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         season_length: Union[int, List[int]],
         trend_forecaster=None,
     ):
-        from statsforecast.models import _TS
+        if _check_soft_dependencies("statsmodels", severity="none"):
+            from statsforecast.models import _TS
+        else:
+            raise Exception(
+                "StatsForecastMSTL requires module `statsforecast` to be installed."
+                "Please install `statsforecast` in your environment."
+            )
 
         self.trend_forecaster = trend_forecaster
         self.season_length = season_length
@@ -667,8 +674,6 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             test instance. `create_test_instance` uses the first (or only)
             dictionary in `params`
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
-
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
         if _check_soft_dependencies("statsmodels", severity="none"):
