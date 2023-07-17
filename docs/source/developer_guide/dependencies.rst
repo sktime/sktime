@@ -47,8 +47,10 @@ Estimators with a soft dependency need to ensure the following:
    should be populated to pass the information on package and import strings as ``dict`` such as ``{"scikit-learn": "sklearn"}``.
 *  If the soft dependencies require specific python versions, the ``python_version``
    tag should also be populated, with a PEP 440 compliant version specification ``str`` such as ``"<3.10"`` or ``">3.6,~=3.8"``.
-*  If including docstring examples that use soft dependencies, ensure to skip doctest. To do this add a ``# doctest: +SKIP`` to the end of each
-   line in the doctest to skip. Check out the arima estimator as as an example. If concerned that skipping the test will reduce test coverage,
+*  If including docstring examples that use soft dependencies, ensure to skip the corresponding doctest,
+   in order to avoid that ``doctest`` attempts to import the soft dependency when it is not present.
+   To do this, add a ``# doctest: +SKIP`` to the end of each line in the doctest to skip it entirely.
+   See ``forecasting.arima.ARIMA`` as as an example. If concerned that skipping the test will reduce test coverage,
    consider exposing the doctest example as a pytest test function instead, see below how to handle soft dependencies in pytest functions.
 *  Decorate all ``pytest`` tests that import soft dependencies with a ``@pytest.mark.skipif(...)`` conditional on a check to ``_check_soft_dependencies``
    for your new soft depenency, with ``severity="none"``.  Be sure that all soft dependencies imported for testing are imported within the test function itself,
