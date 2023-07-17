@@ -45,10 +45,11 @@ class Pipeline(BaseEstimator):
             where `i` is the total count of occurrence of a non-unique string
             inside the list of names leading up to it (inclusive)
 
-    `add_step(skobject, name, edges, method, **kwargs)` - adds a skobject to the pipeline and
-        setting the name as identifier and the steps specified with edges as input steps
-        (predecessors). Therby the method that should be called can be overriden using the method kwarg.
-        Further provided kwargs are directly provided to the skobject if it is called.
+    `add_step(skobject, name, edges, method, **kwargs)` - adds a skobject to the
+        pipeline and setting the name as identifier and the steps specified with
+        edges as input steps (predecessors). Therby the method that should be
+        called can be overriden using the method kwarg. Further provided kwargs
+        are directly provided to the skobject if it is called.
 
     Parameters
     ----------
@@ -222,8 +223,12 @@ class Pipeline(BaseEstimator):
 
         Parameters
         ----------
-        X : TODO What types are really allowed here?
-        y : TODO what types are really allowed?
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+        y : time series in sktime compatible data container format
+                Time series to which to fit the pipeline.
+        kwargs : additional key word arguments that might be passed to skobjects in the
+            pipeline if they have a parameter that corresponds to a key of kwargs.
 
         Notes
         -----
@@ -245,24 +250,52 @@ class Pipeline(BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None, **kwargs):
-        """
-        TODO
+        """Fit graph pipeline to training data and call transform afterward.
+
+        Parameters
+        ----------
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+        y : time series in sktime compatible data container format
+                Time series to which to fit the pipeline.
+        kwargs : additional key word arguments that might be passed to skobjects in the
+            pipeline if they have a parameter that corresponds to a key of kwargs.
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" in the skobjects of the pipeline and sets is_fitted flag to True.
+
+        Raises
+        ------
+        MethodNotImplementedError if a step in the pipeline does not implement
+        `transform`
         """
         return self.fit(X, y, **kwargs).transform(X, y, **kwargs)
 
     def transform(self, X, y=None, **kwargs):
+        """Call transform on each element in the  graph pipeline.
+
+        Parameters
+        ----------
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+        y : time series in sktime compatible data container format
+                Time series to which to fit the pipeline.
+        kwargs : additional key word arguments that might be passed to skobjects in the
+            pipeline if they have a parameter that corresponds to a key of kwargs.
+
+        Raises
+        ------
+        MethodNotImplementedError if a step in the pipeline does not implement
+         `transform`
         """
-        TODO
-        """
-        # Implementation of transform, such methods also are required for predict, ...
         # 1. Check if transform is allowed. I.e., Check method needs to check if
         #    all steps implement transform + If all required params are passed
         self._method_allowed("transform")
 
         # 3. set data into start steps buffer!
-        self.steps["X"].buffer = X
-        self.steps["y"].buffer = y
-        self.kwargs.update(kwargs)
+        self._initiate_call(X, kwargs, y)
 
         # 4. call get_result or something similar on last step!
         return (
@@ -277,19 +310,31 @@ class Pipeline(BaseEstimator):
         )
 
     def predict(self, X, y=None, **kwargs):
+        """Perform a prediction.
+
+        I.e. calls predict or transform on each element in the  graph pipeline.
+
+        Parameters
+        ----------
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+        y : time series in sktime compatible data container format
+                Time series to which to fit the pipeline.
+        kwargs : additional key word arguments that might be passed to skobjects in the
+            pipeline if they have a parameter that corresponds to a key of kwargs.
+
+        Raises
+        ------
+        MethodNotImplementedError if a step in the pipeline does not implement
+        `transform` or `predict`
         """
-        TODO
-        """
-        # Implementation of transform, such methods also are required for predict, ...
         # 1. Check if transform is allowed. I.e., Check method needs to check if all
         #    steps implement transform or predict + If all required params are passed
         # 2. Set predict/transform as global methods
         self._method_allowed("predict")
 
         # 3. set data into start steps buffer!
-        self.steps["X"].buffer = X
-        self.steps["y"].buffer = y
-        self.kwargs.update(kwargs)
+        self._initiate_call(X, kwargs, y)
 
         # 4. call get_result or something similar on last step!
         return (
@@ -304,17 +349,31 @@ class Pipeline(BaseEstimator):
         )
 
     def predict_interval(self, X, y=None, **kwargs):
-        """
-        TODO
+        """Perform an interval prediction.
+
+        I.e. calls predict,  predict_interval, or transform  on each element
+        in the  graph pipeline.
+
+        Parameters
+        ----------
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+        y : time series in sktime compatible data container format
+                Time series to which to fit the pipeline.
+        kwargs : additional key word arguments that might be passed to skobjects in the
+            pipeline if they have a parameter that corresponds to a key of kwargs.
+
+        Raises
+        ------
+        MethodNotImplementedError if a step in the pipeline does not implement
+        `transform`, `predict`, or `predict_interval`
         """
         self._method_allowed("predict_interval")
 
         # 2. Set transform as global method as well as provide all kwargs to step
 
         # 3. set data into start steps buffer!
-        self.steps["X"].buffer = X
-        self.steps["y"].buffer = y
-        self.kwargs.update(kwargs)
+        self._initiate_call(X, kwargs, y)
 
         # 4. call get_result or something similar on last step!
         return (
@@ -329,18 +388,32 @@ class Pipeline(BaseEstimator):
         )
 
     def predict_quantiles(self, X, y=None, **kwargs):
-        """Compute/return quantile forecasts.
+        """
+        Perform a quantile prediction.
 
-        TODO
+        I.e. calls predict,  predict_quantiles, or transform  on each element
+        in the  graph pipeline.
+
+        Parameters
+        ----------
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+        y : time series in sktime compatible data container format
+                Time series to which to fit the pipeline.
+        kwargs : additional key word arguments that might be passed to skobjects in the
+            pipeline if they have a parameter that corresponds to a key of kwargs.
+
+        Raises
+        ------
+        MethodNotImplementedError if a step in the pipeline does not implement
+        `transform`, `predict`, or `predict_quantiles`
         """
         self._method_allowed("predict_quantiles")
 
         # 2. Set transform as global method as well as provide all kwargs to step
 
         # 3. set data into start steps buffer!
-        self.steps["X"].buffer = X
-        self.steps["y"].buffer = y
-        self.kwargs.update(kwargs)
+        self._initiate_call(X, kwargs, y)
 
         # 4. call get_result or something similar on last step!
         return (
@@ -356,9 +429,24 @@ class Pipeline(BaseEstimator):
 
     def predict_residuals(self, X, y=None, **kwargs):
         """
-        Return residuals of time series forecasts.
+        Perform a residuals prediction.
 
-        TODO
+        I.e. calls predict,  predict_residuals, or transform  on each element
+        in the  graph pipeline.
+
+        Parameters
+        ----------
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+        y : time series in sktime compatible data container format
+                Time series to which to fit the pipeline.
+        kwargs : additional key word arguments that might be passed to skobjects in the
+            pipeline if they have a parameter that corresponds to a key of kwargs.
+
+        Raises
+        ------
+        MethodNotImplementedError if a step in the pipeline does not implement
+         `transform`,  `predict`, or `predict_residuals`
         """
         self._method_allowed("predict_residuals")
 
@@ -366,9 +454,7 @@ class Pipeline(BaseEstimator):
 
         # 3. set data into start steps buffer!
         # TODO get rid of this boilerplate
-        self.steps["X"].buffer = X
-        self.steps["y"].buffer = y
-        self.kwargs.update(kwargs)
+        self._initiate_call(X, kwargs, y)
 
         # 4. call get_result or something similar on last step!
         return (
@@ -381,6 +467,11 @@ class Pipeline(BaseEstimator):
             )
             .result
         )
+
+    def _initiate_call(self, X, kwargs, y):
+        self.steps["X"].buffer = X
+        self.steps["y"].buffer = y
+        self.kwargs.update(kwargs)
 
     def _method_allowed(self, method):
         for _step_name, step in self.steps.items():
