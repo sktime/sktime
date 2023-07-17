@@ -39,7 +39,7 @@ Estimators with a soft dependency need to ensure the following:
    e.g., in ``_fit`` or ``__init__`` methods of the estimator.
    In ``__init__``, imports should happen only after calls to ``super(cls).__init__``.
 *  the ``python_dependencies`` tag of the estimator is populated with a ``str``,
-   or a ``list`` of ``str``, of import dependencies, where ``str`` are PEP 440 compliant version specification ``str``
+   or a ``list`` of ``str``, of dependency requirements, where ``str`` are PEP 440 compliant version specification ``str``
    such as ``pandas>=2.0.1``. Exceptions will automatically be raised when constructing the estimator
    in an environment where the requirements are not met.
 *  In a case where the package import differs from the package name, i.e., ``import package_string`` is different from
