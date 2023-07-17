@@ -330,7 +330,10 @@ class StatsForecastBackAdapter(_TS):
 
         self.in_sample_fh = np.flip(-np.arange(len(y)))
         estimator = clone(self.estimator)
-        return estimator.fit(y=y, X=X)
+        clone_self = self.new()
+        clone_self.estimator = estimator.fit(y=y, X=X)
+
+        return clone_self
 
     def predict(self, h, X=None, level=None):
         """Make forecasts.
