@@ -262,8 +262,10 @@ def _check_dict_of_dict(obj, name="obj"):
     ------
     TypeError if obj is not dict of dict, with str keys
     """
-    if not (isinstance(obj, dict) and
-            np.all([isinstance(x, dict) for x in obj.values()]) and
-            np.all([isinstance(x, str) for x in obj.keys()])):
+    if not (
+        isinstance(obj, dict)
+        and np.all([isinstance(x, dict) for x in obj.values()])
+        and np.all([isinstance(x, str) for x in obj.keys()])
+    ):
         raise TypeError(f"{obj} must be a dict of dict, with str keys")
     return obj
