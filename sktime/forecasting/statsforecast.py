@@ -597,7 +597,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsmodels", "statsforecast"],
+        "python_dependencies": ["statsforecast"],
     }
 
     def __init__(
@@ -607,13 +607,11 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     ):
         super().__init__()
 
-        if _check_soft_dependencies("statsmodels", severity="none"):
+        try:
+            _check_soft_dependencies("statsforecast")
             from statsforecast.models import _TS
-        else:
-            raise Exception(
-                "StatsForecastMSTL requires module `statsforecast` to be installed. "
-                "Please install `statsforecast` in your environment."
-            )
+        except ModuleNotFoundError:
+            pass
 
         self.trend_forecaster = trend_forecaster
         self.season_length = season_length
@@ -623,7 +621,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
 
         # checks if trend_forecaster is already wrapped with
-        # StatsForecastBackAdapterMSTL
+        # StatsForecastBackAdapter
         if not isinstance(self._trend_forecaster, StatsForecastBackAdapter):
             # if trend_forecaster is sktime forecaster
             if isinstance(self._trend_forecaster, BaseForecaster):
@@ -632,11 +630,47 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                 )
             # if trend_forecaster is not StatsForecast forecaster
             elif not isinstance(self._trend_forecaster, _TS):
-                raise Exception(
+                raise TypeError(
                     "The provided forecaster is not compatible with MSTL. Please ensure"
                     " that the forecaster you pass into the model is a sktime "
                     "forecaster or statsforecast forecaster."
                 )
+
+    def predict(self, h, X=None, level=None):
+        """Make forecasts.
+
+        Parameters
+        ----------
+        h : int
+            Forecast horizon.
+        X : typing.Optional[numpy.ndarray], default=None
+            Optional exogenous of shape (h, n_x).
+        level : typing.Optional[typing.Tuple[int]], default=None
+            Confidence levels (0-100) for prediction intervals.
+
+        Returns
+        -------
+        y_pred : dict
+            Dictionary with entries mean for point predictions and level_* for
+            probabilistic predictions.
+        """
+        return self._trend_forecaster.predict(h, X, level)
+
+    def predict_in_sample(self, level=None):
+        """Access fitted MSTL insample predictions.
+
+        Parameters
+        ----------
+        level : typing.Optional[typing.Tuple[int]]
+            Confidence levels (0-100) for prediction intervals.
+
+        Returns
+        -------
+        y_pred : dict
+            Dictionary with entries mean for point predictions and level_* for
+            probabilistic predictions.
+        """
+        return self._trend_forecaster.predict_in_sample(level)
 
     def _instantiate_model(self):
         """Create underlying forecaster instance."""
@@ -676,7 +710,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        if _check_soft_dependencies("statsmodels", severity="none"):
+        try:
+            _check_soft_dependencies("statsmodels")
             from sktime.forecasting.theta import ThetaForecaster
 
             params = [
@@ -688,7 +723,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                     "season_length": 4,
                 },
             ]
-        else:
+        except ModuleNotFoundError:
             from sktime.forecasting.naive import NaiveForecaster
 
             params = [

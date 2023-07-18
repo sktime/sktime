@@ -1,6 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
-import numpy as np
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
@@ -8,21 +7,21 @@ from sktime.forecasting.base import BaseForecaster
 __all__ = ["_GeneralisedStatsForecastAdapter"]
 __author__ = ["yarnabrina"]
 
-import warnings
+# import warnings
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+# from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("statsforecast", severity="none"):
-    from statsforecast.models import _TS
-else:
+# if _check_soft_dependencies("statsforecast", severity="none"):
+#     from statsforecast.models import _TS
+# else:
 
-    class _TS:
-        def __init__(self):
-            warnings.warn(
-                "The 'statsforecast' module is not available. Please ensure that"
-                f"'statsforecast' is installed to use {type(self)}.",
-                stacklevel=1,
-            )
+#     class _TS:
+#         def __init__(self):
+#             warnings.warn(
+#                 "The 'statsforecast' module is not available. Please ensure that"
+#                 f"'statsforecast' is installed to use {type(self)}.",
+#                 stacklevel=1,
+#             )
 
 
 class _GeneralisedStatsForecastAdapter(BaseForecaster):
@@ -273,7 +272,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         return final_interval_predictions
 
 
-class StatsForecastBackAdapter(_TS):
+class StatsForecastBackAdapter:
     """StatsForecast Back Adapter.
 
     StatsForecastBackAdapter is a wrapper for sktime forecasters to be used in
@@ -300,7 +299,7 @@ class StatsForecastBackAdapter(_TS):
     """
 
     _tags = {
-        "python_dependencies": ["statsforecast", "statsmodels"],
+        "python_dependencies": ["statsforecast"],
     }
 
     def __init__(self, estimator):
@@ -326,14 +325,9 @@ class StatsForecastBackAdapter(_TS):
         -------
         self : returns an instance of self.
         """
-        from sklearn.base import clone
+        self.estimator = self.estimator.fit(y=y, X=X)
 
-        self.in_sample_fh = np.flip(-np.arange(len(y)))
-        estimator = clone(self.estimator)
-        clone_self = self.new()
-        clone_self.estimator = estimator.fit(y=y, X=X)
-
-        return clone_self
+        return self
 
     def predict(self, h, X=None, level=None):
         """Make forecasts.
@@ -353,6 +347,13 @@ class StatsForecastBackAdapter(_TS):
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
+        if level and not hasattr(self.estimator, "predict_interval"):
+            raise ValueError(
+                "The provided trend_forecaster does not support interval prediction."
+                "Please remove the 'level' parameter or use a different model that"
+                "supports it."
+            )
+
         mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
         if level is None:
             return {"mean": mean}
@@ -364,17 +365,7 @@ class StatsForecastBackAdapter(_TS):
             fh=range(1, h + 1), X=X, coverage=coverage
         )
 
-        return {
-            "mean": mean,
-            **{
-                f"lo-{_l}": pred_int[("Coverage", c, "lower")].values
-                for c, _l in zip(reversed(coverage), reversed(level))
-            },
-            **{
-                f"hi-{_l}": pred_int[("Coverage", c, "upper")].values
-                for c, _l in zip(coverage, level)
-            },
-        }
+        return self.format_pred_int("mean", mean, pred_int, coverage, level)
 
     def predict_in_sample(self, level=None):
         """Access fitted MSTL insample predictions.
@@ -391,13 +382,13 @@ class StatsForecastBackAdapter(_TS):
             probabilistic predictions.
         """
         if level and not hasattr(self.estimator, "predict_interval"):
-            raise Exception(
+            raise ValueError(
                 "The provided trend_forecaster does not support interval prediction."
                 "Please remove the 'level' parameter or use a different model that"
                 "supports it."
             )
 
-        fitted = self.estimator.predict(fh=self.in_sample_fh, X=self.in_sample_X)[:, 0]
+        fitted = self.estimator.predict(self.estimator._y.index)
 
         if level is None:
             return {"fitted": fitted}
@@ -405,17 +396,21 @@ class StatsForecastBackAdapter(_TS):
         level = sorted(level)
         coverage = [round(1 - (_l / 100), 2) for _l in level]
         pred_int = self.estimator.predict_interval(
-            fh=self.in_sample_fh, X=self.in_sample_X, coverage=coverage
+            fh=self.estimator._y.index, X=self.estimator._X, coverage=coverage
         )
+        return self.format_pred_int("fitted", fitted, pred_int, coverage, level)
+
+    def format_pred_int(self, y_pred_name, y_pred, pred_int, coverage, level):
+        pred_int_prefix = "fitted-" if y_pred_name == "fitted" else ""
 
         return {
-            "fitted": fitted,
+            y_pred_name: y_pred,
             **{
-                f"fitted-lo-{_l}": pred_int[("Coverage", c, "lower")].values
+                f"{pred_int_prefix}lo-{_l}": pred_int[("Coverage", c, "lower")].values
                 for c, _l in zip(reversed(coverage), reversed(level))
             },
             **{
-                f"fitted-hi-{_l}": pred_int[("Coverage", c, "upper")].values
+                f"{pred_int_prefix}hi-{_l}": pred_int[("Coverage", c, "upper")].values
                 for c, _l in zip(coverage, level)
             },
         }
