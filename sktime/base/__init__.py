@@ -6,10 +6,12 @@ __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = [
     "BaseObject",
     "BaseEstimator",
+    "_deprecate_util_loads",
     "_HeterogenousMetaEstimator",
     "load",
 ]
 
 from sktime.base._base import BaseEstimator, BaseObject
+from sktime.base._deprecate import _deprecate_util_loads
 from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.base._serialize import load

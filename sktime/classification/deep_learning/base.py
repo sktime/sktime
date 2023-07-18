@@ -12,6 +12,7 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.utils import check_random_state
 
+from sktime.base._deprecate import _deprecate_util_loads
 from sktime.classification.base import BaseClassifier
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -282,6 +283,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         return ZipFile(path.with_name(f"{path.stem}.zip"))
 
     @classmethod
+    @_deprecate_util_loads
     def load_from_serial(cls, serial):
         """Load object from serialized memory container.
 
@@ -300,15 +302,14 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         _check_soft_dependencies("h5py")
         import pickle
         from tempfile import TemporaryFile
-        from warnings import warn
 
-        warn(
-            "`load_from_serial()` will be deprecated in 0.20.2 in the favor of load() "
-            "which is the standard way of deserializing estimators.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-
+        # from warnings import warn
+        # warn(
+        #    "`load_from_serial()` will be deprecated in 0.20.2 in the favor of load() "
+        #     "which is the standard way of deserializing estimators.",
+        #     category=DeprecationWarning,
+        #     stacklevel=2,
+        # )
         import h5py
         from tensorflow.keras.models import load_model
 
@@ -388,6 +389,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         return pickle.loads(serial)
 
     @classmethod
+    @_deprecate_util_loads
     def load_from_path(cls, serial):
         """Load object from file location.
 
@@ -402,17 +404,18 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         """
         import pickle
         from shutil import rmtree
-        from warnings import warn
+
+        # from warnings import warn
         from zipfile import ZipFile
 
         from tensorflow import keras
 
-        warn(
-            "`load_from_path()` will be deprecated in 0.20.2 in the favor of load() "
-            "which is the standard way of deserializing estimators.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
+        # warn(
+        #     "`load_from_path()` will be deprecated in 0.20.2 in the favor of load() "
+        #     "which is the standard way of deserializing estimators.",
+        #     category=DeprecationWarning,
+        #     stacklevel=2,
+        # )
 
         temp_unzip_loc = serial.parent / "temp_unzip/"
         temp_unzip_loc.mkdir()
