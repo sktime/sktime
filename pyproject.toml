@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.20.0"
+version = "0.20.1"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
@@ -85,6 +85,7 @@ all_extras = [
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
     "seasonal",
+    "scikit-optimize",
 ]
 
 all_extras_pandas2 = [
