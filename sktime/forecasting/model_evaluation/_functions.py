@@ -446,9 +446,11 @@ def evaluate(
                 yield y_train, y_test, None, None
         else:
             if cv_X is None:
+
                 def genx():
                     for train_loc, test_loc in cv.split_loc(y):
                         yield X.loc[train_loc], X.loc[test_loc]
+
             else:
                 genx = cv_X.split_series(X)
 
