@@ -24,7 +24,7 @@ class HolidayFeatures(BaseTransformer):
     """Holiday features extraction.
 
     HolidayFeatures uses a dictionary of holidays (which could be a custom made dict
-    or imported as HolidayBase object from holidats package) to extract
+    or imported as HolidayBase object from holidays package) to extract
     holiday features from a datetime index.
 
     Parameters
