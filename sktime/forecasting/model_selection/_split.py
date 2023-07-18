@@ -334,9 +334,15 @@ class BaseSplitter(BaseObject):
         Single step ahead or array of steps ahead to forecast.
     """
 
-    _tags = {"split_hierarchical": False}
-    # split_hierarchical: whether _split supports hierarchical types natively
-    # if not, splitter broadcasts over instances
+    _tags = {
+        "split_hierarchical": False,
+        # split_hierarchical: whether _split supports hierarchical types natively
+        # if not, splitter broadcasts over instances
+        "split_series_uses": "iloc",
+        # split_series_uses: "iloc" or "loc", whether split_series under the hood
+        # calls split ("iloc") or split_loc ("loc"). Setting this can give
+        # performance advantages, e.g., if "loc" is faster to obtain.
+    }
 
     def __init__(
         self,
@@ -450,8 +456,32 @@ class BaseSplitter(BaseObject):
         """
         y_index = self._coerce_to_index(y)
 
-        for train, test in self.split(y_index):
-            yield y_index[train], y_index[test]
+        for y_train_loc, y_test_loc in self._split_loc(y_index):
+            yield y_train_loc, y_test_loc
+
+    def _split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
+        """Get loc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split_loc
+
+        Default implements using split and y.index to look up the loc indices.
+        Can be overridden for faster implementation.
+
+        Parameters
+        ----------
+        y : pd.Index
+            index of time series to split
+
+        Yields
+        ------
+        train : pd.Index
+            Training window indices, loc references to training indices in y
+        test : pd.Index
+            Test window indices, loc references to test indices in y
+        """
+        for train, test in self.split(y):
+            # default gets loc index from iloc index
+            yield y[train], y[test]
 
     def split_series(self, y: ACCEPTED_Y_TYPES) -> Iterator[SPLIT_TYPE]:
         """Split `y` into training and test windows.
@@ -472,9 +502,22 @@ class BaseSplitter(BaseObject):
         """
         y, y_orig_mtype = self._check_y(y)
 
+        use_iloc_or_loc = self.get_tag("split_series_uses", "iloc", raise_error=False)
+
         for train, test in self.split(y.index):
-            y_train = y.iloc[train]
-            y_test = y.iloc[test]
+            if use_iloc_or_loc == "iloc":
+                y_train = y.iloc[train]
+                y_test = y.iloc[test]
+            elif use_iloc_or_loc == "loc":
+                y_train = y.loc[train]
+                y_test = y.loc[test]
+            else:
+                raise RuntimeError(
+                    f"error in {self.__class__.__name__}.split_series: "
+                    f"split_series_uses tag must be 'iloc' or 'loc', "
+                    f"but found {use_iloc_or_loc}"
+                )
+
             y_train = convert_to(y_train, y_orig_mtype)
             y_test = convert_to(y_test, y_orig_mtype)
             yield y_train, y_test
@@ -1343,8 +1386,12 @@ class SameLocSplitter(BaseSplitter):
     >>> list(splitter.split(y)) # doctest: +SKIP
     """
 
-    _tags = {"split_hierarchical": True}
-    # SameLocSplitter supports hierarchical pandas index
+    _tags = {
+        "split_hierarchical": True,
+        # SameLocSplitter supports hierarchical pandas index
+        "split_series_uses": "loc",
+        # loc is quicker to get since that is directly passed
+    }
 
     def __init__(self, cv, y_template=None):
         self.cv = cv
