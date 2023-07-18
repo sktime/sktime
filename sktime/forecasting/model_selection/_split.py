@@ -1436,8 +1436,7 @@ class SameLocSplitter(BaseSplitter):
         else:
             y_template = self.y_template
 
-        for y_train_loc, y_test_loc in cv.split_loc(y_template):
-            yield y.loc[y_train_loc], y.loc[y_test_loc]
+        yield from cv.split_loc(y_template)
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
