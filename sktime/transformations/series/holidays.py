@@ -1,10 +1,13 @@
-"""Holiday functionality."""
+#!/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Extract holiday features from datetime index."""
 
 __author__ = ["mloning", "VyomkeshVyas"]
 __all__ = ["HolidayFeatures"]
 
 import datetime
 from collections import defaultdict
+from datetime import date
 from typing import Dict
 
 import numpy as np
@@ -18,11 +21,15 @@ _check_soft_dependencies("holidays")
 
 
 class HolidayFeatures(BaseTransformer):
-    """Holiday features.
+    """Holiday features extraction.
+
+    HolidayFeatures uses a dictionary of holidays (which could be a custom made dict
+    or imported as HolidayBase object from holidats package) to extract
+    holiday features from a datetime index.
 
     Parameters
     ----------
-    calendar : HolidayBase object
+    calendar : HolidayBase object or Dict[date, str]
         Calendar object from holidays package [1]_.
     holiday_windows : Dict[str, tuple], default=None
         Dictionary for specifying a window of days around holidays, with keys
@@ -47,16 +54,33 @@ class HolidayFeatures(BaseTransformer):
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from holidays import CountryHoliday
+    >>> from datetime import date
+    >>> from holidays import country_holidays, financial_holidays
     >>> values = np.random.normal(size=365)
     >>> index = pd.date_range("2000-01-01", periods=365, freq="D")
     >>> X = pd.DataFrame(values, index=index)
+
+    Returns country holiday features with custom holiday windows
     >>> transformer = HolidayFeatures(
-    ...    calendar=CountryHoliday(country="FR"),
-    ...    return_dummies=False,
+    ...    calendar=country_holidays(country="FR"),
     ...    return_categorical=True,
     ...    holiday_windows={"Noël": (1, 3), "Jour de l'an": (1, 0)})
     >>> yt = transformer.fit_transform(X)
+
+    Returns financial holiday features
+    >>> transformer = HolidayFeatures(
+    ...    calendar=financial_holidays(market="NYSE"),
+    ...    return_categorical=True,
+    ...    include_weekend=True)
+    >>> yt = transformer.fit_transform(X)
+
+    Returns custom made holiday features
+    >>> transformer = HolidayFeatures(
+    ...    calendar={date(2000,1,14): "Regional Holiday",
+    ...              date(2000, 1, 26): "Regional Holiday"},
+    ...    return_categorical=True)
+    >>> yt = transformer.fit_transform(X)
+
 
     References
     ----------
@@ -74,6 +98,8 @@ class HolidayFeatures(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
         "X-y-must-have-same-index": False,
+        "fit_is_empty": True,
+        "requires_y": False,
         "enforce_index_type": [pd.DatetimeIndex],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
@@ -81,7 +107,7 @@ class HolidayFeatures(BaseTransformer):
 
     def __init__(
         self,
-        calendar: HolidayBase,
+        calendar: Dict[date, str],
         holiday_windows: Dict[str, tuple] = None,
         include_bridge_days: bool = False,
         include_weekend: bool = False,
@@ -144,7 +170,7 @@ class HolidayFeatures(BaseTransformer):
             return holidays
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
         Returns
@@ -155,14 +181,37 @@ class HolidayFeatures(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from holidays import CountryHoliday
+        from datetime import date
 
-        return {"calendar": CountryHoliday(country="FR")}
+        from holidays import country_holidays, financial_holidays
+
+        params = [
+            {
+                "calendar": country_holidays(country="GB"),
+                "include_weekend": True,
+                "return_categorical": True,
+            },
+            {
+                "calendar": country_holidays(country="FR"),
+                "include_bridge_days": True,
+                "return_dummies": True,
+            },
+            {
+                "calendar": financial_holidays(market="NYSE"),
+                "return_indicator": True,
+                "return_dummies": False,
+            },
+            {
+                "calendar": {date(2022, 5, 15): "Regional Holiday"},
+                "return_indicator": True,
+            },
+        ]
+        return params
 
 
 def _generate_holidays(
     index: pd.DatetimeIndex,
-    calendar: HolidayBase,
+    calendar: Dict[date, str],
     holiday_windows: dict = None,
     include_bridge_days: bool = False,
     include_weekend: bool = False,
@@ -178,7 +227,7 @@ def _generate_holidays(
     ----------
     index : pd.DatetimeIndex
         Index with time points for which to generate holidays.
-    calendar : HolidayBase object
+    calendar : HolidayBase object or Dict[date, str]
         Calendar object from holidays package [1]_.
     include_bridge_days: bool, default=False
         If True, include bridge days. Bridge days include Monday if a holiday
@@ -219,25 +268,25 @@ def _generate_holidays(
     dates = np.unique(index.date)
     holidays_by_name = defaultdict(list)
 
-    filtered_dates = filter(lambda date: date in calendar, dates)
+    filtered_dates = filter(lambda dte: dte in calendar, dates)
     weekends = []
     if include_weekend:
-        for date in dates:
-            if date.weekday() in [5, 6]:
-                holidays_by_name["Weekend"].append(date)
+        for dte in dates:
+            if dte.weekday() in [5, 6]:
+                holidays_by_name["Weekend"].append(dte)
         weekends = holidays_by_name["Weekend"]
 
-    for date in filtered_dates:
-        name = calendar[date]
-        if date not in weekends:
-            holidays_by_name[name].append(date)
+    for dte in filtered_dates:
+        name = calendar[dte]
+        if dte not in weekends:
+            holidays_by_name[name].append(dte)
 
     # Invert dictionary so that we can later map holidays to
     # dates in the time index.
     holidays_by_date = {}
     for name, dates in holidays_by_name.items():
-        for date in dates:
-            holidays_by_date[date] = name
+        for dte in dates:
+            holidays_by_date[dte] = name
 
     # Add window around holidays.
     if holiday_windows is not None:
@@ -250,7 +299,7 @@ def _generate_holidays(
                 raise ValueError(f"holiday: {name} not found in calendar.")
 
             # For each holiday, we iterate over dates.
-            for date in dates:
+            for dte in dates:
                 # We then get the number of days before and after
                 # the holiday.
                 before, after = window
@@ -264,14 +313,14 @@ def _generate_holidays(
                 )
 
                 for days in range(1, before + 1):
-                    date_before = date - datetime.timedelta(days=days)
+                    date_before = dte - datetime.timedelta(days=days)
                     if date_before not in holidays_by_date:
                         holidays_by_date[date_before] = name
                     else:
                         raise ValueError(msg)
 
                 for days in range(1, after + 1):
-                    date_after = date + datetime.timedelta(days=days)
+                    date_after = dte + datetime.timedelta(days=days)
                     if date_after not in holidays_by_date:
                         holidays_by_date[date_after] = name
                     else:
@@ -281,13 +330,13 @@ def _generate_holidays(
         # Iterate over holidays.
         for name, dates in holidays_by_name.items():
             # For each holiday, iterate over all dates.
-            for date in dates:
+            for dte in dates:
                 # Get the weekday of the holiday.
-                weekday = date.weekday()
+                weekday = dte.weekday()
 
                 # If the holiday is on Tuesday, we add Monday as a bridge day.
                 if weekday == 1:
-                    bridge_day = date - datetime.timedelta(days=1)
+                    bridge_day = dte - datetime.timedelta(days=1)
 
                     # We only add bridge days if they are not holidays already.
                     if bridge_day not in holidays_by_date:
@@ -295,7 +344,7 @@ def _generate_holidays(
 
                 # If the holiday is on Thursday, we add Friday as a bridge day.
                 if weekday == 3:
-                    bridge_day = date + datetime.timedelta(days=1)
+                    bridge_day = dte + datetime.timedelta(days=1)
 
                     # We only add bridge days if they are not holidays already.
                     if bridge_day not in holidays_by_date:
@@ -339,7 +388,7 @@ def _generate_holidays(
 
 def _check_params(
     index: pd.DatetimeIndex,
-    calendar: HolidayBase,
+    calendar: Dict[date, str],
     holiday_windows: Dict[str, tuple],
     include_bridge_days: bool,
     include_weekend: bool,
@@ -353,7 +402,7 @@ def _check_params(
     Parameters
     ----------
     index : pd.DatetimeIndex
-    calendar : HolidayBase object
+    calendar : Dict[date, str],
     include_bridge_days: bool
     include_weekend: bool
     holiday_windows : Dict[str, tuple]
@@ -368,10 +417,10 @@ def _check_params(
         raise ValueError(
             f"Time index must be of type pd.DatetimeIndex, but found: {type(index)}"
         )
-    if not isinstance(calendar, HolidayBase):
+    if not isinstance(calendar, HolidayBase) and not isinstance(calendar, dict):
         raise ValueError(
-            f"calendar must be of type HolidayBase from the `holidays` package, "
-            f" but found: {type(calendar)}."
+            f"calendar must be either of type HolidayBase from the `holidays` package, "
+            f" or a dict, but found: {type(calendar)}."
         )
     if not isinstance(return_dummies, bool):
         raise ValueError(
@@ -403,6 +452,9 @@ def _check_params(
             "One of `return_dummies`, `return_categorical` and `return_indicator` "
             "must be set to True."
         )
+    if not isinstance(calendar, HolidayBase) and isinstance(calendar, dict):
+        _check_calendar(calendar)
+
     if holiday_windows is not None:
         _check_holiday_windows(holiday_windows)
 
@@ -436,3 +488,21 @@ def _check_holiday_windows(holiday_windows: Dict[str, tuple]):
                     "days in `holiday_windows` must all be non-negative, "
                     f"but found: {holiday}: {window}"
                 )
+
+
+def _check_calendar(calendar: Dict[date, str]):
+    """Check calendar param.
+
+    Parameters
+    ----------
+    calendar : Dict[date, str]
+        Dictionary with keys being holiday dates and values being
+        holiday names.
+
+    """
+    for dte, name in calendar.items():
+        if not (isinstance(dte, date) and isinstance(name, str)):
+            raise ValueError(
+                "`calendar` must be a dictionary, with keys being date "
+                "and value being name of holiday."
+            )
