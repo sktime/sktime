@@ -613,10 +613,12 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         except ModuleNotFoundError:
             pass
 
+        from sklearn.base import clone
+
         self.trend_forecaster = trend_forecaster
         self.season_length = season_length
         if trend_forecaster:
-            self._trend_forecaster = trend_forecaster
+            self._trend_forecaster = clone(trend_forecaster)
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
 
@@ -654,7 +656,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        return self._trend_forecaster.predict(h, X, level)
+        return self._forecaster.predict(h, X, level)
 
     def predict_in_sample(self, level=None):
         """Access fitted MSTL insample predictions.
@@ -670,7 +672,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        return self._trend_forecaster.predict_in_sample(level)
+        return self._forecaster.predict_in_sample(level)
 
     def _instantiate_model(self):
         """Create underlying forecaster instance."""
