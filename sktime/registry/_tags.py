@@ -411,7 +411,7 @@ ESTIMATOR_TAG_REGISTER = [
     (
         "split_series_uses",
         "splitter",
-        ("str", ["iloc", "loc"]),
+        ("str", ["iloc", "loc", "custom"]),
         "whether split_series uses split (iloc) or split_loc (loc) to split series",
     ),
     (
