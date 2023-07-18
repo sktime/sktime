@@ -219,17 +219,6 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
     ARIMA
 
-.. currentmodule:: sktime.forecasting.statsforecast
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    StatsForecastAutoARIMA
-    StatsForecastAutoCES
-    StatsForecastAutoETS
-    StatsForecastAutoTheta
-
 .. currentmodule:: sktime.forecasting.sarimax
 
 .. autosummary::
