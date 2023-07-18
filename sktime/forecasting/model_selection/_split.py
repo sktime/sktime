@@ -503,19 +503,23 @@ class BaseSplitter(BaseObject):
 
         use_iloc_or_loc = self.get_tag("split_series_uses", "iloc", raise_error=False)
 
-        for train, test in self.split(y.index):
-            if use_iloc_or_loc == "iloc":
-                y_train = y.iloc[train]
-                y_test = y.iloc[test]
-            elif use_iloc_or_loc == "loc":
-                y_train = y.loc[train]
-                y_test = y.loc[test]
-            else:
-                raise RuntimeError(
-                    f"error in {self.__class__.__name__}.split_series: "
-                    f"split_series_uses tag must be 'iloc' or 'loc', "
-                    f"but found {use_iloc_or_loc}"
-                )
+        if use_iloc_or_loc == "iloc":
+            splitter_name = "split"
+        elif use_iloc_or_loc == "loc":
+            splitter_name = "split_loc"
+        else:
+            raise RuntimeError(
+                f"error in {self.__class__.__name__}.split_series: "
+                f"split_series_uses tag must be 'iloc' or 'loc', "
+                f"but found {use_iloc_or_loc}"
+            )
+
+        _split = getattr(self, splitter_name)
+        _slicer = getattr(y, use_iloc_or_loc)
+
+        for train, test in _split(y.index):
+            y_train = _slicer[train]
+            y_test = _slicer[test]
 
             y_train = convert_to(y_train, y_orig_mtype)
             y_test = convert_to(y_test, y_orig_mtype)
