@@ -1538,7 +1538,7 @@ class TestPlusTrainSplitter(BaseSplitter):
 
         for y_train_inner, y_test_inner in cv.split_loc(y):
             y_train_self = y_train_inner
-            y_test_self = y_train_inner.union(y_test_inner, sort=True)
+            y_test_self = y_train_inner.union(y_test_inner)
             yield y_train_self, y_test_self
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
