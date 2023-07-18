@@ -456,8 +456,7 @@ class BaseSplitter(BaseObject):
         """
         y_index = self._coerce_to_index(y)
 
-        for y_train_loc, y_test_loc in self._split_loc(y_index):
-            yield y_train_loc, y_test_loc
+        yield from self._split_loc(y_index):
 
     def _split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
         """Get loc references to train/test splits of `y`.
