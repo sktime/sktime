@@ -280,7 +280,7 @@ class StatsForecastBackAdapter:
 
     Parameters
     ----------
-    estimator : sktime estimator
+    estimator : sktime forecaster
 
     Examples
     --------

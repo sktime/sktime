@@ -580,7 +580,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     References
     ----------
     .. [1]
-        https://nixtla.github.io/statsforecast/src/core/models.html#multiple-seasonalities
+        https://nixtla.github.io/statsforecast/src/core/models.html#mstl
 
     Examples
     --------
