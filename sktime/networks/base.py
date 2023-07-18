@@ -4,6 +4,9 @@ __author__ = ["Withington", "TonyBagnall"]
 
 from abc import ABC, abstractmethod
 
+import torch
+import torch.nn as nn
+
 from sktime.base import BaseObject
 
 
@@ -27,16 +30,29 @@ class BaseDeepNetwork(BaseObject, ABC):
         ...
 
 
-class BaseDeepNetworkPyTorch(BaseObject, ABC):
+class BaseDeepNetworkPyTorch(BaseObject, ABC, nn.Module):
     """Abstract base class for deep learning networks using torch.nn."""
 
-    def __init__(self):
+    def __init__(
+        self,
+        network,
+        criterion=nn.MSELoss,
+        optimizer=torch.optim.Adam,
+        lr=0.003,
+        num_epochs=16,
+        batch_size=8,
+    ):
         super().__init__()
-        self._criterion = self.criterion()
-        self._optimizer = self.optimizer(self._network.parameters(), self.lr)
 
-    def train(self, dataset):
-        """Train the network.
+        self.network = network
+        self.lr = lr
+        self.criterion = criterion()
+        self.optimizer = optimizer(self.network.parameters(), lr=self.lr)
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
+
+    def fit(self, dataset):
+        """Fit the network.
 
         Changes to state:
             writes to self._network.state_dict
@@ -48,12 +64,23 @@ class BaseDeepNetworkPyTorch(BaseObject, ABC):
         """
         from torch.utils.data import DataLoader
 
-        dataloader = DataLoader(dataset, self.batch_size, self.shuffle)
-        self._network.train()
+        if not hasattr(dataset, "__len__") or not hasattr(dataset, "__getitem__"):
+            raise TypeError(
+                "Please ensure dataset has implemented `__len__` and `__getitem__` "
+                "methods. See (https://pytorch.org/docs/stable/data.html) for more "
+                "information"
+            )
+
+        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+        self.network.train()
 
         for x, y in dataloader:
-            y_pred = self._network(x)
-            loss = self._criterion(y_pred, y)
-            self._optimizer.zero_grad()
+            y_pred = self.network(x)
+            loss = self.criterion(y_pred, y)
+            self.optimizer.zero_grad()
             loss.backward()
-            self._optimizer.step()
+            self.optimizer.step()
+
+    def predict(self, x):
+        """Predict with fitted model."""
+        return self.network(x)

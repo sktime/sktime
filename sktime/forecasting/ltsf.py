@@ -33,38 +33,35 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         loss function to be used for training
     """
 
+    # TODO: fix docstring
+
     def __init__(
         self,
-        seq_len,  # L : Historical data
-        pred_len,  # T : Future predictions
-        lr,
-        num_epochs,
-        batch_size,
-        shuffle=False,
+        seq_len=10,  # L : Historical data
+        pred_len=1,  # T : Future predictions
+        criterion=torch.nn.MSELoss,
+        optimizer=torch.optim.Adam,
+        lr=0.003,
+        num_epochs=16,
+        batch_size=8,
         in_channels=1,
         individual=False,
-        optimizer=torch.optim.Adam,
-        criterion=torch.nn.MSELoss,
     ):
         from sktime.networks.ltsf import LTSFLinearNetwork
 
-        self.seq_len = seq_len
-        self.pred_len = pred_len
-        self.in_channels = in_channels
-        self.individual = individual
-
-        self._network = LTSFLinearNetwork(
-            seq_len,
-            pred_len,
-            in_channels,
-            individual,
+        super().__init__(
+            network=LTSFLinearNetwork(
+                seq_len,
+                pred_len,
+                in_channels,
+                individual,
+            ),
+            criterion=criterion,
+            optimizer=optimizer,
+            lr=lr,
+            num_epochs=num_epochs,
+            batch_size=batch_size,
         )
 
-        self.lr = lr
-        self.num_epochs = num_epochs
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.optimizer = optimizer
-        self.criterion = criterion
-
-        super().__init__()
+        self.in_channels = in_channels
+        self.individual = individual
