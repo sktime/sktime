@@ -109,16 +109,24 @@ def _download_and_extract(url, extract_path=None):
         )
 
 
-def _list_available_datasets(extract_path):
+def _list_available_datasets(extract_path, origin_repo=None):
     """Return a list of all the currently downloaded datasets.
 
-    To count as available, each directory <dir_name> in the extract_path must contain
-    files called <dir_name>_TRAIN.ts and <dir_name>_TEST.ts.
+    Forecastingorg datasets are in the format <dataset_name>.tsf while classification
+    are in the format <dataset_name>_TRAIN.ts and <dataset_name>_TEST.ts.
+    To count as available, each directory <dir_name>
+    in the extract_path must contain files called
+    1. <dir_name>_TRAIN.ts and <dir_name>_TEST.ts if datasets from classification repo.
+    2. <dir_name>.tsf if datasets from forecasting repo.
 
     Parameters
     ----------
     extract_path: string
         root directory where to look for files, if None defaults to sktime/datasets/data
+    origin_repo: string, optional (default=None)
+        if None, returns all available classification datasets in extract_path,
+        if string (must be "forecastingorg"), returns all available
+        forecastingorg datasets in extract_path.
 
     Returns
     -------
@@ -134,8 +142,12 @@ def _list_available_datasets(extract_path):
         sub_dir = os.path.join(data_dir, name)
         if os.path.isdir(sub_dir):
             all_files = os.listdir(sub_dir)
-            if name + "_TRAIN.ts" in all_files and name + "_TEST.ts" in all_files:
-                datasets.append(name)
+            if origin_repo == "forecastingorg":
+                if name + ".tsf" in all_files:
+                    datasets.append(name)
+            else:
+                if name + "_TRAIN.ts" in all_files and name + "_TEST.ts" in all_files:
+                    datasets.append(name)
     return datasets
 
 
