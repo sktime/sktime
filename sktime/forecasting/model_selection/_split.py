@@ -1409,6 +1409,32 @@ class SameLocSplitter(BaseSplitter):
             y_test_iloc = y.get_indexer(y_test_loc)
             yield y_train_iloc, y_test_iloc
 
+    def _split_loc(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Get loc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split_loc
+
+        Parameters
+        ----------
+        y : pd.Index
+            index of time series to split
+
+        Yields
+        ------
+        train : pd.Index
+            Training window indices, loc references to training indices in y
+        test : pd.Index
+            Test window indices, loc references to test indices in y
+        """
+        cv = self.cv
+        if self.y_template is None:
+            y_template = y
+        else:
+            y_template = self.y_template
+
+        for y_train_loc, y_test_loc in cv.split_loc(y_template):
+            yield y.loc[y_train_loc], y.loc[y_test_loc]
+
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
 
