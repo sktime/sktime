@@ -257,6 +257,63 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         _check_soft_dependencies("h5py")
         import pickle
         from tempfile import TemporaryFile
+        from warnings import warn
+
+        warn(
+            "`load_from_serial()` will be deprecated in 0.20.2 in the favor of load() "
+            "which is the standard way of deserializing estimators.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+
+        import h5py
+        from tensorflow.keras.models import load_model
+
+        if not isinstance(serial, tuple):
+            raise TypeError(
+                "`serial` is expected to be a tuple, "
+                f"instead found of type: {type(serial)}"
+            )
+        if len(serial) != 3:
+            raise ValueError(
+                "`serial` should have 3 elements. "
+                "All 3 elements represent in-memory serialization "
+                "of the estimator. "
+                f"Found a tuple of length: {len(serial)} instead."
+            )
+
+        serial, in_memory_model, in_memory_history = serial
+        if in_memory_model is None:
+            cls.model_ = None
+        else:
+            with TemporaryFile() as store_:
+                store_.write(in_memory_model)
+                h5file = h5py.File(store_, "r")
+                cls.model_ = load_model(h5file)
+                h5file.close()
+
+        cls.history = pickle.loads(in_memory_history)
+        return pickle.loads(serial)
+
+    @classmethod
+    def _load_from_serial(cls, serial):
+        """Private helper method load object from serialized memory container.
+
+        Parameters
+        ----------
+        serial: 1st element of output of `cls.save(None)`
+                This is a tuple of size 3.
+                The first element represents pickle-serialized instance.
+                The second element represents h5py-serialized `keras` model.
+                The third element represent pickle-serialized history of `.fit()`.
+
+        Returns
+        -------
+        Deserialized self resulting in output `serial`, of `cls.save(None)`
+        """
+        _check_soft_dependencies("h5py")
+        import pickle
+        from tempfile import TemporaryFile
 
         import h5py
         from tensorflow.keras.models import load_model
@@ -289,11 +346,60 @@ class BaseDeepRegressor(BaseRegressor, ABC):
 
     @classmethod
     def load_from_path(cls, serial):
-        """Load object from file location.
+        """Private helper method load object from file location.
 
         Parameters
         ----------
-        serial : Name of the zip file.
+        serial : pathlib.Path
+            Name of the zip file.
+
+        Returns
+        -------
+        deserialized self resulting in output at `path`, of `cls.save(path)`
+        """
+        import pickle
+        from shutil import rmtree
+        from warnings import warn
+        from zipfile import ZipFile
+
+        from tensorflow import keras
+
+        warn(
+            "`load_from_path()` will be deprecated in 0.20.2 in the favor of load() "
+            "which is the standard way of deserializing estimators.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+
+        temp_unzip_loc = serial.parent / "temp_unzip/"
+        temp_unzip_loc.mkdir()
+
+        with ZipFile(serial, mode="r") as zip_file:
+            for file in zip_file.namelist():
+                if not file.startswith("keras/"):
+                    continue
+                zip_file.extract(file, temp_unzip_loc)
+
+        keras_location = temp_unzip_loc / "keras"
+        if keras_location.exists():
+            cls.model_ = keras.models.load_model(keras_location)
+        else:
+            cls.model_ = None
+
+        rmtree(temp_unzip_loc)
+        cls.history = keras.callbacks.History()
+        with ZipFile(serial, mode="r") as file:
+            cls.history.set_params(pickle.loads(file.open("history").read()))
+            return pickle.loads(file.open("_obj").read())
+
+    @classmethod
+    def _load_from_path(cls, serial):
+        """Private helper method load object from file location.
+
+        Parameters
+        ----------
+        serial : pathlib.Path
+            Name of the zip file.
 
         Returns
         -------

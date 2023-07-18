@@ -154,6 +154,30 @@ class BaseObject(_BaseObject):
         deserialized self resulting in output `serial`, of `cls.save(None)`
         """
         import pickle
+        from warnings import warn
+
+        warn(
+            "`load_from_serial` is deprecated in favour of sktime.base.load "
+            "and will be removed as a public interface in 0.22.0",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+
+        return pickle.loads(serial)
+
+    @classmethod
+    def _load_from_serial(cls, serial):
+        """Private helper method to load object from serialized memory container.
+
+        Parameters
+        ----------
+        serial : 1st element of output of `cls.save(None)`
+
+        Returns
+        -------
+        deserialized self resulting in output `serial`, of `cls.save(None)`
+        """
+        import pickle
 
         return pickle.loads(serial)
 
@@ -163,7 +187,33 @@ class BaseObject(_BaseObject):
 
         Parameters
         ----------
-        serial : result of ZipFile(path).open("object)
+        serial : result of ZipFile(path).open("object")
+
+        Returns
+        -------
+        deserialized self resulting in output at `path`, of `cls.save(path)`
+        """
+        import pickle
+        from warnings import warn
+        from zipfile import ZipFile
+
+        warn(
+            "`load_from_path` is deprecated in favour of sktime.base.load "
+            "and will be removed as a public interface in 0.22.0",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+
+        with ZipFile(serial, "r") as file:
+            return pickle.loads(file.open("_obj").read())
+
+    @classmethod
+    def _load_from_path(cls, serial):
+        """Private helper method to load object from file location.
+
+        Parameters
+        ----------
+        serial : result of ZipFile(path).open("object")
 
         Returns
         -------
