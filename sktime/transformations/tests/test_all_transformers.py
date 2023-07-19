@@ -192,6 +192,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             inside_mask = (X >= inv_range[0]) * (X <= inv_range[1])
             _assert_array_almost_equal(X[inside_mask], Xit[inside_mask])
 
+
 # todo: add testing of inverse_transform
 # todo: refactor the below, equivalent index check
 
