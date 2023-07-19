@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements cosine transformation."""
 
+from math import pi
+
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
@@ -40,7 +42,7 @@ class CosineTransformer(BaseTransformer):
         "fit_is_empty": True,
         "transform-returns-same-time-index": True,
         "capability:inverse_transform": True,
-        # switching off, since cos is not invertible outside [-pi, pi], fails test
+        "capability:inverse_transform:range": [-pi, pi],
     }
 
     def _transform(self, X, y=None):
