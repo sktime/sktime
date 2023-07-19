@@ -562,7 +562,7 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         params = self.get_params()
 
         # drop func from params
-        params.pop("func")
+        params.pop("func", None)
 
         # adding kwargs to the metric, should not overwrite params (but does if clashes)
         params.update(kwargs)
