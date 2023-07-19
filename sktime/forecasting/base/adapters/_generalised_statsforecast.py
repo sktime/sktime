@@ -75,7 +75,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return self
 
-    def _predict_in_or_out_of_sample(self, fh, fh_type, X=None, levels=None):
+    def _predict_in_or_out_of_sample(
+        self, fh, fh_type, X=None, levels=None, legacy_interface=True
+    ):
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
 
         absolute_horizons = fh.to_absolute_index(self.cutoff)
@@ -102,8 +104,13 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         if levels is None:
             return final_point_predictions
 
+        var_names = self._get_varnames(
+            default="Coverage", legacy_interface=legacy_interface
+        )
+        var_name = var_names[0]
+
         interval_predictions_indices = pandas.MultiIndex.from_product(
-            [["Coverage"], levels, ["lower", "upper"]]
+            [var_names, levels, ["lower", "upper"]]
         )
         interval_predictions = pandas.DataFrame(
             index=absolute_horizons, columns=interval_predictions_indices
@@ -128,10 +135,10 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
                 upper_interval_predictions = upper_interval_predictions.to_numpy()
 
             interval_predictions[
-                ("Coverage", level, "lower")
+                (var_name, level, "lower")
             ] = lower_interval_predictions[horizon_positions]
             interval_predictions[
-                ("Coverage", level, "upper")
+                (var_name, level, "upper")
             ] = upper_interval_predictions[horizon_positions]
 
         return interval_predictions
@@ -192,7 +199,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_point_predictions
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -238,7 +247,10 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         if in_sample_horizon:
             in_sample_interval_predictions = self._predict_in_or_out_of_sample(
-                in_sample_horizon, "in-sample", levels=coverage
+                in_sample_horizon,
+                "in-sample",
+                levels=coverage,
+                legacy_interface=legacy_interface,
             )
             interval_predictions.append(in_sample_interval_predictions)
 
@@ -248,6 +260,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
                 "out-of-sample",
                 X=X_predict_input,
                 levels=coverage,
+                legacy_interface=legacy_interface,
             )
             interval_predictions.append(out_of_sample_interval_predictions)
 
