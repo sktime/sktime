@@ -13,8 +13,84 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
-Version 0.21.0 - 2023-07-XX
+Version 0.21.0 - 2023-07-19
 ---------------------------
+
+Maintenance release - dependency updates, scheduled deprecations.
+
+For last non-maintenance content updates, see 0.20.1.
+
+Contents
+~~~~~~~~
+
+* ``sktime`` is now compatible with ``sklearn 1.3.X``
+* start of change in column naming convention for univariate probabilistic forecasts,
+  in preparation for 0.23.0 - see below for details for users and developers
+* scheduled 0.21.0 deprecation actions
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``scikit-learn`` version bounds now allow versions ``1.3.X``
+* ``pycatch22`` has been added back as a soft dependency, after python 3.7 EOL
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting - change of column naming for univariate probabilistic forecasts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From 0.23.0, returns of forecasters' ``predict_quantiles`` and ``predict_intervals``
+in the univariate case will be made consistent with the multivariate case:
+the name of the uppermost (0-indexed) column level will always be the variable name.
+Previously, in the univariate case, it was always ``Coverage`` or ``Quantiles``,
+irrespective of the variable name present in ``y``.
+
+The change will take place over two MINOR cycles, 0.21.X (early phase) and 0.22.X (late phase),
+the union of which makes up the change period.
+We explain the schedule below, for users, and then for maintainers of third party foreasters ("extenders").
+
+Users should use a new, temporary ``legacy_interface`` argument to handle the change:
+
+* Users - change period. The two firecaster methods ``predict_quantiles`` and ``predict_intervals``
+  will have a new boolean argument, ``legacy_interface``. If ``True``, the methods
+  produce returns with the current naming convention. If ``False``, the methods produce
+  returns with the future, post-change naming conention.
+* Users - early and late phase. In the early phase (0.21.X), the default value of ``legacy_interface``
+  will be ``True``. In the late phase (0.22.X), the default value of ``legacy_interface`` will be ``False``.
+* Users - post-deprecation. In 0.23.0, the ``legacy_interface`` argument will be removed.
+  The methods will always produce returns with the future, post-change naming convention.
+* Appropriate deprecation warnings will be raised from 0.21.0 onwards, until 0.22.last.
+* Users - recommended change actions: Users should aim to upgrade dependent code to ``legacy_interface=False`` behaviour by 0.21.last,
+  and to remove ``legacy_interface`` arguments after 0.22.0 and before 0.23.0.
+
+Extenders should use ``"pred_int:legacy_interface:testcfg"`` config to upgrade their third party extensions:
+
+* Extenders - change period. The config field ``"pred_int:legacy_interface:testcfg"`` has been added
+  to all descendants of the ``BaseForecaster`` class. This config controls the contract
+  that the ``check_estimator`` and ``pytest`` tests check against, and can be set by ``set_config``.
+* The default of the tag is ``"auto"`` - this means that the tests will check against the current
+  naming convention in the early phase (0.21.X), and against the future naming convention in the late phase (0.22.X),
+  for ``_predict_quantiles`` or ``_predict_intervals`` having the standard signature, without ``legacy_interface``.
+  From 0.23.0 on, the tag will have no effect.
+* In the change period: tf the tag is set to ``"new"``, the tests will always check against the new interface;
+  if the tag is set to ``"old"``, the tests will check against the old interface, irrespective of the phase.
+  From 0.23.0, the setting will have no effect and the tests will always check against the new interface.
+* Extenders - recommended change actions: Extenders should aim to upgrade their third party extensions
+  to ``"pred_int:legacy_interface:testcfg=new"`` behaviour by 0.21.last. Tests against late stage
+  and post-deprecation behaviour can be enforced by setting ``forecaster.set_config({"pred_int:legacy_interface:testcfg": "new"})``,
+  before passing it to ``check_estimator``.
+  The ``set_config`` call can be removed after 0.22.0, and should be removed before 0.23.0.
+* Extenders with a substantial user base of their own can, alternatively, implement and release ``_predict_quantiles`` and ``_predict_intervals``
+  with a ``legacy_interface`` argument before 0.22.0, the default of which should be ``False`` from the beginning on (even in early phase).
+  In this case, the ``"pred_int:legacy_interface:testcfg"`` tag should be set to ``"auto"``,
+  and the tests will check both new and old behaviour. The ``legacy_interface`` argument can be removed after 0.23.0.
+  This will result in the same transition experience for users of the extenders' forecasters as for users of ``sktime`` proper.
+
+
+List of PR
+~~~~~~~~~~
+
 
 Version 0.20.1 - 2023-07-14
 ---------------------------
