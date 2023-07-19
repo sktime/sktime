@@ -6,7 +6,6 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
-from functools import partial
 from inspect import getfullargspec, isfunction, signature
 from warnings import warn
 
@@ -571,6 +570,10 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
             func = type(self).func
         else:
             func = self.func
+
+        # import here for now to avoid interaction with getmembers in tests
+        # todo: clean up ancient getmembers in test_metrics_classes
+        from functools import partial
 
         # if func does not catch kwargs, subset to args of func
         if getfullargspec(func).varkw is None or isinstance(func, partial):
