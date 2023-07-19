@@ -7,22 +7,6 @@ from sktime.forecasting.base import BaseForecaster
 __all__ = ["_GeneralisedStatsForecastAdapter"]
 __author__ = ["yarnabrina"]
 
-# import warnings
-
-# from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-# if _check_soft_dependencies("statsforecast", severity="none"):
-#     from statsforecast.models import _TS
-# else:
-
-#     class _TS:
-#         def __init__(self):
-#             warnings.warn(
-#                 "The 'statsforecast' module is not available. Please ensure that"
-#                 f"'statsforecast' is installed to use {type(self)}.",
-#                 stacklevel=1,
-#             )
-
 
 class _GeneralisedStatsForecastAdapter(BaseForecaster):
     """Base adapter class for StatsForecast models."""
@@ -303,11 +287,9 @@ class StatsForecastBackAdapter:
     }
 
     def __init__(self, estimator):
-        self.estimator = estimator
-        self.in_sample_fh = None
-        self.in_sample_X = None
-
         super().__init__()
+
+        self.estimator = estimator
 
     def __repr__(self):
         return "StatsForecastBackAdapter"
