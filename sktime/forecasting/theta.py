@@ -195,7 +195,55 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    def _predict_quantiles(self, fh, X, alpha):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        pred_int = BaseForecaster._predict_interval(
+            self, fh, X, coverage, legacy_interface
+        )
+
+        return pred_int
+
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -219,7 +267,11 @@ class ThetaForecaster(ExponentialSmoothing):
                 at quantile probability in second col index, for the row index.
         """
         # prepare return data frame
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        var_names = self._get_varnames(
+            default="Quantiles", legacy_interface=legacy_interface
+        )
+        var_name = var_names[0]
+        index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)
 
         sem = self.sigma_ * np.sqrt(
@@ -230,7 +282,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         # we assume normal additive noise with sem variance
         for a in alpha:
-            pred_quantiles[("Quantiles", a)] = y_pred + norm.ppf(a) * sem
+            pred_quantiles[(var_name, a)] = y_pred + norm.ppf(a) * sem
         # todo: should this not increase with the horizon?
         # i.e., sth like norm.ppf(a) * sem * fh.to_absolute(cutoff) ?
         # I've just refactored this so will leave it for now
