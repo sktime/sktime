@@ -6,6 +6,7 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
+from functools import partial
 from inspect import getfullargspec, isfunction, signature
 from warnings import warn
 
@@ -561,9 +562,6 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         # this dict should contain all parameters
         params = self.get_params()
 
-        # drop func from params
-        params.pop("func", None)
-
         # adding kwargs to the metric, should not overwrite params (but does if clashes)
         params.update(kwargs)
 
@@ -575,7 +573,7 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
             func = self.func
 
         # if func does not catch kwargs, subset to args of func
-        if getfullargspec(func).varkw is None:
+        if getfullargspec(func).varkw is None or isinstance(func, partial):
             func_params = signature(func).parameters.keys()
             func_params = set(func_params).difference(["y_true", "y_pred"])
             func_params = func_params.intersection(params.keys())
