@@ -97,6 +97,7 @@ List of PR
 * [ENH] replace ``"Coverage"`` and ``"Quantiles"`` default variable name in univariate case with variable name (:pr:`4880`) :user:`fkiraly`, :user:`benheid`
 * [BUG] 0.21.0 release bugfix - fix interaction of ``sklearn 1.3.0`` with dynamic error metic based on ``partial`` in ``test_make_scorer`` (:pr:`4915`) :user:`fkiraly`
 * [MNT] xfail ``mlflow`` failure #4904 until debugged, gitignore for ``py-spy`` (:pr:`4913`) :user:`fkiraly`
+* [DOC] 0.21.0 release action - update deprecation guide to reflect deprecation of use of `deprecated` (:pr:`4914`) :user:`fkiraly`
 * [MNT] 0.21.0 release action - update ``sklearn`` bound to ``<1.4.0`` (:pr:`4778`) :user:`fkiraly`
 * [MNT] 0.21.0 release action - add back ``pycatch22`` as a soft dependency post python 3.7 EOL (:pr:`4790`) :user:`fkiraly`
 
