@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing forecasting by group."""
 
@@ -63,18 +62,17 @@ class ForecastByLevel(_DelegatedForecaster):
     }
 
     # attribute for _DelegatedForecaster, which then delegates
-    #     all non-overridden methods to those of same name in self.forecaster_
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
     #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
     def __init__(self, forecaster, groupby="local"):
-
         self.forecaster = forecaster
         self.groupby = groupby
 
         self.forecaster_ = forecaster.clone()
 
-        super(ForecastByLevel, self).__init__()
+        super().__init__()
 
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})

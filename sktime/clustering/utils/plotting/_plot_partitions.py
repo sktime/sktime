@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Cluster plotting tools."""
 
-__author__ = ["Christopher Holder", "Tony Bagnall"]
+__author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["plot_cluster_algorithm"]
 
 import numpy as np
@@ -74,6 +73,7 @@ def plot_cluster_algorithm(model: TimeSeriesLloyds, X: TimeSeriesInstances, k: i
     import matplotlib.patches as mpatches
     import matplotlib.pyplot as plt
 
+    predict_series = X
     if isinstance(X, pd.DataFrame):
         predict_series = convert_to(X, "numpy3D")
     plt.figure(figsize=(5, 10))

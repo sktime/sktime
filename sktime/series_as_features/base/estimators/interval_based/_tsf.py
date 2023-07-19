@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """Time Series Forest (TSF) Classifier."""
 
 __author__ = [
-    "Tony Bagnall",
+    "TonyBagnall",
     "kkoziara",
     "luiszugasti",
     "kanand77",
@@ -38,8 +37,8 @@ class BaseTimeSeriesForest:
         n_jobs=1,
         random_state=None,
     ):
-        super(BaseTimeSeriesForest, self).__init__(
-            base_estimator=self._base_estimator,
+        super().__init__(
+            self._base_estimator,
             n_estimators=n_estimators,
         )
 
@@ -57,6 +56,22 @@ class BaseTimeSeriesForest:
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
+
+    @property
+    def _estimator(self):
+        """Access first parameter in self, self inheriting from sklearn BaseForest.
+
+        The attribute was renamed from base_estimator to estimator in sklearn 1.2.0.
+        """
+        import sklearn
+        from packaging.specifiers import SpecifierSet
+
+        sklearn_version = sklearn.__version__
+
+        if sklearn_version in SpecifierSet(">=1.2.0"):
+            return self.estimator
+        else:
+            return self.base_estimator
 
     def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
@@ -96,7 +111,7 @@ class BaseTimeSeriesForest:
 
         self.estimators_ = Parallel(n_jobs=n_jobs)(
             delayed(_fit_estimator)(
-                _clone_estimator(self.base_estimator, rng), X, y, self.intervals_[i]
+                _clone_estimator(self._estimator, rng), X, y, self.intervals_[i]
             )
             for i in range(self.n_estimators)
         )
@@ -105,7 +120,6 @@ class BaseTimeSeriesForest:
         return self
 
     def _get_fitted_params(self):
-
         return {
             "classes": self.classes_,
             "intervals": self.intervals_,

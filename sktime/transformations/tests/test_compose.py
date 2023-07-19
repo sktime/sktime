@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests for transformer composition functionality attached to the base class."""
 
@@ -13,11 +12,11 @@ from sktime.datatypes import get_examples
 from sktime.transformations.compose import (
     FeatureUnion,
     InvertTransform,
+    OptionalPassthrough,
     TransformerPipeline,
 )
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.boxcox import LogTransformer
-from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.subset import ColumnSelect
@@ -160,7 +159,7 @@ def test_sklearn_after_primitives():
     X_out = t.fit_transform(X)
     X_summary = SummaryTransformer().fit_transform(X)
 
-    assert deep_equals(X_out.index, X_summary.index)
+    assert (X_out.index == X_summary.index).all()
     assert deep_equals(X_out.columns, X_summary.columns)
     # var_0 is the same for all three instances
     # so summary statistics are all the same, thus StandardScaler transforms to 0
@@ -180,11 +179,14 @@ def test_pipeline_column_vectorization():
 
     X_theta = t.fit_transform(X)
 
-    assert set(X_theta.columns) == set(["a__0", "a__2", "b__0", "b__2"])
+    assert set(X_theta.columns) == {"a__0", "a__2", "b__0", "b__2"}
 
 
 def test_pipeline_inverse():
-    """Tests that inverse composition works, with inverse skips. Also see #3084."""
+    """Tests that inverse composition works, with inverse skips.
+
+    Also see #3084.
+    """
     X = load_airline()
     t = LogTransformer() * Imputer()
 

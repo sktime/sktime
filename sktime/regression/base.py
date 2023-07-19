@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Abstract base class for time series regressors.
+"""Abstract base class for time series regressors.
 
     class name: BaseRegressor
 
@@ -62,6 +60,15 @@ class BaseRegressor(BaseEstimator, ABC):
         "capability:multithreading": False,
     }
 
+    # convenience constant to control which metadata of input data
+    # are regularly retrieved in input checks
+    METADATA_REQ_IN_CHECKS = [
+        "n_instances",
+        "has_nans",
+        "is_univariate",
+        "is_equal_length",
+    ]
+
     def __init__(self):
         self.fit_time_ = 0
         self._class_dictionary = {}
@@ -72,7 +79,7 @@ class BaseRegressor(BaseEstimator, ABC):
         # i.e. CalibratedRegressorCV
         self._estimator_type = "regressor"
 
-        super(BaseRegressor, self).__init__()
+        super().__init__()
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
@@ -142,7 +149,9 @@ class BaseRegressor(BaseEstimator, ABC):
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
         X, y = _internal_convert(X, y)
-        X_metadata = _check_regressor_input(X, y)
+        X_metadata = _check_regressor_input(
+            X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
+        )
         self._X_metadata = X_metadata
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
@@ -289,7 +298,9 @@ class BaseRegressor(BaseEstimator, ABC):
         ValueError if the capabilities in self._tags do not handle the data.
         """
         X = _internal_convert(X)
-        X_metadata = _check_regressor_input(X)
+        X_metadata = _check_regressor_input(
+            X, return_metadata=self.METADATA_REQ_IN_CHECKS
+        )
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
@@ -374,6 +385,7 @@ def _check_regressor_input(
     X,
     y=None,
     enforce_min_instances=1,
+    return_metadata=True,
 ):
     """Check whether input X and y are valid formats with minimum data.
 
@@ -385,6 +397,8 @@ def _check_regressor_input(
     y : check whether a pd.Series or np.array
     enforce_min_instances : int, optional (default=1)
         check there are a minimum number of instances.
+    return_metadata : bool, str, or list of str
+        metadata fields to return with X_metadata, input to check_is_scitype
 
     Returns
     -------
@@ -396,7 +410,9 @@ def _check_regressor_input(
         If y or X is invalid input data type, or there is not enough data
     """
     # Check X is valid input type and recover the data characteristics
-    X_valid, _, X_metadata = check_is_scitype(X, scitype="Panel", return_metadata=True)
+    X_valid, _, X_metadata = check_is_scitype(
+        X, scitype="Panel", return_metadata=return_metadata
+    )
     if not X_valid:
         raise TypeError(
             f"X is not of a supported input data type."

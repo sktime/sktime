@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Random interval features.
 
 A transformer for the extraction of features on randomly selected intervals.
@@ -40,17 +39,20 @@ class RandomIntervals(BaseTransformer):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random, integer.
+
+    See Also
+    --------
+    SupervisedIntervals
     """
 
     _tags = {
         "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "scitype:instancewise": True,
+        "X_inner_mtype": "numpy3D",
+        "y_inner_mtype": "None",
+        "capability:unequal_length": False,
+        "fit_is_empty": False,
     }
 
     def __init__(
@@ -70,7 +72,7 @@ class RandomIntervals(BaseTransformer):
         self._intervals = []
         self._dims = []
 
-        super(RandomIntervals, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit the random interval transform.
@@ -168,7 +170,7 @@ class RandomIntervals(BaseTransformer):
         return pd.DataFrame(X_t)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
         Parameters

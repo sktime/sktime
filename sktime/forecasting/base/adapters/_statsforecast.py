@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast forecasters to be used in sktime framework."""
 
@@ -25,17 +24,18 @@ class _StatsForecastAdapter(BaseForecaster):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        "capability:pred_int:insample": True,
         "python_dependencies": "statsforecast",
     }
 
     def __init__(self):
         self._forecaster = None
-        super(_StatsForecastAdapter, self).__init__()
+        super().__init__()
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -69,7 +69,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -100,17 +100,22 @@ class _StatsForecastAdapter(BaseForecaster):
 
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
-            return self._predict_fixed_cutoff(fh_oos, X=X)
+            y_pred = self._predict_fixed_cutoff(fh_oos, X=X)
 
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
-            return self._predict_in_sample(fh_ins, X=X)
+            y_pred = self._predict_in_sample(fh_ins, X=X)
 
         # both in-sample and out-of-sample values
         else:
             y_ins = self._predict_in_sample(fh_ins, X=X)
             y_oos = self._predict_fixed_cutoff(fh_oos, X=X)
-            return pd.concat([y_ins, y_oos])
+            y_pred = pd.concat([y_ins, y_oos])
+
+        # ensure that name is not added nor removed
+        # otherwise this may upset conversion to pd.DataFrame
+        y_pred.name = self._y.name
+        return y_pred
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -131,7 +136,7 @@ class _StatsForecastAdapter(BaseForecaster):
         """
         # initialize return objects
         fh_abs = fh.to_absolute(self.cutoff).to_numpy()
-        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
+        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=True)
         y_pred = pd.Series(index=fh_abs, dtype="float64")
 
         result = self._forecaster.predict_in_sample()
@@ -173,7 +178,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
-        mean = pd.Series(result["mean"].values[fh_idx], index=fh_abs)
+        mean = pd.Series(result["mean"].values[fh_idx], index=fh_abs.to_pandas())
         if return_pred_int:
             pred_ints = []
             for a in alpha:
@@ -184,14 +189,16 @@ class _StatsForecastAdapter(BaseForecaster):
                 )
                 pred_int = result.drop("mean", axis=1).values
                 pred_int = pd.DataFrame(
-                    pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+                    pred_int[fh_idx, :],
+                    index=fh_abs.to_pandas(),
+                    columns=["lower", "upper"],
                 )
                 pred_ints.append(pred_int)
             return mean, pred_ints
         else:
-            return pd.Series(mean, index=fh_abs)
+            return pd.Series(mean, index=fh_abs.to_pandas())
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

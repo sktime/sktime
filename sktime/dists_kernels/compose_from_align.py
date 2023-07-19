@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Composer that creates distance from aligner."""
 
 __author__ = ["fkiraly"]
@@ -15,19 +14,19 @@ class DistFromAligner(BasePairwiseTransformerPanel):
 
     Components
     ----------
-    aligner: BaseAligner, must implement get_distances method
+    aligner: BaseAligner, must implement get_distance method
         if None, distance is equal zero
     """
 
     _tags = {
         "symmetric": True,  # all the distances are symmetric
+        "capability:unequal_length": True,  # aligners can usually handle unequal length
     }
 
     def __init__(self, aligner=None):
-
         self.aligner = aligner
 
-        super(DistFromAligner, self).__init__()
+        super().__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.

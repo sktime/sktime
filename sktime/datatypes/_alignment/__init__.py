@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module exports: Alignment type checkers and mtype inference."""
 
 from sktime.datatypes._alignment._check import check_dict as check_dict_Alignment

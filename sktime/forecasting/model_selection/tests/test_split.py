@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for splitters."""
 
@@ -13,6 +12,7 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import (
     CutoffSplitter,
     ExpandingWindowSplitter,
+    SameLocSplitter,
     SingleWindowSplitter,
     SlidingWindowSplitter,
     temporal_train_test_split,
@@ -325,6 +325,31 @@ def test_sliding_window_splitter_start_with_empty_window(
             )
 
 
+@pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+def test_expanding_window_splitter_start_with_initial_window_zero(y, fh, step_length):
+    """Test ExpandingWindowSplitter."""
+    initial_window = 0
+    if _inputs_are_supported([fh, step_length, initial_window]):
+        cv = ExpandingWindowSplitter(
+            fh=fh,
+            step_length=step_length,
+            initial_window=initial_window,
+        )
+        train_windows, test_windows, _, n_splits = _check_cv(
+            cv, y, allow_empty_window=True
+        )
+
+        assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+    else:
+        match = "Unsupported combination of types"
+        with pytest.raises(TypeError, match=match):
+            ExpandingWindowSplitter(
+                fh=fh, initial_window=initial_window, step_length=step_length
+            )
+
+
 def test_sliding_window_splitter_initial_window_start_with_empty_window_raises_error():
     """Test SlidingWindowSplitter."""
     y = _make_series()
@@ -375,7 +400,6 @@ def test_expanding_window_splitter_start_with_empty_window(
             fh=fh,
             initial_window=initial_window,
             step_length=step_length,
-            start_with_window=True,
         )
         train_windows, test_windows, _, n_splits = _check_cv(cv, y)
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
@@ -390,7 +414,6 @@ def test_expanding_window_splitter_start_with_empty_window(
                 fh=fh,
                 initial_window=initial_window,
                 step_length=step_length,
-                start_with_window=True,
             )
 
 
@@ -405,7 +428,6 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
             fh=fh,
             initial_window=initial_window,
             step_length=step_length,
-            start_with_window=True,
         )
         train_windows, test_windows, _, n_splits = _check_cv(cv, y)
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
@@ -420,7 +442,6 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
                 fh=fh,
                 initial_window=initial_window,
                 step_length=step_length,
-                start_with_window=True,
             )
 
 
@@ -527,7 +548,7 @@ def test_split_series_hier():
         assert len(train) == 10 * n_instances
         assert isinstance(test, np.ndarray)
         assert test.ndim == 1
-        assert test.dtype == np.int64
+        assert pd.api.types.is_integer_dtype(test.dtype)
         assert len(test) == 1 * n_instances
 
     for train, test in cv.split_loc(y):
@@ -548,3 +569,58 @@ def test_split_series_hier():
         assert len(test) == 1 * n_instances
         assert inst_index(train) == inst_index(y)
         assert inst_index(test) == inst_index(y)
+
+
+def test_same_loc_splitter():
+    """Test that SameLocSplitter works as intended."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    y_template = y[:60]
+    cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+
+    splitter = SameLocSplitter(cv_tpl, y_template)
+
+    # these should be the same
+    # not in general, but only because y is longer only at the end
+    split_template_iloc = list(cv_tpl.split(y_template))
+    split_templated_iloc = list(splitter.split(y))
+
+    for (t1, tt1), (t2, tt2) in zip(split_template_iloc, split_templated_iloc):
+        assert np.all(t1 == t2)
+        assert np.all(tt1 == tt2)
+
+    # these should be in general the same
+    split_template_loc = list(cv_tpl.split_loc(y_template))
+    split_templated_loc = list(splitter.split_loc(y))
+
+    for (t1, tt1), (t2, tt2) in zip(split_template_loc, split_templated_loc):
+        assert np.all(t1 == t2)
+        assert np.all(tt1 == tt2)
+
+
+def test_same_loc_splitter_hierarchical():
+    """Test that SameLocSplitter works as intended for hierarchical data."""
+    hierarchy_levels1 = (2, 2)
+    hierarchy_levels2 = (3, 4)
+    n1 = 7
+    n2 = 2 * n1
+    y_template = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels1, max_timepoints=n1, min_timepoints=n1
+    )
+
+    y = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels2, max_timepoints=n2, min_timepoints=n2
+    )
+
+    cv_tpl = ExpandingWindowSplitter(fh=[1, 2], initial_window=1, step_length=2)
+
+    splitter = SameLocSplitter(cv_tpl, y_template)
+
+    # these should be in general the same
+    split_template_loc = list(cv_tpl.split_loc(y_template))
+    split_templated_loc = list(splitter.split_loc(y))
+
+    for (t1, tt1), (t2, tt2) in zip(split_template_loc, split_templated_loc):
+        assert np.all(t1 == t2)
+        assert np.all(tt1 == tt2)

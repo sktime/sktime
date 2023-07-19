@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Metrics to assess performance on forecasting task.
 
@@ -9,7 +8,7 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-__author__ = ["mloning", "Tomasz Chodakowski", "aiwalter", "RNKuhns"]
+__author__ = ["mloning", "tch", "aiwalter", "RNKuhns"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",

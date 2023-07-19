@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test functions for data input and output."""
 
 __author__ = ["SebasKoel", "Emiliathewolf", "TonyBagnall", "jasonlines", "achieveordie"]
@@ -6,7 +5,6 @@ __author__ = ["SebasKoel", "Emiliathewolf", "TonyBagnall", "jasonlines", "achiev
 __all__ = []
 
 import os
-import shutil
 import tempfile
 
 import numpy as np
@@ -21,7 +19,6 @@ from sktime.datasets import (
     load_from_long_to_dataframe,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
-    load_solar,
     load_tsf_to_dataframe,
     load_UCR_UEA_dataset,
     load_uschange,
@@ -31,10 +28,14 @@ from sktime.datasets import (
 from sktime.datasets._data_io import (
     MODULE,
     _convert_tsf_to_hierarchical,
+    _list_available_datasets,
     _load_provided_dataset,
 )
-from sktime.datatypes import MTYPE_LIST_PANEL, check_is_mtype
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.datatypes import check_is_mtype, scitype_to_mtype
+
+# using this and not a direct import
+# in order to avoid mtypes that require soft dependencies
+MTYPE_LIST_PANEL = scitype_to_mtype("Panel")
 
 # Disabling test for these mtypes since they don't support certain functionality yet
 _TO_DISABLE = ["pd-long", "pd-wide", "numpyflat"]
@@ -42,24 +43,23 @@ _TO_DISABLE = ["pd-long", "pd-wide", "numpyflat"]
 
 @pytest.mark.parametrize("dataset_name", ["UnitTest", "BasicMotions"])
 @pytest.mark.parametrize("return_type", ["nested_univ", "numpy3d"])
-def test_write_panel_to_tsfile_equal_length(dataset_name, return_type):
+def test_write_panel_to_tsfile_equal_length(dataset_name, return_type, tmpdir):
     """Test function to write a dataset.
 
     Loads equal and unequal length problems into both data frames and numpy arrays,
     writes locally, reloads, then compares all class labels. It then delete the files.
     """
     X, y = _load_provided_dataset(dataset_name, split="TRAIN", return_type=return_type)
-    write_panel_to_tsfile(data=X, path="./Temp", target=y, problem_name=dataset_name)
-    load_path = f"./Temp/{dataset_name}/{dataset_name}.ts"
+    write_panel_to_tsfile(data=X, path=tmpdir, target=y, problem_name=dataset_name)
+    load_path = tmpdir / dataset_name / f"{dataset_name}.ts"
     newX, newy = load_from_tsfile(
         full_file_path_and_name=load_path, return_data_type=return_type
     )
     assert np.array_equal(y, newy)
-    shutil.rmtree("./Temp")
 
 
 @pytest.mark.parametrize("dataset_name", ["PLAID", "JapaneseVowels"])
-def test_write_panel_to_tsfile_unequal_length(dataset_name):
+def test_write_panel_to_tsfile_unequal_length(dataset_name, tmpdir):
     """Test function to write a dataset.
 
     Loads equal and unequal length problems into both data frames and numpy arrays,
@@ -68,15 +68,12 @@ def test_write_panel_to_tsfile_unequal_length(dataset_name):
     X, y = _load_provided_dataset(
         dataset_name, split="TRAIN", return_type="nested_univ"
     )
-    write_panel_to_tsfile(
-        data=X, path=f"./Temp{dataset_name}/", target=y, problem_name=dataset_name
-    )
-    load_path = f"./Temp{dataset_name}/{dataset_name}/{dataset_name}.ts"
+    write_panel_to_tsfile(data=X, path=tmpdir, target=y, problem_name=dataset_name)
+    load_path = tmpdir / dataset_name / f"{dataset_name}.ts"
     newX, newy = load_from_tsfile(
         full_file_path_and_name=load_path, return_data_type="nested_univ"
     )
     assert np.array_equal(y, newy)
-    shutil.rmtree(f"./Temp{dataset_name}")
 
 
 @pytest.mark.parametrize("return_X_y", [True, False])
@@ -208,8 +205,7 @@ _CHECKS = {
 
 @pytest.mark.parametrize("dataset", sorted(_CHECKS.keys()))
 def test_data_loaders(dataset):
-    """
-    Assert if datasets are loaded correctly.
+    """Assert if datasets are loaded correctly.
 
     dataset: dictionary with values to assert against should contain:
         'columns' : list with column names in correct order,
@@ -460,7 +456,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -487,7 +482,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -513,7 +507,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -600,7 +593,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -694,7 +686,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -734,7 +725,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -761,7 +751,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -790,7 +779,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -870,7 +858,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -958,7 +945,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -1480,73 +1466,19 @@ def test_convert_tsf_to_multiindex(freq):
     )
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("backoff", severity="none"),
-    reason="load_solar requires backoff in the environment",
-)
-@pytest.mark.parametrize("return_df", [False, True])
-def test_load_solar(return_df):
-    """Test function for loading solar data through the Sheffiled Solar API."""
-    # queried on 03/08/2022
-    test_equals = np.array(
-        [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.002,
-            0.021,
-            0.06,
-            0.113,
-            0.176,
-            0.251,
-            0.323,
-            0.356,
-            0.395,
-            0.427,
-            0.431,
-            0.398,
-            0.396,
-            0.406,
-            0.413,
-            0.43,
-            0.421,
-            0.414,
-            0.391,
-            0.37,
-            0.315,
-            0.258,
-            0.222,
-            0.203,
-            0.174,
-            0.134,
-            0.093,
-            0.055,
-            0.022,
-            0.002,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        ]
+@pytest.mark.parametrize("origin_repo", [None, "forecastingorg"])
+def test_list_available_datasets(origin_repo):
+    """Test function for listing available datasets.
+
+    check for two datasets repo format types:
+    1. https://www.timeseriesclassification.com/
+    2  https://forecastingdata.org/
+
+    """
+    dataset_name = "UnitTest"
+    available_datasets = _list_available_datasets(
+        extract_path=None, origin_repo=origin_repo
     )
-
-    y = load_solar(start="2021-05-01", end="2021-05-02", return_full_df=return_df)
-
-    if return_df:
-        assert isinstance(y, pd.DataFrame)
-    else:
-        assert isinstance(y, pd.Series)
-        y = y.round(3).to_numpy()
-        assert np.all(y == test_equals)
+    assert (
+        dataset_name in available_datasets
+    ), f"{dataset_name} dataset should be available."  # noqa: E501

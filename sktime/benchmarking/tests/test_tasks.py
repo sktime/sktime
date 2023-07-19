@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Tests for benchmarking tasks."""
 
-__author__ = "mloning"
+__author__ = ["mloning"]
 
 import pytest
 from pytest import raises

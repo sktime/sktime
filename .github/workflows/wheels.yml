@@ -22,7 +22,7 @@ jobs:
           python -m build --wheel --sdist --outdir wheelhouse
 
       - name: Store wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: wheelhouse/*
@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, macOS-11]
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
       - uses: actions/checkout@v3
@@ -42,7 +42,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: wheels
           path: wheelhouse
@@ -51,7 +51,7 @@ jobs:
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $GITHUB_ENV
 
       - name: Install wheel and extras
-        run: python -m pip install "${{ env.WHEELNAME }}[all_extras,dev]"
+        run: python -m pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
 
       - name: Run tests
         run: make test
@@ -64,11 +64,6 @@ jobs:
       matrix:
         include:
           # Window 64 bit
-          - os: windows-2019
-            python: 37
-            python-version: '3.7'
-            bitness: 64
-            platform_id: win_amd64
           - os: windows-2019
             python: 38
             python-version: '3.8'
@@ -85,8 +80,8 @@ jobs:
             bitness: 64
             platform_id: win_amd64
           - os: windows-2019
-            python: 39
-            python-version: 3.9
+            python: 311
+            python-version: '3.11'
             bitness: 64
             platform_id: win_amd64
 
@@ -102,7 +97,7 @@ jobs:
       - run: conda --version
       - run: which python
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: wheels
           path: wheelhouse
@@ -120,7 +115,7 @@ jobs:
         run: conda activate test
 
       - name: Install wheel and extras
-        run: python -m pip install "${env:WHEELNAME}[all_extras,dev]"
+        run: python -m pip install "${env:WHEELNAME}[all_extras_pandas2,dev]"
 
       - name: Show conda packages
         run: conda list -n test
@@ -138,7 +133,7 @@ jobs:
     needs: [build_wheels,test_unix_wheels,test_windows_wheels]
 
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: wheels
           path: wheelhouse
@@ -146,6 +141,5 @@ jobs:
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          user: ${{ secrets.PYPI_USERNAME }}
-          password: ${{ secrets.PYPI_PASSWORD }}
+          password: ${{ secrets.PYPI_API_TOKEN }}
           packages_dir: wheelhouse/

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for probabilistic quantiles."""
 import warnings
 
@@ -6,9 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.theta import ThetaForecaster
+from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 from sktime.performance_metrics.forecasting.probabilistic import (
     ConstraintViolation,
     EmpiricalCoverage,
@@ -29,31 +27,26 @@ interval_metrics = [
 
 all_metrics = quantile_metrics + interval_metrics
 
+
 y_uni = _make_series(n_columns=1)
 y_train_uni, y_test_uni = temporal_train_test_split(y_uni)
 fh_uni = np.arange(len(y_test_uni)) + 1
-f_uni = ColumnEnsembleForecaster(ThetaForecaster(sp=12))
+f_uni = NaiveVariance(NaiveForecaster())
 f_uni.fit(y_train_uni)
 
 y_multi = _make_series(n_columns=3)
 y_train_multi, y_test_multi = temporal_train_test_split(y_multi)
 fh_multi = np.arange(len(y_test_multi)) + 1
-f_multi = ColumnEnsembleForecaster(ThetaForecaster(sp=12))
+f_multi = NaiveVariance(NaiveForecaster())
 f_multi.fit(y_train_multi)
-"""
-Cases we need to test
-score average = TRUE/FALSE
-multivariable = TRUE/FALSE
-multiscores = TRUE/FALSE
+"""Cases we need to test score average = TRUE/FALSE multivariable = TRUE/FALSE
+multiscores = TRUE/FALSE.
 
-Data types
-Univariate and single score
-Univariate and multi score
-Multivariate and single score
-Multivariate and multiscor
+Data types Univariate and single score Univariate and multi score Multivariate and
+single score Multivariate and multiscor
 
-For each of the data types we need to test with score average = T/F \
-    and multioutput with "raw_values" and "uniform_average"
+For each of the data types we need to test with score average = T/F and multioutput with
+"raw_values" and "uniform_average"
 """
 quantile_pred_uni_s = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.5])
 interval_pred_uni_s = f_uni.predict_interval(fh=fh_uni, coverage=0.9)
