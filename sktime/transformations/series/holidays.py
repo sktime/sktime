@@ -103,6 +103,7 @@ class HolidayFeatures(BaseTransformer):
         "enforce_index_type": [pd.DatetimeIndex],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
+        "python_dependencies": ["holidays"],
     }
 
     def __init__(
