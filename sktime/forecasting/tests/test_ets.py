@@ -46,7 +46,6 @@ def test_airline_default():
     assert_array_equal(fit_result_R, fit_result)
 
 
-@pytest.mark.xfail(reason="known failure to be debugged, see #4904")
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
