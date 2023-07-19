@@ -53,14 +53,16 @@ We explain the schedule below, for users, and then for maintainers of third part
 
 Users should use a new, temporary ``legacy_interface`` argument to handle the change:
 
-* Users - change period. The two firecaster methods ``predict_quantiles`` and ``predict_intervals``
+* Users - change period. The two forecaster methods ``predict_quantiles`` and ``predict_intervals``
   will have a new boolean argument, ``legacy_interface``. If ``True``, the methods
   produce returns with the current naming convention. If ``False``, the methods produce
   returns with the future, post-change naming conention.
 * Users - early and late phase. In the early phase (0.21.X), the default value of ``legacy_interface``
   will be ``True``. In the late phase (0.22.X), the default value of ``legacy_interface`` will be ``False``.
+  This change of default will occur in 0.22.0, and may be breaking for users who do not specify the argument.
 * Users - post-deprecation. In 0.23.0, the ``legacy_interface`` argument will be removed.
   The methods will always produce returns with the future, post-change naming convention.
+  This change may be breaking for users who do not remove the argument by 0.23.0.
 * Appropriate deprecation warnings will be raised from 0.21.0 onwards, until 0.22.last.
 * Users - recommended change actions: Users should aim to upgrade dependent code to ``legacy_interface=False`` behaviour by 0.21.last,
   and to remove ``legacy_interface`` arguments after 0.22.0 and before 0.23.0.
