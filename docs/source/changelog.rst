@@ -44,7 +44,8 @@ From 0.23.0, returns of forecasters' ``predict_quantiles`` and ``predict_interva
 in the univariate case will be made consistent with the multivariate case:
 the name of the uppermost (0-indexed) column level will always be the variable name.
 Previously, in the univariate case, it was always ``Coverage`` or ``Quantiles``,
-irrespective of the variable name present in ``y``.
+irrespective of the variable name present in ``y``, whereas in the multivariate case,
+it was always the variable names present in ``y``.
 
 The change will take place over two MINOR cycles, 0.21.X (early phase) and 0.22.X (late phase),
 the union of which makes up the change period.
