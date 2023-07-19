@@ -10,7 +10,6 @@ __all__ = [
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
 ]
-
 from typing import Dict, List, Optional, Union
 
 from sktime.forecasting.base import BaseForecaster
@@ -637,42 +636,6 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                     " that the forecaster you pass into the model is a sktime "
                     "forecaster or statsforecast forecaster."
                 )
-
-    def predict(self, h, X=None, level=None):
-        """Make forecasts.
-
-        Parameters
-        ----------
-        h : int
-            Forecast horizon.
-        X : typing.Optional[numpy.ndarray], default=None
-            Optional exogenous of shape (h, n_x).
-        level : typing.Optional[typing.Tuple[int]], default=None
-            Confidence levels (0-100) for prediction intervals.
-
-        Returns
-        -------
-        y_pred : dict
-            Dictionary with entries mean for point predictions and level_* for
-            probabilistic predictions.
-        """
-        return self._forecaster.predict(h, X, level)
-
-    def predict_in_sample(self, level=None):
-        """Access fitted MSTL insample predictions.
-
-        Parameters
-        ----------
-        level : typing.Optional[typing.Tuple[int]]
-            Confidence levels (0-100) for prediction intervals.
-
-        Returns
-        -------
-        y_pred : dict
-            Dictionary with entries mean for point predictions and level_* for
-            probabilistic predictions.
-        """
-        return self._forecaster.predict_in_sample(level)
 
     def _instantiate_model(self):
         """Create underlying forecaster instance."""

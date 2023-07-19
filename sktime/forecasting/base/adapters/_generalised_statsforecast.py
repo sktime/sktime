@@ -354,7 +354,7 @@ class StatsForecastBackAdapter:
                 "supports it."
             )
 
-        mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
+        mean = self.estimator.predict(fh=h, X=X)[:, 0]
         if level is None:
             return {"mean": mean}
 
@@ -362,7 +362,7 @@ class StatsForecastBackAdapter:
         coverage = [round(1 - (_l / 100), 2) for _l in level]
 
         pred_int = self.estimator.predict_interval(
-            fh=range(1, h + 1), X=X, coverage=coverage
+            fh=h, X=X, coverage=coverage
         )
 
         return self.format_pred_int("mean", mean, pred_int, coverage, level)
@@ -388,7 +388,7 @@ class StatsForecastBackAdapter:
                 "supports it."
             )
 
-        fitted = self.estimator.predict(self.estimator._y.index)
+        fitted = self.estimator.predict(self.estimator._y.index)[:, 0]
 
         if level is None:
             return {"fitted": fitted}
