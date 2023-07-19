@@ -161,6 +161,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
+                        # todo 0.23.0 - get rid of the "Coverage" case treatment
                         # deal with the "Coverage" case, we need to get rid of this
                         #   i.d., special 1st level name of prediction objet
                         #   in the case where there is only one variable
@@ -508,7 +509,9 @@ class ForecastingPipeline(_Pipeline):
         X = self._transform(X=X)
         return self.forecaster_.predict(fh, X)
 
-    def _predict_quantiles(self, fh, X, alpha):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -541,9 +544,13 @@ class ForecastingPipeline(_Pipeline):
                 at quantile probability in second-level col index, for each row index.
         """
         X = self._transform(X=X)
-        return self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        return self.forecaster_.predict_quantiles(
+            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
+        )
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -580,7 +587,9 @@ class ForecastingPipeline(_Pipeline):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         X = self._transform(X=X)
-        return self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
+        return self.forecaster_.predict_interval(
+            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
+        )
 
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.
@@ -1068,7 +1077,9 @@ class TransformedTargetForecaster(_Pipeline):
         Z = check_series(Z)
         return self._get_inverse_transform(self.transformers_pre_, Z, X)
 
-    def _predict_quantiles(self, fh, X, alpha):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1100,13 +1111,17 @@ class TransformedTargetForecaster(_Pipeline):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        pred_int = self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        pred_int = self.forecaster_.predict_quantiles(
+            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
+        )
         pred_int_transformed = self._get_inverse_transform(
             self.transformers_pre_, pred_int, mode="proba"
         )
         return pred_int_transformed
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -1142,7 +1157,9 @@ class TransformedTargetForecaster(_Pipeline):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
+        pred_int = self.forecaster_.predict_interval(
+            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
+        )
         pred_int_transformed = self._get_inverse_transform(
             self.transformers_pre_, pred_int, mode="proba"
         )
@@ -1391,7 +1408,9 @@ class ForecastX(BaseForecaster):
 
         return self
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -1423,10 +1442,14 @@ class ForecastX(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X, coverage=coverage)
+        y_pred = self.forecaster_y_.predict_interval(
+            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
+        )
         return y_pred
 
-    def _predict_quantiles(self, fh, X, alpha):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_quantiles(self, fh, X=None, alpha=None, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1453,7 +1476,9 @@ class ForecastX(BaseForecaster):
                 at quantile probability in second col index, for the row index.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        y_pred = self.forecaster_y_.predict_quantiles(
+            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
+        )
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
