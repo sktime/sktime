@@ -49,7 +49,7 @@ it was always the variable names present in ``y``.
 
 The change will take place over two MINOR cycles, 0.21.X (early phase) and 0.22.X (late phase),
 the union of which makes up the change period.
-We explain the schedule below, for users, and then for maintainers of third party foreasters ("extenders").
+We explain the schedule below, for users, and then for maintainers of third party forecasters ("extenders").
 
 Users should use a new, temporary ``legacy_interface`` argument to handle the change:
 
