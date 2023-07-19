@@ -142,6 +142,7 @@ These transformers extract simple summary features.
 
     SummaryTransformer
     WindowSummarizer
+    SplitterSummarizer
 
 .. currentmodule:: sktime.transformations.panel.summarize
 

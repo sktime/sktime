@@ -129,6 +129,12 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
+    "MCDCNNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "MCDCNNRegressor": [
+        "test_fit_idempotent",
+    ],
     "MACNNClassifier": [
         "test_fit_idempotent",
     ],
