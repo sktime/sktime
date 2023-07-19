@@ -31,7 +31,7 @@ class _PmdArimaAdapter(BaseForecaster):
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -73,7 +73,7 @@ class _PmdArimaAdapter(BaseForecaster):
             self._forecaster.update(y, X=X)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -244,7 +244,7 @@ class _PmdArimaAdapter(BaseForecaster):
             result.index = fh_abs.to_pandas()
             return result
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
