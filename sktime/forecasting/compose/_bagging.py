@@ -286,7 +286,7 @@ class BaggingForecaster(BaseForecaster):
         self : reference to self
         """
         # Need to construct a completely new y out of ol self._y and y and then
-        # fit_treansform the transformer and re-fit the foreaster.
+        # fit_treansform the transformer and re-fit the forecaster.
         _y = update_data(self._y, y)
 
         self.bootstrap_transformer_.fit(X=_y)
