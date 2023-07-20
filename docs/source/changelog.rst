@@ -67,8 +67,9 @@ Users should use a new, temporary ``legacy_interface`` argument to handle the ch
   The methods will always produce returns with the future, post-change naming convention.
   This change may be breaking for users who do not remove the argument by 0.23.0.
 * Appropriate deprecation warnings will be raised from 0.21.0 onwards, until 0.22.last.
-* Users - recommended change actions: Users should aim to upgrade dependent code to ``legacy_interface=False`` behaviour by 0.21.last,
+* Users - recommended change actions. Users should aim to upgrade dependent code to ``legacy_interface=False`` behaviour by 0.21.last,
   and to remove ``legacy_interface`` arguments after 0.22.0 and before 0.23.0.
+  Users who need more time to upgrade dependent code can set ``legacy_interface=True`` until 0.22.last.
 
 Extenders should use ``"pred_int:legacy_interface:testcfg"`` config to upgrade their third party extensions:
 
