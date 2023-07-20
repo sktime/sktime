@@ -1,12 +1,9 @@
 """Time series KMeans, wrapping sklearn KMeans."""
 
-from warnings import warn
-
 import numpy as np
 from sklearn.cluster import KMeans
 
 from sktime.clustering.base import BaseClusterer
-from sktime.datatypes import update_data
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 
@@ -188,18 +185,10 @@ class TimeSeriesKMeansSklearn(BaseClusterer):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to
         """
-        # if X is the same as seen in _fit, simply return the labels
-        if X is self._X:
-            return self.labels_
-        else:
-            all_X = update_data(X=self._X, X_new=X)
-            warn(
-                "sklearn and sktime KMeans estimators do not support different X "
-                "in fit and predict, but a new X was passed in predict. "
-                "Therefore, a clone of TimeSeriesDBSCAN will be fit, and results "
-                "returned, without updating the state of the fitted estimator."
-            )
-            return self.clone().fit(all_X).labels_
+        distance = self.distance
+        distmat = distance(X)
+
+        return self.kmeans_.predict(distmat)
 
     def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
