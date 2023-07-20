@@ -39,7 +39,7 @@ class BaseDeepNetworkPyTorch(BaseObject, ABC, nn.Module):
         criterion=nn.MSELoss,
         optimizer=torch.optim.Adam,
         lr=0.003,
-        num_epochs=16,
+        num_epochs=50,
         batch_size=8,
     ):
         super().__init__()
@@ -74,12 +74,15 @@ class BaseDeepNetworkPyTorch(BaseObject, ABC, nn.Module):
         dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
         self.network.train()
 
-        for x, y in dataloader:
-            y_pred = self.network(x)
-            loss = self.criterion(y_pred, y)
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+        for _i_epoch in range(self.num_epochs):
+            for x, y in dataloader:
+                y_pred = self.network(x)
+                loss = self.criterion(y_pred, y)
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+
+            # print(f"EPOCH: {i_epoch}, LOSS: {loss.item():.4f}")
 
     def predict(self, x):
         """Predict with fitted model."""
