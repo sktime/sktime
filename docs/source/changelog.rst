@@ -13,6 +13,290 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.21.0 - 2023-07-19
+---------------------------
+
+Maintenance release - dependency updates, scheduled deprecations.
+
+For last non-maintenance content updates, see 0.20.1.
+
+Contents
+~~~~~~~~
+
+* ``sktime`` is now compatible with ``sklearn 1.3.X``
+* start of change in column naming convention for univariate probabilistic forecasts,
+  in preparation for 0.23.0 - see below for details for users and developers
+* scheduled 0.21.0 deprecation actions
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``scikit-learn`` version bounds now allow versions ``1.3.X``
+* the ``deprecated`` package is deprecated as a core dependency of ``sktime``, and
+  will cease to be a dependency from 0.22.0 onwards. No action is required of users
+  or developers, as the package was used only for internal deprecation actions.
+* ``pycatch22`` has been added back as a soft dependency, after python 3.7 EOL
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting - change of column naming for univariate probabilistic forecasts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From 0.23.0, returns of forecasters' ``predict_quantiles`` and ``predict_intervals``
+in the univariate case will be made consistent with the multivariate case:
+the name of the uppermost (0-indexed) column level will always be the variable name.
+Previously, in the univariate case, it was always ``Coverage`` or ``Quantiles``,
+irrespective of the variable name present in ``y``, whereas in the multivariate case,
+it was always the variable names present in ``y``.
+
+The change will take place over two MINOR cycles, 0.21.X (early phase) and 0.22.X (late phase),
+the union of which makes up the change period.
+We explain the schedule below, for users, and then for maintainers of third party forecasters ("extenders").
+
+Users should use a new, temporary ``legacy_interface`` argument to handle the change:
+
+* Users - change period. The two forecaster methods ``predict_quantiles`` and ``predict_intervals``
+  will have a new boolean argument, ``legacy_interface``. If ``True``, the methods
+  produce returns with the current naming convention. If ``False``, the methods produce
+  returns with the future, post-change naming covention.
+* Users - early and late phase. In the early phase (0.21.X), the default value of ``legacy_interface``
+  will be ``True``. In the late phase (0.22.X), the default value of ``legacy_interface`` will be ``False``.
+  This change of default will occur in 0.22.0, and may be breaking for users who do not specify the argument.
+* Users - post-deprecation. In 0.23.0, the ``legacy_interface`` argument will be removed.
+  The methods will always produce returns with the future, post-change naming convention.
+  This change may be breaking for users who do not remove the argument by 0.23.0.
+* Appropriate deprecation warnings will be raised from 0.21.0 onwards, until 0.22.last.
+* Users - recommended change actions. Users should aim to upgrade dependent code to ``legacy_interface=False`` behaviour by 0.21.last,
+  and to remove ``legacy_interface`` arguments after 0.22.0 and before 0.23.0.
+  Users who need more time to upgrade dependent code can set ``legacy_interface=True`` until 0.22.last.
+
+Extenders should use the new ``"pred_int:legacy_interface:testcfg"`` config field to upgrade their third party extensions:
+
+* Extenders - change period. The config field ``"pred_int:legacy_interface:testcfg"`` has been added
+  to all descendants of the ``BaseForecaster`` class. This config controls the contract
+  that the ``check_estimator`` and ``pytest`` tests check against, and can be set by ``set_config``.
+* The default value of the tag is ``"auto"`` - this means that the tests will check against the current
+  naming convention in the early phase (0.21.X), and against the future naming convention in the late phase (0.22.X),
+  for ``_predict_quantiles`` or ``_predict_intervals`` having the standard signature, without ``legacy_interface``.
+  From 0.23.0 on, the tag will have no effect.
+* In the change period: if the tag is set to ``"new"``, the tests will always check against the new interface;
+  if the tag is set to ``"old"``, the tests will check against the old interface, irrespective of the phase.
+  From 0.23.0, the setting will have no effect and the tests will always check against the new interface.
+* Extenders - recommended change actions: Extenders should aim to upgrade their third party extensions
+  to ``"pred_int:legacy_interface:testcfg=new"`` behaviour by 0.21.last. Tests against late stage
+  and post-deprecation behaviour can be enforced by setting ``forecaster.set_config({"pred_int:legacy_interface:testcfg": "new"})``,
+  before passing it to ``check_estimator``.
+  The ``set_config`` call can be removed after 0.22.0, and should be removed before 0.23.0, but will not be breaking if not removed.
+* Extenders with a substantial user base of their own can, alternatively, implement and release ``_predict_quantiles`` and ``_predict_intervals``
+  with a ``legacy_interface`` argument before 0.22.0, the default of which should be ``False`` from the beginning on (even in early phase).
+  In this case, the ``"pred_int:legacy_interface:testcfg"`` tag should be set to ``"auto"``,
+  and the tests will check both new and old behaviour. The ``legacy_interface`` argument can be removed after 0.23.0.
+  This will result in the same transition experience for users of the extenders' forecasters as for users of ``sktime`` proper.
+
+
+List of PR
+~~~~~~~~~~
+
+* [ENH] replace ``"Coverage"`` and ``"Quantiles"`` default variable name in univariate case with variable name (:pr:`4880`) :user:`fkiraly`, :user:`benheid`
+* [BUG] 0.21.0 release bugfix - fix interaction of ``sklearn 1.3.0`` with dynamic error metic based on ``partial`` in ``test_make_scorer`` (:pr:`4915`) :user:`fkiraly`
+* [MNT] xfail ``mlflow`` failure #4904 until debugged, gitignore for ``py-spy`` (:pr:`4913`) :user:`fkiraly`
+* [DOC] 0.21.0 release action - update deprecation guide to reflect deprecation of use of `deprecated` (:pr:`4914`) :user:`fkiraly`
+* [MNT] 0.21.0 release action - update ``sklearn`` bound to ``<1.4.0`` (:pr:`4778`) :user:`fkiraly`
+* [MNT] 0.21.0 release action - add back ``pycatch22`` as a soft dependency post python 3.7 EOL (:pr:`4790`) :user:`fkiraly`
+
+Version 0.20.1 - 2023-07-14
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* data loader for Monash Forecasting Repository (:pr:`4826`) :user:`hazrulakmal`
+* estimator crafter = string serialization/deserialization for all object/estimator blueprint specifications (:pr:`4738`) :user:`fkiraly`
+* ``SkoptForecastingCV`` - hyperparameter tuning for forecasters using ``scikit-optimize`` (:pr:`4580`) :user:`hazrulakmal`
+* new forecaster - ``statsmodels`` ``AutoReg`` interface (:pr:`4774`) :user:`CTFallon`, :user:`mgazian000`, :user:`JonathanBechtel`
+* new forecaster - by-horizon ``FhPlexForecaster``, for different estimator/parameter per horizon (:pr:`4811`) :user:`fkiraly`
+* new transformer - ``SplitterSummarizer`` to apply transformer by fold (:pr:`4759`) :user:`BensHamza`
+* ``ColumnEnsembleTransformer`` - ``remainder`` argument (:pr:`4789`) :user:`fkiraly`
+* new classifier and regressor - MCDCNN estimators migrated from ``sktime-dl`` (:pr:`4637`) :user:`achieveordie`
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+BaseObject
+^^^^^^^^^^
+
+* object blueprint (specification) serialization/deserialization to string has been added.
+  "blueprints" in this sense are object composites at init state, e.g., a pristine forecasting pipeline.
+  All objects serialize by ``str`` coercion, e.g., ``str(my_pipeline)``, and deserialize
+  via ``sktime.registry.craft : str -> object``. The deserializer ``craft`` is a pseudo-inverse
+  of the serializer ``str`` for a fixed python environment, so can be used for fully reproducible
+  specification storage and sharing, e.g., in reproducible science or performance benchmarking.
+* further utilities ``registry.deps`` and ``registry.imports`` complement the serialization
+  toolbox. In an environment with only core dependencies of ``sktime``, the utility
+  ``deps : str -> list[str]`` produces a list of PEP 440 soft dependency specifiers
+  required to craft the serialized object (e.g., a forecasting pipeline) which can be used
+  to set up a python environment install before crafting. The utility ``imports : str -> str``
+  produces a code block of all python compilable imports required to craft the serialized object.
+* the tag ``python_dependencies_alias`` was added to manage estimator specific
+  dependencies where the package name differs from the import name.
+  See the estimator developer guide for further details.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* the transformations base interface, i.e., estimators inheriting From
+  ``BaseTransformer``, now allow ``X=None`` in ``transform`` without raising an
+  exception.
+  Individual transformers may now implement their own logic to deal with ``X=None``.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject
+^^^^^^^^^^
+
+* [ENH] estimator crafter aka deserialization of estimator spec from string (:pr:`4738`) :user:`fkiraly`
+* [ENH] ``_HeterogenousMetaEstimator`` to accept list of tuples of any length (:pr:`4793`) :user:`fkiraly`
+* [ENH] Improve handling of dependencies with alias (:pr:`4832`) :user:`hazrulakmal`
+* [ENH] Add an explicit context manager during estimator dump (:pr:`4859`) :user:`achieveordie`, :user:`yarnabrina`
+
+Benchmarking and Metrics
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] refactored ``evaluate`` routine, use splitters internally and allow for separate ``X``-split (:pr:`4861`) :user:`fkiraly`
+
+Data loaders
+^^^^^^^^^^^^
+
+* [ENH] data loader for Monash Forecasting Repository (:pr:`4826`) :user:`hazrulakmal`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] refactoring of ``ForecastingHorizon`` to use ``Index`` based ``cutoff`` in private methods (:pr:`4463`) :user:`fkiraly`
+* [ENH] ``SkoptForecastingCV`` - hyperparameter tuning using ``scikit-optimize`` (:pr:`4580`) :user:`hazrulakmal`
+* [ENH] add more contract tests for ``predict_interval``, ``predict_quantiles`` (:pr:`4763`) :user:`yarnabrina`
+* [ENH] ``statsmodels`` ``AutoReg`` interface (:pr:`4774`) :user:`CTFallon`, :user:`mgazian000`, :user:`JonathanBechtel`
+* [ENH] remove private defaults in forecasting module (:pr:`4810`) :user:`fkiraly`
+* [ENH] by-horizon forecaster, for different estimator/parameter per horizon (:pr:`4811`) :user:`fkiraly`
+* [ENH] splitter that replicates ``loc`` of another splitter (:pr:`4851`) :user:`fkiraly`
+* [ENH] test-plus-train splitter compositor (:pr:`4862`) :user:`fkiraly`
+* [ENH] set ``ForecastX`` missing data handling tag to ``True`` to properly cope with future unknown variables (:pr:`4876`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ensure ``BaggingClassifier`` can be used as univariate-to-multivariate compositor (:pr:`4788`) :user:`fkiraly`
+* [ENH] migrate MCDCNN classifier, regressor, network from ``sktime-dl`` (:pr:`4637`) :user:`achieveordie`
+* [ENH] in ``CNNNetwork``, add options to control ``padding`` and ``filter_size`` logic (:pr:`4784`) :user:`alan191006`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] migrate MCDCNN classifier, regressor, network from ``sktime-dl`` (:pr:`4637`) :user:`achieveordie`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] allow ``X=None`` in ``BaseTransformer.transform`` (:pr:`4112`) :user:`fkiraly`
+* [ENH] Add ``hour_of_week`` option to ``DateTimeFeatures`` transformer (:pr:`4724`) :user:`VyomkeshVyas`
+* [ENH] ``ColumnEnsembleTransformer`` - ``remainder`` argument (:pr:`4789`) :user:`fkiraly`
+* [ENH] ``SplitterSummarizer`` transformer to apply transformer by fold (:pr:`4759`) :user:`BensHamza`
+
+Visualisations
+^^^^^^^^^^^^^^
+
+* [ENH] remove assumption about column names from ``plot_series`` / ``plot_interval`` (:pr:`4779`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Temporarily skip all DL Estimators (:pr:`4760`) :user:`achieveordie`
+* [MNT] remove verbose flag on windows CI (:pr:`4761`) :user:`fkiraly`
+* [MNT] address deprecation of ``sklearn`` ``if_delegate_has_method`` in 1.3 (:pr:`4764`) :user:`fkiraly`
+* [MNT] bound ``tslearn<0.6.0`` due to bad dependency handling and massive imports (:pr:`4819`) :user:`fkiraly`
+* [MNT] ensure CI for python 3.8-3.10 runs on ``pandas 2`` (:pr:`4795`) :user:`fkiraly`
+* [MNT] also restrict ``tslearn`` on the ``pandas 2`` testing dependency set (:pr:`4825`) :user:`fkiraly`
+* [MNT] clean-up of ``CODEOWNERS`` (:pr:`4782`) :user:`fkiraly`
+* [MNT] skip failing ``test_transform_and_smooth_fp`` on ``main`` (:pr:`4836`) :user:`fkiraly`
+* [MNT] unpin ``sphinx`` and plugins, with defensive upper bounds (:pr:`4823`) :user:`fkiraly`
+* [MNT] Dependabot Setup (:pr:`4852`) :user:`yarnabrina`
+* [MNT] update readthedocs env to python 3.11 and ubuntu 22.04 (:pr:`4821`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Bump actions/download-artifact from 2 to 3 (:pr:`4854`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Bump styfle/cancel-workflow-action from 0.9.1 to 0.11.0 (:pr:`4855`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Bump actions/upload-artifact from 2 to 3 (:pr:`4856`) :user:`dependabot[bot]`
+* [MNT] fix remaining ``sklearn 1.3.0`` compatibility issues (:pr:`4860`) :user:`fkiraly`, :user:`hazrulakmal`
+* [MNT] remove forgotten ``deprecated`` import from 0.13.0 (:pr:`4824`) :user:`fkiraly`
+* [MNT] Extend softdep error message tests support for packages with version speciefier and alias (:pr:`4867`) :user:`hazrulakmal`, :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Update Get Started docs, add regression vignette (:pr:`4216`) :user:`GargiChakraverty-yb`
+* [DOC] adds a banner for non-latest branches in read-the-docs (:pr:`4681`) :user:`yarnabrina`
+* [DOC] greatly simplified forecaster and transformer extension templates (:pr:`4729`) :user:`fkiraly`
+* [DOC] Added examples to docstrings for K-Means and K-Medoids (:pr:`4736`) :user:`CTFallon`
+* [DOC] Improvements to formulations in the README  (:pr:`4757`) :user:`mswat5`
+* [DOC] testing guide: add ellipsis flag to doctest command (:pr:`4768`) :user:`mdsaad2305`
+* [DOC] Examples added to docstrings for Time Series Forest Regressor and Dummy Regressor (:pr:`4775`) :user:`mgazian000`
+* [DOC] add missing metrics to API reference (:pr:`4813`) :user:`fkiraly`
+* [DOC] update date/year in LICENSE and readthedocs license constant (:pr:`4816`) :user:`fkiraly`, :user:`yarnabrina`
+* [DOC] improved guide for soft dependencies (:pr:`4831`) :user:`fkiraly`
+* [DOC] sort slightly disordered forecasting API reference (:pr:`4815`) :user:`fkiraly`
+* [DOC] fix ``ColumnSelect`` typos in documentation (:pr:`4800`) :user:`fkiraly`
+* [DOC] minor improvements to forecasting and transformer extension templates (:pr:`4828`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+Benchmarking and Metrics
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] allow unused parameters in metric when using ``make_forecasting_scorer`` (:pr:`4833`) :user:`fkiraly`
+* [BUG] fix ``evaluate`` utility for case where ``y`` and ``X`` are not equal length (:pr:`4861`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] Add temporary fix to ``_BaseWindowForecaster`` to handle simultaneous in and out-of-sample forecasts (:pr:`4812`) :user:`felipeangelimvieira`
+* [BUG] fix for ``make_reduction`` with unequal panels time index for ``global`` pooling (:pr:`4644`) :user:`kbpk`
+* [BUG] allows probabilistic predictions in ``DynamicFactor`` in presence of exogenous variables by (:pr:`4758`) :user:`yarnabrina`
+* [BUG] Fix ``predict_residuals`` internal data type conversion (:pr:`4772`) :user:`fkiraly`, :user:`benHeid`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix ``BoxCoxTransformer`` failure after ``scipy`` 1.11.0 (:pr:`4770`) :user:`fkiraly`
+* [BUG] ``ColumnEnsembleTransformer`` - bugfixing broken logic (:pr:`4789`) :user:`fkiraly`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* [BUG] fix sporadic failures in ``utils.plotting`` tests - set the ``matplotlib``
+  backend to ``agg`` to avoid that a GUI is triggered (:pr:`4781`) :user:`benHeid`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`achieveordie`,
+:user:`alan191006`,
+:user:`benHeid`,
+:user:`BensHamza`,
+:user:`CTFallon`,
+:user:`felipeangelimvieira`,
+:user:`fkiraly`,
+:user:`GargiChakraverty-yb`,
+:user:`hazrulakmal`,
+:user:`JonathanBechtel`,
+:user:`kbpk`,
+:user:`mdsaad2305`,
+:user:`mgazian000`,
+:user:`mswat5`,
+:user:`VyomkeshVyas`,
+:user:`yarnabrina`
+
+
 Version 0.20.0 - 2023-06-21
 ---------------------------
 

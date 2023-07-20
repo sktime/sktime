@@ -571,8 +571,12 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         else:
             func = self.func
 
+        # import here for now to avoid interaction with getmembers in tests
+        # todo: clean up ancient getmembers in test_metrics_classes
+        from functools import partial
+
         # if func does not catch kwargs, subset to args of func
-        if getfullargspec(func).varkw is None:
+        if getfullargspec(func).varkw is None or isinstance(func, partial):
             func_params = signature(func).parameters.keys()
             func_params = set(func_params).difference(["y_true", "y_pred"])
             func_params = func_params.intersection(params.keys())
