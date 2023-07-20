@@ -329,13 +329,6 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        if level and not hasattr(self.estimator, "predict"):
-            raise ValueError(
-                "The provided trend_forecaster does not support interval prediction."
-                "Please remove the 'level' parameter or use a different model that"
-                "supports it."
-            )
-
         mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
         if level is None:
             return {"mean": mean}
@@ -363,13 +356,6 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        if level and not hasattr(self.estimator, "predict_interval"):
-            raise ValueError(
-                "The provided trend_forecaster does not support interval prediction."
-                "Please remove the 'level' parameter or use a different model that"
-                "supports it."
-            )
-
         fitted = self.estimator.predict(self.estimator._y.index)[:, 0]
 
         if level is None:
