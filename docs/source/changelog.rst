@@ -59,7 +59,7 @@ Users should use a new, temporary ``legacy_interface`` argument to handle the ch
 * Users - change period. The two forecaster methods ``predict_quantiles`` and ``predict_intervals``
   will have a new boolean argument, ``legacy_interface``. If ``True``, the methods
   produce returns with the current naming convention. If ``False``, the methods produce
-  returns with the future, post-change naming conention.
+  returns with the future, post-change naming covention.
 * Users - early and late phase. In the early phase (0.21.X), the default value of ``legacy_interface``
   will be ``True``. In the late phase (0.22.X), the default value of ``legacy_interface`` will be ``False``.
   This change of default will occur in 0.22.0, and may be breaking for users who do not specify the argument.
