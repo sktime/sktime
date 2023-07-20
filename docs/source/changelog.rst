@@ -71,23 +71,23 @@ Users should use a new, temporary ``legacy_interface`` argument to handle the ch
   and to remove ``legacy_interface`` arguments after 0.22.0 and before 0.23.0.
   Users who need more time to upgrade dependent code can set ``legacy_interface=True`` until 0.22.last.
 
-Extenders should use ``"pred_int:legacy_interface:testcfg"`` config to upgrade their third party extensions:
+Extenders should use the new ``"pred_int:legacy_interface:testcfg"`` config field to upgrade their third party extensions:
 
 * Extenders - change period. The config field ``"pred_int:legacy_interface:testcfg"`` has been added
   to all descendants of the ``BaseForecaster`` class. This config controls the contract
   that the ``check_estimator`` and ``pytest`` tests check against, and can be set by ``set_config``.
-* The default of the tag is ``"auto"`` - this means that the tests will check against the current
+* The default value of the tag is ``"auto"`` - this means that the tests will check against the current
   naming convention in the early phase (0.21.X), and against the future naming convention in the late phase (0.22.X),
   for ``_predict_quantiles`` or ``_predict_intervals`` having the standard signature, without ``legacy_interface``.
   From 0.23.0 on, the tag will have no effect.
-* In the change period: tf the tag is set to ``"new"``, the tests will always check against the new interface;
+* In the change period: if the tag is set to ``"new"``, the tests will always check against the new interface;
   if the tag is set to ``"old"``, the tests will check against the old interface, irrespective of the phase.
   From 0.23.0, the setting will have no effect and the tests will always check against the new interface.
 * Extenders - recommended change actions: Extenders should aim to upgrade their third party extensions
   to ``"pred_int:legacy_interface:testcfg=new"`` behaviour by 0.21.last. Tests against late stage
   and post-deprecation behaviour can be enforced by setting ``forecaster.set_config({"pred_int:legacy_interface:testcfg": "new"})``,
   before passing it to ``check_estimator``.
-  The ``set_config`` call can be removed after 0.22.0, and should be removed before 0.23.0.
+  The ``set_config`` call can be removed after 0.22.0, and should be removed before 0.23.0, but will not be breaking if not removed.
 * Extenders with a substantial user base of their own can, alternatively, implement and release ``_predict_quantiles`` and ``_predict_intervals``
   with a ``legacy_interface`` argument before 0.22.0, the default of which should be ``False`` from the beginning on (even in early phase).
   In this case, the ``"pred_int:legacy_interface:testcfg"`` tag should be set to ``"auto"``,
