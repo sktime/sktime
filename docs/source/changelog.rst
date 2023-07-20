@@ -32,6 +32,9 @@ Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
 * ``scikit-learn`` version bounds now allow versions ``1.3.X``
+* the ``deprecated`` package is deprecated as a core dependency of ``sktime``, and
+  will cease to be a dependency from 0.22.0 onwards. No action is required of users
+  or developers, as the package was used only for internal deprecation actions.
 * ``pycatch22`` has been added back as a soft dependency, after python 3.7 EOL
 
 Deprecations and removals
