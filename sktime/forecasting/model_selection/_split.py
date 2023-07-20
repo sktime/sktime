@@ -3,6 +3,7 @@
 """Implement dataset splitting for model evaluation and selection."""
 
 __all__ = [
+    "ExpandingGreedySplitter",
     "ExpandingWindowSplitter",
     "SlidingWindowSplitter",
     "CutoffSplitter",
@@ -11,7 +12,14 @@ __all__ = [
     "temporal_train_test_split",
     "TestPlusTrainSplitter",
 ]
-__author__ = ["mloning", "kkoralturk", "khrapovs", "chillerobscuro", "fkiraly"]
+__author__ = [
+    "mloning",
+    "kkoralturk",
+    "khrapovs",
+    "chillerobscuro",
+    "fkiraly",
+    "davidgilbertson",
+]
 
 from typing import Iterator, Optional, Tuple, Union
 
@@ -1183,6 +1191,71 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
         return self._split_windows_generic(expanding=True, **kwargs)
+
+
+class ExpandingGreedySplitter(BaseSplitter):
+    """Splitter that uses all available data.
+
+    Takes an integer `test_size` that defines the number of steps included in the
+    test set of each fold. The train set of each fold will contain all data before
+    the test set. If the data contains multiple instances, `test_size` is
+    _per instance_.
+
+    If no `step_length` is defined, the test sets (one for each fold) will be
+    adjacent, taken from the end of the dataset.
+
+    For example, with `test_size=7` and `folds=5`, the test sets in total will cover
+    the last 35 steps of the data with no overlap.
+
+    Parameters
+    ----------
+    test_size : int
+        The number of steps included in the test set of each fold.
+    folds : int, default = 5
+        The number of folds.
+    step_length : int, optional
+        The number of steps advanced for each fold. Defaults to `test_size`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.forecasting.model_selection import ExpandingGreedySplitter
+
+    >>> ts = np.arange(10)
+    >>> splitter = ExpandingGreedySplitter(test_size=3, folds=2)
+    >>> list(splitter.split(ts))  # doctest: +SKIP
+    [
+        (array([0, 1, 2, 3]), array([4, 5, 6])),
+        (array([0, 1, 2, 3, 4, 5, 6]), array([7, 8, 9]))
+    ]
+    """
+
+    _tags = {"split_hierarchical": True}
+
+    def __init__(self, test_size: int, folds: int = 5, step_length: int = None):
+        super().__init__()
+        self.folds = folds
+        self.test_size = test_size
+        self.step_length = step_length
+        self.fh = np.arange(test_size) + 1
+
+    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        if isinstance(y, pd.MultiIndex):
+            groups = pd.Series(index=y).groupby(y.names[:-1])
+            reverse_idx = groups.transform("size") - groups.cumcount() - 1
+        else:
+            reverse_idx = np.arange(len(y))[::-1]
+
+        step_length = self.step_length or self.test_size
+
+        for i in reversed(range(self.folds)):
+            tst_end = i * step_length
+            trn_end = tst_end + self.test_size
+            trn_indices = np.flatnonzero(reverse_idx >= trn_end)
+            tst_indices = np.flatnonzero(
+                (reverse_idx < trn_end) & (reverse_idx >= tst_end)
+            )
+            yield trn_indices, tst_indices
 
 
 class SingleWindowSplitter(BaseSplitter):
