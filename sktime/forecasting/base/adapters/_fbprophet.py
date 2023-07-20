@@ -205,7 +205,9 @@ class _ProphetAdapter(BaseForecaster):
 
         return y_pred
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -245,7 +247,11 @@ class _ProphetAdapter(BaseForecaster):
         X = self._convert_X_for_exog(X, fh)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = ["Coverage"]
+        var_names = self._get_varnames(
+            default="Coverage", legacy_interface=legacy_interface
+        )
+        var_name = var_names[0]
+
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
@@ -269,10 +275,10 @@ class _ProphetAdapter(BaseForecaster):
             # retrieve lower/upper and write in pred_int return frame
             # instead of writing lower to lower, upper to upper
             #  we take the min/max for lower and upper
-            #  because prophet (erroneously?) uses MC indenendent for upper/lower
+            #  because prophet (erroneously?) uses MC independent for upper/lower
             #  so if coverage is small, it can happen that upper < lower in prophet
-            pred_int[("Coverage", c, "lower")] = out_prophet.min(axis=1)
-            pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
+            pred_int[(var_name, c, "lower")] = out_prophet.min(axis=1)
+            pred_int[(var_name, c, "upper")] = out_prophet.max(axis=1)
 
         if self.y_index_was_int_ or self.y_index_was_period_:
             pred_int.index = self.fh.to_absolute_index(cutoff=self.cutoff)

@@ -39,21 +39,24 @@ Estimators with a soft dependency need to ensure the following:
    e.g., in ``_fit`` or ``__init__`` methods of the estimator.
    In ``__init__``, imports should happen only after calls to ``super(cls).__init__``.
 *  the ``python_dependencies`` tag of the estimator is populated with a ``str``,
-   or a ``list`` of ``str``, of import dependencies. Exceptions will automatically raised when constructing the estimator
-   in an environment without the required packages.
+   or a ``list`` of ``str``, of dependency requirements, where ``str`` are PEP 440 compliant version specification ``str``
+   such as ``pandas>=2.0.1``. Exceptions will automatically be raised when constructing the estimator
+   in an environment where the requirements are not met.
 *  In a case where the package import differs from the package name, i.e., ``import package_string`` is different from
    ``pip install different-package-string`` (usually the case for packages containing a dash in the name), the ``python_dependencies_alias`` tag
-   should be populated to pass the information on package and import strings as ``dict`` such as ``{"scikit-learn":"sklearn"}``.
+   should be populated to pass the information on package and import strings as ``dict`` such as ``{"scikit-learn": "sklearn"}``.
 *  If the soft dependencies require specific python versions, the ``python_version``
    tag should also be populated, with a PEP 440 compliant version specification ``str`` such as ``"<3.10"`` or ``">3.6,~=3.8"``.
-*  If including docstring examples that use soft dependencies, ensure to skip doctest. To do this add a ``# doctest: +SKIP`` to the end of each
-   line in the doctest to skip. Check out the arima estimator as as an example. If concerned that skipping the test will reduce test coverage,
-   consider exposing the doctest example as a pytest test function instead, see below how to handle soft dependencies in pytest functions.".
-*  Decorate all pytest tests that import soft dependencies with a ``@pytest.mark.skipif(...)`` conditional on a check to ``_check_soft_dependencies``
-   for your new soft depenency.  Be sure that all soft dependencies which are imported for testing are imported within the test funciton itself,
-   rather than for the whole module!  This decorator will then skip your test unless the system has the required packages installed.  Doing this is
-   helpful for any users running ``check_estimator`` on all estimators, or a full local `pytest` run without the required soft dependency.
-   Again, see the tests for pydarima (in forecasting) for a concrete example.
+*  If including docstring examples that use soft dependencies, ensure to skip the corresponding doctest,
+   in order to avoid that ``doctest`` attempts to import the soft dependency when it is not present.
+   To do this, add a ``# doctest: +SKIP`` to the end of each line in the doctest to skip it entirely.
+   See ``forecasting.arima.ARIMA`` as as an example. If concerned that skipping the test will reduce test coverage,
+   consider exposing the doctest example as a pytest test function instead, see below how to handle soft dependencies in pytest functions.
+*  Decorate all ``pytest`` tests that import soft dependencies with a ``@pytest.mark.skipif(...)`` conditional on a check to ``_check_soft_dependencies``
+   for your new soft depenency, with ``severity="none"``.  Be sure that all soft dependencies imported for testing are imported within the test function itself,
+   rather than for the whole module!  This decorator will then skip your test, including imports, unless the system has the required packages installed.
+   This prevents crashes for any users running ``check_estimator`` on all estimators, or a full local ``pytest`` run without the required soft dependency.
+   See the tests in ``forecasting.tests.test_pmdarima`` for a concrete example.
 
 Adding a new soft dependency
 ----------------------------
