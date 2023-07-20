@@ -300,7 +300,7 @@ class StatsForecastBackAdapter:
         Parameters
         ----------
         y : ndarray
-            Clean time series of shape (t, ).
+            Time series of shape (t, ) without missing values
         X : typing.Optional[numpy.ndarray], default=None
 
         Returns
