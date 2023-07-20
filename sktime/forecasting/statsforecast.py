@@ -606,12 +606,6 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     ):
         super().__init__()
 
-        try:
-            _check_soft_dependencies("statsforecast")
-            from statsforecast.models import _TS
-        except ModuleNotFoundError:
-            pass
-
         from sklearn.base import clone
 
         self.trend_forecaster = trend_forecaster
@@ -629,12 +623,11 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                 self._trend_forecaster = StatsForecastBackAdapter(
                     self._trend_forecaster
                 )
-            # if trend_forecaster is not StatsForecast forecaster
-            elif not isinstance(self._trend_forecaster, _TS):
+            else:
                 raise TypeError(
                     "The provided forecaster is not compatible with MSTL. Please ensure"
                     " that the forecaster you pass into the model is a sktime "
-                    "forecaster or statsforecast forecaster."
+                    "forecaster."
                 )
 
     def _instantiate_model(self):
@@ -645,13 +638,6 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             season_length=self.season_length,
             trend_forecaster=self._trend_forecaster,
         )
-
-    def __getattr__(self, name):
-        """Return self._trend_forecaster when self.trend_forecaster is accessed."""
-        if name == "trend_forecaster":
-            return self._trend_forecaster
-        else:
-            return self.__getattribute__(name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
