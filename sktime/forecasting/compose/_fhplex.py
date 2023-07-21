@@ -41,9 +41,11 @@ class FhPlexForecaster(BaseForecaster):
     fh_contiguous : bool, default=False
         whether fh in inner loops are enforced to be contiguous
         True: forecaster with fh_params[fN] is asked to forecast fN and only fN
-        False: forecaster with fh_params[fN] is asked to forecast 1,2, ... fN
+        False: forecaster with fh_params[fN] is asked to forecast 1, 2, ..., fN
             and the output is then subset to the forecast of fN
             this is required if the forecaster can only forecast contiguous horizons
+        CAUTION: if using grid search inside, then ``False`` will cause the
+        tuning metric to be evaluated on horizons 1, 2, ..., fN, not just fN
 
     Attributes
     ----------
