@@ -45,7 +45,7 @@ def test_paramplugin_dict():
     from sklearn.ensemble import RandomForestRegressor
 
     from sktime.forecasting.base import ForecastingHorizon
-    from sktime.forecasting.compose import make_reduction, EnsembleForecaster
+    from sktime.forecasting.compose import EnsembleForecaster, make_reduction
     from sktime.forecasting.model_selection import (
         ExpandingWindowSplitter,
         ForecastingGridSearchCV,
@@ -73,7 +73,7 @@ def test_paramplugin_dict():
     plugin_fcst = PluginParamsForecaster(
         param_est=cv_random_forest,
         forecaster=ensembler,
-        params={"forecasters": "n_best_forecasters"}
+        params={"forecasters": "n_best_forecasters"},
     )
 
     plugin_fcst.fit(y, X, fh=horizon)
