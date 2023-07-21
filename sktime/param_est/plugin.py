@@ -180,10 +180,8 @@ class PluginParamsForecaster(_DelegatedForecaster):
         }
         self.param_map_ = param_map
 
-        print(param_map)
         # obtain the values of fitted params, and set forecaster to those
         new_params = {k: fitted_params[v] for k, v in param_map.items()}
-        print(new_params)
         forecaster.set_params(**new_params)
 
         # fit the forecaster, with the fitted parameter values
