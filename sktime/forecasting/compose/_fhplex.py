@@ -75,8 +75,8 @@ class FhPlexForecaster(BaseForecaster):
     }
 
     def __init__(
-            self, forecaster, fh_params=None, fh_lookup="relative", fh_contiguous=False
-        ):
+        self, forecaster, fh_params=None, fh_lookup="relative", fh_contiguous=False
+    ):
         self.forecaster = forecaster
         self.fh_params = fh_params
         self.fh_lookup = fh_lookup
