@@ -2,7 +2,7 @@
 
 import torch
 
-from sktime.networks.base import BaseDeepNetworkPyTorch
+from sktime.forecasting.deep_learning.base import BaseDeepNetworkPyTorch
 
 
 class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
@@ -49,6 +49,16 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     ):
         from sktime.networks.ltsf import LTSFLinearNetwork
 
+        self.seq_len = seq_len
+        self.pred_len = pred_len
+        self.criterion = criterion
+        self.optimizer = optimizer
+        self.lr = lr
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
+        self.in_channels = in_channels
+        self.individual = individual
+
         super().__init__(
             network=LTSFLinearNetwork(
                 seq_len,
@@ -62,6 +72,3 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             num_epochs=num_epochs,
             batch_size=batch_size,
         )
-
-        self.in_channels = in_channels
-        self.individual = individual
