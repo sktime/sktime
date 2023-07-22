@@ -176,7 +176,10 @@ In the ``anaconda prompt`` terminal:
 
 5. Activate the environment: :code:`conda activate sktime-dev`
 
-6. Build an editable version of sktime :code:`pip install -e .[all_extras,dev]`
+6. Build an editable version of sktime :code:`pip install -e .[dev]`
+In order to install all soft dependencies, use :code:`pip install -e .[dev, all-extras]`
+If you are on Mac, use :code:`pip install -e ".[dev]"`
+
 
 7. If everything has worked you should see message "successfully installed sktime"
 
