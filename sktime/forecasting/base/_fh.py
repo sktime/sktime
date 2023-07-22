@@ -42,7 +42,6 @@ DELEGATED_METHODS = (
     "__ge__",
     "__ne__",
     "__lt__",
-    "__eq__",
     "__le__",
     "__radd__",
     "__rsub__",
@@ -353,6 +352,32 @@ class ForecastingHorizon:
         if freq is None:
             freq = self._freq
         return type(self)(values=values, is_relative=is_relative, freq=freq)
+
+    def __eq__(self, other):
+        """Equality dunder. Compares is_relative, freq, and values."""
+        from sktime.utils._testing.deep_equals import deep_equals
+
+        if not isinstance(other, ForecastingHorizon):
+            try:
+                other = ForecastingHorizon(other)
+            except Exception:
+                return False
+
+        if not self.is_relative == other.is_relative:
+            return False
+
+        if not self.freq == other.freq:
+            return False
+
+        if not deep_equals(self._values, other._values):
+            return False
+
+        return True
+
+    def __hash__(self):
+        """Need to define hash since we defined eq and used in _is_relative, etc."""
+        value_hash = hash(tuple(self._values.to_list()))
+        return hash((self.is_relative, self.freq, value_hash))
 
     @property
     def is_relative(self) -> bool:
