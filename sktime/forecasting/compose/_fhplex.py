@@ -49,7 +49,7 @@ class FhPlexForecaster(BaseForecaster):
     >>> from sktime.forecasting.compose import FhPlexForecaster
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> y = _make_hierarchical()
-    >>> f = ForecastByLevel(NaiveForecaster(), groupby="local")
+    >>> f = FhPlexForecaster(NaiveForecaster())
     >>> f.fit(y)
     ForecastByLevel(...)
     >>> fitted_forecasters = f.forecasters_
