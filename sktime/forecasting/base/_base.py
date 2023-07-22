@@ -944,6 +944,8 @@ class BaseForecaster(BaseEstimator):
         X=None,
         update_params=True,
         reset_forecaster=True,
+        output_format="auto",
+        fh_priority="cv",
     ):
         """Make predictions and update model iteratively over the test set.
 
@@ -1004,42 +1006,146 @@ class BaseForecaster(BaseEstimator):
                 and cutoff, model parameters, data memory of self do not change
             if False, will update self when the update/predict sequence is run
                 as if update/predict were called directly
+        output_format : str, optional (default="auto")
+            controls which format the output y_pred will be returned in, see Returns
+            "overwrite" : output is in of same type format as y,
+                forecasts from later folds overwrite forecasts from earlier folds
+            "multiindex" : output is pd.DataFrame, indexed by (cutoff, horizon)
+            "col_multiindex" : output is pd.DataFrame, column-indexed by cutoff
+            "auto" : as "overwrite" if collection of absolute horizon points is unique
+                as "multiindex" if collection of absolute horizon points is not unique
+        fh_priority : str, optional (default="cv")
+            which fh - of `self`, or of `cv` - will be used if the two are discrepant
+            "cv" - the `fh` of the `cv` argument is used
+            "self" - the `fh` of `self` is used
 
         Returns
         -------
         y_pred : object that tabulates point forecasts from multiple split batches
             format depends on pairs (cutoff, absolute horizon) forecast overall
-            if collection of absolute horizon points is unique:
+            output_format="overwrite", or "auto" with unique absolute horizon points:
                 type is time series in sktime compatible data container format
                 cutoff is suppressed in output
                 has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
-            if collection of absolute horizon points is not unique:
+            output_format="col_multiindex", or "auto" and duplicate horizon points:
                 type is a pandas DataFrame, with row and col index being time stamps
                 row index corresponds to cutoffs that are predicted from
                 column index corresponds to absolut horizons that are predicted
                 entry is the point prediction of col index predicted from row index
                 entry is nan if no prediction is made at that (cutoff, horizon) pair
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
-
-        if cv is None:
-            cv = ExpandingWindowSplitter(initial_window=1)
-
         self.check_is_fitted()
 
-        # input checks and minor coercions on X, y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        if cv is None:
+            from sktime.forecasting.model_selection import ExpandingWindowSplitter
 
-        cv = check_cv(cv)
+            cv = ExpandingWindowSplitter(initial_window=1)
+        else:
+            cv = check_cv(cv)
 
-        return self._predict_moving_cutoff(
-            y=y_inner,
-            cv=cv,
-            X=X_inner,
-            update_params=update_params,
-            reset_forecaster=reset_forecaster,
+        if fh_priority == "self":
+            fh = self.fh
+        else:
+            fh = cv.get_fh()
+
+        y_preds = []
+        cutoffs = []
+
+        # enter into a detached cutoff mode, if reset_forecaster is True
+        if reset_forecaster:
+            self_copy = deepcopy(self)
+        # otherwise just work with a reference to self
+        else:
+            self_copy = self
+
+        # set cutoff to time point before data
+        y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
+        self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
+
+        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
+        y_valid, _, y_metadata = check_is_scitype(
+            y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
         )
+        msg = (
+            "y must be in an sktime compatible format, "
+            "of scitype Series, Panel or Hierarchical, "
+            "for instance a pandas.DataFrame with sktime compatible time indices, "
+            "or with MultiIndex and last(-1) level an sktime compatible time index."
+            " See the forecasting tutorial examples/01_forecasting.ipynb, or"
+            " the data format tutorial examples/AA_datatypes_and_datasets.ipynb,"
+            "If you think y is already in an sktime supported input format, "
+            "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
+            "where mtype is the string of the type specification you want for y. "
+        )
+        if not y_valid:
+            raise TypeError(msg)
+
+        # convert to data frame to avoid complicated special case treatment
+        y_store = {}
+        y_mtype = y_metadata["mtype"]
+        y_df = convert_to(
+            y,
+            ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+            store=y_store,
+        )
+
+        # iterate over data
+        for y_new, _ in cv.split_series(y_df):
+            # we use `update_predict_single` here
+            #  this updates the forecasting horizon
+            y_pred = self_copy._update_predict_single(
+                y=y_new,
+                fh=fh,
+                X=X,
+                update_params=update_params,
+            )
+            # y_preds is now guaranteed list of pandas.DataFrame
+            y_preds.append(y_pred)
+            cutoffs.append(self_copy.cutoff)
+
+        y_mi = y_preds[0]
+
+        for y_upd in y_preds[1:]:
+            y_mi = update_data(y_mi, y_upd)
+
+        # index_duplicated = is there a duplicate absolute horizon index
+        index_duplicated = len(y_mi) < sum([len(y) for y in y_preds])
+
+        # resolve "auto" output_format depending
+        if output_format == "auto":
+            if index_duplicated:
+                output_format = "col_multiindex"
+            else:
+                output_format = "overwrite"
+
+        if output_format == "overwrite":
+            # return series for single step ahead predictions
+            y_pred = pd.concat(y_preds)
+        elif output_format == "col_multiindex":
+            y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
+            y_pred_col_names = list(y_pred.columns.names)
+            y_pred_col_names[0] = "cutoff"
+            y_pred.columns.names = y_pred_col_names
+        elif output_format == "multiindex":
+            y_pred = pd.concat(y_preds, axis=0, keys=cutoffs)
+            y_pred = y_pred.swaplevel(0, -1)
+            y_pred_index_names = list(y_pred.index.names)
+            y_pred_index_names[-1] = "cutoff"
+            y_pred.index.names = y_pred_index_names
+        else:
+            raise ValueError(
+                f"invalid output_format found in update_predict: {output_format}"
+            )
+
+        if output_format == "overwrite":
+            y_pred = convert_to(
+                y_pred,
+                y_mtype,
+                store=y_store,
+            )
+
+        return y_pred
 
     def update_predict_single(
         self,
