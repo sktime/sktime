@@ -2227,6 +2227,16 @@
         "code",
         "bug"
       ]
+    },
+
+    {
+      "login": "julia-kraus",
+      "name": "Julia Kraus",
+      "avatar_url": "https://avatars.githubusercontent.com/julia-kraus",
+      "profile": "https://github.com/julia-kraus",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
