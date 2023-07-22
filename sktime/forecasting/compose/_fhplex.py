@@ -45,15 +45,30 @@ class FhPlexForecaster(BaseForecaster):
 
     Examples
     --------
+    >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import FhPlexForecaster
-    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> y = _make_hierarchical()
+
+    Simple example - same parameters per fh element
+    >>> y = load_airline()
     >>> f = FhPlexForecaster(NaiveForecaster())
-    >>> f.fit(y)
-    ForecastByLevel(...)
-    >>> fitted_forecasters = f.forecasters_
-    >>> fitted_forecasters_alt = f.get_fitted_params()["forecasters"]
+    >>> f.fit(y, fh=[1, 2, 3])
+    FhPlexForecaster(...)
+    >>> f.forecasters_  # get individual fitted forecasters
+    {1: NaiveForecaster(), 2: NaiveForecaster(), 3: NaiveForecaster()}
+    >>> f.get_fitted_params()["forecasters"]  # same via get_fitted_params
+    {1: NaiveForecaster(), 2: NaiveForecaster(), 3: NaiveForecaster()}
+    >>> y_pred = f.predict()
+
+    Simple example - different parameters per fh element
+    >>> y = load_airline()
+    >>> fh_params = [{}, {"strategy": "last"}, {"strategy": "mean"}]
+    >>> f = FhPlexForecaster(NaiveForecaster(), fh_params=fh_params)
+    >>> f.fit(y, fh=[1, 2, 3])
+    FhPlexForecaster(...)
+    >>> f.forecasters_  # get individual fitted forecasters
+    {1: NaiveForecaster(), 2: NaiveForecaster(), 3: NaiveForecaster(strategy='mean')}
+    >>> y_pred = f.predict()
     """
 
     _tags = {
