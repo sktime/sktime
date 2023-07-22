@@ -180,7 +180,8 @@ In the ``anaconda prompt`` terminal:
 
 3. Activate the environment: :code:`conda activate sktime-dev`
 
-4. Build an editable version of sktime :code:`pip install -e .[all_extras,dev]`
+4. Build an editable version of sktime :code:`pip install -e .[dev]`
+If you also want to install the soft dependencies, install them one-by-one or use: :code:`pip install -e .[all_extras,dev]`
 
 5. If everything has worked you should see message "successfully installed sktime"
 
@@ -194,7 +195,7 @@ Some users have experienced issues when installing NumPy, particularly version 1
 
         .. code-block:: bash
 
-            pip install -e ."[all_extras,dev]"
+            pip install -e ."[dev]"
 
 .. note::
 
