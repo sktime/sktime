@@ -20,7 +20,7 @@ For frequent issues with installation, consult the `Release versions - troublesh
 There are three different installation types:
 * Installing sktime releases
 * Installing the latest sktime development version
-* For sktime developers: Developer setup
+* For developers of sktime and 3rd party extensions: Developer setup
 
 Each of these three setups are explained below.
 
@@ -50,9 +50,10 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
     be found in the :ref:`troubleshooting section<Dependency error on mac ARM>` below.
 
 .. warning::
-    The soft dependencies with ``all_extras`` are only necessary for running all tests. However, they
-    slow down the download consicerably. For most develper scenarios, downloading ``all_extras`` will
-    not be necessary
+    The soft dependencies with ``all_extras`` are only necessary to have all estimators available, or to run all tests.
+    However, this slows down the downloads, and multiples test time.
+    For most user or developer scenarios, downloading ``all_extras`` will
+    not be necessary.
 
 
 Installing sktime from conda
@@ -157,19 +158,19 @@ The ``.whl`` package and ``.exe`` installers can be built with:
 
 The resulting packages are generated in the ``dist/`` folder.
 
-
-Setting up a development environment (For sktime contributors)
---------------------------------------------------------------
+Contributor or 3rd party extension developer setup
+--------------------------------------------------
 
 1. Follow the Git workflow: Fork and clone the repository as described in [Git and GitHub workflow](https://www.sktime.net/en/stable/developer_guide/git_workflow.html)
+
 2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
 This relies on an `anaconda installation <https://www.anaconda.com/products/individual#windows>`_. The process will be similar for ``venv`` or other virtual environment managers.
 
 In the ``anaconda prompt`` terminal:
 
-3. Navigate to your local sktime folder :code:`cd sktime`
+3. Navigate to your local sktime folder, :code:`cd sktime` or similar
 
-4. Create new environment with python 3.8: :code:`conda create -n sktime-dev python=3.8`
+4. Create new environment with a supported python version: :code:`conda create -n sktime-dev python=3.8` (or :code:`python=3.11` etc)
 
    .. warning::
        If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this.
@@ -179,7 +180,8 @@ In the ``anaconda prompt`` terminal:
 6. Build an editable version of sktime :code:`pip install -e .[dev]`
 In order to install all soft dependencies, use :code:`pip install -e .[dev]`
 If you are on Mac, use :code:`pip install -e ".[dev]"`
-If you also want to install the soft dependencies, install them one-by-one or use: :code:`pip install -e .[all_extras,dev]`
+If you also want to install soft dependencies, install them individually, after the above,
+or instead use: :code:`pip install -e .[all_extras,dev]` to install all of them.
 
 7. If everything has worked you should see message "successfully installed sktime"
 
