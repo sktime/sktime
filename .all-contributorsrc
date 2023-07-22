@@ -2227,6 +2227,16 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "janpipek",
+      "name": "Jan Pipek",
+      "avatar_url": "https://avatars.githubusercontent.com/janpipek",
+      "profile": "https://github.com/janpipek",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }
