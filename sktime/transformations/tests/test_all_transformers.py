@@ -6,6 +6,7 @@ __all__ = []
 
 import pandas as pd
 
+from sktime.datasets import load_airline
 from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
@@ -174,6 +175,23 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             _assert_array_almost_equal(X, Xit)
         elif isinstance(X, pd.DataFrame):
             _assert_array_almost_equal(X.loc[Xit.index], Xit)
+
+    def test_update(self, estimator_instance):
+        """Test transformer update functionality."""
+        # todo: think of good way to deal with transformers that need y
+        if estimator_instance.get_tag("requires_y", False):
+            return None
+
+        y = load_airline()
+        y_fit = y[0:36]
+        y_update1 = y[36:72]
+        y_update2 = y[72:108]
+
+        estimator_instance.fit(y_fit)
+        estimator_instance.update(y_update1, update_params=True)
+        estimator_instance.transform(y_update1)
+        estimator_instance.update(y_update2, update_params=False)
+        estimator_instance.transform(y_update2)
 
 
 # todo: add testing of inverse_transform
