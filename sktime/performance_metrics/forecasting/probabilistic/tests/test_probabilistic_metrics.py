@@ -25,9 +25,47 @@ interval_metrics = [
     ConstraintViolation,
 ]
 
+alpha_s = [0.5]
+alpha_m = [0.05, 0.5, 0.95]
+coverage_s = 0.9
+coverage_m = [0.7, 0.8, 0.9, 0.99]
+
 all_metrics = quantile_metrics + interval_metrics
 
+@pytest.fixture
+def y_uni():
+    pass
 
+
+@pytest.fixture
+def y_multi():
+    pass
+
+@pytest.fixture
+def timeseries_fitted_naive_fc(n_columns, alpha, coverage):
+    y = _make_series(n_columns)
+    y_train, y_test = temporal_train_test_split(y_uni)
+    # fh: forecasting horizon
+    fh = np.arange(len(y_test)) + 1
+    f = NaiveVariance(NaiveForecaster())
+    f.fit(y_train)
+
+    return f
+
+@pytest.fixture
+def y_uni():
+    """Creates univariate test data fitted with naive forecaster"""
+    f = timeseries_fitted_naive_fc(n_columns=1)
+    return f
+
+@pytest.fixture
+def y_multi():
+    """Creates multivariate test data fitted with naive forecaster"""
+    f = timeseries_fitted_naive_fc(n_columns=3)
+    return f
+
+
+# creates univariate time series
 y_uni = _make_series(n_columns=1)
 y_train_uni, y_test_uni = temporal_train_test_split(y_uni)
 fh_uni = np.arange(len(y_test_uni)) + 1
@@ -48,6 +86,44 @@ single score Multivariate and multiscor
 For each of the data types we need to test with score average = T/F and multioutput with
 "raw_values" and "uniform_average"
 """
+
+@pytest.fixture
+def uni_data():
+    pass
+
+@pytest.fixture
+def multi_data():
+    pass
+
+# Comment. This is a strange data structure. Maybe decouple the differently sized
+# models?
+
+@pytest.fixture
+def interval_pred(fitted_model, fh, coverage):
+    return fitted_model.predict_interval(fh, coverage)
+
+# TODO: Find how to hand over fh to this
+@pytest.fixture
+def quantile_pred(fitted_model, fh, alpha):
+    return fitted_model.predict_quantile(fh, alpha)
+
+@pytest.fixture
+def quantile_data(fitted_model):
+    quantile_pred_s = interval_pred(fitted_model, coverage_s)
+    quantile_pred_m = interval_pred(fitted_model, coverage_m)
+    interval_pred_s = interval_pred(fitted_model, alpha_s)
+    interval_pred_m = interval_pred(fitted_model, alpha_m)
+    return [quantile_pred_s, interval_pred_s, quantile_pred_m, interval_pred_m]
+
+
+@pytest.fixture
+def uni_data():
+    pass
+
+def multi_data():
+    pass
+
+
 quantile_pred_uni_s = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.5])
 interval_pred_uni_s = f_uni.predict_interval(fh=fh_uni, coverage=0.9)
 quantile_pred_uni_m = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.05, 0.5, 0.95])
