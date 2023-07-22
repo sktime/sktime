@@ -27,9 +27,9 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
     Parameters
     ----------
     p: int (default 1)
-        GARCH heteroskedasticity lag parameter - number of lags for variance term.
-    q: int (default 1)
         AR parameter - number of auto-regressive lags.
+    q: int (default 1)
+        GARCH heteroskedasticity lag parameter - number of lags for variance term.
     """
 
     _tags = {
@@ -85,14 +85,10 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
 
     Direct interface to ``statsforecast.models.ARCH``.
 
-    This implements the Autoregressive Conditional 
+    This implements the Autoregressive Conditional
     Heteroskedasticity (ARCH) model.
 
-    Constructs an ARCH(p) model - note that this is in contrast to the usual
-    naming convetio where the single parameter is called ``q``.
-
-    That is, this parameterization, identical to the one in ``statsforecast``,
-    is equivalent to ``GARCH(p=0, q=p)`` and not ``GARCH(p=p, q=0)``.
+    Constructs an ARCH(p) model.
 
     Parameters
     ----------
@@ -141,6 +137,5 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = [{}, {"approximation": True, "p": 1, "q": 1}]
+        params = [{}, {"approximation": True, "p": 1}]
         return params
-
