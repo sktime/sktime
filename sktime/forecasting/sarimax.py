@@ -242,4 +242,16 @@ class SARIMAX(_StatsModelsAdapter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
 
-        return {}
+        return [
+            {
+                "order": (1, 0, 0),
+                "trend": [1,1,0,1],
+                "concentrate_scale": True,
+
+            },
+            {
+                "order": (2, 1, 2),
+                "seasonal_order": (1, 1, 0, 4),
+                "measurement_error": True,
+            }
+        ]
