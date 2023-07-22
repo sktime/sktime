@@ -243,25 +243,22 @@ class SARIMAX(_StatsModelsAdapter):
         """
         return [
             {
-                "order": (4, 0, 0),
-            },
-            {
-                "order": (1, 1, 1),
-                "seasonal_order": (1, 1, 0, 3),
-            },
-            {
-                "order": (2, 1, 2),
+                "order": (4, 1, 2),
                 "trend": "ct",
+                "time_varying_regression": True,
                 "enforce_stationarity": False,
                 "enforce_invertibility": False,
                 "concentrate_scale": True,
                 "use_exact_diffuse": True,
+                "mle_regression": False,
             },
             {
                 "order": [1, 0, 1],
                 "trend": [1, 1, 0, 1],
+                "measurement_error": True,
                 "seasonal_order": (1, 0, 1, 2),
                 "hamilton_representation": True,
                 "simple_differencing": True,
             },
+            # We cannot test the measurement_error argument with
         ]
