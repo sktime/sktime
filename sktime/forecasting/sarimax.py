@@ -260,5 +260,4 @@ class SARIMAX(_StatsModelsAdapter):
                 "hamilton_representation": True,
                 "simple_differencing": True,
             },
-            # We cannot test the measurement_error argument with
         ]
