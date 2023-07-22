@@ -16,20 +16,20 @@ from sktime.forecasting.base.adapters._generalised_statsforecast import (
 
 class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
     """StatsForecast GARCH estimator.
-    
-    This implements the Generalized Autoregressive Conditional 
+
+    Direct interface to ``statsforecast.models.GARCH``.
+
+    This implements the Generalized Autoregressive Conditional
     Heteroskedasticity (GARCH) model.
 
-    Returns the GARCH model according to p and q parameter input.
-    
+    Constructs a GARCH(p, q) model.
+
     Parameters
     ----------
     p: int (default 1)
-        Number of lagged versions of the series.
+        GARCH heteroskedasticity lag parameter - number of lags for variance term.
     q: int (default 1)
-        Number of moving average for the series.
-    alias: str (default "GARCH")
-        Custom name of the model. 
+        AR parameter - number of auto-regressive lags.
     """
 
     _tags = {
@@ -40,8 +40,8 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        p = 1,
-        q = 1,
+        p=1,
+        q=1,
     ):
         self.p = p
         self.q = q
@@ -82,18 +82,22 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
 
 class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
     """StatsForecast ARCH estimator.
-    
+
+    Direct interface to ``statsforecast.models.ARCH``.
+
     This implements the Autoregressive Conditional 
     Heteroskedasticity (ARCH) model.
 
-    Returns the ARCH model according to p and q parameter input.
-    
+    Constructs an ARCH(p) model - note that this is in contrast to the usual
+    naming convetio where the single parameter is called ``q``.
+
+    That is, this parameterization, identical to the one in ``statsforecast``,
+    is equivalent to ``GARCH(p=0, q=p)`` and not ``GARCH(p=p, q=0)``.
+
     Parameters
     ----------
     p: int (default 1)
-        Number of lagged versions of the series.
-    alias: str (default "GARCH")
-        Custom name of the model. 
+        AR parameter - number of auto-regressive lags.
     """
 
     _tags = {
@@ -104,7 +108,7 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        p = 1,
+        p=1,
     ):
         self.p = p
 
