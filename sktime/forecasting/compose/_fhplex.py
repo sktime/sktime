@@ -158,7 +158,7 @@ class FhPlexForecaster(BaseForecaster):
         fh_params = self.fh_params
         fh_contiguous = self.fh_contiguous
 
-        if not fh_contiguous:
+        if fh_contiguous:
             fh_rel = fh.to_relative(self.cutoff)
 
         fh_keys = self._get_fh_keys(fh)
@@ -187,7 +187,7 @@ class FhPlexForecaster(BaseForecaster):
         """Get prediction DataFrame for method."""
         fh_contiguous = self.fh_contiguous
 
-        if not fh_contiguous:
+        if fh_contiguous:
             fh_abs = fh_keys.to_absolute(self.cutoff)
 
         fh_keys = self._get_fh_keys(fh_keys)
