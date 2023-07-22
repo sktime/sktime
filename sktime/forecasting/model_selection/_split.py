@@ -1276,7 +1276,7 @@ class ExpandingGreedySplitter(BaseSplitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {"test_size": 1}
-        params2 = {"test_size": 3, "folds": 2, "step_size": 2}
+        params2 = {"test_size": 3, "folds": 2, "step_length": 2}
         return [params1, params2]
 
 
