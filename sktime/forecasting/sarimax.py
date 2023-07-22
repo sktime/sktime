@@ -241,16 +241,27 @@ class SARIMAX(_StatsModelsAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
         return [
             {
-                "order": (1, 0, 0),
-                "trend": [1,1,0,1],
-
+                "order": (4, 0, 0),
+            },
+            {
+                "order": (1, 1, 1),
+                "seasonal_order": (1, 1, 0, 3),
             },
             {
                 "order": (2, 1, 2),
-                # It breaks with seasonality = 4
-                "seasonal_order": (1, 1, 0, 2),
-            }
+                "trend": "ct",
+                "enforce_stationarity": False,
+                "enforce_invertibility": False,
+                "concentrate_scale": True,
+                "use_exact_diffuse": True,
+            },
+            {
+                "order": [1, 0, 1],
+                "trend": [1, 1, 0, 1],
+                "seasonal_order": (1, 0, 1, 2),
+                "hamilton_representation": True,
+                "simple_differencing": True,
+            },
         ]
