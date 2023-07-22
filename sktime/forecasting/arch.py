@@ -1,3 +1,12 @@
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements ARCH and GARCH models."""
+
+__author__ = ["eyjo"]
+
+__all__ = [
+    "StatsForecastARCH",
+    "StatsForecastGARCH",
+]
 
 
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
