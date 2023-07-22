@@ -194,7 +194,7 @@ class CanonicalIntervalForest(BaseClassifier):
         if self._max_interval < self._min_interval:
             self._max_interval = self._min_interval
 
-        fit = Parallel(n_jobs=self._threads_to_use)(
+        fit = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._fit_estimator)(
                 X,
                 y,
@@ -224,7 +224,7 @@ class CanonicalIntervalForest(BaseClassifier):
                 "that in the test data"
             )
 
-        y_probas = Parallel(n_jobs=self._threads_to_use)(
+        y_probas = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._predict_proba_for_estimator)(
                 X,
                 self.estimators_[i],
