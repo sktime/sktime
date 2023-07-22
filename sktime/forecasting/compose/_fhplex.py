@@ -46,7 +46,7 @@ class FhPlexForecaster(BaseForecaster):
     Examples
     --------
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.compose import ForecastByLevel
+    >>> from sktime.forecasting.compose import FhPlexForecaster
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> y = _make_hierarchical()
     >>> f = ForecastByLevel(NaiveForecaster(), groupby="local")
