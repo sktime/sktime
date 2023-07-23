@@ -111,7 +111,6 @@ class MyForecaster(BaseForecaster):
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, parama, paramb="default", paramc=None):
-
         # this should be the first line and not change
         self._set_params_from(locals())
         # convenience function that does self.parama = parama, self.paramb=paramb etc
