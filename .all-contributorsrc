@@ -2228,7 +2228,16 @@
         "bug"
       ]
     },
-
+    {
+      "login": "eyjo",
+      "name": "Eyjólfur Sigurðsson",
+      "avatar_url": "https://avatars.githubusercontent.com/eyjo",
+      "profile": "https://github.com/eyjo",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
     {
       "login": "julia-kraus",
       "name": "Julia Kraus",
