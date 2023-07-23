@@ -47,22 +47,32 @@ def sample_data(request):
 
     # predict model
 
-    if pred_type == 'interval':
+    if pred_type == "interval":
         interval_pred = f.predict_interval(fh=fh, coverage=coverage_or_alpha)
         return y_test, interval_pred
 
-    elif pred_type == 'quantile':
+    elif pred_type == "quantile":
         quantile_pred = f.predict_quantiles(fh=fh, alpha=coverage_or_alpha)
         return y_test, quantile_pred
 
     return
 
+
 # Test the parametrized fixture
-@pytest.mark.parametrize("sample_data",
-                         [(1, alpha_s, 'quantile'), (3, alpha_s, 'quantile'), (1, alpha_m, 'quantile'),
-                          (3, alpha_m, 'quantile'),
-                          (1, coverage_s, 'interval'), (3, coverage_s, 'interval'), (1, coverage_m, 'interval'),
-                          (3, coverage_m, 'interval')], indirect=True)
+@pytest.mark.parametrize(
+    "sample_data",
+    [
+        (1, alpha_s, "quantile"),
+        (3, alpha_s, "quantile"),
+        (1, alpha_m, "quantile"),
+        (3, alpha_m, "quantile"),
+        (1, coverage_s, "interval"),
+        (3, coverage_s, "interval"),
+        (1, coverage_m, "interval"),
+        (3, coverage_m, "interval"),
+    ],
+    indirect=True,
+)
 def test_sample_data(sample_data):
     y_true, y_pred = sample_data
     assert isinstance(y_true, (pd.Series, pd.DataFrame))
@@ -73,7 +83,8 @@ def test_sample_data(sample_data):
 # #                          [(1, alpha_s, 'interval'), (3, alpha_s, 'interval'),
 # #                           (1, alpha_m, 'interval'), (3, alpha_m, 'interval'),
 # #                           (1, coverage_s, 'quantile'), (3, coverage_s, 'quantile'),
-# #                           (1, coverage_m, 'quantile'), (3, coverage_m, 'quantile')], indirect=True)
+# #                           (1, coverage_m, 'quantile'), (3, coverage_m, 'quantile')],
+# indirect=True)
 # @pytest.mark.parametrize("sample_data",
 #                          [(1, coverage_s, 'interval'), (3, coverage_s, 'interval'),
 #                           (1, alpha_s, 'quantile'), (3, alpha_s, 'quantile')
@@ -208,36 +219,51 @@ def helper_check_output(metric, score_average, multioutput, sample_data):
         assert len(eval_loss) == no_vars
 
 
-@pytest.mark.parametrize("sample_data",
-                         [(1, alpha_s, 'quantile'), (3, alpha_s, 'quantile'),
-                          (1, alpha_m, 'quantile'), (3, alpha_m, 'quantile')
-                          ], indirect=True)
+@pytest.mark.parametrize(
+    "sample_data",
+    [
+        (1, alpha_s, "quantile"),
+        (3, alpha_s, "quantile"),
+        (1, alpha_m, "quantile"),
+        (3, alpha_m, "quantile"),
+    ],
+    indirect=True,
+)
 @pytest.mark.parametrize("metric", quantile_metrics)
 @pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
 @pytest.mark.parametrize("score_average", [True, False])
 def test_output_quantiles(metric, score_average, multioutput, sample_data):
-
     helper_check_output(metric, score_average, multioutput, sample_data)
 
 
-
-@pytest.mark.parametrize("sample_data",
-                         [(1, coverage_s, 'interval'), (3, coverage_s, 'interval'),
-                          (1, coverage_m, 'interval'), (3, coverage_m, 'interval')], indirect=True)
+@pytest.mark.parametrize(
+    "sample_data",
+    [
+        (1, coverage_s, "interval"),
+        (3, coverage_s, "interval"),
+        (1, coverage_m, "interval"),
+        (3, coverage_m, "interval"),
+    ],
+    indirect=True,
+)
 @pytest.mark.parametrize("metric", interval_metrics)
 @pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
 @pytest.mark.parametrize("score_average", [True, False])
 def test_output_intervals(metric, score_average, multioutput, sample_data):
-
     helper_check_output(metric, score_average, multioutput, sample_data)
 
 
-
 @pytest.mark.parametrize("metric", quantile_metrics)
-@pytest.mark.parametrize("sample_data",
-                         [(1, alpha_s, 'quantile'), (3, alpha_s, 'quantile'),
-                          (1, alpha_m, 'quantile'), (3, alpha_m, 'quantile')],
-                          indirect=True)
+@pytest.mark.parametrize(
+    "sample_data",
+    [
+        (1, alpha_s, "quantile"),
+        (3, alpha_s, "quantile"),
+        (1, alpha_m, "quantile"),
+        (3, alpha_m, "quantile"),
+    ],
+    indirect=True,
+)
 def test_evaluate_alpha_positive(metric, sample_data):
     """Tests output when required quantile is present."""
     # 0.5 in test quantile data don't raise error.
@@ -257,12 +283,17 @@ def test_evaluate_alpha_positive(metric, sample_data):
 
 
 # This test tests quantile data
-@pytest.mark.parametrize("sample_data",
-                         [(1, alpha_s, 'quantile'), (3, alpha_s, 'quantile'),
-                          (1, alpha_m, 'quantile'), (3, alpha_m, 'quantile')],
-                          indirect=True)
+@pytest.mark.parametrize(
+    "sample_data",
+    [
+        (1, alpha_s, "quantile"),
+        (3, alpha_s, "quantile"),
+        (1, alpha_m, "quantile"),
+        (3, alpha_m, "quantile"),
+    ],
+    indirect=True,
+)
 @pytest.mark.parametrize("metric", quantile_metrics)
-
 def test_evaluate_alpha_negative(metric, sample_data):
     """Tests whether correct error raised when required quantile not present."""
     y_true, y_pred = sample_data
