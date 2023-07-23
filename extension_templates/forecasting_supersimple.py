@@ -82,8 +82,8 @@ class MyForecaster(BaseForecaster):
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, parama, paramb="default", paramc=None):
-        # this should be the first line and not change
-        self._set_params_from(locals())
+        # this should be the first line, change MyForecaster to your estimator name
+        self._set_params_from(locals(), MyForecaster)
 
         # leave this as is
         super().__init__()

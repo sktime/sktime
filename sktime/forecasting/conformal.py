@@ -150,7 +150,7 @@ class ConformalIntervals(BaseForecaster):
                 f"method must be one of {self.ALLOWED_METHODS}, but found {method}"
             )
 
-        self._set_params_from(locals())
+        self._set_params_from(locals(), ConformalIntervals)
 
         self.forecasters_ = []
 

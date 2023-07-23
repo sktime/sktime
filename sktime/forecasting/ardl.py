@@ -234,7 +234,7 @@ class ARDL(_StatsModelsAdapter):
         X_oos=None,
         dynamic=False,
     ):
-        self._set_params_from(locals())
+        self._set_params_from(locals(), ARDL)
 
         if not self.auto_ardl:
             assert self.lags is not None

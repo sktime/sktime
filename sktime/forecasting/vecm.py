@@ -99,7 +99,7 @@ class VECM(_StatsModelsAdapter):
         exog_coint=None,
         exog_coint_fc=None,
     ):
-        self._set_params_from(locals())
+        self._set_params_from(locals(), VECM)
 
         super().__init__()
 

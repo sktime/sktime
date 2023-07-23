@@ -143,7 +143,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         random_state=None,
     ):
         # Model params
-        self._set_params_from(locals())
+        self._set_params_from(locals(), ExponentialSmoothing)
 
         super().__init__(random_state=random_state)
 

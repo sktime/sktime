@@ -249,7 +249,7 @@ class VARMAX(_StatsModelsAdapter):
         suppress_warnings=False,
     ):
         # Model parameters
-        self._set_params_from(locals())
+        self._set_params_from(locals(), VARMAX)
 
         super().__init__()
 

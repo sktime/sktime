@@ -159,7 +159,7 @@ class DynamicFactor(_StatsModelsAdapter):
         flags=None,
         low_memory=False,
     ):
-        self._set_params_from(locals())
+        self._set_params_from(locals(), DynamicFactor)
 
         super().__init__()
 

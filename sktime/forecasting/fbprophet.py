@@ -159,7 +159,7 @@ class Prophet(_ProphetAdapter):
         stan_backend=None,
         verbose=0,
     ):
-        self._set_params_from(locals())
+        self._set_params_from(locals(), Prophet)
 
         super().__init__()
 

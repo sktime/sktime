@@ -73,7 +73,7 @@ class BaseObject(_BaseObject):
     Extends ``skbase`` ``BaseObject`` with additional features.
     """
 
-    def _set_params_from(self, locals):
+    def _set_params_from(self, locals, cls):
         """Set parameters to self from locals.
 
         Convenience method for estimator authors and developers.
@@ -104,7 +104,8 @@ class BaseObject(_BaseObject):
         """
         if isinstance(locals, dict):
             for param in locals.keys():
-                setattr(self, param, locals[param])
+                if param in cls._get_param_names():
+                    setattr(self, param, locals[param])
 
         return self
 

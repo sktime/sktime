@@ -142,7 +142,7 @@ class SARIMAX(_StatsModelsAdapter):
         validate_specification=True,
         random_state=None,
     ):
-        self._set_params_from(locals())
+        self._set_params_from(locals(), SARIMAX)
 
         super().__init__(random_state=random_state)
 

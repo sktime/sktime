@@ -316,7 +316,7 @@ class AutoARIMA(_PmdArimaAdapter):
         hamilton_representation=False,
         concentrate_scale=False,
     ):
-        self._set_params_from(locals())
+        self._set_params_from(locals(), AutoARIMA)
 
         super().__init__()
 
@@ -595,7 +595,7 @@ class ARIMA(_PmdArimaAdapter):
         hamilton_representation=False,
         concentrate_scale=False,
     ):
-        self._set_params_from(locals())
+        self._set_params_from(locals(), ARIMA)
 
         super().__init__()
 

@@ -209,7 +209,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         biasadj: bool = False,
         parallel: bool = False,
     ):
-        self._set_params_from(locals())
+        self._set_params_from(locals(), StatsForecastAutoARIMA)
 
         super().__init__()
 
