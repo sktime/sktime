@@ -239,11 +239,14 @@ class BaseGridSearch(_DelegatedForecaster):
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
-        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
-
-        # Refit model with best parameters.
         if self.refit:
+            # Refit model with best parameters.
+            self.best_forecaster_ = self.forecaster.clone()
+            self.best_forecaster_.set_params(**self.best_params_)
             self.best_forecaster_.fit(y, X, fh)
+        else:
+            self.best_forecaster_ = # we need to set this to the fitted best forecaster
+            # but it is not clear where to get it from
 
         # Sort values according to rank
         results = results.sort_values(
@@ -1256,6 +1259,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
             "n_iter": 1,
+            "refit": False,
         }
 
         return [params, params2]
