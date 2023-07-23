@@ -186,6 +186,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer capable of carrying out an inverse transform?",
     ),
     (
+        "capability:inverse_transform:range",
+        "transformer",
+        "list",
+        "domain of invertibility of transform, must be list [lower, upper] of float",
+    ),
+    (
         "capability:pred_int",
         "forecaster",
         "bool",
