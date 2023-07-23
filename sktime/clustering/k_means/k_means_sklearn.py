@@ -14,6 +14,10 @@ class TimeSeriesKMeansSklearn(BaseClusterer):
 
     Parameters
     ----------
+    distance : Callable
+        The metric to use when calculating distance between instances in a feature
+        array. It must be one of the options allowed by
+        :func:`sklearn.metrics.pairwise_distances` for its metric parameter.
     n_clusters : int, default=8
         The number of clusters to form as well as the number of
         centroids to generate.
