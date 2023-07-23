@@ -37,6 +37,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
+from inspect import getfullargspec
 from itertools import product
 from warnings import warn
 
@@ -492,7 +493,9 @@ class BaseForecaster(BaseEstimator):
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
 
-    def predict_quantiles(self, fh=None, X=None, alpha=None):
+    # todo 0.22.0 - update default of legacy_interface arg in docstring
+    # todo 0.23.0 - remove legacy_interface arg and logic using it, update docstring
+    def predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=None):
         """Compute/return quantile forecasts.
 
         If alpha is iterable, multiple quantiles will be calculated.
@@ -518,6 +521,12 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
+        legacy_interface : bool, default=True
+            controls legacy behaviour for level 0 naming of quantiles reuturn
+            If "True", in univariate case level 0 will be named "Quantiles" and not
+            according to the variable name.
+            If "False", return is as described.
+            Default will change to False in 0.22.0, argument will be removed in 0.23.0.
 
         Returns
         -------
@@ -538,6 +547,29 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # todo 0.22.0 - switch legacy_interface default to False
+        if legacy_interface is None:
+            _legacy_interface = True
+        else:
+            _legacy_interface = legacy_interface
+
+        if _legacy_interface:
+            warn(
+                "In 0.22.0, predict_quantiles return default column level 0 name will "
+                "change for univariate probabilistic quantile forecasts "
+                "from 'Quantiles' to variable name. The old behaviour can be "
+                "retained by setting the legacy_interface argument to True, "
+                "until 0.23.0 when the legacy_interface argument will be removed."
+            )
+        elif legacy_interface is not None:
+            warn(
+                "Until 0.23.0, the predict_quantiles legacy_interface argument "
+                "can be used for facilitating deprecation and change to the new "
+                "predict_quantiles interface. It will be removed in 0.23.0, "
+                "from when passing the legacy_interface argument will raise an "
+                "exception."
+            )
+
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
@@ -552,22 +584,38 @@ class BaseForecaster(BaseEstimator):
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
+        # todo 0.23.0: remove logic for adapting legacy_interface
+        # this is needed since user implemented estimators might not have the
+        # legacy_interface argument
+        has_li_arg = "legacy_interface" in getfullargspec(self._predict_quantiles).args
+        if has_li_arg:
+            kwargs = {"legacy_interface": _legacy_interface}
+        else:
+            kwargs = {}
+
         # we call the ordinary _predict_quantiles if no looping/vectorization needed
         if not self._is_vectorized:
-            quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
+            quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha, **kwargs)
         else:
             # otherwise we call the vectorized version of predict_quantiles
             quantiles = self._vectorize(
-                "predict_quantiles", fh=fh, X=X_inner, alpha=alpha
+                "predict_quantiles",
+                fh=fh,
+                X=X_inner,
+                alpha=alpha,
+                **kwargs,
             )
 
         return quantiles
 
+    # todo 0.22.0 - update default of legacy_interface arg in docstring
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
     def predict_interval(
         self,
         fh=None,
         X=None,
         coverage=0.90,
+        legacy_interface=None,
     ):
         """Compute/return prediction interval forecasts.
 
@@ -594,6 +642,12 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         coverage : float or list of float of unique values, optional (default=0.90)
            nominal coverage(s) of predictive interval(s)
+        legacy_interface : bool, default=True
+            controls legacy behaviour for level 0 naming of pred_int return
+            If "True", in univariate case level 0 will be named "Coverage" and not
+            according to the variable name.
+            If "False", return is as described.
+            Default will change to False in 0.22.0, argument will be removed in 0.23.0.
 
         Returns
         -------
@@ -619,6 +673,29 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # todo 0.22.0 - switch legacy_interface default to False
+        if legacy_interface is None:
+            _legacy_interface = True
+        else:
+            _legacy_interface = legacy_interface
+
+        if _legacy_interface:
+            warn(
+                "In 0.22.0, predict_interval return default column level 0 name will "
+                "change for univariate probabilistic interval forecasts "
+                "from 'Coverage' to variable name. The old behaviour can be "
+                "retained by setting the legacy_interface argument to True, "
+                "until 0.23.0 when the legacy_interface argument will be removed."
+            )
+        elif legacy_interface is not None:
+            warn(
+                "Until 0.23.0, the predict_interval legacy_interface argument "
+                "can be used for facilitating deprecation and change to the new "
+                "predict_interval interface. It will be removed in 0.23.0, "
+                "from when passing the legacy_interface argument will raise an "
+                "exception."
+            )
+
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
@@ -629,13 +706,28 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
+        # todo 0.23.0: remove logic for adapting legacy_interface
+        # this is needed since user implemented estimators might not have the
+        # legacy_interface argument
+        has_li_arg = "legacy_interface" in getfullargspec(self._predict_interval).args
+        if has_li_arg:
+            kwargs = {"legacy_interface": _legacy_interface}
+        else:
+            kwargs = {}
+
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
-            pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
+            pred_int = self._predict_interval(
+                fh=fh, X=X_inner, coverage=coverage, **kwargs
+            )
         else:
             # otherwise we call the vectorized version of predict_interval
             pred_int = self._vectorize(
-                "predict_interval", fh=fh, X=X_inner, coverage=coverage
+                "predict_interval",
+                fh=fh,
+                X=X_inner,
+                coverage=coverage,
+                **kwargs,
             )
 
         return pred_int
@@ -1912,7 +2004,9 @@ class BaseForecaster(BaseEstimator):
         self.update(y=y, X=X, update_params=update_params)
         return self.predict(fh=fh, X=X)
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -1964,7 +2058,9 @@ class BaseForecaster(BaseEstimator):
             alphas.extend([0.5 - 0.5 * float(c), 0.5 + 0.5 * float(c)])
 
         # compute quantile forecasts corresponding to upper/lower
-        pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
+        pred_int = self._predict_quantiles(
+            fh=fh, X=X, alpha=alphas, legacy_interface=legacy_interface
+        )
 
         # change the column labels (multiindex) to the format for intervals
         # idx returned by _predict_quantiles is
@@ -1972,9 +2068,12 @@ class BaseForecaster(BaseEstimator):
         idx = pred_int.columns
         # variable names (unique, in same order)
         var_names = idx.get_level_values(0).unique()
-        # if was univariate & unnamed variable, replace default
-        if len(var_names) == 1 and var_names == ["Quantiles"]:
-            var_names = ["Coverage"]
+
+        # todo 0.23.0 - predict_interval new interface - remove this
+        if legacy_interface:
+            # if was univariate & unnamed variable, replace default
+            if len(var_names) == 1 and var_names == ["Quantiles"]:
+                var_names = ["Coverage"]
         # idx returned by _predict_interval should be
         #   3-level MultiIndex with variable names, coverage, lower/upper
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
@@ -1983,7 +2082,9 @@ class BaseForecaster(BaseEstimator):
 
         return pred_int
 
-    def _predict_quantiles(self, fh, X, alpha):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -2029,7 +2130,9 @@ class BaseForecaster(BaseEstimator):
                 coverage = abs(1 - 2 * a)
 
                 # compute quantile forecasts corresponding to upper/lower
-                pred_a = self._predict_interval(fh=fh, X=X, coverage=[coverage])
+                pred_a = self._predict_interval(
+                    fh=fh, X=X, coverage=[coverage], legacy_interface=legacy_interface
+                )
                 pred_int = pd.concat([pred_int, pred_a], axis=1)
 
             # now we need to subset to lower/upper depending
@@ -2047,9 +2150,12 @@ class BaseForecaster(BaseEstimator):
             idx = pred_int.columns
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
-            # if was univariate & unnamed variable, replace default
-            if len(var_names) == 1 and var_names == ["Coverage"]:
-                var_names = ["Quantiles"]
+
+            # todo 0.23.0 - predict_interval new interface - remove this
+            if legacy_interface:
+                # if was univariate & unnamed variable, replace default
+                if len(var_names) == 1 and var_names == ["Coverage"]:
+                    var_names = ["Quantiles"]
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
             int_idx = pd.MultiIndex.from_product([var_names, alpha])
@@ -2149,9 +2255,9 @@ class BaseForecaster(BaseEstimator):
             #   the indices and column names are already correct
             pred_var = pd.DataFrame(vars_dict)
 
-            # check whether column format was "nameless", set it to RangeIndex then
+            # check whether column format was "nameless", set it to expected vars
             if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
-                pred_var.columns = pd.RangeIndex(1)
+                pred_var.columns = self._get_varnames(default=0, legacy_interface=False)
 
         return pred_var
 
@@ -2301,6 +2407,27 @@ class BaseForecaster(BaseEstimator):
                     store_behaviour="freeze",
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
+
+    def _get_varnames(self, default=None, legacy_interface=True):
+        """Return variable column for DataFrame-like returns.
+
+        Developer note: currently a helper for predict_interval, predict_quantiles,
+        valid only in the univariate case. Can be extended later.
+        """
+        if legacy_interface:
+            var_name = default
+        else:
+            y = self._y
+            if isinstance(y, pd.Series):
+                var_name = self._y.name
+            elif isinstance(y, pd.DataFrame):
+                return y.columns
+            else:
+                var_name = 0
+            if var_name is None:
+                var_name = 0
+
+        return [var_name]
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
