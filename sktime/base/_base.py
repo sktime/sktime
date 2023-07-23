@@ -103,9 +103,8 @@ class BaseObject(_BaseObject):
         self
         """
         if isinstance(locals, dict):
-            for param in self.get_param_names():
-                if param in locals.keys():
-                    setattr(self, param, locals[param])
+            for param in locals.keys():
+                setattr(self, param, locals[param])
 
         return self
 
