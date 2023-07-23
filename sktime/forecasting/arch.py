@@ -76,7 +76,7 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = [{}, {"approximation": True, "p": 1, "q": 1}]
+        params = [{}, {"p": 1, "q": 1}]
         return params
 
 
@@ -137,6 +137,6 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = [{}, {"approximation": True, "p": 1, "q": 1}]
+        params = [{}, {"p": 1, "q": 1}]
         return params
 
