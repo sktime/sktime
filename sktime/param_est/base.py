@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for parameter estimator scitype.
+"""Base class template for parameter estimator scitype.
 
     class name: BaseParamFitter
 
@@ -48,8 +46,8 @@ def _coerce_to_list(obj):
 class BaseParamFitter(BaseEstimator):
     """Base parameter fitting estimator class.
 
-    The base parameter fitter specifies the methods and method
-    signatures that all parameter fitter have to implement.
+    The base parameter fitter specifies the methods and method signatures that all
+    parameter fitter have to implement.
 
     Specific implementations of these methods is deferred to concrete instances.
     """
@@ -69,7 +67,7 @@ class BaseParamFitter(BaseEstimator):
 
         self._X = None
 
-        super(BaseParamFitter, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):

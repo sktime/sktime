@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unit tests for sktime classifier compatability with sklearn interfaces."""
 
 __author__ = ["MatthewMiddlehurst"]

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Prophet forecaster by wrapping fbprophet."""
 
@@ -162,7 +161,7 @@ class Prophet(_ProphetAdapter):
     ):
         self._set_params_from(locals())
 
-        super(Prophet, self).__init__()
+        super().__init__()
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unit tests for classifier/regressor input output."""
 
 __author__ = ["mloning", "TonyBagnall", "fkiraly"]
@@ -202,8 +201,8 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
     def test_handles_single_class(self, estimator_instance):
         """Test that estimator handles fit when only single class label is seen.
 
-        This is important for compatibility with ensembles that sub-sample,
-        as sub-sampling stochastically produces training sets with single class label.
+        This is important for compatibility with ensembles that sub-sample, as sub-
+        sampling stochastically produces training sets with single class label.
         """
         X, y = make_classification_problem()
         y[:] = 42

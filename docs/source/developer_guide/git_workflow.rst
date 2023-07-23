@@ -3,7 +3,7 @@
 Git and GitHub workflow
 =======================
 
-The preferred workflow for contributing to sktime’s repository is to
+The preferred workflow for contributing to sktime's repository is to
 fork the `main
 repository <https://github.com/sktime/sktime/>`__ on
 GitHub, clone, and develop on a new branch.

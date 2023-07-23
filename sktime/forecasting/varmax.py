@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Vector Autoregressive Moving Average with eXogenous regressors model (VARMAX)."""
 __all__ = ["VARMAX"]
 __author__ = ["KatieBuc"]
@@ -252,7 +251,7 @@ class VARMAX(_StatsModelsAdapter):
         # Model parameters
         self._set_params_from(locals())
 
-        super(VARMAX, self).__init__()
+        super().__init__()
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
@@ -311,9 +310,8 @@ class VARMAX(_StatsModelsAdapter):
     # for two reasons:
     # 1. to pass in `dynamic`, `information_set` and `signal_only`
     # 2. to deal with statsmodel integer indexing issue
-    def _predict(self, fh, X=None):
-        """
-        Wrap Statmodel's VARMAX forecast method.
+    def _predict(self, fh, X):
+        """Wrap Statmodel's VARMAX forecast method.
 
         Parameters
         ----------

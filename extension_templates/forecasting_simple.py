@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for forecasters, SIMPLE version.
+"""Extension template for forecasters, SIMPLE version.
 
 Contains only bare minimum of implementation requirements for a functional forecaster.
 Also assumes *no composition*, i.e., no forecaster or other estimator components.
@@ -120,16 +118,15 @@ class MyForecaster(BaseForecaster):
         # parameters of same name as __init__ args should never be overwritten!
         # if parameters are generated, write to other attr names, such as self._parama
 
-        # todo: change "MyForecaster" to the name of the class
-        # this should be the second line and not be changed except the class name
-        super(MyForecaster, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
         # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -172,7 +169,7 @@ class MyForecaster(BaseForecaster):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -194,7 +191,8 @@ class MyForecaster(BaseForecaster):
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : sktime time series object
+            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
 

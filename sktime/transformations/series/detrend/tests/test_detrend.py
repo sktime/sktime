@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test detrenders."""
 import numpy as np
 import pandas as pd

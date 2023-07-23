@@ -48,7 +48,10 @@ Deep learning
     FCNClassifier
     LSTMFCNClassifier
     InceptionTimeClassifier
+    MACNNClassifier
     MLPClassifier
+    MCDCNNClassifier
+    SimpleRNNClassifier
     TapNetClassifier
 
 Dictionary-based

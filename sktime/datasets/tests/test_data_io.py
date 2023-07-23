@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test functions for data input and output."""
 
 __author__ = ["SebasKoel", "Emiliathewolf", "TonyBagnall", "jasonlines", "achieveordie"]
@@ -29,6 +28,7 @@ from sktime.datasets import (
 from sktime.datasets._data_io import (
     MODULE,
     _convert_tsf_to_hierarchical,
+    _list_available_datasets,
     _load_provided_dataset,
 )
 from sktime.datatypes import check_is_mtype, scitype_to_mtype
@@ -205,8 +205,7 @@ _CHECKS = {
 
 @pytest.mark.parametrize("dataset", sorted(_CHECKS.keys()))
 def test_data_loaders(dataset):
-    """
-    Assert if datasets are loaded correctly.
+    """Assert if datasets are loaded correctly.
 
     dataset: dictionary with values to assert against should contain:
         'columns' : list with column names in correct order,
@@ -457,7 +456,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -484,7 +482,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -510,7 +507,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -597,7 +593,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -691,7 +686,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -731,7 +725,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -758,7 +751,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -787,7 +779,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -867,7 +858,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -955,7 +945,6 @@ def test_load_from_tsfile_to_dataframe():
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
 
             file_contents = (
@@ -1475,3 +1464,21 @@ def test_convert_tsf_to_multiindex(freq):
         _convert_tsf_to_hierarchical(input_df, metadata, freq=freq),
         check_dtype=False,
     )
+
+
+@pytest.mark.parametrize("origin_repo", [None, "forecastingorg"])
+def test_list_available_datasets(origin_repo):
+    """Test function for listing available datasets.
+
+    check for two datasets repo format types:
+    1. https://www.timeseriesclassification.com/
+    2  https://forecastingdata.org/
+
+    """
+    dataset_name = "UnitTest"
+    available_datasets = _list_available_datasets(
+        extract_path=None, origin_repo=origin_repo
+    )
+    assert (
+        dataset_name in available_datasets
+    ), f"{dataset_name} dataset should be available."  # noqa: E501

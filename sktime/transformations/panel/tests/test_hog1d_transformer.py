@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """HOG1D transformer test code."""
 
 import numbers

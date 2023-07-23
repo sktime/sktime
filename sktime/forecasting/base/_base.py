@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for forecaster scitype.
+"""Base class template for forecaster scitype.
 
     class name: BaseForecaster
 
@@ -39,7 +37,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
-from inspect import signature
+from inspect import getfullargspec
 from itertools import product
 from warnings import warn
 
@@ -58,10 +56,7 @@ from sktime.datatypes import (
 )
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies,
-    _check_estimator_deps,
-)
+from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 
@@ -79,11 +74,10 @@ def _coerce_to_list(obj):
 class BaseForecaster(BaseEstimator):
     """Base forecaster template class.
 
-    The base forecaster specifies the methods and method
-    signatures that all forecasters have to implement.
+    The base forecaster specifies the methods and method signatures that all forecasters
+    have to implement.
 
-    Specific implementations of these methods is deferred to concrete
-    forecasters.
+    Specific implementations of these methods is deferred to concrete forecasters.
     """
 
     # default tag values - these typically make the "safest" assumption
@@ -117,7 +111,7 @@ class BaseForecaster(BaseEstimator):
 
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
-        super(BaseForecaster, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __mul__(self, other):
@@ -240,17 +234,17 @@ class BaseForecaster(BaseEstimator):
         First index does subsetting of exogeneous input data.
         Second index does subsetting of the forecast (but not of endogeneous data).
 
-        Keys must be valid inputs for `columns` in `ColumnSubset`.
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following composite pipeline object:
-            ColumnSubset(columns1) ** self * ColumnSubset(columns2)
+            ColumnSelect(columns1) ** self * ColumnSelect(columns2)
             where `columns1` is first or only item in `key`, and `columns2` is the last
             if only one item is passed in `key`, only `columns1` is applied to input
         """
@@ -265,7 +259,10 @@ class BaseForecaster(BaseEstimator):
             if not len(key) == 2:
                 raise ValueError(
                     "there should be one or two keys when calling [] or getitem, "
-                    "e.g., mytrafo[key], or mytrafo[key1, key2]"
+                    "of a forecaster, "
+                    "e.g., mytrafo[key], or mytrafo[key1, key2]. "
+                    f"But {self.__class__.__name__} instance got tuple"
+                    f" with {len(key)} keys."
                 )
             columns1 = key[0]
             columns2 = key[1]
@@ -496,7 +493,9 @@ class BaseForecaster(BaseEstimator):
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
 
-    def predict_quantiles(self, fh=None, X=None, alpha=None):
+    # todo 0.22.0 - update default of legacy_interface arg in docstring
+    # todo 0.23.0 - remove legacy_interface arg and logic using it, update docstring
+    def predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=None):
         """Compute/return quantile forecasts.
 
         If alpha is iterable, multiple quantiles will be calculated.
@@ -522,6 +521,12 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
+        legacy_interface : bool, default=True
+            controls legacy behaviour for level 0 naming of quantiles reuturn
+            If "True", in univariate case level 0 will be named "Quantiles" and not
+            according to the variable name.
+            If "False", return is as described.
+            Default will change to False in 0.22.0, argument will be removed in 0.23.0.
 
         Returns
         -------
@@ -542,6 +547,29 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # todo 0.22.0 - switch legacy_interface default to False
+        if legacy_interface is None:
+            _legacy_interface = True
+        else:
+            _legacy_interface = legacy_interface
+
+        if _legacy_interface:
+            warn(
+                "In 0.22.0, predict_quantiles return default column level 0 name will "
+                "change for univariate probabilistic quantile forecasts "
+                "from 'Quantiles' to variable name. The old behaviour can be "
+                "retained by setting the legacy_interface argument to True, "
+                "until 0.23.0 when the legacy_interface argument will be removed."
+            )
+        elif legacy_interface is not None:
+            warn(
+                "Until 0.23.0, the predict_quantiles legacy_interface argument "
+                "can be used for facilitating deprecation and change to the new "
+                "predict_quantiles interface. It will be removed in 0.23.0, "
+                "from when passing the legacy_interface argument will raise an "
+                "exception."
+            )
+
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
@@ -556,22 +584,38 @@ class BaseForecaster(BaseEstimator):
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
+        # todo 0.23.0: remove logic for adapting legacy_interface
+        # this is needed since user implemented estimators might not have the
+        # legacy_interface argument
+        has_li_arg = "legacy_interface" in getfullargspec(self._predict_quantiles).args
+        if has_li_arg:
+            kwargs = {"legacy_interface": _legacy_interface}
+        else:
+            kwargs = {}
+
         # we call the ordinary _predict_quantiles if no looping/vectorization needed
         if not self._is_vectorized:
-            quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
+            quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha, **kwargs)
         else:
             # otherwise we call the vectorized version of predict_quantiles
             quantiles = self._vectorize(
-                "predict_quantiles", fh=fh, X=X_inner, alpha=alpha
+                "predict_quantiles",
+                fh=fh,
+                X=X_inner,
+                alpha=alpha,
+                **kwargs,
             )
 
         return quantiles
 
+    # todo 0.22.0 - update default of legacy_interface arg in docstring
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
     def predict_interval(
         self,
         fh=None,
         X=None,
         coverage=0.90,
+        legacy_interface=None,
     ):
         """Compute/return prediction interval forecasts.
 
@@ -598,6 +642,12 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         coverage : float or list of float of unique values, optional (default=0.90)
            nominal coverage(s) of predictive interval(s)
+        legacy_interface : bool, default=True
+            controls legacy behaviour for level 0 naming of pred_int return
+            If "True", in univariate case level 0 will be named "Coverage" and not
+            according to the variable name.
+            If "False", return is as described.
+            Default will change to False in 0.22.0, argument will be removed in 0.23.0.
 
         Returns
         -------
@@ -623,6 +673,29 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # todo 0.22.0 - switch legacy_interface default to False
+        if legacy_interface is None:
+            _legacy_interface = True
+        else:
+            _legacy_interface = legacy_interface
+
+        if _legacy_interface:
+            warn(
+                "In 0.22.0, predict_interval return default column level 0 name will "
+                "change for univariate probabilistic interval forecasts "
+                "from 'Coverage' to variable name. The old behaviour can be "
+                "retained by setting the legacy_interface argument to True, "
+                "until 0.23.0 when the legacy_interface argument will be removed."
+            )
+        elif legacy_interface is not None:
+            warn(
+                "Until 0.23.0, the predict_interval legacy_interface argument "
+                "can be used for facilitating deprecation and change to the new "
+                "predict_interval interface. It will be removed in 0.23.0, "
+                "from when passing the legacy_interface argument will raise an "
+                "exception."
+            )
+
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
@@ -633,13 +706,28 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
+        # todo 0.23.0: remove logic for adapting legacy_interface
+        # this is needed since user implemented estimators might not have the
+        # legacy_interface argument
+        has_li_arg = "legacy_interface" in getfullargspec(self._predict_interval).args
+        if has_li_arg:
+            kwargs = {"legacy_interface": _legacy_interface}
+        else:
+            kwargs = {}
+
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
-            pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
+            pred_int = self._predict_interval(
+                fh=fh, X=X_inner, coverage=coverage, **kwargs
+            )
         else:
             # otherwise we call the vectorized version of predict_interval
             pred_int = self._vectorize(
-                "predict_interval", fh=fh, X=X_inner, coverage=coverage
+                "predict_interval",
+                fh=fh,
+                X=X_inner,
+                coverage=coverage,
+                **kwargs,
             )
 
         return pred_int
@@ -714,8 +802,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
-    # todo 0.19.0: remove any legacy_interface logic
-    def predict_proba(self, fh=None, X=None, marginal=True, legacy_interface=False):
+    def predict_proba(self, fh=None, X=None, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         Note: currently only implemented for Series (non-panel, non-hierarchical) y.
@@ -741,34 +828,13 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
-        legacy_interface : bool or None, optional, default=False
-            whether legacy interface is used, deprecation parameter
-            parameter will be removed in 0.19.0
-            True: always returns tfp Distribution object
-            False: always returns sktime BaseDistribution object
-            None: returns tfp Distribution if tensorflow_probability is in the env
-                otherwise returns sktime BaseDistribution
 
         Returns
         -------
-        If legacy_interface=False, or None and tensorflow_probability is not in the env
         pred_dist : sktime BaseDistribution
             predictive distribution
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
-
-        If legacy_interface=True, or None and tensorflow_probability is in the env
-        pred_dist : tfp Distribution object
-            if marginal=True:
-                batch shape is 1D and same length as fh
-                event shape is 1D, with length equal number of variables being forecast
-                i-th (batch) distribution is forecast for i-th entry of fh
-                j-th (event) index is j-th variable, order as y in `fit`/`update`
-            if marginal=False:
-                there is a single batch
-                event shape is 2D, of shape (len(fh), no. variables)
-                i-th (event dim 1) distribution is forecast for i-th entry of fh
-                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -789,24 +855,8 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        # pass legacy_interface arg on only if inner function has it
-        inner_params = signature(self._predict_proba).parameters.keys()
-        if "legacy_interface" in inner_params:
-            pred_dist = self._predict_proba(
-                fh=fh, X=X_inner, marginal=marginal, legacy_interface=legacy_interface
-            )
-        else:
-            pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
-            msg = (
-                f"warning: {type(self)} implements _predict_proba, but "
-                "has no legacy_interface parameter. This likely means that the class "
-                "is custom built. Please note that from 0.19.0 on, "
-                "_predict_proba will be expected to return an sktime BaseDistribution. "
-                "We will try to catch this via coercion from 0.18.0, if a "
-                "tensorflow distribution is returned, but to minimize risk, "
-                "we recommend to move to sktime BaseDistribution. "
-            )
-            warn(msg)
+        # pass to inner _predict_proba
+        pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
 
         return pred_dist
 
@@ -1171,10 +1221,7 @@ class BaseForecaster(BaseEstimator):
         y_pred = self.predict(fh=fh, X=X)
 
         if not type(y_pred) == type(y):
-            raise TypeError(
-                "y must have same type, dims, index as expected predict return. "
-                f"expected type {type(y_pred)}, but found {type(y)}"
-            )
+            y = convert_to(y, self._y_mtype_last_seen)
 
         y_res = y - y_pred
 
@@ -1253,7 +1300,7 @@ class BaseForecaster(BaseEstimator):
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super(BaseForecaster, self).get_fitted_params(deep=deep)
+            return super().get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys
@@ -1641,7 +1688,9 @@ class BaseForecaster(BaseEstimator):
         # raise error if some method tries to accessed it before it has been set
         if self._fh is None:
             raise ValueError(
-                "No `fh` has been set yet, please specify `fh` " "in `fit` or `predict`"
+                f"No `fh` has been set yet, in this instance of "
+                f"{self.__class__.__name__}, "
+                "please specify `fh` in `fit` or `predict`"
             )
 
         return self._fh
@@ -1677,8 +1726,8 @@ class BaseForecaster(BaseEstimator):
         requires_fh = self.get_tag("requires-fh-in-fit")
 
         msg = (
-            f"This is because fitting of the `"
-            f"{self.__class__.__name__}` "
+            f"This is because fitting of the "
+            f"forecaster {self.__class__.__name__} "
             f"depends on `fh`. "
         )
 
@@ -1696,8 +1745,8 @@ class BaseForecaster(BaseEstimator):
                 if not requires_fh and self._fh is None:
                     raise ValueError(
                         "The forecasting horizon `fh` must be passed "
-                        "either to `fit` or `predict`, "
-                        "but was found in neither."
+                        "either to `fit` or `predict`, but was found in neither "
+                        f"call of this {self.__class__.__name__} instance's methods."
                     )
                 # in case C. fh is not optional in fit: this is fine
                 # any error would have already been caught in fit
@@ -1708,7 +1757,7 @@ class BaseForecaster(BaseEstimator):
                 # fh must be passed in fit
                 raise ValueError(
                     "The forecasting horizon `fh` must be passed to "
-                    "`fit`, but none was found. " + msg
+                    f"`fit` of {self.__class__.__name__}, but none was found. " + msg
                 )
                 # in case C. fh is optional in fit:
                 # this is fine, nothing to check/raise
@@ -1735,8 +1784,9 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "A different forecasting horizon `fh` has been "
                     "provided from "
-                    "the one seen in `fit`. If you want to change the "
-                    "forecasting "
+                    "the one seen already in `fit`, in this instance of "
+                    f"{self.__class__.__name__}. "
+                    "If you want to change the forecasting "
                     "horizon, please re-fit the forecaster. " + msg
                 )
             # if existing one and new match, ignore new one
@@ -1788,7 +1838,6 @@ class BaseForecaster(BaseEstimator):
         # predict-like methods: return as list, then run through reconstruct
         # to obtain a pandas based container in one of the pandas mtype formats
         elif methodname in PREDICT_METHODS:
-
             if methodname == "update_predict_single":
                 self._yvec = y
 
@@ -1808,7 +1857,7 @@ class BaseForecaster(BaseEstimator):
                 y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -1839,7 +1888,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -1948,14 +1997,16 @@ class BaseForecaster(BaseEstimator):
     ):
         """Update forecaster and then make forecasts.
 
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
+        Implements default behaviour of calling update and predict sequentially, but can
+        be overwritten by subclasses to implement more efficient updating algorithms
+        when available.
         """
         self.update(y=y, X=X, update_params=update_params)
         return self.predict(fh=fh, X=X)
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -2007,7 +2058,9 @@ class BaseForecaster(BaseEstimator):
             alphas.extend([0.5 - 0.5 * float(c), 0.5 + 0.5 * float(c)])
 
         # compute quantile forecasts corresponding to upper/lower
-        pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
+        pred_int = self._predict_quantiles(
+            fh=fh, X=X, alpha=alphas, legacy_interface=legacy_interface
+        )
 
         # change the column labels (multiindex) to the format for intervals
         # idx returned by _predict_quantiles is
@@ -2015,9 +2068,12 @@ class BaseForecaster(BaseEstimator):
         idx = pred_int.columns
         # variable names (unique, in same order)
         var_names = idx.get_level_values(0).unique()
-        # if was univariate & unnamed variable, replace default
-        if len(var_names) == 1 and var_names == ["Quantiles"]:
-            var_names = ["Coverage"]
+
+        # todo 0.23.0 - predict_interval new interface - remove this
+        if legacy_interface:
+            # if was univariate & unnamed variable, replace default
+            if len(var_names) == 1 and var_names == ["Quantiles"]:
+                var_names = ["Coverage"]
         # idx returned by _predict_interval should be
         #   3-level MultiIndex with variable names, coverage, lower/upper
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
@@ -2026,7 +2082,9 @@ class BaseForecaster(BaseEstimator):
 
         return pred_int
 
-    def _predict_quantiles(self, fh, X, alpha):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -2065,7 +2123,6 @@ class BaseForecaster(BaseEstimator):
             )
 
         if implements_interval:
-
             pred_int = pd.DataFrame()
             for a in alpha:
                 # compute quantiles corresponding to prediction interval coverage
@@ -2073,7 +2130,9 @@ class BaseForecaster(BaseEstimator):
                 coverage = abs(1 - 2 * a)
 
                 # compute quantile forecasts corresponding to upper/lower
-                pred_a = self._predict_interval(fh=fh, X=X, coverage=[coverage])
+                pred_a = self._predict_interval(
+                    fh=fh, X=X, coverage=[coverage], legacy_interface=legacy_interface
+                )
                 pred_int = pd.concat([pred_int, pred_a], axis=1)
 
             # now we need to subset to lower/upper depending
@@ -2091,9 +2150,12 @@ class BaseForecaster(BaseEstimator):
             idx = pred_int.columns
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
-            # if was univariate & unnamed variable, replace default
-            if len(var_names) == 1 and var_names == ["Coverage"]:
-                var_names = ["Quantiles"]
+
+            # todo 0.23.0 - predict_interval new interface - remove this
+            if legacy_interface:
+                # if was univariate & unnamed variable, replace default
+                if len(var_names) == 1 and var_names == ["Coverage"]:
+                    var_names = ["Quantiles"]
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
             int_idx = pd.MultiIndex.from_product([var_names, alpha])
@@ -2101,9 +2163,7 @@ class BaseForecaster(BaseEstimator):
             pred_int.columns = int_idx
 
         elif implements_proba:
-
-            # 0.19.0 - one instance of legacy_interface to remove
-            pred_proba = self.predict_proba(fh=fh, X=X, legacy_interface=False)
+            pred_proba = self.predict_proba(fh=fh, X=X)
             pred_int = pred_proba.quantile(alpha=alpha)
 
         return pred_int
@@ -2195,15 +2255,15 @@ class BaseForecaster(BaseEstimator):
             #   the indices and column names are already correct
             pred_var = pd.DataFrame(vars_dict)
 
-            # check whether column format was "nameless", set it to RangeIndex then
+            # check whether column format was "nameless", set it to expected vars
             if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
-                pred_var.columns = pd.RangeIndex(1)
+                pred_var.columns = self._get_varnames(default=0, legacy_interface=False)
 
         return pred_var
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -2217,34 +2277,13 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series to predict from.
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
-        legacy_interface : bool or None, optional, default=False
-            whether legacy interface is used, deprecation parameter
-            parameter will be removed in 0.19.0
-            True: always returns tfp Distribution object
-            False: always returns sktime BaseDistribution object
-            None: returns tfp Distribution if tensorflow_probability is in the env
-                otherwise returns sktime BaseDistribution
 
         Returns
         -------
-        If legacy_interface=False, or None and tensorflow_probability is not in the env
         pred_dist : sktime BaseDistribution
             predictive distribution
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
-
-        If legacy_interface=True, or None and tensorflow_probability is in the env
-        pred_dist : tfp Distribution object
-            if marginal=True:
-                batch shape is 1D and same length as fh
-                event shape is 1D, with length equal number of variables being forecast
-                i-th (batch) distribution is forecast for i-th entry of fh
-                j-th (event) index is j-th variable, order as y in `fit`/`update`
-            if marginal=False:
-                there is a single batch
-                event shape is 2D, of shape (len(fh), no. variables)
-                i-th (event dim 1) distribution is forecast for i-th entry of fh
-                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         # default behaviour is implemented if one of the following three is implemented
         implements_interval = self._has_implementation_of("_predict_interval")
@@ -2270,22 +2309,12 @@ class BaseForecaster(BaseEstimator):
         pred_mean = convert_to(pred_mean, to_type=df_types)
         # pred_mean and pred_var now have the same format
 
-        if legacy_interface is None:
-            legacy_interface = _check_dl_dependencies(severity="none")
-        if legacy_interface:
-            import tensorflow_probability as tfp
+        # default is normal with predict as mean and pred_var as variance
+        from sktime.proba.normal import Normal
 
-            d = tfp.distributions.Normal
-            pred_dist = d(loc=pred_mean, scale=pred_std)
-
-        else:
-            from sktime.proba.normal import Normal
-
-            index = pred_mean.index
-            columns = pred_mean.columns
-            pred_dist = Normal(
-                mu=pred_mean, sigma=pred_std, index=index, columns=columns
-            )
+        index = pred_mean.index
+        columns = pred_mean.columns
+        pred_dist = Normal(mu=pred_mean, sigma=pred_std, index=index, columns=columns)
 
         return pred_dist
 
@@ -2378,6 +2407,27 @@ class BaseForecaster(BaseEstimator):
                     store_behaviour="freeze",
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
+
+    def _get_varnames(self, default=None, legacy_interface=True):
+        """Return variable column for DataFrame-like returns.
+
+        Developer note: currently a helper for predict_interval, predict_quantiles,
+        valid only in the univariate case. Can be extended later.
+        """
+        if legacy_interface:
+            var_name = default
+        else:
+            y = self._y
+            if isinstance(y, pd.Series):
+                var_name = self._y.name
+            elif isinstance(y, pd.DataFrame):
+                return y.columns
+            else:
+                var_name = 0
+            if var_name is None:
+                var_name = 0
+
+        return [var_name]
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):

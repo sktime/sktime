@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implement composite time series regression estimators."""
 
 __all__ = [

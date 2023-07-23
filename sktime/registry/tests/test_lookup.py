@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Testing of registry lookup functionality."""
 
@@ -59,7 +58,6 @@ def _get_type_tuple(estimator_scitype):
         corresponding to scitype strings in estimator_scitypes
     """
     if estimator_scitype is not None:
-
         estimator_classes = tuple(
             BASE_CLASS_LOOKUP[scitype] for scitype in _to_list(estimator_scitype)
         )

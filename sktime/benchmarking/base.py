@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Benchmarking base module."""
 
 __author__ = ["mloning", "viktorkaz"]
@@ -38,7 +37,7 @@ class HDDBaseDataset(BaseDataset):
 
     def __init__(self, path, name):
         self._path = path
-        super(HDDBaseDataset, self).__init__(name=name)
+        super().__init__(name=name)
 
     @property
     def path(self):
@@ -137,7 +136,7 @@ class HDDBaseResults(BaseResults):
         # set path
         self._path = path
 
-        super(HDDBaseResults, self).__init__()
+        super().__init__()
 
     @property
     def path(self):

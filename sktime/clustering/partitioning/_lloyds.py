@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
 from abc import ABC, abstractmethod
@@ -246,7 +245,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         if distance_params is None:
             self._distance_params = {}
 
-        super(TimeSeriesLloyds, self).__init__(n_clusters=n_clusters)
+        super().__init__(n_clusters=n_clusters)
 
     def _check_params(self, X: np.ndarray) -> None:
         """Check parameters are valid and initialized.
