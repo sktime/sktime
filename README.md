@@ -191,7 +191,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 [extension templates]: https://github.com/sktime/sktime/tree/main/extension_templates
 [developer guides]: https://www.sktime.net/en/latest/developer_guide.html
 [contributors]: https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md
-[governance]: https://www.sktime.net/en/latest/governance.html
+[governance]: https://www.sktime.net/en/latest/get_involved/governance.html
 [mentoring]: https://github.com/sktime/mentoring
 [meetings]: https://calendar.google.com/calendar/u/0/embed?src=sktime.toolbox@gmail.com&ctz=UTC
 [enhancement proposals]: https://github.com/sktime/enhancement-proposals
