@@ -55,6 +55,9 @@ class PluginParamsForecaster(_DelegatedForecaster):
         this clone is fitted in the pipeline when `fit` is called
     forecaster_ : sktime forecaster, clone of forecaster in `forecaster`
         this clone is fitted in the pipeline when `fit` is called
+    param_map_ : dict
+        mapping of parameters from `param_est_` to `forecaster_` used in `fit`,
+        after filtering for parameters present in both
 
     Examples
     --------
