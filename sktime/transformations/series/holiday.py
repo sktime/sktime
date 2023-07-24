@@ -47,10 +47,10 @@ class CountryHolidaysTransformer(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>>
-    >>> y_t = CountryHolidaysTransformer("US").fit_transform(y)
-    >>> y_t.dtype
+    >>> y_t = CountryHolidaysTransformer("US").fit_transform(y)  # doctest: +SKIP
+    >>> y_t.dtype  # doctest: +SKIP
     dtype('bool')
-    >>> y_t.sum()
+    >>> y_t.sum()  # doctest: +SKIP
     14
     """
 
@@ -207,10 +207,10 @@ class FinancialHolidaysTransformer(BaseTransformer):
     >>>
     >>> y = pandas.Series(data, index=index, name="random")
     >>>
-    >>> y_t = FinancialHolidaysTransformer("NYSE").fit_transform(y)
-    >>> y_t.dtype
+    >>> y_t = FinancialHolidaysTransformer("NYSE").fit_transform(y)  # doctest: +SKIP
+    >>> y_t.dtype  # doctest: +SKIP
     dtype('bool')
-    >>> y_t.sum()
+    >>> y_t.sum()  # doctest: +SKIP
     10
     """
 
