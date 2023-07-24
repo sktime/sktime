@@ -1,4 +1,4 @@
-"""Tests for probabilistic quantiles."""
+"""Tests for probabilistic performance metrics."""
 import warnings
 
 import numpy as np
