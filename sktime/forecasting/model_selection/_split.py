@@ -1234,8 +1234,8 @@ class ExpandingGreedySplitter(BaseSplitter):
 
     def __init__(self, test_size: int, folds: int = 5, step_length: int = None):
         super().__init__()
-        self.folds = folds
         self.test_size = test_size
+        self.folds = folds
         self.step_length = step_length
         self.fh = np.arange(test_size) + 1
 
