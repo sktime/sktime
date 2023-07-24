@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Preprocessing algorithm DOBIN (Distance based Outlier BasIs using Neighbors)."""
 
 import warnings
@@ -92,7 +91,7 @@ class DOBIN(BaseTransformer):
     ):
         self.frac = frac
         self.k = k
-        super(DOBIN, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -239,17 +238,7 @@ def close_distance_matrix(X: npt.ArrayLike, k: int, frac: float):
 
     dist = pd.DataFrame(
         [
-            (
-                (
-                    X.iloc[
-                        i,
-                    ]
-                    - X.iloc[
-                        j,
-                    ]
-                )
-                ** 2
-            ).tolist()
+            ((X.iloc[i,] - X.iloc[j,]) ** 2).tolist()
             for (i, j) in zip(
                 np.repeat(indices[:, 0], repeats=k), indices[:, 1:].flatten()
             )
@@ -261,6 +250,4 @@ def close_distance_matrix(X: npt.ArrayLike, k: int, frac: float):
 
     mask = row_sums > q_frac
 
-    return dist.loc[
-        mask,
-    ]
+    return dist.loc[mask,]

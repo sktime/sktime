@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements simple forecasts based on naive assumptions."""
@@ -27,6 +26,7 @@ from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
+from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
 
@@ -117,7 +117,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
-        super(NaiveForecaster, self).__init__()
+        super().__init__()
         self.strategy = strategy
         self.sp = sp
         self.window_length = window_length
@@ -127,7 +127,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         if self.strategy in ("last", "mean"):
             self.set_tags(**{"handles-missing-data": True})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -323,6 +323,54 @@ class NaiveForecaster(_BaseWindowForecaster):
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
+    def _predict_naive(self, fh=None, X=None):
+        from sktime.transformations.series.lag import Lag
+
+        strategy = self.strategy
+        sp = self.sp
+        _y = self._y
+        cutoff = self.cutoff
+
+        if isinstance(_y.index, pd.DatetimeIndex) and hasattr(_y.index, "freq"):
+            freq = _y.index.freq
+        else:
+            freq = None
+
+        lagger = Lag(1, keep_column_names=True, freq=freq)
+
+        expected_index = fh.to_absolute(cutoff).to_pandas()
+
+        if strategy == "last" and sp == 1:
+            y_old = lagger.fit_transform(_y)
+            y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
+            full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
+            y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            # subset to rows that contain elements we wanted to fill
+            y_pred = y_filled.loc["b"]
+            # convert to pd.Series from pd.DataFrame
+            y_pred = y_pred.iloc[:, 0]
+
+        elif strategy == "last" and sp > 1:
+            y_old = _pivot_sp(_y, sp, anchor_side="end")
+            y_old = lagger.fit_transform(y_old)
+
+            y_new_mask = pd.Series(index=expected_index, dtype="float64")
+            y_new = _pivot_sp(y_new_mask, sp, anchor=_y, anchor_side="end")
+            full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
+            y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            # subset to rows that contain elements we wanted to fill
+            y_pred = y_filled.loc["b"]
+            # reformat to wide
+            y_pred = _unpivot_sp(y_pred, template=_y)
+
+            # subset to required indices
+            y_pred = y_pred.reindex(expected_index)
+            # convert to pd.Series from pd.DataFrame
+            y_pred = y_pred.iloc[:, 0]
+
+        y_pred.name = _y.name
+        return y_pred
+
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
@@ -333,7 +381,13 @@ class NaiveForecaster(_BaseWindowForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
-        y_pred = super(NaiveForecaster, self)._predict(fh=fh, X=X)
+        strategy = self.strategy
+        NEW_PREDICT = ["last"]
+
+        if strategy in NEW_PREDICT:
+            return self._predict_naive(fh=fh, X=X)
+
+        y_pred = super()._predict(fh=fh, X=X)
 
         # test_predict_time_index_in_sample_full[ForecastingPipeline-0-int-int-True]
         #   causes a pd.DataFrame to appear as y_pred, which upsets the next lines
@@ -352,7 +406,9 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return y_pred
 
-    def _predict_quantiles(self, fh, X=None, alpha=0.5):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
@@ -386,9 +442,13 @@ class NaiveForecaster(_BaseWindowForecaster):
             np.sqrt(pred_var.to_numpy().reshape(len(pred_var), 1)) * z_scores
         ).reshape(len(y_pred), len(alpha))
 
+        var_names = self._get_varnames(
+            default="Quantiles", legacy_interface=legacy_interface
+        )
+
         pred_quantiles = pd.DataFrame(
             errors + y_pred.values.reshape(len(y_pred), 1),
-            columns=pd.MultiIndex.from_product([["Quantiles"], alpha]),
+            columns=pd.MultiIndex.from_product([var_names, alpha]),
             index=fh.to_absolute_index(self.cutoff),
         )
 
@@ -598,11 +658,10 @@ class NaiveVariance(BaseForecaster):
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
-
         self.forecaster = forecaster
         self.initial_window = initial_window
         self.verbose = verbose
-        super(NaiveVariance, self).__init__()
+        super().__init__()
 
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -615,8 +674,7 @@ class NaiveVariance(BaseForecaster):
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
-    def _fit(self, y, X=None, fh=None):
-
+    def _fit(self, y, X, fh):
         self.fh_early_ = fh is not None
         self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -628,7 +686,7 @@ class NaiveVariance(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
@@ -642,7 +700,9 @@ class NaiveVariance(BaseForecaster):
             )
         return self
 
-    def _predict_quantiles(self, fh, X=None, alpha=0.5):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
@@ -675,10 +735,15 @@ class NaiveVariance(BaseForecaster):
         z_scores = norm.ppf(alpha)
         errors = [pred_var**0.5 * z for z in z_scores]
 
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        var_names = self._get_varnames(
+            default="Quantiles", legacy_interface=legacy_interface
+        )
+        var_name = var_names[0]
+
+        index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)
         for a, error in zip(alpha, errors):
-            pred_quantiles[("Quantiles", a)] = y_pred + error
+            pred_quantiles[(var_name, a)] = y_pred + error
 
         fh_absolute = fh.to_absolute(self.cutoff)
         pred_quantiles.index = fh_absolute.to_pandas()

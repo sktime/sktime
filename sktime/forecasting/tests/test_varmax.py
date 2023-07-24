@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests the VARMAX model."""
 __author__ = ["KatieBuc"]
 

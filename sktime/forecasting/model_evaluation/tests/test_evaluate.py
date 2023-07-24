@@ -1,10 +1,9 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for model evaluation module.
 
-In particular, function `evaluate`, that performs time series
-cross-validation, is tested with various configurations for correct output.
+In particular, function `evaluate`, that performs time series cross-validation, is
+tested with various configurations for correct output.
 """
 
 __author__ = ["aiwalter", "mloning", "fkiraly"]
@@ -43,6 +42,7 @@ from sktime.performance_metrics.forecasting.probabilistic import (
     LogLoss,
     PinballLoss,
 )
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
@@ -101,7 +101,7 @@ def _check_evaluate_output(out, cv, y, scoring):
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", [7, 10])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
-@pytest.mark.parametrize("strategy", ["refit", "update"])
+@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize(
     "scoring",
     [
@@ -216,7 +216,7 @@ def test_evaluate_no_exog_against_with_exog():
 )
 @pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
 @pytest.mark.parametrize("return_data", [True, False])
-@pytest.mark.parametrize("strategy", ["refit", "update"])
+@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_error_score(error_score, return_data, strategy, backend):
     """Test evaluate to raise warnings and exceptions according to error_score value."""
@@ -342,3 +342,37 @@ def test_evaluate_probabilistic(n_columns, metric):
         assert scoring_name in out.columns
     except NotImplementedError:
         pass
+
+
+def test_evaluate_hierarchical_unequal_X_y():
+    """Test evaluate with hierarchical X and y where X is larger.
+
+    Tests failure case in bug report #4842.
+    """
+    from sktime.transformations.hierarchical.aggregate import Aggregator
+
+    # hierarchical/panel with 2-level pd.MultiIndex,
+    # level 0 with "A", and "B", dates from 2020-01-01 to 2020-01-10
+    df = pd.DataFrame(
+        index=pd.MultiIndex.from_product(
+            [["A", "B"], pd.date_range("2020-01-01", "2020-01-10").to_period("D")]
+        ),
+        data={"target": np.arange(20) % 10},
+    ).sort_index()
+    df = Aggregator().fit_transform(df)
+
+    y = df[df.index.get_level_values(-1) < "2020-01-08"]
+    X = df.copy()
+    cv = ExpandingWindowSplitter(initial_window=2, fh=[1], step_length=1)
+
+    f = NaiveForecaster()
+
+    # this fails in the case of #4842 as y and X have different length
+    res = evaluate(f, cv, y, X, error_score="raise")
+
+    # further sanity checks to pin down deterministic properties of return
+    assert isinstance(res, pd.DataFrame)
+    assert res.shape == (5, 5)
+
+    expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
+    _assert_array_almost_equal(res.iloc[:, 0].values, expected_cols)

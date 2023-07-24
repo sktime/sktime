@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements automatic and manually exponential time series smoothing models."""
@@ -35,13 +34,14 @@ class AutoETS(_StatsModelsAdapter):
     Parameters
     ----------
     error : str, default="add"
-        The error model. Takes one of "add" or "mul".
+        The error model. Takes one of "add" or "mul". Ignored if auto=True.
     trend : str or None, default=None
-        The trend component model. Takes one of "add", "mul", or None.
+        The trend component model. Takes one of "add", "mul", or None. Ignored if
+        auto=True.
     damped_trend : bool, default=False
-        Whether or not an included trend component is damped.
+        Whether or not an included trend component is damped. Ignored if auto=True.
     seasonal : str or None, default=None
-        The seasonality model. Takes one of "add", "mul", or None.
+        The seasonality model. Takes one of "add", "mul", or None. Ignored if auto=True.
     sp : int, default=1
         The number of periods in a complete seasonal cycle for seasonal
         (Holt-Winters) models. For example, 4 for quarterly data with an
@@ -119,7 +119,8 @@ class AutoETS(_StatsModelsAdapter):
     return_params : bool, default=False
         Whether or not to return only the array of maximizing parameters.
     auto : bool, default=False
-        Set True to enable automatic model selection.
+        Set True to enable automatic model selection. If auto=True, then error,
+        trend, seasonal and damped_trend are ignored.
     information_criterion : str, default="aic"
         Information criterion to be used in model selection. One of:
 
@@ -156,6 +157,10 @@ class AutoETS(_StatsModelsAdapter):
         https://www.statsmodels.org/stable/_modules/statsmodels/tsa/exponential_smoothing/ets.html#ETSModel
     .. [3] R Version of ETS:
         https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets
+
+    See Also
+    --------
+    StatsForecastAutoETS
 
     Examples
     --------
@@ -237,7 +242,22 @@ class AutoETS(_StatsModelsAdapter):
         self.ignore_inf_ic = ignore_inf_ic
         self.n_jobs = n_jobs
 
-        super(AutoETS, self).__init__(random_state=random_state)
+        super().__init__(random_state=random_state)
+
+        if self.auto:
+            # If auto=True, check if trend, damped_trend, seasonal, or error are not set
+            # to default values
+            if any([trend, damped_trend, seasonal]) or error != "add":
+                warnings.warn(
+                    "The user-specified parameters provided alongside auto=True in "
+                    "AutoETS may not be respected. The AutoETS function "
+                    "automatically selects the best model based on the "
+                    "information criterion, ignoring the error, trend, "
+                    "seasonal, and damped_trend parameters when auto=True"
+                    " is set. Please ensure that your intended behavior"
+                    " aligns with the automatic model selection.",
+                    stacklevel=2,
+                )
 
     def _fit_forecaster(self, y, X=None):
         from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
@@ -389,7 +409,7 @@ class AutoETS(_StatsModelsAdapter):
                 return_params=self.return_params,
             )
 
-    def _predict(self, fh, X=None, **simulate_kwargs):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -400,7 +420,6 @@ class AutoETS(_StatsModelsAdapter):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        **simulate_kwargs : see statsmodels ETSResults.get_prediction
 
         Returns
         -------
@@ -450,3 +469,30 @@ class AutoETS(_StatsModelsAdapter):
         https://www.statsmodels.org/dev/examples/notebooks/generated/ets.html
         """
         return self._fitted_forecaster.summary()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = [
+            # default setting, non-auto
+            {},
+            # "auto-ets"
+            # TODO: uncomment following line while fixing #4591
+            # {"sp": 2, "auto": True},
+            # ets (non-auto) with some non-default parameters
+            {"information_criterion": "bic", "trend": "add", "damped_trend": True},
+        ]
+
+        return params

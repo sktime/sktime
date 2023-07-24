@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DrCIF classifier.
 
 interval based DrCIF classifier extracting catch22 features from random intervals on
@@ -61,13 +60,15 @@ class DrCIF(BaseClassifier):
         Maximum length of an interval per representation as an int for all
         representations or list for individual settings, if None set to
         (representation_length / 2).
-    base_estimator : BaseEstimator or str, default="DTC"
+    base_estimator : BaseEstimator or str, default="CIT"
         Base estimator for the ensemble, can be supplied a sklearn BaseEstimator or a
         string for suggested options.
         "DTC" uses the sklearn DecisionTreeClassifier using entropy as a splitting
-        measure.
+        measure (sklearn.tree.DecisionTreeClassifier).
         "CIT" uses the sktime ContinuousIntervalTree, an implementation of the original
-        tree used with embedded attribute processing for faster predictions.
+        tree used with embedded attribute processing for faster predictions
+        (sktime.classification.interval_based.ContinuousIntervalTree).
+        In order to pass parameters to estimators, pass a BaseEstimator instance.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding n_estimators.
         Default of 0 means n_estimators is used.
@@ -193,9 +194,18 @@ class DrCIF(BaseClassifier):
         self._att_subsample_size = att_subsample_size
         self._min_interval = min_interval
         self._max_interval = max_interval
-        self._base_estimator = base_estimator
 
-        super(DrCIF, self).__init__()
+        super().__init__()
+
+        if isinstance(base_estimator, str):
+            if base_estimator.lower() == "dtc":
+                self._base_estimator = DecisionTreeClassifier(criterion="entropy")
+            elif base_estimator.lower() == "cit":
+                self._base_estimator = ContinuousIntervalTree()
+        elif isinstance(base_estimator, BaseEstimator):
+            self._base_estimator = _clone_estimator(base_estimator)
+        else:
+            raise ValueError("DrCIF invalid base estimator given")
 
     def _fit(self, X, y):
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
@@ -203,15 +213,6 @@ class DrCIF(BaseClassifier):
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0
-
-        if self.base_estimator.lower() == "dtc":
-            self._base_estimator = DecisionTreeClassifier(criterion="entropy")
-        elif self.base_estimator.lower() == "cit":
-            self._base_estimator = ContinuousIntervalTree()
-        elif isinstance(self.base_estimator, BaseEstimator):
-            self._base_estimator = self.base_estimator
-        else:
-            raise ValueError("DrCIF invalid base estimator given.")
 
         X_p = np.zeros(
             (
@@ -633,9 +634,18 @@ class DrCIF(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
         else:
-            return {
-                "n_estimators": 2,
-                "n_intervals": 2,
-                "att_subsample_size": 2,
-                "save_transformed_data": True,
-            }
+            return [
+                {
+                    "n_estimators": 2,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                    "save_transformed_data": True,
+                },
+                {
+                    "n_estimators": 2,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                    "base_estimator": ContinuousIntervalTree(),
+                    "save_transformed_data": True,
+                },
+            ]

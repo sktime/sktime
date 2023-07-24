@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test YtoX."""
 __author__ = ["aiwalter", "fkiraly"]
 
@@ -17,8 +16,8 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 def test_featurized_values():
     """Test against plain transformation.
 
-    Test to check that the featurized values are same as if transformation
-    is done without YtoX.
+    Test to check that the featurized values are same as if transformation is done
+    without YtoX.
     """
     lags = len(y_test)
     featurizer = YtoX() * ExponentTransformer() * Lag(lags)

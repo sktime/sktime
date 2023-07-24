@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from logging import warning
 
@@ -325,7 +324,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     def _get_alpha_from(self, y_pred):
         """Fetch the alphas present in y_pred."""
         alphas = np.unique(list(y_pred.columns.get_level_values(1)))
-        if not all(((alphas > 0) & (alphas < 1))):
+        if not all((alphas > 0) & (alphas < 1)):
             raise ValueError("Alpha must be between 0 and 1.")
 
         return alphas
@@ -341,7 +340,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         if not isinstance(alpha, np.ndarray):
             alpha = np.asarray(alpha)
 
-        if not all(((alpha > 0) & (alpha < 1))):
+        if not all((alpha > 0) & (alpha < 1)):
             raise ValueError("Alpha must be between 0 and 1.")
 
         return alpha
@@ -377,7 +376,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
 
 
 class PinballLoss(_BaseProbaForecastingErrorMetric):
-    """Evaluate the pinball loss at all quantiles given in data.
+    """Pinball loss aka quantile loss for quantile/interval predictions.
 
     Parameters
     ----------
@@ -463,7 +462,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
 
 class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
-    """Evaluate the pinball loss at all quantiles given in data.
+    """Empirical coverage percentage for interval predictions.
 
     Parameters
     ----------
@@ -530,7 +529,7 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
 
 class ConstraintViolation(_BaseProbaForecastingErrorMetric):
-    """Evaluate the pinball loss at all quantiles given in data.
+    """Percentage of interval constraint violations for interval predictions.
 
     Parameters
     ----------

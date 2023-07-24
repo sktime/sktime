@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Metrics to assess performance on forecasting task.
 
@@ -19,6 +18,7 @@ __all__ = [
     "ConstraintViolation",
     "CRPS",
     "LogLoss",
+    "SquaredDistrLoss",
 ]
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
@@ -27,5 +27,6 @@ from sktime.performance_metrics.forecasting.probabilistic._classes import (
     EmpiricalCoverage,
     LogLoss,
     PinballLoss,
+    SquaredDistrLoss,
     _BaseProbaForecastingErrorMetric,
 )

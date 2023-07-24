@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Class for signature computation over windows."""
 import numpy as np
 
@@ -61,7 +60,6 @@ class _WindowSignatureTransform(BaseTransformer):
         )
 
     def _transform(self, X, y=None):
-
         import esig
 
         depth = self.sig_depth

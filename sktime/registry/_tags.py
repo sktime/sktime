@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Register of estimator and object tags.
 
 Note for extenders: new tags should be entered in ESTIMATOR_TAG_REGISTER.
@@ -37,7 +36,6 @@ ESTIMATOR_TAG_LIST - list of string
 ---
 
 check_tag_is_valid(tag_name, tag_value) - checks whether tag_value is valid for tag_name
-
 """
 
 __author__ = ["fkiraly", "victordremov"]
@@ -186,6 +184,12 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "is the transformer capable of carrying out an inverse transform?",
+    ),
+    (
+        "capability:inverse_transform:range",
+        "transformer",
+        "list",
+        "domain of invertibility of transform, must be list [lower, upper] of float",
     ),
     (
         "capability:pred_int",
@@ -374,6 +378,13 @@ ESTIMATOR_TAG_REGISTER = [
         "python dependencies of estimator as str or list of str",
     ),
     (
+        "python_dependencies_alias",
+        "estimator",
+        "dict",
+        "should be provided if import name differs from package name, \
+        key-value pairs are package name, import name",
+    ),
+    (
         "requires_cython",
         "estimator",
         "bool",
@@ -398,6 +409,12 @@ ESTIMATOR_TAG_REGISTER = [
         "parameters reserved by the base class and present in all child estimators",
     ),
     (
+        "split_hierarchical",
+        "splitter",
+        "bool",
+        "whether _split is natively implemented for hierarchical y types",
+    ),
+    (
         "capabilities:exact",
         "distribution",
         ("list", "str"),
@@ -414,6 +431,30 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         ("str", ["continuous", "discrete", "mixed"]),
         "class the distribution measure belongs to - abs.continuous, discrete, mixed",
+    ),
+    (
+        "approx_mean_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative mean if not available",
+    ),
+    (
+        "approx_var_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative variance if not available",
+    ),
+    (
+        "approx_energy_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative energy if not available",
+    ),
+    (
+        "approx_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating other statistics if not available",
     ),
 ]
 
