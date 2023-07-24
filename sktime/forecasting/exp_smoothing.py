@@ -231,15 +231,15 @@ class ExponentialSmoothing(_StatsModelsAdapter):
             },
             {
                 "trend": "add",
-                "damped_trend": True,
+                "damped_trend": False,
                 "seasonal": "add",
                 "sp": 2,
-                "use_boxcox": False,
-                "initialization_method": "heuristic",
+                "use_boxcox": True,
+                "initialization_method": "estimated",
                 "smoothing_level": 0.3,
                 "smoothing_trend": 0.5,
                 "damping_trend": 0.28,
-                "method": "least_squares",
+                "method": "SLSQP",
             },
         ]
 

@@ -171,8 +171,6 @@ class Croston(BaseForecaster):
             {},
             {"smoothing": 0},
             {"smoothing": 0.42},
-            {"smoothing": 0.83},
-            {"smoothing": 1.25},
         ]
 
         return params
