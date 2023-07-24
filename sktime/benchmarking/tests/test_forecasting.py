@@ -112,3 +112,24 @@ def test_coer_estimator_and_id(estimator, estimator_id, expected_output):
     assert (
         coer_estimator_and_id(estimator, estimator_id) == expected_output
     ), "coer_estimator_and_id does not return the expected output."
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("kotsu", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+@pytest.mark.parametrize(
+    "estimators",
+    [
+        ({"N-v1": NaiveForecaster(), "T-v1": TrendForecaster()}),
+        ([NaiveForecaster(), TrendForecaster()]),
+    ],
+)
+def test_multiple_estimators(estimators):
+    """Test add_estimator with multiple estimators."""
+    benchmark = ForecastingBenchmark()
+    benchmark.add_estimator(estimators)
+    registered_estimators = benchmark.estimators.entity_specs.keys()
+    assert len(registered_estimators) == len(
+        estimators
+    ), "add_estimator does not register all estimators."
