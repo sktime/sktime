@@ -203,7 +203,9 @@ class ConformalIntervals(BaseForecaster):
                 update=True,
             )
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -258,7 +260,11 @@ class ConformalIntervals(BaseForecaster):
 
         ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
 
-        cols = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
+        var_names = self._get_varnames(
+            default="Coverage", legacy_interface=legacy_interface
+        )
+
+        cols = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
         for fh_ind, offset in zip(fh_absolute, fh_relative):
             resids = np.diagonal(residuals_matrix, offset=offset)
@@ -293,36 +299,6 @@ class ConformalIntervals(BaseForecaster):
             pred_int[col] = y_pred + sign * pred_int[col]
 
         return pred_int.convert_dtypes()
-
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and default _predict_interval
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to predict from.
-        alpha : list of float, optional (default=[0.5])
-            A list of probabilities at which quantile forecasts are computed.
-
-        Returns
-        -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
-        """
-        pred_int = BaseForecaster._predict_quantiles(self, fh, X, alpha)
-
-        return pred_int
 
     def _parse_initial_window(self, y, initial_window=None):
         n_samples = len(y)

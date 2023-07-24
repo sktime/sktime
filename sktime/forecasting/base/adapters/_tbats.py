@@ -246,7 +246,9 @@ class _TbatsAdapter(BaseForecaster):
 
         return pred_int
 
-    def _predict_interval(self, fh, X, coverage):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg and logic using it
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -286,22 +288,26 @@ class _TbatsAdapter(BaseForecaster):
         cutoff = self.cutoff
 
         # accumulator of results
-        var_names = ["Coverage"]
+        var_names = self._get_varnames(
+            default="Coverage", legacy_interface=legacy_interface
+        )
+        var_name = var_names[0]
+
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx, index=fh.to_absolute_index(cutoff))
 
         for c in coverage:
             # separate treatment for "0" coverage: upper/lower = point prediction
             if c == 0:
-                pred_int[("Coverage", 0, "lower")] = self._tbats_forecast(fh)
-                pred_int[("Coverage", 0, "upper")] = pred_int[("Coverage", 0, "lower")]
+                pred_int[(var_name, 0, "lower")] = self._tbats_forecast(fh)
+                pred_int[(var_name, 0, "upper")] = pred_int[(var_name, 0, "lower")]
                 continue
 
             # tbats prediction intervals
             tbats_pred_int = self._tbats_forecast_interval(fh, c)
 
-            pred_int[("Coverage", c, "lower")] = tbats_pred_int["lower"]
-            pred_int[("Coverage", c, "upper")] = tbats_pred_int["upper"]
+            pred_int[(var_name, c, "lower")] = tbats_pred_int["lower"]
+            pred_int[(var_name, c, "upper")] = tbats_pred_int["upper"]
 
         return pred_int
 
