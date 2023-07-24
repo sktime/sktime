@@ -269,6 +269,20 @@ Auto-ARIMA models
 
     StatsForecastAutoARIMA
 
+
+ARCH models
+-----------
+
+.. currentmodule:: sktime.forecasting.arch
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastARCH
+    StatsForecastGARCH
+
+
 Structural time series models
 -----------------------------
 
