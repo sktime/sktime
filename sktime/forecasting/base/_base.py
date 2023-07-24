@@ -1264,12 +1264,8 @@ class BaseForecaster(BaseEstimator):
             mean_absolute_percentage_error,
         )
 
-        # specify non-symmetric explicit as it changed in the past
-        return mean_absolute_percentage_error(
-            y, 
-            self.predict(fh, X), 
-            symmetric=False
-        )
+        # specify non-symmetric explicitly as it changed in the past
+        return mean_absolute_percentage_error(y, self.predict(fh, X), symmetric=False)
 
     def get_fitted_params(self, deep=True):
         """Get fitted parameters.
