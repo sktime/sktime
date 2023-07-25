@@ -177,24 +177,26 @@ In the ``anaconda prompt`` terminal:
 
 5. Activate the environment: :code:`conda activate sktime-dev`
 
-6. Build an editable version of sktime :code:`pip install -e .[dev]`
-In order to install only the dev dependencies, use :code:`pip install -e .[dev]`
+6. Build an editable version of sktime.
+In order to install only the dev dependencies, :code:`pip install -e .[dev]`
 If you also want to install soft dependencies, install them individually, after the above,
 or instead use: :code:`pip install -e .[all_extras,dev]` to install all of them.
+
+    .. note::
+
+        If this step results in a "no matches found" error, it may be due to how your shell handles special characters.
+
+        - Possible solution: use quotation marks:
+
+            .. code-block:: bash
+
+                pip install -e ."[dev]"
 
 7. If everything has worked you should see message "successfully installed sktime"
 
 Some users have experienced issues when installing NumPy, particularly version 1.19.4.
 
-.. note::
 
-    If step 4. results in a "no matches found" error, it may be due to how your shell handles special characters.
-
-    - Possible solution: use quotation marks:
-
-        .. code-block:: bash
-
-            pip install -e ."[dev]"
 
 .. note::
 
