@@ -179,7 +179,6 @@ In the ``anaconda prompt`` terminal:
 
 6. Build an editable version of sktime :code:`pip install -e .[dev]`
 In order to install all soft dependencies, use :code:`pip install -e .[dev]`
-If you are on Mac, use :code:`pip install -e ".[dev]"`
 If you also want to install soft dependencies, install them individually, after the above,
 or instead use: :code:`pip install -e .[all_extras,dev]` to install all of them.
 
