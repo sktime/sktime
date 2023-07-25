@@ -28,6 +28,7 @@ from sktime.datasets import (
 from sktime.datasets._data_io import (
     MODULE,
     _convert_tsf_to_hierarchical,
+    _list_available_datasets,
     _load_provided_dataset,
 )
 from sktime.datatypes import check_is_mtype, scitype_to_mtype
@@ -1463,3 +1464,21 @@ def test_convert_tsf_to_multiindex(freq):
         _convert_tsf_to_hierarchical(input_df, metadata, freq=freq),
         check_dtype=False,
     )
+
+
+@pytest.mark.parametrize("origin_repo", [None, "forecastingorg"])
+def test_list_available_datasets(origin_repo):
+    """Test function for listing available datasets.
+
+    check for two datasets repo format types:
+    1. https://www.timeseriesclassification.com/
+    2  https://forecastingdata.org/
+
+    """
+    dataset_name = "UnitTest"
+    available_datasets = _list_available_datasets(
+        extract_path=None, origin_repo=origin_repo
+    )
+    assert (
+        dataset_name in available_datasets
+    ), f"{dataset_name} dataset should be available."  # noqa: E501
