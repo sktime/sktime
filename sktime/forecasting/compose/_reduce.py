@@ -2310,9 +2310,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
             # Xtt = lag_plus.fit_transform(Xt)
 
-            # c = time.time()
-            # print(c-a)
-
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             if X_pool is not None:
                 Xtt_predrow = pd.concat(
@@ -2333,9 +2330,15 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # 2D numpy array with col index = (var) and 1 row
             y_pred_list.append(y_pred_i)
 
+            c = time.time()
+            print(c-a)
+
             y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
             y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
             y_plus_preds = y_plus_preds.combine_first(y_pred_new)
+
+            d = time.time()
+            print(d-a)
 
             # ff = time.time()
 
@@ -2343,14 +2346,25 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 y_pred_new = y_pred_new.asfreq(self.fh.freq)
 
             # Xt_new = lagger_y_to_X.transform(y_pred_new)
+
+            # most time is spent here:
             Xt_new = lagger.fit_transform(y_pred_new)
+
+            # lagger.set_config(**{"input_conversion": "off", "output_conversion": "off"})
+            # print(Xt_new)
             Xtt_new = lag_plus.fit_transform(Xt_new)
+
+
+
+            f = time.time()
+            print(f-a)
+
             Xtt_new.columns = Xtt.columns
 
             Xtt = Xtt.combine_first(Xtt_new)
 
-            fff = time.time()
-            print(f"time{fff-a}")
+            g = time.time()
+            print(g-a)
 
         y_pred = np.concatenate(y_pred_list)
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=y_abs_no_gaps)
