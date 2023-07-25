@@ -2246,6 +2246,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "davidgilbertson",
+      "name": "David Gilbertson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4443482?v=4",
+      "profile": "https://github.com/davidgilbertson",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }
