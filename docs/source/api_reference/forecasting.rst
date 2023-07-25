@@ -428,6 +428,7 @@ Time series splitters can be used in both evaluation and tuning.
     SingleWindowSplitter
     SlidingWindowSplitter
     ExpandingWindowSplitter
+    ExpandingGreedySplitter
 
 .. autosummary::
     :toctree: auto_generated/
