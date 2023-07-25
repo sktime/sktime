@@ -134,7 +134,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer", "transformer-pairwise-panel", "param_est"],
+        [
+            "clusterer",
+            "forecaster",
+            "transformer",
+            "transformer-pairwise-panel",
+            "param_est",
+        ],
         (
             "list",
             [
