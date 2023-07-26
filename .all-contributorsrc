@@ -2267,6 +2267,15 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "MBristle",
+      "name": "Mirko Bristle",
+      "avatar_url": "https://avatars.githubusercontent.com/MBristle",
+      "profile": "https://github.com/MBristle",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }

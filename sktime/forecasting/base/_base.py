@@ -1232,7 +1232,7 @@ class BaseForecaster(BaseEstimator):
         return y_res
 
     def score(self, y, X=None, fh=None):
-        """Scores forecast against ground truth, using MAPE.
+        """Scores forecast against ground truth, using MAPE (non-symmetric).
 
         Parameters
         ----------
@@ -1252,7 +1252,7 @@ class BaseForecaster(BaseEstimator):
         Returns
         -------
         score : float
-            sMAPE loss of self.predict(fh, X) with respect to y_test.
+            MAPE loss of self.predict(fh, X) with respect to y_test.
 
         See Also
         --------
@@ -1260,12 +1260,12 @@ class BaseForecaster(BaseEstimator):
         """
         # no input checks needed here, they will be performed
         # in predict and loss function
-        # symmetric=True is default for mean_absolute_percentage_error
         from sktime.performance_metrics.forecasting import (
             mean_absolute_percentage_error,
         )
 
-        return mean_absolute_percentage_error(y, self.predict(fh, X))
+        # specify non-symmetric explicitly as it changed in the past
+        return mean_absolute_percentage_error(y, self.predict(fh, X), symmetric=False)
 
     def get_fitted_params(self, deep=True):
         """Get fitted parameters.
