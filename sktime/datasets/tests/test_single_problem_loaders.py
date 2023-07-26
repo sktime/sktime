@@ -78,7 +78,7 @@ def test_load_numpy2d_multivariate_raises(loader):
 
 
 @pytest.mark.xfail(
-    reason="repeatedly failed due to random changes, see 4754. xfail until fixed."
+    reason="repeated upstream location failures, see 4754. xfail until fixed."
 )
 def test_load_UEA():
     """Test loading of a random subset of the UEA data, to check API."""
