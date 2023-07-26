@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 
 __author__ = ["fkiraly"]
 __all__ = []

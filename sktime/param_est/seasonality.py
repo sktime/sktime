@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for seasonality."""
 
@@ -109,7 +108,7 @@ class SeasonalityACF(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACF, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -142,6 +141,8 @@ class SeasonalityACF(BaseParamFitter):
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
             candidate_sp = range(2, nlags + 1)
+        elif isinstance(candidate_sp, int):
+            candidate_sp = [candidate_sp]
 
         fft = self.fft
         missing = self.missing
@@ -197,8 +198,9 @@ class SeasonalityACF(BaseParamFitter):
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
+        params3 = {"candidate_sp": 12}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class SeasonalityACFqstat(BaseParamFitter):
@@ -294,7 +296,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACFqstat, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -332,6 +334,8 @@ class SeasonalityACFqstat(BaseParamFitter):
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
             candidate_sp = range(2, nlags + 1)
+        elif isinstance(candidate_sp, int):
+            candidate_sp = [candidate_sp]
 
         fft = self.fft
         missing = self.missing
@@ -405,8 +409,9 @@ class SeasonalityACFqstat(BaseParamFitter):
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
+        params3 = {"candidate_sp": 12}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class SeasonalityPeriodogram(BaseParamFitter):
@@ -457,7 +462,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
         self.min_period = min_period
         self.max_period = max_period
         self.thresh = thresh
-        super(SeasonalityPeriodogram, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.

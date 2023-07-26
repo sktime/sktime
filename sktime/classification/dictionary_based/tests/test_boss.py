@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BOSS test code."""
 import numpy as np
 import pytest
@@ -10,8 +9,7 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
 
 @pytest.fixture
 def dataset():
-    """
-    Load unit_test train and test data set from sktime.
+    """Load unit_test train and test data set from sktime.
 
     :return: tuple, (X_train, y_train, X_test, y_test).
     """

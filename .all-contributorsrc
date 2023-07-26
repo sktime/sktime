@@ -1218,7 +1218,7 @@
       "login": "moradabaz",
       "name": "Morad :)",
       "avatar_url": "https://avatars.githubusercontent.com/u/29915156?v=4",
-      "profile": "https://moradisten.github.io/",
+      "profile": "https://moradabaz.github.io/",
       "contributions": [
         "code",
         "test",
@@ -2135,6 +2135,146 @@
       "contributions": [
         "code",
         "maintenance"
+      ]
+    },
+    {
+      "login": "yarnabrina",
+      "name": "Anirban Ray",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39331844?v=4",
+      "profile": "https://github.com/yarnabrina/",
+      "contributions": [
+        "bug",
+        "code",
+        "doc",
+        "ideas",
+        "maintenance",
+        "mentoring",
+        "question",
+        "review",
+        "test"
+      ]
+    },
+    {
+      "login": "dashapetr",
+      "name": "Darya Petrashka",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54349415?v=4",
+      "profile": "https://github.com/dashapetr",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "luca-miniati",
+      "name": "Luca Miniati",
+      "avatar_url": "https://avatars.githubusercontent.com/u/87467600?v=4",
+      "profile": "https://github.com/luca-miniati",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "marrov",
+      "name": "Marc Rovira",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54272586?v=4",
+      "profile": "https://github.com/marrov",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Taise228",
+      "name": "Taisei Yamamoto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/95762401?s=400&v=4",
+      "profile": "https://github.com/Taise228",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "CTFallon",
+      "name": "Colin Fallon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19725980?v=4",
+      "profile": "https://github.com/CTFallon",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mgazian000",
+      "name": "Michael Gaziani",
+      "avatar_url": "https://avatars.githubusercontent.com/mgazian000",
+      "profile": "https://github.com/mgazian000",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "alan191006",
+      "name": "Alan Huynh",
+      "avatar_url": "https://avatars.githubusercontent.com/alan191006",
+      "profile": "https://github.com/alan191006",
+      "contributions": [
+        "code"
+    ]
+    },
+    {
+      "login": "felipeangelimvieira",
+      "name": "Felipe Angelim",
+      "avatar_url": "https://avatars.githubusercontent.com/felipeangelimvieira",
+      "profile": "https://github.com/felipeangelimvieira",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "Gigi1111",
+      "name": "Chung-Fan Tsai",
+      "avatar_url": "https://avatars.githubusercontent.com/Gigi1111",
+      "profile": "https://github.com/Gigi1111",
+      "contributions": [
+        "test"
+      ]
+    },
+    {
+      "login": "eyjo",
+      "name": "Eyjólfur Sigurðsson",
+      "avatar_url": "https://avatars.githubusercontent.com/eyjo",
+      "profile": "https://github.com/eyjo",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "julia-kraus",
+      "name": "Julia Kraus",
+      "avatar_url": "https://avatars.githubusercontent.com/julia-kraus",
+      "profile": "https://github.com/julia-kraus",
+      "contributions": [
+        "doc",
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "davidgilbertson",
+      "name": "David Gilbertson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4443482?v=4",
+      "profile": "https://github.com/davidgilbertson",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "MBristle",
+      "name": "Mirko Bristle",
+      "avatar_url": "https://avatars.githubusercontent.com/MBristle",
+      "profile": "https://github.com/MBristle",
+      "contributions": [
+        "doc"
       ]
     }
   ]

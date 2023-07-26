@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Base class for clustering."""
 __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["BaseClusterer"]
@@ -43,7 +42,7 @@ class BaseClusterer(BaseEstimator):
         self._class_dictionary = {}
         self._threads_to_use = 1
         self.n_clusters = n_clusters
-        super(BaseClusterer, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):
@@ -371,8 +370,14 @@ class BaseClusterer(BaseEstimator):
         """
         X = self._initial_conversion(X)
 
+        X_metadata_required = [
+            "n_instances",
+            "has_nans",
+            "is_univariate",
+            "is_equal_length",
+        ]
         X_valid, _, X_metadata = check_is_scitype(
-            X, scitype="Panel", return_metadata=True
+            X, scitype="Panel", return_metadata=X_metadata_required
         )
         if not X_valid:
             raise TypeError(

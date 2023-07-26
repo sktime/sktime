@@ -1,9 +1,8 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests simple forecasts based on naive assumptions."""
 
-__author__ = ["mloning", "Piyush Gade", "Flix6x"]
+__author__ = ["mloning", "Piyush1729", "Flix6x"]
 
 import numpy as np
 import pandas as pd
@@ -193,12 +192,11 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
 ):
     """Check that naive forecasters yield the right forecasts given simple data.
 
-    Test for perfectly cyclic data, and for robustness against a missing value.
-    More specifically,
-    check time series of n * window_length with a 1:n-1 train/test split,
-    for different combinations of the period and seasonal periodicity.
-    The time series contains perfectly cyclic data,
-    so switching between the "mean" and "last" strategies should not make a difference.
+    Test for perfectly cyclic data, and for robustness against a missing value. More
+    specifically, check time series of n * window_length with a 1:n-1 train/test split,
+    for different combinations of the period and seasonal periodicity. The time series
+    contains perfectly cyclic data, so switching between the "mean" and "last"
+    strategies should not make a difference.
     """
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
     freq = pd.Timedelta("1H")

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """Time format related utilities."""
 
 __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
@@ -173,7 +172,7 @@ def _infer_freq_from_index(index: pd.Index) -> Optional[str]:
         return index.freqstr
     else:
         try:
-            return pd.infer_freq(index, warn=False)
+            return pd.infer_freq(index)
         except (TypeError, ValueError):
             return None
 
@@ -211,7 +210,7 @@ def _shift(x, by=1, return_index=False):
 
     # if we want index, we can simply use add dunder or shift
     if return_index:
-        if idx.is_integer():
+        if pd.api.types.is_integer_dtype(idx):
             return idx + by
         else:
             return idx.shift(by)

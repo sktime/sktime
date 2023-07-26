@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for some metrics."""
 # currently this consists entirely of doctests from _classes and _functions
 # since the numpy output print changes between versions
 
 import numpy as np
+import pandas as pd
 
 
 def test_gmse_class():
@@ -107,3 +107,18 @@ def test_linex_function():
     assert np.allclose(
         mean_linex_error(y_true, y_pred, multioutput=[0.3, 0.7]), 0.30917568000716666
     )
+
+
+def test_make_scorer():
+    """Test make_forecasting_scorer and the failure case in #4827."""
+    import functools
+
+    from sklearn.metrics import mean_squared_log_error
+
+    from sktime.performance_metrics.forecasting import make_forecasting_scorer
+
+    rmsle = functools.partial(mean_squared_log_error, squared=False)
+
+    scorer = make_forecasting_scorer(rmsle, name="RMSLE")
+
+    scorer.evaluate(pd.Series([1, 2, 3]), pd.Series([1, 2, 4]))

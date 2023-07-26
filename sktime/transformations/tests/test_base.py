@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests for base class conversion and vectorization functionality.
 
-Each test covers a "decision path" in the base class boilerplate,
-    with a focus on frequently breaking paths in base class refactor and bugfixing.
-The path taken depends on tags of a given transformer, and input data type.
-Concrete transformer classes from sktime are imported to cover
-    different combinations of transformer tags.
-Transformer scenarios cover different combinations of input data types.
+Each test covers a "decision path" in the base class boilerplate,     with a focus on
+frequently breaking paths in base class refactor and bugfixing. The path taken depends
+on tags of a given transformer, and input data type. Concrete transformer classes from
+sktime are imported to cover     different combinations of transformer tags. Transformer
+scenarios cover different combinations of input data types.
 """
 
 __author__ = ["fkiraly"]
@@ -621,15 +619,15 @@ def test_vectorize_reconstruct_unique_columns():
 
     X_t_cols = t.fit_transform(X).columns
 
-    assert set(X_t_cols) == set(["a__0", "a__2", "b__0", "b__2", "c__0", "c__2"])
+    assert set(X_t_cols) == {"a__0", "a__2", "b__0", "b__2", "c__0", "c__2"}
 
     X_mi_cols = t.fit_transform(X_mi)
-    assert set(X_mi_cols) == set(["var_0__0", "var_0__2", "var_1__0", "var_1__2"])
+    assert set(X_mi_cols) == {"var_0__0", "var_0__2", "var_1__0", "var_1__2"}
 
     X = _make_series(n_columns=2, n_timepoints=15)
     t = Detrender.create_test_instance()
     Xt = t.fit_transform(X)
-    assert set(Xt.columns) == set([0, 1])
+    assert set(Xt.columns) == {0, 1}
 
 
 def test_vectorize_reconstruct_correct_hierarchy():

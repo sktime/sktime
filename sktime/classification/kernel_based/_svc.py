@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """Support vector classifier using time series kernels..
 
-Direct wrap of sklearn SVC with added functionality that allows
-time series kernel to be passed, and uses the sktime time series classifier interface.
+Direct wrap of sklearn SVC with added functionality that allows time series kernel to be
+passed, and uses the sktime time series classifier interface.
 """
 
 __author__ = ["fkiraly"]
@@ -29,17 +28,19 @@ class TimeSeriesSVC(BaseClassifier):
 
     Parameters
     ----------
-    kernel : pairwise panel transformer or callable
-        pairwise panel transformer inheriting from BasePairwiseTransformerPanel, or
-        callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
-            output must be mxn array if X is Panel of m Series, X2 of n Series
-            if distance_mtype is not set, must be able to take
-                X, X2 which are pd_multiindex and numpy3D mtype
+    kernel : pairwise panel transformer or callable, optional, default see below
+        pairwise panel transformer inheriting from ``BasePairwiseTransformerPanel``, or
+        callable, must be of signature ``(X: Panel, X2: Panel) -> np.ndarray``
+        output must be mxn array if ``X`` is Panel of m Series, ``X``2 of n Series
+        if ``distance_mtype`` is not set, must be able to take
+        ``X``, ``X2`` which are ``pd_multiindex`` and ``numpy3D`` mtype
+        default = mean Euclidean kernel, same as ``AggrDist(RBF())``,
+        where ``AggrDist`` is from ``sktime`` and ``RBF`` from ``sklearn``
     kernel_params : dict, optional. default = None.
         dictionary for distance parameters, in case that distance is a callable
     kernel_mtype : str, or list of str optional. default = None.
-        mtype that distance expects for X and X2, if a callable
-            only set this if distance is not BasePairwiseTransformerPanel descendant
+        mtype that ``kernel`` expects for X and X2, if a callable
+        only set this if ``kernel`` is not ``BasePairwiseTransformerPanel`` descendant
     C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive. The penalty
@@ -48,9 +49,9 @@ class TimeSeriesSVC(BaseClassifier):
         Whether to use the shrinking heuristic.
     probability : bool, default=False
         Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, will slow down that method as it internally uses
-        5-fold cross-validation, and `predict_proba` may be inconsistent with
-        `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
+        to calling ``fit``, will slow down that method as it internally uses
+        5-fold cross-validation, and ``predict_proba`` may be inconsistent with
+        ``predict``.
     tol : float, default=1e-3
         Tolerance for stopping criterion.
     cache_size : float, default=200
@@ -68,7 +69,7 @@ class TimeSeriesSVC(BaseClassifier):
         properly in a multithreaded context.
     max_iter : int, default=-1
         Hard limit on iterations within solver, or -1 for no limit.
-    decision_function_shape : {'ovo', 'ovr'}, default='ovr'
+    decision_function_shape : ``{'ovo', 'ovr'}``, default='ovr'
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
@@ -85,7 +86,6 @@ class TimeSeriesSVC(BaseClassifier):
         Controls the pseudo random number generation for shuffling the data for
         probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
-        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -107,6 +107,7 @@ class TimeSeriesSVC(BaseClassifier):
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
         "classifier_type": "kernel",
     }
@@ -127,7 +128,7 @@ class TimeSeriesSVC(BaseClassifier):
 
     def __init__(
         self,
-        kernel,
+        kernel=None,
         kernel_params=None,
         kernel_mtype=None,
         C=1,
@@ -154,7 +155,7 @@ class TimeSeriesSVC(BaseClassifier):
         for key, val in delegated_param_dict.items():
             setattr(self, key, val)
 
-        super(TimeSeriesSVC, self).__init__()
+        super().__init__()
 
         self.svc_estimator_ = SVC(kernel="precomputed", **delegated_param_dict)
 
@@ -178,6 +179,13 @@ class TimeSeriesSVC(BaseClassifier):
         kernel_params = self.kernel_params
         if kernel_params is None:
             kernel_params = {}
+
+        if kernel is None:
+            from sklearn.gaussian_process.kernels import RBF
+
+            from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+
+            kernel = AggrDist(RBF())
 
         if X2 is not None:
             return kernel(X, X2, **kernel_params)
@@ -274,13 +282,13 @@ class TimeSeriesSVC(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # testing that callables/classes can be passed
-        from sktime.dists_kernels.compose_tab_to_panel import AggrDist, FlatDist
+        from sktime.dists_kernels.compose_tab_to_panel import FlatDist
 
         # probability must be True, or predict_proba will not work
         dist1 = FlatDist.create_test_instance()
         params1 = {"kernel": dist1, "probability": True}
 
-        dist2 = AggrDist.create_test_instance()
-        params2 = {"kernel": dist2, "probability": True}
+        # testing the default kernel
+        params2 = {"probability": True}
 
         return [params1, params2]

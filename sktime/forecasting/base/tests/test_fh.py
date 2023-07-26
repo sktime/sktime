@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for ForecastingHorizon object."""
 
@@ -24,6 +23,7 @@ from sktime.forecasting.base._fh import (
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
     INDEX_TYPE_LOOKUP,
     TEST_FHS,
@@ -31,7 +31,7 @@ from sktime.forecasting.tests._config import (
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.utils._testing.forecasting import _make_fh, make_forecasting_problem
-from sktime.utils._testing.series import _make_index
+from sktime.utils._testing.series import _make_index, _make_series
 from sktime.utils.datetime import (
     _coerce_duration_to_int,
     _get_duration,
@@ -120,7 +120,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
     # check outputs
     # check relative representation
-    _assert_index_equal(fh_absolute, fh.to_absolute(cutoff).to_pandas())
+    _assert_index_equal(fh_absolute, fh.to_absolute_index(cutoff))
     assert not fh.to_absolute(cutoff).is_relative
 
     # check relative representation
@@ -596,3 +596,48 @@ def test_extract_freq_from_cutoff(freq: str) -> None:
 def test_extract_freq_from_cutoff_with_wrong_input(x) -> None:
     """Test extract frequency from cutoff with wrong input."""
     assert _extract_freq_from_cutoff(x) is None
+
+
+def test_regular_spaced_fh_of_different_periodicity():
+    """Test for failure condition from bug #4462.
+
+    Due to pandas frequency inference logic, a specific case of constructing
+    `ForecastingHorizon` could upset the constructor: passing a regular `DatetimeIndex`
+    with frequency different from the `freq` argument, which would be triggered in some
+    `to_absolute` conversions.
+    """
+    y = _make_series(n_columns=1)
+
+    naive = NaiveForecaster()
+    naive.fit(y)
+    naive.predict([1, 3, 5])
+
+
+def test_standard_range_in_fh():
+    """Test using most common ``range`` without start/step."""
+    standard_range = ForecastingHorizon(values=range(1, 5 + 1))
+    assert (standard_range == ForecastingHorizon(values=[1, 2, 3, 4, 5])).all()
+
+
+def test_range_with_positive_step_in_fh():
+    """Test using ``range`` with positive step."""
+    range_with_positive_step = ForecastingHorizon(values=range(0, 5, 2))
+    assert (range_with_positive_step == ForecastingHorizon(values=[0, 2, 4])).all()
+
+
+def test_range_with_negative_step_in_fh():
+    """Test using ``range`` with negative step."""
+    range_with_negative_step = ForecastingHorizon(values=range(3, -5, -2))
+    assert (range_with_negative_step == ForecastingHorizon(values=[3, 1, -1, -3])).all()
+
+
+def test_range_sorting_in_fh():
+    """Test that ``range`` is independent of order."""
+    standard_range = ForecastingHorizon(values=range(5))
+    assert (standard_range == ForecastingHorizon(values=[0, 3, 4, 1, 2])).all()
+
+
+def test_empty_range_in_fh():
+    """Test when ``range`` has zero length."""
+    empty_range = ForecastingHorizon(values=range(-5))
+    assert (empty_range == ForecastingHorizon(values=[])).all()

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for classes in _classes module."""
 from inspect import getmembers, isclass
 
@@ -111,7 +110,6 @@ def test_custom_metric(greater_is_better):
     y = load_airline()
 
     def custom_mape(y_true, y_pred) -> float:
-
         eps = np.finfo(np.float64).eps
 
         result = np.mean(np.abs(y_true - y_pred) / np.maximum(np.abs(y_true), eps))

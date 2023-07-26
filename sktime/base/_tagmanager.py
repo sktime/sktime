@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Mixin class for flag and configuration settings management."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -176,7 +175,7 @@ class _FlagManager:
         return self
 
     def _clone_flags(self, estimator, flag_names=None, flag_attr_name="_flags"):
-        """clone/mirror flags from another estimator as dynamic override.
+        """Clone/mirror flags from another estimator as dynamic override.
 
         Parameters
         ----------

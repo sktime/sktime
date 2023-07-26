@@ -1,21 +1,17 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements BATS algorithm.
 
-BATS refers to Exponential smoothing state space model with Box-Cox
-transformation, ARMA errors, Trend and Seasonal components.
+BATS refers to Exponential smoothing state space model with Box-Cox transformation, ARMA
+errors, Trend and Seasonal components.
 
 Wrapping implementation in [1]_ of method proposed in [2]_.
 """
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["BATS"]
 
 from sktime.forecasting.base.adapters import _TbatsAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tbats", severity="warning")
 
 
 class BATS(_TbatsAdapter):

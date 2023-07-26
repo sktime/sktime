@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing panel converters - internal functions and more extensive fixtures."""
 
 import numpy as np
@@ -14,7 +13,7 @@ from sktime.utils._testing.series import _make_series
 
 def test_convert_numpy_series_to_panel():
     """Test output format of series-to-panel for numpy type input."""
-    X_series = _make_series(n_columns=2, return_numpy=True)
+    X_series = _make_series(n_columns=2, return_mtype="np.ndarray")
     n_time, n_var = X_series.shape
 
     X_panel = convert_Series_to_Panel(X_series)
@@ -38,7 +37,7 @@ def test_convert_numpy_panel_to_series():
 
 def test_convert_df_series_to_panel():
     """Test output format of series-to-panel for dataframe type input."""
-    X_series = _make_series(n_columns=2, return_numpy=False)
+    X_series = _make_series(n_columns=2, return_mtype="pd.DataFrame")
 
     X_panel = convert_Series_to_Panel(X_series)
 
