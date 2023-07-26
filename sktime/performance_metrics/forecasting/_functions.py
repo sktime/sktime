@@ -418,7 +418,7 @@ def mean_absolute_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     # _check_reg_targets converts 1-dim y_true,y_pred to 2-dim so need to match
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
@@ -547,7 +547,7 @@ def median_absolute_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
 
@@ -681,7 +681,7 @@ def mean_squared_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
 
@@ -809,7 +809,7 @@ def median_squared_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
 
