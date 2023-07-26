@@ -75,7 +75,7 @@ def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac
     This checks refit and update strategies as well as expanding and sliding window
     splitters.
     """
-    y = load_airline()[:36]
+    y = load_airline()[:48]
 
     if splitter == SlidingWindowSplitter:
         cv = splitter(
