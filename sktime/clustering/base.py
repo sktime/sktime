@@ -1,8 +1,13 @@
 """Base class for clustering."""
-__author__ = ["chrisholder", "TonyBagnall"]
+__author__ = [
+    "chrisholder",
+    "TonyBagnall",
+    "achieveordie",
+]
 __all__ = ["BaseClusterer"]
 
 import time
+from inspect import signature
 from typing import Any, Union
 
 import numpy as np
@@ -10,6 +15,8 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels._registry import _VALID_DIST_KERNELS
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
@@ -401,3 +408,65 @@ class BaseClusterer(BaseEstimator):
             to_type=self.get_tag("X_inner_mtype"),
             as_scitype="Panel",
         )
+
+    @staticmethod
+    def _resolve_str_to_dist_kernel(str):
+        """
+        Given a string, it returns the instance of appropriate dist_kernel.
+
+        Parameters
+        ----------
+        str : str
+            A string to match to appropriate dist_kernel.
+
+        Returns
+        -------
+        distance_kernel_instance : A subclass of BasePairwiseTransformerPanel
+            The instance corresponding to provided string, can be used
+            further to calculate the distance matrix.
+        """
+        for entries in _VALID_DIST_KERNELS:
+            if str in entries.aka:
+                return entries.dist_kernel_instance
+
+        raise ValueError(
+            f"The passed string: {str} could not be resolved "
+            "into a valid sktime.dist_kernel instance. "
+        )
+
+    @staticmethod
+    def _get_distance_kernel(distance):
+        """Given a distance metric, tries to resolve it to be a proper callable.
+
+        Parameters
+        ----------
+        distance : Union[str, Callable] or Subclass of BasePairwiseTransformerPanel
+            The metric to resolve
+
+        Returns
+        -------
+        resolved_distance : Callable or Subclass of BasePairwiseTransformerPanel
+            The resolved distance function/instance that can directly calculate
+            distance matrix.
+        """
+        if isinstance(distance, str):
+            return BaseClusterer._resolve_str_to_dist_kernel(distance)()
+        elif isinstance(distance, BasePairwiseTransformerPanel):
+            return distance
+        elif callable(distance):
+            # If callable then it checks for at least two parameters
+            # and confirms that return type is not float.
+            sig = signature(distance)
+            assert (
+                len(sig.parameters) >= 2
+                and sig.return_annotation is not float
+                and "The callable must have at least two parameters and return "
+                "a distance matrix and not a single value."
+            )
+            return distance
+        else:
+            raise ValueError(
+                f"The distance provided: {distance} has to either be a string, "
+                "a callable or have `BasePairwiseTransformerPanel` as a superclass "
+                f"but found type to be: {type(distance)}."
+            )

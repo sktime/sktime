@@ -21,9 +21,12 @@ class TimeSeriesDBSCAN(BaseClusterer):
     ----------
     distance : str, or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, it must be one of
+        feature array. If metric is a string, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
+        If metric is a callable function, it must be compatible with
+        :func:`sklearn.metrics.pairwise_distances` i.e. it should take two
+        arrays and return a value indicating the distance between them.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a :term:`Glossary <sparse graph>`, in which
         case only "nonzero" elements may be considered neighbors for DBSCAN.
@@ -118,7 +121,9 @@ class TimeSeriesDBSCAN(BaseClusterer):
         """
         self._X = X
 
-        distance = self.distance
+        # `._get_distance_kernel` returns the class, create an instance to be directly
+        # used as an instance
+        distance = BaseClusterer._get_distance_kernel(distance=self.distance)
         distmat = distance(X)
 
         deleg_param_dict = {key: getattr(self, key) for key in self.DELEGATED_PARAMS}
@@ -221,4 +226,9 @@ class TimeSeriesDBSCAN(BaseClusterer):
         dist = AggrDist.create_test_instance()
         params3 = {"distance": dist}
 
-        return [params1, params2, params3]
+        # distance is a string, belonging to sktime's distance module
+        params4 = {"distance": "dtw"}
+        params5 = {"distance": "ScipyDist"}
+
+        # return [params1, params2, params3, params4, params5, params6]
+        return [params1, params2, params3, params4, params5]
