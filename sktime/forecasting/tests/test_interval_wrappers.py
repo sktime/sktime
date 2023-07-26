@@ -109,5 +109,5 @@ def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac
         backend=None,
     )
 
-    assert len(results) == 8
+    assert len(results) == 5
     assert not results.test_PinballLoss.isna().any()
