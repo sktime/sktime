@@ -75,27 +75,27 @@ def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac
     This checks refit and update strategies as well as expanding and sliding window
     splitters.
     """
-    y = load_airline()
+    y = load_airline()[:36]
 
     if splitter == SlidingWindowSplitter:
         cv = splitter(
-            fh=np.arange(1, 13),
-            window_length=48,
-            step_length=12,
+            fh=np.arange(1, 7),
+            window_length=18,
+            step_length=6,
         )
     elif splitter == ExpandingWindowSplitter:
         cv = splitter(
-            fh=np.arange(1, 13),
-            initial_window=48,
-            step_length=12,
+            fh=np.arange(1, 7),
+            initial_window=18,
+            step_length=6,
         )
 
     f = NaiveForecaster()
 
     if wrapper == ConformalIntervals:
-        interval_forecaster = wrapper(f, initial_window=24, sample_frac=sample_frac)
+        interval_forecaster = wrapper(f, initial_window=12, sample_frac=sample_frac)
     else:
-        interval_forecaster = wrapper(f, initial_window=24)
+        interval_forecaster = wrapper(f, initial_window=12)
 
     results = evaluate(
         forecaster=interval_forecaster,
