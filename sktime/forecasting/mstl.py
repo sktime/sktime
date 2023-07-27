@@ -50,8 +50,8 @@ class MSTL(_StatsModelsAdapter):
     >>> mstl = MSTL()  # doctest: +SKIP
     >>> res = mstl.fit(y)  # doctest: +SKIP
     >>> res.plot()  # doctest: +SKIP
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> plt.tight_layout()  # doctest: +SKIP
+    >>> plt.show()  # doctest: +SKIP
     """
 
     _tags = {
