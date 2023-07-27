@@ -127,6 +127,7 @@ def test_coer_estimator_and_id(estimator, estimator_id, expected_output):
 )
 def test_multiple_estimators(estimators):
     """Test add_estimator with multiple estimators."""
+    # single estimator test is checked in test_forecastingbenchmark
     benchmark = ForecastingBenchmark()
     benchmark.add_estimator(estimators)
     registered_estimators = benchmark.estimators.entity_specs.keys()
