@@ -43,9 +43,9 @@ class MSTL(_StatsModelsAdapter):
 
     Examples
     --------
-    >>> from sktime.forecasting.mstl import MSTL
+    >>> from sktime.forecasting.mstl import MSTL  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> import matplotlib.pyplot as plt
+    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
     >>> y = load_airline()
     >>> mstl = MSTL()  # doctest: +SKIP
     >>> res = mstl.fit(y)  # doctest: +SKIP
