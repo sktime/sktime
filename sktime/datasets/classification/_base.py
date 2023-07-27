@@ -12,7 +12,6 @@ class BaseClassificationDataset(BaseDataset):
     """Base class for classification datasets."""
 
     def __init__(self, return_mtype="pd-multiindex"):
-
         self.return_mtype = return_mtype
         super().__init__()
 
