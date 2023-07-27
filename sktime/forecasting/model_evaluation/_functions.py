@@ -446,14 +446,14 @@ def evaluate(
                 yield y_train, y_test, None, None
         else:
             if cv_X is None:
-                from sktime.forecasting.model_selection import (
-                    SameLocSplitter,
-                    TestPlusTrainSplitter,
-                )
 
-                cv_X = SameLocSplitter(TestPlusTrainSplitter(cv), y)
+                def genx():
+                    for train_loc, test_loc in cv.split_loc(y):
+                        train_plus_test_loc = train_loc.union(test_loc, sort=True)
+                        yield X.loc[train_loc], X.loc[train_plus_test_loc]
 
-            genx = cv_X.split_series(X)
+            else:
+                genx = cv_X.split_series(X)
 
             for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
                 yield y_train, y_test, X_train, X_test
