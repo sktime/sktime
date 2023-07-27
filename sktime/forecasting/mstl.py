@@ -54,6 +54,10 @@ class MSTL(_StatsModelsAdapter):
     >>> plt.show()
     """
 
+    _tags = {
+        "python_dependencies": "statsmodels",
+    }
+
     def __init__(
         self,
         periods=None,
