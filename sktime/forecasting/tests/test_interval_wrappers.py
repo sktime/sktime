@@ -75,18 +75,18 @@ def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac
     This checks refit and update strategies as well as expanding and sliding window
     splitters.
     """
-    y = load_airline()[:48]
+    y = load_airline()[:60]
 
     if splitter == SlidingWindowSplitter:
         cv = splitter(
             fh=np.arange(1, 7),
-            window_length=18,
+            window_length=24,
             step_length=6,
         )
     elif splitter == ExpandingWindowSplitter:
         cv = splitter(
             fh=np.arange(1, 7),
-            initial_window=18,
+            initial_window=24,
             step_length=6,
         )
 
@@ -109,5 +109,5 @@ def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac
         backend=None,
     )
 
-    assert len(results) == 5
+    assert len(results) == 8
     assert not results.test_PinballLoss.isna().any()
