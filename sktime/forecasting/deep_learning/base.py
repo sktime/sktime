@@ -27,7 +27,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         self.num_epochs = num_epochs
         self.batch_size = batch_size
 
-    def _fit(self, X, **kwargs):
+    def _fit(self, y, X, fh):
         """Fit the network.
 
         Changes to state:
@@ -40,14 +40,9 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         """
         from torch.utils.data import DataLoader
 
-        if not hasattr(X, "__len__") or not hasattr(X, "__getitem__"):
-            raise TypeError(
-                "Please ensure dataset has implemented `__len__` and `__getitem__` "
-                "methods. See (https://pytorch.org/docs/stable/data.html) for more "
-                "information"
-            )
+        from sktime.networks.data import ETTDataset
 
-        dataloader = DataLoader(X, batch_size=self.batch_size, shuffle=True)
+        dataloader = DataLoader(ETTDataset(y), batch_size=self.batch_size, shuffle=True)
         self.network.train()
 
         criterion = self.criterion()
