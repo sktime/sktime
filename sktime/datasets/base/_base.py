@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Base class template for data sets.
@@ -29,7 +28,7 @@ class BaseDataset(BaseObject):
 
     def __init__(self):
 
-        super(BaseDataset, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __call__(self, *args, **kwargs):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base classes for classification datasets."""
 
@@ -15,7 +14,7 @@ class BaseClassificationDataset(BaseDataset):
     def __init__(self, return_mtype="pd-multiindex"):
 
         self.return_mtype = return_mtype
-        super(BaseClassificationDataset, self).__init__()
+        super().__init__()
 
     def load(self, *args):
         """Load the dataset.

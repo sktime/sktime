@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Base class for datasets."""
 
 __all__ = ["BaseDataset"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Plaid dataset."""
 
 from sktime.datasets._single_problem_loaders import load_plaid
