@@ -299,7 +299,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 f" but found refit=False. If refit=False, {self.__class__.__name__} can"
                 " be used only to tune hyper-parameters, as a parameter estimator."
             )
-        return super()._predict(self, fh, X)
+        return super()._predict(fh, X)
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
