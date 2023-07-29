@@ -6,9 +6,15 @@ import pandas as pd
 
 
 class StepResult:
-    """Result of a Step of the graphpipeline.
+    """
+    Result of a step.
 
-    TODO explain parameters
+    Parameters
+    ----------
+    result : mtype: `np.ndarray` or `pd.Series` or `pd.DataFrame`
+        The result of the step.
+    mode : str
+        The mode of the result. Is it a probabilistic result or not.
     """
 
     def __init__(self, result, mode):
@@ -18,9 +24,26 @@ class StepResult:
 
 class Step:
     """
-    Step of a graphpipeline.
+    A step in the pipeline.
 
-    TODO
+    Parameters
+    ----------
+    skobject : BaseObject
+        The sktime object that is used in the step.
+    name : str
+        The name of the step.
+    input_edges : dict
+        A dict with string keys to string values. Identifying the
+        predcessors.  The keys of the edges dict specify to which argument
+        of fit/predict/.. the output of the predessors (the value of the
+        dict specifies the predessors name) shuold be passed.
+    method : str
+        The method that should be called on the skobject. If None, the pipeline
+         selects the method based on the method
+         that is called on the pipeline (e.g., predict, transform, ..)
+    params : dict
+        The parameters that should be passed to the skobject when calling
+        method
     """
 
     def __init__(
@@ -40,9 +63,9 @@ class Step:
 
     def get_allowed_method(self):
         """
-        Get the methods that are callable on the step's skobject.
+        Get the allowed method for the step.
 
-        #TODO
+        Returns all methods that are allowed to be called on the step.
         """
         if self.skobject is None:
             return ["transform"]  # TODO very hacky
@@ -52,7 +75,17 @@ class Step:
         """
         Get the results of the pipeline step.
 
-        #TODO
+        Parameters
+        ----------
+        fit : bool
+            Whether the pipeline is in fit mode.
+        required_method : str
+            The method that should be called on the step.
+        mro : list
+            The method resolution order of the step. I.e., first try to call
+            the first method, if not possible second method, etc.
+        kwargs : dict
+            The kwargs that should be passed to the method.
         """
         if self.input_edges is None:
             # If the input_edges are none that the step is a first step.
@@ -131,10 +164,6 @@ class Step:
             # TODO fill buffer to save
 
     def _fetch_input_data(self, fit, required_method, mro, kwargs):
-        # TODO can we get rid off required_method?
-
-        # TODO enable different mtypes
-        all_none = True
         mode = ""
         input_data = {}
         all_none = True
