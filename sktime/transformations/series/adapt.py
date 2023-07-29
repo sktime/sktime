@@ -116,6 +116,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         self.transformer = transformer
         self.transformer_ = clone(self.transformer)
         self.fit_in_transform = fit_in_transform
+        self.pass_y = pass_y
 
         super().__init__()
 
