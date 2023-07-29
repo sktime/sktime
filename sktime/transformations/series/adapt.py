@@ -73,16 +73,16 @@ class TabularToSeriesAdaptor(BaseTransformer):
         whether transformer_ should be fitted in transform (True), or in fit (False)
             recommended setting in forecasting (single series or hierarchical): False
             recommended setting in ts classification, regression, clustering: True
-    pass_y : str, optional, one of "auto" (default), "fit", "fit_transform", "no"
+    pass_y : str, optional, one of "auto" (default), "fit", "always", "never"
         Whether to pass y to transformer methods of the ``transformer`` clone.
         "auto": passes y to methods fit, transform, fit_transform, inverse_transform,
             if and only if y is a named arg of either method.
             Note: passes y even if it is None
         "fit": passes y to method fit, but not to transform.
             Note: passes y even if it is None, or if not a named arg
-        "fit_transform": passes y to all methods, fit, transform, inverse_transform.
+        "always": passes y to all methods, fit, transform, inverse_transform.
             Note: passes y even if it is None, or if not a named arg
-        "no": never passes y to any method.
+        "never": never passes y to any method.
 
     Attributes
     ----------
@@ -149,13 +149,14 @@ class TabularToSeriesAdaptor(BaseTransformer):
             return_y = method in ["fit", "fit_transform"]
         elif pass_y == "fit":
             return_y = method in ["fit", "fit_transform"]
-        elif pass_y == "fit_transform":
+        elif pass_y == "always":
             return_y = True
-        elif pass_y == "no":
+        elif pass_y == "never":
             return_y = False
         else:
             raise ValueError(
-                f"error in {self.__class__.__name__}, pass_y={pass_y} not supported"
+                f"error in {self.__class__.__name__}, pass_y={pass_y} not supported, "
+                "must be one of 'auto', 'fit', 'always', 'never'"
             )
 
         if return_y:
