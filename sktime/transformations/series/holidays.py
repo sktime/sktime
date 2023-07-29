@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class HolidayFeatures(BaseTransformer):
@@ -180,24 +181,30 @@ class HolidayFeatures(BaseTransformer):
         """
         from datetime import date
 
-        from holidays import country_holidays, financial_holidays
+        if _check_soft_dependencies("holidays", severity="none"):
+            from holidays import country_holidays, financial_holidays
 
-        params = [
-            {
-                "calendar": country_holidays(country="GB"),
-                "include_weekend": True,
-                "return_categorical": True,
-            },
-            {
-                "calendar": country_holidays(country="FR"),
-                "include_bridge_days": True,
-                "return_dummies": True,
-            },
-            {
-                "calendar": financial_holidays(market="NYSE"),
-                "return_indicator": True,
-                "return_dummies": False,
-            },
+            params = [
+                {
+                    "calendar": country_holidays(country="GB"),
+                    "include_weekend": True,
+                    "return_categorical": True,
+                },
+                {
+                    "calendar": country_holidays(country="FR"),
+                    "include_bridge_days": True,
+                    "return_dummies": True,
+                },
+                {
+                    "calendar": financial_holidays(market="NYSE"),
+                    "return_indicator": True,
+                    "return_dummies": False,
+                },
+            ]
+        else:
+            params = []
+
+        params += [
             {
                 "calendar": {date(2022, 5, 15): "Regional Holiday"},
                 "return_indicator": True,
