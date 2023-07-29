@@ -2229,6 +2229,15 @@
       ]
     },
     {
+      "login": "Gigi1111",
+      "name": "Chung-Fan Tsai",
+      "avatar_url": "https://avatars.githubusercontent.com/Gigi1111",
+      "profile": "https://github.com/Gigi1111",
+      "contributions": [
+        "test"
+      ]
+    },
+    {
       "login": "eyjo",
       "name": "Eyjólfur Sigurðsson",
       "avatar_url": "https://avatars.githubusercontent.com/eyjo",
@@ -2243,6 +2252,27 @@
       "name": "Julia Kraus",
       "avatar_url": "https://avatars.githubusercontent.com/julia-kraus",
       "profile": "https://github.com/julia-kraus",
+      "contributions": [
+        "doc",
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "davidgilbertson",
+      "name": "David Gilbertson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4443482?v=4",
+      "profile": "https://github.com/davidgilbertson",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "MBristle",
+      "name": "Mirko Bristle",
+      "avatar_url": "https://avatars.githubusercontent.com/MBristle",
+      "profile": "https://github.com/MBristle",
       "contributions": [
         "doc"
       ]
