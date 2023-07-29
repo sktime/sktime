@@ -61,8 +61,8 @@ class TabularToSeriesAdaptor(BaseTransformer):
             because in these settings the independent samples are the individual series)
 
     Whether ``y`` is passed to transformer methods is controlled by ``pass_y``.
-    If the inner transformer has ``y`` args, the default behaviour is to pass
-    a potential ``y`` to ``fit`` and, ``fit_transform``, but not to ``transform``.
+    If the inner transformer has non-defaulting ``y`` args, the default behaviour is
+    to pass ``y`` to ``fit`` and, ``fit_transform``, but not to ``transform``.
 
     Parameters
     ----------
@@ -76,7 +76,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
     pass_y : str, optional, one of "auto" (default), "fit", "always", "never"
         Whether to pass y to transformer methods of the ``transformer`` clone.
         "auto": passes y to methods fit, transform, fit_transform, inverse_transform,
-            if and only if y is a named arg of either method.
+            if and only if y is a named arg of either method without default.
             Note: passes y even if it is None
         "fit": passes y to method fit, but not to transform.
             Note: passes y even if it is None, or if not a named arg
@@ -134,9 +134,22 @@ class TabularToSeriesAdaptor(BaseTransformer):
         if self._skip_fit:
             self.set_tags(**{"fit_is_empty": True})
 
-        trafo_fit_params = list(signature(transformer.fit).parameters.keys())
-        if "y" in trafo_fit_params or pass_y not in ["auto", "no"]:
+        trafo_has_y, trafo_has_y_default = self._trafo_fit_has_y_and_default("fit")
+        need_y = trafo_has_y and not trafo_has_y_default
+        if need_y or pass_y not in ["auto", "no"]:
             self.set_tags(**{"y_inner_mtype": "numpy1D"})
+
+    def _trafo_has_y_and_default(self, method="fit"):
+        """Return if transformer.method has a y, and whether y has a default."""
+        method_fun = getattr(self.transformer, method)
+        method_params = list(signature(method_fun).parameters.keys())
+        if "y" in method_params:
+            y_param = signature(self.transformer.fit).parameters["y"]
+            y_default = y_param.default
+            y_has_default = y_default is not y_param.empty
+            return True, y_has_default
+        else:
+            return False, False
 
     def _get_y_args(self, y, method="fit"):
         """Get empty dict or dict with y, depending on pass_y and method.
@@ -147,9 +160,9 @@ class TabularToSeriesAdaptor(BaseTransformer):
         pass_y = self.pass_y
 
         if pass_y == "auto":
-            trafo_fit_params = list(signature(self.transformer.fit).parameters.keys())
-            fit_takes_y = "y" in trafo_fit_params
-            return_y = fit_takes_y and method in ["fit", "fit_transform"]
+            has_y, has_y_default = self._trafo_fit_has_y_and_default(method)
+            need_y = has_y and not has_y_default
+            return_y = need_y
         elif pass_y == "fit":
             return_y = method in ["fit", "fit_transform"]
         elif pass_y == "always":
