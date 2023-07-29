@@ -146,7 +146,9 @@ class TabularToSeriesAdaptor(BaseTransformer):
         pass_y = self.pass_y
 
         if pass_y == "auto":
-            return_y = method in ["fit", "fit_transform"]
+            trafo_fit_params = list(signature(self.transformer.fit).parameters.keys())
+            fit_takes_y = "y" in trafo_fit_params
+            return_y = fit_takes_y and method in ["fit", "fit_transform"]
         elif pass_y == "fit":
             return_y = method in ["fit", "fit_transform"]
         elif pass_y == "always":
