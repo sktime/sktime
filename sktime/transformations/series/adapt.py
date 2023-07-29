@@ -134,7 +134,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         if self._skip_fit:
             self.set_tags(**{"fit_is_empty": True})
 
-        trafo_has_y, trafo_has_y_default = self._trafo_fit_has_y_and_default("fit")
+        trafo_has_y, trafo_has_y_default = self._trafo_has_y_and_default("fit")
         need_y = trafo_has_y and not trafo_has_y_default
         if need_y or pass_y not in ["auto", "no"]:
             self.set_tags(**{"y_inner_mtype": "numpy1D"})
@@ -160,7 +160,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         pass_y = self.pass_y
 
         if pass_y == "auto":
-            has_y, has_y_default = self._trafo_fit_has_y_and_default(method)
+            has_y, has_y_default = self._trafo_has_y_and_default(method)
             need_y = has_y and not has_y_default
             return_y = need_y
         elif pass_y == "fit":
