@@ -7,20 +7,23 @@ __author__ = ["VyomkeshVyas"]
 import numpy as np
 import pandas as pd
 import pytest
-from holidays import country_holidays
 from pandas.testing import assert_frame_equal
 
 from sktime.transformations.series.holidays import HolidayFeatures
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.fixture
+def calendar():
+    """Fixture for GB holidays."""
+    from holidays import country_holidays
+
+    return country_holidays(country="GB")
+
+
 @pytest.mark.skipif(
     not _check_soft_dependencies("holidays", severity="none"),
     reason="skip test if required soft dependency not available",
-)
-@pytest.mark.parametrize(
-    "calendar",
-    [country_holidays(country="GB")],
 )
 def test_return_dummies(calendar):
     """Tests return_dummies param."""
@@ -34,9 +37,9 @@ def test_return_dummies(calendar):
     assert_frame_equal(X_trafo_dm, expected_dm)
 
 
-@pytest.mark.parametrize(
-    "calendar",
-    [country_holidays(country="GB")],
+@pytest.mark.skipif(
+    not _check_soft_dependencies("holidays", severity="none"),
+    reason="skip test if required soft dependency not available",
 )
 def test_return_categorical(calendar):
     """Tests return_categorical param."""
@@ -59,9 +62,9 @@ def test_return_categorical(calendar):
     assert_frame_equal(X_trafo_ctg, expected_ctg)
 
 
-@pytest.mark.parametrize(
-    "calendar",
-    [country_holidays(country="GB")],
+@pytest.mark.skipif(
+    not _check_soft_dependencies("holidays", severity="none"),
+    reason="skip test if required soft dependency not available",
 )
 def test_return_indicator(calendar):
     """Test return_indicator param."""
@@ -77,9 +80,9 @@ def test_return_indicator(calendar):
     assert_frame_equal(X_trafo_id, expected_id)
 
 
-@pytest.mark.parametrize(
-    "calendar",
-    [country_holidays(country="GB")],
+@pytest.mark.skipif(
+    not _check_soft_dependencies("holidays", severity="none"),
+    reason="skip test if required soft dependency not available",
 )
 def test_keep_original_column(calendar):
     """Tests keep_original_column param."""
@@ -101,9 +104,9 @@ def test_keep_original_column(calendar):
     assert_frame_equal(X_trafo_koc, expected_koc)
 
 
-@pytest.mark.parametrize(
-    "calendar",
-    [country_holidays(country="GB")],
+@pytest.mark.skipif(
+    not _check_soft_dependencies("holidays", severity="none"),
+    reason="skip test if required soft dependency not available",
 )
 def test_include_weekend(calendar):
     """Tests include_weekend param."""

@@ -12,12 +12,8 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
-from holidays import HolidayBase
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("holidays")
 
 
 class HolidayFeatures(BaseTransformer):
@@ -411,8 +407,9 @@ def _check_params(
     return_categorical : bool
     return_indicator : bool
     keep_original_columns : bool
-
     """
+    from holidays import HolidayBase
+
     # Input checks.
     if not isinstance(index, pd.DatetimeIndex):
         raise ValueError(
