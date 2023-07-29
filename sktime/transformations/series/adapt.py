@@ -62,7 +62,8 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
     Whether ``y`` is passed to transformer methods is controlled by ``pass_y``.
     If the inner transformer has non-defaulting ``y`` args, the default behaviour is
-    to pass ``y`` to ``fit`` and, ``fit_transform``, but not to ``transform``.
+    to pass ``y`` to ``fit``, ``fit_transform``, or ``transform``.
+    If no ``y`` arg is present, or if it has a default value, ``y`` is not passed.
 
     Parameters
     ----------
