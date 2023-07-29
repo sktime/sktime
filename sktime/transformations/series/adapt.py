@@ -271,7 +271,9 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         params1 = {"transformer": StandardScaler(), "fit_in_transform": False}
         params2 = {
-            "transformer": StandardScaler(), "fit_in_transform": True, "pass_y": "auto"
+            "transformer": StandardScaler(),
+            "fit_in_transform": True,
+            "pass_y": "auto",
         }
         params3 = {"transformer": VarianceThreshold(), "pass_y": "fit"}
         params4 = {"transformer": VarianceThreshold()}
