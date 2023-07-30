@@ -62,12 +62,11 @@ def _alias_mtype_check(return_type):
     return return_type
 
 
-# time series classification data sets
 def _download_and_extract(url, extract_path=None):
     """Download and unzip datasets (helper function).
 
     This code was modified from
-    https://github.com/tslearn-team/tslearn/blob
+    https://github.com/tslearn-team/tslearn/blobl       
     /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L28
 
     Parameters
@@ -151,6 +150,45 @@ def _list_available_datasets(extract_path, origin_repo=None):
     return datasets
 
 
+def _cache_data(url, extract_path=None):
+    """Download and unzip datasets from multiple mirrors or fallback sources.
+
+    Parameters
+    ----------
+    url : string or list of string
+        URL pointing to file to download
+    extract_path : string, optional (default: None)
+        path to extract downloaded zip to, None defaults
+        to sktime/datasets/data
+
+    Returns
+    -------
+    extract_path : string or None
+        if successful, string containing the path of the extracted file, None
+        if it wasn't successful
+    """
+
+
+def _mkdir_if_not_exist(*path):
+    """Shortcut for making a directory if it does not exist.
+
+    Parameters
+    ----------
+    path : tuple of strings
+        Directory path to create
+        If multiple strings are given, they will be joined together
+
+    Returns
+    -------
+    os.path.join(*path) : string
+        Directory path created
+    """
+    full_path = os.path.join(*path)
+    if not os.path.exists(full_path):
+        os.makedirs(full_path)
+    return full_path
+
+
 def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     """Load time series classification datasets (helper function).
 
@@ -174,7 +212,10 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    extract_path : todo author: please fill in docstring
+    extract_path : string, optional (default: None)
+        path to extract downloaded zip to
+        None defaults to sktime/datasets/data if the data exists there, otherwise
+        defaults to sktime/datasets/local_data and downloads data there
 
     Returns
     -------
@@ -185,46 +226,51 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
         If return_X_y is False, y is appended to X instead.
     """
     # Allow user to have non standard extract path
-    if extract_path is not None:
-        local_module = os.path.dirname(extract_path)
-        local_dirname = extract_path
-    else:
-        local_module = MODULE
-        local_dirname = "data"
+    if extract_path is None:
+        # default for first check is sktime/datasets/data
+        check_path = os.path.join(MODULE, "data")
 
-    if not os.path.exists(os.path.join(local_module, local_dirname)):
-        os.makedirs(os.path.join(local_module, local_dirname))
-    if name not in _list_available_datasets(extract_path):
-        if extract_path is None:
-            local_dirname = "local_data"
-        if not os.path.exists(os.path.join(local_module, local_dirname)):
-            os.makedirs(os.path.join(local_module, local_dirname))
-        if name not in _list_available_datasets(
-            os.path.join(local_module, local_dirname)
-        ):
-            # Dataset is not already present in the datasets directory provided.
-            # If it is not there, download and install it.
-            url = (
-                "https://timeseriesclassification.com/"
-                f"ClassificationDownloads/{name}.zip"
-            )
-            # This also tests the validitiy of the URL, can't rely on the html
-            # status code as it always returns 200
-            try:
-                _download_and_extract(
-                    url,
-                    extract_path=extract_path,
-                )
-            except zipfile.BadZipFile as e:
-                raise ValueError(
-                    f"Invalid dataset name ={name} is not available on extract path ="
-                    f"{extract_path}. Nor is it available on "
-                    f"https://timeseriesclassification.com/.",
-                ) from e
+    def _get_data_from(path):
+        return _load_provided_dataset(name, split, return_X_y, return_type, path)
 
-    return _load_provided_dataset(
-        name, split, return_X_y, return_type, local_module, local_dirname
+    # if the dataset exists in check_path = sktime/datasets/data, retrieve it from there
+    if name in _list_available_datasets(check_path):
+        return _get_data_from(check_path)
+
+    # now we know the dataset is not in check_path
+    # so we need to check whether it is already in the download/cache path
+    # download path is extract_path/local_data, defaults to sktime/datasets/local_data
+    if extract_path is None:
+        extract_path = os.path.join(extract_path, "local_data")
+
+    if name in _list_available_datasets(extract_path):
+        return _get_data_from(extract_path)
+
+    # now we know the dataset is not in the download/cache path
+    # so we need to download it
+    _mkdir_if_not_exist(extract_path)
+
+    # Dataset is not already present in the datasets directory provided.
+    # If it is not there, download and install it.
+    url = (
+        "https://timeseriesclassification.com/"
+        f"ClassificationDownloads/{name}.zip"
     )
+    # This also tests the validitiy of the URL, can't rely on the html
+    # status code as it always returns 200
+    try:
+        _download_and_extract(
+            url,
+            extract_path=extract_path,
+        )
+    except zipfile.BadZipFile as e:
+        raise ValueError(
+            f"Invalid dataset name ={name} is not available on extract path ="
+            f"{extract_path}. Nor is it available on "
+            f"https://timeseriesclassification.com/.",
+        ) from e
+
+    return _get_data_from(extract_path)
 
 
 def _load_provided_dataset(
@@ -232,8 +278,7 @@ def _load_provided_dataset(
     split=None,
     return_X_y=True,
     return_type=None,
-    local_module=MODULE,
-    local_dirname=DIRNAME,
+    extract_path=None,
 ):
     """Load baked in time series classification datasets (helper function).
 
@@ -270,21 +315,24 @@ def _load_provided_dataset(
         The class labels for each time series instance in X
         If return_X_y is False, y is appended to X instead.
     """
+    if extract_path is None:
+        extract_path = os.path.join(MODULE, DIRNAME)
+
     if isinstance(split, str):
         split = split.upper()
 
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
-        abspath = os.path.join(local_module, local_dirname, name, fname)
+        abspath = os.path.join(extract_path, name, fname)
         X, y = load_from_tsfile(abspath, return_data_type="nested_univ")
     # if split is None, load both train and test set
     elif split is None:
         fname = name + "_TRAIN.ts"
-        abspath = os.path.join(local_module, local_dirname, name, fname)
+        abspath = os.path.join(extract_path, name, fname)
         X_train, y_train = load_from_tsfile(abspath, return_data_type="nested_univ")
 
         fname = name + "_TEST.ts"
-        abspath = os.path.join(local_module, local_dirname, name, fname)
+        abspath = os.path.join(extract_path, name, fname)
         X_test, y_test = load_from_tsfile(abspath, return_data_type="nested_univ")
 
         X = pd.concat([X_train, X_test])
