@@ -15,7 +15,7 @@ class _TslearnAdapter:
         "python_dependencies": ["tslearn"],
     }
 
-    # defines the name of the attribute to be set on the estimator
+    # defines the name of the attribute containing the tslearn estimator
     _estimator_attr = "_estimator"
 
     def _get_tslearn_class(self):
