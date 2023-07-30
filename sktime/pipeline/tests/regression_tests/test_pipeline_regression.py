@@ -13,6 +13,7 @@ from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
+from transformations.series.detrend import Detrender
 
 
 def test_transformer_regression():
@@ -231,3 +232,35 @@ def test_feature_union_subsetting_regression():
         general_pipeline.add_step(**step)
     result_general = general_pipeline.fit_transform(X=X)
     np.testing.assert_array_equal(result, result_general)
+
+
+@pytest.mark.parametrize(
+    "data,testing_method", [
+        (np.random.normal(0,1, 200), np.testing.assert_array_equal),
+        (pd.DataFrame(np.random.normal(0, 1, (200)),
+                      index=pd.DatetimeIndex(pd.date_range("01.01.2008", freq="h", periods=200))),
+         pd.testing.assert_frame_equal),
+        (pd.Series(np.random.normal(0, 1, 200),
+                      index=pd.DatetimeIndex(pd.date_range("01.01.2008", freq="h", periods=200))),
+        pd.testing.assert_series_equal),
+    ]
+)
+def test_varying_mtypes(data, testing_method):
+    pipe = Detrender() * ExponentTransformer()
+    pipe.fit(X=data)
+    result = pipe.transform(X=data)
+
+    general_pipeline = Pipeline()
+    for step in [
+        {"skobject": Detrender(), "name": "detrender", "edges": {"X": "X"}},
+        {
+            "skobject": ExponentTransformer(),
+            "name": "ExponentTransformer",
+            "edges": {"X": "detrender"},
+        },
+    ]:
+        general_pipeline.add_step(**step)
+    general_pipeline.fit(X=data)
+    general_pipeline.transform(X=data)
+    result_general = general_pipeline.predict(data)
+    testing_method(result, result_general)

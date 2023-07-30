@@ -4,6 +4,8 @@ from copy import deepcopy
 
 import pandas as pd
 
+ALLOWED_METHODS = ["transform", "inverse_transform", "predict",
+                   "predict_quantiles", "predict_interval", "predict_residuals"]
 
 class StepResult:
     """
@@ -69,7 +71,7 @@ class Step:
         """
         if self.skobject is None:
             return ["transform"]  # TODO very hacky
-        return dir(self.skobject)
+        return set(dir(self.skobject)).intersection(ALLOWED_METHODS)
 
     def get_result(self, fit, required_method, mro, kwargs):
         """
