@@ -231,7 +231,7 @@ def _mkdir_if_not_exist(*path):
     return full_path
 
 
-CLASSIF_URLS = ["https://timeseriesclassification.com"]
+CLASSIF_URLS = ["https://timeseriesclassification.com/ClassificationDownloads"]
 
 
 def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
