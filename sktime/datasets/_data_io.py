@@ -286,7 +286,7 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     # so we need to check whether it is already in the download/cache path
     # download path is extract_path/local_data, defaults to sktime/datasets/local_data
     if extract_path is None:
-        extract_path = os.path.join(extract_path, "local_data")
+        extract_path = os.path.join(MODULE, "local_data")
 
     if name in _list_available_datasets(extract_path):
         return _get_data_from(extract_path)
