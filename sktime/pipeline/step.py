@@ -64,11 +64,17 @@ class Step:
         params,
     ):
         self.buffer = None
+        self.mode = ""
         self.skobject = skobject
         self.name = name
         self.method = method
         self.input_edges = input_edges
         self.params = params
+
+    def reset(self):
+        """Reset the step."""
+        self.buffer = None
+        self.mode = ""
 
     def get_allowed_method(self):
         """
@@ -77,7 +83,7 @@ class Step:
         Returns all methods that are allowed to be called on the step.
         """
         if self.skobject is None:
-            return ["transform"]  # TODO very hacky
+            return ["transform"]
         return set(dir(self.skobject)).intersection(ALLOWED_METHODS)
 
     def get_result(self, fit, required_method, mro, kwargs):
@@ -96,12 +102,11 @@ class Step:
         kwargs : dict
             The kwargs that should be passed to the method.
         """
-        if self.input_edges is None:
-            # If the input_edges are none that the step is a first step.
-            return StepResult(self.buffer, "")
-        # 1. Get results from all previous steps!
+        if self.buffer is not None or self.input_edges is None:
+            return StepResult(self.buffer, mode=self.mode)
 
-        input_data, mode, all_none = self._fetch_input_data(
+        # 1. Get results from all previous steps!
+        input_data, self.mode, all_none = self._fetch_input_data(
             fit, required_method, mro, kwargs
         )
         if all_none:
@@ -116,7 +121,7 @@ class Step:
 
         for method in mro:
             if hasattr(self.skobject, method):
-                kwargs_ = self._extract_kwargs("fit", kwargs)
+                kwargs_ = self._extract_kwargs(method, kwargs)
                 if "fh" in kwargs_ and fit:
                     # Perform in sample prediction if the get_result is called
                     # during fitting the pipeline. In the case a provided,
@@ -128,7 +133,7 @@ class Step:
                         else range(len(input_data["y"]))
                     )
                 # 3. Call method on skobject and return result
-                if mode == "proba":
+                if self.mode == "proba":
                     # TODO fix the case if we need to apply this to X and y?
                     idx = input_data["X"].columns
                     n = idx.nlevels
@@ -156,7 +161,7 @@ class Step:
                         **kwargs_,
                     )
 
-                mode = (
+                self.mode = (
                     "proba"
                     if (
                         method
@@ -166,14 +171,13 @@ class Step:
                             "predict_proba",
                         ]
                     )
-                    or (mode == "proba")
+                    or (self.mode == "proba")
                     else ""
                 )
-                return StepResult(result, mode)
-            # TODO fill buffer to save
+                self._store_to_buffer(result)
+                return StepResult(result, self.mode)
 
     def _fetch_input_data(self, fit, required_method, mro, kwargs):
-        mode = ""
         input_data = {}
         all_none = True
         transformer_names = []
@@ -187,7 +191,7 @@ class Step:
                 )
                 results.append(result.result)
                 if result.mode != "":
-                    mode = result.mode
+                    self.mode = result.mode
                 if result.result is not None:
                     all_none = False
             if not results[0] is None:  # TODO more generic and prettier
@@ -197,7 +201,7 @@ class Step:
                     )
                 else:
                     input_data[step_name] = results[0]
-        return input_data, mode, all_none
+        return input_data, self.mode, all_none
 
     def _extract_kwargs(self, method_name, kwargs):
         kwargs_ = deepcopy(kwargs)
@@ -210,3 +214,6 @@ class Step:
             if name in kwargs:
                 use_kwargs[name] = kwargs[name]
         return use_kwargs
+
+    def _store_to_buffer(self, result):
+        self.buffer = result

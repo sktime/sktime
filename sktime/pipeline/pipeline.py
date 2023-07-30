@@ -235,12 +235,8 @@ class Pipeline(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" in the skobjects of the pipeline and sets is_fitted flag to True.
         """
-        # Fits the pipeline
-        self.kwargs = kwargs
-        self.steps["X"].buffer = X
-        self.steps["y"].buffer = y
+        self._initiate_call(X, kwargs, y)
 
-        # 4. call get_result or something similar on last step!
         self.steps[self._last_step_name].get_result(
             fit=True,
             required_method=None,
@@ -290,14 +286,9 @@ class Pipeline(BaseEstimator):
         MethodNotImplementedError if a step in the pipeline does not implement
          `transform`
         """
-        # 1. Check if transform is allowed. I.e., Check method needs to check if
-        #    all steps implement transform + If all required params are passed
         self._method_allowed("transform")
-
-        # 3. set data into start steps buffer!
         self._initiate_call(X, kwargs, y)
 
-        # 4. call get_result or something similar on last step!
         return (
             self.steps[self._last_step_name]
             .get_result(
@@ -328,15 +319,9 @@ class Pipeline(BaseEstimator):
         MethodNotImplementedError if a step in the pipeline does not implement
         `transform` or `predict`
         """
-        # 1. Check if transform is allowed. I.e., Check method needs to check if all
-        #    steps implement transform or predict + If all required params are passed
-        # 2. Set predict/transform as global methods
         self._method_allowed("predict")
-
-        # 3. set data into start steps buffer!
         self._initiate_call(X, kwargs, y)
 
-        # 4. call get_result or something similar on last step!
         return (
             self.steps[self._last_step_name]
             .get_result(
@@ -369,13 +354,8 @@ class Pipeline(BaseEstimator):
         `transform`, `predict`, or `predict_interval`
         """
         self._method_allowed("predict_interval")
-
-        # 2. Set transform as global method as well as provide all kwargs to step
-
-        # 3. set data into start steps buffer!
         self._initiate_call(X, kwargs, y)
 
-        # 4. call get_result or something similar on last step!
         return (
             self.steps[self._last_step_name]
             .get_result(
@@ -409,13 +389,8 @@ class Pipeline(BaseEstimator):
         `transform`, `predict`, or `predict_quantiles`
         """
         self._method_allowed("predict_quantiles")
-
-        # 2. Set transform as global method as well as provide all kwargs to step
-
-        # 3. set data into start steps buffer!
         self._initiate_call(X, kwargs, y)
 
-        # 4. call get_result or something similar on last step!
         return (
             self.steps[self._last_step_name]
             .get_result(
@@ -449,14 +424,8 @@ class Pipeline(BaseEstimator):
          `transform`,  `predict`, or `predict_residuals`
         """
         self._method_allowed("predict_residuals")
-
-        # 2. Set transform as global method as well as provide all kwargs to step
-
-        # 3. set data into start steps buffer!
-        # TODO get rid of this boilerplate
         self._initiate_call(X, kwargs, y)
 
-        # 4. call get_result or something similar on last step!
         return (
             self.steps[self._last_step_name]
             .get_result(
@@ -469,6 +438,8 @@ class Pipeline(BaseEstimator):
         )
 
     def _initiate_call(self, X, kwargs, y):
+        for step in self.steps.values():
+            step.reset()
         self.steps["X"].buffer = X
         self.steps["y"].buffer = y
         self.kwargs.update(kwargs)
