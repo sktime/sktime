@@ -134,7 +134,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer", "transformer-pairwise-panel", "param_est"],
+        [
+            "clusterer",
+            "forecaster",
+            "transformer",
+            "transformer-pairwise-panel",
+            "param_est",
+        ],
         (
             "list",
             [
@@ -184,6 +190,12 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "is the transformer capable of carrying out an inverse transform?",
+    ),
+    (
+        "capability:inverse_transform:range",
+        "transformer",
+        "list",
+        "domain of invertibility of transform, must be list [lower, upper] of float",
     ),
     (
         "capability:pred_int",

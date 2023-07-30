@@ -15,10 +15,17 @@ We appreciate community contributions towards compatibility with python 3.10, or
 .. contents::
    :local:
 
+For frequent issues with installation, consult the `Release versions - troubleshooting`_ section.
+
+There are three different installation types:
+* Installing sktime releases
+* Installing the latest sktime development version
+* For developers of sktime and 3rd party extensions: Developer setup
+
+Each of these three setups are explained below.
+
 Release versions
 ----------------
-
-For frequent issues with installation, consult the `Release versions - troubleshooting`_ section.
 
 Installing sktime from PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,6 +48,12 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
     Some of the dependencies included in ``all_extras`` do not work on mac ARM-based processors, such
     as M1, M2, M1Pro, M1Max or M1Ultra. This may cause an error during installation. Mode details can
     be found in the :ref:`troubleshooting section<Dependency error on mac ARM>` below.
+
+.. warning::
+    The soft dependencies with ``all_extras`` are only necessary to have all estimators available, or to run all tests.
+    However, this slows down the downloads, and multiples test time.
+    For most user or developer scenarios, downloading ``all_extras`` will
+    not be necessary.
 
 
 Installing sktime from conda
@@ -102,15 +115,7 @@ Valid version strings are the repository's ``git`` tags, which can be inspected 
 You can also `download <https://github.com/sktime/sktime/releases>`_ a zip archive of the version from GitHub.
 
 
-Step 2 - satisfying build requirements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Before carrying out step 3, the ``sktime`` build requirements need to be satisfied.
-Details for this differ by operating system, and can be found in the `sktime build requirements`_ section below.
-
-Typically, the set-up steps needs to be carried out only once per system.
-
-Step 3 - building sktime from source
+Step 2 - building sktime from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To build and install ``sktime`` from source, navigate to the local clone's root directory and type:
@@ -153,36 +158,32 @@ The ``.whl`` package and ``.exe`` installers can be built with:
 
 The resulting packages are generated in the ``dist/`` folder.
 
+Contributor or 3rd party extension developer setup
+--------------------------------------------------
 
-sktime build requirements
--------------------------
+1. Follow the Git workflow: Fork and clone the repository as described in [Git and GitHub workflow](https://www.sktime.net/en/stable/developer_guide/git_workflow.html)
 
-This section outlines the ``sktime`` build requirements. These are required for:
-
-* installing ``sktime`` from source, e.g., development versions
-* the advanced developer set-up
-
-
-Setting up a development environment
-------------------------------------
-
-First set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
+2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
 This relies on an `anaconda installation <https://www.anaconda.com/products/individual#windows>`_. The process will be similar for ``venv`` or other virtual environment managers.
 
 In the ``anaconda prompt`` terminal:
 
-1. Navigate to your local sktime folder :code:`cd sktime`
+3. Navigate to your local sktime folder, :code:`cd sktime` or similar
 
-2. Create new environment with python 3.8: :code:`conda create -n sktime-dev python=3.8`
+4. Create new environment with a supported python version: :code:`conda create -n sktime-dev python=3.8` (or :code:`python=3.11` etc)
 
    .. warning::
        If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this.
 
-3. Activate the environment: :code:`conda activate sktime-dev`
+5. Activate the environment: :code:`conda activate sktime-dev`
 
-4. Build an editable version of sktime :code:`pip install -e .[all_extras,dev]`
+6. Build an editable version of sktime :code:`pip install -e .[dev]`
+In order to install all soft dependencies, use :code:`pip install -e .[dev]`
+If you are on Mac, use :code:`pip install -e ".[dev]"`
+If you also want to install soft dependencies, install them individually, after the above,
+or instead use: :code:`pip install -e .[all_extras,dev]` to install all of them.
 
-5. If everything has worked you should see message "successfully installed sktime"
+7. If everything has worked you should see message "successfully installed sktime"
 
 Some users have experienced issues when installing NumPy, particularly version 1.19.4.
 
@@ -194,7 +195,7 @@ Some users have experienced issues when installing NumPy, particularly version 1
 
         .. code-block:: bash
 
-            pip install -e ."[all_extras,dev]"
+            pip install -e ."[dev]"
 
 .. note::
 

@@ -261,6 +261,20 @@ Auto-ARIMA models
 
     StatsForecastAutoARIMA
 
+
+ARCH models
+-----------
+
+.. currentmodule:: sktime.forecasting.arch
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastARCH
+    StatsForecastGARCH
+
+
 Structural time series models
 -----------------------------
 
@@ -414,6 +428,7 @@ Time series splitters can be used in both evaluation and tuning.
     SingleWindowSplitter
     SlidingWindowSplitter
     ExpandingWindowSplitter
+    ExpandingGreedySplitter
 
 .. autosummary::
     :toctree: auto_generated/
