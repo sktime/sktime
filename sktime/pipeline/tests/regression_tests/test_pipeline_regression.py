@@ -9,11 +9,11 @@ from sktime.forecasting.sarimax import SARIMAX
 from sktime.pipeline.pipeline import Pipeline
 from sktime.transformations.compose import Id
 from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
-from transformations.series.detrend import Detrender
 
 
 def test_transformer_regression():
