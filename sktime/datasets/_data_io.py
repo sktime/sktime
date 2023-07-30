@@ -32,6 +32,7 @@ from datetime import datetime
 from distutils.util import strtobool
 from typing import Dict
 from urllib.request import urlretrieve
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -150,16 +151,25 @@ def _list_available_datasets(extract_path, origin_repo=None):
     return datasets
 
 
-def _cache_data(url, extract_path=None):
+def _cache_data(url, name, extract_path=None, repeats=1, verbose=False):
     """Download and unzip datasets from multiple mirrors or fallback sources.
+
+    If url is string, will attempt to download and unzip from url, to extract_path.
+    If url is list of str, will go through urls in order until a download succeeds.
 
     Parameters
     ----------
     url : string or list of string
         URL pointing to file to download
+        files are expected to be at f"{url}/{name}.zip" for a string url
+        or f"{url[i]}/{name}.zip" for a list of string urls
     extract_path : string, optional (default: None)
         path to extract downloaded zip to, None defaults
         to sktime/datasets/data
+    repeats : int, optional (default: 1)
+        number of times to try downloading from each url
+    verbose : bool, optional (default: False)
+        whether to print progress
 
     Returns
     -------
@@ -167,6 +177,30 @@ def _cache_data(url, extract_path=None):
         if successful, string containing the path of the extracted file, None
         if it wasn't successful
     """
+    if isinstance(url, str):
+        url = [url]
+
+    for u in url:
+        name_url = f"{u}/{name}.zip"
+        for _i in repeats:
+            if verbose:
+                print(
+                    f"Downloading {name} from {u} to {extract_path}" 
+                    f"(attempt {_i} of {repeats} total)"
+                )
+            try:
+                _download_and_extract(
+                    name_url,
+                    extract_path=extract_path,
+                )
+            except zipfile.BadZipFile as e:
+                if verbose:
+
+                raise ValueError(
+                    f"Invalid dataset name ={name} is not available on extract path ="
+                    f"{extract_path}. Nor is it available on "
+                    f"https://timeseriesclassification.com/.",
+                ) from e
 
 
 def _mkdir_if_not_exist(*path):
@@ -304,8 +338,8 @@ def _load_provided_dataset(
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    local_module: default = os.path.dirname(__file__),
-    local_dirname: default = "data"
+    extract_path: default = join(MODULE, DIRNAME) = os.path.dirname(__file__) + "/data"
+        path to extract downloaded zip to
 
     Returns
     -------
