@@ -32,7 +32,6 @@ from datetime import datetime
 from distutils.util import strtobool
 from typing import Dict
 from urllib.request import urlretrieve
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -67,7 +66,7 @@ def _download_and_extract(url, extract_path=None):
     """Download and unzip datasets (helper function).
 
     This code was modified from
-    https://github.com/tslearn-team/tslearn/blobl       
+    https://github.com/tslearn-team/tslearn/blob
     /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L28
 
     Parameters
@@ -151,7 +150,7 @@ def _list_available_datasets(extract_path, origin_repo=None):
     return datasets
 
 
-def _cache_data(url, name, extract_path=None, repeats=1, verbose=False):
+def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
     """Download and unzip datasets from multiple mirrors or fallback sources.
 
     If url is string, will attempt to download and unzip from url, to extract_path.
@@ -174,33 +173,42 @@ def _cache_data(url, name, extract_path=None, repeats=1, verbose=False):
     Returns
     -------
     extract_path : string or None
-        if successful, string containing the path of the extracted file, None
-        if it wasn't successful
+        if successful, string containing the path of the extracted file
+    u : string
+        url from which the dataset was downloaded
+    repeat : int
+        number of times it took to download the dataset from u
+    If none of the attempts are successful, will raise RuntimeError
     """
     if isinstance(url, str):
         url = [url]
 
     for u in url:
         name_url = f"{u}/{name}.zip"
-        for _i in repeats:
+        for repeat in range(repeats):
             if verbose:
                 print(
-                    f"Downloading {name} from {u} to {extract_path}" 
-                    f"(attempt {_i} of {repeats} total)"
+                    f"Downloading dataset {name} from {u} to {extract_path}"
+                    f"(attempt {repeat} of {repeats} total). "
                 )
-            try:
-                _download_and_extract(
-                    name_url,
-                    extract_path=extract_path,
-                )
-            except zipfile.BadZipFile as e:
-                if verbose:
 
-                raise ValueError(
-                    f"Invalid dataset name ={name} is not available on extract path ="
-                    f"{extract_path}. Nor is it available on "
-                    f"https://timeseriesclassification.com/.",
-                ) from e
+            try:
+                _download_and_extract(name_url, extract_path=extract_path)
+                return extract_path, u, repeat
+
+            except zipfile.BadZipFile:
+                if verbose:
+                    if repeat < len(repeats) - 1:
+                        print("Download failed, continuing with next attempt. ")
+                    else:
+                        print(
+                            "All attempts for mirror failed, "
+                            "continuing with next mirror."
+                        )
+
+    raise RuntimeError(
+        f"Dataset with name ={name} could not be downloaded from any of the mirrors."
+    )
 
 
 def _mkdir_if_not_exist(*path):
@@ -221,6 +229,9 @@ def _mkdir_if_not_exist(*path):
     if not os.path.exists(full_path):
         os.makedirs(full_path)
     return full_path
+
+
+CLASSIF_URLS = ["https://timeseriesclassification.com"]
 
 
 def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
@@ -284,26 +295,12 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     # so we need to download it
     _mkdir_if_not_exist(extract_path)
 
-    # Dataset is not already present in the datasets directory provided.
-    # If it is not there, download and install it.
-    url = (
-        "https://timeseriesclassification.com/"
-        f"ClassificationDownloads/{name}.zip"
-    )
-    # This also tests the validitiy of the URL, can't rely on the html
-    # status code as it always returns 200
-    try:
-        _download_and_extract(
-            url,
-            extract_path=extract_path,
-        )
-    except zipfile.BadZipFile as e:
-        raise ValueError(
-            f"Invalid dataset name ={name} is not available on extract path ="
-            f"{extract_path}. Nor is it available on "
-            f"https://timeseriesclassification.com/.",
-        ) from e
+    # download the dataset from CLASSIF_URLS
+    # will try multiple mirrors if necessary
+    # if fails, will raise a RuntimeError
+    _cache_dataset(CLASSIF_URLS, name, extract_path=extract_path)
 
+    # if we reach this, the data has been downloaded, now we can load it
     return _get_data_from(extract_path)
 
 
