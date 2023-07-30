@@ -187,10 +187,10 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
         name_url = f"{u}/{name}.zip"
         for repeat in range(repeats):
             if verbose:
-                print(
+                print(  # noqa: T201
                     f"Downloading dataset {name} from {u} to {extract_path}"
                     f"(attempt {repeat} of {repeats} total). "
-                )  # noqa: T201
+                )
 
             try:
                 _download_and_extract(name_url, extract_path=extract_path)
@@ -199,14 +199,14 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
             except zipfile.BadZipFile:
                 if verbose:
                     if repeat < len(repeats) - 1:
-                        print(
+                        print(  # noqa: T201
                             "Download failed, continuing with next attempt. "
-                        )  # noqa: T201
+                        )
                     else:
-                        print(
+                        print(  # noqa: T201
                             "All attempts for mirror failed, "
                             "continuing with next mirror."
-                        )  # noqa: T201
+                        )
 
     raise RuntimeError(
         f"Dataset with name ={name} could not be downloaded from any of the mirrors."
