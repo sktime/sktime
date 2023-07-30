@@ -11,15 +11,15 @@ __author__ = ["yarnabrina"]
 class CountryHolidaysTransformer(BaseTransformer):
     """Country Holidays Transformer.
 
-    This implementation wraps over holidays [1]_ by dr-prodigy.
+    This implementation wraps over holidays [1]_ by vacanza.
 
     Parameters
     ----------
     country : str
-        An ISO 3166-1 Alpha-2 country code.
+        An ISO 3166-1 Alpha-2 country code. [2]_
     subdiv : str, optional
         The subdivision (e.g. state or province); not implemented for all countries
-        (see documentation).
+        (see documentation [3_]). [2]_
     years : Union[int, Iterable[int]], optional
         The year(s) to pre-calculate public holidays for at instantiation.
     expand : bool, optional
@@ -31,14 +31,17 @@ class CountryHolidaysTransformer(BaseTransformer):
         work for all countries.
     language : str, optional
         The language which the returned holiday names will be translated into. It must
-        be an ISO 639-1 (2-letter) language code. If the language translation is not
-        supported the original holiday names will be used.
+        be an ISO 639-1 (2-letter) language code. [4]_ If the language translation is
+        not supported the original holiday names will be used.
     categories : Tuple[str], optional
         requested holiday categories.
 
     References
     ----------
-    .. [1] https://github.com/dr-prodigy/python-holidays
+    .. [1] https://github.com/vacanza/python-holidays
+    .. [2] https://www.iso.org/obp/ui/#search/code/
+    .. [3] https://python-holidays.readthedocs.io/en/latest/#available-countries
+    .. [4] https://www.loc.gov/standards/iso639-2/php/English_list.php
 
     Examples
     --------
@@ -171,12 +174,13 @@ class CountryHolidaysTransformer(BaseTransformer):
 class FinancialHolidaysTransformer(BaseTransformer):
     """Financial Holidays Transformer.
 
-    This implementation wraps over holidays [1]_ by dr-prodigy.
+    This implementation wraps over holidays [1]_ by vacanza.
 
     Parameters
     ----------
     market : str
-        An ISO 3166-1 Alpha-2 market code.
+        An ISO 3166-1 Alpha-2 market code [2]_; not implemented for all countries (see
+        documentation [3_]).
     years : Union[int, Iterable[int]], optional
         The year(s) to pre-calculate public holidays for at instantiation.
     expand : bool, optional
@@ -188,12 +192,15 @@ class FinancialHolidaysTransformer(BaseTransformer):
         work for all countries.
     language : str, optional
         The language which the returned holiday names will be translated into. It must
-        be an ISO 639-1 (2-letter) language code. If the language translation is not
-        supported the original holiday names will be used.
+        be an ISO 639-1 (2-letter) language code. [4]_ If the language translation is
+        not supported the original holiday names will be used.
 
     References
     ----------
-    .. [1] https://github.com/dr-prodigy/python-holidays
+    .. [1] https://github.com/vacanza/python-holidays
+    .. [2] https://www.iso20022.org/market-identifier-codes
+    .. [3] https://python-holidays.readthedocs.io/en/latest/#available-financial-markets
+    .. [4] https://www.loc.gov/standards/iso639-2/php/English_list.php
 
     Examples
     --------
@@ -207,7 +214,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
     >>>
     >>> y = pandas.Series(data, index=index, name="random")
     >>>
-    >>> y_t = FinancialHolidaysTransformer("NYSE").fit_transform(y)  # doctest: +SKIP
+    >>> y_t = FinancialHolidaysTransformer("XNYS").fit_transform(y)  # doctest: +SKIP
     >>> y_t.dtype  # doctest: +SKIP
     dtype('bool')
     >>> y_t.sum()  # doctest: +SKIP
