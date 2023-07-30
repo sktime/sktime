@@ -1302,9 +1302,7 @@ def geometric_mean_absolute_error(
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
-            np.abs(errors),
-            sample_weight=horizon_weight,
-            axis=0,
+            np.abs(errors), weights=horizon_weight, axis=0
         )
 
     if isinstance(multioutput, str):
@@ -1427,9 +1425,7 @@ def geometric_mean_squared_error(
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
-            np.square(errors),
-            sample_weight=horizon_weight,
-            axis=0,
+            np.square(errors), weights=horizon_weight, axis=0
         )
 
     if square_root:
