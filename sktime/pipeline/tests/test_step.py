@@ -3,9 +3,9 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from forecasting.naive import NaiveForecaster
-from pipeline.step import Step, StepResult
-from transformations.series.exponent import ExponentTransformer
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.pipeline.step import Step, StepResult
+from sktime.transformations.series.exponent import ExponentTransformer
 
 
 def test_get_result_none_predessor():
