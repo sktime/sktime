@@ -4,8 +4,15 @@ from copy import deepcopy
 
 import pandas as pd
 
-ALLOWED_METHODS = ["transform", "inverse_transform", "predict",
-                   "predict_quantiles", "predict_interval", "predict_residuals"]
+ALLOWED_METHODS = [
+    "transform",
+    "inverse_transform",
+    "predict",
+    "predict_quantiles",
+    "predict_interval",
+    "predict_residuals",
+]
+
 
 class StepResult:
     """

@@ -235,15 +235,28 @@ def test_feature_union_subsetting_regression():
 
 
 @pytest.mark.parametrize(
-    "data,testing_method", [
-        (np.random.normal(0,1, 200), np.testing.assert_array_equal),
-        (pd.DataFrame(np.random.normal(0, 1, (200)),
-                      index=pd.DatetimeIndex(pd.date_range("01.01.2008", freq="h", periods=200))),
-         pd.testing.assert_frame_equal),
-        (pd.Series(np.random.normal(0, 1, 200),
-                      index=pd.DatetimeIndex(pd.date_range("01.01.2008", freq="h", periods=200))),
-        pd.testing.assert_series_equal),
-    ]
+    "data,testing_method",
+    [
+        (np.random.normal(0, 1, 200), np.testing.assert_array_equal),
+        (
+            pd.DataFrame(
+                np.random.normal(0, 1, (200)),
+                index=pd.DatetimeIndex(
+                    pd.date_range("01.01.2008", freq="h", periods=200)
+                ),
+            ),
+            pd.testing.assert_frame_equal,
+        ),
+        (
+            pd.Series(
+                np.random.normal(0, 1, 200),
+                index=pd.DatetimeIndex(
+                    pd.date_range("01.01.2008", freq="h", periods=200)
+                ),
+            ),
+            pd.testing.assert_series_equal,
+        ),
+    ],
 )
 def test_varying_mtypes(data, testing_method):
     pipe = Detrender() * ExponentTransformer()
