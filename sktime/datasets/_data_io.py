@@ -198,7 +198,7 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
 
             except zipfile.BadZipFile:
                 if verbose:
-                    if repeat < len(repeats) - 1:
+                    if repeat < repeats - 1:
                         print(  # noqa: T201
                             "Download failed, continuing with next attempt. "
                         )
