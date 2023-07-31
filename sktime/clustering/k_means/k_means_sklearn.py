@@ -1,13 +1,13 @@
 """Time series KMeans, wrapping sklearn KMeans."""
 
 import numpy as np
-from sklearn.cluster import KMeans
+from sklearn.cluster import SpectralClustering
 
 from sktime.clustering.base import BaseClusterer
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 
-class TimeSeriesKMeansSklearn(BaseClusterer):
+class TimeSeriesSpectralClustering(BaseClusterer):
     """KMeans for time series distances.
 
     Interface to sklearn KMeans with sktime time series distances.
@@ -99,40 +99,56 @@ class TimeSeriesKMeansSklearn(BaseClusterer):
 
     DELEGATED_PARAMS = [
         "n_clusters",
-        "init",
-        "n_init",
-        "max_iter",
-        "tol",
-        "verbose",
+        "eigen_solver",
+        "n_components",
         "random_state",
-        "copy_x",
-        "algorithm",
+        "n_init",
+        "gamma",
+        "affinity",
+        "n_neighbors",
+        "eigen_tol",
+        "assign_labels",
+        "degree",
+        "coef0",
+        "kernel_params",
+        "n_jobs",
+        "verbose",
     ]
-    DELEGATED_FITTED_PARAMS = ["cluster_centers_", "labels_"]
+    DELEGATED_FITTED_PARAMS = ["affinity_matrix_", "labels_"]
 
     def __init__(
         self,
         distance,
         n_clusters=8,
-        init="k-means++",
-        n_init="auto",
-        max_iter=300,
-        tol=1e-4,
-        verbose=0,
+        eigen_solver=None,
+        n_components=None,
         random_state=None,
-        copy_x=True,
-        algorithm="lloyd",
+        n_init=10,
+        gamma=1.0,
+        n_neighbors=10,
+        eigen_tol="auto",
+        assign_labels="kmeans",
+        degree=3,
+        coef0=1,
+        kernel_params=None,
+        n_jobs=None,
+        verbose=False,
     ):
         self.distance = distance
-        self.init = init
-        self.n_init = n_init
-        self.max_iter = max_iter
-        self.tol = tol
-        self.verbose = verbose
+        self.eigen_solver = eigen_solver
+        self.n_components = n_components
         self.random_state = random_state
-        self.copy_x = copy_x
-        self.algorithm = algorithm
-
+        self.n_init = n_init
+        self.gamma = gamma
+        self.affinity = "precomputed"
+        self.n_neighbors = n_neighbors
+        self.eigen_tol = eigen_tol
+        self.assign_labels = assign_labels
+        self.degree = degree
+        self.coef0 = coef0
+        self.kernel_params = kernel_params
+        self.n_jobs = n_jobs
+        self.verbose = verbose
         super().__init__(n_clusters)
 
         if isinstance(distance, BasePairwiseTransformerPanel):
@@ -143,7 +159,7 @@ class TimeSeriesKMeansSklearn(BaseClusterer):
             ]
             self.clone_tags(distance, tags_to_clone)
 
-        self.kmeans_ = None
+        self.spectralclusterer_ = None
 
     def _fit(self, X, y=None):
         """Fit time series clusterer to training data.
@@ -166,12 +182,12 @@ class TimeSeriesKMeansSklearn(BaseClusterer):
 
         deleg_param_dict = {key: getattr(self, key) for key in self.DELEGATED_PARAMS}
 
-        self.kmeans_ = KMeans(**deleg_param_dict)
-        self.kmeans_.fit(X=distmat)
+        self.spectralclusterer_ = SpectralClustering(**deleg_param_dict)
+        self.spectralclusterer_.fit(X=distmat)
 
         for key in self.DELEGATED_FITTED_PARAMS:
-            if hasattr(self.kmeans_, key):
-                setattr(self, key, getattr(self.kmeans_, key))
+            if hasattr(self.spectralclusterer_, key):
+                setattr(self, key, getattr(self.spectralclusterer_, key))
 
         return self
 
@@ -192,7 +208,7 @@ class TimeSeriesKMeansSklearn(BaseClusterer):
         distance = self.distance
         distmat = distance(X)
 
-        return self.kmeans_.predict(distmat)
+        return self.spectralclusterer_.fit_predict(distmat)
 
     def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
