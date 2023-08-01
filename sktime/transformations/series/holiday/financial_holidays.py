@@ -32,17 +32,12 @@ class FinancialHolidaysTransformer(BaseTransformer):
         Whether to include the dates of when public holiday are observed (e.g. a
         holiday falling on a Sunday being observed the following Monday). False may not
         work for all countries.
-    language : str, optional
-        The language which the returned holiday names will be translated into. It must
-        be an ISO 639-1 (2-letter) language code. [4]_ If the language translation is
-        not supported the original holiday names will be used.
 
     References
     ----------
     .. [1] https://github.com/vacanza/python-holidays
     .. [2] https://www.iso20022.org/market-identifier-codes
     .. [3] https://python-holidays.readthedocs.io/en/latest/#available-financial-markets
-    .. [4] https://www.loc.gov/standards/iso639-2/php/English_list.php
 
     Examples
     --------
@@ -80,12 +75,11 @@ class FinancialHolidaysTransformer(BaseTransformer):
         "python_dependencies": ["holidays"],
     }
 
-    def __init__(self, market, years=None, expand=True, observed=True, language=None):
+    def __init__(self, market, years=None, expand=True, observed=True):
         self.market = market
         self.years = years
         self.expand = expand
         self.observed = observed
-        self.language = language
 
         super().__init__()
 
@@ -109,11 +103,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
         from holidays import financial_holidays
 
         holidays_data = financial_holidays(
-            self.market,
-            years=self.years,
-            expand=self.expand,
-            observed=self.observed,
-            language=self.language,
+            self.market, years=self.years, expand=self.expand, observed=self.observed
         )
 
         if isinstance(X.index, pandas.DatetimeIndex):

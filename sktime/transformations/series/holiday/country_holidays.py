@@ -34,10 +34,6 @@ class CountryHolidaysTransformer(BaseTransformer):
         Whether to include the dates of when public holiday are observed (e.g. a
         holiday falling on a Sunday being observed the following Monday). False may not
         work for all countries.
-    language : str, optional
-        The language which the returned holiday names will be translated into. It must
-        be an ISO 639-1 (2-letter) language code. [4]_ If the language translation is
-        not supported the original holiday names will be used.
     categories : Tuple[str], optional
         requested holiday categories.
 
@@ -46,7 +42,6 @@ class CountryHolidaysTransformer(BaseTransformer):
     .. [1] https://github.com/vacanza/python-holidays
     .. [2] https://www.iso.org/obp/ui/#search/code/
     .. [3] https://python-holidays.readthedocs.io/en/latest/#available-countries
-    .. [4] https://www.loc.gov/standards/iso639-2/php/English_list.php
 
     Examples
     --------
@@ -86,7 +81,6 @@ class CountryHolidaysTransformer(BaseTransformer):
         years=None,
         expand=True,
         observed=True,
-        language=None,
         categories=None,
     ):
         self.country = country
@@ -94,7 +88,6 @@ class CountryHolidaysTransformer(BaseTransformer):
         self.years = years
         self.expand = expand
         self.observed = observed
-        self.language = language
         self.categories = categories
 
         super().__init__()
@@ -124,7 +117,6 @@ class CountryHolidaysTransformer(BaseTransformer):
             years=self.years,
             expand=self.expand,
             observed=self.observed,
-            language=self.language,
             categories=self.categories,
         )
 
