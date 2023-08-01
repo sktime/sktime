@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from datasets import load_longley
+from forecasting.model_selection import temporal_train_test_split
 from sktime.datasets import load_airline
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
@@ -166,6 +168,15 @@ def test_differencer_cutoff():
 
     # fit
     gscv.fit(train_model, X=X_train)
+
+
+def test_inverse_train_data_fill_zero():
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+
+    diff = Differencer().fit(y_train)
+    result = diff.inverse_transform(diff.transform(y_train))
+    _assert_array_almost_equal(result, y_train)
 
 
 def test_differencer_inverse_does_not_memorize():
