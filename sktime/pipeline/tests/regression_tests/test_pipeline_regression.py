@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_arrow_head, load_longley
@@ -57,6 +58,10 @@ def test_classifier_regression():
     np.testing.assert_array_equal(result, result_general)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize(
     "method",
     [
@@ -94,6 +99,10 @@ def test_forecaster_regression(method):
     np.testing.assert_array_equal(result, result_general)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_forecaster_regression_predict_residuals():
     # TODO integrate in test_forecaster_regression if issue 4993 is fixed
     y, X = load_longley()
@@ -124,6 +133,10 @@ def test_forecaster_regression_predict_residuals():
     np.testing.assert_array_equal(result, result_general)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_exogenous_transform_regression():
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
@@ -149,6 +162,10 @@ def test_exogenous_transform_regression():
     np.testing.assert_array_equal(result_pi, result_pi_general)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_endogenous_exogenous_transform_regression():
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
