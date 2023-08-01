@@ -32,7 +32,7 @@ def test_return_dummies(calendar):
         index=pd.date_range("2022-05-01", periods=5, freq="D"),
     )
     trafo_dm = HolidayFeatures(calendar=calendar, return_dummies=True)
-    X_trafo_dm = trafo_dm.fit_transform(X)
+    X_trafo_dm = trafo_dm.fit_transform(X).astype(np.int32)
     expected_dm = pd.DataFrame({"May Day": np.int32([0, 1, 0, 0, 0])}, index=X.index)
     assert_frame_equal(X_trafo_dm, expected_dm)
 
@@ -75,7 +75,7 @@ def test_return_indicator(calendar):
     trafo_id = HolidayFeatures(
         calendar=calendar, return_indicator=True, return_dummies=False
     )
-    X_trafo_id = trafo_id.fit_transform(X)
+    X_trafo_id = trafo_id.fit_transform(X).astype(np.int32)
     expected_id = pd.DataFrame({"is_holiday": np.int32([0, 1, 0, 0, 0])}, index=X.index)
     assert_frame_equal(X_trafo_id, expected_id)
 
@@ -96,7 +96,7 @@ def test_keep_original_column(calendar):
         keep_original_columns=True,
         return_dummies=False,
     )
-    X_trafo_koc = trafo_koc.fit_transform(X)
+    X_trafo_koc = trafo_koc.fit_transform(X).astype(np.int32)
     expected_koc = pd.DataFrame(
         {"values": np.arange(1, 6), "is_holiday": np.int32([0, 1, 0, 0, 0])},
         index=X.index,
@@ -120,6 +120,6 @@ def test_include_weekend(calendar):
         include_weekend=True,
         return_dummies=False,
     )
-    X_trafo_iw = trafo_iw.fit_transform(X)
+    X_trafo_iw = trafo_iw.fit_transform(X).astype(np.int32)
     expected_iw = pd.DataFrame({"is_holiday": np.int32([1, 1, 0, 0, 0])}, index=X.index)
     assert_frame_equal(X_trafo_iw, expected_iw)

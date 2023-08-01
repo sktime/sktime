@@ -271,7 +271,7 @@ def _generate_holidays(
     dates = np.unique(index.date)
     holidays_by_name = defaultdict(list)
 
-    filtered_dates = filter(lambda dte: dte in calendar, dates)
+    filtered_dates = [dte for dte in dates if dte in calendar]
     weekends = []
     if include_weekend:
         for dte in dates:
