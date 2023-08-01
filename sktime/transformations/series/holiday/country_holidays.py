@@ -36,12 +36,19 @@ class CountryHolidaysTransformer(BaseTransformer):
         work for all countries.
     categories : Tuple[str], optional
         requested holiday categories.
+    name : str, optional
+        name of transformed series.
 
     References
     ----------
     .. [1] https://github.com/vacanza/python-holidays
     .. [2] https://www.iso.org/obp/ui/#search/code/
     .. [3] https://python-holidays.readthedocs.io/en/latest/#available-countries
+
+    Notes
+    -----
+    If ``name`` is missing (by default), it is auto-populated using ``country`` and
+    ``subdiv`` as ``{country}_holidays`` or ``{country}_{subdiv}_holidays``.
 
     Examples
     --------
@@ -55,6 +62,8 @@ class CountryHolidaysTransformer(BaseTransformer):
     dtype('bool')
     >>> y_t.sum()  # doctest: +SKIP
     14
+    >>> y_t.name  # doctest: +SKIP
+    'US_holidays'
     """
 
     _tags = {
@@ -82,6 +91,7 @@ class CountryHolidaysTransformer(BaseTransformer):
         expand=True,
         observed=True,
         categories=None,
+        name=None,
     ):
         self.country = country
         self.subdiv = subdiv
@@ -89,8 +99,20 @@ class CountryHolidaysTransformer(BaseTransformer):
         self.expand = expand
         self.observed = observed
         self.categories = categories
+        self.name = name
 
         super().__init__()
+
+    @property
+    def _name(self):
+        """Generate name of transformed series."""
+        if self.name:
+            return self.name
+
+        if self.subdiv:
+            return f"{self.country}_{self.subdiv}_holidays"
+
+        return f"{self.country}_holidays"
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -136,7 +158,7 @@ class CountryHolidaysTransformer(BaseTransformer):
         # but works correctly while using one at a time
         country_holidays = [date in holidays_data for date in dates]
 
-        return pandas.Series(country_holidays)
+        return pandas.Series(country_holidays, name=self._name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

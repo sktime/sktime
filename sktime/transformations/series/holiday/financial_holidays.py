@@ -32,12 +32,18 @@ class FinancialHolidaysTransformer(BaseTransformer):
         Whether to include the dates of when public holiday are observed (e.g. a
         holiday falling on a Sunday being observed the following Monday). False may not
         work for all countries.
+    name : str, optional
+        name of transformed series.
 
     References
     ----------
     .. [1] https://github.com/vacanza/python-holidays
     .. [2] https://www.iso20022.org/market-identifier-codes
     .. [3] https://python-holidays.readthedocs.io/en/latest/#available-financial-markets
+
+    Notes
+    -----
+    If ``name`` is missing (by default), it is auto-populated as ``{market}_holidays``.
 
     Examples
     --------
@@ -56,6 +62,8 @@ class FinancialHolidaysTransformer(BaseTransformer):
     dtype('bool')
     >>> y_t.sum()  # doctest: +SKIP
     10
+    >>> y_t.name  # doctest: +SKIP
+    'XNYS_holidays'
     """
 
     _tags = {
@@ -75,13 +83,19 @@ class FinancialHolidaysTransformer(BaseTransformer):
         "python_dependencies": ["holidays"],
     }
 
-    def __init__(self, market, years=None, expand=True, observed=True):
+    def __init__(self, market, years=None, expand=True, observed=True, name=None):
         self.market = market
         self.years = years
         self.expand = expand
         self.observed = observed
+        self.name = name
 
         super().__init__()
+
+    @property
+    def _name(self):
+        """Generate name of transformed series."""
+        return self.name if self.name else f"{self.market}_holidays"
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -122,7 +136,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
         # but works correctly while using one at a time
         financial_holidays = [date in holidays_data for date in dates]
 
-        return pandas.Series(financial_holidays)
+        return pandas.Series(financial_holidays, name=self._name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
