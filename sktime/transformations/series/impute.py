@@ -371,7 +371,6 @@ class Imputer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
         from sklearn.linear_model import LinearRegression
 
         from sktime.forecasting.compose import make_reduction
