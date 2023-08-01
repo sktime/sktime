@@ -345,6 +345,7 @@ class Imputer(BaseTransformer):
                     X=self._y[col].fillna(method="ffill").fillna(method="backfill")
                     if self._y is not None
                     else None,
+                    fh=fh,
                 )
 
                 # replace missing values with predicted values
