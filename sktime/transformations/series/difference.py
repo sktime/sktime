@@ -147,7 +147,7 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         X_update = X_diff_orig.loc[X_ix_shift.intersection(X_diff_orig.index)]
         X.loc[
             X_diff_orig.index.difference(
-                _shift(X_diff_orig.index, lag_last)
+                _shift(X_diff_orig.index, sum(lags) + lag_last)
             ).intersection(X.index)
         ] = np.nan
         X = X.combine_first(X_update)

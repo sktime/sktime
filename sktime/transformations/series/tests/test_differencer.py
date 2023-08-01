@@ -174,7 +174,7 @@ def test_inverse_train_data_fill_zero(lags, index_type):
     y = y_airline
     if index_type == "int":
         y = y.reset_index(drop=True)
-    diff = Differencer().fit(y)
+    diff = Differencer(lags).fit(y)
     result = diff.inverse_transform(diff.transform(y))
     _assert_array_almost_equal(result, y)
 
