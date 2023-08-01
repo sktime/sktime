@@ -145,7 +145,11 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         X_diff_orig = X_diff_seq[len(lags)]
         X_ix_shift = _shift(X.index, -lag_last)
         X_update = X_diff_orig.loc[X_ix_shift.intersection(X_diff_orig.index)]
-        X.loc[X.index.intersection(X_diff_orig.index[:lag_last])] = np.nan
+        X.loc[
+            X_diff_orig.index.difference(
+                _shift(X_diff_orig.index, lag_last)
+            ).intersection(X.index)
+        ] = np.nan
         X = X.combine_first(X_update)
 
     X_diff_last = X.copy()
