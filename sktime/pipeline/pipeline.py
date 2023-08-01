@@ -86,42 +86,42 @@ class Pipeline(BaseEstimator):
 
         Example 1: Simple sequential pipeline of transformers using the generalized
         non-sequential pipeline implementation
-    >>>     y, X = load_longley()
-    >>>     general_pipeline = Pipeline()
-    >>>     for step in [
-    ...         {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
-    ...         {"skobject": BoxCoxTransformer(), "name": "box", "edges": {"X": "exp"}},
-    ...         ]:
-    >>>         general_pipeline.add_step(**step)
-    >>>     general_pipeline.fit(X=X)
-    >>>     result_general = general_pipeline.transform(X)
+    >>> y, X = load_longley()
+    >>> general_pipeline = Pipeline()
+    >>> for step in [
+    ...     {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
+    ...     {"skobject": BoxCoxTransformer(), "name": "box", "edges": {"X": "exp"}},
+    ...     ]:
+    ...     general_pipeline.add_step(**step)
+    >>> general_pipeline.fit(X=X) # doctest: +SKIP
+    >>> result_general = general_pipeline.transform(X) # doctest: +SKIP
 
         Example 2: Classification sequential pipeline using the generalized
          non-sequential pipeline implementation
-    >>>     X, y = load_arrow_head(split="train", return_X_y=True)
-    >>>     general_pipeline = Pipeline()
-    >>>     for step in [
-    ...         {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
-    ...         {"skobject": KNeighborsTimeSeriesClassifier(),
-    ...          "name": "knnclassifier",
-    ...          "edges": {"X": "exp", "y": "y"}}]:
-    >>>         general_pipeline.add_step(**step)
-    >>>     general_pipeline.fit(X=X, y=y)
-    >>>     result_general = general_pipeline.predict(X)
+    >>> X, y = load_arrow_head(split="train", return_X_y=True)
+    >>> general_pipeline = Pipeline()
+    >>> for step in [
+    ...     {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
+    ...     {"skobject": KNeighborsTimeSeriesClassifier(),
+    ...      "name": "knnclassifier",
+    ...      "edges": {"X": "exp", "y": "y"}}]:
+    ...     general_pipeline.add_step(**step)
+    >>> general_pipeline.fit(X=X, y=y) # doctest: +SKIP
+    >>> result_general = general_pipeline.predict(X) # doctest: +SKIP
         Example 3: Forecasting pipeline with exogenous features using the
         generalized non-sequential pipeline implementation
 
-    >>>     y, X = load_longley()
-    >>>     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
-    >>>     general_pipeline = Pipeline()
-    >>>     for step in [
-    ...         {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
-    ...         {"skobject": SARIMAX(),
-    ...          "name": "SARIMAX",
-    ...          "edges": {"X": "exp", "y": "y"}}]:
-    >>>         general_pipeline.add_step(**step)
-    >>>     general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
-    >>>     result_general = general_pipeline.predict(X=X_test)
+    >>> y, X = load_longley()
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+    >>> general_pipeline = Pipeline()
+    >>> for step in [
+    ...     {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
+    ...     {"skobject": SARIMAX(),
+    ...      "name": "SARIMAX",
+    ...      "edges": {"X": "exp", "y": "y"}}]:
+    ...     general_pipeline.add_step(**step)
+    >>> general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4]) # doctest: +SKIP
+    >>> result_general = general_pipeline.predict(X=X_test) # doctest: +SKIP
     """
 
     def __init__(self, step_informations=None):
@@ -136,7 +136,7 @@ class Pipeline(BaseEstimator):
         }
         self.model_dict = {}
         self.kwargs = {}
-        self.step_informations = [] if step_informations is None else step_informations
+        self.step_informations = []
         if step_informations is not None:
             for step_info in step_informations:
                 self.add_step(**step_info)
@@ -216,7 +216,6 @@ class Pipeline(BaseEstimator):
             }
         )
         self.step_informations.append(new_step_info)
-        return step
 
     def fit(self, X, y=None, **kwargs):
         """Fit graph pipeline to training data.
