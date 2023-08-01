@@ -8,10 +8,10 @@ __all__ = []
 import numpy as np
 import pandas as pd
 import pytest
-
 from datasets import load_longley
-from forecasting.model_selection import temporal_train_test_split
+
 from sktime.datasets import load_airline
+from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils.validation._dependencies import _check_soft_dependencies
