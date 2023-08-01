@@ -98,7 +98,10 @@ def test_keep_original_column(calendar):
     )
     X_trafo_koc = trafo_koc.fit_transform(X).astype(np.int32)
     expected_koc = pd.DataFrame(
-        {"values": np.arange(1, 6), "is_holiday": np.int32([0, 1, 0, 0, 0])},
+        {
+            "values": np.arange(1, 6).astype(np.int32),
+            "is_holiday": np.int32([0, 1, 0, 0, 0]),
+        },
         index=X.index,
     )
     assert_frame_equal(X_trafo_koc, expected_koc)
