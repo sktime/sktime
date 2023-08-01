@@ -240,6 +240,11 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
 
         self._random_state = None
         self._init_algorithm = None
+        self._initial_cluster_centers = None
+
+        if isinstance(self.init_algorithm, np.ndarray):
+            self._initial_cluster_centers = self.init_algorithm
+            self.init_algorithm = lambda *args, **kwargs: self._initial_cluster_centers
 
         self._distance_params = distance_params
         if distance_params is None:
