@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from sktime.transformations.series.holidays import HolidayFeatures
+from sktime.transformations.series.holiday._holidayfeats import HolidayFeatures
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
