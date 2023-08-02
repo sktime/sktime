@@ -440,13 +440,15 @@ Seasonality and Date-Time Features
 
     DateTimeFeatures
 
-.. currentmodule:: sktime.transformations.series.holidays
+.. currentmodule:: sktime.transformations.series.holiday
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
     HolidayFeatures
+    CountryHolidaysTransformer
+    FinancialHolidaysTransformer
 
 .. currentmodule:: sktime.transformations.series.time_since
 
