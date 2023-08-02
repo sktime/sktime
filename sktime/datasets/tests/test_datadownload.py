@@ -5,11 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import (
-    load_forecastingdata,
-    load_solar,
-    load_UCR_UEA_dataset,
-)
+from sktime.datasets import load_forecastingdata, load_solar, load_UCR_UEA_dataset
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 
 
