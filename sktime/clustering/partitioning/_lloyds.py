@@ -242,10 +242,6 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         self._init_algorithm = None
         self._initial_cluster_centers = None
 
-        if isinstance(self.init_algorithm, np.ndarray):
-            self._initial_cluster_centers = self.init_algorithm
-            self.init_algorithm = lambda *args, **kwargs: self._initial_cluster_centers
-
         self._distance_params = distance_params
         if distance_params is None:
             self._distance_params = {}
@@ -269,11 +265,19 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         self._random_state = check_random_state(self.random_state)
 
         if isinstance(self.init_algorithm, str):
-            self._init_algorithm = self._init_algorithms.get(self.init_algorithm)
-        else:
+            try:
+                self._init_algorithm = self._init_algorithms[self.init_algorithm]
+            except KeyError as e:
+                raise KeyError(
+                    f"The string provided for init_algorim: {self.init_algorithm} is "
+                    f"invalid. The following are a list of valid init algorithms "
+                    f"strings: {list(self._init_algorithms.keys())}"
+                ) from e
+        elif isinstance(self.init_algorithm, np.ndarray):
             self._init_algorithm = self.init_algorithm
-
-        if not isinstance(self._init_algorithm, Callable):
+        elif isinstance(self._init_algorithm, Callable):
+            self._init_algorithm = self.init_algorithm
+        else:
             raise ValueError(
                 f"The value provided for init_algorim: {self.init_algorithm} is "
                 f"invalid. The following are a list of valid init algorithms strings: "
@@ -382,12 +386,15 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             Sum of squared distances of samples to their closest cluster center,
             weighted by the sample weights if provided.
         """
-        cluster_centres = self._init_algorithm(
-            X,
-            self.n_clusters,
-            self._random_state,
-            distance_metric=self._distance_metric,
-        )
+        if isinstance(self._init_algorithm, np.ndarray):
+            cluster_centres = self._init_algorithm
+        else:
+            cluster_centres = self._init_algorithm(
+                X,
+                self.n_clusters,
+                self._random_state,
+                distance_metric=self._distance_metric,
+            )
         old_inertia = np.inf
         old_labels = None
         for i in range(self.max_iter):
