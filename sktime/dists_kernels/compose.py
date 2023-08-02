@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipelines for pairwise panel transformers."""
 
 __author__ = ["fkiraly"]
@@ -11,7 +10,7 @@ from sktime.transformations.compose import TransformerPipeline
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
 
-class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator):
+class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel):
     """Pipeline of transformers and a pairwise panel transformer.
 
     `PwTrafoPanelPipeline` chains transformers and a pairwise transformer at the end.
@@ -40,7 +39,7 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     Parameters
     ----------
     pw_trafo : pairwise panel transformer,
-        i.e., estimator inheriting from BasePairwiseTransformerPane
+        i.e., estimator inheriting from BasePairwiseTransformerPanel
         this is a "blueprint" estimator, state does not change when `fit` is called
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
@@ -67,12 +66,11 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     }
 
     def __init__(self, pw_trafo, transformers):
-
         self.pw_trafo = pw_trafo
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(PwTrafoPanelPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = pw_trafo.get_tag("capability:multivariate", False)
@@ -209,12 +207,37 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Test parameters for DistFromAligner."""
-        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for distance/kernel transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.dists_kernels.compose_tab_to_panel import AggrDist, FlatDist
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer
 
-        params = {
+        # transformer has no fit, two transformers, list without names
+        params1 = {
             "pw_trafo": AggrDist.create_test_instance(),
-            "transformers": [ExponentTransformer()],
+            "transformers": [ExponentTransformer(), ExponentTransformer(3)],
         }
-        return params
+
+        # transformer has fit, 1 transformer, name/estimator pair list
+        params2 = {
+            "pw_trafo": FlatDist.create_test_instance(),
+            "transformers": [("boxcox", BoxCoxTransformer())],
+        }
+
+        return [params1, params2]

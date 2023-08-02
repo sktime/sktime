@@ -1,27 +1,47 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements trend based forecasters."""
 
-__author__ = ["tensorflow-as-tf", "mloning", "aiwalter"]
+__author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"]
 __all__ = ["TrendForecaster", "PolynomialTrendForecaster", "STLForecaster"]
 
-import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
-from statsmodels.tsa.seasonal import STL as _STL
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.datetime import _get_duration
+
+
+def _get_X_numpy_int_from_pandas(x):
+    """Convert pandas index to an sklearn compatible X, 2D np.ndarray, int type."""
+    if isinstance(x, (pd.DatetimeIndex)):
+        x = x.astype("int64") / 864e11
+    else:
+        x = x.astype("int64")
+    return x.to_numpy().reshape(-1, 1)
 
 
 class TrendForecaster(BaseForecaster):
-    """Trend based forecasts of time series data.
+    r"""Trend based forecasts of time series data, regressing values on index.
 
-    Default settings train a linear regression model.
+    Uses a `sklearn` regressor `regressor` to regress values of time series on index:
+
+    In `fit`, for input time series :math:`(v_i, t_i), i = 1, \dots, T`,
+    where :math:`v_i` are values and :math:`t_i` are time stamps,
+    fits an `sklearn` model :math:`v_i = f(t_i) + \epsilon_i`, where `f` is
+    the model fitted when `regressor.fit` is passed `X` = vector of :math:`t_i`,
+    and `y` = vector of :math:`v_i`.
+
+    In `predict`, for a new time point :math:`t_*`, predicts :math:`f(t_*)`,
+    where :math:`f` is the function as fitted above in `fit`.
+
+    Default for `regressor` is linear regression = `sklearn` `LinearRegression` default.
+
+    If time stamps are `pd.DatetimeIndex`, fitted coefficients are in units
+    of days since start of 1970. If time stamps are `pd.PeriodIndex`,
+    coefficients are in units of (full) periods since start of 1970.
 
     Parameters
     ----------
@@ -49,9 +69,9 @@ class TrendForecaster(BaseForecaster):
     def __init__(self, regressor=None):
         # for default regressor, set fit_intercept=True
         self.regressor = regressor
-        super(TrendForecaster, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -67,16 +87,18 @@ class TrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self.regressor_ = self.regressor or LinearRegression(fit_intercept=True)
+        if self.regressor is None:
+            self.regressor_ = LinearRegression(fit_intercept=True)
+        else:
+            self.regressor_ = clone(self.regressor)
 
-        # create a clone of self.regressor
-        self.regressor_ = clone(self.regressor_)
-
-        # transform data
-        X = y.index.astype("int").to_numpy().reshape(-1, 1)
+        # we regress index on series values
+        # the sklearn X is obtained from the index of y
+        # the sklearn y can be taken as the y seen here
+        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X, y)
+        self.regressor_.fit(X_sklearn, y)
         return self
 
     def _predict(self, fh=None, X=None):
@@ -95,23 +117,69 @@ class TrendForecaster(BaseForecaster):
             Point predictions for the forecast
         """
         # use relative fh as time index to predict
-        fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
-        X_pred = fh.to_numpy().reshape(-1, 1)
-        y_pred = self.regressor_.predict(X_pred)
-        return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
+        fh = self.fh.to_absolute_index(self.cutoff)
+        X_sklearn = _get_X_numpy_int_from_pandas(fh)
+        y_pred_sklearn = self.regressor_.predict(X_sklearn)
+        y_pred = pd.Series(y_pred_sklearn, index=fh)
+        y_pred.name = self._y.name
+        return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        params_list = [{}, {"regressor": RandomForestRegressor()}]
+
+        return params_list
 
 
 class PolynomialTrendForecaster(BaseForecaster):
-    """Forecast time series data with a polynomial trend.
+    r"""Forecast time series data with a polynomial trend.
 
-    Default settings train a linear regression model with a 1st degree
-    polynomial transformation of the feature.
+    Uses a `sklearn` regressor `regressor` to regress values of time series on index,
+    after extraction of polynomial features.
+    Same `TrendForecaster` where `regressor` is pipelined with transformation step
+    `PolynomialFeatures(degree, with_intercept)` applied to time, at the start.
+
+    In `fit`, for input time series :math:`(v_i, p(t_i)), i = 1, \dots, T`,
+    where :math:`v_i` are values, :math:`t_i` are time stamps,
+    and :math:`p` is the polynomial feature transform with degree `degree`,
+    and with/without intercept depending on `with_intercept`,
+    fits an `sklearn` model :math:`v_i = f(p(t_i)) + \epsilon_i`, where `f` is
+    the model fitted when `regressor.fit` is passed `X` = vector of :math:`p(t_i)`,
+    and `y` = vector of :math:`v_i`.
+
+    In `predict`, for a new time point :math:`t_*`, predicts :math:`f(p(t_*))`,
+    where :math:`f` is the function as fitted above in `fit`,
+    and :math:`p` is the same polynomial feature transform as above.
+
+    Default for `regressor` is linear regression = `sklearn` `LinearRegression` default.
+
+    If time stamps are `pd.DatetimeIndex`, fitted coefficients are in units
+    of days since start of 1970. If time stamps are `pd.PeriodIndex`,
+    coefficients are in units of (full) periods since start of 1970.
 
     Parameters
     ----------
-    regressor : estimator object, default = None
+    regressor : sklearn regressor estimator object, default = None
         Define the regression model type. If not set, will default to
-         sklearn.linear_model.LinearRegression
+        sklearn.linear_model.LinearRegression
     degree : int, default = 1
         Degree of polynomial function
     with_intercept : bool, default=True
@@ -141,9 +209,9 @@ class PolynomialTrendForecaster(BaseForecaster):
         self.degree = degree
         self.with_intercept = with_intercept
         self.regressor_ = self.regressor
-        super(PolynomialTrendForecaster, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -164,7 +232,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         if self.regressor is None:
             regressor = LinearRegression(fit_intercept=False)
         else:
-            regressor = self.regressor
+            regressor = clone(self.regressor)
 
         # make pipeline with polynomial features
         self.regressor_ = make_pipeline(
@@ -172,12 +240,13 @@ class PolynomialTrendForecaster(BaseForecaster):
             regressor,
         )
 
-        # transform data
-        n_timepoints = _get_duration(self._y.index, coerce_to_int=True) + 1
-        X = np.arange(n_timepoints).reshape(-1, 1)
+        # we regress index on series values
+        # the sklearn X is obtained from the index of y
+        # the sklearn y can be taken as the y seen here
+        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X, y)
+        self.regressor_.fit(X_sklearn, y)
         return self
 
     def _predict(self, fh=None, X=None):
@@ -196,10 +265,43 @@ class PolynomialTrendForecaster(BaseForecaster):
             Point predictions for the forecast
         """
         # use relative fh as time index to predict
-        fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
-        X_pred = fh.to_numpy().reshape(-1, 1)
-        y_pred = self.regressor_.predict(X_pred)
-        return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
+        fh = self.fh.to_absolute_index(self.cutoff)
+        X_sklearn = _get_X_numpy_int_from_pandas(fh)
+        y_pred_sklearn = self.regressor_.predict(X_sklearn)
+        y_pred = pd.Series(y_pred_sklearn, index=fh)
+        y_pred.name = self._y.name
+        return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        params_list = [
+            {},
+            {
+                "regressor": RandomForestRegressor(),
+                "degree": 2,
+                "with_intercept": False,
+            },
+        ]
+
+        return params_list
 
 
 class STLForecaster(BaseForecaster):
@@ -232,7 +334,7 @@ class STLForecaster(BaseForecaster):
         default forecaster_trend does not get sp as trend is independent
         to seasonality.
     seasonal : int, optional., default=7. Passed to `statsmodels` `STL`.
-        Length of the seasonal smoother. Must be an odd integer, and should
+        Length of the seasonal smoother. Must be an odd integer >=3, and should
         normally be >= 7 (default).
     trend : {int, None}, optional, default=None. Passed to `statsmodels` `STL`.
         Length of the trend smoother. Must be an odd integer. If not provided
@@ -305,10 +407,10 @@ class STLForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import STLForecaster
     >>> y = load_airline()
-    >>> forecaster = STLForecaster(sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = STLForecaster(sp=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     STLForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
 
     See Also
     --------
@@ -330,6 +432,7 @@ class STLForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -367,9 +470,9 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend = forecaster_trend
         self.forecaster_seasonal = forecaster_seasonal
         self.forecaster_resid = forecaster_resid
-        super(STLForecaster, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         Parameters
@@ -384,6 +487,8 @@ class STLForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
         from sktime.forecasting.naive import NaiveForecaster
 
         self._stl = _STL(
@@ -427,7 +532,7 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend_.fit(y=self.trend_, X=X, fh=fh)
         self.forecaster_resid_.fit(y=self.resid_, X=X, fh=fh)
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters
@@ -446,6 +551,7 @@ class STLForecaster(BaseForecaster):
         y_pred_trend = self.forecaster_trend_.predict(fh=fh, X=X)
         y_pred_resid = self.forecaster_resid_.predict(fh=fh, X=X)
         y_pred = y_pred_seasonal + y_pred_trend + y_pred_resid
+        y_pred.name = self._y.name
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -464,6 +570,8 @@ class STLForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
         self._stl = _STL(
             y.values,
             period=self.sp,
@@ -489,3 +597,43 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend_.update(y=self.trend_, X=X, update_params=update_params)
         self.forecaster_resid_.update(y=self.resid_, X=X, update_params=update_params)
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        params_list = [
+            {},
+            {
+                "sp": 3,
+                "seasonal": 7,
+                "trend": 5,
+                "seasonal_deg": 2,
+                "trend_deg": 2,
+                "robust": True,
+                "seasonal_jump": 2,
+                "trend_jump": 2,
+                "low_pass_jump": 2,
+                "forecaster_trend": NaiveForecaster(strategy="drift"),
+                "forecaster_seasonal": NaiveForecaster(sp=3),
+                "forecaster_resid": NaiveForecaster(strategy="mean"),
+            },
+        ]
+
+        return params_list

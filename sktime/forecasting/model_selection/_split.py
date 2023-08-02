@@ -1,16 +1,25 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implement dataset splitting for model evaluation and selection."""
 
 __all__ = [
+    "ExpandingGreedySplitter",
     "ExpandingWindowSplitter",
     "SlidingWindowSplitter",
     "CutoffSplitter",
     "SingleWindowSplitter",
+    "SameLocSplitter",
     "temporal_train_test_split",
+    "TestPlusTrainSplitter",
 ]
-__author__ = ["mloning", "kkoralturk", "khrapovs"]
+__author__ = [
+    "mloning",
+    "kkoralturk",
+    "khrapovs",
+    "chillerobscuro",
+    "fkiraly",
+    "davidgilbertson",
+]
 
 from typing import Iterator, Optional, Tuple, Union
 
@@ -96,8 +105,7 @@ def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     fh_offset = null if fh.is_all_in_sample() else fh[-1]
     if array_is_int(fh):
         return n_timepoints - fh_offset - 1
-    else:
-        return y_index.get_loc(y_index[-1] - fh_offset)
+    return y_index.get_loc(y_index[-1] - fh_offset)
 
 
 def _check_window_lengths(
@@ -180,10 +188,7 @@ def _inputs_are_supported(args: list) -> bool:
     -------
     True if all inputs are compatible, False otherwise
     """
-    if all_inputs_are_iloc_like(args) or all_inputs_are_time_like(args):
-        return True
-    else:
-        return False
+    return all_inputs_are_iloc_like(args) or all_inputs_are_time_like(args)
 
 
 def _check_inputs_for_compatibility(args: list) -> None:
@@ -337,6 +342,10 @@ class BaseSplitter(BaseObject):
         Single step ahead or array of steps ahead to forecast.
     """
 
+    _tags = {"split_hierarchical": False}
+    # split_hierarchical: whether _split supports hierarchical types natively
+    # if not, splitter broadcasts over instances
+
     def __init__(
         self,
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
@@ -345,10 +354,10 @@ class BaseSplitter(BaseObject):
         self.window_length = window_length
         self.fh = fh
 
-        super(BaseSplitter, self).__init__()
+        super().__init__()
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
-        """Get iloc references to train/test slits of `y`.
+        """Get iloc references to train/test splits of `y`.
 
         Parameters
         ----------
@@ -368,6 +377,8 @@ class BaseSplitter(BaseObject):
         y_index = self._coerce_to_index(y)
 
         if not isinstance(y_index, pd.MultiIndex):
+            split = self._split
+        elif self.get_tag("split_hierarchical", False, raise_error=False):
             split = self._split
         else:
             split = self._split_vectorized
@@ -394,7 +405,7 @@ class BaseSplitter(BaseObject):
         """
         raise NotImplementedError("abstract method")
 
-    def _split_vectorized(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split_vectorized(self, y: pd.MultiIndex) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`, for pd.MultiIndex.
 
         This applies _split per time series instance in the multiindex.
@@ -412,51 +423,22 @@ class BaseSplitter(BaseObject):
         test : 1D np.ndarray of dtype int
             Test window indices, iloc references to test indices in y
         """
-        # challenge is obtaining iloc references for *the original data frame*
-        #   todo: try to shorten this, there must be a quicker way
-        train_test_res = dict()
-        train_iloc = dict()
-        test_iloc = dict()
-        y = pd.DataFrame(index=y)
-        y_index_df = y.reset_index(-1)
-        y_index_df["__index"] = range(len(y_index_df))
-        y_index_inst = y_index_df.index.unique()
-        for idx in y_index_inst:
-            train_iloc[idx] = dict()
-            test_iloc[idx] = dict()
-        for idx in y_index_inst:
-            y_inst = y_index_df.loc[idx]
-            y_inst = y_inst.reset_index(drop=True).set_index(y_inst.columns[0])
-            y_inst_index = y_inst.index
-            train_test_res[idx] = list(self._split(y_inst_index))
-            for i, tt in enumerate(train_test_res[idx]):
-                train_iloc[idx][i] = tt[0]
-                test_iloc[idx][i] = tt[1]
-            for i, train in train_iloc[idx].items():
-                train_iloc[idx][i] = y_inst["__index"].iloc[train].values
-            for i, test in test_iloc[idx].items():
-                test_iloc[idx][i] = y_inst["__index"].iloc[test].values
+        srs = pd.DataFrame(index=y).reset_index(-1).iloc[:, 0]
+        index = srs.index
+        anchors = pd.Series(range(len(srs)), index).groupby(index).first().tolist()
+        splits = (self._split(pd.Index(inst.values)) for _, inst in srs.groupby(index))
 
-        train_multi = dict()
-        test_multi = dict()
-        for idx in y_index_inst:
-            for i in train_iloc[idx].keys():
-                if i not in train_multi.keys():
-                    train_multi[i] = train_iloc[idx][i]
-                    test_multi[i] = test_iloc[idx][i]
-                else:
-                    train_multi[i] = np.concatenate(
-                        (train_iloc[idx][i], train_multi[i])
-                    )
-                    test_multi[i] = np.concatenate((test_iloc[idx][i], test_multi[i]))
-        for i in train_multi.keys():
-            train_multi[i] = np.sort(train_multi[i])
-            test_multi[i] = np.sort(test_multi[i])
+        train = []
+        test = []
+        for split_inst, anchor in zip(splits, anchors):
+            train_inst, test_inst = zip(*split_inst)
+            train.append(tuple(indices + anchor for indices in train_inst))
+            test.append(tuple(indices + anchor for indices in test_inst))
 
-        for i in train_multi.keys():
-            train = train_multi[i]
-            test = test_multi[i]
-            yield train, test
+        train = map(np.concatenate, zip(*train))
+        test = map(np.concatenate, zip(*test))
+
+        yield from zip(train, test)
 
     def split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
         """Get loc references to train/test splits of `y`.
@@ -660,14 +642,12 @@ class BaseSplitter(BaseObject):
         Returns
         -------
         np.ndarray with integer indices of the train window
-
         """
         if split_point > max(0, train_start):
             return np.argwhere(
                 (y >= y[max(train_start, 0)]) & (y <= y[min(split_point, len(y)) - 1])
             ).flatten()
-        else:
-            return np.array([], dtype=int)
+        return np.array([], dtype=int)
 
 
 class CutoffSplitter(BaseSplitter):
@@ -724,7 +704,7 @@ class CutoffSplitter(BaseSplitter):
     ) -> None:
         _check_inputs_for_compatibility([fh, cutoffs, window_length])
         self.cutoffs = cutoffs
-        super(CutoffSplitter, self).__init__(fh, window_length)
+        super().__init__(fh, window_length)
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -742,9 +722,8 @@ class CutoffSplitter(BaseSplitter):
             null = 0 if is_int(cutoff) else pd.Timestamp(0)
             if cutoff >= null:
                 train_end = y[cutoff] if is_int(cutoff) else cutoff
-                training_window = get_window(
-                    pd.Series(index=y[y <= train_end]), window_length=window_length
-                ).index
+                y_train = pd.Series(index=y[y <= train_end], dtype=y.dtype)
+                training_window = get_window(y_train, window_length=window_length).index
             else:
                 training_window = []
             training_window = y.get_indexer(training_window)
@@ -792,8 +771,7 @@ class CutoffSplitter(BaseSplitter):
         """
         if array_is_int(self.cutoffs):
             return check_cutoffs(self.cutoffs)
-        else:
-            return np.argwhere(y.index.isin(check_cutoffs(self.cutoffs))).flatten()
+        return np.argwhere(y.index.isin(check_cutoffs(self.cutoffs))).flatten()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -813,8 +791,7 @@ class CutoffSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"cutoffs": np.array([3, 7, 10])}
-        return params
+        return {"cutoffs": np.array([3, 7, 10])}
 
 
 class BaseWindowSplitter(BaseSplitter):
@@ -834,14 +811,13 @@ class BaseWindowSplitter(BaseSplitter):
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
-        super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
+        super().__init__(fh=fh, window_length=window_length)
 
     @property
     def _initial_window(self):
         if hasattr(self, "initial_window"):
             return self.initial_window
-        else:
-            return None
+        return None
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -863,8 +839,7 @@ class BaseWindowSplitter(BaseSplitter):
         if self._initial_window is not None:
             yield self._split_for_initial_window(y)
 
-        for train, test in self._split_windows(window_length=window_length, y=y, fh=fh):
-            yield train, test
+        yield from self._split_windows(window_length=window_length, y=y, fh=fh)
 
     def _split_for_initial_window(self, y: pd.Index) -> SPLIT_ARRAY_TYPE:
         """Get train/test splits for non-empty initial window.
@@ -878,7 +853,6 @@ class BaseWindowSplitter(BaseSplitter):
         -------
         (np.ndarray, np.ndarray)
             Integer indices of the train/test windows
-
         """
         fh = _check_fh(self.fh)
         if not self.start_with_window:
@@ -985,9 +959,7 @@ class BaseWindowSplitter(BaseSplitter):
         # If we start with a full window, the first split point depends on the window
         # length.
         if hasattr(self, "start_with_window") and self.start_with_window:
-
-            if self._initial_window is not None:
-
+            if self._initial_window not in [None, 0]:
                 if is_timedelta_or_date_offset(x=self._initial_window):
                     start = y.get_loc(
                         y[start] + self._initial_window + self.step_length
@@ -1122,7 +1094,6 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     >>> splitter = SlidingWindowSplitter(fh=[2, 4], window_length=3, step_length=2)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([0, 1, 2]), array([4, 6])), (array([2, 3, 4]), array([6, 8]))]
-
     """
 
     def __init__(
@@ -1133,7 +1104,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         initial_window: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
         start_with_window: bool = True,
     ) -> None:
-        super(SlidingWindowSplitter, self).__init__(
+        super().__init__(
             fh=fh,
             window_length=window_length,
             initial_window=initial_window,
@@ -1176,12 +1147,9 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     fh : int, list or np.array, optional (default=1)
         Forecasting horizon
     initial_window : int or timedelta or pd.DateOffset, optional (default=10)
-        Window length
+        Window length of initial training fold. If =0, initial training fold is empty.
     step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
-    start_with_window : bool, optional (default=True)
-        - If True, starts with full window.
-        - If False, starts with empty window.
 
     Examples
     --------
@@ -1191,7 +1159,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     >>> splitter = ExpandingWindowSplitter(fh=[2, 4], initial_window=5, step_length=2)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     '[(array([0, 1, 2, 3, 4]), array([6, 8]))]'
-
     """
 
     def __init__(
@@ -1199,12 +1166,13 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
-        start_with_window: bool = True,
     ) -> None:
+        start_with_window = initial_window != 0
+
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
         # time expose the more intuitive name for the ExpandingWindowSplitter.
-        super(ExpandingWindowSplitter, self).__init__(
+        super().__init__(
             fh=fh,
             window_length=initial_window,
             initial_window=None,
@@ -1223,6 +1191,93 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
         return self._split_windows_generic(expanding=True, **kwargs)
+
+
+class ExpandingGreedySplitter(BaseSplitter):
+    """Splitter that uses all available data.
+
+    Takes an integer `test_size` that defines the number of steps included in the
+    test set of each fold. The train set of each fold will contain all data before
+    the test set. If the data contains multiple instances, `test_size` is
+    _per instance_.
+
+    If no `step_length` is defined, the test sets (one for each fold) will be
+    adjacent, taken from the end of the dataset.
+
+    For example, with `test_size=7` and `folds=5`, the test sets in total will cover
+    the last 35 steps of the data with no overlap.
+
+    Parameters
+    ----------
+    test_size : int
+        The number of steps included in the test set of each fold.
+    folds : int, default = 5
+        The number of folds.
+    step_length : int, optional
+        The number of steps advanced for each fold. Defaults to `test_size`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.forecasting.model_selection import ExpandingGreedySplitter
+
+    >>> ts = np.arange(10)
+    >>> splitter = ExpandingGreedySplitter(test_size=3, folds=2)
+    >>> list(splitter.split(ts))  # doctest: +SKIP
+    [
+        (array([0, 1, 2, 3]), array([4, 5, 6])),
+        (array([0, 1, 2, 3, 4, 5, 6]), array([7, 8, 9]))
+    ]
+    """
+
+    _tags = {"split_hierarchical": True}
+
+    def __init__(self, test_size: int, folds: int = 5, step_length: int = None):
+        super().__init__()
+        self.test_size = test_size
+        self.folds = folds
+        self.step_length = step_length
+        self.fh = np.arange(test_size) + 1
+
+    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        if isinstance(y, pd.MultiIndex):
+            groups = pd.Series(index=y).groupby(y.names[:-1])
+            reverse_idx = groups.transform("size") - groups.cumcount() - 1
+        else:
+            reverse_idx = np.arange(len(y))[::-1]
+
+        step_length = self.step_length or self.test_size
+
+        for i in reversed(range(self.folds)):
+            tst_end = i * step_length
+            trn_end = tst_end + self.test_size
+            trn_indices = np.flatnonzero(reverse_idx >= trn_end)
+            tst_indices = np.flatnonzero(
+                (reverse_idx < trn_end) & (reverse_idx >= tst_end)
+            )
+            yield trn_indices, tst_indices
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {"test_size": 1}
+        params2 = {"test_size": 3, "folds": 2, "step_length": 2}
+        return [params1, params2]
 
 
 class SingleWindowSplitter(BaseSplitter):
@@ -1253,7 +1308,6 @@ class SingleWindowSplitter(BaseSplitter):
     >>> splitter = SingleWindowSplitter(fh=[2, 4], window_length=3)
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([3, 4, 5]), array([7, 9]))]
-
     """
 
     def __init__(
@@ -1262,7 +1316,7 @@ class SingleWindowSplitter(BaseSplitter):
         window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
     ) -> None:
         _check_inputs_for_compatibility(args=[fh, window_length])
-        super(SingleWindowSplitter, self).__init__(fh=fh, window_length=window_length)
+        super().__init__(fh=fh, window_length=window_length)
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -1273,7 +1327,8 @@ class SingleWindowSplitter(BaseSplitter):
         train_end = _get_end(y_index=y, fh=fh)
 
         training_window = get_window(
-            pd.Series(index=y[y <= y[train_end]]), window_length=window_length
+            pd.Series(index=y[y <= y[train_end]], dtype=y.dtype),
+            window_length=window_length,
         ).index
         training_window = y.get_indexer(training_window)
         if array_is_int(fh):
@@ -1349,11 +1404,214 @@ class SingleWindowSplitter(BaseSplitter):
         return params
 
 
+class SameLocSplitter(BaseSplitter):
+    r"""Splitter that replicates loc indices from another splitter.
+
+    Takes a splitter ``cv`` and a time series ``y_template``.
+    Splits ``y`` in ``split`` and ``split_loc`` such that ``loc`` indices of splits
+    are identical to loc indices of ``cv`` applied to ``y_template``.
+
+    Parameters
+    ----------
+    cv : BaseSplitter
+        splitter for which to replicate splits by ``loc`` index
+    y_template : time series container of ``Series`` scitype, optional
+        template used in ``cv`` to determine ``loc`` indices
+        if None, ``y_template=y`` will be used in methods
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import (
+    ...    ExpandingWindowSplitter,
+    ...    SameLocSplitter,
+    ... )
+
+    >>> y = load_airline()
+    >>> y_template = y[:60]
+    >>> cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+
+    >>> splitter = SameLocSplitter(cv_tpl, y_template)
+
+    these two are the same:
+    >>> list(cv_tpl.split(y_template)) # doctest: +SKIP
+    >>> list(splitter.split(y)) # doctest: +SKIP
+    """
+
+    _tags = {"split_hierarchical": True}
+    # SameLocSplitter supports hierarchical pandas index
+
+    def __init__(self, cv, y_template=None):
+        self.cv = cv
+        self.y_template = y_template
+        super().__init__()
+
+    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        cv = self.cv
+        if self.y_template is None:
+            y_template = y
+        else:
+            y_template = self.y_template
+
+        for y_train_loc, y_test_loc in cv.split_loc(y_template):
+            y_train_iloc = y.get_indexer(y_train_loc)
+            y_test_iloc = y.get_indexer(y_test_loc)
+            yield y_train_iloc, y_test_iloc
+
+    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+        """Return the number of splits.
+
+        This will always be equal to the number of splits
+        of ``self.cv`` on ``self.y_template``.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
+
+        Returns
+        -------
+        n_splits : int
+            The number of splits.
+        """
+        if self.y_template is None:
+            y_template = y
+        else:
+            y_template = self.y_template
+        return self.cv.get_n_splits(y_template)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.datasets import load_airline
+        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+        y = load_airline()
+        y_template = y[:60]
+        cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+
+        params = {"cv": cv_tpl, "y_template": y_template}
+
+        return params
+
+
+class TestPlusTrainSplitter(BaseSplitter):
+    r"""Splitter that adds the train sets to the test sets.
+
+    Takes a splitter ``cv`` and modifies it in the following way:
+    The i-th train sets is identical to the i-th train set of ``cv``.
+    The i-th test set is the union of the i-th train set and i-th test set of ``cv``.
+
+    Parameters
+    ----------
+    cv : BaseSplitter
+        splitter to modify as above
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+    >>> y = load_airline()
+    >>> y_template = y[:60]
+    >>> cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+
+    >>> splitter = TestPlusTrainSplitter(cv_tpl)
+    """
+
+    def __init__(self, cv):
+        self.cv = cv
+        super().__init__()
+
+    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Get iloc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split
+
+        Parameters
+        ----------
+        y : pd.Index or time series in sktime compatible time series format
+            Time series to split, or index of time series to split
+
+        Yields
+        ------
+        train : 1D np.ndarray of dtype int
+            Training window indices, iloc references to training indices in y
+        test : 1D np.ndarray of dtype int
+            Test window indices, iloc references to test indices in y
+        """
+        cv = self.cv
+
+        for y_train_inner, y_test_inner in cv.split(y):
+            y_train_self = y_train_inner
+            y_test_self = np.union1d(y_train_inner, y_test_inner)
+            yield y_train_self, y_test_self
+
+    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+        """Return the number of splits.
+
+        This will always be equal to the number of splits
+        of ``self.cv`` on ``y``.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
+
+        Returns
+        -------
+        n_splits : int
+            The number of splits.
+        """
+        return self.cv.get_n_splits(y)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+        cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+
+        params = {"cv": cv_tpl}
+
+        return params
+
+
 def temporal_train_test_split(
     y: ACCEPTED_Y_TYPES,
     X: Optional[pd.DataFrame] = None,
-    test_size: Optional[Union[int, float]] = None,
-    train_size: Optional[Union[int, float]] = None,
+    test_size: Optional[float] = None,
+    train_size: Optional[float] = None,
     fh: Optional[FORECASTING_HORIZON_TYPES] = None,
 ) -> SPLIT_TYPE:
     """Split arrays or matrices into sequential train and test subsets.
@@ -1366,10 +1624,25 @@ def temporal_train_test_split(
 
     Parameters
     ----------
-    y : pd.Series
-        Target series
-    X : pd.DataFrame, optional (default=None)
-        Exogenous data
+    y : time series in sktime compatible data container format
+    X : time series in sktime compatible data container format, optional, default=None
+        y and X can be in one of the following formats:
+        Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            for vanilla forecasting, one time series
+        Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+            3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            for global or panel forecasting
+        Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            for hierarchical forecasting
+        Number of columns admissible depend on the "scitype:y" tag:
+            if self.get_tag("scitype:y")=="univariate":
+                y must have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                y must have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+        For further details:
+            on usage, see forecasting tutorial examples/01_forecasting.ipynb
+            on specification of formats, examples/AA_datatypes_and_datasets.ipynb
     test_size : float, int or None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
@@ -1478,7 +1751,6 @@ def _split_by_fh(
     if X is None:
         return y_train, y_test
 
-    else:
-        X_train = X.loc[train]
-        X_test = X.loc[test]
-        return y_train, y_test, X_train, X_test
+    X_train = X.loc[train]
+    X_test = X.loc[test]
+    return y_train, y_test, X_train, X_test

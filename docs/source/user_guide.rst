@@ -15,7 +15,7 @@ To run the user guide notebooks interactively, you can
 `launch them on binder <https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples>`_
 without having to install anything.
 
-We assume basic familiarity with `scikit-learn`_. If you haven’t worked with scikit-learn before, check out their
+We assume basic familiarity with `scikit-learn`_. If you haven't worked with scikit-learn before, check out their
 `getting-started guide`_.
 
 The notebook files can be found `here <https://github.com/sktime/sktime/blob/main/examples>`_.

@@ -1,23 +1,14 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "jlines", "TonyBagnall"]
 
-import warnings
 from typing import List, Tuple
 
 import numpy as np
-from numba import njit
-from numba.core.errors import NumbaWarning
 
-from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances.base import (
     DistanceAlignmentPathCallable,
     DistanceCallable,
     NumbaDistance,
 )
-from sktime.distances.lower_bounding import resolve_bounding_matrix
-
-# Warning occurs when using large time series (i.e. 1000x1000)
-warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _MsmDistance(NumbaDistance):
@@ -99,6 +90,11 @@ class _MsmDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
+        from sktime.distances._distance_alignment_paths import compute_min_return_path
+        from sktime.distances._msm_numba import _cost_matrix
+        from sktime.distances.lower_bounding import resolve_bounding_matrix
+        from sktime.utils.numba.njit import njit
+
         if x.shape[0] > 1 or y.shape[0] > 1:
             raise ValueError(
                 f"ERROR, MSM distance currently only works with "
@@ -186,6 +182,10 @@ class _MsmDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
+        from sktime.distances._msm_numba import _cost_matrix
+        from sktime.distances.lower_bounding import resolve_bounding_matrix
+        from sktime.utils.numba.njit import njit
+
         if x.shape[0] > 1 or y.shape[0] > 1:
             raise ValueError(
                 f"ERROR, MSM distance currently only works with "
@@ -205,80 +205,3 @@ class _MsmDistance(NumbaDistance):
             return cost_matrix[-1, -1]
 
         return numba_msm_distance
-
-
-@njit(cache=True)
-def _cost_function(x: float, y: float, z: float, c: float) -> float:
-    """Compute the cost function for the MSM algorithm.
-
-    Parameters
-    ----------
-    x: float
-        First value.
-    y: float
-        Second value.
-    z: float
-        Third value.
-    c: float
-        Parameter used in MSM (update later!)
-
-    Returns
-    -------
-    float
-        Cost function value.
-    """
-    if (y <= x <= z) or (y >= x >= z):
-        return c
-
-    return c + min(abs(x - y), abs(x - z))
-
-
-@njit(cache=True)
-def _cost_matrix(
-    x: np.ndarray,
-    y: np.ndarray,
-    bounding_matrix: np.ndarray,
-    c: float,
-) -> float:
-    """MSM distance compiled to no_python.
-
-    Series should be shape (1, m), where m the series (m is currently univariate only).
-    length.
-
-    Parameters
-    ----------
-    x: np.ndarray (2d array)
-        First time series.
-    y: np.ndarray (2d array)
-        Second time series.
-    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-        Bounding matrix where the index in bound finite values (0.) and indexes
-        outside bound points are infinite values (non finite).
-
-    Returns
-    -------
-    distance: float
-        MSM distance between the x and y time series.
-    """
-    x_size = x.shape[1]
-    y_size = y.shape[1]
-    cost = np.zeros((x_size, y_size))
-    # init the first cell
-    if x[0][0] > y[0][0]:
-        cost[0, 0] = x[0][0] - y[0][0]
-    else:
-        cost[0, 0] = y[0][0] - x[0][0]
-    # init the rest of the first row and column
-    for i in range(1, x_size):
-        cost[i][0] = cost[i - 1][0] + _cost_function(x[0][i], x[0][i - 1], y[0][0], c)
-    for i in range(1, y_size):
-        cost[0][i] = cost[0][i - 1] + _cost_function(y[0][i], y[0][i - 1], x[0][0], c)
-    for i in range(1, x_size):
-        for j in range(1, y_size):
-            if np.isfinite(bounding_matrix[i, j]):
-                d1 = cost[i - 1, j - 1] + np.abs(x[0][i] - y[0][j])
-                d2 = cost[i - 1, j] + _cost_function(x[0][i], x[0][i - 1], y[0][j], c)
-                d3 = cost[i, j - 1] + _cost_function(y[0][j], x[0][i], y[0][j - 1], c)
-                cost[i][j] = min(d1, d2, d3)
-
-    return cost[0:, 0:]

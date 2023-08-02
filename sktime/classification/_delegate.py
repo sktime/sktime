@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """Delegator mixin that delegates all methods to wrapped classifiers.
 
-Useful for building estimators where all but one or a few methods are delegated.
-For that purpose, inherit from this estimator and then override only the methods
-    that are not delegated.
+Useful for building estimators where all but one or a few methods are delegated. For
+that purpose, inherit from this estimator and then override only the methods     that
+are not delegated.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -30,6 +29,9 @@ class _DelegatedClassifier(BaseClassifier):
     Does NOT delegate or copy tags, this should be done in a child class if required.
     """
 
+    # attribute for _Delegatedclassifier, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedClassifier docstring
     _delegate_name = "estimator_"
 
     def _get_delegate(self):
@@ -133,7 +135,8 @@ class _DelegatedClassifier(BaseClassifier):
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
         estimator = self._get_delegate()
         return estimator.get_fitted_params()

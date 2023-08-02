@@ -1,6 +1,6 @@
 .. _testing_framework:
 
-``Sktime`` testing framework overview
+``sktime`` testing framework overview
 =====================================
 
 ``sktime`` uses ``pytest`` for testing interface compliance of estimators, and correctness of code.
@@ -154,6 +154,33 @@ As a default, the ``sktime`` implemented ``pytest_generate_tests`` only pass app
 Further, scenarios inherit from ``BaseObject``, which allows to use the ``sktime`` tag system with scenarios.
 
 For further details on scenarios, inspect the docstring of ``BaseScenario``.
+
+Remote CI set-up
+~~~~~~~~~~~~~~~~
+
+The remote CI runs all package level tests, module level tests, and low-level tests
+for all combinations of supported operating systems (OS) and python versions.
+
+The estimators package and module level are distributed across OS and
+python version combinations so that:
+
+* only about a third of estimators are run per combination
+* a given estimator runs at least once for a given OS
+* a given estimator runs at least once for a python version
+
+This is for reducing runtime and memory requirements for each CI element.
+
+The precise logic maps estimators, OS and python versions on integers,
+and matches estimators with the sum of OS and python version modulo 3.
+
+This logic located in ``subsample_by_version_os`` in ``tests.test_all_estimators``,
+which is called in ``pytest_generate_tests`` of ``BaseFixtureGenerator``, which
+is inherited by all the ``TestAll[estimator_type]`` classes.
+
+By default, the subsetting by OS and python version is switched off,
+but can be turned on by setting the ``pytest`` flag ``matrixdesign`` to ``True``
+(see ``conftest.py``)
+
 
 Extending the testing module
 ----------------------------

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for classification and regression.
 
 Contains TestScenario concrete children to run in tests for classifiers/regressirs.
@@ -12,7 +11,6 @@ __all__ = [
     "scenarios_regression",
 ]
 
-from copy import deepcopy
 from inspect import isclass
 
 from sktime.base import BaseObject
@@ -52,12 +50,7 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         if key in ["predict_proba", "decision_function"]:
             key = "predict"
 
-        args = self.args[key]
-
-        if deepcopy_args:
-            args = deepcopy(args)
-
-        return args
+        return super().get_args(key=key, obj=obj, deepcopy_args=deepcopy_args)
 
     def is_applicable(self, obj):
         """Check whether scenario is applicable to obj.

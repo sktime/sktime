@@ -11,7 +11,7 @@ Installation
 
 ``sktime`` currently supports:
 
-* environments with python version 3.7, 3.8, or 3.9.
+* environments with python version 3.8, 3.9, 3.10, or 3.11.
 * operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 * installation via ``PyPi`` or ``conda``
 
@@ -109,13 +109,19 @@ Time Series Classification
 Time Series Regression
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-    The time series regression API is stable. But the inclusion of a dataset to illustrate
-    its features is still in progress.
-
 .. code-block:: python
 
-    >>> from sktime.regression.compose import ComposableTimeSeriesForestRegressor
+    >>> from sktime.datasets import load_covid_3month
+    >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+    >>> from sklearn.metrics import mean_squared_error
+
+    >>> X_train, y_train = load_covid_3month(split="train")
+    >>> y_train = y_train.astype("float")
+    >>> X_test, _ = load_covid_3month(split="test")
+    >>> regressor = KNeighborsTimeSeriesRegressor()
+    >>> regressor.fit(X_train, y_train)
+    >>> y_pred = regressor.predict(X_test)
+    >>> mean_squared_error(y_test, y_pred)
 
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -124,7 +130,7 @@ Time Series Clustering
 
     >>> from sklearn.model_selection import train_test_split
     >>> from sktime.clustering.k_means import TimeSeriesKMeans
-    >>> from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
+    >>> from sktime.clustering.utils.plotting._plot_partitions import plot_cluster_algorithm
     >>> from sktime.datasets import load_arrow_head
 
     >>> X, y = load_arrow_head()
@@ -139,8 +145,8 @@ Time Series Annotation
 
 .. warning::
 
-   The time series annotation API is still experimental. Features may change
-   in future releases.
+   The time series annotation API is experimental,
+   and may change in future releases.
 
 .. code-block:: python
 

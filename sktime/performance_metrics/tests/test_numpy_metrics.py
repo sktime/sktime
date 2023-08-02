@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for numpy metrics in _functions module."""
 from inspect import getmembers, isfunction
 

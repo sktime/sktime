@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Abstract base class for time series classifiers.
+"""Abstract base class for time series classifiers.
 
     class name: BaseClassifier
 
@@ -63,8 +61,19 @@ class BaseClassifier(BaseEstimator, ABC):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:predict_proba": False,
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "requires_cython": False,  # whether C compiler is required in env, e.g., gcc
     }
+
+    # convenience constant to control which metadata of input data
+    # are regularly retrieved in input checks
+    METADATA_REQ_IN_CHECKS = [
+        "n_instances",
+        "has_nans",
+        "is_univariate",
+        "is_equal_length",
+    ]
 
     def __init__(self):
         # reserved attributes written to in fit
@@ -79,7 +88,7 @@ class BaseClassifier(BaseEstimator, ABC):
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
 
-        super(BaseClassifier, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):
@@ -153,7 +162,9 @@ class BaseClassifier(BaseEstimator, ABC):
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
         X, y = self._internal_convert(X, y)
-        X_metadata = self._check_classifier_input(X, y)
+        X_metadata = self._check_classifier_input(
+            X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
+        )
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
@@ -332,7 +343,9 @@ class BaseClassifier(BaseEstimator, ABC):
 
         # we now know that cv is an sklearn splitter
         X, y = self._internal_convert(X, y)
-        X_metadata = self._check_classifier_input(X, y)
+        X_metadata = self._check_classifier_input(
+            X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
+        )
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
@@ -426,7 +439,10 @@ class BaseClassifier(BaseEstimator, ABC):
 
     def _single_class_y_pred(self, X, method="predict"):
         """Handle the prediction case where only single class label was seen in fit."""
-        _, _, X_meta = check_is_scitype(X, scitype="Panel", return_metadata=True)
+        X_meta_required = ["n_instances"]
+        _, _, X_meta = check_is_scitype(
+            X, scitype="Panel", return_metadata=X_meta_required
+        )
         n_instances = X_meta["n_instances"]
         if method == "predict":
             return np.repeat(list(self._class_dictionary.keys()), n_instances)
@@ -589,7 +605,9 @@ class BaseClassifier(BaseEstimator, ABC):
         ValueError if the capabilities in self._tags do not handle the data.
         """
         X = self._internal_convert(X)
-        X_metadata = self._check_classifier_input(X)
+        X_metadata = self._check_classifier_input(
+            X, return_metadata=self.METADATA_REQ_IN_CHECKS
+        )
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
@@ -669,7 +687,9 @@ class BaseClassifier(BaseEstimator, ABC):
         )
         return X
 
-    def _check_classifier_input(self, X, y=None, enforce_min_instances=1):
+    def _check_classifier_input(
+        self, X, y=None, enforce_min_instances=1, return_metadata=True
+    ):
         """Check whether input X and y are valid formats with minimum data.
 
         Raises a ValueError if the input is not valid.
@@ -680,6 +700,8 @@ class BaseClassifier(BaseEstimator, ABC):
         y : check whether a pd.Series or np.array
         enforce_min_instances : int, optional (default=1)
             check there are a minimum number of instances.
+        return_metadata : bool, str, or list of str
+            metadata fields to return with X_metadata, input to check_is_scitype
 
         Returns
         -------
@@ -692,7 +714,7 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         # Check X is valid input type and recover the data characteristics
         X_valid, _, X_metadata = check_is_scitype(
-            X, scitype="Panel", return_metadata=True
+            X, scitype="Panel", return_metadata=return_metadata
         )
         if not X_valid:
             raise TypeError(

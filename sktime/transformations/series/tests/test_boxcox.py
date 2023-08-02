@@ -1,18 +1,25 @@
-#!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
+"""Tests for BoxCoxTransformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = []
 
 import numpy as np
 import pytest
-from scipy.stats import boxcox
+
 from sktime.datasets import load_airline
 from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("scipy", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_boxcox_against_scipy():
+    """Test boxcox transformer vs the scipy boxvox function."""
+    from scipy.stats import boxcox
+
     y = load_airline()
 
     t = BoxCoxTransformer()
@@ -44,7 +51,8 @@ def test_lambda_bounds(bounds, method, sp):
     ],
 )
 def test_guerrero_against_r_implementation(bounds, r_lambda):
-    """
+    """Test BoxCoxTransformer against forecast guerrero method.
+
     Testing lambda values estimated by the R implementation of the Guerrero method
     https://github.com/robjhyndman/forecast/blob/master/R/guerrero.R
     against the guerrero method in BoxCoxTransformer.

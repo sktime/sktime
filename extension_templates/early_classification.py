@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Extension template for early time series classifiers.
+"""Extension template for early time series classifiers.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -16,7 +14,8 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting                 - _fit(self, X, y)
@@ -26,11 +25,11 @@ Mandatory implements:
 
 Optional implements:
     data conversion and capabilities tags - _tags
-    fitted parameter inspection           - get_fitted_params()
+    fitted parameter inspection           - _get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)
     updating probability predictions      - _update_predict_proba(self, X)
 
-Testing - implement if sktime early classifier (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -93,8 +92,8 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyEarlyTimeSeriesClassifier" to the name of the class
-        super(MyEarlyTimeSeriesClassifier, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
@@ -303,15 +302,32 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         # HM: (2 * accuracy * (1 - earliness)) / (accuracy + (1 - earliness))
 
     # todo: consider implementing this, optional
+    # implement only if different from default:
+    #   default retrieves all self attributes ending in "_"
+    #   and returns them with keys that have the "_" removed
     # if not implementing, delete the method
-    def get_fitted_params(self):
+    #   avoid overriding get_fitted_params
+    def _get_fitted_params(self):
         """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
         # implement here
+        #
+        # when this function is reached, it is already guaranteed that self is fitted
+        #   this does not need to be checked separately
+        #
+        # parameters of components should follow the sklearn convention:
+        #   separate component name from parameter name by double-underscore
+        #   e.g., componentname__paramname
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
@@ -352,6 +368,15 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         #       such as published in benchmarking studies, or for identity testing.
         # A parameter dictionary must be returned *for all values* of parameter_set,
         #   i.e., "parameter_set not available" errors should never be raised.
+        #
+        # A good parameter set should primarily satisfy two criteria,
+        #   1. Chosen set of parameters should have a low testing time,
+        #      ideally in the magnitude of few seconds for the entire test suite.
+        #       This is vital for the cases where default values result in
+        #       "big" models which not only increases test time but also
+        #       run into the risk of test workers crashing.
+        #   2. There should be a minimum two such parameter sets with different
+        #      sets of values to ensure a wide range of code coverage is provided.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

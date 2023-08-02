@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
-"""
-ClaSP (Classification Score Profile) Segmentation.
+"""ClaSP (Classification Score Profile) Segmentation.
 
 Notes
 -----
@@ -213,21 +210,25 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     >>> from sktime.annotation.clasp import ClaSPSegmentation
     >>> from sktime.annotation.clasp import find_dominant_window_sizes
     >>> from sktime.datasets import load_gun_point_segmentation
-    >>> X, true_period_size, cps = load_gun_point_segmentation()
-    >>> dominant_period_size = find_dominant_window_sizes(X)
-    >>> clasp = ClaSPSegmentation(dominant_period_size, n_cps=1)
-    >>> found_cps = clasp.fit_predict(X)
-    >>> profiles = clasp.profiles
-    >>> scores = clasp.scores
+    >>> X, true_period_size, cps = load_gun_point_segmentation() # doctest: +SKIP
+    >>> dominant_period_size = find_dominant_window_sizes(X) # doctest: +SKIP
+    >>> clasp = ClaSPSegmentation(dominant_period_size, n_cps=1) # doctest: +SKIP
+    >>> found_cps = clasp.fit_predict(X) # doctest: +SKIP
+    >>> profiles = clasp.profiles # doctest: +SKIP
+    >>> scores = clasp.scores # doctest: +SKIP
     """
 
-    _tags = {"univariate-only": True, "fit_is_empty": True}  # for unit test cases
+    _tags = {
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "python_dependencies": "numba",
+    }  # for unit test cases
 
     def __init__(self, period_length=10, n_cps=1, fmt="sparse", exclusion_radius=0.05):
         self.period_length = int(period_length)
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
-        super(ClaSPSegmentation, self).__init__(fmt)
+        super().__init__(fmt)
 
     def _fit(self, X, Y=None):
         """Do nothing, as there is no need to fit a model for ClaSP.
@@ -336,7 +337,6 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         -------
         IntervalIndex:
             Segmentation based on found change pints
-
         """
         cps = np.array(found_cps)
         start = np.insert(cps, 0, 0)

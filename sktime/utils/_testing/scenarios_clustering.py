@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for clustering.
 
 Contains TestScenario concrete children to run in tests for clusterers.
@@ -7,8 +6,6 @@ Contains TestScenario concrete children to run in tests for clusterers.
 __author__ = ["fkiraly"]
 
 __all__ = ["scenarios_clustering"]
-
-from copy import deepcopy
 
 from sktime.base import BaseObject
 from sktime.utils._testing.panel import _make_panel_X, make_clustering_problem
@@ -44,12 +41,7 @@ class ClustererTestScenario(TestScenario, BaseObject):
         if key in ["predict_proba"]:
             key = "predict"
 
-        args = self.args[key]
-
-        if deepcopy_args:
-            args = deepcopy(args)
-
-        return args
+        return super().get_args(key=key, obj=obj, deepcopy_args=deepcopy_args)
 
 
 class ClustererFitPredict(ClustererTestScenario):

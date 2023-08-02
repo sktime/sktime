@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interface module to dtw-python package.
 
 Exposes basic interface, excluding multivariate case.
@@ -11,14 +10,6 @@ import pandas as pd
 
 from sktime.alignment.base import BaseAligner
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies(
-    "dtw-python",
-    package_import_alias={"dtw-python": "dtw"},
-    severity="warning",
-    obj="AlignerDTW or AlignerDTWfromDist",
-    suppress_import_stdout=True,
-)
 
 
 class AlignerDTW(BaseAligner):
@@ -60,6 +51,7 @@ class AlignerDTW(BaseAligner):
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "python_dependencies": "dtw-python",
+        "python_dependencies_alias": {"dtw-python": "dtw"},
     }
 
     def __init__(
@@ -74,14 +66,7 @@ class AlignerDTW(BaseAligner):
         """Construct instance."""
         # added manually since dtw-python has an import alias
         # default check from super.__init__ does not allow aliases
-        _check_soft_dependencies(
-            "dtw-python",
-            package_import_alias={"dtw-python": "dtw"},
-            severity="error",
-            obj=self,
-            suppress_import_stdout=True,
-        )
-        super(AlignerDTW, self).__init__()
+        super().__init__()
 
         self.dist_method = dist_method
         self.step_pattern = step_pattern
@@ -257,7 +242,7 @@ class AlignerDTWfromDist(BaseAligner):
             obj=self,
             suppress_import_stdout=True,
         )
-        super(AlignerDTWfromDist, self).__init__()
+        super().__init__()
 
         self.dist_trafo = dist_trafo
         self.dist_trafo_ = self.dist_trafo.clone()

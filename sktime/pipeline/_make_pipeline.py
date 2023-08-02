@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipeline making utility."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
@@ -26,19 +25,19 @@ def make_pipeline(*steps):
 
     Example 1: forecaster pipeline
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.pipeline import make_pipeline
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> y = load_airline()
-    >>> pipe = make_pipeline(ExponentTransformer(), ThetaForecaster())
+    >>> pipe = make_pipeline(ExponentTransformer(), PolynomialTrendForecaster())
     >>> type(pipe).__name__
     'TransformedTargetForecaster'
 
     Example 2: classifier pipeline
-    >>> from sktime.classification.feature_based import Catch22Classifier
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
     >>> from sktime.pipeline import make_pipeline
     >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> pipe = make_pipeline(ExponentTransformer(), Catch22Classifier())
+    >>> pipe = make_pipeline(ExponentTransformer(), KNeighborsTimeSeriesClassifier())
     >>> type(pipe).__name__
     'ClassifierPipeline'
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ShapeDTW classifier.
 
 Nearest neighbour classifier that extracts shapee features.
@@ -109,10 +108,10 @@ class ShapeDTW(BaseClassifier):
     .. [1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
-
     """
 
     _tags = {
+        "capability:predict_proba": True,
         "classifier_type": "distance",
     }
 
@@ -134,7 +133,7 @@ class ShapeDTW(BaseClassifier):
             self._shape_descriptor_functions = shape_descriptor_functions
         self.metric_params = metric_params
 
-        super(ShapeDTW, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Train the classifier.
@@ -301,9 +300,8 @@ class ShapeDTW(BaseClassifier):
     def _generate_shape_descriptors(self, data):
         """Generate shape descriptors.
 
-        This function is used to convert a list of
-        subsequences into a list of shape descriptors
-        to be used for classification.
+        This function is used to convert a list of subsequences into a list of shape
+        descriptors to be used for classification.
         """
         # Get the appropriate transformer objects
         if self.shape_descriptor_function != "compound":
