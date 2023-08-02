@@ -2276,6 +2276,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "MCRE-BE",
+      "name": "Mathias Creemers",
+      "avatar_url": "https://avatars.githubusercontent.com/u/99316631",
+      "profile": "https://github.com/MCRE-BE",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }
