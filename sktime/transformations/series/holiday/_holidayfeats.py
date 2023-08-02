@@ -185,18 +185,15 @@ class HolidayFeatures(BaseTransformer):
 
             params = [
                 {
-                    "calendar": country_holidays(country="GB"),
+                    "calendar": dict(country_holidays(country="GB")),
                     "include_weekend": True,
                     "return_categorical": True,
-                },
-                {
-                    "calendar": country_holidays(country="FR"),
-                    "include_bridge_days": True,
                     "return_dummies": True,
                 },
                 {
-                    "calendar": financial_holidays(market="NYSE"),
+                    "calendar": dict(financial_holidays(market="NYSE")),
                     "return_indicator": True,
+                    "include_bridge_days": True,
                     "return_dummies": False,
                 },
             ]
@@ -271,7 +268,7 @@ def _generate_holidays(
     dates = np.unique(index.date)
     holidays_by_name = defaultdict(list)
 
-    filtered_dates = filter(lambda dte: dte in calendar, dates)
+    filtered_dates = [dte for dte in dates if dte in calendar]
     weekends = []
     if include_weekend:
         for dte in dates:
