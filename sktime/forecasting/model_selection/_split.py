@@ -21,6 +21,7 @@ __author__ = [
     "davidgilbertson",
 ]
 
+from logging import warn
 from typing import Iterator, Optional, Tuple, Union
 
 import numpy as np
@@ -279,6 +280,46 @@ def _check_cutoffs_fh_y(
             raise ValueError(msg)
     else:
         raise TypeError("Unsupported type of `cutoffs` and `fh`")
+
+
+def _check_freq_time_index(
+    y: pd.Index, window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES]
+) -> Tuple[pd.Index, Union[pd.DateOffset, ACCEPTED_WINDOW_LENGTH_TYPES]]:
+    """Check that combination of inputs is compatible.
+
+    Parameters
+    ----------
+    y : pd.Index
+        Index of time series
+    window_length : int or timedelta or pd.DateOffset
+        Length of the window.
+
+    Returns
+    -------
+    y : pd.Index
+        Index of time series with inferred frequency.
+    window_length : pd.DateOffset
+        Length of the window with the correct format.
+    """
+    warn_msg = (
+        "The frequency of the time index is not set. "
+        "The frequency is inferred and set to {}."
+    )
+
+    error_msg = (
+        "Could not infer the frequency of the time index. "
+        "Please make sure window_length is the same datatype as y."
+    )
+
+    if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
+        if y.freq is None:
+            y.freq = pd.infer_freq(y)
+            if y.freq is None:  # failed to infer freq
+                raise ValueError(error_msg)
+            warn(warn_msg.format(y.freq))
+        window_length = y.freq * window_length
+        return y, window_length
+    return y, window_length
 
 
 class BaseSplitter(BaseObject):
@@ -713,8 +754,7 @@ class CutoffSplitter(BaseSplitter):
         window_length = check_window_length(
             window_length=self.window_length, n_timepoints=n_timepoints
         )
-        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
-            window_length = y.freq * window_length
+        y, window_length = _check_freq_time_index(y=y, window_length=window_length)
         _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
 
@@ -1321,8 +1361,7 @@ class SingleWindowSplitter(BaseSplitter):
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
-        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
-            window_length = y.freq * window_length
+        y, window_length = _check_freq_time_index(y, window_length)
         fh = _check_fh(self.fh)
         train_end = _get_end(y_index=y, fh=fh)
 
