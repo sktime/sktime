@@ -680,7 +680,7 @@ def make_forecasting_scorer(
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time}
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
