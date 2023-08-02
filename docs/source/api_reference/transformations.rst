@@ -446,6 +446,7 @@ Seasonality and Date-Time Features
     :toctree: auto_generated/
     :template: class.rst
 
+    HolidayFeatures
     CountryHolidaysTransformer
     FinancialHolidaysTransformer
 
