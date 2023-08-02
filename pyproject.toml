@@ -62,9 +62,10 @@ all_extras = [
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5; python_version < '3.11'",
+    "gluonts>=0.9.0",
     "h5py",
     "hmmlearn>=0.2.7; python_version < '3.11'",
-    "gluonts>=0.9.0",
+    "holidays",
     "keras-self-attention; python_version < '3.11'",
     "kotsu>=0.3.1",
     "matplotlib>=3.3.2",
@@ -75,8 +76,10 @@ all_extras = [
     "pycatch22",
     "pykalman>=0.9.5; python_version < '3.11'",
     "pyod>=0.8.0; python_version < '3.11'",
+    "scikit-optimize",
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
+    "seasonal",
     "statsforecast>=0.5.2; python_version < '3.11'",
     "statsmodels>=0.12.1",
     "stumpy>=1.5.1; python_version < '3.11'",
@@ -85,8 +88,6 @@ all_extras = [
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
-    "seasonal",
-    "scikit-optimize",
 ]
 
 all_extras_pandas2 = [
@@ -97,9 +98,10 @@ all_extras_pandas2 = [
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5; python_version < '3.11'",
+    "gluonts>=0.9.0",
     "h5py",
     "hmmlearn>=0.2.7; python_version < '3.11'",
-    "gluonts>=0.9.0",
+    "holidays",
     "keras-self-attention; python_version < '3.11'",
     "kotsu>=0.3.1",
     "matplotlib>=3.3.2",
@@ -112,6 +114,7 @@ all_extras_pandas2 = [
     "pyod>=0.8.0; python_version < '3.11'",
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
+    "seasonal",
     "statsforecast>=0.5.2; python_version < '3.11'",
     "statsmodels>=0.12.1",
     "stumpy>=1.5.1; python_version < '3.11'",
@@ -120,7 +123,6 @@ all_extras_pandas2 = [
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
-    "seasonal",
 ]
 
 cython_extras = [
@@ -163,7 +165,7 @@ docs = [
     "pydata-sphinx-theme",
     "sphinx-issues<4.0.0",
     "sphinx-gallery<0.14.0",
-    "sphinx-design<0.5.0",
+    "sphinx-design<0.6.0",
     "sphinx-version-warning",
     "Sphinx<8.0.0",
     "tabulate",
