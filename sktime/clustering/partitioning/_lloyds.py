@@ -265,14 +265,13 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         self._random_state = check_random_state(self.random_state)
 
         if isinstance(self.init_algorithm, str):
-            try:
-                self._init_algorithm = self._init_algorithms[self.init_algorithm]
-            except KeyError as e:
+            if self.init_algorithm not in self._init_algorithms.keys():
                 raise KeyError(
                     f"The string provided for init_algorim: {self.init_algorithm} is "
                     f"invalid. The following are a list of valid init algorithms "
                     f"strings: {list(self._init_algorithms.keys())}"
-                ) from e
+                )
+            self._init_algorithm = self._init_algorithms[self.init_algorithm]
         elif isinstance(self.init_algorithm, np.ndarray):
             self._init_algorithm = self.init_algorithm
         elif isinstance(self._init_algorithm, Callable):
