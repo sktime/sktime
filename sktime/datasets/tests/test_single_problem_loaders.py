@@ -1,6 +1,4 @@
-"""Test single problem loaders with varying return types."""
-from urllib.request import Request, urlopen
-
+"""Test single problem loaders using data shipping with sktime."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,16 +7,12 @@ from sktime.datasets import (
     load_acsf1,
     load_arrow_head,
     load_basic_motions,
-    load_forecastingdata,
     load_italy_power_demand,
     load_japanese_vowels,
     load_osuleaf,
     load_plaid,
-    load_solar,
-    load_UCR_UEA_dataset,
     load_unit_test,
 )
-from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 
 UNIVARIATE_PROBLEMS = [
     load_acsf1,
