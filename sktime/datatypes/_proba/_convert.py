@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type converters for Series scitype.
 
 Exports conversion and mtype dictionary for Series scitype:
@@ -44,7 +43,6 @@ convert_dict = dict()
 
 
 def convert_identity(obj, store=None):
-
     return obj
 
 
@@ -87,8 +85,8 @@ def convert_pred_interval_to_quantiles(y_pred, inplace=False):
     idx = y_pred.columns
     var_names = idx.get_level_values(0)
 
+    # todo 0.22.0 - predict_interval new interface - remove this
     # treat univariate default name
-    # todo: maybe not a good idea, remove this...
     # here because it's in the current specification
     var_names = ["Quantiles" if x == "Coverage" else x for x in var_names]
 
@@ -112,7 +110,6 @@ def convert_pred_interval_to_quantiles(y_pred, inplace=False):
 
 
 def convert_interval_to_quantiles(obj: pd.DataFrame, store=None) -> pd.DataFrame:
-
     return convert_pred_interval_to_quantiles(y_pred=obj)
 
 
@@ -155,8 +152,8 @@ def convert_pred_quantiles_to_interval(y_pred, inplace=False):
     idx = y_pred.columns
     var_names = idx.get_level_values(0)
 
+    # todo 0.22.0 - predict_interval new interface - remove this
     # treat univariate default name
-    # todo: maybe not a good idea, remove this...
     # here because it's in the current specification
     var_names = ["Coverage" if x == "Quantiles" else x for x in var_names]
 
@@ -175,7 +172,6 @@ def convert_pred_quantiles_to_interval(y_pred, inplace=False):
 
 
 def convert_quantiles_to_interval(obj: pd.DataFrame, store=None) -> pd.DataFrame:
-
     return convert_pred_quantiles_to_interval(y_pred=obj)
 
 

@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class templates for distances or kernels between time series, and for tabular data.
+"""Base class templates for distances or kernels between time series and tabular data.
 
 templates in this module:
 
@@ -42,8 +40,8 @@ from sktime.datatypes._series_as_panel import convert_Series_to_Panel
 class BasePairwiseTransformer(BaseEstimator):
     """Base pairwise transformer for tabular or series data template class.
 
-    The base pairwise transformer specifies the methods and method
-    signatures that all pairwise transformers have to implement.
+    The base pairwise transformer specifies the methods and method signatures that all
+    pairwise transformers have to implement.
 
     Specific implementations of these methods is deferred to concrete classes.
     """
@@ -58,7 +56,7 @@ class BasePairwiseTransformer(BaseEstimator):
     }
 
     def __init__(self):
-        super(BasePairwiseTransformer, self).__init__()
+        super().__init__()
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -175,8 +173,8 @@ class BasePairwiseTransformer(BaseEstimator):
 class BasePairwiseTransformerPanel(BaseEstimator):
     """Base pairwise transformer for panel data template class.
 
-    The base pairwise transformer specifies the methods and method
-    signatures that all pairwise transformers have to implement.
+    The base pairwise transformer specifies the methods and method signatures that all
+    pairwise transformers have to implement.
 
     Specific implementations of these methods is deferred to concrete classes.
     """
@@ -192,7 +190,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     }
 
     def __init__(self):
-        super(BasePairwiseTransformerPanel, self).__init__()
+        super().__init__()
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -349,6 +347,28 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         else:
             return NotImplemented
 
+    def __getitem__(self, key):
+        """Magic [...] method, return column subsetted transformer.
+
+        Pairwise transformer (e.g., distance kernel) subsetted to the index.
+
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
+
+        Parameters
+        ----------
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
+            keys can also be a :-slice, in which case it is considered as not passed
+
+        Returns
+        -------
+        the following TransformerPipeline object:
+            ColumnSelect(columns) * self
+            where `columns` only item in `key`
+        """
+        from sktime.transformations.series.subset import ColumnSelect
+
+        return ColumnSelect(key) * self
+
     def transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
@@ -473,12 +493,10 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             usually df-list, list of pd.DataFrame, unless overridden
         """
         check_res = check_is_scitype(
-            X, ["Series", "Panel"], return_metadata=True, var_name=var_name
+            X, ["Series", "Panel"], return_metadata=[], var_name=var_name
         )
         X_valid = check_res[0]
         metadata = check_res[2]
-
-        X_scitype = metadata["scitype"]
 
         if not X_valid:
             msg = (
@@ -489,6 +507,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
                 " See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
             raise TypeError(msg)
+
+        X_scitype = metadata["scitype"]
 
         # if the input is a single series, convert it to a Panel
         if X_scitype == "Series":

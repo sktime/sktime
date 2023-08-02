@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Type checkers, converters and mtype inference for probabilistic return types."""
 
 from sktime.datatypes._proba._check import check_dict as check_dict_Proba

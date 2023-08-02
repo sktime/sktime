@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Dummy time series classifier."""
 
 __author__ = ["ZiyaoWei"]
@@ -65,6 +64,7 @@ class DummyClassifier(BaseClassifier):
         "capability:missing_values": True,
         "capability:unequal_length": True,
         "capability:multivariate": True,
+        "capability:predict_proba": True,
     }
 
     VALID_STRATEGIES = ["most_frequent", "prior", "stratified", "uniform", "constant"]
@@ -76,7 +76,7 @@ class DummyClassifier(BaseClassifier):
         self.sklearn_dummy_classifier = SklearnDummyClassifier(
             strategy=strategy, random_state=random_state, constant=constant
         )
-        super(DummyClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit the dummy classifier.

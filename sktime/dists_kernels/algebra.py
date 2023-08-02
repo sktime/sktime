@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Arithmetics with distances/kernels, e.g., addition, multiplication."""
 
 __author__ = ["fkiraly"]
@@ -46,6 +45,10 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     >>> X = X[0:3]
     >>> sum_dist = CombinedDistance([DtwDist(), DtwDist(weighted=True)], "+")
     >>> dist_mat = sum_dist.transform(X)
+
+    the same can also be done more compactly using dunders:
+    >>> sum_dist = DtwDist() + DtwDist(weighted=True)
+    >>> dist_mat = sum_dist(X)
     """
 
     _tags = {
@@ -58,11 +61,10 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "_pw_trafos"
 
     def __init__(self, pw_trafos, operation=None):
-
         self.pw_trafos = pw_trafos
         self.pw_trafos_ = self._check_estimators(
             self.pw_trafos, cls_type=BasePairwiseTransformerPanel
@@ -70,7 +72,7 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
         self.operation = operation
         self._operation = self._resolve_operation(operation)
 
-        super(CombinedDistance, self).__init__()
+        super().__init__()
 
         # abbreviate for readability
         ests = self.pw_trafos_

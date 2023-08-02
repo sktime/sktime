@@ -25,7 +25,7 @@ of the initial development under the UKRI Strategic Priorities Fund
 Systems <https://www.turing.ac.uk/events/tools-practices-and-systems-data-science-and-artificial-intelligence-scoping-workshop>`__
 theme within that grant.
 
-Markus Löning’s contributions between 2019 and 2021 were supported by:
+Markus Löning's contributions between 2019 and 2021 were supported by:
 
 * the `UK Economic and Social Research Council (ESRC) <https://esrc.ukri.org>`_,
 * the `Consumer Data Research Centre (CDRC) <https://www.cdrc.ac.uk>`_,
@@ -49,7 +49,7 @@ Institutional sponsorship
 
 The 2019 joint sktime MLJ development sprint was kindly hosted by `UCL <https://www.ucl.ac.uk>`_ and `The Alan Turing Institute <https://turing.ac.uk>`_. Some participants could attend thanks to the initial funding of the `The Alan Turing Institute <https://turing.ac.uk>`_.
 
-Since 2022, `sktime` is an officially affiliated project of the `NumFOCUS <https://numfocus.org/>`_ organization.
+2022-2023, `sktime` was an officially affiliated project of the `NumFOCUS <https://numfocus.org/>`_ organization.
 
 .. image:: ../images/numfocus.png
   :width: 32 %

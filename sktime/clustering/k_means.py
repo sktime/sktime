@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series kmeans."""
 __author__ = ["chrisholder", "TonyBagnall"]
 
@@ -20,7 +19,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
         centroids to generate.
-    init_algorithm: str, defaults = 'forgy'
+    init_algorithm: str, defaults = 'random'
         Method for initializing cluster centers. Any of the following are valid:
         ['kmeans++', 'random', 'forgy']
     metric: str or Callable, defaults = 'dtw'
@@ -64,7 +63,20 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         the sample weights if provided.
     n_iter_: int
         Number of iterations run.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_arrow_head
+    >>> from sktime.clustering.k_means import TimeSeriesKMeans
+    >>> X_train, y_train = load_arrow_head(split="train")
+    >>> X_test, y_test = load_arrow_head(split="test")
+    >>> clusterer = TimeSeriesKMeans(n_clusters=3)  # doctest: +SKIP
+    >>> clusterer.fit(X_train)  # doctest: +SKIP
+    TimeSeriesKMeans(n_clusters=3)
+    >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
     """
+
+    _tags = {"python_dependencies": "numba"}
 
     def __init__(
         self,
@@ -101,7 +113,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
                 if average_dist == "wddtw":
                     self._average_params["averaging_distance_metric"] = "wdtw"
 
-        super(TimeSeriesKMeans, self).__init__(
+        super().__init__(
             n_clusters,
             init_algorithm,
             metric,

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series kernel kmeans."""
 from typing import Dict, Union
 
@@ -6,9 +5,6 @@ import numpy as np
 from numpy.random import RandomState
 
 from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tslearn", severity="warning")
 
 
 class TimeSeriesKernelKMeans(BaseClusterer):
@@ -100,7 +96,7 @@ class TimeSeriesKernelKMeans(BaseClusterer):
 
         self._tslearn_kernel_k_means = None
 
-        super(TimeSeriesKernelKMeans, self).__init__(n_clusters=n_clusters)
+        super().__init__(n_clusters=n_clusters)
 
     def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.

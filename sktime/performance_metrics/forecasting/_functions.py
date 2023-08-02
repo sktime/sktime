@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Metrics functions to assess performance on forecasting task.
 
@@ -20,7 +19,7 @@ from sklearn.utils.validation import check_consistent_length
 from sktime.utils.stats import _weighted_geometric_mean
 from sktime.utils.validation.series import check_series
 
-__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
+__author__ = ["mloning", "tch", "RNKuhns"]
 __all__ = [
     "relative_loss",
     "mean_linex_error",

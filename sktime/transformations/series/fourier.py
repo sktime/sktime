@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Fourier features for time series with long/complex seasonality."""
 
-__author__ = ["ltsaprounis"]
+__author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
-from copy import deepcopy
 from distutils.log import warn
-from typing import List, Union
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
+from numpy.fft import rfft
 
 from sktime.transformations.base import BaseTransformer
 
@@ -38,7 +37,7 @@ class FourierFeatures(BaseTransformer):
 
     Parameters
     ----------
-    sp_list : List[Union[int, float]]
+    sp_list : List[float]
         list of seasonal periods
     fourier_terms_list : List[int]
         list of number of fourier terms (K) for each seasonal period.
@@ -51,6 +50,8 @@ class FourierFeatures(BaseTransformer):
         Specifies the frequency of the index of your data. The string should
         match a pandas offset alias:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+    keep_original_columns : boolean, optional, default=False
+        Keep original columns in X passed to `.transform()`
 
     References
     ----------
@@ -107,11 +108,16 @@ class FourierFeatures(BaseTransformer):
     }
 
     def __init__(
-        self, sp_list: List[Union[int, float]], fourier_terms_list: List[int], freq=None
+        self,
+        sp_list: List[float],
+        fourier_terms_list: List[int],
+        freq: Optional[str] = None,
+        keep_original_columns: Optional[bool] = False,
     ):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list
         self.freq = freq
+        self.keep_original_columns = keep_original_columns
 
         if len(self.sp_list) != len(self.fourier_terms_list):
             raise ValueError(
@@ -125,7 +131,7 @@ class FourierFeatures(BaseTransformer):
                 "needs to be lower from the corresponding element of the sp_list"
             )
 
-        super(FourierFeatures, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -163,26 +169,27 @@ class FourierFeatures(BaseTransformer):
                     warnings.warn(
                         f"The terms sin_{sp}_{k} and cos_{sp}_{k} from FourierFeatures "
                         "will be skipped because the resulting coefficient already "
-                        "exists from other seasonal period, fourier term pairs."
+                        "exists from other seasonal period, fourier term pairs.",
+                        stacklevel=2,
                     )
 
-        X = deepcopy(X)
+        time_index = X.index
 
-        if isinstance(X.index, pd.DatetimeIndex):
+        if isinstance(time_index, pd.DatetimeIndex):
             # Chooses first non None value
-            self.freq_ = X.index.freq or self.freq or pd.infer_freq(X.index)
+            self.freq_ = time_index.freq or self.freq or pd.infer_freq(time_index)
             if self.freq_ is None:
                 ValueError("X has no known frequency and none is supplied")
-            if self.freq_ == X.index.freq and self.freq_ != self.freq:
+            if self.freq_ == time_index.freq and self.freq_ != self.freq:
                 warn(
-                    f"Using frequency from index: {X.index.freq}, which \
+                    f"Using frequency from index: {time_index.freq}, which \
                      does not match the frequency given:{self.freq}."
                 )
-            X.index = X.index.to_period(self.freq_)
+            time_index = time_index.to_period(self.freq_)
         # this is used to make sure that time t is calculated with reference to
         # the data passed on fit
         # store the integer form of the minimum date in the prediod index
-        self.min_t_ = np.min(X.index.astype(int))
+        self.min_t_ = np.min(time_index.astype("int64"))
 
         return self
 
@@ -203,13 +210,14 @@ class FourierFeatures(BaseTransformer):
         -------
         transformed version of X
         """
-        X_transformed = deepcopy(X)
+        X_transformed = pd.DataFrame(index=X.index)
+        time_index = X.index
 
-        if isinstance(X.index, pd.DatetimeIndex):
-            X_transformed.index = X_transformed.index.to_period(self.freq_)
+        if isinstance(time_index, pd.DatetimeIndex):
+            time_index = time_index.to_period(self.freq_)
 
         # get the integer form of the PeriodIndex
-        int_index = X_transformed.index.astype(int) - self.min_t_
+        int_index = time_index.astype("int64") - self.min_t_
 
         for sp_k in self.sp_k_pairs_list_:
             sp = sp_k[0]
@@ -218,8 +226,9 @@ class FourierFeatures(BaseTransformer):
             X_transformed[f"sin_{sp}_{k}"] = np.sin(int_index * 2 * k * np.pi / sp)
             X_transformed[f"cos_{sp}_{k}"] = np.cos(int_index * 2 * k * np.pi / sp)
 
-        # Ensure transformed X has same index
-        X_transformed.index = deepcopy(X.index)
+        if self.keep_original_columns:
+            X_transformed = pd.concat([X, X_transformed], axis=1, copy=True)
+
         return X_transformed
 
     @classmethod
@@ -246,3 +255,58 @@ class FourierFeatures(BaseTransformer):
             {"sp_list": [12, 6.2], "fourier_terms_list": [3, 4]},
         ]
         return params
+
+
+class FourierTransform(BaseTransformer):
+    r"""Simple Fourier transform for time series.
+
+    The implementation is based on the real fast fourier transform from numpy.fft.rfft
+    Returns pd.Series of amplitudes of integer range frequencies.
+    Even-Sampling of data is assumed and frequency range converted to integer.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.fourier import FourierTransform
+    >>> from sktime.datasets import load_airline
+    >>> X = load_airline()
+    >>> transformer = FourierTransform()
+    >>> X_ft = transformer.fit_transform(X)
+    """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "scitype:instancewise": True,
+        "scitype:transform-labels": "None",
+        "X_inner_mtype": "pd.Series",
+        "y_inner_mtype": "None",
+        "univariate-only": True,
+        "requires_y": False,
+        "fit_is_empty": True,
+        "capability:inverse_transform": False,
+        "capability:unequal_length": True,
+        "handles-missing-data": False,
+    }
+
+    def __init__(self):
+        super().__init__()
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series mtype X_inner_mtype
+
+        Returns
+        -------
+        transformed version of X
+        """
+        # numpy.fft methods
+        dft_seq = np.abs(rfft(X))
+
+        # Combining the arrays to Pandas Series
+        Y = pd.Series(dft_seq[1:])
+        return Y

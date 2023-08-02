@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Class for signature computation over windows."""
 import numpy as np
 
@@ -8,9 +7,6 @@ from sktime.transformations.panel.signature_based._rescaling import (
     _rescale_signature,
 )
 from sktime.transformations.panel.signature_based._window import _window_getter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("esig", severity="warning")
 
 
 class _WindowSignatureTransform(BaseTransformer):
@@ -64,7 +60,6 @@ class _WindowSignatureTransform(BaseTransformer):
         )
 
     def _transform(self, X, y=None):
-
         import esig
 
         depth = self.sig_depth

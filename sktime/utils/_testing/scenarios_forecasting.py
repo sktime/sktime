@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for forecasters.
 
 Contains TestScenario concrete children to run in tests for forecasters.
@@ -105,9 +104,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
         if key in PREDICT_LIKE_FUNCTIONS:
             key = "predict"
 
-        return super(ForecasterTestScenario, self).get_args(
-            key=key, obj=obj, deepcopy_args=deepcopy_args
-        )
+        return super().get_args(key=key, obj=obj, deepcopy_args=deepcopy_args)
 
 
 class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
