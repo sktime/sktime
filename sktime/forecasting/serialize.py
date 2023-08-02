@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""Implements simple forecasts based on naive assumptions."""
+"""Pre-fitted forecaster, initialized from serialized object."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -63,7 +62,7 @@ class FittedForecaster(_DelegatedForecaster):
     def __init__(
         self, fitted_forecaster, update_forecaster=True, unwrap_time="construct"
     ):
-        super(FittedForecaster, self).__init__()
+        super().__init__()
         self.fitted_forecaster = fitted_forecaster
         self.update_forecaster = update_forecaster
         self.unwrap_time = unwrap_time
