@@ -711,3 +711,21 @@ def test_same_loc_splitter_hierarchical():
     for (t1, tt1), (t2, tt2) in zip(split_template_loc, split_templated_loc):
         assert np.all(t1 == t2)
         assert np.all(tt1 == tt2)
+
+
+CVs = [ExpandingWindowSplitter, SlidingWindowSplitter]
+
+
+@pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
+def test_windowbase_splitter_get_n_split_hierarchical(CV):
+    """Test that WindowBaseSplitter.get_n_splits works for hierarchical data."""
+    # see bugs 4971
+    y_hierarchical = _make_hierarchical(hierarchy_levels=(2, 3))
+    fh = [1]
+    step_length = 1
+    window_length = 10
+
+    cv = CV(fh, window_length, step_length)
+    assert cv.get_n_splits(y_hierarchical) == len(
+        list(cv.split(y_hierarchical))
+    ), "get_n_splits does not equal to output number of split"

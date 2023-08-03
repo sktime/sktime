@@ -1001,7 +1001,16 @@ class BaseWindowSplitter(BaseSplitter):
                 f"{self.__class__.__name__} requires `y` to compute the "
                 f"number of splits."
             )
-        return len(self.get_cutoffs(y))
+
+        # n_splits based on the first lowest level series cutoffs
+        index = self._coerce_to_index(y)
+        if isinstance(index, pd.MultiIndex):
+            for _, values in y.groupby(index.droplevel(-1)):
+                n_splits = len(self.get_cutoffs(values))
+                break
+        else:
+            n_splits = len(self.get_cutoffs(y))
+        return n_splits
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
