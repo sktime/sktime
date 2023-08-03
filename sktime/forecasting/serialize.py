@@ -69,7 +69,7 @@ class FittedForecaster(_DelegatedForecaster):
 
         if unwrap_time == "construct":
             self.fitted_forecaster_ = self._unwrap_serialized(fitted_forecaster)
-            self.clone_tags(fitted_forecaster)
+            self.clone_tags(self.fitted_forecaster_)
         elif unwrap_time == "fit":
             self.fitted_forecaster_ = None
             self.set_tags(**self._unwrap_serialized_tags(fitted_forecaster))
