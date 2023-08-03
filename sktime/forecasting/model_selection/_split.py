@@ -21,6 +21,10 @@ __author__ = [
     "davidgilbertson",
 ]
 
+import warnings
+
+warnings.warn("This module is deprecated, use sktime.split instead", DeprecationWarning)
+
 from typing import Iterator, Optional, Tuple, Union
 
 import numpy as np
