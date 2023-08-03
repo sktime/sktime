@@ -1002,11 +1002,14 @@ class BaseWindowSplitter(BaseSplitter):
                 f"number of splits."
             )
 
-        # n_splits based on the first lowest level series cutoffs
+        # n_splits based on the first instance of the lowest level series cutoffs
         index = self._coerce_to_index(y)
         if isinstance(index, pd.MultiIndex):
             for _, values in y.groupby(index.droplevel(-1)):
-                n_splits = len(self.get_cutoffs(values))
+                # convert to a single ts
+                instance_series = values.reset_index().iloc[:, -2:]
+                instance_series.set_index(instance_series.columns[0], inplace=True)
+                n_splits = len(self.get_cutoffs(instance_series))
                 break
         else:
             n_splits = len(self.get_cutoffs(y))

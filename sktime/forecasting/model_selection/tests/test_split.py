@@ -722,9 +722,9 @@ def test_windowbase_splitter_get_n_split_hierarchical(
 ):
     """Test that WindowBaseSplitter.get_n_splits works for hierarchical data."""
     # see bugs 4971
-    y_hierarchical = _make_hierarchical(hierarchy_levels=(2, 3))
+    y = _make_hierarchical((2, 3), 15, 15)
     if _inputs_are_supported([fh, window_length, step_length]):
         cv = CV(fh, window_length, step_length)
-        assert cv.get_n_splits(y_hierarchical) == len(
-            list(cv.split(y_hierarchical))
+        assert cv.get_n_splits(y) == len(
+            list(cv.split(y))
         ), "get_n_splits does not equal the number of splits in the output."
