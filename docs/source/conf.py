@@ -429,7 +429,7 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-    "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
+    "joblib": ("https://joblib.readthedocs.io/en/stable/", None),
     "scikit-learn": ("https://scikit-learn.org/stable/", None),
     "statsmodels": ("https://www.statsmodels.org/stable/", None),
 }
