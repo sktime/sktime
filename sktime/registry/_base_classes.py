@@ -61,6 +61,7 @@ from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
+from sktime.datasets.base import BaseDataset
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
@@ -86,6 +87,7 @@ BASE_CLASS_REGISTER = [
     ("aligner", BaseAligner, "time series aligner or sequence aligner"),
     ("classifier", BaseClassifier, "time series classifier"),
     ("clusterer", BaseClusterer, "time series clusterer"),
+    ("dataset", BaseDataset, "data set"),
     ("early_classifier", BaseEarlyClassifier, "early time series classifier"),
     ("forecaster", BaseForecaster, "forecaster"),
     ("metric", BaseMetric, "performance metric"),
