@@ -713,9 +713,6 @@ def test_same_loc_splitter_hierarchical():
         assert np.all(tt1 == tt2)
 
 
-CVs = [ExpandingWindowSplitter, SlidingWindowSplitter]
-
-
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 def test_windowbase_splitter_get_n_split_hierarchical(CV):
     """Test that WindowBaseSplitter.get_n_splits works for hierarchical data."""
