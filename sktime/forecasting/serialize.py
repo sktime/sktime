@@ -113,11 +113,8 @@ class FittedForecaster(_DelegatedForecaster):
         -------
         unwrapped_forecaster : sktime forecaster object (BaseForecaster)
         """
-        if isinstance(fitted_forecaster, BaseForecaster) and self.update_forecaster:
+        if isinstance(fitted_forecaster, BaseForecaster):
             unwrapped_forecaster = deepcopy(fitted_forecaster)
-
-        if isinstance(fitted_forecaster, BaseForecaster) and not self.update_forecaster:
-            unwrapped_forecaster = fitted_forecaster
 
         if isinstance(fitted_forecaster, bytes):
             unwrapped_forecaster = pickle.loads(fitted_forecaster)
