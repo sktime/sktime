@@ -280,8 +280,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         else:
             raise ValueError(
                 f"The value provided for init_algorithm: {self.init_algorithm} is "
-                f"invalid. The following are a list of valid init algorithms strings: "
-                f"{list(self._init_algorithms.keys())}"
+                f"invalid. It must be either a string, callable or 3D numpy array."
             )
 
         if self.distance_params is None:
