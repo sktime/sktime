@@ -267,7 +267,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         if isinstance(self.init_algorithm, str):
             if self.init_algorithm not in self._init_algorithms.keys():
                 raise KeyError(
-                    f"The string provided for init_algorim: {self.init_algorithm} is "
+                    f"The string provided for init_algorithm: {self.init_algorithm} is "
                     f"invalid. The following are a list of valid init algorithms "
                     f"strings: {list(self._init_algorithms.keys())}"
                 )
@@ -278,7 +278,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             self._init_algorithm = self.init_algorithm
         else:
             raise ValueError(
-                f"The value provided for init_algorim: {self.init_algorithm} is "
+                f"The value provided for init_algorithm: {self.init_algorithm} is "
                 f"invalid. The following are a list of valid init algorithms strings: "
                 f"{list(self._init_algorithms.keys())}"
             )
