@@ -922,7 +922,13 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         estimator = estimator_instance
         params = estimator.get_params()
         assert isinstance(params, dict)
-        _check_get_params_invariance(estimator.__class__.__name__, estimator)
+
+        e = estimator.clone()
+
+        shallow_params = e.get_params(deep=False)
+        deep_params = e.get_params(deep=True)
+
+        assert all(item in deep_params.items() for item in shallow_params.items())
 
     def test_set_params(self, estimator_instance):
         """Check that set_params works correctly."""
