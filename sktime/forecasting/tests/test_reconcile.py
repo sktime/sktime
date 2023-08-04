@@ -44,9 +44,10 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
     agg = Aggregator(flatten_single_levels=flatten)
 
     y = _bottom_hier_datagen(
-        no_bottom_nodes=5,
+        no_bottom_nodes=2,
         no_levels=no_levels,
         random_seed=123,
+        length=10,
     )
     # add aggregate levels
     y = agg.fit_transform(y)
@@ -86,20 +87,20 @@ def test_reconcilerforecaster_exog(n_columns):
     from sktime.forecasting.sarimax import SARIMAX
 
     y = _make_hierarchical(
-        hierarchy_levels=(2, 4),
+        hierarchy_levels=(2, 3),
         n_columns=n_columns,
-        min_timepoints=24,
-        max_timepoints=24,
+        min_timepoints=12,
+        max_timepoints=12,
         index_type="period",
     )
     y_train = get_window(y, lag=2)
     y_test = get_window(y, window_length=2)
 
     X = _make_hierarchical(
-        hierarchy_levels=(2, 4),
+        hierarchy_levels=(2, 3),
         n_columns=2,
-        min_timepoints=24,
-        max_timepoints=24,
+        min_timepoints=12,
+        max_timepoints=12,
         index_type="period",
     )
     X.columns = ["foo", "bar"]
