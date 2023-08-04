@@ -25,7 +25,7 @@ def get_module_from_class(cls):
 
 
 def get_path_from_module(module_str):
-    """Get local path string from module string.
+    r"""Get local path string from module string.
 
     Parameters
     ----------
