@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BaseAligner interface to sktime dtw aligners in distances module."""
 
 __author__ = ["fkiraly"]
@@ -133,7 +132,6 @@ class AlignerDtwNumba(BaseAligner):
         bounding_matrix: np.ndarray = None,
         g: float = 0.0,
     ):
-
         self.weighted = weighted
         self.derivative = derivative
         self.window = window
@@ -164,7 +162,7 @@ class AlignerDtwNumba(BaseAligner):
 
         self.kwargs = kwargs
 
-        super(AlignerDtwNumba, self).__init__()
+        super().__init__()
 
     def _fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.

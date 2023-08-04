@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities to dispatch on estimators."""
 
 __author__ = ["fkiraly"]

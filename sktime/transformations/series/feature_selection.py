@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements feature selection algorithms."""
 
@@ -78,7 +77,7 @@ class FeatureSelection(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
+        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
@@ -99,7 +98,7 @@ class FeatureSelection(BaseTransformer):
         self.random_state = random_state
         self.columns = columns
 
-        super(FeatureSelection, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

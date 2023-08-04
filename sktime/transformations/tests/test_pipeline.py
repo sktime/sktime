@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for using sklearn FeatureUnion with sktime."""
 
 import numpy as np

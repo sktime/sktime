@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Catch22 test code."""
 
 import numpy as np

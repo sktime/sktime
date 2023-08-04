@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements framework for applying online ensembling algorithms to forecasters."""
@@ -33,13 +32,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
-
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
 
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters

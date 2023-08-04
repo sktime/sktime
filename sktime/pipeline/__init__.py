@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipeline maker utility."""
 
 __all__ = ["make_pipeline", "sklearn_to_sktime"]

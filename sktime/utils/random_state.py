@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for handling the random_state variable."""
 # copied from scikit-learn to avoid dependency on sklearn private methods
 

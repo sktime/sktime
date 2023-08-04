@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interval based time series classifiers."""
 __all__ = [
     "TimeSeriesForestClassifier",

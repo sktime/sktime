@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multi-scale Attention Convolutional Neural Network (MACNN)."""
 
 __author__ = ["jnrusson1"]
@@ -47,7 +46,7 @@ class MACNNNetwork(BaseDeepNetwork):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super(MACNNNetwork, self).__init__()
+        super().__init__()
 
         self.padding = padding
         self.pool_size = pool_size
@@ -59,8 +58,7 @@ class MACNNNetwork(BaseDeepNetwork):
         self.random_state = random_state
 
     def _macnn_block(self, x, kernels, reduce):
-        """
-        Implement a single MACNN Block.
+        """Implement a single MACNN Block.
 
         Parameters
         ----------
@@ -103,8 +101,7 @@ class MACNNNetwork(BaseDeepNetwork):
         return x1 * x2
 
     def _stack(self, x, repeats, kernels, reduce):
-        """
-        Build MACNN Blocks and stack them.
+        """Build MACNN Blocks and stack them.
 
         Parameters
         ----------
@@ -128,8 +125,7 @@ class MACNNNetwork(BaseDeepNetwork):
         return x
 
     def build_network(self, input_shape, **kwargs):
-        """
-        Construct a network and return its input and output layers.
+        """Construct a network and return its input and output layers.
 
         Parameters
         ----------

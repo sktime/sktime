@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
 __author__ = ["fkiraly", "mloning"]
@@ -109,7 +108,6 @@ def _check_soft_dependencies(
         )
 
     for package in packages:
-
         try:
             req = Requirement(package)
         except InvalidRequirement:
@@ -380,10 +378,13 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     compatible = compatible and _check_python_version(obj, severity=severity)
 
     pkg_deps = obj.get_class_tag("python_dependencies", None)
+    pck_alias = obj.get_class_tag("python_dependencies_alias", None)
     if pkg_deps is not None and not isinstance(pkg_deps, list):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
-        pkg_deps_ok = _check_soft_dependencies(*pkg_deps, severity=severity, obj=obj)
+        pkg_deps_ok = _check_soft_dependencies(
+            *pkg_deps, severity=severity, obj=obj, package_import_alias=pck_alias
+        )
         compatible = compatible and pkg_deps_ok
 
     return compatible

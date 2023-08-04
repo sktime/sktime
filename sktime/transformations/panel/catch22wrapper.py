@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Catch22 features.
 
 A transformer for the Catch22 features using the pycatch22 C wrapper.
@@ -117,7 +116,7 @@ class Catch22Wrapper(BaseTransformer):
 
         self._transform_features = None
 
-        super(Catch22Wrapper, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform data into the Catch22 features.

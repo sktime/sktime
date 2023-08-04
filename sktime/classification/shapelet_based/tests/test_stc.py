@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ShapeletTransformClassifier test code."""
 import pytest
 

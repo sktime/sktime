@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements hierarchical reconciliation transformers.
 
@@ -98,10 +97,9 @@ class Reconciler(BaseTransformer):
     METHOD_LIST = ["bu", "ols", "wls_str", "td_fcst"]
 
     def __init__(self, method="bu"):
-
         self.method = method
 
-        super(Reconciler, self).__init__()
+        super().__init__()
 
     def _add_totals(self, X):
         """Add total levels to X, using Aggregate."""
@@ -201,7 +199,6 @@ class Reconciler(BaseTransformer):
         recon_preds = []
         gmat = self.g_matrix
         for _name, group in X:
-
             if self.method == "td_fcst":
                 gmat = _update_td_fcst(
                     g_matrix=gmat, x_sf=group.droplevel(-1), conn_df=self.parent_child

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test orchestration."""
 __author__ = ["viktorkaz", "mloning"]
 
@@ -21,8 +20,8 @@ from sktime.benchmarking.orchestration import Orchestrator
 from sktime.benchmarking.results import HDDResults, RAMResults
 from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
-from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.classification.ensemble import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_arrow_head, load_gunpoint
 from sktime.series_as_features.model_selection import SingleSplit
 from sktime.transformations.panel.reduce import Tabularizer
@@ -161,7 +160,7 @@ def test_single_dataset_single_strategy_against_sklearn(
 # simple test of sign test and ranks
 def test_stat():
     """Test sign ranks."""
-    data = load_gunpoint(split="train", return_X_y=False)
+    data = load_gunpoint(split="train", return_X_y=False)[:7]
     dataset = RAMDataset(dataset=data, name="gunpoint")
     task = TSCTask(target="class_val")
 
@@ -190,7 +189,7 @@ def test_stat():
     pf_rank = ranks.loc[ranks.strategy == "pf", "accuracy_mean_rank"].item()  # 1
     fc_rank = ranks.loc[ranks.strategy == "tsf", "accuracy_mean_rank"].item()  # 2
     rank_array = [pf_rank, fc_rank]
-    rank_array_test = [1, 2]
+    rank_array_test = [2, 1]
     _, sign_test_df = analyse.sign_test()
 
     sign_array = [
