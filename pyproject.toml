@@ -163,6 +163,7 @@ docs = [
     "nbsphinx>=0.8.6",
     "numpydoc",
     "pydata-sphinx-theme",
+    "sphinx-copybutton",
     "sphinx-issues<4.0.0",
     "sphinx-gallery<0.14.0",
     "sphinx-design<0.6.0",

@@ -47,6 +47,7 @@ extensions = [
     "nbsphinx",  # integrates example notebooks
     "sphinx_gallery.load_style",
     "myst_parser",
+    "sphinx_copybutton",
     "sphinx_design",
     "sphinx_issues",
     "versionwarning.extension",
@@ -448,3 +449,7 @@ versionwarning_messages = {
 # Show warning at top of page
 versionwarning_body_selector = "div.document"
 versionwarning_banner_title = ""
+
+copybutton_prompt_text = r">>> |\.\.\. |\$ "
+copybutton_prompt_is_regexp = True
+copybutton_line_continuation_character = "\\"
