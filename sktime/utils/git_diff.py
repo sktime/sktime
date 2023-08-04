@@ -40,7 +40,7 @@ def get_path_from_module(module_str):
         module_spec = importlib.util.find_spec(module_str)
         if module_spec is None:
             raise ImportError(
-                f"Errpr in get_path_from_module, module '{module_str}' not found."
+                f"Error in get_path_from_module, module '{module_str}' not found."
             )
         return module_spec.origin
     except Exception as e:
