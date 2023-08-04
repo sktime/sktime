@@ -21,7 +21,6 @@ __author__ = [
     "davidgilbertson",
 ]
 
-from logging import warn
 from typing import Iterator, Optional, Tuple, Union
 
 import numpy as np
@@ -305,22 +304,17 @@ def _check_freq_time_index(
     window_length : pd.DateOffset
         Length of the window as a dateoffset format.
     """
-    warn_msg = (
-        "The frequency of the time index is not set. "
-        "The frequency is inferred and set to {}."
-    )
-
     error_msg = (
-        "Could not infer the frequency of the time index. Please make sure"
-        "window_length input format is set as DateOffset."
+        "Could not infer the frequency of the time index. To resolve this issue, "
+        "either set the 'window_length' input to a DateOffset format, or store the "
+        "frequency offsets in the Pandas index."
     )
 
     if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
         if y.freq is None:
-            y.freq = pd.infer_freq(y)
+            y.freq = y.inferred_freq
             if y.freq is None and failed_infer_error:  # failed to infer freq
                 raise ValueError(error_msg)
-            warn(warn_msg.format(y.freq))
         window_length = y.freq * window_length
         return y, window_length
     return y, window_length

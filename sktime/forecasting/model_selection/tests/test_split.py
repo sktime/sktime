@@ -718,9 +718,7 @@ def test_hierachical_singlewindowsplitter():
 
     See #4972
     """
-    y = _make_hierarchical(
-        hierarchy_levels=(2, 3), min_timepoints=12, max_timepoints=12, random_state=0
-    )
+    y = _make_hierarchical(hierarchy_levels=(2, 3), random_state=0)
     splitter = SingleWindowSplitter(fh=[1, 2], window_length=10)
     splits = list(splitter.split(y))
     assert len(splits) == 1, "Should only be one split"
