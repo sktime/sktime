@@ -312,7 +312,7 @@ def _check_freq_time_index(
 
     error_msg = (
         "Could not infer the frequency of the time index. Please make sure"
-        "window_length input format to DateOffset."
+        "window_length input format is set as DateOffset."
     )
 
     if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
