@@ -996,6 +996,8 @@ class BaseWindowSplitter(BaseSplitter):
         n_splits : int
             The number of splits.
         """
+        from sktime.datatypes import check_is_scitype
+
         if y is None:
             raise ValueError(
                 f"{self.__class__.__name__} requires `y` to compute the "
@@ -1003,8 +1005,8 @@ class BaseWindowSplitter(BaseSplitter):
             )
 
         # n_splits based on the first instance of the lowest level series cutoffs
-        index = self._coerce_to_index(y)
-        if isinstance(index, pd.MultiIndex):
+        if check_is_scitype(y, scitype="Hierarchical"):
+            index = self._coerce_to_index(y)
             for _, values in y.groupby(index.droplevel(-1)):
                 # convert to a single ts
                 instance_series = values.reset_index().iloc[:, -2:]
