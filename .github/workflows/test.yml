@@ -168,8 +168,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+
+      - name: Fetch 'main' branch
+        run: git fetch origin main
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -216,8 +217,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+
+      - name: Fetch 'main' branch
+        run: git fetch origin main
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -252,8 +254,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+
+      - name: Fetch 'main' branch
+        run: git fetch origin main
 
       - name: Set up Python
         uses: actions/setup-python@v4
