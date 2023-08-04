@@ -22,9 +22,6 @@ __author__ = [
 ]
 
 import warnings
-
-warnings.warn("This module is deprecated, use sktime.split instead", DeprecationWarning)
-
 from typing import Iterator, Optional, Tuple, Union
 
 import numpy as np
@@ -70,6 +67,12 @@ SPLIT_TYPE = Union[
 SPLIT_ARRAY_TYPE = Tuple[np.ndarray, np.ndarray]
 SPLIT_GENERATOR_TYPE = Iterator[SPLIT_ARRAY_TYPE]
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
+
+warnings.warn(
+    "This module is deprecated, use sktime.split instead",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:

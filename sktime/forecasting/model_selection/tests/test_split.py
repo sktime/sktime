@@ -5,8 +5,6 @@ __author__ = ["mloning", "kkoralturk", "khrapovs", "fkiraly"]
 
 import warnings
 
-warnings.warn("This module is deprecated, use sktime.split.tests instead", DeprecationWarning)
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -47,6 +45,12 @@ from sktime.utils.validation import (
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = 30
+
+warnings.warn(
+    "This module is deprecated, use sktime.split.tests instead",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 def _get_windows(cv, y):

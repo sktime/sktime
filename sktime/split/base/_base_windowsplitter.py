@@ -6,10 +6,16 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from sktime.split.base import BaseSplitter
 from sktime.datatypes._utilities import get_index_for_series
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
+from sktime.split.base import BaseSplitter
+from sktime.split.base._config import (
+    ACCEPTED_Y_TYPES,
+    FORECASTING_HORIZON_TYPES,
+    SPLIT_ARRAY_TYPE,
+    SPLIT_GENERATOR_TYPE,
+)
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     NON_FLOAT_WINDOW_LENGTH_TYPES,
@@ -20,16 +26,8 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
-from sktime.utils.validation.forecasting import (
-    check_fh,
-    check_step_length,
-)
-from sktime.split.base._config import (
-    ACCEPTED_Y_TYPES,
-    FORECASTING_HORIZON_TYPES,
-    SPLIT_ARRAY_TYPE,
-    SPLIT_GENERATOR_TYPE,
-)
+from sktime.utils.validation.forecasting import check_fh, check_step_length
+
 
 def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
     """Check and convert fh to format expected by CV splitters."""
@@ -171,6 +169,7 @@ def _check_inputs_for_compatibility(args: list) -> None:
     """
     if not _inputs_are_supported(args):
         raise TypeError("Unsupported combination of types")
+
 
 class BaseWindowSplitter(BaseSplitter):
     """Base class for sliding and expanding window splitter."""

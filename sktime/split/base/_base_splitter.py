@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from typing import Iterator, Optional, Tuple, Union
+from typing import Iterator, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -9,16 +9,17 @@ import pandas as pd
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.split.base._config import (
+    ACCEPTED_Y_TYPES,
+    DEFAULT_FH,
+    DEFAULT_WINDOW_LENGTH,
+    FORECASTING_HORIZON_TYPES,
+    PANDAS_MTYPES,
+    SPLIT_GENERATOR_TYPE,
+    SPLIT_TYPE,
+)
 from sktime.utils.validation import NON_FLOAT_WINDOW_LENGTH_TYPES
 from sktime.utils.validation.forecasting import check_fh
-from sktime.split.base._config import (
-    DEFAULT_WINDOW_LENGTH,
-    DEFAULT_FH, ACCEPTED_Y_TYPES,
-    FORECASTING_HORIZON_TYPES,
-    SPLIT_TYPE,
-    SPLIT_GENERATOR_TYPE,
-    PANDAS_MTYPES
-)
 
 
 class BaseSplitter(BaseObject):
