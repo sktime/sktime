@@ -2,6 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements simple forecasts based on naive assumptions."""
 
+# foo foo foo foo
 __all__ = ["NaiveForecaster", "NaiveVariance"]
 __author__ = [
     "mloning",

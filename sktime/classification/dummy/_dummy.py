@@ -9,6 +9,7 @@ from sklearn.dummy import DummyClassifier as SklearnDummyClassifier
 from sktime.classification.base import BaseClassifier
 
 
+# bar bar bar bar
 class DummyClassifier(BaseClassifier):
     """DummyClassifier makes predictions that ignore the input features.
 
