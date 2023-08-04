@@ -722,3 +722,10 @@ def test_hierachical_singlewindowsplitter():
     splitter = SingleWindowSplitter(fh=[1, 2], window_length=10)
     splits = list(splitter.split(y))
     assert len(splits) == 1, "Should only be one split"
+
+    irregular_y = _make_series(12, random_state=1)
+    irregular_y[2:4] = np.nan
+    irregular_y.dropna(inplace=True)
+    with pytest.raises(ValueError) as excinfo:
+        list(splitter.split(irregular_y))
+    assert "Could not infer the frequency" in str(excinfo.value)

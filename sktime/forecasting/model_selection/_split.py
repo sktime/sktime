@@ -305,9 +305,9 @@ def _check_freq_time_index(
         Length of the window as a dateoffset format.
     """
     error_msg = (
-        "Could not infer the frequency of the time index. To resolve this issue, "
-        "either set the 'window_length' input to a DateOffset format, or store the "
-        "frequency offsets in the Pandas index."
+        "Could not infer frequency of time index. To resolve this issue, "
+        "either set 'window_length' input to a DateOffset format, or store "
+        "frequency offsets in the index."
     )
 
     if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
