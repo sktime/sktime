@@ -57,7 +57,7 @@ def deep_equals(x, y, return_msg=False):
             != - call to generic != returns False
     """
 
-    def ret(is_equal, msg):
+    def ret(is_equal, msg=""):
         if return_msg:
             if is_equal:
                 msg = ""
@@ -65,7 +65,7 @@ def deep_equals(x, y, return_msg=False):
         else:
             return is_equal
 
-    if type(x) != type(y):
+    if type(x) is not type(y):
         return ret(False, f".type, x.type = {type(x)} != y.type = {type(y)}")
 
     # compute delayed objects (dask)
@@ -93,7 +93,12 @@ def deep_equals(x, y, return_msg=False):
                 msg = ""
             return ret(index_equal and values_equal, msg)
         else:
-            return ret(x.equals(y), f".series_equals, x = {x} != y = {y}")
+            # this construction is needed so costly str(pd.Series) is only
+            # called when needed
+            if x.equals(y):
+                return ret(True)
+            else:
+                return ret(False, f".series_equals, x = {x} != y = {y}")
     elif isinstance(x, pd.DataFrame):
         if not x.columns.equals(y.columns):
             return ret(
@@ -105,11 +110,21 @@ def deep_equals(x, y, return_msg=False):
                 is_equal, msg = deep_equals(x[c], y[c], return_msg=True)
                 if not is_equal:
                     return ret(False, f'["{c}"]' + msg)
-            return ret(True, "")
+            return ret(True)
         else:
-            return ret(x.equals(y), f".df_equals, x = {x} != y = {y}")
+            # this construction is needed so costly str(pd.DataFrame) is only
+            # called when needed
+            if x.equals(y):
+                return ret(True)
+            else:
+                return ret(False, f".df_equals, x = {x} != y = {y}")
     elif isinstance(x, pd.Index):
-        return ret(x.equals(y), f".index_equals, x = {x} != y = {y}")
+        # this construction is needed so costly str(pd.Index) is only
+        # called when needed
+        if x.equals(y):
+            return ret(True)
+        else:
+            return ret(False, f".index_equals, x = {x} != y = {y}")
     elif isinstance(x, np.ndarray):
         if x.dtype != y.dtype:
             return ret(False, f".dtype, x.dtype = {x.dtype} != y.dtype = {y.dtype}")
