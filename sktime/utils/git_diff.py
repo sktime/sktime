@@ -44,7 +44,7 @@ def get_path_from_module(module_str):
             )
         return module_spec.origin
     except Exception as e:
-        raise ImportError(f"Error finding module '{module_str}': {e}")
+        raise ImportError(f"Error finding module '{module_str}'") from e
 
 
 def is_module_changed(module_str):
