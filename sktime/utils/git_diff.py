@@ -3,9 +3,9 @@
 __author__ = ["fkiraly"]
 __all__ = []
 
-import subprocess
 import importlib.util
 import inspect
+import subprocess
 
 
 def get_module_from_class(cls):
