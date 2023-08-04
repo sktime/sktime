@@ -116,7 +116,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: 3.8
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
