@@ -44,7 +44,7 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
     agg = Aggregator(flatten_single_levels=flatten)
 
     y = _bottom_hier_datagen(
-        no_bottom_nodes=2,
+        no_bottom_nodes=4,
         no_levels=no_levels,
         random_seed=123,
         length=10,
@@ -54,7 +54,7 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
 
     # forecast all levels
     fh = ForecastingHorizon([1, 2], is_relative=True)
-    forecaster = ExponentialSmoothing(trend="add", seasonal="additive", sp=12)
+    forecaster = ExponentialSmoothing(trend="add", seasonal="additive", sp=3)
     reconciler = ReconcilerForecaster(forecaster, method=method)
     reconciler.fit(y)
     prds_recon = reconciler.predict(fh=fh)
