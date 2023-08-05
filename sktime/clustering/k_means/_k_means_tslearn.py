@@ -5,8 +5,10 @@ from sktime.base.adapters._tslearn import _TslearnAdapter
 from sktime.clustering.base import BaseClusterer
 
 
-class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
+class TimeSeriesMeans(_TslearnAdapter, BaseClusterer):
     """K-means clustering for time-series data.
+
+    Direct interface to ``tslearn.clustering.TimeSeriesKMeans``.
 
     Parameters
     ----------
@@ -169,7 +171,17 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {}
+        params1 = {
+            "n_clusters": 3,
+            "max_iter": 3,
+            "tol": 0.001,
+            "n_init": 2,
+            "metric": "euclidean",
+            "max_iter_barycenter": 7,
+            "verbose": 0,
+            "random_state": 42,
+            "init": "k-means++",
+        }
         params2 = {
             "n_clusters": 2,
             "max_iter": 5,
