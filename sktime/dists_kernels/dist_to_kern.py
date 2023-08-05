@@ -48,6 +48,7 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        "pwtrafo_type": "kernel",
     }
 
     def __init__(self, dist, dist_diag=None):
@@ -178,6 +179,7 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        "pwtrafo_type": "distance",
     }
 
     def __init__(self, kernel):
