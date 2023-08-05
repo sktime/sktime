@@ -168,6 +168,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -191,6 +193,9 @@ jobs:
       - name: Show dependencies
         run: python -m pip list
 
+      - name: Show available branches
+        run: git branch -a
+
       - name: Run tests
         run: |
           mkdir -p testdir/
@@ -211,10 +216,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -224,6 +233,9 @@ jobs:
 
       - name: Show dependencies
         run: python -m pip list
+
+      - name: Show available branches
+        run: git branch -a
 
       - name: Run tests
         run: make test
@@ -240,10 +252,14 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -253,6 +269,9 @@ jobs:
 
       - name: Show dependencies
         run: python -m pip list
+
+      - name: Show available branches
+        run: git branch -a
 
       - name: Run tests
         run: make test
