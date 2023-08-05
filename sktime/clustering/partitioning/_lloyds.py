@@ -278,6 +278,13 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
                 raise ValueError(
                     "The array provided to init_algorithm is invalid. It must be 3D."
                 )
+            if self.init_algorithm.shape[0] != self.n_clusters:
+                raise ValueError(
+                    f"The number of centers in init_algorithm and n_clusters must be "
+                    f"the same. The number of centres in init_algorithm is "
+                    f"{self.init_algorithm.shape[0]} but n_clusters is "
+                    f"{self.n_clusters}"
+                )
             self._init_algorithm = self.init_algorithm
         elif isinstance(self._init_algorithm, Callable):
             self._init_algorithm = self.init_algorithm
