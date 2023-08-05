@@ -169,6 +169,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
@@ -215,6 +219,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -248,6 +256,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
 
       - name: Set up Python
         uses: actions/setup-python@v4
