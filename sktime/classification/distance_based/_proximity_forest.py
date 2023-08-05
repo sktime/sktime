@@ -735,7 +735,10 @@ def _check_distance_measure(obj_self):
     self = obj_self
     if self.distance_measure is None:
         if self.get_distance_measure is None:
-            self.get_distance_measure = self.setup_distance_measure_getter(self)
+            if hasattr(self, "setup_distance_measure"):
+                self.get_distance_measure = self.setup_distance_measure(self)
+            else:
+                self.get_distance_measure = self.setup_distance_measure_getter(self)
         return self.get_distance_measure(self)
     else:
         return self.distance_measure
