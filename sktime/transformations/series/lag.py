@@ -249,10 +249,10 @@ class Lag(BaseTransformer):
             # this is necessary, because we added indices from _X above
             if index_out == "extend":
                 X_orig_idx_extended = X_orig_idx_shifted.union(X_orig_idx)
-                Xt = Xt.reindex[X_orig_idx_extended]
+                Xt = Xt.reindex(X_orig_idx_extended)
             # sub-set to original, if "original"
             if index_out == "original":
-                Xt = Xt.reindex[X_orig_idx]
+                Xt = Xt.reindex(X_orig_idx)
             # sub-set to shifted index, if "shifted"
             # this is necessary if we added indices from _X above
             if index_out == "shifted" and remember_data:
