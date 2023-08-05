@@ -208,6 +208,7 @@ class ARDL(_StatsModelsAdapter):
 
     def __init__(
         self,
+        # Model Params
         lags=None,
         order=None,
         fixed=None,
@@ -218,46 +219,22 @@ class ARDL(_StatsModelsAdapter):
         hold_back=None,
         period=None,
         missing="none",
+        # Fit Params
         cov_type="nonrobust",
         cov_kwds=None,
         use_t=True,
+        # Auto ARDL params
         auto_ardl=False,
         maxlag=None,
         maxorder=None,
         ic="bic",
         glob=False,
+        # Predict Params
         fixed_oos=None,
         X_oos=None,
         dynamic=False,
     ):
-        # Model Params
-        self.lags = lags
-        self.order = order
-        self.fixed = fixed
-        self.causal = causal
-        self.trend = trend
-        self.seasonal = seasonal
-        self.deterministic = deterministic
-        self.hold_back = hold_back
-        self.period = period
-        self.missing = missing
-
-        # Fit Params
-        self.cov_type = cov_type
-        self.cov_kwds = cov_kwds
-        self.use_t = use_t
-
-        # Predict Params
-        self.fixed_oos = fixed_oos
-        self.X_oos = X_oos
-        self.dynamic = dynamic
-
-        # Auto ARDL params
-        self.auto_ardl = auto_ardl
-        self.maxlag = maxlag
-        self.ic = ic
-        self.glob = glob
-        self.maxorder = maxorder
+        self._set_params_from(locals(), ARDL)
 
         if not self.auto_ardl:
             assert self.lags is not None

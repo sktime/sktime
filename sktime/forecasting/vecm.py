@@ -99,17 +99,7 @@ class VECM(_StatsModelsAdapter):
         exog_coint=None,
         exog_coint_fc=None,
     ):
-        self.dates = dates
-        self.freq = freq
-        self.missing = missing
-        self.k_ar_diff = k_ar_diff
-        self.coint_rank = coint_rank
-        self.deterministic = deterministic
-        self.seasons = seasons
-        self.first_season = first_season
-        self.method = method
-        self.exog_coint = exog_coint
-        self.exog_coint_fc = exog_coint_fc
+        self._set_params_from(locals(), VECM)
 
         super().__init__()
 

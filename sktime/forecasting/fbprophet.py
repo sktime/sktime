@@ -159,29 +159,7 @@ class Prophet(_ProphetAdapter):
         stan_backend=None,
         verbose=0,
     ):
-        self.freq = freq
-        self.add_seasonality = add_seasonality
-        self.add_country_holidays = add_country_holidays
-
-        self.growth = growth
-        self.growth_floor = growth_floor
-        self.growth_cap = growth_cap
-        self.changepoints = changepoints
-        self.n_changepoints = n_changepoints
-        self.changepoint_range = changepoint_range
-        self.yearly_seasonality = yearly_seasonality
-        self.weekly_seasonality = weekly_seasonality
-        self.daily_seasonality = daily_seasonality
-        self.holidays = holidays
-        self.seasonality_mode = seasonality_mode
-        self.seasonality_prior_scale = seasonality_prior_scale
-        self.changepoint_prior_scale = changepoint_prior_scale
-        self.holidays_prior_scale = holidays_prior_scale
-        self.mcmc_samples = mcmc_samples
-        self.alpha = alpha
-        self.uncertainty_samples = uncertainty_samples
-        self.stan_backend = stan_backend
-        self.verbose = verbose
+        self._set_params_from(locals(), Prophet)
 
         super().__init__()
 

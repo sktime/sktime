@@ -266,17 +266,6 @@ class AutoARIMA(_PmdArimaAdapter):
 
     _tags = {"handles-missing-data": True}
 
-    SARIMAX_KWARGS_KEYS = [
-        "time_varying_regression",
-        "enforce_stationarity",
-        "enforce_invertibility",
-        "simple_differencing",
-        "measurement_error",
-        "mle_regression",
-        "hamilton_representation",
-        "concentrate_scale",
-    ]
-
     def __init__(
         self,
         start_p=2,
@@ -327,47 +316,7 @@ class AutoARIMA(_PmdArimaAdapter):
         hamilton_representation=False,
         concentrate_scale=False,
     ):
-        self.start_p = start_p
-        self.d = d
-        self.start_q = start_q
-        self.max_p = max_p
-        self.max_d = max_d
-        self.max_q = max_q
-        self.start_P = start_P
-        self.D = D
-        self.start_Q = start_Q
-        self.max_P = max_P
-        self.max_D = max_D
-        self.max_Q = max_Q
-        self.max_order = max_order
-        self.sp = sp
-        self.seasonal = seasonal
-        self.stationary = stationary
-        self.information_criterion = information_criterion
-        self.alpha = alpha
-        self.test = test
-        self.seasonal_test = seasonal_test
-        self.stepwise = stepwise
-        self.n_jobs = n_jobs
-        self.start_params = start_params
-        self.trend = trend
-        self.method = method
-        self.maxiter = maxiter
-        self.offset_test_args = offset_test_args
-        self.seasonal_test_args = seasonal_test_args
-        self.suppress_warnings = suppress_warnings
-        self.error_action = error_action
-        self.trace = trace
-        self.random = random
-        self.random_state = random_state
-        self.n_fits = n_fits
-        self.out_of_sample_size = out_of_sample_size
-        self.scoring = scoring
-        self.scoring_args = scoring_args
-        self.with_intercept = with_intercept
-        self.update_pdq = update_pdq
-        for key in self.SARIMAX_KWARGS_KEYS:
-            setattr(self, key, eval(key))
+        self._set_params_from(locals(), AutoARIMA)
 
         super().__init__()
 
@@ -377,49 +326,10 @@ class AutoARIMA(_PmdArimaAdapter):
         # import inside method to avoid hard dependency
         from pmdarima.arima import AutoARIMA as _AutoARIMA  # type: ignore
 
-        sarimax_kwargs = {key: getattr(self, key) for key in self.SARIMAX_KWARGS_KEYS}
+        params_same = set(self.get_param_names()).difference(["update_pdq", "sp"])
+        sarimax_kwargs = {key: getattr(self, key) for key in params_same}
 
-        return _AutoARIMA(
-            start_p=self.start_p,
-            d=self.d,
-            start_q=self.start_q,
-            max_p=self.max_p,
-            max_d=self.max_d,
-            max_q=self.max_q,
-            start_P=self.start_P,
-            D=self.D,
-            start_Q=self.start_Q,
-            max_P=self.max_P,
-            max_D=self.max_D,
-            max_Q=self.max_Q,
-            max_order=self.max_order,
-            m=self._sp,
-            seasonal=self.seasonal,
-            stationary=self.stationary,
-            information_criterion=self.information_criterion,
-            alpha=self.alpha,
-            test=self.test,
-            seasonal_test=self.seasonal_test,
-            stepwise=self.stepwise,
-            n_jobs=self.n_jobs,
-            start_params=None,
-            trend=self.trend,
-            method=self.method,
-            maxiter=self.maxiter,
-            offset_test_args=self.offset_test_args,
-            seasonal_test_args=self.seasonal_test_args,
-            suppress_warnings=self.suppress_warnings,
-            error_action=self.error_action,
-            trace=self.trace,
-            random=self.random,
-            random_state=self.random_state,
-            n_fits=self.n_fits,
-            out_of_sample_size=self.out_of_sample_size,
-            scoring=self.scoring,
-            scoring_args=self.scoring_args,
-            with_intercept=self.with_intercept,
-            **sarimax_kwargs,
-        )
+        return _AutoARIMA(m=self._sp, **sarimax_kwargs)
 
     def _update(self, y, X=None, update_params=True):
         """Update model with data.
@@ -663,17 +573,6 @@ class ARIMA(_PmdArimaAdapter):
 
     _tags = {"handles-missing-data": True}
 
-    SARIMAX_KWARGS_KEYS = [
-        "time_varying_regression",
-        "enforce_stationarity",
-        "enforce_invertibility",
-        "simple_differencing",
-        "measurement_error",
-        "mle_regression",
-        "hamilton_representation",
-        "concentrate_scale",
-    ]
-
     def __init__(
         self,
         order=(1, 0, 0),
@@ -696,19 +595,7 @@ class ARIMA(_PmdArimaAdapter):
         hamilton_representation=False,
         concentrate_scale=False,
     ):
-        self.order = order
-        self.seasonal_order = seasonal_order
-        self.start_params = start_params
-        self.method = method
-        self.maxiter = maxiter
-        self.suppress_warnings = suppress_warnings
-        self.out_of_sample_size = out_of_sample_size
-        self.scoring = scoring
-        self.scoring_args = scoring_args
-        self.trend = trend
-        self.with_intercept = with_intercept
-        for key in self.SARIMAX_KWARGS_KEYS:
-            setattr(self, key, eval(key))
+        self._set_params_from(locals(), ARIMA)
 
         super().__init__()
 
@@ -716,22 +603,9 @@ class ARIMA(_PmdArimaAdapter):
         # import inside method to avoid hard dependency
         from pmdarima.arima.arima import ARIMA as _ARIMA
 
-        sarimax_kwargs = {key: getattr(self, key) for key in self.SARIMAX_KWARGS_KEYS}
+        sarimax_kwargs = self.get_params()
 
-        return _ARIMA(
-            order=self.order,
-            seasonal_order=self.seasonal_order,
-            start_params=self.start_params,
-            method=self.method,
-            maxiter=self.maxiter,
-            suppress_warnings=self.suppress_warnings,
-            out_of_sample_size=self.out_of_sample_size,
-            scoring=self.scoring,
-            scoring_args=self.scoring_args,
-            trend=self.trend,
-            with_intercept=self.with_intercept,
-            **sarimax_kwargs,
-        )
+        return _ARIMA(**sarimax_kwargs)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

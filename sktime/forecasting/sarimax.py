@@ -142,23 +142,7 @@ class SARIMAX(_StatsModelsAdapter):
         validate_specification=True,
         random_state=None,
     ):
-        self.order = order
-        self.seasonal_order = seasonal_order
-        self.trend = trend
-        self.measurement_error = measurement_error
-        self.time_varying_regression = time_varying_regression
-        self.mle_regression = mle_regression
-        self.simple_differencing = simple_differencing
-        self.enforce_stationarity = enforce_stationarity
-        self.enforce_invertibility = enforce_invertibility
-        self.hamilton_representation = hamilton_representation
-        self.concentrate_scale = concentrate_scale
-        self.trend_offset = trend_offset
-        self.use_exact_diffuse = use_exact_diffuse
-        self.dates = dates
-        self.freq = freq
-        self.missing = missing
-        self.validate_specification = validate_specification
+        self._set_params_from(locals(), SARIMAX)
 
         super().__init__(random_state=random_state)
 

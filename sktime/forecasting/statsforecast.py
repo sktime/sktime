@@ -211,39 +211,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         biasadj: bool = False,
         parallel: bool = False,
     ):
-        self.start_p = start_p
-        self.d = d
-        self.start_q = start_q
-        self.max_p = max_p
-        self.max_d = max_d
-        self.max_q = max_q
-        self.start_P = start_P
-        self.D = D
-        self.start_Q = start_Q
-        self.max_P = max_P
-        self.max_D = max_D
-        self.max_Q = max_Q
-        self.max_order = max_order
-        self.sp = sp
-        self.seasonal = seasonal
-        self.stationary = stationary
-        self.information_criterion = information_criterion
-        self.test = test
-        self.seasonal_test = seasonal_test
-        self.stepwise = stepwise
-        self.n_jobs = n_jobs
-        self.trend = trend
-        self.method = method
-        self.offset_test_args = offset_test_args
-        self.seasonal_test_args = seasonal_test_args
-        self.trace = trace
-        self.n_fits = n_fits
-        self.with_intercept = with_intercept
-        self.approximation = approximation
-        self.truncate = truncate
-        self.blambda = blambda
-        self.biasadj = biasadj
-        self.parallel = parallel
+        self._set_params_from(locals(), StatsForecastAutoARIMA)
 
         super().__init__()
 
