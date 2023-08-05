@@ -11,6 +11,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
     not _check_soft_dependencies("numba", severity="none"),
     reason="skip test if required soft dependency not available",
 )
+@pytest.mark.slow
 def test_contracted_hivecote_v2():
     """Test of contracted HIVECOTEV2 on unit test data."""
     # load unit test data

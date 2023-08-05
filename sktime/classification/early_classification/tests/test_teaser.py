@@ -119,6 +119,7 @@ def test_teaser_near_classification_points():
     not _check_soft_dependencies("numba", severity="none"),
     reason="skip test if required soft dependency not available",
 )
+@pytest.mark.slow
 def test_teaser_full_length():
     """Test of TEASER on the full data with the default estimator."""
     X_train, y_train, X_test, y_test, indices = load_unit_data()
