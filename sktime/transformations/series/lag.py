@@ -178,7 +178,7 @@ class Lag(BaseTransformer):
             self.set_tags(**{"transform-returns-same-time-index": True})
 
         if not remember_data:
-            self.set_tags(**{"remember_data": False})
+            self.set_tags(**{"remember_data": False, "fit_is_empty": True})
 
     def _yield_shift_params(self):
         """Yield (periods, freq) pairs to pass to pandas.DataFrame.shift."""
