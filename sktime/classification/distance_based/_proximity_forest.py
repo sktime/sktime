@@ -730,6 +730,17 @@ def best_of_n_stumps(n):
     return find_best_stump
 
 
+def _check_distance_measure(obj_self):
+    """Check the distance measure, return default if distance measure is None."""
+    self = obj_self
+    if self.distance_measure is None:
+        if self.get_distance_measure is None:
+            self.get_distance_measure = self.setup_distance_measure_getter(self)
+        return self.get_distance_measure(self)
+    else:
+        return self.distance_measure
+
+
 class ProximityStump(BaseClassifier):
     """Proximity Stump class.
 
@@ -836,14 +847,14 @@ class ProximityStump(BaseClassifier):
             parallel = Parallel(self._threads_to_use)
             distances = parallel(
                 delayed(self._distance_to_exemplars_inst)(
-                    self.X_exemplar, X.iloc[index, :], self.distance_measure
+                    self.X_exemplar, X.iloc[index, :], self._distance_measure
                 )
                 for index in range(X.shape[0])
             )
         else:
             distances = [
                 self._distance_to_exemplars_inst(
-                    self.X_exemplar, X.iloc[index, :], self.distance_measure
+                    self.X_exemplar, X.iloc[index, :], self._distance_measure
                 )
                 for index in range(X.shape[0])
             ]
@@ -868,12 +879,9 @@ class ProximityStump(BaseClassifier):
         self.X = _positive_dataframe_indices(X)
         self._random_object = check_random_state(self.random_state)
         self.y = y
-        if self.distance_measure is None:
-            if self.get_distance_measure is None:
-                self._get_distance_measure = self.setup_distance_measure(self)
-            else:
-                self._get_distance_measure = self.get_distance_measure
-            self.distance_measure = self._get_distance_measure(self)
+
+        self._distance_measure = _check_distance_measure(self)
+
         self.X_exemplar, self.y_exemplar = self.get_exemplars(self)
 
         return self
@@ -1103,10 +1111,9 @@ class ProximityTree(BaseClassifier):
         if self.find_stump is None:
             self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
         self.y = y
-        if self.distance_measure is None:
-            if self.get_distance_measure is None:
-                self.get_distance_measure = self.setup_distance_measure(self)
-            self.distance_measure = self.get_distance_measure(self)
+
+        self._distance_measure = _check_distance_measure(self)
+
         self.stump = self.find_stump(self)
         n_branches = len(self.stump.y_exemplar)
         self.branches = [None] * n_branches
@@ -1117,7 +1124,7 @@ class ProximityTree(BaseClassifier):
                     sub_tree = ProximityTree(
                         random_state=self.random_state,
                         get_exemplars=self.get_exemplars,
-                        distance_measure=self.distance_measure,
+                        distance_measure=self._distance_measure,
                         setup_distance_measure=self.setup_distance_measure,
                         get_distance_measure=self.get_distance_measure,
                         get_gain=self.get_gain,
@@ -1351,7 +1358,7 @@ class ProximityForest(BaseClassifier):
             verbosity=self.verbosity,
             get_exemplars=self.get_exemplars,
             get_gain=self.get_gain,
-            distance_measure=self.distance_measure,
+            distance_measure=self._distance_measure,
             setup_distance_measure=self.setup_distance_measure_getter,
             get_distance_measure=self.get_distance_measure,
             max_depth=self.max_depth,
@@ -1381,10 +1388,9 @@ class ProximityForest(BaseClassifier):
         self.X = _positive_dataframe_indices(X)
         self._random_object = check_random_state(self.random_state)
         self.y = y
-        if self.distance_measure is None:
-            if self.get_distance_measure is None:
-                self.get_distance_measure = self.setup_distance_measure_getter(self)
-            self.distance_measure = self.get_distance_measure(self)
+
+        self._distance_measure = _check_distance_measure(self)
+
         if self._threads_to_use > 1:
             parallel = Parallel(self._threads_to_use)
             self.trees = parallel(
