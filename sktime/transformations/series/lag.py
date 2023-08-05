@@ -142,13 +142,14 @@ class Lag(BaseTransformer):
         index_out="extend",
         flatten_transform_index=True,
         keep_column_names=False,
+        remember_data=True,
     ):
         self.lags = lags
         self.freq = freq
         self.index_out = index_out
         self.flatten_transform_index = flatten_transform_index
         self.keep_column_names = keep_column_names
-        self.remember_data = True
+        self.remember_data = remember_data
 
         if index_out not in ["shift", "extend", "original"]:
             raise ValueError(
@@ -176,7 +177,7 @@ class Lag(BaseTransformer):
         if index_out == "original":
             self.set_tags(**{"transform-returns-same-time-index": True})
 
-        if remember_data = False:
+        if not remember_data:
             self.set_tags(**{"remember_data": False})
 
     def _yield_shift_params(self):
