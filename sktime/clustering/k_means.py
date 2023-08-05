@@ -210,10 +210,20 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {
+        params1 = {
             "n_clusters": 2,
             "metric": "euclidean",
+            "init_algorithm": "random",
             "n_init": 1,
             "max_iter": 10,
             "random_state": 0,
         }
+        params2 = {
+            "n_clusters": 3,
+            "metric": "dtw",
+            "init_algorithm": np.random.normal(size=(3, 4, 10)),
+            "n_init": 1,
+            "max_iter": 15,
+            "random_state": 1,
+        }
+        return [params1, params2]
