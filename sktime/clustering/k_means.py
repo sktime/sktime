@@ -22,7 +22,8 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
     init_algorithm: str, np.ndarray (3d array of shape (n_clusters, n_dimensions,
         series_length)), defaults = 'random'
         Method for initializing cluster centers or an array of initial cluster centers.
-        If string, any of the following strings are valid: ['kmeans++', 'random', 'forgy']
+        If string, any of the following strings are valid:
+            ['kmeans++', 'random', 'forgy'].
         If 3D np.ndarray, initializes cluster centers with the provided array. The array
             must have shape (n_clusters, n_dimensions, series_length) and the number of
             clusters in the array must be the same as what is provided to the n_clusters
