@@ -274,6 +274,10 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
                 )
             self._init_algorithm = self._init_algorithms[self.init_algorithm]
         elif isinstance(self.init_algorithm, np.ndarray):
+            if self.init_algorithm.ndim != 3:
+                raise ValueError(
+                    "The array provided to init_algorithm is invalid. It must be 3D."
+                )
             self._init_algorithm = self.init_algorithm
         elif isinstance(self._init_algorithm, Callable):
             self._init_algorithm = self.init_algorithm
