@@ -19,6 +19,11 @@ class _TslearnPwTrafoAdapter:
         "python_dependencies": ["tslearn"],
     }
 
+    # parameters to pass to the inner tslearn estimator, list of str
+    # if None, will pass all of self.get_params()
+    # otherwise, passes only the parameters in the list of str _inner_params
+    _inner_params = None
+
     def _get_tslearn_pwtrafo(self):
         """Abstract method to get tslearn pwtrafo.
 
@@ -49,7 +54,10 @@ class _TslearnPwTrafoAdapter:
             X2 = X
 
         pwtrafo = self._get_tslearn_pwtrafo()
-        return pwtrafo(X, X2, **self.get_params())
+        params = self.get_params()
+        if self._inner_params is not None:
+            params = [params[param] for param in params if param in self._inner_params]
+        return pwtrafo(X, X2, **params)
 
     def _eval_tslearn_pwtrafo_vectorized(self, X, X2=None):
         """Evaluate tslearn pwtrafo on two time series panels.
