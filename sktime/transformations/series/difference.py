@@ -143,7 +143,7 @@ def _inverse_diff(X, lags, X_diff_seq=None):
     # invert last lag index
     if X_diff_seq is not None:
         X_diff_orig = X_diff_seq[len(lags)]
-        X_ix_shift = X.index.shift(-lag_last)
+        X_ix_shift = _shift(X.index, -lag_last)
         X_update = X_diff_orig.loc[X_ix_shift.intersection(X_diff_orig.index)]
 
         X = X.combine_first(X_update)
