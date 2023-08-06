@@ -265,10 +265,10 @@ def test_evaluate_hierarchical(backend):
         return None
 
     y = _make_hierarchical(
-        random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+        random_state=0, hierarchy_levels=(2, 2), min_timepoints=12, max_timepoints=12
     )
     X = _make_hierarchical(
-        random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+        random_state=42, hierarchy_levels=(2, 2), min_timepoints=12, max_timepoints=12
     )
     y = y.sort_index()
     X = X.sort_index()
