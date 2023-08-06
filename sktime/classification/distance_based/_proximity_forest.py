@@ -1,10 +1,15 @@
 """Proximity Forest time series classifier.
 
-A decision tree forest which uses distance measures to partition data.
+A decision tree forest which uses distance measures to partition data. B. Lucas and A.
+Shifaz, C. Pelletier, L. O'Neill, N. Zaidi, B. Goethals, F. Petitjean and G. Webb
+Proximity Forest: an effective and scalable distance-based classifier for time series,
+Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
 """
 
-__author__ = ["goastler"]
+__author__ = ["goastler", "moradabaz"]
 __all__ = ["ProximityForest", "ProximityStump", "ProximityTree"]
+
+import math
 
 import numpy as np
 import pandas as pd
@@ -833,7 +838,7 @@ class ProximityStump(BaseClassifier):
         """
         n_exemplars = len(exemplars)
         distances = np.empty(n_exemplars)
-        min_distance = np.math.inf
+        min_distance = math.inf
         for exemplar_index in range(n_exemplars):
             exemplar = exemplars[exemplar_index]
             if exemplar.name == instance.name:
@@ -1070,7 +1075,7 @@ class ProximityTree(BaseClassifier):
         get_distance_measure=None,
         setup_distance_measure=setup_all_distance_measure_getter,
         get_gain=gini_gain,
-        max_depth=np.math.inf,
+        max_depth=math.inf,
         is_leaf=pure,
         verbosity=0,
         n_jobs=1,
@@ -1283,10 +1288,10 @@ class ProximityForest(BaseClassifier):
     setup_distance_measure: function, default=setup_all_distance_measure_getter
         method to setup the distance measures based upon the dataset given
 
-    Notes
-    -----
+    References
+    ----------
     .. [1] Ben Lucas et al., "Proximity Forest: an effective and scalable distance-based
-      classifier for time series",Data Mining and Knowledge Discovery, 33(3): 607-635,
+      classifier for time series",vData Mining and Knowledge Discovery, 33(3): 607-635,
       2019 https://arxiv.org/abs/1808.10594
     Java wrapper of authors original
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
@@ -1326,7 +1331,7 @@ class ProximityForest(BaseClassifier):
         get_exemplars=get_one_exemplar_per_class_proximity,
         get_gain=gini_gain,
         verbosity=0,
-        max_depth=np.math.inf,
+        max_depth=math.inf,
         is_leaf=pure,
         n_jobs=1,
         n_stump_evaluations=5,
@@ -1689,8 +1694,8 @@ def _stdp(X):
                 sum_sq += value**2  # todo missing values NaN messes
                 # this up!
     mean = sum / num_values
-    stdp = np.math.sqrt(sum_sq / num_values - mean**2)
-    return stdp
+    stdp_val = math.sqrt(sum_sq / num_values - mean**2)
+    return stdp_val
 
 
 def _bin_instances_by_class(X, class_labels):
