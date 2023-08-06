@@ -68,6 +68,7 @@ def test_classifier_regression():
         "predict",
         "predict_interval",
         "predict_quantiles",
+        "predict_residuals",
     ],
 )
 def test_forecaster_regression(method):
