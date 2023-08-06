@@ -126,7 +126,6 @@ class Step:
                     # Perform in sample prediction if the get_result is called
                     # during fitting the pipeline. In the case a provided,
                     # fh should be replaced with the length of the time series.
-                    # TODO Test for numpy etc.
                     kwargs_["fh"] = (
                         input_data["y"].index
                         if hasattr(input_data["y"], "index")
@@ -134,7 +133,6 @@ class Step:
                     )
                 # 3. Call method on skobject and return result
                 if self.mode == "proba":
-                    # TODO fix the case if we need to apply this to X and y?
                     idx = input_data["X"].columns
                     n = idx.nlevels
                     yt = dict()
@@ -194,7 +192,7 @@ class Step:
                     self.mode = result.mode
                 if result.result is not None:
                     all_none = False
-            if not results[0] is None:  # TODO more generic and prettier
+            if not results[0] is None:
                 if len(results) > 1:
                     input_data[step_name] = pd.concat(
                         results, axis=1, keys=transformer_names

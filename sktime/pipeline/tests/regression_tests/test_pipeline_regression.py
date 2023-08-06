@@ -104,40 +104,6 @@ def test_forecaster_regression(method):
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
 )
-def test_forecaster_regression_predict_residuals():
-    # TODO integrate in test_forecaster_regression if issue 4993 is fixed
-    y, X = load_longley()
-    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
-    pipe = Differencer() * SARIMAX()
-    pipe.fit(y=y_train.to_frame(), X=X_train, fh=[1, 2, 3, 4])
-    result = pipe.predict_residuals()
-
-    general_pipeline = Pipeline()
-    differencer = Differencer()
-    for step in [
-        {"skobject": differencer, "name": "differencer", "edges": {"X": "y"}},
-        {
-            "skobject": SARIMAX(),
-            "name": "SARIMAX",
-            "edges": {"X": "X", "y": "differencer"},
-        },
-        {
-            "skobject": differencer,
-            "name": "differencer_inverse",
-            "edges": {"X": "SARIMAX"},
-            "method": "inverse_transform",
-        },
-    ]:
-        general_pipeline.add_step(**step)
-    general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
-    result_general = pipe.predict_residuals()
-    np.testing.assert_array_equal(result, result_general)
-
-
-@pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
-)
 def test_exogenous_transform_regression():
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)

@@ -2,7 +2,6 @@
 import weakref
 from copy import deepcopy
 
-from datatypes import convert_to
 from sktime.base import BaseEstimator
 from sktime.pipeline.step import Step
 from sktime.transformations.series.subset import ColumnSelect
@@ -236,7 +235,7 @@ class Pipeline(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" in the skobjects of the pipeline and sets is_fitted flag to True.
         """
-        self._initiate_call(X, kwargs, y)
+        self._initiate_call(X, y, kwargs)
         self._y = y
         self._X = X
 
@@ -290,7 +289,7 @@ class Pipeline(BaseEstimator):
          `transform`
         """
         self._method_allowed("transform")
-        self._initiate_call(X, kwargs, y)
+        self._initiate_call(X, y, kwargs)
 
         return (
             self.steps[self._last_step_name]
@@ -323,7 +322,7 @@ class Pipeline(BaseEstimator):
         `transform` or `predict`
         """
         self._method_allowed("predict")
-        self._initiate_call(X, kwargs, y)
+        self._initiate_call(X, y, kwargs)
 
         return (
             self.steps[self._last_step_name]
@@ -357,7 +356,7 @@ class Pipeline(BaseEstimator):
         `transform`, `predict`, or `predict_interval`
         """
         self._method_allowed("predict_interval")
-        self._initiate_call(X, kwargs, y)
+        self._initiate_call(X, y, kwargs)
 
         return (
             self.steps[self._last_step_name]
@@ -392,7 +391,7 @@ class Pipeline(BaseEstimator):
         `transform`, `predict`, or `predict_quantiles`
         """
         self._method_allowed("predict_quantiles")
-        self._initiate_call(X, kwargs, y)
+        self._initiate_call(X, y, kwargs)
 
         return (
             self.steps[self._last_step_name]
@@ -426,16 +425,17 @@ class Pipeline(BaseEstimator):
         MethodNotImplementedError if a step in the pipeline does not implement
          `transform`,  `predict`, or `predict_residuals`
         """
+        # If no y is passed, use the data passed to fit.
         inner_X = X if y is not None else self._X
         inner_y = y if y is not None else self._y
         if y is None:
             kwargs = deepcopy(kwargs)
             kwargs["fh"] = inner_X.index
-        y_pred = self.predict(inner_X, **kwargs)
+        y_pred = self.predict(inner_X, inner_y, **kwargs)
 
         return inner_y - y_pred
 
-    def _initiate_call(self, X, kwargs, y):
+    def _initiate_call(self, X, y, kwargs):
         for step in self.steps.values():
             step.reset()
         self.steps["X"].buffer = X

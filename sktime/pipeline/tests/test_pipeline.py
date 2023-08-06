@@ -72,17 +72,26 @@ def test_add_step_cloned():
 @pytest.mark.parametrize(
     "method,mro,allowed_method",
     [
-        ("fit", ["transform", "predict"], ),
-        ("predict", ["predict", "transform"]),
-        ("predict_interval", ["predict_interval", "predict", "transform"]),
-        ("predict_quantiles", ["predict_quantiles", "predict", "transform"]),
+        ("fit", ["transform", "predict"], "fit"),
+        ("predict", ["predict", "transform"], "predict"),
+        (
+            "predict_interval",
+            ["predict_interval", "predict", "transform"],
+            "predict_interval",
+        ),
+        (
+            "predict_quantiles",
+            ["predict_quantiles", "predict", "transform"],
+            "predict_quantiles",
+        ),
+        ("predict_residuals", ["predict", "transform"], "predict"),
     ],
 )
-def test_method(method, mro):
+def test_method(method, mro, allowed_method):
     # Test if the correct methods are called on the underlying steps. Use mocking here?
     pipeline = Pipeline()
     step_mock = MagicMock()
-    step_mock.get_allowed_method.return_value = [method]
+    step_mock.get_allowed_method.return_value = [allowed_method]
 
     pipeline.steps.update({"name": step_mock})
     pipeline._last_step_name = "name"
@@ -98,12 +107,9 @@ def test_method(method, mro):
     step_mock.get_result.assert_called_with(
         fit=True if method == "fit" else False,
         mro=mro,
-        required_method=None if method == "fit" else method,
+        required_method=None if method == "fit" else allowed_method,
         kwargs={"additional_kwarg": 42},
     )
-
-def test_predict_residuals():
-    pass # TODO
 
 
 @pytest.mark.parametrize(
