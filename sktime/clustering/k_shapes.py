@@ -91,6 +91,17 @@ class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
 
         return KShape
 
+    def _get_tslearn_object(self):
+        """Initialize tslearn object.
+
+        We need to override this due to the different names of
+        init_algorithm, which in tslearn is init
+        """
+        cls = self._get_tslearn_class()
+        params = self.get_params()
+        params["init"] = params.pop("init_algorithm")
+        return cls(**params)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
