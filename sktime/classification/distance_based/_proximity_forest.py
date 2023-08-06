@@ -798,6 +798,7 @@ class ProximityStump(BaseClassifier):
         self.get_gain = get_gain
         self.verbosity = verbosity
         self.n_jobs = n_jobs
+
         # set in fit
         self.label_encoder = None
         self.y_exemplar = None
@@ -1077,15 +1078,16 @@ class ProximityTree(BaseClassifier):
         self.get_distance_measure = distance_measure
         self.random_state = random_state
         self.is_leaf = is_leaf
+        self.distance_measure = distance_measure
         self.get_distance_measure = get_distance_measure
         self.setup_distance_measure = setup_distance_measure
         self.get_exemplars = get_exemplars
         self.get_gain = get_gain
         self.n_jobs = n_jobs
         self.depth = 0
+
         # below set in fit method
         self.label_encoder = None
-        self.distance_measure = None
         self.stump = None
         self.branches = None
         self.X = None
@@ -1328,6 +1330,7 @@ class ProximityForest(BaseClassifier):
         self.setup_distance_measure_getter = setup_distance_measure_getter
         self.distance_measure = distance_measure
         self.find_stump = find_stump
+
         # set in fit method
         self.label_encoder = None
         self.trees = None
