@@ -1013,39 +1013,35 @@ class ProximityTree(BaseClassifier):
 
     A decision tree which uses distance measures to partition data.
 
-    Attributes
+    Parameters
     ----------
-        random_state            : the random state
-        get_exemplars:
-            function to extract exemplars from a dataframe and class value list
-        distance_measure        : distance measures
-        get_distance_measure    : distance measure getters
-        setup_distance_measure  : function
-            setup the distance measure getters from dataframe and class value list
-        get_gain                : function
-            score the quality of a split
-        verbosity: logging verbosity
-        is_leaf                 : function
-            decide when to mark a node as a leaf node
-        n_jobs: number of jobs to run in parallel *across threads"
-        find_stump: function to find the best split of data
-        max_depth: max tree depth
-        depth: current depth of tree, as each node is a tree itself,
-        therefore can have a depth of >=0
-        stump: the stump used to split data at this node
-        branches: the partitions of data driven by the stump
-        get_exemplars: get the exemplars from a given dataframe and list of class labels
-        distance_measure: distance measure to use
-        get_distance_measure: method to get the distance measure
-        setup_distance_measure: method to setup the distance measures based upon the
-        dataset given
-        get_gain: method to find the gain of a data split
-        max_depth: maximum depth of the tree
-        verbosity: number reflecting the verbosity of logging
-        n_jobs: number of parallel threads to use while building
-        find_stump: method to find the best split of data / stump at a node
-        n_stump_evaluations: number of stump evaluations to do if
-        find_stump method is None
+    random_state: int or np.RandomState, default=0
+        random seed for the random number generator
+    get_exemplars: function, default=get_one_exemplar_per_class_proximity
+        algorithm to get the exemplars from a given dataframe and list of class labels
+    distance_measure: None (default) or str; if str, one of
+        "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
+        distance measure to use
+        if None, selects distances randomly from the list of available distances
+    get_distance_measure: function or None, default=None
+        method to get the distance measure
+    setup_distance_measure: function, default=setup_all_distance_measure_getter
+        method to setup the distance measures based upon the dataset given
+    get_gain: function, default=gini_gain
+        method to find the gain of a data split
+    max_depth: int or math.inf, default=math.inf
+        maximum depth of the tree
+    is_leaf : function, default=pure
+        decide when to mark a node as a leaf node
+    verbosity: 0 or 1
+        number reflecting the verbosity of logging
+        0 = no logging, 1 = verbose logging
+    n_jobs: int or None, default=1
+        number of parallel threads to use while building
+    find_stump: method to find the best split of data / stump at a node
+    n_stump_evaluations: number of stump evaluations to do if find_stump method is None
+    find_stump: function, default=None
+        algorithm to find the best split of data
 
     Examples
     --------
@@ -1252,30 +1248,40 @@ class ProximityTree(BaseClassifier):
 
 
 class ProximityForest(BaseClassifier):
-    """Proximity Forest class.
+    """Proximity Forest classifier.
 
-    Models a decision tree forest which uses distance measures to partition data [1].
+    Forest of decision tree which uses distance measures to partition data [1].
+    Uses ProximityTree internally.
 
     Parameters
     ----------
-    random_state        : random, default = None
-        seed for reproducibility
-    n_estimators        : int, default=100
+    random_state: int or np.RandomState, default=None
+        random seed for the random number generator
+    n_estimators: int, default=100
         The number of trees in the forest.
-    distance_measure: default = None
-    get_exemplars: default=get_one_exemplar_per_class_proximity
-    get_gain: default=gini_gain
-        function to score the quality of a split
-    verbosity: default=0
-    max_depth: default=np.math.inf
+    distance_measure: None (default) or str; if str, one of
+        "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
+        distance measure to use
+        if None, selects distances randomly from the list of available distances
+    get_exemplars: function, default=get_one_exemplar_per_class_proximity
+        algorithm to get the exemplars from a given dataframe and list of class labels
+    get_gain: function, default=gini_gain
+        method to find the gain of a data split
+    verbosity: 0 or 1
+        number reflecting the verbosity of logging
+        0 = no logging, 1 = verbose logging
+    max_depth: int or math.inf, default=math.inf
         maximum depth of the tree
-    is_leaf: default=pure
+    is_leaf: function, default=pure
         function to decide when to mark a node as a leaf node
-    n_jobs: default=int, 1
+    n_jobs: int, default=1
         number of jobs to run in parallel *across threads"
     n_stump_evaluations: int, default=5
-    find_stump: default=None, function to find the best split of data
-    setup_distance_measure_getter=setup_all_distance_measure_getter
+        number of stump evaluations to do if find_stump method is None
+    find_stump: function, default=None
+        function to find the best split of data
+    setup_distance_measure: function, default=setup_all_distance_measure_getter
+        method to setup the distance measures based upon the dataset given
 
     Notes
     -----
