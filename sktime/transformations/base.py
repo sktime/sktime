@@ -1026,7 +1026,9 @@ class BaseTransformer(BaseEstimator):
                 as_scitype = "Panel"
             else:
                 as_scitype = "Hierarchical"
-            X = convert_to_scitype(X, to_scitype=as_scitype, from_scitype=X_scitype)
+            X, X_mtype = convert_to_scitype(
+                X, to_scitype=as_scitype, from_scitype=X_scitype, return_to_mtype=True
+            )
             X_scitype = as_scitype
             # then pass to case 1, which we've reduced to, X now has inner scitype
 
