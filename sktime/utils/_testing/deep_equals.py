@@ -57,10 +57,13 @@ def deep_equals(x, y, return_msg=False):
             != - call to generic != returns False
     """
 
-    def ret(is_equal, msg=""):
+    def ret(is_equal, msg="", string_arguments: list = None):
+        string_arguments = [] if string_arguments is None else string_arguments
         if return_msg:
             if is_equal:
                 msg = ""
+            elif len(string_arguments) > 0:
+                msg = msg.format(*string_arguments)
             return is_equal, msg
         else:
             return is_equal
@@ -93,12 +96,7 @@ def deep_equals(x, y, return_msg=False):
                 msg = ""
             return ret(index_equal and values_equal, msg)
         else:
-            # this construction is needed so costly str(pd.Series) is only
-            # called when needed
-            if x.equals(y):
-                return ret(True)
-            else:
-                return ret(False, f".series_equals, x = {x} != y = {y}")
+            return ret(x.equals(y), ".series_equals, x = {} != y = {}", [x, y])
     elif isinstance(x, pd.DataFrame):
         if not x.columns.equals(y.columns):
             return ret(
@@ -112,19 +110,9 @@ def deep_equals(x, y, return_msg=False):
                     return ret(False, f'["{c}"]' + msg)
             return ret(True)
         else:
-            # this construction is needed so costly str(pd.DataFrame) is only
-            # called when needed
-            if x.equals(y):
-                return ret(True)
-            else:
-                return ret(False, f".df_equals, x = {x} != y = {y}")
+            return ret(x.equals(y), ".df_equals, x = {} != y = {}", [x, y])
     elif isinstance(x, pd.Index):
-        # this construction is needed so costly str(pd.Index) is only
-        # called when needed
-        if x.equals(y):
-            return ret(True)
-        else:
-            return ret(False, f".index_equals, x = {x} != y = {y}")
+        return ret(x.equals(y), ".index_equals, x = {} != y = {}", [x, y])
     elif isinstance(x, np.ndarray):
         if x.dtype != y.dtype:
             return ret(False, f".dtype, x.dtype = {x.dtype} != y.dtype = {y.dtype}")
