@@ -1178,7 +1178,7 @@ class BaseTransformer(BaseEstimator):
                 Xt,
                 from_type=Xt_mtype,
                 to_type=X_output_mtype,
-                as_scitype=output_scitype,
+                as_scitype=X_input_scitype,
                 store=_converter_store_X,
                 store_behaviour="freeze",
             )
