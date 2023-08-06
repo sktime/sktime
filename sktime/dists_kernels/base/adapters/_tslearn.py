@@ -104,4 +104,4 @@ class _TslearnPwTrafoAdapter:
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
         """
-        return self._eval_tslearn_pwtrafo_vectorized(self, X, X2)
+        return self._eval_tslearn_pwtrafo_vectorized(X, X2)
