@@ -1172,25 +1172,25 @@ class BaseTransformer(BaseEstimator):
                     )
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
-                # Xt_mtype = metadata["mtype"]
-            # else:
-            #     Xt_mtype = X_input_mtype
+                Xt_mtype = metadata["mtype"]
+            else:
+                Xt_mtype = X_input_mtype
 
-            # Xt = convert(
-            #     Xt,
-            #     from_type=Xt_mtype,
-            #     to_type=X_output_mtype,
-            #     as_scitype=X_input_scitype,
-            #     store=_converter_store_X,
-            #     store_behaviour="freeze",
-            # )
-            Xt = convert_to(
+            Xt = convert(
                 Xt,
+                from_type=Xt_mtype,
                 to_type=X_output_mtype,
                 as_scitype=X_input_scitype,
                 store=_converter_store_X,
                 store_behaviour="freeze",
             )
+            # Xt = convert_to(
+            #     Xt,
+            #     to_type=X_output_mtype,
+            #     as_scitype=X_input_scitype,
+            #     store=_converter_store_X,
+            #     store_behaviour="freeze",
+            # )
         elif output_scitype == "Primitives":
             # we ensure the output is pd_DataFrame_Table
             # & ensure the returned index is sensible
