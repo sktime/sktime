@@ -118,7 +118,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         out = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
         if self.score_average and multioutput == "uniform_average":
-            out = float(out.mean(axis=1))  # average over all
+            out = float(out.mean(axis=1).iloc[0])  # average over all
         if self.score_average and multioutput == "raw_values":
             out = out.groupby(axis=1, level=0).mean()  # average over scores
         if not self.score_average and multioutput == "uniform_average":
