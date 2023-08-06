@@ -87,6 +87,7 @@ all_extras = [
     "tensorflow; python_version < '3.11'",
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
+    "u8darts",
     "xarray",
 ]
 
@@ -122,6 +123,7 @@ all_extras_pandas2 = [
     "tensorflow; python_version < '3.11'",
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
+    "u8darts",
     "xarray",
 ]
 
