@@ -5,7 +5,7 @@ import numpy as np
 from numpy.random import RandomState
 
 from sktime.base.adapters._tslearn import _TslearnAdapter
-from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
+from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
