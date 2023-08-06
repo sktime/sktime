@@ -5,7 +5,7 @@ from sktime.base.adapters._tslearn import _TslearnAdapter
 from sktime.clustering.base import BaseClusterer
 
 
-class TimeSeriesMeansTslearn(_TslearnAdapter, BaseClusterer):
+class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
     """K-means clustering for time-series data.
 
     Direct interface to ``tslearn.clustering.TimeSeriesKMeans``.
