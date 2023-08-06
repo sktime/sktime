@@ -1172,7 +1172,7 @@ class BaseTransformer(BaseEstimator):
                     X_output_mtype = "pd.DataFrame"
                 # Xt_mtype = metadata["mtype"]
             # else:
-                # Xt_mtype = X_input_mtype
+            #     Xt_mtype = X_input_mtype
 
             # Xt = convert(
             #     Xt,
