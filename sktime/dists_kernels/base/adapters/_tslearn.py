@@ -78,8 +78,7 @@ class _TslearnPwTrafoAdapter:
             X2 = X
 
         dist_kern_vectorized = np.vectorize(
-            self._eval_tslearn_pwtrafo,
-            signature="(m,k,l),(n,k,l)->(m,n)"
+            self._eval_tslearn_pwtrafo, signature="(m,k,l),(n,k,l)->(m,n)"
         )
         return dist_kern_vectorized(X, X2)
 
