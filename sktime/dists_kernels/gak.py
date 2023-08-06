@@ -86,6 +86,6 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params0 = {"normalized": True, "sigma": 0.5}
-        params1 = {"normralized": False}
+        params1 = {"normalized": False}
 
         return [params0, params1]
