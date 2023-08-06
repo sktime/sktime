@@ -6,6 +6,24 @@ __all__ = ["_TslearnPwTrafoAdapter"]
 __author__ = ["fkiraly"]
 
 
+def _subset_dict(d, keys):
+    """Subsets dictionary to keys in iterable keys.
+
+    Parameters
+    ----------
+    d : dict
+        dictionary to subset
+    keys : iterable
+        keys to subset to
+
+    Returns
+    -------
+    dict
+        subsetted dictionary
+    """
+    return {key: d[key] for key in keys if key in d}
+
+
 class _TslearnPwTrafoAdapter:
     """Base adapter mixin for tslearn distances and kernels."""
 
@@ -56,7 +74,7 @@ class _TslearnPwTrafoAdapter:
         pwtrafo = self._get_tslearn_pwtrafo()
         params = self.get_params()
         if self._inner_params is not None:
-            params = [params[param] for param in params if param in self._inner_params]
+            params = _subset_dict(params, self._inner_params)
         return pwtrafo(X, X2, **params)
 
     def _eval_tslearn_pwtrafo_vectorized(self, X, X2=None):
