@@ -566,35 +566,44 @@ def setup_all_distance_measure_getter(proximity):
     :returns: a list of distance measure getters
     """
     transformer = _CachedTransformer(DerivativeSlopeTransformer())
-    distance_measure_getters = [
-        euclidean_distance_measure_getter,
-        dtw_distance_measure_getter,
-        setup_ddtw_distance_measure_getter(transformer),
-        wdtw_distance_measure_getter,
-        setup_wddtw_distance_measure_getter(transformer),
-        msm_distance_measure_getter,
-        lcss_distance_measure_getter,
-        erp_distance_measure_getter,
+    distance_measure_getters = {
+        "euclidean": euclidean_distance_measure_getter,
+        "dtw": dtw_distance_measure_getter,
+        "ddtw": setup_ddtw_distance_measure_getter(transformer),
+        "wdtw": wdtw_distance_measure_getter,
+        "wddtw": setup_wddtw_distance_measure_getter(transformer),
+        "msm": msm_distance_measure_getter,
+        "lcss": lcss_distance_measure_getter,
+        "erp": erp_distance_measure_getter,
         #        twe_distance_measure_getter,
-    ]
+    }
 
-    def pick_rand_distance_measure(proximity):
+    def pick_distance_measure(proximity):
         """Generate a distance measure from a range of parameters.
 
         :param proximity: proximity object containing distance measures, ranges and
             dataset
         :returns: a distance measure with no parameters
         """
+        self = proximity
+        distance_measure = self.distance_measure
+
         random_state = check_random_state(proximity.random_state)
         X = proximity.X
-        distance_measure_getter = random_state.choice(distance_measure_getters)
+        distance_measure_getter_list = list(distance_measure_getters.values())
+
+        if distance_measure is None:
+            distance_measure_getter = random_state.choice(distance_measure_getter_list)
+        else:  # is string
+            distance_measure_getter = distance_measure_getters[distance_measure]
+
         distance_measure_perm = distance_measure_getter(X)
         param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
         distance_measure = param_perm["distance_measure"]
         del param_perm["distance_measure"]
         return distance_predefined_params(distance_measure, **param_perm)
 
-    return pick_rand_distance_measure
+    return pick_distance_measure
 
 
 def pick_rand_param_perm_from_dict(param_pool, random_state):
@@ -733,7 +742,8 @@ def best_of_n_stumps(n):
 def _check_distance_measure(obj_self):
     """Check the distance measure, return default if distance measure is None."""
     self = obj_self
-    if self.distance_measure is None:
+    distance_measure = self.distance_measure
+    if distance_measure is None or isinstance(distance_measure, str):
         if self.get_distance_measure is None:
             if hasattr(self, "setup_distance_measure"):
                 self.get_distance_measure = self.setup_distance_measure(self)
