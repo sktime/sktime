@@ -1,0 +1,14 @@
+{
+    "name": "Python 3",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "..",
+        "args": { }
+    },
+    "runArgs": [ ],
+    "settings": { },
+    "extensions": [
+        "ms-python.python",
+        "sourcegraph.cody-ai"
+    ]
+}
