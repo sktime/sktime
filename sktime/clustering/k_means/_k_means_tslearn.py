@@ -171,6 +171,11 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        # commented since k-means++ does not properly work
+        # errors out with
+        # TypeError:
+        # _kmeans_plusplus() missing 1 required positional argument: 'sample_weight'
+        #
         # params1 = {
         #     "n_clusters": 3,
         #     "max_iter": 3,
