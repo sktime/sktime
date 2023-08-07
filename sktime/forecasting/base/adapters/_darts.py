@@ -35,7 +35,7 @@ class _DartsAdapter(BaseForecaster):
         "capability:insample": False,
         "python_version": ">=3.8",
         "python_dependencies": ["u8darts"],
-        "python_dependecies_alias": {"u8darts": "darts"},
+        "python_dependencies_alias": {"u8darts": "darts"},
     }
 
     def __init__(
