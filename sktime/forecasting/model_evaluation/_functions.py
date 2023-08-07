@@ -283,7 +283,7 @@ def evaluate(
     scoring : subclass of sktime.performance_metrics.BaseMetric or list of same,
         default=None. Used to get a score function that takes y_pred and y_test
         arguments and accept y_train as keyword argument.
-        If None, then uses scoring = MeanAbsolutePercentageError(symmetric=True).
+        If None, then uses scoring = MeanAbsolutePercentageError().
     return_data : bool, default=False
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
@@ -309,8 +309,7 @@ def evaluate(
         if passed, must have same number of splits as ``cv``
     **kwargs : Keyword arguments
         Only relevant if backend is specified. Additional kwargs are passed into
-        `dask.distributed.get_client` or `dask.distributed.Client` if backend is
-        set to "dask", otherwise kwargs are passed into `joblib.Parallel`.
+        into `joblib.Parallel` if backend is "loky", "multiprocessing" or "threading".
 
     Returns
     -------
