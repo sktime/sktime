@@ -1,31 +1,32 @@
 """Test LTSF."""
-import random
+import os
 
 import pandas as pd
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from sktime.forecasting.ltsf import LTSFLinearForecaster
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-def train_test_split(dataset_path, input_output_len, test_size, col_name="HUFL"):
-    """Shuffle data for LTSF-Linear."""
-    data = pd.read_csv(dataset_path).drop("date", axis=1)
-    # data = [
-    #     data[i : i + input_output_len] for i in range(
-    #         0, len(data), input_output_len
-    #     ) if len(data[i : i + input_output_len]) == input_output_len
-    # ]
-    cutoff = int(len(data) * test_size)
-    # data = pd.DataFrame(data)
-    indicies = list(range(len(data)))
-    random.shuffle(indicies)
-    # get rows
-    train = data[:, indicies[:cutoff]].reset_index()
-    test = data[indicies[cutoff:]].reset_index()
-    return train, test
+data = pd.read_csv("ETT/ETTh1.csv").drop("date", axis=1)
+test_size = 0.3
+train = data.iloc[int(len(data) * test_size) :]
+test = data.iloc[: int(len(data) * test_size)]
 
+seq_len = 96
+pred_len = 96
 
-train, test = train_test_split("examples/ltsf/ETT/ETTh1.csv", 96 + 1, 0.2)
-# train, test = train_test_split("ETT/ETTh1.csv", 96 + 1, 0.2)
+network = LTSFLinearForecaster(
+    seq_len=96,
+    pred_len=1,
+    lr=0.001,
+    batch_size=32,
+    in_channels=7,
+    num_epochs=200,
+)
+network.fit(train)
+y_pred = network.predict(X=test)
+y_true = network.get_y_true(test)
 
-network = LTSFLinearForecaster(seq_len=96, pred_len=1, num_epochs=100)
-network.fit(train, fh=[1])
+mse = mean_squared_error(y_true, y_pred)
+mae = mean_absolute_error(y_true, y_pred)

@@ -121,7 +121,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         self,
         seq_len,  # L : Historical data
         pred_len,  # T : Future predictions
-        in_channels=1,
+        in_channels,
         criterion=torch.nn.MSELoss,
         optimizer=torch.optim.Adam,
         lr=0.001,

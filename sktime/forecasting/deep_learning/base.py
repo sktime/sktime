@@ -2,7 +2,6 @@
 from abc import ABC
 
 import numpy as np
-import pandas as pd
 import torch
 
 from sktime.forecasting.base import BaseForecaster
@@ -58,11 +57,33 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
 
     def _predict(self, X, **kwargs):
         """Predict with fitted model."""
+        # import xarray as xr
+
         dataloader = self.build_pytorch_dataloader(X)
+
         y_pred = []
         for x, _ in dataloader:
-            y_pred.append(self.network(x).detach().numpy())
-        return np.concatenate(y_pred)
+            y_pred.append(self.network(x).detach())
+        y_pred = torch.cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
+        return y_pred
+        # for x, _ in dataloader:
+        #     y_pred.append(self.network(x).detach().numpy())
+        # y_pred = np.concatenate(y_pred)
+
+        # batch_coords = np.arange(self.batch_size)
+        # pred_coords = np.arange(self.network.pred_len)
+        # channel_coords = np.arange(self.network.in_channels)
+
+        # y_pred = xr.DataArray(
+        #     y_pred,
+        #     coords=[
+        #         ("batch", batch_coords),
+        #         ("pred", pred_coords),
+        #         ("channel", channel_coords)
+        #     ]
+        # )
+
+        # return y_pred.to_dataframe('predictions')
 
     def build_pytorch_dataloader(self, y):
         """Build PyTorch DataLoader for training."""
@@ -70,9 +91,12 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
 
         return DataLoader(
             PyTorchDataset(
-                y, self.network.seq_len, self.network.pred_len, shuffle=self.shuffle
+                y,
+                self.network.seq_len,
+                self.network.pred_len,
             ),
             self.batch_size,
+            shuffle=self.shuffle,
         )
 
     def get_y_true(self, y):
@@ -86,53 +110,31 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
                 + self.network.pred_len
             ]
             y_true.append(y_true_values)
+        y_true = np.concatenate(y_true, axis=0)
         return y_true
+
+    def save(self, save_model_path):
+        """Save model state dict."""
+        torch.save(self.network.state_dict(), save_model_path)
 
 
 class PyTorchDataset:
     """Dataset for use in sktime deep learning forecasters."""
 
-    def __init__(self, y, seq_len, pred_len, shuffle):
+    def __init__(self, y, seq_len, pred_len):
+        self.y = y
         self.seq_len = seq_len
         self.pred_len = pred_len
 
-        if shuffle:
-            self.y = [
-                y.iloc[i : i + seq_len + pred_len]
-                for i in range(0, len(y) - seq_len - pred_len + 1)
-            ]
-            np.random.shuffle(self.y)
-            self.y = pd.concat(self.y, ignore_index=True)
-        else:
-            self.y = y
-
     def __len__(self):
         """Return length of dataset."""
-        return len(self.y) // (self.seq_len + self.pred_len)
+        return len(self.y) - self.seq_len - self.pred_len + 1
 
     def __getitem__(self, i):
         """Return data point."""
         return (
-            torch.tensor(
-                self.y.iloc[
-                    i
-                    + self.seq_len
-                    + self.pred_len : i
-                    + self.seq_len
-                    + self.pred_len
-                    + self.seq_len
-                ].values
-            ).float(),
+            torch.tensor(self.y.iloc[i : i + self.seq_len].values).float(),
             torch.from_numpy(
-                self.y.iloc[
-                    i
-                    + self.seq_len
-                    + self.pred_len
-                    + self.seq_len : i
-                    + self.seq_len
-                    + self.pred_len
-                    + self.seq_len
-                    + self.pred_len
-                ].values
+                self.y.iloc[i + self.seq_len : i + self.seq_len + self.pred_len].values
             ).float(),
         )
