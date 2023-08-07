@@ -48,6 +48,8 @@ class _DartsAdapter(BaseForecaster):
         self.past_covariates = [] if past_covariates is None else past_covariates
         self.num_samples = num_samples
 
+        self._forecaster = None
+
     @staticmethod
     def convert_dataframe_to_timeseries(dataset: pandas.DataFrame):
         """Convert dataset for compatibility with ``darts``.
@@ -102,9 +104,8 @@ class _DartsAdapter(BaseForecaster):
 
         return future_known_dataset, future_unknown_dataset
 
-    @property
     @abc.abstractmethod
-    def _forecaster(self: "_DartsAdapter"):
+    def _create_forecaster(self: "_DartsAdapter"):
         """Create Darts model."""
 
     def _fit(
@@ -140,6 +141,8 @@ class _DartsAdapter(BaseForecaster):
 
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
+
+        self._forecaster = self._create_forecaster()
 
         self._forecaster.fit(
             endogenous_actuals,

@@ -127,8 +127,7 @@ class DartsXGBModel(_DartsAdapter):
 
         super().__init__(past_covariates=past_covariates, num_samples=num_samples)
 
-    @property
-    def _forecaster(self: "DartsXGBModel"):
+    def _create_forecaster(self: "DartsXGBModel"):
         """Create Darts model."""
         from darts.models import XGBModel
 
