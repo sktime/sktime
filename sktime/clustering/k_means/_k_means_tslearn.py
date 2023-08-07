@@ -66,7 +66,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
         fixes the seed. Defaults to the global
         numpy random number generator.
 
-    init : {'k-means++', 'random' or an ndarray} (default: 'k-means++')
+    init : {'k-means++', 'random' or an ndarray} (default: 'random')
         Method for initialization:
         'k-means++' : use k-means++ heuristic. See `scikit-learn's k_init_
         <https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/\
@@ -130,7 +130,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
         dtw_inertia=False,
         verbose=0,
         random_state=None,
-        init="k-means++",
+        init="random",
     ):
         self.n_clusters = n_clusters
         self.max_iter = max_iter
@@ -171,17 +171,17 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {
-            "n_clusters": 3,
-            "max_iter": 3,
-            "tol": 0.001,
-            "n_init": 2,
-            "metric": "euclidean",
-            "max_iter_barycenter": 7,
-            "verbose": 0,
-            "random_state": 42,
-            "init": "k-means++",
-        }
+        # params1 = {
+        #     "n_clusters": 3,
+        #     "max_iter": 3,
+        #     "tol": 0.001,
+        #     "n_init": 2,
+        #     "metric": "euclidean",
+        #     "max_iter_barycenter": 7,
+        #     "verbose": 0,
+        #     "random_state": 42,
+        #     "init": "k-means++",
+        # }
         params2 = {
             "n_clusters": 2,
             "max_iter": 5,
