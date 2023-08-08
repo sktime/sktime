@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from sktime.benchmarking.benchmarks import coer_estimator_and_id
+from sktime.benchmarking.benchmarks import coerce_estimator_and_id
 from sktime.benchmarking.forecasting import ForecastingBenchmark
 from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
@@ -107,11 +107,11 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
 
 
 @pytest.mark.parametrize("estimator, estimator_id, expected_output", COER_CASES)
-def test_coer_estimator_and_id(estimator, estimator_id, expected_output):
-    """Test coer_estimator_and_id return expected output."""
+def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
+    """Test coerce_estimator_and_id return expected output."""
     assert (
-        coer_estimator_and_id(estimator, estimator_id) == expected_output
-    ), "coer_estimator_and_id does not return the expected output."
+        coerce_estimator_and_id(estimator, estimator_id) == expected_output
+    ), "coerce_estimator_and_id does not return the expected output."
 
 
 @pytest.mark.skipif(

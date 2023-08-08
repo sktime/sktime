@@ -10,6 +10,40 @@ from sktime.base import BaseEstimator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+def is_initalised_estimator(estimator):
+    """Check if the estimator is an initialised BaseEstimator object.
+
+    Parameters
+    ----------
+    estimator : object
+        The estimator to check.
+
+    Returns
+    -------
+    is_estimator : bool
+        Whether the estimator is an initialised BaseEstimator object or not.
+    """
+    if isinstance(estimator, BaseEstimator):
+        return True
+    return False
+
+
+def _check_estimators_type(objs: Union[dict, list, BaseEstimator]) -> None:
+    """Check if all estimators are initialised BaseEstimator objects.
+
+    Raises
+    ------
+    TypeError
+        If any of the estimators are not BaseEstimator objects.
+    """
+    if isinstance(objs, BaseEstimator):
+        objs = [objs]
+    items = objs.values() if isinstance(objs, dict) else objs
+    compatible = all([is_initalised_estimator(estimator) for estimator in items])
+    if not compatible:
+        raise TypeError("Estimator must be an initialised BaseEstimator object.")
+
+
 def coerce_estimator_and_id(estimators, estimator_id=None):
     """Coerce estimators to a dict with estimator_id as key and estimator as value.
 
@@ -25,21 +59,22 @@ def coerce_estimator_and_id(estimators, estimator_id=None):
     estimators : dict
         Dict with estimator_id as key and estimator as value.
     """
-    VERSION_ID = "-v1"
+    DEFAULT_ID = "{}-v1"
+    _check_estimators_type(estimators)
     if isinstance(estimators, dict):
         return estimators
     elif isinstance(estimators, list):
         return {
-            f"{estimator.__class__.__name__ + VERSION_ID }": estimator
+            DEFAULT_ID.format(estimator.__class__.__name__): estimator
             for estimator in estimators
         }
-    elif isinstance(estimators, BaseEstimator):
-        estimator_id = estimator_id or f"{estimators.__class__.__name__+ VERSION_ID}"
+    elif is_initalised_estimator(estimators):
+        estimator_id = estimator_id or DEFAULT_ID.format(estimators.__class__.__name__)
         return {estimator_id: estimators}
     else:
         raise TypeError(
-            "estimator must be of a type a dict, list or "
-            f"BaseEstimator object but received {type(estimators)}"
+            "estimator must be of a type a dict, list or an initialised "
+            f"BaseEstimator object but received {type(estimators)} type."
         )
 
 
@@ -68,8 +103,8 @@ class BaseBenchmark:
         ----------
         estimator : Dict, List or BaseEstimator object
             Estimator to add to the benchmark.
-            If Dict, keys are estimator_ids and values are estimators,
-            use to customise the identifier ID.
+            If Dict, keys are estimator_ids used to customise identifier ID
+            and values are estimators.
             If List, each element is an estimator. estimator_ids are generated
             automatically using the estimator's class name.
         estimator_id : str, optional (default=None)
