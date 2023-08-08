@@ -1,4 +1,3 @@
-# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements MSTL."""
 
@@ -7,10 +6,12 @@ __authors__ = ["luca-miniati"]
 
 from typing import Optional
 
-from sktime.forecasting.base.adapters import _StatsModelsAdapter
+import pandas as pd
+
+from sktime.transformations.base import BaseTransformer
 
 
-class MSTL(_StatsModelsAdapter):
+class MSTL(BaseTransformer):
     """Season-Trend decomposition using LOESS for multiple seasonalities.
 
     Direct interface for `statsmodels.tsa.seasonal.MSTL`.
@@ -63,25 +64,96 @@ class MSTL(_StatsModelsAdapter):
         periods=None,
         windows=None,
         lmbda=None,
-        iterate=Optional[int],
-        stl_kwargs=Optional[dict],
+        iterate: Optional[int] = 2,
+        stl_kwargs: Optional[dict] = None,
+        return_components=False,
     ):
-        super().__init__()
-
         self.periods = periods
         self.windows = windows
         self.lmbda = lmbda
         self.iterate = iterate
         self.stl_kwargs = stl_kwargs
+        self.return_components = return_components
 
-    def _fit_forecaster(self, y, X=None):
+        super().__init__()
+
+    def _fit(self, X, y=None):
         from statsmodels.tsa.seasonal import MSTL as _MSTL
 
-        self._forecaster = _MSTL(
-            y, self.periods, self.windows, self.lmbda, self.iterate, self.stl_kwargs
-        )
+        self.mstl_ = _MSTL(
+            y,
+            periods=self.periods,
+            windows=self.windows,
+            lmbda=self.lmbda,
+            iterate=self.iterate,
+            stl_kwargs=self.stl_kwargs,
+        ).fit()
 
-        self._fitted_forecaster = self._forecaster.fit()
+        self.seasonal_ = pd.Series(self.mstl_.seasonal, index=X.index)
+        self.resid_ = pd.Series(self.mstl_.resid, index=X.index)
+        self.trend_ = pd.Series(self.mstl_.trend, index=X.index)
+
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        transformed version of X
+        """
+        from statsmodels.tsa.seasonal import MSTL as _MSTL
+
+        # fit again if indices not seen, but don't store anything
+        if not X.index.equals(self._X.index):
+            X_full = X.combine_first(self._X)
+            new_mstl = _MSTL(
+                X_full.values,
+                periods=self.periods,
+                windows=self.windows,
+                lmbda=self.lmbda,
+                iterate=self.iterate,
+                stl_kwargs=self.stl_kwargs,
+            ).fit()
+
+            ret_obj = self._make_return_object(X_full, new_mstl)
+        else:
+            ret_obj = self._make_return_object(X, self.mstl_)
+
+        return ret_obj
+
+    def _make_return_object(self, X, mstl):
+        # deseasonalize only
+        transformed = pd.Series(X.values - mstl.seasonal, index=X.index)
+        # transformed = pd.Series(X.values - stl.seasonal - stl.trend, index=X.index)
+
+        if self.return_components:
+            seasonal = pd.Series(mstl.seasonal, index=X.index)
+            resid = pd.Series(mstl.resid, index=X.index)
+            trend = pd.Series(mstl.trend, index=X.index)
+
+            ret = pd.DataFrame(
+                {
+                    "transformed": transformed,
+                    "seasonal": seasonal,
+                    "trend": trend,
+                    "resid": resid,
+                }
+            )
+        else:
+            ret = transformed
+
+        return ret
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
