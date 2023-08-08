@@ -10,7 +10,7 @@ from sktime.base import BaseEstimator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
-def coer_estimator_and_id(estimators, estimator_id=None):
+def coerce_estimator_and_id(estimators, estimator_id=None):
     """Coerce estimators to a dict with estimator_id as key and estimator as value.
 
     Parameters
@@ -75,7 +75,7 @@ class BaseBenchmark:
         estimator_id : str, optional (default=None)
             Identifier for estimator. If none given then uses estimator's class name.
         """
-        estimators = coer_estimator_and_id(estimator, estimator_id)
+        estimators = coerce_estimator_and_id(estimator, estimator_id)
         for estimator_id, estimator in estimators.items():
             estimator = estimator.clone()  # extra cautious
             self.estimators.register(id=estimator_id, entry_point=estimator.clone)
