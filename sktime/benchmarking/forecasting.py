@@ -102,4 +102,60 @@ class ForecastingBenchmark(BaseBenchmark):
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]-v1"
             )
-        self._add_task(_factory_forecasting_validation, task_kwargs, task_id=task_id)
+        self._add_task(
+            self._factory_forecasting_validation, task_kwargs, task_id=task_id
+        )
+
+    def prepare_forecasting_validation(
+        self,
+        dataset_loader: Callable,
+        cv_splitter: BaseSplitter,
+        scorers: List[BaseMetric],
+        estimator: BaseForecaster,
+        **kwargs,
+    ) -> Dict[str, Union[float, str]]:
+        """Run validation for a forecasting estimator.
+
+        Parameters
+        ----------
+        dataset_loader : Callable
+            A function which returns a dataset, like from `sktime.datasets`.
+        cv_splitter : BaseSplitter object
+            Splitter used for generating validation folds.
+        scorers : a list of BaseMetric objects
+            Each BaseMetric output will be included in the results.
+        estimator : BaseForecaster object
+            Estimator to benchmark.
+
+        Returns
+        -------
+        Dictionary of benchmark results for that forecaster
+        """
+        if callable(dataset_loader):
+            dataset_loader = dataset_loader()
+
+        results = {}
+        scores_df = evaluate(
+            forecaster=estimator, y=dataset_loader, cv=cv_splitter, scoring=scorers
+        )
+        for scorer in scorers:
+            scorer_name = scorer.name
+            for ix, row in scores_df.iterrows():
+                results[f"{scorer_name}_fold_{ix}_test"] = row[f"test_{scorer_name}"]
+            results[f"{scorer_name}_mean"] = scores_df[f"test_{scorer_name}"].mean()
+            results[f"{scorer_name}_std"] = scores_df[f"test_{scorer_name}"].std()
+        return results
+
+    def _factory_forecasting_validation(
+        self,
+        dataset_loader: Callable,
+        cv_splitter: BaseSplitter,
+        scorers: List[BaseMetric],
+    ) -> Callable:
+        """Build validation func which just takes a forecasting estimator."""
+        return functools.partial(
+            self.prepare_forecasting_validation,
+            dataset_loader,
+            cv_splitter,
+            scorers,
+        )
