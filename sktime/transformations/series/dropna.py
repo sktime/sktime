@@ -231,6 +231,8 @@ class DropNA(BaseTransformer):
             {"axis": 0, "how": "all", "thresh": None},
             {"axis": 1, "how": "all", "thresh": None},
             {"axis": 0, "how": None, "thresh": 0.9},
+            {"axis": 1, "how": None, "thresh": 0.9},
+            {"axis": 0, "how": None, "thresh": 3},
             {"axis": 1, "how": None, "thresh": 3},
         ]
 
