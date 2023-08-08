@@ -10,19 +10,8 @@ from sktime.base import BaseEstimator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
-def is_initalised_estimator(estimator):
-    """Check if the estimator is an initialised BaseEstimator object.
-
-    Parameters
-    ----------
-    estimator : object
-        The estimator to check.
-
-    Returns
-    -------
-    is_estimator : bool
-        Whether the estimator is an initialised BaseEstimator object or not.
-    """
+def is_initalised_estimator(estimator: BaseEstimator) -> bool:
+    """Check if estimator is initialised BaseEstimator object."""
     if isinstance(estimator, BaseEstimator):
         return True
     return False
