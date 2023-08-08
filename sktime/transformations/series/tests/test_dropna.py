@@ -12,8 +12,6 @@ from sktime.datasets import load_longley
 from sktime.transformations.series.dropna import DropNA
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
-# todo: univariate case (implement check that axis=0 first).
-
 y_few_na, X_few_na = load_longley()
 X_few_na.loc["1947", "GNPDEFL"] = np.nan
 X_few_na.loc["1950", "GNPDEFL"] = np.nan

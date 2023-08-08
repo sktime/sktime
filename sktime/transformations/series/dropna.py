@@ -46,7 +46,7 @@ class DropNA(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
-        "X_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
