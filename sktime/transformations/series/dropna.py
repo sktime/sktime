@@ -33,6 +33,11 @@ class DropNA(BaseTransformer):
          If int, require that many non-NA values (as in pandas.dropna). If
          float, share of non-NA values for rows or columns to be retained.
          Cannot be combined with how.
+
+    remember : bool, default False if axis==0, True if axis==1
+        If True, drops the same rows/columns in transform as in fit. If false,
+        drops rows/columns according to the NAs seen in transform (equivalent
+        to PandasTransformAdaptor(method="dropna")).
     """
 
     _tags = {
@@ -51,14 +56,16 @@ class DropNA(BaseTransformer):
     VALID_AXIS_VALUES = [0, "index", 1, "columns"]
     VALID_HOW_VALUES = [None, "any", "all"]
     VALID_THRESH_TYPES = (type(None), int, float)
+    VALID_REMEMBER_TYPES = (type(None), bool)
 
-    def __init__(self, axis=0, how=None, thresh=None):
+    def __init__(self, axis=0, how=None, thresh=None, remember=None):
         self.axis = self._check_axis(axis)
         self.how = self._check_how(how)
         self.thresh = self._check_thresh(thresh, how)
+        self.remember = self._check_remember(remember)
         super().__init__()
 
-        # use numeric axis internally
+        # axis, use numeric axis internally, default rows/index
         if self.axis == "index":
             self._axis = 0
         elif self.axis == "columns":
@@ -66,13 +73,18 @@ class DropNA(BaseTransformer):
         else:
             self._axis = self.axis
 
-        # set default for criterion, default to "any" if neither how nor thresh passed
+        # criterion (how/thresh), default to "any" if neither how nor thresh passed
         if (self.how is None) and (self.thresh is None):
             self._how = "any"
         else:
             self._how = how
-
         self._thresh = self.thresh
+
+        # remember, default to remember dropped columns but not rows
+        if self.remember is None:
+            self._remember = bool(self._axis)
+        else:
+            self._remember = self.remember
 
     def _check_axis(self, axis):
         """Check axis parameter, should be a valid string as per docstring."""
@@ -108,6 +120,16 @@ class DropNA(BaseTransformer):
 
         return thresh
 
+    def _check_remember(self, remember):
+        """Check remember parameter, should be a valid type as per docstring."""
+        if not isinstance(remember, self.VALID_REMEMBER_TYPES):
+            raise ValueError(
+                f'invalid remember parameter value encountered: "{remember}", '
+                f"remember must be of type: {self.VALID_REMEMBER_TYPES}"
+            )
+
+        return remember
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -126,18 +148,19 @@ class DropNA(BaseTransformer):
         self: reference to self
         """
         self.dropped_index_values_ = None
-
-        agg_axis = 1 - self._axis
+        self._agg_axis = 1 - self._axis
 
         mask = None
         if self._how == "any":
-            mask = X.isna().any(axis=agg_axis)
+            mask = X.isna().any(axis=self._agg_axis)
         elif self._how == "all":
-            mask = X.isna().all(axis=agg_axis)
+            mask = X.isna().all(axis=self._agg_axis)
         elif isinstance(self._thresh, int):
-            mask = X.count(axis=agg_axis) < self._thresh
+            mask = X.count(axis=self._agg_axis) < self._thresh
         elif isinstance(self._thresh, float):
-            mask = X.count(axis=agg_axis).div(X.shape[agg_axis]) < self._thresh
+            mask = (
+                X.count(axis=self._agg_axis).div(X.shape[self._agg_axis]) < self._thresh
+            )
 
         if mask is not None:
             self.dropped_index_values_ = mask.index[mask].to_list()
@@ -164,12 +187,26 @@ class DropNA(BaseTransformer):
         transformed version of X
         """
         dropped_index_values = self.dropped_index_values_
+        agg_axis = self._agg_axis
         axis = self._axis
+        how = self._how
+        thresh = self._thresh
+        remember = self._remember
 
-        if dropped_index_values is not None:
-            return X.drop(labels=dropped_index_values, axis=axis)
+        if remember:
+            if dropped_index_values is not None:
+                return X.drop(labels=dropped_index_values, axis=axis)
+            else:
+                return X
         else:
-            return X
+            if isinstance(thresh, float):
+                mask = X.count(axis=agg_axis).div(X.shape[agg_axis]) < thresh
+                index_to_drop = mask.index[mask]
+                return X.drop(labels=index_to_drop, axis=axis)
+            elif isinstance(thresh, int):
+                return X.dropna(axis=axis, thresh=thresh)
+            else:
+                return X.dropna(axis=axis, how=how)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
