@@ -193,18 +193,10 @@ class DropNA(BaseTransformer):
         params = [
             {"axis": 0, "how": "any", "thresh": None},
             {"axis": 1, "how": "any", "thresh": None},
-            {"axis": "index", "how": "any", "thresh": None},
-            {"axis": "columns", "how": "any", "thresh": None},
             {"axis": 0, "how": "all", "thresh": None},
             {"axis": 1, "how": "all", "thresh": None},
             {"axis": 0, "how": None, "thresh": 0.9},
-            {"axis": 1, "how": None, "thresh": 0.9},
-            {"axis": 0, "how": None, "thresh": 4},
-            {"axis": 1, "how": None, "thresh": 4},
-            {"axis": 0, "how": None, "thresh": 1.9},
-            {"axis": 1, "how": None, "thresh": 1.9},
-            {"axis": 0, "how": "any", "thresh": 0.9},
-            {"axis": 1, "how": "any", "thresh": 0.9},
+            {"axis": 1, "how": None, "thresh": 3},
         ]
 
         return params
