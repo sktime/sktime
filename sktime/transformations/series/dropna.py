@@ -30,9 +30,9 @@ class DropNA(BaseTransformer):
         * 'all' : If all values are NA, drop that row or column.
 
     thresh : int or float, optional
-         If int, require that many non-NA values (as in pandas.dropna). If
-         float, share of non-NA values for rows or columns to be retained.
-         Cannot be combined with how.
+         If int, require at least that many non-NA values (as in pandas.dropna).
+         If float, minimum share of non-NA values for rows/columns to be
+         retained. Cannot be combined with how.
 
     remember : bool, default False if axis==0, True if axis==1
         If True, drops the same rows/columns in transform as in fit. If false,
@@ -158,9 +158,7 @@ class DropNA(BaseTransformer):
         elif isinstance(self._thresh, int):
             mask = X.count(axis=self._agg_axis) < self._thresh
         elif isinstance(self._thresh, float):
-            mask = (
-                X.notna().mean(axis=self._agg_axis) < self._thresh
-            )
+            mask = X.notna().mean(axis=self._agg_axis) < self._thresh
 
         if mask is not None:
             self.dropped_index_values_ = mask.index[mask].to_list()
