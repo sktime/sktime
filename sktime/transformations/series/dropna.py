@@ -109,7 +109,7 @@ class DropNA(BaseTransformer):
     def _check_thresh(self, thresh, how):
         """Check thresh parameter, should be a valid value as per docstring."""
         if not isinstance(thresh, self.VALID_THRESH_TYPES):
-            raise ValueError(
+            raise TypeError(
                 f'invalid thresh parameter value encountered: "{thresh}", '
                 f"thresh must be of type: {self.VALID_HOW_VALUES}"
             )
@@ -123,7 +123,7 @@ class DropNA(BaseTransformer):
     def _check_remember(self, remember):
         """Check remember parameter, should be a valid type as per docstring."""
         if not isinstance(remember, self.VALID_REMEMBER_TYPES):
-            raise ValueError(
+            raise TypeError(
                 f'invalid remember parameter value encountered: "{remember}", '
                 f"remember must be of type: {self.VALID_REMEMBER_TYPES}"
             )
@@ -159,7 +159,7 @@ class DropNA(BaseTransformer):
             mask = X.count(axis=self._agg_axis) < self._thresh
         elif isinstance(self._thresh, float):
             mask = (
-                X.count(axis=self._agg_axis).div(X.shape[self._agg_axis]) < self._thresh
+                X.notna().mean(axis=self._agg_axis) < self._thresh
             )
 
         if mask is not None:
@@ -200,7 +200,7 @@ class DropNA(BaseTransformer):
                 return X
         else:
             if isinstance(thresh, float):
-                mask = X.count(axis=agg_axis).div(X.shape[agg_axis]) < thresh
+                mask = X.notna().mean(axis=agg_axis) < thresh
                 index_to_drop = mask.index[mask]
                 return X.drop(labels=index_to_drop, axis=axis)
             elif isinstance(thresh, int):
