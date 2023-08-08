@@ -108,13 +108,18 @@ class DropNA(BaseTransformer):
 
     def _check_thresh(self, thresh, how):
         """Check thresh parameter, should be a valid value as per docstring."""
-        if not isinstance(thresh, self.VALID_THRESH_TYPES):
+        if not isinstance(thresh, self.VALID_THRESH_TYPES) or isinstance(thresh, bool):
             raise TypeError(
                 f'invalid thresh parameter value encountered: "{thresh}", '
-                f"thresh must be of type: {self.VALID_HOW_VALUES}"
+                f"thresh must be of type: {self.VALID_THRESH_TYPES}"
             )
-        if isinstance(thresh, float) and not (0 < thresh < 1):
-            raise ValueError("thresh must be a fraction between zero and one")
+        if (isinstance(thresh, int) and not (thresh > 0)) or (
+            isinstance(thresh, float) and not (0 < thresh < 1)
+        ):
+            raise ValueError(
+                "thresh must be positive integer or a fraction between zero and one"
+            )
+
         if (how is not None) and (thresh is not None):
             raise TypeError("thresh cannot be set together with how")
 
