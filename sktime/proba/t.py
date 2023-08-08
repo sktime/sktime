@@ -5,7 +5,7 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 import pandas as pd
-from scipy.special import erf, erfinv, gamma
+from scipy.special import erfinv, gamma, hyp2f1
 
 from sktime.proba.base import BaseDistribution
 
@@ -138,7 +138,9 @@ class TDistribution(BaseDistribution):
     def cdf(self, x):
         """Cumulative distribution function."""
         d = self.loc[x.index, x.columns]
-        cdf_arr = 0.5 + 0.5 * erf((x.values - d.mu) / (d.sigma * np.sqrt(2)))
+        cdf_arr = x * gamma((d.df + 1) / 2)
+        cdf_arr = cdf_arr * hyp2f1(0.5, (d.df + 1) / 2, 3 / 2, -(x**2) / d.df)
+        cdf_arr = 0.5 + cdf_arr / (np.sqrt(np.pi * d.df) * gamma(d.df / 2))
         return pd.DataFrame(cdf_arr, index=x.index, columns=x.columns)
 
     def ppf(self, p):
