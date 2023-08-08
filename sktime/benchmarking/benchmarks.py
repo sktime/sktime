@@ -37,9 +37,9 @@ def coer_estimator_and_id(estimators, estimator_id=None):
         estimator_id = estimator_id or f"{estimators.__class__.__name__+ VERSION_ID}"
         return {estimator_id: estimators}
     else:
-        raise ValueError(
-            f"estimator must be of a type a dict, list or\
-            BaseEstimator object but received {type(estimators)}"
+        raise TypeError(
+            "estimator must be of a type a dict, list or "
+            f"BaseEstimator object but received {type(estimators)}"
         )
 
 
