@@ -374,15 +374,26 @@ class ForecastingGridSearchCV(BaseGridSearch):
         "no_update" = neither tuning parameters nor inner estimator are updated
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
-    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        If callable, must have signature
+
+        * sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
         Metrics in sktime.performance_metrics.forecasting are all of this form.
-        sktime metric objects (BaseMetric) descendants can be searched
-        with the ``registry.all_estimators`` search utility,
-        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If str, uses registry.resolve_alias to resolve to one of the above.
+          Valid strings are valid registry.craft specs, which include
+          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+          and keys of registry.ALIAS_DICT referring to metrics.
+
+        * If None, defaults to MeanAbsolutePercentageError()
+
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
@@ -635,15 +646,26 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
-    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        If callable, must have signature
+
+        * sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
         Metrics in sktime.performance_metrics.forecasting are all of this form.
-        sktime metric objects (BaseMetric) descendants can be searched
-        with the ``registry.all_estimators`` search utility,
-        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If str, uses registry.resolve_alias to resolve to one of the above.
+          Valid strings are valid registry.craft specs, which include
+          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+          and keys of registry.ALIAS_DICT referring to metrics.
+
+        * If None, defaults to MeanAbsolutePercentageError()
+
     n_jobs : int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
@@ -806,15 +828,26 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     n_points : int, default=1
         Number of parameter settings to sample in parallel.
         If this does not align with n_iter, the last iteration will sample less points
-    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        If callable, must have signature
+
+        * sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
         Metrics in sktime.performance_metrics.forecasting are all of this form.
-        sktime metric objects (BaseMetric) descendants can be searched
-        with the ``registry.all_estimators`` search utility,
-        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If str, uses registry.resolve_alias to resolve to one of the above.
+          Valid strings are valid registry.craft specs, which include
+          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+          and keys of registry.ALIAS_DICT referring to metrics.
+
+        * If None, defaults to MeanAbsolutePercentageError()
+
     optimizer_kwargs: dict, optional
         Arguments passed to Optimizer to control the bahaviour of the bayesian search.
         For example, {'base_estimator': 'RF'} would use a Random Forest surrogate
