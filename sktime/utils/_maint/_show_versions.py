@@ -50,7 +50,7 @@ DEFAULT_DEPS_TO_SHOW = [
     "statsforecast",
     "tsfresh",
     "tslearn",
-    "pytorch",
+    "torch",
     "tensorflow",
     "tensorflow_probability",
 ]
