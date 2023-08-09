@@ -61,5 +61,8 @@ def resolve_alias(alias):
         return craft(alias)
     except Exception as e:
         raise ValueError(
-            ""
+            "Error in resolve_alias, argument alias must be a resolvable "
+            "alias string. That is, a key of ALIAS_DICT, or resolvable by "
+            f"registry.craft. Found {alias}, which is not a key of ALIAS_DICT, "
+            f"and raises the following exception in registry.craft: {e}"
         )
