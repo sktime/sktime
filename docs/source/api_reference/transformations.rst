@@ -85,20 +85,6 @@ Pipeline building
 
     FunctionTransformer
 
-.. currentmodule:: sktime.transformations.panel.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    SeriesToSeriesRowTransformer
-    SeriesToPrimitivesRowTransformer
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    make_row_transformer
 
 Sklearn and pandas adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -142,6 +128,7 @@ These transformers extract simple summary features.
 
     SummaryTransformer
     WindowSummarizer
+    SplitterSummarizer
 
 .. currentmodule:: sktime.transformations.panel.summarize
 
@@ -452,6 +439,16 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     DateTimeFeatures
+
+.. currentmodule:: sktime.transformations.series.holiday
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HolidayFeatures
+    CountryHolidaysTransformer
+    FinancialHolidaysTransformer
 
 .. currentmodule:: sktime.transformations.series.time_since
 

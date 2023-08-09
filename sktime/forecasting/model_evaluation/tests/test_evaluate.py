@@ -42,6 +42,7 @@ from sktime.performance_metrics.forecasting.probabilistic import (
     LogLoss,
     PinballLoss,
 )
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
@@ -264,10 +265,10 @@ def test_evaluate_hierarchical(backend):
         return None
 
     y = _make_hierarchical(
-        random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+        random_state=0, hierarchy_levels=(2, 2), min_timepoints=12, max_timepoints=12
     )
     X = _make_hierarchical(
-        random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+        random_state=42, hierarchy_levels=(2, 2), min_timepoints=12, max_timepoints=12
     )
     y = y.sort_index()
     X = X.sort_index()
@@ -341,3 +342,37 @@ def test_evaluate_probabilistic(n_columns, metric):
         assert scoring_name in out.columns
     except NotImplementedError:
         pass
+
+
+def test_evaluate_hierarchical_unequal_X_y():
+    """Test evaluate with hierarchical X and y where X is larger.
+
+    Tests failure case in bug report #4842.
+    """
+    from sktime.transformations.hierarchical.aggregate import Aggregator
+
+    # hierarchical/panel with 2-level pd.MultiIndex,
+    # level 0 with "A", and "B", dates from 2020-01-01 to 2020-01-10
+    df = pd.DataFrame(
+        index=pd.MultiIndex.from_product(
+            [["A", "B"], pd.date_range("2020-01-01", "2020-01-10").to_period("D")]
+        ),
+        data={"target": np.arange(20) % 10},
+    ).sort_index()
+    df = Aggregator().fit_transform(df)
+
+    y = df[df.index.get_level_values(-1) < "2020-01-08"]
+    X = df.copy()
+    cv = ExpandingWindowSplitter(initial_window=2, fh=[1], step_length=1)
+
+    f = NaiveForecaster()
+
+    # this fails in the case of #4842 as y and X have different length
+    res = evaluate(f, cv, y, X, error_score="raise")
+
+    # further sanity checks to pin down deterministic properties of return
+    assert isinstance(res, pd.DataFrame)
+    assert res.shape == (5, 5)
+
+    expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
+    _assert_array_almost_equal(res.iloc[:, 0].values, expected_cols)
