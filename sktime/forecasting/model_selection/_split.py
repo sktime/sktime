@@ -595,7 +595,7 @@ class BaseSplitter(BaseObject):
             "pd_multiindex_hier",
         ]
         y_valid, _, y_metadata = check_is_scitype(
-            y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
+            y, scitype=ALLOWED_SCITYPES, return_metadata=[], var_name="y"
         )
         if allow_index:
             msg = (
