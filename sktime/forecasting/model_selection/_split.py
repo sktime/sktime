@@ -28,7 +28,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
-from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes import check_is_scitype, convert
 from sktime.datatypes._utilities import get_index_for_series, get_time_index, get_window
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
@@ -507,7 +507,7 @@ class BaseSplitter(BaseObject):
         test : time series of same sktime mtype as `y`
             test series in the split
         """
-        y, y_orig_mtype = self._check_y(y)
+        y_inner, y_orig_mtype, y_inner_mtype = self._check_y(y)
 
         use_iloc_or_loc = self.get_tag("split_series_uses", "iloc", raise_error=False)
 
@@ -523,14 +523,14 @@ class BaseSplitter(BaseObject):
             )
 
         _split = getattr(self, splitter_name)
-        _slicer = getattr(y, use_iloc_or_loc)
+        _slicer = getattr(y_inner, use_iloc_or_loc)
 
-        for train, test in _split(y.index):
+        for train, test in _split(y_inner.index):
             y_train = _slicer[train]
             y_test = _slicer[test]
 
-            y_train = convert_to(y_train, y_orig_mtype)
-            y_test = convert_to(y_test, y_orig_mtype)
+            y_train = convert(y_train, from_type=y_inner_mtype, to_type=y_orig_mtype)
+            y_test = convert(y_test, from_type=y_inner_mtype, to_type=y_orig_mtype)
             yield y_train, y_test
 
     def _coerce_to_index(self, y: ACCEPTED_Y_TYPES) -> pd.Index:
@@ -564,10 +564,14 @@ class BaseSplitter(BaseObject):
 
         Returns
         -------
-        y_inner : time series y coerced to one of the sktime pandas based mtypes:
+        y_inner : pd.DataFrame or pd.Series, sktime time series data container
+            time series y coerced to one of the sktime pandas based mtypes:
             pd.DataFrame, pd.Series, pd-multiindex, pd_multiindex_hier
             returns pd.Series only if y was pd.Series, otherwise a pandas.DataFrame
-        y_mtype : original mtype of y
+        y_mtype : str, sktime mtype string
+            original mtype of y (the input)
+        y_inner_mtype : str, sktime mtype string
+            mtype of y_inner (the output)
 
         Raises
         ------
@@ -622,11 +626,16 @@ class BaseSplitter(BaseObject):
         if not y_valid:
             raise TypeError(msg)
 
-        y_inner = convert_to(y, to_type=PANDAS_MTYPES)
+        y_mtype = y_metadata["mtype"]
 
-        mtype = y_metadata["mtype"]
+        y_inner, y_inner_mtype = convert(
+            y,
+            from_type=y_mtype,
+            to_type=PANDAS_MTYPES,
+            return_to_mtype=True,
+        )
 
-        return y_inner, mtype
+        return y_inner, y_mtype, y_inner_mtype
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
