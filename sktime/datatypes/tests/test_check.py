@@ -319,7 +319,6 @@ def test_check_negative(scitype, mtype):
 
             # check fixtures that exist against checks that exist
             if fixture_wrong_type is not None and check_is_defined:
-
                 start_time = time()
                 result = check_is_mtype(
                     fixture_wrong_type, mtype, scitype, return_metadata=[]
