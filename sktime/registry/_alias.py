@@ -55,7 +55,11 @@ def resolve_alias(alias):
     # 1. check if ``alias`` is a valid key in ``registry.ALIAS_DICT``.
     # If yes, returns the aliased object from ``ALIAS_DICT``, terminate.
     if alias in ALIAS_DICT.keys():
-        return ALIAS_DICT[alias][1]()
+        alias_init = ALIAS_DICT[alias][1]
+        if isinstance(alias_init, str):
+            return craft(alias_init)
+        else:
+            return ALIAS_DICT[alias][1]()
 
     try:
         return craft(alias)
