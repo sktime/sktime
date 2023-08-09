@@ -579,7 +579,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
+        from sktime.forecasting.model_selection._split import (
+            ExpandingWindowSplitter,
+            SingleWindowSplitter,
+        )
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import (
@@ -600,7 +603,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "scoring": mean_absolute_percentage_error,
             "update_behaviour": "inner_only",
         }
-        return [params, params2]
+        params3 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": ExpandingWindowSplitter(),
+            "param_grid": {"window_length": [3, 4]},
+            "scoring": "MeanAbsolutePercentageError(symmetric=True)",
+            "update_behaviour": "no_update",
+        }
+        return [params, params2, params3]
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
@@ -770,7 +780,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
+        from sktime.forecasting.model_selection._split import (
+            ExpandingWindowSplitter,
+            SingleWindowSplitter,
+        )
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
@@ -789,8 +802,15 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
         }
+        params3 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": ExpandingWindowSplitter(),
+            "param_grid": {"window_length": [3, 4]},
+            "scoring": "MeanAbsolutePercentageError(symmetric=True)",
+            "update_behaviour": "no_update",
+        }
 
-        return [params, params2]
+        return [params, params2, params3]
 
 
 class ForecastingSkoptSearchCV(BaseGridSearch):
