@@ -548,7 +548,7 @@ class BaseSplitter(BaseObject):
         y_index : y, if y was pd.Index; otherwise _check_y(y).index
         """
         if not isinstance(y, pd.Index):
-            y, _ = self._check_y(y, allow_index=True)
+            y = self._check_y(y, allow_index=True)[0]
             y_index = y.index
         else:
             y_index = y
