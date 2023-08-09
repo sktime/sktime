@@ -1,5 +1,7 @@
 """Implements registry for sktime estimator base classes and tags."""
 
+from sktime.registry._alias import resolve_alias
+from sktime.registry._alias_str import ALIAS_DICT
 from sktime.registry._base_classes import (
     BASE_CLASS_LIST,
     BASE_CLASS_LOOKUP,
@@ -10,8 +12,6 @@ from sktime.registry._base_classes import (
     TRANSFORMER_MIXIN_REGISTER,
     TRANSFORMER_MIXIN_SCITYPE_LIST,
 )
-from sktime.registry._alias import resolve_alias
-from sktime.registry._alias_str import ALIAS_DICT
 from sktime.registry._craft import craft, deps, imports
 from sktime.registry._lookup import all_estimators, all_tags
 from sktime.registry._scitype import scitype
