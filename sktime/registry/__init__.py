@@ -1,4 +1,4 @@
-"""Implements registry for sktime estimator base classes and tags."""
+"""Registry for sktime estimator base classes, tags, global aliases."""
 
 from sktime.registry._alias import resolve_alias
 from sktime.registry._alias_str import ALIAS_DICT
