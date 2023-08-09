@@ -2286,6 +2286,18 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "hazrulakmal",
+      "name": "Hazrul Akmal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24774385?v=4",
+      "profile": "https://github.com/hazrulakmal",
+      "contributions": [
+        "code",
+        "doc",
+        "bug",
+        "test"
+      ]
     }
   ]
 }
