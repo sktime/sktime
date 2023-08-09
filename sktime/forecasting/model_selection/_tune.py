@@ -805,7 +805,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         params3 = {
             "forecaster": NaiveForecaster(strategy="mean"),
             "cv": ExpandingWindowSplitter(),
-            "param_grid": {"window_length": [3, 4]},
+            "param_distributions": {"window_length": [3, 4]},
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
         }
