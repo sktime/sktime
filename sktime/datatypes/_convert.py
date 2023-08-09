@@ -286,8 +286,7 @@ def _get_first_mtype_of_same_scitype(from_mtype, to_mtypes, varname="to_mtypes")
     -------
     to_type : str - first mtype in to_mtypes that has same scitype as from_mtype
     """
-    if isinstance(to_mtypes, str):
-        return to_mtypes
+    to_mtypes = _check_str_or_list_of_str(to_mtypes, obj_name=varname)
 
     if not isinstance(to_mtypes, list):
         raise TypeError(f"{varname} must be a str or a list of str")
