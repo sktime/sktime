@@ -10,6 +10,8 @@ from sktime.registry._base_classes import (
     TRANSFORMER_MIXIN_REGISTER,
     TRANSFORMER_MIXIN_SCITYPE_LIST,
 )
+from sktime.registry._alias import resolve_alias
+from sktime.registry._alias_str import ALIAS_DICT
 from sktime.registry._craft import craft, deps, imports
 from sktime.registry._lookup import all_estimators, all_tags
 from sktime.registry._scitype import scitype
@@ -26,7 +28,9 @@ __all__ = [
     "craft",
     "deps",
     "imports",
+    "resolve_alias",
     "scitype",
+    "ALIAS_DICT",
     "ESTIMATOR_TAG_LIST",
     "ESTIMATOR_TAG_REGISTER",
     "BASE_CLASS_REGISTER",
