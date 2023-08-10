@@ -50,6 +50,7 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
+from sktime.utils.git_diff import is_class_changed
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
 from sktime.utils.validation._dependencies import (
@@ -65,6 +66,10 @@ MATRIXDESIGN = False
 # whether to test only estimators that require cython, C compiler such as gcc
 # default is False, can be set to True by pytest --only_cython_estimators True flag
 CYTHON_ESTIMATORS = False
+
+# whether to test only estimators from modules that are changed w.r.t. main
+# default is False, can be set to True by pytest --only_changed_modules True flag
+ONLY_CHANGED_MODULES = False
 
 
 def subsample_by_version_os(x):
@@ -214,6 +219,12 @@ class BaseFixtureGenerator:
         # but all are tested on every OS at least once, and on every python version once
         if MATRIXDESIGN:
             est_list = subsample_by_version_os(est_list)
+
+        # this setting ensures that only estimators are tested that have changed
+        # in the sense that any line in the module is different from main
+        if ONLY_CHANGED_MODULES:
+            est_list = [est for est in est_list if is_class_changed(est)]
+
         return est_list
 
     def generator_dict(self):
