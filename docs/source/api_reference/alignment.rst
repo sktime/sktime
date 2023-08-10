@@ -9,7 +9,7 @@ dynamic time warrping aligners.
 Dynamic time warping
 --------------------
 
-.. currentmodule:: sktime.dists_kernels.indep
+.. currentmodule:: sktime.alignment.dtw_python
 
 .. autosummary::
     :toctree: auto_generated/
