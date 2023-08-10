@@ -457,6 +457,8 @@ class NaiveForecaster(_BaseWindowForecaster):
             # y_diff_w_new[i] = y_diff_w[last(i)]
             y_diff_w_new = naive_last(y_diff_w)
 
+            # we consistendly coerce dates to floats
+            # this cancels out in the fraction below
             y_ix = ix_to_float_series(_y.index)
             # y_ix_diff_w[j] = _y.index[j] - _y.index[j-offset]
             y_ix_diff_w = y_ix.diff(offset).fillna(method="bfill")
@@ -469,6 +471,8 @@ class NaiveForecaster(_BaseWindowForecaster):
             # y_ix_diff[i] = i - last(i)
             y_ix_diff = diff_to_last(y_ix)
 
+            # both y_ix_diff and y_ix_diff_w_new are float coerced
+            # this is consistently done so the conversion factor cancels out
             y_pred = y_last + y_ix_diff * y_diff_w_new / y_ix_diff_w_new
 
         y_pred.name = _y.name
