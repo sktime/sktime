@@ -605,7 +605,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         }
         params3 = {
             "forecaster": NaiveForecaster(strategy="mean"),
-            "cv": ExpandingWindowSplitter(),
+            "cv": ExpandingWindowSplitter(window_length=5),
             "param_grid": {"window_length": [3, 4]},
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
@@ -804,7 +804,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         }
         params3 = {
             "forecaster": NaiveForecaster(strategy="mean"),
-            "cv": ExpandingWindowSplitter(),
+            "cv": ExpandingWindowSplitter(window_length=5),
             "param_distributions": {"window_length": [3, 4]},
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
