@@ -9,7 +9,7 @@ from sktime.dists_kernels.base.adapters import _TslearnPwTrafoAdapter
 class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
     r"""Global Alignment Kernel, from tslearn.
 
-    Direct interface to ``tslearn.metrics.cdist_gak`` and ``gak``.
+    Direct interface to ``tslearn.metrics.cdist_gak``.
 
     Implements the fast GAK from [1]_.
 
@@ -17,9 +17,6 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
     ----------
     sigma : float, default 1.
         Bandwidth of the internal gaussian kernel used for GAK
-    normalized : bool, optional, default=True
-        if True, computes the normalized GAK (``cdist_gak``)
-        if False, computes unnormalized GAK (``gak``)
 
     References
     ----------
@@ -28,9 +25,8 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
     _tags = {"symmetric": True, "pwtrafo_type": "kernel"}
 
-    def __init__(self, sigma=1.0, normalized=True):
+    def __init__(self, sigma=1.0):
         self.sigma = sigma
-        self.normalized = normalized
 
         super().__init__()
 
@@ -38,14 +34,9 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
     def _get_tslearn_pwtrafo(self):
         """Adapter method to get tslearn pwtrafo."""
-        if self.normalized:
-            from tslearn.metrics.softdtw_variants import cdist_gak
+        from tslearn.metrics.softdtw_variants import cdist_gak
 
-            return cdist_gak
-        else:
-            from tslearn.metrics.softdtw_variants import gak
-
-            return gak
+        return cdist_gak
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -66,7 +57,7 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params0 = {"normalized": True, "sigma": 0.5}
-        params1 = {"normalized": False}
+        params0 = {"sigma": 0.5}
+        params1 = {"sigma": 2}
 
         return [params0, params1]
