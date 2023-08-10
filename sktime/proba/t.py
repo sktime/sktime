@@ -35,7 +35,7 @@ class TDistribution(BaseDistribution):
         "distr:measuretype": "continuous",
     }
 
-    def __init__(self, mu, sigma, df, index=None, columns=None):
+    def __init__(self, mu, sigma, df=1, index=None, columns=None):
         self.mu = mu
         self.sigma = sigma
         self.df = df
