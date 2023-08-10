@@ -51,6 +51,8 @@ def test_lag_fit_transform_out_index(X, index_out):
 def test_lag_fit_transform_out_values(X, index_out, remember_data):
     """Test that index sets of fit_transform output behave as expected."""
     t = Lag(2, index_out=index_out, remember_data=remember_data)
+    if isinstance(X, pd.Series):
+        X = pd.DataFrame(X)
     X_fit = X[:2]
     X_trafo = X[2:]
     Xt = t.fit(X_fit).transform(X_trafo)
@@ -61,9 +63,11 @@ def test_lag_fit_transform_out_values(X, index_out, remember_data):
         else:  # remember_data == False
             assert all(Xt.iloc[0].isna().values)
         assert all(Xt.iloc[2].values == X_trafo.iloc[0].values)
+        if len(Xt) > 2:
+            assert all(Xt.iloc[2].values == X_trafo.iloc[0].values)
 
     elif index_out == "shift":
-        assert all(Xt.values == X_trafo.values)
+        assert (Xt.values == X_trafo.values).all()
 
 
 @pytest.mark.parametrize("X", X_fixtures)
