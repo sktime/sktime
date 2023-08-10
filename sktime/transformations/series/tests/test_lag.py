@@ -15,7 +15,7 @@ from sktime.utils._testing.series import _make_series
 # some examples with range vs time index, univariate vs multivariate (mv)
 X_range_idx = get_examples("pd.DataFrame")[0]
 X_range_idx_mv = get_examples("pd.DataFrame")[1]
-X_time_idx = _make_series()
+X_time_idx = pd.DataFrame(_make_series())
 X_time_idx_mv = _make_series(n_columns=2)
 
 # all fixtures
@@ -56,10 +56,11 @@ def test_lag_fit_transform_out_values(X, index_out):
 
     if index_out in ["original", "extend"]:
         assert all(Xt.iloc[0].values == X_fit.iloc[0].values)
-        assert all(Xt.iloc[2].values == X_trafo.iloc[0].values)
+        if len(Xt) > 2:
+            assert all(Xt.iloc[2].values == X_trafo.iloc[0].values)
 
     elif index_out == "shift":
-        assert all(Xt.values == X_trafo.values)
+        assert (Xt.values == X_trafo.values).all()
 
 
 @pytest.mark.parametrize("X", X_fixtures)
