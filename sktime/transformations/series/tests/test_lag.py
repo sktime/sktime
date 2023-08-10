@@ -46,6 +46,28 @@ def test_lag_fit_transform_out_index(X, index_out):
 
 @pytest.mark.parametrize("X", X_fixtures)
 @pytest.mark.parametrize("index_out", index_outs)
+@pytest.mark.parametrize("remember_data", [True, False])
+def test_lag_fit_transform_out_values(X, index_out, remember_data):
+    """Test that index sets of fit_transform output behave as expected."""
+    t = Lag(2, index_out=index_out, remember_data=remember_data)
+    X_fit = X[:2]
+    X_trafo = X[2:]
+    Xt = t.fit(X_fit).transform(X_trafo)
+
+    if index_out in ["original", "extend"]:
+        if remember_data:
+            assert all(Xt.iloc[0].values == X_fit.iloc[0].values)
+        else:  # remember_data == False
+            assert all(Xt.iloc[0].isna().values)
+        assert all(Xt.iloc[2].values == X_trafo.iloc[0].values)
+
+    elif index_out == "shift":
+        assert len(Xt) == len(X)
+        assert X.index[2:].isin(Xt.index).all()
+
+
+@pytest.mark.parametrize("X", X_fixtures)
+@pytest.mark.parametrize("index_out", index_outs)
 @pytest.mark.parametrize("lag", [2, [2, 4], [-1, 0, 5]])
 def test_lag_fit_transform_columns(X, index_out, lag):
     """Test that columns of fit_transform output behave as expected."""
