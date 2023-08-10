@@ -77,14 +77,14 @@ def _create_hierarchical_data():
     y = _make_hierarchical(
         random_state=TEST_RANDOM_SEEDS[0],
         hierarchy_levels=(2, 2),
-        min_timepoints=20,
-        max_timepoints=20,
+        min_timepoints=14,
+        max_timepoints=14,
     )
     X = _make_hierarchical(
         random_state=TEST_RANDOM_SEEDS[1],
         hierarchy_levels=(2, 2),
-        min_timepoints=20,
-        max_timepoints=20,
+        min_timepoints=14,
+        max_timepoints=14,
     )
     return y, X
 
