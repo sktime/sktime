@@ -255,7 +255,7 @@ class Lag(BaseTransformer):
                 Xt = Xt.reindex(X_orig_idx)
             # sub-set to shifted index, if "shifted"
             # this is necessary if we added indices from _X above
-            if index_out == "shifted" and remember_data:
+            if index_out == "shift" and remember_data:
                 Xt = Xt.loc[X_orig_idx_shifted]
 
             Xt_list.append(Xt)
