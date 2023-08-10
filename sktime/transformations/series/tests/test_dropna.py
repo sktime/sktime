@@ -19,71 +19,23 @@ X_few_na.loc["1950", "GNP"] = np.nan
 
 X_few_na_expected = {
     "0": {
-        "None": X_few_na.drop(
-            labels=[
-                "1947",
-                "1950",
-            ],
-            axis=0,
-        ),
-        "any": X_few_na.drop(
-            labels=[
-                "1947",
-                "1950",
-            ],
-            axis=0,
-        ),
+        "None": X_few_na.drop(labels=["1947", "1950"], axis=0),
+        "any": X_few_na.drop(labels=["1947", "1950"], axis=0),
         "all": X_few_na,
     },
     "index": {
-        "None": X_few_na.drop(
-            labels=[
-                "1947",
-                "1950",
-            ],
-            axis=0,
-        ),
-        "any": X_few_na.drop(
-            labels=[
-                "1947",
-                "1950",
-            ],
-            axis=0,
-        ),
+        "None": X_few_na.drop(labels=["1947", "1950"], axis=0),
+        "any": X_few_na.drop(labels=["1947", "1950"], axis=0),
         "all": X_few_na,
     },
     "1": {
-        "None": X_few_na.drop(
-            labels=[
-                "GNPDEFL",
-                "GNP",
-            ],
-            axis=1,
-        ),
-        "any": X_few_na.drop(
-            labels=[
-                "GNPDEFL",
-                "GNP",
-            ],
-            axis=1,
-        ),
+        "None": X_few_na.drop(labels=["GNPDEFL", "GNP"], axis=1),
+        "any": X_few_na.drop(labels=["GNPDEFL", "GNP"], axis=1),
         "all": X_few_na,
     },
     "columns": {
-        "None": X_few_na.drop(
-            labels=[
-                "GNPDEFL",
-                "GNP",
-            ],
-            axis=1,
-        ),
-        "any": X_few_na.drop(
-            labels=[
-                "GNPDEFL",
-                "GNP",
-            ],
-            axis=1,
-        ),
+        "None": X_few_na.drop(labels=["GNPDEFL", "GNP"], axis=1),
+        "any": X_few_na.drop(labels=["GNPDEFL", "GNP"], axis=1),
         "all": X_few_na,
     },
 }
@@ -112,24 +64,12 @@ X_many_na_expected = {
     "1": {
         "None": X_many_na.drop(labels=X_many_na.columns, axis=1),
         "any": X_many_na.drop(labels=X_many_na.columns, axis=1),
-        "all": X_many_na.drop(
-            labels=[
-                "ARMED",
-                "POP",
-            ],
-            axis=1,
-        ),
+        "all": X_many_na.drop(labels=["ARMED", "POP"], axis=1),
     },
     "columns": {
         "None": X_many_na.drop(labels=X_many_na.columns, axis=1),
         "any": X_many_na.drop(labels=X_many_na.columns, axis=1),
-        "all": X_many_na.drop(
-            labels=[
-                "ARMED",
-                "POP",
-            ],
-            axis=1,
-        ),
+        "all": X_many_na.drop(labels=["ARMED", "POP"], axis=1),
     },
 }
 
