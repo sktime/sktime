@@ -340,8 +340,22 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         expected_index = fh.to_absolute(cutoff).to_pandas()
 
-        if strategy == "last" and sp == 1:
-            y_old = lagger.fit_transform(_y)
+        def naive_last(template):
+            """Fill a pd.Series at expected_index via the 'last' strategy.
+
+            Parameters
+            ----------
+            template : pd.Series
+                template with values to use to fill the output
+
+            Returns
+            -------
+            y_pred : pd.Series, with index expected_index
+                The value ``y_pred.loc[i]`` is the value ``template.loc[j]``
+                where ``j`` is the largest element of ``template.index``
+                with the property ``j<i``.
+            """
+            y_old = lagger.fit_transform(template)
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
@@ -349,6 +363,11 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred = y_filled.loc["b"]
             # convert to pd.Series from pd.DataFrame
             y_pred = y_pred.iloc[:, 0]
+
+            return y_pred
+
+        if strategy == "last" and sp == 1:
+            y_pred = naive_last(_y)
 
         elif strategy == "last" and sp > 1:
             y_old = _pivot_sp(_y, sp, anchor_side="end")
