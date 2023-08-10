@@ -62,8 +62,7 @@ def test_lag_fit_transform_out_values(X, index_out, remember_data):
         assert all(Xt.iloc[2].values == X_trafo.iloc[0].values)
 
     elif index_out == "shift":
-        assert len(Xt) == len(X)
-        assert X.index[2:].isin(Xt.index).all()
+        assert all(Xt.values == X_trafo.values)
 
 
 @pytest.mark.parametrize("X", X_fixtures)
