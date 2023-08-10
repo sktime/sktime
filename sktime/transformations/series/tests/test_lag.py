@@ -42,6 +42,7 @@ def test_lag_fit_transform_out_index(X, index_out):
     elif index_out == "shift":
         assert len(Xt) == len(X)
         assert X.index[2:].isin(Xt.index).all()
+        assert not X.index[:2].isin(Xt.index).any()
 
 
 @pytest.mark.parametrize("X", X_fixtures)
