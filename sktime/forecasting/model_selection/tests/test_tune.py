@@ -103,7 +103,7 @@ PIPE_GRID = {
 }
 CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],
-    SlidingWindowSplitter(fh=1, initial_window=15),
+    SlidingWindowSplitter(fh=1, initial_window=10, step_length=3),
 ]
 ERROR_SCORES = [np.nan, "raise", 1000]
 
