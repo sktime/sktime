@@ -9,14 +9,14 @@ dynamic time warrping aligners.
 Dynamic time warping
 --------------------
 
+.. currentmodule:: sktime.dists_kernels.indep
+
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
     AlignerDTW
     AlignerDTWfromDist
-
-.. currentmodule:: sktime.dists_kernels.indep
 
 .. currentmodule:: sktime.alignment.dtw_numba
 
@@ -25,3 +25,15 @@ Dynamic time warping
     :template: class.rst
 
     AlignerDtwNumba
+
+
+Edit distance based aligners
+----------------------------
+
+.. currentmodule:: sktime.alignment.edit_numba
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AlignerEditNumba
