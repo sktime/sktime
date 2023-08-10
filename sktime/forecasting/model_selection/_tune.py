@@ -579,10 +579,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import (
-            ExpandingWindowSplitter,
-            SingleWindowSplitter,
-        )
+        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import (
@@ -605,7 +602,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         }
         params3 = {
             "forecaster": NaiveForecaster(strategy="mean"),
-            "cv": ExpandingWindowSplitter(initial_window=12),
+            "cv": SingleWindowSplitter(fh=1),
             "param_grid": {"window_length": [3, 4]},
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
@@ -780,10 +777,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import (
-            ExpandingWindowSplitter,
-            SingleWindowSplitter,
-        )
+        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
@@ -804,7 +798,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         }
         params3 = {
             "forecaster": NaiveForecaster(strategy="mean"),
-            "cv": ExpandingWindowSplitter(initial_window=12),
+            "cv": SingleWindowSplitter(fh=1),
             "param_distributions": {"window_length": [3, 4]},
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
