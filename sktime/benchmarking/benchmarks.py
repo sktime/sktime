@@ -28,7 +28,7 @@ def _check_estimators_type(objs: Union[dict, list, BaseEstimator]) -> None:
     if isinstance(objs, BaseEstimator):
         objs = [objs]
     items = objs.values() if isinstance(objs, dict) else objs
-    compatible = all([is_initalised_estimator(estimator) for estimator in items])
+    compatible = all(is_initalised_estimator(estimator) for estimator in items)
     if not compatible:
         raise TypeError("Estimator must be an initialised BaseEstimator object.")
 
