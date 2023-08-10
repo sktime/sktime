@@ -32,7 +32,9 @@ class DropNA(BaseTransformer):
     thresh : int or float, optional
          If int, require at least that many non-NA values (as in pandas.dropna).
          If float, minimum share of non-NA values for rows/columns to be
-         retained. Cannot be combined with how.
+         retained. Fraction must be contained within (0,1]. Setting fraction
+         to 1.0 is equivalent to setting how='any'. thresh cannot be combined
+         with how.
 
     remember : bool, default False if axis==0, True if axis==1
         If True, drops the same rows/columns in transform as in fit. If false,
@@ -114,7 +116,7 @@ class DropNA(BaseTransformer):
                 f"thresh must be of type: {self.VALID_THRESH_TYPES}"
             )
         if (isinstance(thresh, int) and not (thresh > 0)) or (
-            isinstance(thresh, float) and not (0 < thresh < 1)
+            isinstance(thresh, float) and not (0 < thresh <= 1)
         ):
             raise ValueError(
                 "thresh must be positive integer or a fraction between zero and one"
