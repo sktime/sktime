@@ -110,15 +110,29 @@ class TDistribution(BaseDistribution):
         r"""Return element/entry-wise variance of the distribution.
 
         Let :math:`X` be a random variable with the distribution of `self`.
-        Returns :math:`\mathbb{V}[X] = \mathbb{E}\left(X - \mathbb{E}[X]\right)^2`
+        Returns,
+
+        .. math::
+            \mathbb{V}[X] = \begin{cases}
+                \frac{\nu}{\nu - 2} & \text{if} \nu > 2, \\
+                \infty              & \text{if} \nu = 2, \\
+                \text{NaN}          & \text{if} \nu < 2.
+            \begin{cases}
+
+        Where :math:`\nu` is the degrees of freedom of the t-distribution.
 
         Returns
         -------
         pd.DataFrame with same rows, columns as `self`
         variance of distribution (entry-wise)
         """
-        sd_arr = self._sigma
-        return pd.DataFrame(sd_arr, index=self.index, columns=self.columns) ** 2
+        df_arr = self._df.copy()
+        df_arr = df_arr.astype(np.float32)
+        df_arr[df_arr < 2] = np.nan
+        df_arr[df_arr == 2] = np.inf
+        mask = (df_arr > 2) & (df_arr != np.inf)
+        df_arr[mask] = df_arr[mask] / (df_arr[mask] - 2)
+        return pd.DataFrame(df_arr, index=self.index, columns=self.columns)
 
     def pdf(self, x):
         """Probability density function."""
