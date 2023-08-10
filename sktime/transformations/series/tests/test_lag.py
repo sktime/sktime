@@ -15,7 +15,7 @@ from sktime.utils._testing.series import _make_series
 # some examples with range vs time index, univariate vs multivariate (mv)
 X_range_idx = get_examples("pd.DataFrame")[0]
 X_range_idx_mv = get_examples("pd.DataFrame")[1]
-X_time_idx = pd.DataFrame(_make_series())
+X_time_idx = _make_series()
 X_time_idx_mv = _make_series(n_columns=2)
 
 # all fixtures
@@ -50,6 +50,8 @@ def test_lag_fit_transform_out_index(X, index_out):
 def test_lag_fit_transform_out_values(X, index_out):
     """Test that index sets of fit_transform output behave as expected."""
     t = Lag(2, index_out=index_out)
+    if isinstance(X, pd.Series):
+        X = pd.DataFrame(X)
     X_fit = X[:2]
     X_trafo = X[2:]
     Xt = t.fit(X_fit).transform(X_trafo)
