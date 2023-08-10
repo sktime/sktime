@@ -381,9 +381,9 @@ class NaiveForecaster(_BaseWindowForecaster):
                 where ``j`` is the largest element of ``template.index``
                 with the property ``j<i``.
             """
-            ix_old = pd.DataFrame(template.index, index=template.index, columns=[0])
+            ix_old = ix_to_float_series(template, out="DataFrame")
             ix_old = lagger.fit_transform(ix_old)
-            ix_new = pd.DataFrame(expected_index, index=expected_index, columns=[0])
+            ix_new = ix_to_float_series(expected_index, out="DataFrame")
             full_ix = pd.concat([ix_old, ix_new], keys=["a", "b"]).sort_index(level=-1)
             ix_diff_full = full_ix.diff().fillna(method="ffill")
             # subset to index of expected_index
@@ -393,17 +393,19 @@ class NaiveForecaster(_BaseWindowForecaster):
 
             return ix_diff
 
-        def ix_to_float_series(ix):
-            """Coerce index to a pd.Series with integer index and float values.
+        def ix_to_float_series(ix, out="Series"):
+            """Coerce index to a pandas object with integer index and float values.
 
             Parameters
             ----------
             ix : pd.Series, or pd.Index
                 if pd.Series, is replaced by ix.index
+            out : str, one of "Series" or "DataFrame"
+                typ
 
             Returns
             -------
-            s : pd.Series
+            s : pd.Series or pd.DataFrame
                 s.index[i] is i
                 s[i] is ix[i], coerced to float
             """
@@ -415,6 +417,10 @@ class NaiveForecaster(_BaseWindowForecaster):
             if s.values.dtype == "object":
                 s = s.astype("int64")
                 s = s.astype("float64")
+
+            if out == "DataFrame":
+                s = pd.DataFrame(s)
+                s.columns = [0]
 
             return s
 
