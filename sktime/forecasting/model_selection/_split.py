@@ -342,9 +342,15 @@ class BaseSplitter(BaseObject):
         Single step ahead or array of steps ahead to forecast.
     """
 
-    _tags = {"split_hierarchical": False}
-    # split_hierarchical: whether _split supports hierarchical types natively
-    # if not, splitter broadcasts over instances
+    _tags = {
+        "split_hierarchical": False,
+        # split_hierarchical: whether _split supports hierarchical types natively
+        # if not, splitter broadcasts over instances
+        "split_series_uses": "iloc",
+        # split_series_uses: "iloc" or "loc", whether split_series under the hood
+        # calls split ("iloc") or split_loc ("loc"). Setting this can give
+        # performance advantages, e.g., if "loc" is faster to obtain.
+    }
 
     def __init__(
         self,
@@ -458,8 +464,31 @@ class BaseSplitter(BaseObject):
         """
         y_index = self._coerce_to_index(y)
 
-        for train, test in self.split(y_index):
-            yield y_index[train], y_index[test]
+        yield from self._split_loc(y_index)
+
+    def _split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
+        """Get loc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split_loc
+
+        Default implements using split and y.index to look up the loc indices.
+        Can be overridden for faster implementation.
+
+        Parameters
+        ----------
+        y : pd.Index
+            index of time series to split
+
+        Yields
+        ------
+        train : pd.Index
+            Training window indices, loc references to training indices in y
+        test : pd.Index
+            Test window indices, loc references to test indices in y
+        """
+        for train, test in self.split(y):
+            # default gets loc index from iloc index
+            yield y[train], y[test]
 
     def split_series(self, y: ACCEPTED_Y_TYPES) -> Iterator[SPLIT_TYPE]:
         """Split `y` into training and test windows.
@@ -480,9 +509,26 @@ class BaseSplitter(BaseObject):
         """
         y, y_orig_mtype = self._check_y(y)
 
-        for train, test in self.split(y.index):
-            y_train = y.iloc[train]
-            y_test = y.iloc[test]
+        use_iloc_or_loc = self.get_tag("split_series_uses", "iloc", raise_error=False)
+
+        if use_iloc_or_loc == "iloc":
+            splitter_name = "split"
+        elif use_iloc_or_loc == "loc":
+            splitter_name = "split_loc"
+        else:
+            raise RuntimeError(
+                f"error in {self.__class__.__name__}.split_series: "
+                f"split_series_uses tag must be 'iloc' or 'loc', "
+                f"but found {use_iloc_or_loc}"
+            )
+
+        _split = getattr(self, splitter_name)
+        _slicer = getattr(y, use_iloc_or_loc)
+
+        for train, test in _split(y.index):
+            y_train = _slicer[train]
+            y_test = _slicer[test]
+
             y_train = convert_to(y_train, y_orig_mtype)
             y_test = convert_to(y_test, y_orig_mtype)
             yield y_train, y_test
@@ -1438,8 +1484,12 @@ class SameLocSplitter(BaseSplitter):
     >>> list(splitter.split(y)) # doctest: +SKIP
     """
 
-    _tags = {"split_hierarchical": True}
-    # SameLocSplitter supports hierarchical pandas index
+    _tags = {
+        "split_hierarchical": True,
+        # SameLocSplitter supports hierarchical pandas index
+        "split_series_uses": "loc",
+        # loc is quicker to get since that is directly passed
+    }
 
     def __init__(self, cv, y_template=None):
         self.cv = cv
@@ -1457,6 +1507,31 @@ class SameLocSplitter(BaseSplitter):
             y_train_iloc = y.get_indexer(y_train_loc)
             y_test_iloc = y.get_indexer(y_test_loc)
             yield y_train_iloc, y_test_iloc
+
+    def _split_loc(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Get loc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split_loc
+
+        Parameters
+        ----------
+        y : pd.Index
+            index of time series to split
+
+        Yields
+        ------
+        train : pd.Index
+            Training window indices, loc references to training indices in y
+        test : pd.Index
+            Test window indices, loc references to test indices in y
+        """
+        cv = self.cv
+        if self.y_template is None:
+            y_template = y
+        else:
+            y_template = self.y_template
+
+        yield from cv.split_loc(y_template)
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
@@ -1538,6 +1613,10 @@ class TestPlusTrainSplitter(BaseSplitter):
         self.cv = cv
         super().__init__()
 
+        # dispatch split_series to the same split/split_loc as the wrapped cv
+        # for performance reasons
+        self.clone_tags(cv, "split_series_uses")
+
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`.
 
@@ -1560,6 +1639,30 @@ class TestPlusTrainSplitter(BaseSplitter):
         for y_train_inner, y_test_inner in cv.split(y):
             y_train_self = y_train_inner
             y_test_self = np.union1d(y_train_inner, y_test_inner)
+            yield y_train_self, y_test_self
+
+    def _split_loc(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Get loc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split_loc
+
+        Parameters
+        ----------
+        y : pd.Index
+            index of time series to split
+
+        Yields
+        ------
+        train : pd.Index
+            Training window indices, loc references to training indices in y
+        test : pd.Index
+            Test window indices, loc references to test indices in y
+        """
+        cv = self.cv
+
+        for y_train_inner, y_test_inner in cv.split_loc(y):
+            y_train_self = y_train_inner
+            y_test_self = y_train_inner.union(y_test_inner)
             yield y_train_self, y_test_self
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:

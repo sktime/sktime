@@ -218,6 +218,6 @@ def _sample_node(index_table, level, sampler):
     """Sample a number of nodes depending on the size of hierarchy and level."""
     nodes = np.arange(1, np.floor(len(index_table) / level) + 1, 1)
     # return a single sample of them
-    sample_nodes = int(sampler.choice(nodes, size=1))
+    sample_nodes = int(sampler.choice(nodes, size=1)[0])
 
     return sample_nodes
