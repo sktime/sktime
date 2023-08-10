@@ -7,7 +7,7 @@ import pandas as pd
 from sktime.alignment.base import BaseAligner
 
 
-class AlignerMtNaive(BaseAligner):
+class AlignerNaive(BaseAligner):
     """Naive strategies for multiple alignment.
 
     Parameters
