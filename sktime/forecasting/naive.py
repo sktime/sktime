@@ -416,7 +416,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         elif strategy == "drift":
 
-            offset = self.window_length_
+            offset = self.window_length_ - 1
 
             # below, denote by last(i) the largest j in _y.index
             # such that j < i
