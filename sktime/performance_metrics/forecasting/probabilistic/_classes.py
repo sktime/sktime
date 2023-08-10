@@ -33,41 +33,6 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         for interval and quantile losses only
             if True, metric/loss is averaged by upper/lower and/or quantile
             if False, metric/loss is not averaged by upper/lower and/or quantile
-    
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
-    >>> y_true = pd.Series([3, -0.5, 2, 7, 2])
-    >>> y_pred = pd.DataFrame({
-    >>>     ('Quantiles', 0.05): [1.25, 0, 1, 4, 0.625],
-    >>>     ('Quantiles', 0.5): [2.5, 0, 2, 8, 1.25],
-    >>>     ('Quantiles', 0.95): [3.75, 0, 3, 12, 1.875],
-    >>> })
-    >>> pl = PinballLoss()
-    >>> pl(y_true, y_pred)
-    0.1791666666666667
-    >>> pl = PinballLoss(score_average=False)
-    >>> pl(y_true, y_pred).to_numpy()
-    array([0.16625, 0.275  , 0.09625])
-    >>> y_true = pd.DataFrame({
-    >>>     "Quantiles1": [3, -0.5, 2, 7, 2],
-    >>>     "Quantiles2": [4, 0.5, 3, 8, 3],
-    >>> })
-    >>> y_pred = pd.DataFrame({
-    >>>     ('Quantiles1', 0.05): [1.5, -1, 1, 4, 0.65],
-    >>>     ('Quantiles1', 0.5): [2.5, 0, 2, 8, 1.25],
-    >>>     ('Quantiles1', 0.95): [3.5, 4, 3, 12, 1.85],
-    >>>     ('Quantiles2', 0.05): [2.5, 0, 2, 8, 1.25],
-    >>>     ('Quantiles2', 0.5): [5.0, 1, 4, 16, 2.5],
-    >>>     ('Quantiles2', 0.95): [7.5, 2, 6, 24, 3.75],
-    >>> })
-    >>> pl = PinballLoss(multioutput='raw_values')
-    >>> pl(y_true, y_pred).to_numpy()
-    array([0.16233333, 0.465     ])
-    >>> pl = PinballLoss(multioutput=[0.3, 0.7])
-    >>> pl(y_true, y_pred).to_numpy()
-    array([0.0735, 0.275 , 0.1385, 0.0475, 1.1   , 0.2475])
     """
 
     _tags = {
@@ -423,6 +388,41 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
     alpha (optional) : float, list or np.ndarray, specifies what quantiles to \
         evaluate metric at.
+    
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
+    >>> y_true = pd.Series([3, -0.5, 2, 7, 2])
+    >>> y_pred = pd.DataFrame({
+    ...     ('Quantiles', 0.05): [1.25, 0, 1, 4, 0.625],
+    ...     ('Quantiles', 0.5): [2.5, 0, 2, 8, 1.25],
+    ...     ('Quantiles', 0.95): [3.75, 0, 3, 12, 1.875],
+    ... })
+    >>> pl = PinballLoss()
+    >>> pl(y_true, y_pred)
+    0.1791666666666667
+    >>> pl = PinballLoss(score_average=False)
+    >>> pl(y_true, y_pred).to_numpy()
+    array([0.16625, 0.275  , 0.09625])
+    >>> y_true = pd.DataFrame({
+    ...     "Quantiles1": [3, -0.5, 2, 7, 2],
+    ...     "Quantiles2": [4, 0.5, 3, 8, 3],
+    ... })
+    >>> y_pred = pd.DataFrame({
+    ...     ('Quantiles1', 0.05): [1.5, -1, 1, 4, 0.65],
+    ...     ('Quantiles1', 0.5): [2.5, 0, 2, 8, 1.25],
+    ...     ('Quantiles1', 0.95): [3.5, 4, 3, 12, 1.85],
+    ...     ('Quantiles2', 0.05): [2.5, 0, 2, 8, 1.25],
+    ...     ('Quantiles2', 0.5): [5.0, 1, 4, 16, 2.5],
+    ...     ('Quantiles2', 0.95): [7.5, 2, 6, 24, 3.75],
+    ... })
+    >>> pl = PinballLoss(multioutput='raw_values')
+    >>> pl(y_true, y_pred).to_numpy()
+    array([0.16233333, 0.465     ])
+    >>> pl = PinballLoss(multioutput=[0.3, 0.7])
+    >>> pl(y_true, y_pred).to_numpy()
+    array([0.0735, 0.275 , 0.1385, 0.0475, 1.1   , 0.2475])
     """
 
     _tags = {
