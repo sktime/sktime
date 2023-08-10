@@ -39,8 +39,8 @@ from sktime.utils._testing.panel import _make_panel_X, make_classification_probl
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 DATA_ARGS = [
-    {"return_numpy": True, "n_columns": 2},
-    {"return_numpy": False, "n_columns": 2},
+    {"return_numpy": True, "n_columns": 2, "n_instances": 7, "n_timepoints": 12},
+    {"return_numpy": False, "n_columns": 2, "n_instances": 7, "n_timepoints": 12},
 ]
 
 # StratifiedGroupKFold(n_splits=2), removed because it is not available in sklearn 0.24
