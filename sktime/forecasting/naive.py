@@ -393,6 +393,31 @@ class NaiveForecaster(_BaseWindowForecaster):
 
             return ix_diff
 
+        def ix_to_float_series(ix):
+            """Coerce index to a pd.Series with integer index and float values.
+
+            Parameters
+            ----------
+            ix : pd.Series, or pd.Index
+                if pd.Series, is replaced by ix.index
+
+            Returns
+            -------
+            s : pd.Series
+                s.index[i] is i
+                s[i] is ix[i], coerced to float
+            """
+            if hasattr(ix, "index"):
+                ix = ix.index
+
+            s = pd.Series(ix, index=ix)
+
+            if s.values.dtype == "object":
+                s = s.astype("int64")
+                s = s.astype("float64")
+
+            return s
+
         if strategy == "last" and sp == 1:
             y_pred = naive_last(_y)
 
@@ -426,7 +451,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             # y_diff_w_new[i] = y_diff_w[last(i)]
             y_diff_w_new = naive_last(y_diff_w)
 
-            y_ix = pd.Series(_y.index, index=_y.index)
+            y_ix = ix_to_float_series(_y.index)
             # y_ix_diff_w[j] = _y.index[j] - _y.index[j-offset]
             y_ix_diff_w = y_ix.diff(offset).fillna(method="bfill")
             # y_ix_diff_w_new[i] = y_ix_diff_w[last(i)]
@@ -436,7 +461,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_last = naive_last(_y)
 
             # y_ix_diff[i] = i - last(i)
-            y_ix_diff = diff_to_last(_y)
+            y_ix_diff = diff_to_last(y_ix)
 
             y_pred = y_last + y_ix_diff * y_diff_w_new / y_ix_diff_w_new
 
