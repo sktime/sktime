@@ -782,7 +782,7 @@ class SplitterSummarizer(BaseTransformer):
 
     index : str, optional (default="last")
     Determines the indexing approach for the resulting series.
-    If "last", the index of each series' row is used.
+    If "last", the latest index of the split is used.
     If anything else, the row's number becomes the index.
 
     remember_data : bool, optional (default=True)
