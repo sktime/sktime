@@ -367,7 +367,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             return y_pred
 
         def diff_to_last(template):
-            """Fill a pd.Series at expected_index with diff to last ix in template
+            """Fill a pd.Series at expected_index with diff to last ix in template.
 
             Parameters
             ----------
@@ -454,7 +454,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             Exogenous time series
         """
         strategy = self.strategy
-        NEW_PREDICT = ["last"]
+        NEW_PREDICT = ["last", "drift"]
 
         if strategy in NEW_PREDICT:
             return self._predict_naive(fh=fh, X=X)
