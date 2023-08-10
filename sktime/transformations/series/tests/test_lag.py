@@ -62,7 +62,6 @@ def test_lag_fit_transform_out_values(X, index_out, remember_data):
             assert all(Xt.iloc[0].values == X_fit.iloc[0].values)
         else:  # remember_data == False
             assert all(Xt.iloc[0].isna().values)
-        assert all(Xt.iloc[2].values == X_trafo.iloc[0].values)
         if len(Xt) > 2:
             assert all(Xt.iloc[2].values == X_trafo.iloc[0].values)
 
