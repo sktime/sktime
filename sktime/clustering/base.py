@@ -241,8 +241,9 @@ class BaseClusterer(BaseEstimator):
         """
         preds = self._predict(X)
         n_instances = len(preds)
-        n_clusters = self.n_clusters
-        if n_clusters is None:
+        if hasattr(self, "n_clusters") and self.n_clusters is not None:
+            n_clusters = self.n_clusters
+        else:
             n_clusters = max(preds) + 1
         dists = np.zeros((X.shape[0], n_clusters))
         for i in range(n_instances):
