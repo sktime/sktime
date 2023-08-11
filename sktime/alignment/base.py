@@ -37,6 +37,7 @@ class BaseAligner(BaseEstimator):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": False,  # does compute/return overall distance?
         "capability:distance-matrix": False,  # does compute/return distance matrix?
+        "alignment_type": "full",  # does the aligner produce full or partial alignment
     }
 
     def __init__(self):
