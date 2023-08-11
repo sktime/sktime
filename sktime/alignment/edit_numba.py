@@ -190,7 +190,7 @@ class AlignerEditNumba(BaseAligner):
         X1 = X[0].values
         X2 = X[1].values
 
-        metric_key = self.metric_key
+        metric_key = self.distance
         kwargs = self.kwargs
 
         path, dist = distance_alignment_path(X1, X2, metric=metric_key, **kwargs)
