@@ -269,6 +269,6 @@ class AlignerEditNumba(BaseAligner):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params0 = {}
-        params1 = {"distance": "edr"}
+        params1 = {"distance": "twe"}
 
         return [params0, params1]
