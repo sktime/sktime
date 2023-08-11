@@ -143,6 +143,8 @@ def all_estimators(
         "utils",
         "all",
         "plotting",
+        "_split",
+        "test_split",
     )
 
     result = []

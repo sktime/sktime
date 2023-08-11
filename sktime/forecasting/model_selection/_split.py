@@ -69,7 +69,7 @@ SPLIT_GENERATOR_TYPE = Iterator[SPLIT_ARRAY_TYPE]
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 warnings.warn(
-    "This module is deprecated, use sktime.split instead",
+    f"The '{__name__}' module is deprecated, use 'sktime.split' instead",
     DeprecationWarning,
     stacklevel=2,
 )
