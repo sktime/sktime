@@ -66,7 +66,7 @@ class AlignerNaive(BaseAligner):
 
             elif strategy == "start-end":
                 # indices are linearly spaced to fill entire length and rounded
-                vals = np.linspace(start=0, sstart=nXi - 1, num=alignlen)
+                vals = np.linspace(start=0, stop=nXi - 1, num=alignlen)
                 vals = np.round(vals).astype("int64")
             else:
                 raise ValueError(
