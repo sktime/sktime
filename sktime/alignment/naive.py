@@ -10,6 +10,12 @@ from sktime.alignment.base import BaseAligner
 class AlignerNaive(BaseAligner):
     """Naive strategies for multiple alignment.
 
+    Naive strategies are:
+
+    * top: aligns tops (lowest index), does no squeezing/stretching
+    * bottom: aligns bottoms (highest index), no squeezing/stretching
+    * top-bottom: aligns tops and bottoms, stretches linearly and rounds
+
     Parameters
     ----------
     strategy: str, one of "top", "bottom", "top-bottom" (default)
@@ -19,7 +25,6 @@ class AlignerNaive(BaseAligner):
     """
 
     def __init__(self, strategy="top-bottom"):
-
         self.strategy = strategy
 
     def _fit(self, X, Z=None):
@@ -40,7 +45,6 @@ class AlignerNaive(BaseAligner):
         align = [pd.DataFrame({"ind_align": np.arange(alignlen)})]
 
         for i, Xi in enumerate(X):
-
             col = "ind" + str(i)
             nXi = len(Xi)
 
@@ -60,7 +64,7 @@ class AlignerNaive(BaseAligner):
 
             elif strategy == "top-bottom":
                 # indices are linearly spaced to fill entire length and rounded
-                vals = np.linspace(start=0, stop=nXi-1, num=alignlen)
+                vals = np.linspace(start=0, stop=nXi - 1, num=alignlen)
                 vals = np.round(vals).astype("int64")
             else:
                 raise ValueError(
