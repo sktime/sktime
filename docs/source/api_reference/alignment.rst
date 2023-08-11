@@ -4,7 +4,7 @@ Time series alignment
 =====================
 
 The :mod:`sktime.alignment` module contains time series aligners, such as
-dynamic time warrping aligners.
+dynamic time warping aligners.
 
 Dynamic time warping
 --------------------
