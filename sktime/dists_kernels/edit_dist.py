@@ -110,6 +110,7 @@ class EditDist(BasePairwiseTransformerPanel):
     >>> distmat = d.transform(X)  # doctest: +SKIP
 
     distances are also callable, this does the same:
+
     >>> distmat = d(X)  # doctest: +SKIP
     """
 
