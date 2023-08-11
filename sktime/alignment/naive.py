@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Naive aligners, aligning tops/bottoms."""
+"""Naive aligners, aligning starts/ends."""
 
 import numpy as np
 import pandas as pd
@@ -12,20 +12,22 @@ class AlignerNaive(BaseAligner):
 
     Naive strategies supported by this estimator are:
 
-    * top: aligns tops (lowest index), does no squeezing/stretching
-    * bottom: aligns bottoms (highest index), no squeezing/stretching
-    * top-bottom: aligns tops and bottoms, stretches linearly and rounds
+    * start: aligns starts (lowest index), does no squeezing/stretching
+    * end: aligns ends (highest index), no squeezing/stretching
+    * start-end: aligns starts and ends, stretches linearly and rounds
 
     Parameters
     ----------
-    strategy: str, one of "top", "bottom", "top-bottom" (default)
-        top: aligns tops (lowest index), does no squeezing/stretching
-        bottom: aligns bottoms (highest index), no squeezing/stretching
-        top-bottom: aligns tops and bottoms, stretches linearly and rounds
+    strategy: str, one of "start", "end", "start-end" (default)
+        start: aligns starts (lowest index), does no squeezing/stretching
+        end: aligns ends (highest index), no squeezing/stretching
+        start-end: aligns starts and ends, stretches linearly and rounds
     """
 
-    def __init__(self, strategy="top-bottom"):
+    def __init__(self, strategy="start-end"):
         self.strategy = strategy
+
+        super().__init__()
 
     def _fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.
@@ -48,27 +50,27 @@ class AlignerNaive(BaseAligner):
             col = "ind" + str(i)
             nXi = len(Xi)
 
-            if strategy == "top":
+            if strategy == "start":
                 # indices are consecutive and padded at the end
                 padl = alignlen - nXi
                 vals = np.arange(nXi, dtype="object")
                 vals = np.pad(vals, (0, padl), constant_values=np.nan)
                 vals = pd.array(vals, dtype="Int64")
 
-            elif strategy == "bottom":
+            elif strategy == "end":
                 # indices are consecutive and padded at the start
                 padl = alignlen - nXi
                 vals = np.arange(nXi, dtype="object")
                 vals = np.pad(vals, (padl, 0), constant_values=np.nan)
                 vals = pd.array(vals, dtype="Int64")
 
-            elif strategy == "top-bottom":
+            elif strategy == "start-end":
                 # indices are linearly spaced to fill entire length and rounded
-                vals = np.linspace(start=0, stop=nXi - 1, num=alignlen)
+                vals = np.linspace(start=0, sstart=nXi - 1, num=alignlen)
                 vals = np.round(vals).astype("int64")
             else:
                 raise ValueError(
-                    "strategy must be one of 'top', 'bottom', or 'top-bottom'"
+                    "strategy must be one of 'start', 'end', or 'start-end'"
                 )
 
             align = align + [pd.DataFrame({col: vals})]
@@ -91,3 +93,28 @@ class AlignerNaive(BaseAligner):
                 iloc index of X[i] mapped to alignment coordinate for alignment
         """
         return self.align
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for aligners.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params0 = {}
+        params1 = {"strategy": "start"}
+        params2 = {"strategy": "end"}
+
+        return [params0, params1, params2]
