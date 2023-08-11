@@ -77,9 +77,9 @@ class AlignerDTW(BaseAligner):
         self.variable_to_align = variable_to_align
 
         if open_end or open_begin:
-            self.set_tag({"alignment_type": "partial"})
+            self.set_tags(**{"alignment_type": "partial"})
         else:
-            self.set_tag({"alignment_type": "full"})
+            self.set_tags(**{"alignment_type": "full"})
 
     def _fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.
