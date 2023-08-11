@@ -58,6 +58,7 @@ from sktime.datatypes import (
     VectorizedDF,
     check_is_mtype,
     check_is_scitype,
+    convert,
     convert_to,
     mtype_to_scitype,
     update_data,
@@ -927,6 +928,7 @@ class BaseTransformer(BaseEstimator):
 
         # checking X
         X_metadata_required = ["is_univariate"]
+
         X_valid, msg, X_metadata = check_is_scitype(
             X,
             scitype=ALLOWED_SCITYPES,
@@ -998,6 +1000,7 @@ class BaseTransformer(BaseEstimator):
                 raise TypeError("y " + msg_invalid_input)
 
             y_scitype = y_metadata["scitype"]
+            y_mtype = y_metadata["mtype"]
 
         else:
             # y_scitype is used below - set to None if y is None
@@ -1023,7 +1026,9 @@ class BaseTransformer(BaseEstimator):
                 as_scitype = "Panel"
             else:
                 as_scitype = "Hierarchical"
-            X = convert_to_scitype(X, to_scitype=as_scitype, from_scitype=X_scitype)
+            X, X_mtype = convert_to_scitype(
+                X, to_scitype=as_scitype, from_scitype=X_scitype, return_to_mtype=True
+            )
             X_scitype = as_scitype
             # then pass to case 1, which we've reduced to, X now has inner scitype
 
@@ -1032,8 +1037,9 @@ class BaseTransformer(BaseEstimator):
         #   and does not require vectorization because of cols (multivariate)
         if not requires_vectorization:
             # converts X
-            X_inner = convert_to(
+            X_inner = convert(
                 X,
+                from_type=X_mtype,
                 to_type=X_inner_mtype,
                 store=metadata["_converter_store_X"],
                 store_behaviour="reset",
@@ -1041,8 +1047,9 @@ class BaseTransformer(BaseEstimator):
 
             # converts y, returns None if y is None
             if y_inner_mtype != ["None"] and y is not None:
-                y_inner = convert_to(
+                y_inner = convert(
                     y,
+                    from_type=y_mtype,
                     to_type=y_inner_mtype,
                     as_scitype=y_scitype,
                 )
@@ -1145,11 +1152,17 @@ class BaseTransformer(BaseEstimator):
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
             #   this happens only for Series, not Panel
             if X_input_scitype == "Series":
+                if X_input_mtype == "pd.Series":
+                    Xt_metadata_required = ["is_univariate"]
+                else:
+                    Xt_metadata_required = []
+
                 valid, msg, metadata = check_is_mtype(
                     Xt,
                     ["pd.DataFrame", "pd.Series", "np.ndarray"],
-                    return_metadata=True,
+                    return_metadata=Xt_metadata_required,
                 )
+
                 if not valid:
                     raise TypeError(
                         f"_transform output of {type(self)} does not comply "
@@ -1157,9 +1170,20 @@ class BaseTransformer(BaseEstimator):
                         " for mtype specifications. Returned error message:"
                         f" {msg}. Returned object: {Xt}"
                     )
-                if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
+                if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
+                # Xt_mtype = metadata["mtype"]
+            # else:
+            #     Xt_mtype = X_input_mtype
 
+            # Xt = convert(
+            #     Xt,
+            #     from_type=Xt_mtype,
+            #     to_type=X_output_mtype,
+            #     as_scitype=X_input_scitype,
+            #     store=_converter_store_X,
+            #     store_behaviour="freeze",
+            # )
             Xt = convert_to(
                 Xt,
                 to_type=X_output_mtype,
