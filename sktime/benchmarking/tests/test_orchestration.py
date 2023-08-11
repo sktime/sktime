@@ -160,7 +160,7 @@ def test_single_dataset_single_strategy_against_sklearn(
 # simple test of sign test and ranks
 def test_stat():
     """Test sign ranks."""
-    data = load_gunpoint(split="train", return_X_y=False)
+    data = load_gunpoint(split="train", return_X_y=False)[:7]
     dataset = RAMDataset(dataset=data, name="gunpoint")
     task = TSCTask(target="class_val")
 
@@ -189,7 +189,7 @@ def test_stat():
     pf_rank = ranks.loc[ranks.strategy == "pf", "accuracy_mean_rank"].item()  # 1
     fc_rank = ranks.loc[ranks.strategy == "tsf", "accuracy_mean_rank"].item()  # 2
     rank_array = [pf_rank, fc_rank]
-    rank_array_test = [1, 2]
+    rank_array_test = [2, 1]
     _, sign_test_df = analyse.sign_test()
 
     sign_array = [

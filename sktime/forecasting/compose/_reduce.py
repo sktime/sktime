@@ -916,7 +916,7 @@ class _RecursiveReducer(_Reducer):
                     X_pred = X_pred.reshape(1, -1)
 
                 # Generate predictions.
-                y_pred[i] = self.estimator_.predict(X_pred)
+                y_pred[i] = self.estimator_.predict(X_pred)[0]
 
                 # Update last window with previous prediction.
                 last[:, 0, window_length + i] = y_pred[i]
@@ -1063,7 +1063,7 @@ class _DirRecReducer(_Reducer):
             if self._estimator_scitype == "tabular-regressor":
                 X_pred = X_pred.reshape(1, -1)
 
-            y_pred[i] = self.estimators_[i].predict(X_pred)
+            y_pred[i] = self.estimators_[i].predict(X_pred)[0]
 
             # Update the last window with previously predicted value.
             X_full[:, :, window_length + i] = y_pred[i]
@@ -2449,6 +2449,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
+        "handles-missing-data": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }

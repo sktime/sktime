@@ -267,3 +267,179 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         final_interval_predictions = pandas.concat(interval_predictions, copy=False)
 
         return final_interval_predictions
+
+
+class StatsForecastBackAdapter:
+    """StatsForecast Back Adapter.
+
+    StatsForecastBackAdapter is a wrapper for sktime forecasters to be used in
+    StatsForecast composite models.
+
+    Parameters
+    ----------
+    estimator : sktime forecaster
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastMSTL
+    >>> from sktime.forecasting.ets import AutoETS
+
+    >>> y = load_airline()
+    >>> trend_forecaster = AutoETS() # doctest: +SKIP
+    >>> model = StatsForecastMSTL( # doctest: +SKIP
+            season_length=[3,12],
+            trend_forecaster=trend_forecaster
+        )
+    >>> fitted_model = model.fit(y=y) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=[1,2,3]) # doctest: +SKIP
+    """
+
+    _tags = {
+        "python_dependencies": ["statsforecast"],
+    }
+
+    def __init__(self, estimator):
+        super().__init__()
+
+        self.estimator = estimator
+
+    def __repr__(self):
+        return "StatsForecastBackAdapter"
+
+    def fit(self, y, X=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : ndarray
+            Time series of shape (t, ) without missing values
+        X : typing.Optional[numpy.ndarray], default=None
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self.estimator = self.estimator.fit(y=y, X=X)
+
+        return self
+
+    def predict(self, h, X=None, level=None):
+        """Make forecasts.
+
+        Parameters
+        ----------
+        h : int
+            Forecast horizon.
+        X : typing.Optional[numpy.ndarray], default=None
+            Optional exogenous of shape (h, n_x).
+        level : typing.Optional[typing.Tuple[int]], default=None
+            Confidence levels (0-100) for prediction intervals.
+
+        Returns
+        -------
+        y_pred : dict
+            Dictionary with entries mean for point predictions and level_* for
+            probabilistic predictions.
+        """
+        mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
+        if level is None:
+            return {"mean": mean}
+
+        level = sorted(level)
+        coverage = [round(1 - (_l / 100), 2) for _l in level]
+
+        pred_int = self.estimator.predict_interval(
+            fh=range(1, h + 1), X=X, coverage=coverage
+        )
+
+        return self.format_pred_int("mean", mean, pred_int, coverage, level)
+
+    def predict_in_sample(self, level=None):
+        """Access fitted MSTL insample predictions.
+
+        Parameters
+        ----------
+        level : typing.Optional[typing.Tuple[int]]
+            Confidence levels (0-100) for prediction intervals.
+
+        Returns
+        -------
+        y_pred : dict
+            Dictionary with entries mean for point predictions and level_* for
+            probabilistic predictions.
+        """
+        fitted = self.estimator.predict(self.estimator._y.index)[:, 0]
+
+        if level is None:
+            return {"fitted": fitted}
+
+        level = sorted(level)
+        coverage = [round(1 - (_l / 100), 2) for _l in level]
+        pred_int = self.estimator.predict_interval(
+            fh=self.estimator._y.index, X=self.estimator._X, coverage=coverage
+        )
+        return self.format_pred_int("fitted", fitted, pred_int, coverage, level)
+
+    def format_pred_int(self, y_pred_name, y_pred, pred_int, coverage, level):
+        pred_int_prefix = "fitted-" if y_pred_name == "fitted" else ""
+
+        pred_int_no_lev = pred_int.droplevel(0, axis=1)
+
+        return {
+            y_pred_name: y_pred,
+            **{
+                f"{pred_int_prefix}lo-{_l}": pred_int_no_lev[(c, "lower")].values
+                for c, _l in zip(reversed(coverage), reversed(level))
+            },
+            **{
+                f"{pred_int_prefix}hi-{_l}": pred_int_no_lev[(c, "upper")].values
+                for c, _l in zip(coverage, level)
+            },
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        if _check_soft_dependencies("statsmodels", severity="none"):
+            from sktime.forecasting.theta import ThetaForecaster
+            from sktime.forecasting.var import VAR
+
+            params = [
+                {
+                    "estimator": ThetaForecaster(),
+                },
+                {
+                    "estimator": VAR(),
+                },
+            ]
+        else:
+            from sktime.forecasting.naive import NaiveForecaster
+
+            params = [
+                {
+                    "estimator": NaiveForecaster(),
+                },
+            ]
+
+        return params
