@@ -10,7 +10,7 @@ from sktime.alignment.base import BaseAligner
 class AlignerNaive(BaseAligner):
     """Naive strategies for multiple alignment.
 
-    Naive strategies are:
+    Naive strategies supported by this estimator are:
 
     * top: aligns tops (lowest index), does no squeezing/stretching
     * bottom: aligns bottoms (highest index), no squeezing/stretching
