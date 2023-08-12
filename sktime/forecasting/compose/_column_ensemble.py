@@ -47,6 +47,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     >>> from sktime.datasets import load_longley
 
     Using integers (column iloc references) for indexing:
+
     >>> y = load_longley()[1][["GNP", "UNEMP"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
@@ -58,6 +59,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     >>> y_pred = forecaster.predict()
 
     Using strings for indexing:
+
     >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
     >>> fc = ColumnEnsembleForecaster(
     ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
@@ -67,6 +69,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     >>> y_pred = fc.predict()
 
     Applying one forecaster to multiple columns, multivariate:
+
     >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
     >>> fc = ColumnEnsembleForecaster(
     ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
