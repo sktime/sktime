@@ -26,7 +26,7 @@ def run_test_for_class(cls):
     """
     from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
     from sktime.utils.git_diff import is_class_changed
-    from sktime.utils.validations._dependencies import _check_estimator_deps
+    from sktime.utils.validation._dependencies import _check_estimator_deps
 
     if not _check_estimator_deps(cls, severity="none"):
         return False
