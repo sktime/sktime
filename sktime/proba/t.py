@@ -5,7 +5,7 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 import pandas as pd
-from scipy.special import erfinv, gamma, hyp2f1, loggamma
+from scipy.special import gamma, hyp2f1, loggamma
 
 from sktime.proba.base import BaseDistribution
 
@@ -32,8 +32,8 @@ class TDistribution(BaseDistribution):
     """
 
     _tags = {
-        "capabilities:approx": ["pdfnorm"],
-        "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
+        "capabilities:approx": ["pdfnorm", "energy", "ppf"],
+        "capabilities:exact": ["mean", "var", "pdf", "log_pdf", "cdf"],
         "distr:measuretype": "continuous",
     }
 
@@ -64,35 +64,6 @@ class TDistribution(BaseDistribution):
             to_broadcast += [self.columns.to_numpy()]
         bc = np.broadcast_arrays(*to_broadcast)
         return bc[0], bc[1], bc[2]
-
-    def energy(self, x=None):
-        r"""Energy of self, w.r.t. self or a constant frame x.
-
-        Let :math:`X, Y` be i.i.d. random variables with the distribution of `self`.
-
-        If `x` is `None`, returns :math:`\mathbb{E}[|X-Y|]` (per row), "self-energy".
-        If `x` is passed, returns :math:`\mathbb{E}[|X-x|]` (per row), "energy wrt x".
-
-        Parameters
-        ----------
-        x : None or pd.DataFrame, optional, default=None
-            if pd.DataFrame, must have same rows and columns as `self`
-
-        Returns
-        -------
-        pd.DataFrame with same rows as `self`, single column `"energy"`
-        each row contains one float, self-energy/energy as described above.
-        """
-        if x is None:
-            sd_arr = self._sigma
-            energy_arr = 2 * np.sum(sd_arr, axis=1) / np.sqrt(np.pi)
-            energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
-        else:
-            mu_arr, sd_arr = self._mu, self._sigma
-            c_arr = (x - mu_arr) * (2 * self.cdf(x) - 1) + 2 * sd_arr**2 * self.pdf(x)
-            energy_arr = np.sum(c_arr, axis=1)
-            energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
-        return energy
 
     def mean(self):
         r"""Return expected value of the distribution.
@@ -160,12 +131,6 @@ class TDistribution(BaseDistribution):
         cdf_arr = cdf_arr * hyp2f1(0.5, (d.df + 1) / 2, 3 / 2, -(x**2) / d.df)
         cdf_arr = 0.5 + cdf_arr / (np.sqrt(np.pi * d.df) * gamma(d.df / 2))
         return pd.DataFrame(cdf_arr, index=x.index, columns=x.columns)
-
-    def ppf(self, p):
-        """Quantile function = percent point function = inverse cdf."""
-        d = self.loc[p.index, p.columns]
-        icdf_arr = d.mu + d.sigma * np.sqrt(2) * erfinv(2 * p.values - 1)
-        return pd.DataFrame(icdf_arr, index=p.index, columns=p.columns)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
