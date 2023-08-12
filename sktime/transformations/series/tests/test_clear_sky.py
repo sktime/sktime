@@ -9,9 +9,8 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_solar
-from sktime.transformations.series.clear_sky import ClearSky
 from sktime.tests.test_switch import run_test_for_class
-
+from sktime.transformations.series.clear_sky import ClearSky
 
 output_chk = [0.0, 0.0, 0.901, 0.739, 0.618, 0.0]
 

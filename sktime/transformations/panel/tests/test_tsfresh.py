@@ -7,9 +7,9 @@ from sklearn.model_selection import train_test_split
 
 from sktime.datasets import load_arrow_head
 from sktime.datatypes import convert
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.utils._testing.panel import make_classification_problem
-from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
