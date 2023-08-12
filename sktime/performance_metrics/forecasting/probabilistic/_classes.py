@@ -388,7 +388,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
     alpha (optional) : float, list or np.ndarray, specifies what quantiles to \
         evaluate metric at.
-    
+
     Examples
     --------
     >>> import pandas as pd
