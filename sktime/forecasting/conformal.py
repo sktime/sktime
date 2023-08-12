@@ -475,6 +475,7 @@ class ConformalIntervals(BaseForecaster):
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-        params_list = {"forecaster": FORECASTER}
+        params1 = {"forecaster": FORECASTER}
+        params2 = {"forecaster": FORECASTER, "method": "conformal", "sample_frac": 0.9}
 
-        return params_list
+        return [params1, params2]
