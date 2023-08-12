@@ -77,14 +77,14 @@ def _create_hierarchical_data():
     y = _make_hierarchical(
         random_state=TEST_RANDOM_SEEDS[0],
         hierarchy_levels=(2, 2),
-        min_timepoints=14,
-        max_timepoints=14,
+        min_timepoints=15,
+        max_timepoints=15,
     )
     X = _make_hierarchical(
         random_state=TEST_RANDOM_SEEDS[1],
         hierarchy_levels=(2, 2),
-        min_timepoints=14,
-        max_timepoints=14,
+        min_timepoints=15,
+        max_timepoints=15,
     )
     return y, X
 
@@ -103,7 +103,7 @@ PIPE_GRID = {
 }
 CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],
-    SlidingWindowSplitter(fh=1, initial_window=15, step_length=3),
+    SlidingWindowSplitter(fh=1, initial_window=12, step_length=3),
 ]
 ERROR_SCORES = [np.nan, "raise", 1000]
 
