@@ -5,11 +5,25 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.classification.dummy import DummyClassifier
-from sktime.forecasting.dummy import ForecastKnownValues
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.estimator_checks import check_estimator
 
-EXAMPLE_CLASSES = [DummyClassifier, ForecastKnownValues, ExponentTransformer]
+
+class _NaiveLast(NaiveForecaster):
+    """Simplified NaiveForecaster for faster testing."""
+
+    def __init__(self, sp=1):
+        super().__init__(sp=sp)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
+        params_list = [{}, {"sp": 2}]
+        return params_list
+
+
+EXAMPLE_CLASSES = [DummyClassifier, _NaiveLast, ExponentTransformer]
 
 
 @pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
