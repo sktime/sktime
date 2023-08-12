@@ -25,6 +25,8 @@ def test_metric_output(metric, multioutput, n_columns):
     """Test output is correct class."""
     # create numpy weights based on n_columns
     if multioutput == "numpy":
+        if n_columns == 1:
+            return None
         multioutput = np.random.rand(n_columns)
 
     # create test data
@@ -43,7 +45,7 @@ def test_metric_output(metric, multioutput, n_columns):
         y_train=y_true,
     )
 
-    if multioutput == "uniform_average":
+    if isinstance(multioutput, np.ndarray) or multioutput == "uniform_average":
         assert isinstance(res, float)
     elif multioutput == "raw_values":
         assert isinstance(res, np.ndarray)

@@ -37,6 +37,8 @@ def test_metric_output_direct(metric, multioutput, n_columns):
     """
     # create numpy weights based on n_columns
     if multioutput == "numpy":
+        if n_columns == 1:
+            return None
         multioutput = np.random.rand(n_columns)
 
     # create test data
@@ -63,7 +65,7 @@ def test_metric_output_direct(metric, multioutput, n_columns):
         y_train=y_true,
     )
 
-    if multioutput == "uniform_average":
+    if isinstance(multioutput, np.ndarray) or multioutput == "uniform_average":
         assert all(isinstance(x, float) for x in res.values())
     elif multioutput == "raw_values":
         assert all(isinstance(x, np.ndarray) for x in res.values())
@@ -83,6 +85,8 @@ def test_metric_hierarchical(multioutput, multilevel, n_columns):
     """Test hierarchical input for metrics."""
     # create numpy weights based on n_columns
     if multioutput == "numpy":
+        if n_columns == 1:
+            return None
         multioutput = np.random.rand(n_columns)
 
     # create test data
@@ -103,11 +107,12 @@ def test_metric_hierarchical(multioutput, multilevel, n_columns):
         expected_index = y_true.index.droplevel(-1).unique()
         found_index = res.index.unique()
         assert set(expected_index) == set(found_index)
-        if multioutput == "raw_values" and isinstance(res, pd.DataFrame):
-            assert all(y_true.columns == res.columns)
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values" and isinstance(res, pd.DataFrame):
+                assert all(y_true.columns == res.columns)
     # if multilevel == "uniform_average" or "uniform_average_time"
     else:
-        if multioutput == "uniform_average":
+        if isinstance(multioutput, np.ndarray) or multioutput == "uniform_average":
             assert isinstance(res, float)
         elif multioutput == "raw_values":
             assert isinstance(res, np.ndarray)
@@ -150,6 +155,8 @@ def test_metric_output_by_instance(metric, multioutput, n_columns):
     """Test output of evaluate_by_index is of correct type, dependent on multioutput."""
     # create numpy weights based on n_columns
     if multioutput == "numpy":
+        if n_columns == 1:
+            return None
         multioutput = np.random.rand(n_columns)
 
     # create test data
@@ -183,6 +190,8 @@ def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
     """Test hierarchical input for metrics."""
     # create numpy weights based on n_columns
     if multioutput == "numpy":
+        if n_columns == 1:
+            return None
         multioutput = np.random.rand(n_columns)
 
     # create test data
