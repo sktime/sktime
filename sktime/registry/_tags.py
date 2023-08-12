@@ -421,6 +421,12 @@ ESTIMATOR_TAG_REGISTER = [
         "whether _split is natively implemented for hierarchical y types",
     ),
     (
+        "split_series_uses",
+        "splitter",
+        ("str", ["iloc", "loc", "custom"]),
+        "whether split_series uses split (iloc) or split_loc (loc) to split series",
+    ),
+    (
         "capabilities:exact",
         "distribution",
         ("list", "str"),

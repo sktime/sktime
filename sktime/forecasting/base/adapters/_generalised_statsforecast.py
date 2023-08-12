@@ -384,14 +384,16 @@ class StatsForecastBackAdapter:
     def format_pred_int(self, y_pred_name, y_pred, pred_int, coverage, level):
         pred_int_prefix = "fitted-" if y_pred_name == "fitted" else ""
 
+        pred_int_no_lev = pred_int.droplevel(0, axis=1)
+
         return {
             y_pred_name: y_pred,
             **{
-                f"{pred_int_prefix}lo-{_l}": pred_int[("Coverage", c, "lower")].values
+                f"{pred_int_prefix}lo-{_l}": pred_int_no_lev[(c, "lower")].values
                 for c, _l in zip(reversed(coverage), reversed(level))
             },
             **{
-                f"{pred_int_prefix}hi-{_l}": pred_int[("Coverage", c, "upper")].values
+                f"{pred_int_prefix}hi-{_l}": pred_int_no_lev[(c, "upper")].values
                 for c, _l in zip(coverage, level)
             },
         }
