@@ -7,7 +7,7 @@ from typing import Union
 import numpy as np
 
 from sktime.distances import pairwise_distance
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class EditDist(BasePairwiseTransformerPanel):
