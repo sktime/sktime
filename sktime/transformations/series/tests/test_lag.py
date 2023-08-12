@@ -5,6 +5,7 @@ __author__ = ["fkiraly"]
 
 import itertools
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -59,14 +60,14 @@ def test_lag_fit_transform_out_values(X, index_out, remember_data):
 
     if index_out in ["original", "extend"]:
         if remember_data:
-            assert all(Xt.iloc[0].values == X_fit.iloc[0].values)
+            np.testing.assert_equal(Xt.iloc[0].values, X_fit.iloc[0].values)
         else:  # remember_data == False
             assert all(Xt.iloc[0].isna().values)
         if len(Xt) > 2:
-            assert all(Xt.iloc[2].values == X_trafo.iloc[0].values)
+            np.testing.assert_equal(Xt.iloc[2].values, X_trafo.iloc[0].values)
 
     elif index_out == "shift":
-        assert (Xt.values == X_trafo.values).all()
+        np.testing.assert_equal(Xt.values, X_trafo.values)
 
 
 @pytest.mark.parametrize("X", X_fixtures)
