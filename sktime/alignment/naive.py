@@ -44,7 +44,7 @@ class AlignerNaive(BaseAligner):
         strategy = self.strategy
 
         alignlen = np.max([len(Xi) for Xi in X])
-        align = [pd.DataFrame({"ind_align": np.arange(alignlen)})]
+        align = []
 
         for i, Xi in enumerate(X):
             col = "ind" + str(i)
