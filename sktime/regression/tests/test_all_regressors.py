@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unit tests for all time series regressors."""
 
 __author__ = ["mloning", "TonyBagnall", "fkiraly"]

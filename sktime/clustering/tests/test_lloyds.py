@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for time series Lloyds partitioning."""
 from typing import Callable
 
@@ -25,7 +24,7 @@ class _test_class(TimeSeriesLloyds):
         return self.cluster_centers_
 
     def __init__(self):
-        super(_test_class, self).__init__(random_state=1, n_init=2)
+        super().__init__(random_state=1, n_init=2)
 
 
 def test_lloyds():

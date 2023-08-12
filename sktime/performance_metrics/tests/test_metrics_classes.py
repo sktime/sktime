@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for classes in _classes module."""
 from inspect import getmembers, isclass
 
@@ -13,6 +12,7 @@ from sktime.performance_metrics.forecasting import (
     make_forecasting_scorer,
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
 
 metric_classes = getmembers(_classes, isclass)
@@ -111,7 +111,6 @@ def test_custom_metric(greater_is_better):
     y = load_airline()
 
     def custom_mape(y_true, y_pred) -> float:
-
         eps = np.finfo(np.float64).eps
 
         result = np.mean(np.abs(y_true - y_pred) / np.maximum(np.abs(y_true), eps))
@@ -190,3 +189,31 @@ def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
 
     found_index = res.index.unique()
     assert set(expected_index) == set(found_index)
+
+
+@pytest.mark.parametrize("metric", metrics, ids=names)
+def test_uniform_average_time(metric):
+    """Tests that uniform_average_time indeed ignores index."""
+    y_true = _make_panel()
+    y_pred = _make_panel()
+
+    metric_obj = metric(multilevel="uniform_average_time")
+
+    y_true_noix = y_true.reset_index(drop=True)
+    y_pred_noix = y_pred.reset_index(drop=True)
+
+    res = metric_obj.evaluate(
+        y_true=y_true,
+        y_pred=y_pred,
+        y_pred_benchmark=y_pred,
+        y_train=y_true,
+    )
+
+    res_noix = metric_obj.evaluate(
+        y_true=y_true_noix,
+        y_pred=y_pred_noix,
+        y_pred_benchmark=y_pred_noix,
+        y_train=y_true_noix,
+    )
+
+    assert np.allclose(res, res_noix)

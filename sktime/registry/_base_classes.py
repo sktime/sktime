@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Register of estimator base classes corresponding to sktime scitypes.
 
 This module exports the following:
@@ -50,8 +49,6 @@ TRANSFORMER_MIXIN_LIST - list of string
 
 TRANSFORMER_MIXIN_LOOKUP - dictionary
     keys/entries are 0/1-th entries of TRANSFORMER_MIXIN_REGISTER
-
-
 """
 
 __author__ = ["fkiraly"]
@@ -64,7 +61,7 @@ from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
-from sktime.dists_kernels._base import (
+from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )

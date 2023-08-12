@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Lagging transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -140,7 +139,6 @@ class Lag(BaseTransformer):
         flatten_transform_index=True,
         keep_column_names=False,
     ):
-
         self.lags = lags
         self.freq = freq
         self.index_out = index_out
@@ -168,7 +166,7 @@ class Lag(BaseTransformer):
         msg = "freq must be a list of equal length to lags, or a scalar."
         assert len(self._lags) == len(self._freq), msg
 
-        super(Lag, self).__init__()
+        super().__init__()
 
         if index_out == "original":
             self.set_tags(**{"transform-returns-same-time-index": True})
@@ -225,7 +223,7 @@ class Lag(BaseTransformer):
         for lag, freq in shift_params:
             # need to deal separately with RangeIndex
             # because shift always cuts off the end values
-            if isinstance(lag, int) and X.index.is_integer():
+            if isinstance(lag, int) and pd.api.types.is_integer_dtype(X.index):
                 Xt = X.copy()
                 Xt.index = X.index + lag
                 X_orig_idx_shifted = X_orig_idx + lag
@@ -248,9 +246,9 @@ class Lag(BaseTransformer):
             # sub-set to original, if "original"
             if index_out == "original":
                 Xt = Xt.loc[X_orig_idx]
-            # sub-set to shifted index, if "shifted"
+            # sub-set to shifted index, if "shift"
             # this is necessary, because we added indices from _X above
-            if index_out == "shifted":
+            if index_out == "shift":
                 Xt = Xt.loc[X_orig_idx_shifted]
 
             Xt_list.append(Xt)
@@ -442,7 +440,6 @@ class ReducerTransform(BaseTransformer):
         transformers=None,
         impute_method="bfill",
     ):
-
         self.lags = lags
         self.freq = freq
         self.shifted_vars = shifted_vars
@@ -457,7 +454,7 @@ class ReducerTransform(BaseTransformer):
         else:
             self._lags = lags
 
-        super(ReducerTransform, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements trend based forecasters."""
@@ -70,9 +69,9 @@ class TrendForecaster(BaseForecaster):
     def __init__(self, regressor=None):
         # for default regressor, set fit_intercept=True
         self.regressor = regressor
-        super(TrendForecaster, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -118,8 +117,8 @@ class TrendForecaster(BaseForecaster):
             Point predictions for the forecast
         """
         # use relative fh as time index to predict
-        fh = self.fh.to_absolute(self.cutoff)
-        X_sklearn = _get_X_numpy_int_from_pandas(fh.to_pandas())
+        fh = self.fh.to_absolute_index(self.cutoff)
+        X_sklearn = _get_X_numpy_int_from_pandas(fh)
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
         y_pred = pd.Series(y_pred_sklearn, index=fh)
         y_pred.name = self._y.name
@@ -210,9 +209,9 @@ class PolynomialTrendForecaster(BaseForecaster):
         self.degree = degree
         self.with_intercept = with_intercept
         self.regressor_ = self.regressor
-        super(PolynomialTrendForecaster, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -266,8 +265,8 @@ class PolynomialTrendForecaster(BaseForecaster):
             Point predictions for the forecast
         """
         # use relative fh as time index to predict
-        fh = self.fh.to_absolute(self.cutoff)
-        X_sklearn = _get_X_numpy_int_from_pandas(fh.to_pandas())
+        fh = self.fh.to_absolute_index(self.cutoff)
+        X_sklearn = _get_X_numpy_int_from_pandas(fh)
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
         y_pred = pd.Series(y_pred_sklearn, index=fh)
         y_pred.name = self._y.name
@@ -471,9 +470,9 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend = forecaster_trend
         self.forecaster_seasonal = forecaster_seasonal
         self.forecaster_resid = forecaster_resid
-        super(STLForecaster, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         Parameters
@@ -533,7 +532,7 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend_.fit(y=self.trend_, X=X, fh=fh)
         self.forecaster_resid_.fit(y=self.resid_, X=X, fh=fh)
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters

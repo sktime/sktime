@@ -1,10 +1,9 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for model evaluation module.
 
-In particular, function `evaluate`, that performs time series
-cross-validation, is tested with various configurations for correct output.
+In particular, function `evaluate`, that performs time series cross-validation, is
+tested with various configurations for correct output.
 """
 
 __author__ = ["aiwalter", "mloning", "fkiraly"]
@@ -21,7 +20,9 @@ from sklearn.linear_model import LinearRegression
 
 from sktime.datasets import load_airline, load_longley
 from sktime.exceptions import FitFailedWarning
+from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
+from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -31,12 +32,24 @@ from sktime.forecasting.model_selection import (
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import TEST_FHS, TEST_STEP_LENGTHS_INT
 from sktime.performance_metrics.forecasting import (
+    MeanAbsoluteError,
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,
 )
+from sktime.performance_metrics.forecasting.probabilistic import (
+    CRPS,
+    EmpiricalCoverage,
+    LogLoss,
+    PinballLoss,
+)
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils._testing.series import _make_series
+from sktime.utils.validation._dependencies import (
+    _check_estimator_deps,
+    _check_soft_dependencies,
+)
 
 
 def _check_evaluate_output(out, cv, y, scoring):
@@ -88,7 +101,7 @@ def _check_evaluate_output(out, cv, y, scoring):
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", [7, 10])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
-@pytest.mark.parametrize("strategy", ["refit", "update"])
+@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize(
     "scoring",
     [
@@ -203,7 +216,7 @@ def test_evaluate_no_exog_against_with_exog():
 )
 @pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
 @pytest.mark.parametrize("return_data", [True, False])
-@pytest.mark.parametrize("strategy", ["refit", "update"])
+@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_error_score(error_score, return_data, strategy, backend):
     """Test evaluate to raise warnings and exceptions according to error_score value."""
@@ -233,7 +246,7 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
         if error_score == 1000:
             assert results["test_MeanAbsolutePercentageError"].max() == 1000
     if error_score == "raise":
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             evaluate(
                 forecaster=forecaster,
                 y=y,
@@ -246,16 +259,16 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
 
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_hierarchical(backend):
-    """Check that adding exogenous data produces different results."""
+    """Check that evaluate works with hierarchical data."""
     # skip test for dask backend if dask is not installed
     if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
         return None
 
     y = _make_hierarchical(
-        random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+        random_state=0, hierarchy_levels=(2, 2), min_timepoints=12, max_timepoints=12
     )
     X = _make_hierarchical(
-        random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+        random_state=42, hierarchy_levels=(2, 2), min_timepoints=12, max_timepoints=12
     )
     y = y.sort_index()
     X = X.sort_index()
@@ -272,3 +285,94 @@ def test_evaluate_hierarchical(backend):
 
     scoring_name = f"test_{scoring.name}"
     assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])
+
+
+# ARIMA models from statsmodels, pmdarima
+ARIMA_MODELS = [ARIMA, AutoARIMA]
+
+# breaks for SARIMAX, see issue #3670, this should be fixed
+# ARIMA_MODELS = [ARIMA, AutoARIMA, SARIMAX]
+
+
+@pytest.mark.parametrize("cls", ARIMA_MODELS)
+def test_evaluate_bigger_X(cls):
+    """Check that evaluating ARIMA models with exogeneous X works.
+
+    Example adapted from bug report #3657.
+    """
+    if not _check_estimator_deps(cls, severity="none"):
+        return None
+
+    y, X = load_longley()
+
+    f = cls.create_test_instance()
+    cv = ExpandingWindowSplitter(initial_window=3, step_length=1, fh=np.arange(1, 4))
+    loss = MeanAbsoluteError()
+
+    # check that this does not break
+    evaluate(forecaster=f, y=y, X=X, cv=cv, error_score="raise", scoring=loss)
+
+
+PROBA_METRICS = [CRPS, EmpiricalCoverage, LogLoss, PinballLoss]
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("n_columns", [1, 2])
+@pytest.mark.parametrize("metric", PROBA_METRICS)
+def test_evaluate_probabilistic(n_columns, metric):
+    """Check that evaluate works with interval, quantile, and distribution forecasts."""
+    y = _make_series(n_columns=n_columns)
+
+    forecaster = AutoETS()
+    cv = SlidingWindowSplitter()
+    scoring = metric()
+    try:
+        out = evaluate(
+            forecaster,
+            cv,
+            y,
+            X=None,
+            scoring=scoring,
+            error_score="raise",
+        )
+        scoring_name = f"test_{scoring.name}"
+        assert scoring_name in out.columns
+    except NotImplementedError:
+        pass
+
+
+def test_evaluate_hierarchical_unequal_X_y():
+    """Test evaluate with hierarchical X and y where X is larger.
+
+    Tests failure case in bug report #4842.
+    """
+    from sktime.transformations.hierarchical.aggregate import Aggregator
+
+    # hierarchical/panel with 2-level pd.MultiIndex,
+    # level 0 with "A", and "B", dates from 2020-01-01 to 2020-01-10
+    df = pd.DataFrame(
+        index=pd.MultiIndex.from_product(
+            [["A", "B"], pd.date_range("2020-01-01", "2020-01-10").to_period("D")]
+        ),
+        data={"target": np.arange(20) % 10},
+    ).sort_index()
+    df = Aggregator().fit_transform(df)
+
+    y = df[df.index.get_level_values(-1) < "2020-01-08"]
+    X = df.copy()
+    cv = ExpandingWindowSplitter(initial_window=2, fh=[1], step_length=1)
+
+    f = NaiveForecaster()
+
+    # this fails in the case of #4842 as y and X have different length
+    res = evaluate(f, cv, y, X, error_score="raise")
+
+    # further sanity checks to pin down deterministic properties of return
+    assert isinstance(res, pd.DataFrame)
+    assert res.shape == (5, 5)
+
+    expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
+    _assert_array_almost_equal(res.iloc[:, 0].values, expected_cols)

@@ -6,7 +6,7 @@ Time series clustering
 
 The :mod:`sktime.clustering` module contains algorithms for time series clustering.
 
-All clusterers in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+All clusterers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="clusterer"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
@@ -20,6 +20,7 @@ Clustering models
     :template: class.rst
 
     TimeSeriesKMeans
+    TimeSeriesKMeansTslearn
 
 .. currentmodule:: sktime.clustering.k_medoids
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for tabular-to-panel distance aggregation/reduction."""
 import numpy as np
 

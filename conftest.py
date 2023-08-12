@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Main configuration file for pytest.
 
 Contents:
@@ -21,6 +20,16 @@ def pytest_addoption(parser):
         default=False,
         help="sub-sample estimators in tests by os/version matrix partition design",
     )
+    parser.addoption(
+        "--only_cython_estimators",
+        default=False,
+        help="test only cython estimators, with tag requires_cython=True",
+    )
+    parser.addoption(
+        "--only_changed_modules",
+        default=False,
+        help="test only cython estimators, with tag requires_cython=True",
+    )
 
 
 def pytest_configure(config):
@@ -29,3 +38,7 @@ def pytest_configure(config):
 
     if config.getoption("--matrixdesign") in [True, "True"]:
         test_all_estimators.MATRIXDESIGN = True
+    if config.getoption("--only_cython_estimators") in [True, "True"]:
+        test_all_estimators.CYTHON_ESTIMATORS = True
+    if config.getoption("--only_changed_modules") in [True, "True"]:
+        test_all_estimators.ONLY_CHANGED_MODULES = True

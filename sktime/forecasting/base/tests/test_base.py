@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing advanced functionality of the base class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -14,17 +13,23 @@ from pandas.testing import assert_series_equal
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.theta import ThetaForecaster
+from sktime.forecasting.var import VAR
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_estimator_deps,
+    _check_soft_dependencies,
+)
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
@@ -73,7 +78,7 @@ def test_vectorization_series_to_panel(mtype):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
@@ -126,7 +131,7 @@ PROBA_DF_METHODS = ["predict_interval", "predict_quantiles", "predict_var"]
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -162,7 +167,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -198,7 +203,7 @@ def test_vectorization_series_to_hier_proba(method, mtype):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -219,7 +224,7 @@ def test_vectorization_preserves_row_index_names(method):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
@@ -278,11 +283,36 @@ def test_vectorization_multivariate(mtype, exogeneous):
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
 )
+def test_col_vectorization_correct_col_order():
+    """Test that forecaster vectorization preserves column index ordering.
+
+    Failure case is as in issue #4683 where the column index is correct,
+    but the values are in fact coming from forecasters in jumbled order.
+    """
+    from sktime.datasets import load_macroeconomic
+
+    y = load_macroeconomic().iloc[:5]
+
+    f = NaiveForecaster()
+    # force univariate tag to trigger vectorization over columns for sure
+    f.set_tags(**{"scitype:y": "univariate"})
+
+    f.fit(y=y, fh=[1])
+    y_pred = f.predict()
+
+    # last value, so entries of last y column and y_pred should all be exactly equal
+    # if they were jumbled, as in #4683 by lexicographic column name order,
+    # this assertion would fail since the values are all different
+    assert (y_pred == y.iloc[4]).all().all()
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps([ThetaForecaster, VAR], severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_dynamic_tags_reset_properly():
     """Test that dynamic tags are being reset properly."""
     from sktime.forecasting.compose import MultiplexForecaster
-    from sktime.forecasting.theta import ThetaForecaster
-    from sktime.forecasting.var import VAR
 
     # this forecaster will have the scitype:y tag set to "univariate"
     f = MultiplexForecaster([("foo", ThetaForecaster()), ("var", VAR())])
@@ -295,14 +325,13 @@ def test_dynamic_tags_reset_properly():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ThetaForecaster, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_predict_residuals():
     """Test that predict_residuals has no side-effect."""
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.model_selection import temporal_train_test_split
-    from sktime.forecasting.theta import ThetaForecaster
 
     y = _make_series(n_columns=1)
     y_train, y_test = temporal_train_test_split(y)
@@ -318,7 +347,7 @@ def test_predict_residuals():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("nullable_type", ["Int64", "Float64", "boolean"])
@@ -327,16 +356,58 @@ def test_nullable_dtypes(nullable_type):
     dtype = nullable_type
 
     X = pd.DataFrame()
-    X["ints"] = pd.Series([1, 0] * 20, dtype=dtype)
-    X.index = pd.date_range("1/1/21", periods=40)
+    X["ints"] = pd.Series([1, 0] * 40, dtype=dtype)
+    X.index = pd.date_range("1/1/21", periods=80)
+    X_train = X.iloc[0:40]
+    X_test = X.iloc[40:80]
     y = pd.Series([1, 0] * 20, dtype=dtype)
     y.index = pd.date_range("1/1/21", periods=40)
 
     f = ARIMA()
 
-    fh = list(range(1, len(X) + 1))
-    f.fit(X=X, y=y, fh=fh)
-    y_pred = f.predict(X=X)
+    fh = list(range(1, len(X_test) + 1))
+    f.fit(X=X_train, y=y, fh=fh)
+    y_pred = f.predict(X=X_test)
     assert isinstance(y_pred, pd.Series)
     assert len(y_pred) == 40
     assert y_pred.dtype == "float64"
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(VAR, severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_range_fh_in_fit():
+    """Test using ``range`` in ``fit``."""
+    test_dataset = _make_panel(n_instances=10, n_columns=5)
+
+    var_model = VAR().fit(test_dataset, fh=range(1, 2 + 1))
+    var_predictions = var_model.predict()
+
+    assert isinstance(var_predictions, pd.DataFrame)
+    assert var_predictions.shape == (10 * 2, 5)
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(VAR, severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_range_fh_in_predict():
+    """Test using ``range`` in ``predict``."""
+    test_dataset = _make_panel(n_instances=10, n_columns=5)
+
+    var_model = VAR().fit(test_dataset)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "The forecasting horizon `fh` must be passed either to `fit` or `predict`,"
+            " but was found in neither."
+        ),
+    ):
+        _ = var_model.predict()
+
+    var_predictions = var_model.predict(fh=range(1, 2 + 1))
+
+    assert isinstance(var_predictions, pd.DataFrame)
+    assert var_predictions.shape == (10 * 2, 5)

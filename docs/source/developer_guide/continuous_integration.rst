@@ -104,6 +104,45 @@ Further, developer IDEs such as pycharm or vs code will automatically recognize
 the tests via ``pytest``, refer to the documentation of the IDEs for testing
 via the embedded graphical user interface.
 
+Running docstring examples via ``doctest``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sktime's Python modules are equipped with docstrings that include examples
+demonstrating the usage of specific classes within each module. These examples
+can be executed using doctest to ensure the expected functionality of the
+modules after making modifications, thereby identifying any unforeseen bugs.
+
+To run doctest on all the files with ``pytest``, navigate to the root directory and execute
+the following command:
+
+  .. code:: bash
+
+      pytest --doctest-modules
+
+To run doctest on all the files without ``pytest``, navigate to the root directory and execute
+the following command:
+
+(for ``UNIX`` based OS)
+  .. code:: bash
+
+      find . -name "*.py" -print0 | xargs -0 python -m doctest -v -o=ELLIPSIS
+
+(for windows)
+  .. code:: bash
+
+      for /r %G in (*.py) do python -m doctest -v "%G" -o=ELLIPSIS
+
+To run doctest on a specific module, navigate to the directory where the
+module is located and execute the following command:
+
+   .. code:: bash
+
+      python -m doctest -v -o=ELLIPSIS {filename}
+
+
+Executing this command will display the test results for all the docstrings
+contained within the module.
+
 Alternative: dockerized testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

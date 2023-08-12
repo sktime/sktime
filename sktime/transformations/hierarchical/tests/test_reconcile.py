@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """Tests for hierarchical reconcilers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -33,7 +32,7 @@ flatten_list = [True, False]
 @pytest.mark.parametrize("flatten", flatten_list)
 @pytest.mark.parametrize("no_levels", level_list)
 def test_reconciler_fit_transform(method, flatten, no_levels):
-    """Tests fit_trasnform and output of reconciler.
+    """Tests fit_transform and output of reconciler.
 
     Raises
     ------

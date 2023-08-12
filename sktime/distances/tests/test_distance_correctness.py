@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test the distance calculations are correct.
 
 Compare the distance calculations on the 1D and 2D (d,m) format input against the

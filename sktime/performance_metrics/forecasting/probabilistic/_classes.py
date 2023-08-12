@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from logging import warning
 
@@ -8,8 +7,9 @@ import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from sklearn.utils import check_array, check_consistent_length
 
-from sktime.datatypes import check_is_scitype, convert
+from sktime.datatypes import check_is_scitype, convert, convert_to
 from sktime.performance_metrics.forecasting._classes import BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._coerce import _coerce_to_scalar
 
 # TODO: Rework tests now
 
@@ -118,7 +118,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         out = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
         if self.score_average and multioutput == "uniform_average":
-            out = float(out.mean(axis=1))  # average over all
+            out = float(out.mean(axis=1).iloc[0])  # average over all
         if self.score_average and multioutput == "raw_values":
             out = out.groupby(axis=1, level=0).mean()  # average over scores
         if not self.score_average and multioutput == "uniform_average":
@@ -324,7 +324,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     def _get_alpha_from(self, y_pred):
         """Fetch the alphas present in y_pred."""
         alphas = np.unique(list(y_pred.columns.get_level_values(1)))
-        if not all(((alphas > 0) & (alphas < 1))):
+        if not all((alphas > 0) & (alphas < 1)):
             raise ValueError("Alpha must be between 0 and 1.")
 
         return alphas
@@ -340,7 +340,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         if not isinstance(alpha, np.ndarray):
             alpha = np.asarray(alpha)
 
-        if not all(((alpha > 0) & (alpha < 1))):
+        if not all((alpha > 0) & (alpha < 1)):
             raise ValueError("Alpha must be between 0 and 1.")
 
         return alpha
@@ -376,7 +376,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
 
 
 class PinballLoss(_BaseProbaForecastingErrorMetric):
-    """Evaluate the pinball loss at all quantiles given in data.
+    """Pinball loss aka quantile loss for quantile/interval predictions.
 
     Parameters
     ----------
@@ -462,7 +462,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
 
 class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
-    """Evaluate the pinball loss at all quantiles given in data.
+    """Empirical coverage percentage for interval predictions.
 
     Parameters
     ----------
@@ -529,7 +529,7 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
 
 class ConstraintViolation(_BaseProbaForecastingErrorMetric):
-    """Evaluate the pinball loss at all quantiles given in data.
+    """Percentage of interval constraint violations for interval predictions.
 
     Parameters
     ----------
@@ -598,6 +598,9 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
         return [params1]
 
 
+PANDAS_DF_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+
+
 class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
     """Intermediate base class for distributional prediction metrics/scores.
 
@@ -629,11 +632,15 @@ class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
         Returns
         -------
         loss : float or 1-column pd.DataFrame with calculated metric value(s)
+            float if multioutput = "uniform_average"
             metric is always averaged (arithmetic) over fh values
         """
         index_df = self.evaluate_by_index(y_true, y_pred, multioutput)
         out_df = pd.DataFrame(index_df.mean(axis=0)).T
         out_df.columns = index_df.columns
+
+        if multioutput == "uniform_average":
+            out_df = _coerce_to_scalar(out_df)
         return out_df
 
     def evaluate_by_index(
@@ -650,6 +657,8 @@ class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
             Must have same index and columns as y_true.
         """
         multivariate = self.multivariate
+
+        y_true = convert_to(y_true, to_type=PANDAS_DF_MTYPES)
 
         if multivariate:
             res = self._evaluate_by_index(
@@ -685,8 +694,12 @@ class LogLoss(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : str, "uniform_average" or "raw_values"
-        determines how multioutput results will be treated.
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines whether and how to aggregate metric for across variables.
+        If 'uniform_average' (default), errors are mean-averaged across variables.
+        If array-like, errors are weighted averaged across variables, values as weights.
+        If 'raw_values', does not average errors across variables, columns are retained.
     multivariate : bool, optional, default=False
         if True, behaves as multivariate log-loss
         log-loss is computed for entire row, results one score per row
@@ -729,13 +742,17 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : str, "uniform_average" or "raw_values"
-        determines how multioutput results will be treated.
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines whether and how to aggregate metric for across variables.
+        If 'uniform_average' (default), errors are mean-averaged across variables.
+        If array-like, errors are weighted averaged across variables, values as weights.
+        If 'raw_values', does not average errors across variables, columns are retained.
     multivariate : bool, optional, default=False
         if True, behaves as multivariate squared loss
-        log-loss is computed for entire row, results one score per row
+        squared loss is computed for entire row, results one score per row
         if False, is univariate squared loss
-        log-loss is computed per variable marginal, results in many scores per row
+        squared loss is computed per variable marginal, results in many scores per row
     """
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
@@ -771,13 +788,17 @@ class CRPS(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : str, "uniform_average" or "raw_values"
-        determines how multioutput results will be treated.
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines whether and how to aggregate metric for across variables.
+        If 'uniform_average' (default), errors are mean-averaged across variables.
+        If array-like, errors are weighted averaged across variables, values as weights.
+        If 'raw_values', does not average errors across variables, columns are retained.
     multivariate : bool, optional, default=False
-        if True, behaves as multivariate log-loss
-        log-loss is computed for entire row, results one score per row
-        if False, is univariate log-loss
-        log-loss is computed per variable marginal, results in many scores per row
+        if True, behaves as multivariate CRPS (sum of scores)
+        CRPS is computed for entire row, results one score per row
+        if False, is univariate log-loss, per variable
+        CRPS is computed per variable marginal, results in many scores per row
     """
 
     def __init__(self, multioutput="uniform_average", multivariate=False):

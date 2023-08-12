@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time series DBSCAN, wrapping sklearn DBSCAN."""
 
 __author__ = ["fkiraly"]
@@ -10,7 +9,7 @@ from sklearn.cluster import DBSCAN
 
 from sktime.clustering.base import BaseClusterer
 from sktime.datatypes import update_data
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class TimeSeriesDBSCAN(BaseClusterer):
@@ -84,7 +83,6 @@ class TimeSeriesDBSCAN(BaseClusterer):
         leaf_size=30,
         n_jobs=None,
     ):
-
         self.distance = distance
         self.eps = eps
         self.min_samples = min_samples
@@ -92,7 +90,7 @@ class TimeSeriesDBSCAN(BaseClusterer):
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
 
-        super(TimeSeriesDBSCAN, self).__init__()
+        super().__init__()
 
         if isinstance(distance, BasePairwiseTransformerPanel):
             tags_to_clone = [

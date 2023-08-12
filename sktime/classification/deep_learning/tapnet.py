@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for classification."""
 
 __author__ = [
@@ -17,8 +16,6 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.tapnet import TapNetNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class TapNetClassifier(BaseDeepClassifier):
@@ -115,7 +112,7 @@ class TapNetClassifier(BaseDeepClassifier):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super(TapNetClassifier, self).__init__()
+        super().__init__()
 
         self.batch_size = batch_size
         self.random_state = random_state

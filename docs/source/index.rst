@@ -4,7 +4,12 @@
 Welcome to sktime
 =================
 
-  A unified framework for machine learning with time series.
+A unified framework for machine learning with time series.
+
+.. topic:: Register as a user, or voter for sktime committees!
+
+    Prioritized bugfixes, shape the tech roadmap and governance policy.
+    `Register here <https://forms.gle/eVuzrCjKDRupxawL7>`_
 
 
 Mission
@@ -12,25 +17,21 @@ Mission
 
 .. include:: about/_mission.rst
 
+Features
+========
 
-Scope
-=====
+* **unified API** for ML/AI with time series, for model building, fitting, application, and validation
+* **support for a variety of learning tasks** including :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`regression <regression_ref>`, :ref:`clustering <clustering_ref>`.
+* **composite model building**, including pipelines with transformations, ensembles, tuning, reduction
+* interactive user experience with **scikit-learn like interface conventions**
 
-sktime features a unified interface for multiple time series learning tasks.
-Currently, we support :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`time series regression <regression_ref>` and :ref:`time series clustering <clustering_ref>`.
-We have experimental support for time series annotation.
-
-Features:
-
-* API for machine learning with time series, for the purpose of specifying, fitting, applying and validating machine learning models
-* Interactive user experience with scikit-learn like syntax conventions
-
-Technical specification:
+Technical specification
+=======================
 
 * In-memory computation of a single machine, no distributed computing
-* Medium-sized data in pandas and NumPy
+* Medium-sized data in pandas and NumPy based containers
 * Modular, principled and object-oriented API
-* Making use of interactive Python interpreter, no command-line interface or graphical user interface
+* Using interactive Python interpreter, no command-line interface or graphical user interface
 
 Contents
 ========

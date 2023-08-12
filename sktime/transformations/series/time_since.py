@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """A transformer to compute the time elapsed since a reference time."""
 from __future__ import annotations
@@ -17,7 +16,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class TimeSince(BaseTransformer):
-    """Computes element-wise time elapsed between the time index and a reference start time.
+    """Compute element-wise time elapsed between time index and a reference start time.
 
     Creates a column(s) which represents: `t` - `start`, where `start` is
     a reference time and `t` is the time index. The type of `start` must be
@@ -109,7 +108,7 @@ class TimeSince(BaseTransformer):
         self.freq = freq
         self.keep_original_columns = keep_original_columns
         self.positive_only = positive_only
-        super(TimeSince, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -130,7 +129,7 @@ class TimeSince(BaseTransformer):
         """
         time_index = _get_time_index(X)
 
-        if time_index.is_numeric():
+        if pd.api.types.is_numeric_dtype(time_index):
             if self.freq:
                 warnings.warn(
                     "Index is integer type. `freq` will be ignored.",
@@ -188,11 +187,12 @@ class TimeSince(BaseTransformer):
                     f"Period index. Check that `start` is of type "
                     f"pd.Period or a pd.Period parsable string."
                 )
-            elif time_index.is_numeric() and not isinstance(start_, (int, np.integer)):
-                raise ValueError(
-                    f"start_={start_} incompatible with a numeric index."
-                    f"Check that `start` is an integer."
-                )
+            elif pd.api.types.is_numeric_dtype(time_index):
+                if not isinstance(start_, (int, np.integer)):
+                    raise ValueError(
+                        f"start_={start_} incompatible with a numeric index."
+                        f"Check that `start` is an integer."
+                    )
 
         return self
 
@@ -275,7 +275,7 @@ class TimeSince(BaseTransformer):
                     # Compute time differences.
                     time_deltas = _get_period_diff_as_int(time_index, start_period)
 
-                elif time_index.is_numeric():
+                elif pd.api.types.is_numeric_dtype(time_index):
                     time_deltas = time_index - start_
             else:
                 time_deltas = time_index - start_
@@ -321,7 +321,7 @@ class TimeSince(BaseTransformer):
 
 
 def _get_period_diff_as_int(x: pd.PeriodIndex, y: pd.PeriodIndex) -> pd.Index:
-    return x.astype(int) - y.astype(int)
+    return x.astype("int64") - y.astype("int64")
 
 
 def _remove_digits_from_str(x: str) -> str:

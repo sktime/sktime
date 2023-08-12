@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Hidalgo (Heterogeneous Intrinsic Dimensionality Algorithm) Segmentation."""
 
 __author__ = ["KatieBuc"]
@@ -7,7 +5,6 @@ __all__ = ["Hidalgo"]
 
 
 from functools import reduce
-from typing import Union
 
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
@@ -115,7 +112,6 @@ class Hidalgo(BaseTransformer):
         f=None,
         seed=1,
     ):
-
         self.metric = metric
         self.K = K
         self.zeta = zeta
@@ -133,11 +129,10 @@ class Hidalgo(BaseTransformer):
         self.f = f
         self.seed = seed
 
-        super(Hidalgo, self).__init__()
+        super().__init__()
 
     def _get_neighbourhood_params(self, X):
-        """
-        Neighbourhood information from input data X.
+        """Neighbourhood information from input data X.
 
         Parameters
         ----------
@@ -208,8 +203,7 @@ class Hidalgo(BaseTransformer):
         return N_in, f1
 
     def _initialise_params(self, N, mu, Iin, _rng):
-        """
-        Initialise parameters used in algorithm.
+        """Initialise parameters used in algorithm.
 
         Outputs
         ----------
@@ -278,8 +272,7 @@ class Hidalgo(BaseTransformer):
         N_in,
         _rng,
     ):
-        """
-        Gibbs sampling method to find joint posterior distribution of target variables.
+        """Gibbs sampling method for joint posterior distribution of target variables.
 
         Notes
         -----
@@ -310,7 +303,6 @@ class Hidalgo(BaseTransformer):
         -------
         sampling : 2D np.ndarray of shape (n_iter, Npar), where Npar = N + 2 * K + 2 + 1
             posterior samples of d, p, Z and likelihood samples, respectively.
-
         """
         zeta = self.zeta
         q = self.q
@@ -439,7 +431,6 @@ class Hidalgo(BaseTransformer):
                 for k1 in range(K):
                     g = 0
                     if use_Potts:
-
                         n_in = sum([Z[Iin[q * i + j]] == k1 for j in range(q)])
 
                         m_in = sum(
@@ -509,7 +500,6 @@ class Hidalgo(BaseTransformer):
             return lik0, lik1
 
         for it in range(n_iter):
-
             d = sample_d(K, a1, b1, _rng)
             sampling = np.append(sampling, d)
 
@@ -603,7 +593,6 @@ class Hidalgo(BaseTransformer):
         maxlik = -1e10
 
         for _ in range(n_replicas):
-
             sampling = self._gibbs_sampling(
                 N,
                 mu,
@@ -628,9 +617,7 @@ class Hidalgo(BaseTransformer):
                 for it in range(n_iter)
                 if it % sampling_rate == 0 and it >= n_iter * burn_in
             ]
-            sampling = sampling[
-                idx,
-            ]
+            sampling = sampling[idx,]
 
             lik = np.mean(sampling[:, -1], axis=0)
 
@@ -720,7 +707,7 @@ class Hidalgo(BaseTransformer):
         }
 
 
-def binom(N: Union[int, float], q: Union[int, float]):
+def binom(N: float, q: float):
     """Calculate the binomial coefficient.
 
     Parameters

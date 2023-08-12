@@ -22,10 +22,10 @@ subject to `widening of governance model <https://github.com/sktime/community-or
      - :user:`jonathanbechtel`
    * - Franz Király
      - :user:`fkiraly`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
    * - Sagar Mishra
      - :user:`achieveordie`
+   * - Ugochukwu Onyeka
+     - :user:`onyekaugochukwu`
    * - Kiril Ralinovski
      - :user:`kirilral`
    * - Marc Rovira
@@ -40,6 +40,8 @@ Community Council Observers
 
    * - Name
      - GitHub ID
+   * - Benedikt Heidrich
+     - :user:`benheid`
    * - Jana Schmidberger
      - :user:`janasberger`
    * - Lovkush Agarwal
@@ -68,24 +70,34 @@ Core Developers
 
    * - Name
      - GitHub ID
+   * - Anirban Ray
+     - :user:`yarnabrina`
+   * - Benedikt Heidrich
+     - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
    * - Franz Király
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
+   * - Jonathan Bechtel
+     - :user:`jonathanbechtel`
+   * - Kiril Ralinovski
+     - :user:`kirilral`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
+   * - Marc Rovira
+     - :user:`marrov`
    * - Mirae Parker
      - :user:`miraep8`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
    * - Sagar Mishra
      - :user:`achieveordie`
    * - Stanislav Khrapov
      - :user:`khrapovs`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
+   * - Ugochukwu Onyeka
+     - :user:`onyekaugochukwu`
 
 Former Core Developers
 ----------------------
@@ -111,6 +123,8 @@ Former Core Developers
      - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
    * - Leonidas Tsaprounis
      - :user:`ltsaprounis`
    * - Łukasz Mentel

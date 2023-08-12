@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Extension template for pairwise distance or kernel on tabular data.
+"""Extension template for pairwise distance or kernel on tabular data.
 
 How to use this:
 - this is meant as a "fill in" template for easy extension
@@ -30,11 +28,7 @@ from sktime.dists_kernels import BasePairwiseTransformer
 # todo: add any necessary imports here
 
 # todo: if any imports are sktime soft dependencies:
-#  * make sure to fill in the "python_dependencies" tag with the package import name
-#  * add a _check_soft_dependencies warning here, example:
-#
-# from sktime.utils.validation._dependencies import check_soft_dependencies
-# _check_soft_dependencies("soft_dependency_name", severity="warning")
+# make sure to fill in the "python_dependencies" tag with the package import name
 
 
 class MyTrafoPw(BasePairwiseTransformer):
@@ -80,8 +74,8 @@ class MyTrafoPw(BasePairwiseTransformer):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTrafoPw" to the name of the class
-        super(MyTrafoPw, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

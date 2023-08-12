@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """Composer that creates distance from aligner."""
 
 __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class DistFromAligner(BasePairwiseTransformerPanel):
@@ -15,7 +14,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
 
     Components
     ----------
-    aligner: BaseAligner, must implement get_distances method
+    aligner: BaseAligner, must implement get_distance method
         if None, distance is equal zero
     """
 
@@ -25,10 +24,9 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, aligner=None):
-
         self.aligner = aligner
 
-        super(DistFromAligner, self).__init__()
+        super().__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.

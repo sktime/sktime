@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Abstract base class for unsupervised sequence aligners.
 
@@ -45,7 +44,7 @@ class BaseAligner(BaseEstimator):
         self._is_fitted = False
         self._X = None
 
-        super(BaseAligner, self).__init__()
+        super().__init__()
 
     def fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.

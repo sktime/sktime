@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Sklearn to sktime coercion utility."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 

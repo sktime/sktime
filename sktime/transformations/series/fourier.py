@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Fourier features for time series with long/complex seasonality."""
 
@@ -6,7 +5,7 @@ __author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
 from distutils.log import warn
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -15,8 +14,6 @@ from numpy.fft import rfft
 from sktime.transformations.base import BaseTransformer
 
 
-# TODO: Change the default value of `keep_original_columns` from True to False
-# and remove the warning in v0.17.0
 class FourierFeatures(BaseTransformer):
     r"""Fourier Features for time series seasonality.
 
@@ -40,7 +37,7 @@ class FourierFeatures(BaseTransformer):
 
     Parameters
     ----------
-    sp_list : List[Union[int, float]]
+    sp_list : List[float]
         list of seasonal periods
     fourier_terms_list : List[int]
         list of number of fourier terms (K) for each seasonal period.
@@ -53,7 +50,7 @@ class FourierFeatures(BaseTransformer):
         Specifies the frequency of the index of your data. The string should
         match a pandas offset alias:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
-    keep_original_columns :  boolean, optional, default=True
+    keep_original_columns : boolean, optional, default=False
         Keep original columns in X passed to `.transform()`
 
     References
@@ -112,24 +109,15 @@ class FourierFeatures(BaseTransformer):
 
     def __init__(
         self,
-        sp_list: List[Union[int, float]],
+        sp_list: List[float],
         fourier_terms_list: List[int],
         freq: Optional[str] = None,
-        keep_original_columns: Optional[bool] = True,
+        keep_original_columns: Optional[bool] = False,
     ):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list
         self.freq = freq
         self.keep_original_columns = keep_original_columns
-
-        warnings.warn(
-            "Currently the default value of `keep_original_columns\n"
-            " is `True`. In future releases this will be changed \n"
-            " to `False`. To keep the current behaviour explicitly \n"
-            " set `keep_original_columns=True`.",
-            FutureWarning,
-            stacklevel=2,
-        )
 
         if len(self.sp_list) != len(self.fourier_terms_list):
             raise ValueError(
@@ -143,7 +131,7 @@ class FourierFeatures(BaseTransformer):
                 "needs to be lower from the corresponding element of the sp_list"
             )
 
-        super(FourierFeatures, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -201,7 +189,7 @@ class FourierFeatures(BaseTransformer):
         # this is used to make sure that time t is calculated with reference to
         # the data passed on fit
         # store the integer form of the minimum date in the prediod index
-        self.min_t_ = np.min(time_index.astype(int))
+        self.min_t_ = np.min(time_index.astype("int64"))
 
         return self
 
@@ -229,7 +217,7 @@ class FourierFeatures(BaseTransformer):
             time_index = time_index.to_period(self.freq_)
 
         # get the integer form of the PeriodIndex
-        int_index = time_index.astype(int) - self.min_t_
+        int_index = time_index.astype("int64") - self.min_t_
 
         for sp_k in self.sp_k_pairs_list_:
             sp = sp_k[0]
@@ -301,7 +289,7 @@ class FourierTransform(BaseTransformer):
     }
 
     def __init__(self):
-        super(FourierTransform, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
