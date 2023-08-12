@@ -39,3 +39,4 @@ def test_contracted_hivecote_v2():
         random_state=0,
     )
     hc2.fit(X_train, y_train)
+ 
