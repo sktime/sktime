@@ -1232,7 +1232,7 @@ class BaseForecaster(BaseEstimator):
         return y_res
 
     def score(self, y, X=None, fh=None):
-        """Scores forecast against ground truth, using MAPE.
+        """Scores forecast against ground truth, using MAPE (non-symmetric).
 
         Parameters
         ----------
@@ -1252,7 +1252,7 @@ class BaseForecaster(BaseEstimator):
         Returns
         -------
         score : float
-            sMAPE loss of self.predict(fh, X) with respect to y_test.
+            MAPE loss of self.predict(fh, X) with respect to y_test.
 
         See Also
         --------
@@ -1260,12 +1260,12 @@ class BaseForecaster(BaseEstimator):
         """
         # no input checks needed here, they will be performed
         # in predict and loss function
-        # symmetric=True is default for mean_absolute_percentage_error
         from sktime.performance_metrics.forecasting import (
             mean_absolute_percentage_error,
         )
 
-        return mean_absolute_percentage_error(y, self.predict(fh, X))
+        # specify non-symmetric explicitly as it changed in the past
+        return mean_absolute_percentage_error(y, self.predict(fh, X), symmetric=False)
 
     def get_fitted_params(self, deep=True):
         """Get fitted parameters.
@@ -1410,10 +1410,11 @@ class BaseForecaster(BaseEstimator):
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
         FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
 
+        mtypes_messages = []
         for scitype in ALLOWED_SCITYPES:
             mtypes = set(scitype_to_mtype(scitype))
             mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
-            mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
+            mtypes_messages.append(f'"For {scitype} scitype: {mtypes}. ')
 
         # checking y
         if y is not None:
@@ -1432,7 +1433,7 @@ class BaseForecaster(BaseEstimator):
             )
             msg = (
                 "y must be in an sktime compatible format, "
-                "of scitype Series, Panel or Hierarchical, "
+                f"of scitype {', '.join(ALLOWED_SCITYPES)}, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 " See the forecasting tutorial examples/01_forecasting.ipynb, or"
@@ -1440,10 +1441,10 @@ class BaseForecaster(BaseEstimator):
                 "If you think y is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
                 "where mtype is the string of the type specification you want for y. "
-                "Possible mtype specification strings are as follows. "
+                "Possible mtype specification strings are as follows: "
             )
             if not y_valid:
-                raise TypeError(msg + mtypes_msg)
+                raise TypeError(msg + ", ".join(mtypes_messages))
 
             y_scitype = y_metadata["scitype"]
             self._y_mtype_last_seen = y_metadata["mtype"]
@@ -1498,7 +1499,7 @@ class BaseForecaster(BaseEstimator):
                 "Possible mtype specification strings are as follows. "
             )
             if not X_valid:
-                raise TypeError(msg + mtypes_msg)
+                raise TypeError(msg + ", ".join(mtypes_messages))
 
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype
@@ -1520,7 +1521,7 @@ class BaseForecaster(BaseEstimator):
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
                 # currently, check_equal_time_index only works for Series
-                # todo: fix this so the check is general, using get_time_index
+                # TODO: fix this so the check is general, using get_time_index
                 if not self.get_tag("ignores-exogeneous-X") and X_scitype == "Series":
                     check_equal_time_index(X, y, mode="contains")
 
@@ -1528,7 +1529,7 @@ class BaseForecaster(BaseEstimator):
                 raise TypeError("X and y must have the same scitype")
         # end compatibility checking X and y
 
-        # todo: add tests that :
+        # TODO: add tests that :
         #   y_inner_scitype are same as X_inner_scitype
         #   y_inner_scitype always includes "less index" scitypes
 

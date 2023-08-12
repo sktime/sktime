@@ -109,7 +109,7 @@ class ConformalIntervals(BaseForecaster):
     >>> gscv_with_conformal = PluginParamsForecaster(
     ...     gscv,
     ...     conformal_with_fallback,
-    ...     params={"best_forecaster": "forecaster"},
+    ...     params={"forecaster": "best_forecaster"},
     ... )
     >>> y = load_airline()
     >>> gscv_with_conformal.fit(y, fh=[1, 2, 3])

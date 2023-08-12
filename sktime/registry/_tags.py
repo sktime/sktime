@@ -134,7 +134,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer", "transformer-pairwise-panel", "param_est"],
+        [
+            "clusterer",
+            "forecaster",
+            "transformer",
+            "transformer-pairwise-panel",
+            "param_est",
+        ],
         (
             "list",
             [
@@ -413,6 +419,12 @@ ESTIMATOR_TAG_REGISTER = [
         "splitter",
         "bool",
         "whether _split is natively implemented for hierarchical y types",
+    ),
+    (
+        "split_series_uses",
+        "splitter",
+        ("str", ["iloc", "loc", "custom"]),
+        "whether split_series uses split (iloc) or split_loc (loc) to split series",
     ),
     (
         "capabilities:exact",

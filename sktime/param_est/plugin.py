@@ -44,7 +44,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         list of str: parameters in the list are plugged into parameters of the same name
             only parameters present in both `forecaster` and `param_est` are plugged in
         str: considered as a one-element list of str with the string as single element
-        dict: parameter with name of key is plugged into parameter with name of value
+        dict: parameter with name of value is plugged into parameter with name of key
             only keys present in `param_est` and values in `forecaster` are plugged in
     update_params : bool, optional, default=False
         whether fitted parameters by param_est_ are to be updated in self.update
@@ -55,6 +55,9 @@ class PluginParamsForecaster(_DelegatedForecaster):
         this clone is fitted in the pipeline when `fit` is called
     forecaster_ : sktime forecaster, clone of forecaster in `forecaster`
         this clone is fitted in the pipeline when `fit` is called
+    param_map_ : dict
+        mapping of parameters from `param_est_` to `forecaster_` used in `fit`,
+        after filtering for parameters present in both
 
     Examples
     --------
@@ -181,7 +184,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         self.param_map_ = param_map
 
         # obtain the values of fitted params, and set forecaster to those
-        new_params = {x: fitted_params[x] for x in param_map}
+        new_params = {k: fitted_params[v] for k, v in param_map.items()}
         forecaster.set_params(**new_params)
 
         # fit the forecaster, with the fitted parameter values
