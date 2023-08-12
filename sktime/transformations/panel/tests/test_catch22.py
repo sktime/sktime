@@ -7,7 +7,6 @@ from numpy import testing
 from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.transformations.panel.catch22wrapper import Catch22Wrapper
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.tests.test_switch import run_test_for_class
 
 
