@@ -2295,6 +2295,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "hliebert",
+      "name": "Helge Liebert",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20834265",
+      "profile": "https://github.com/hliebert",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }
