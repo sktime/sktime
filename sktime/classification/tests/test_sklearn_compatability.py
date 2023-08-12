@@ -107,7 +107,7 @@ def test_sklearn_cross_validation(data_args):
 def test_sklearn_cross_validation_iterators(data_args, cross_validation_method):
     """Test if sklearn cross-validation iterators can handle sktime panel data."""
     fit_args = make_classification_problem(**data_args)
-    groups = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10]
+    groups = [1, 1, 2, 2, 3, 3, 4]
 
     for train, test in cross_validation_method.split(*fit_args, groups=groups):
         assert isinstance(train, np.ndarray) and isinstance(test, np.ndarray)
