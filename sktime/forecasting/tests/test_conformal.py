@@ -33,7 +33,8 @@ def test_conformal_standard():
 def test_conformal_with_gscv():
     """With ForecastingGridSearchCV and parameter plugin"""
     from sktime.forecasting.model_selection import (
-        ExpandingWindowSplitter, ForecastingGridSearchCV
+        ExpandingWindowSplitter,
+        ForecastingGridSearchCV,
     )
     from sktime.param_est.plugin import PluginParamsForecaster
 
@@ -42,7 +43,7 @@ def test_conformal_with_gscv():
     # part 1 = grid search
     cv = ExpandingWindowSplitter(fh=[1, 2, 3])
     forecaster = NaiveForecaster()
-    param_grid = {"strategy" : ["last", "mean", "drift"]}
+    param_grid = {"strategy": ["last", "mean", "drift"]}
     gscv = ForecastingGridSearchCV(
         forecaster=forecaster,
         param_grid=param_grid,
