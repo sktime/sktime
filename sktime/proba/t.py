@@ -5,7 +5,7 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 import pandas as pd
-from scipy.special import erfinv, gamma, hyp2f1
+from scipy.special import erfinv, gamma, hyp2f1, loggamma
 
 from sktime.proba.base import BaseDistribution
 
@@ -145,8 +145,10 @@ class TDistribution(BaseDistribution):
     def log_pdf(self, x):
         """Logarithmic probability density function."""
         d = self.loc[x.index, x.columns]
-        lpdf_arr = -0.5 * ((x.values - d.mu) / d.sigma) ** 2
-        lpdf_arr = lpdf_arr - np.log(d.sigma * np.sqrt(2 * np.pi))
+        lpdf_arr = loggamma((d.df + 1) / 2)
+        lpdf_arr = lpdf_arr - 0.5 * np.log(d.df * np.pi)
+        lpdf_arr = lpdf_arr - loggamma(d.df / 2)
+        lpdf_arr = lpdf_arr - ((d.df + 1) / 2) * np.log(1 + x**2 / d.df)
         return pd.DataFrame(lpdf_arr, index=x.index, columns=x.columns)
 
     def cdf(self, x):
