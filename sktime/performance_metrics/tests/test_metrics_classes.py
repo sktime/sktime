@@ -22,9 +22,11 @@ metric_classes = [x for x in metric_classes if not x[0].startswith(exclude_start
 
 names, metrics = zip(*metric_classes)
 
+MULTIOUTPUT = ["uniform_average", "raw_values", "numpy"]
+
 
 @pytest.mark.parametrize("n_columns", [1, 2])
-@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+@pytest.mark.parametrize("multioutput", MULTIOUTPUT)
 @pytest.mark.parametrize("metric", metrics, ids=names)
 def test_metric_output_direct(metric, multioutput, n_columns):
     """Test output is of correct type, dependent on multioutput.
@@ -33,6 +35,11 @@ def test_metric_output_direct(metric, multioutput, n_columns):
         1. using the __call__ dunder
         2. calling the evaluate method
     """
+    # create numpy weights based on n_columns
+    if multioutput == "numpy":
+        multioutput = np.random.rand(n_columns)
+
+    # create test data
     y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
     y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
 
@@ -71,9 +78,14 @@ def test_metric_output_direct(metric, multioutput, n_columns):
 @pytest.mark.parametrize(
     "multilevel", ["uniform_average", "uniform_average_time", "raw_values"]
 )
-@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+@pytest.mark.parametrize("multioutput", MULTIOUTPUT)
 def test_metric_hierarchical(multioutput, multilevel, n_columns):
     """Test hierarchical input for metrics."""
+    # create numpy weights based on n_columns
+    if multioutput == "numpy":
+        multioutput = np.random.rand(n_columns)
+
+    # create test data
     y_pred = _make_hierarchical(random_state=21, n_columns=n_columns)
     y_true = _make_hierarchical(random_state=42, n_columns=n_columns)
 
@@ -132,10 +144,15 @@ def test_custom_metric(greater_is_better):
 
 
 @pytest.mark.parametrize("n_columns", [1, 2])
-@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+@pytest.mark.parametrize("multioutput", MULTIOUTPUT)
 @pytest.mark.parametrize("metric", metrics, ids=names)
 def test_metric_output_by_instance(metric, multioutput, n_columns):
     """Test output of evaluate_by_index is of correct type, dependent on multioutput."""
+    # create numpy weights based on n_columns
+    if multioutput == "numpy":
+        multioutput = np.random.rand(n_columns)
+
+    # create test data
     y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
     y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
 
@@ -161,9 +178,14 @@ def test_metric_output_by_instance(metric, multioutput, n_columns):
 
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("multilevel", ["uniform_average", "raw_values"])
-@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+@pytest.mark.parametrize("multioutput", MULTIOUTPUT)
 def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
     """Test hierarchical input for metrics."""
+    # create numpy weights based on n_columns
+    if multioutput == "numpy":
+        multioutput = np.random.rand(n_columns)
+
+    # create test data
     y_pred = _make_hierarchical(random_state=21, n_columns=n_columns)
     y_true = _make_hierarchical(random_state=42, n_columns=n_columns)
 
