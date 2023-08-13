@@ -17,13 +17,17 @@ def run_test_for_class(cls):
 
     Parameters
     ----------
-    cls : class
+    cls : class or list of class
         class for which to determine whether it should be tested
 
     Returns
     -------
     bool : True if class should be tested, False otherwise
+        if cls was a list, is True iff True for at least one of the classes in the list
     """
+    if isinstance(cls, list):
+        return any(run_test_for_class(x) for x in cls)
+
     from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
     from sktime.utils.git_diff import is_class_changed
     from sktime.utils.validation._dependencies import _check_estimator_deps
