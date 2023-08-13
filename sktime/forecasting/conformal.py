@@ -15,7 +15,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.base import clone
 
-from sktime.datatypes import convert, convert_to
+from sktime.datatypes import MTYPE_LIST_SERIES, convert, convert_to
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
 
@@ -125,6 +125,8 @@ class ConformalIntervals(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "X_inner_mtype": MTYPE_LIST_SERIES,
+        "y_inner_mtype": MTYPE_LIST_SERIES,
     }
 
     ALLOWED_METHODS = [
@@ -165,8 +167,6 @@ class ConformalIntervals(BaseForecaster):
             "requires-fh-in-fit",
             "ignores-exogeneous-X",
             "handles-missing-data",
-            "y_inner_mtype",
-            "X_inner_mtype",
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]
@@ -371,6 +371,7 @@ class ConformalIntervals(BaseForecaster):
             if sample_frac is passed this will have NaN values for 1 - sample_frac
             fraction of the matrix
         """
+        print(y)
         y = convert_to(y, "pd.Series")
 
         n_initial_window = self._parse_initial_window(y, initial_window=initial_window)
