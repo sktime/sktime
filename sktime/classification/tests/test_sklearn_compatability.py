@@ -17,8 +17,6 @@ from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
     GroupShuffleSplit,
-    # HalvingGridSearchCV,
-    # HalvingRandomSearchCV,
     KFold,
     LeaveOneOut,
     LeavePGroupsOut,
@@ -31,6 +29,9 @@ from sklearn.model_selection import (
     TimeSeriesSplit,
     cross_val_score,
 )
+# removed due to too small data:
+# HalvingGridSearchCV,
+# HalvingRandomSearchCV,
 from sklearn.pipeline import Pipeline
 
 from sktime.classification.interval_based import CanonicalIntervalForest
