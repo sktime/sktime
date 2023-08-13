@@ -249,7 +249,6 @@ class ConformalIntervals(BaseForecaster):
         if not isinstance(self.residuals_matrix_, dict):
             return self._predict_interval_series(
                 fh=fh,
-                X=X,
                 coverage=coverage,
                 y_pred=y_pred,
                 legacy_interface=legacy_interface,
@@ -262,14 +261,9 @@ class ConformalIntervals(BaseForecaster):
 
         pred_ints = {}
         for ix in y_pred_index:
-            if X is not None:
-                X_ix = X.loc[ix]
-            else:
-                X_ix = None
             y_pred_ix = y_pred.loc[ix]
             pred_ints[ix] = self._predict_interval_series(
                 fh=fh,
-                X=X_ix,
                 coverage=coverage,
                 y_pred=y_pred_ix,
                 legacy_interface=legacy_interface,
@@ -277,8 +271,8 @@ class ConformalIntervals(BaseForecaster):
         pred_int = pd.concat(pred_ints, axis=0, keys=y_pred_index)
         return pred_int
 
-    def _predict_interval_series(self, fh, X, coverage, y_pred, legacy_interface):
-        """Function predict_interval for series"""
+    def _predict_interval_series(self, fh, coverage, y_pred, legacy_interface):
+        """Compute prediction intervals predict_interval for series scitype."""
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
         fh_absolute_idx = fh_absolute.to_pandas()
