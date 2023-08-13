@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Empirical distribution."""
 
@@ -50,7 +49,6 @@ class Empirical(BaseDistribution):
     }
 
     def __init__(self, spl, weights=None, time_indep=True, index=None, columns=None):
-
         self.spl = spl
         self.weights = weights
         self.time_indep = time_indep
@@ -69,7 +67,7 @@ class Empirical(BaseDistribution):
         if columns is None:
             columns = pd.RangeIndex(shape[1])
 
-        super(Empirical, self).__init__(index=index, columns=columns)
+        super().__init__(index=index, columns=columns)
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -131,7 +129,7 @@ class Empirical(BaseDistribution):
         else:
             var_df = spl.groupby(level=0).apply(
                 lambda x: np.average(
-                    (x - self.mean().loc[x.index])**2,
+                    (x - self.mean().loc[x.index]) ** 2,
                     weights=self.weights.loc[x.index],
                     axis=0,
                 )
