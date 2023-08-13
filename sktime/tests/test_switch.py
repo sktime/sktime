@@ -10,8 +10,8 @@ def run_test_for_class(cls):
     This checks the following conditions:
 
     * if required dependencies are not present, does not run the test
-    * if ONLY_CHANGED_MODULES setting is on, runs the test
-      if and only if the module containing the class has changed according to is_class_changed
+    * if ONLY_CHANGED_MODULES setting is on, runs the test if and only
+      if the module containing the class has changed according to is_class_changed
 
     otherwise, always runs the test.
 
