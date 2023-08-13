@@ -1,4 +1,7 @@
-import pandas as pd
+"""Registry of mtypes for Alignment scitype.
+
+See datatypes._registry for API.
+"""
 
 __all__ = [
     "MTYPE_REGISTER_ALIGNMENT",
@@ -19,4 +22,4 @@ MTYPE_REGISTER_ALIGNMENT = [
     ),
 ]
 
-MTYPE_LIST_ALIGNMENT = pd.DataFrame(MTYPE_REGISTER_ALIGNMENT)[0].values
+MTYPE_LIST_ALIGNMENT = [x[0] for x in MTYPE_REGISTER_ALIGNMENT]
