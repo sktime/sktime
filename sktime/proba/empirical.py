@@ -172,7 +172,7 @@ class Empirical(BaseDistribution):
             n_samples_was_none = False
         smpls = []
 
-        for i in range(n_samples):
+        for _ in range(n_samples):
             smpls_i = []
             for t in timestamps:
                 spl_from = spl.loc[(slice(None), t), :]
@@ -185,7 +185,6 @@ class Empirical(BaseDistribution):
                 smpls_i.append(spl_time)
             spl_i = pd.concat(smpls_i, axis=0)
             smpls.append(spl_i)
-            print(spl_i)
 
         spl = pd.concat(smpls, axis=0, keys=range(n_samples))
         if n_samples_was_none:
