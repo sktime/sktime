@@ -297,7 +297,7 @@ def test_evaluate_bigger_X(cls):
 
     Example adapted from bug report #3657.
     """
-    if not run_test_for_class(cls, severity="none"):
+    if not run_test_for_class(cls):
         return None
 
     y, X = load_longley()
