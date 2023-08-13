@@ -281,7 +281,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             colname_default=self.name,
         )
 
-        if self.multioutput == "raw_values":
+        if isinstance(self.multioutput, str) and self.multioutput == "raw_values":
             eval_result = pd.DataFrame(
                 eval_result.iloc[:, 0].to_list(),
                 index=eval_result.index,
