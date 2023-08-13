@@ -17,8 +17,8 @@ from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
     GroupShuffleSplit,
-    HalvingGridSearchCV,
-    HalvingRandomSearchCV,
+    # HalvingGridSearchCV,
+    # HalvingRandomSearchCV,
     KFold,
     LeaveOneOut,
     LeavePGroupsOut,
@@ -60,8 +60,8 @@ CROSS_VALIDATION_METHODS = [
 PARAMETER_TUNING_METHODS = [
     GridSearchCV,
     RandomizedSearchCV,
-    HalvingGridSearchCV,
-    HalvingRandomSearchCV,
+    # HalvingGridSearchCV,
+    # HalvingRandomSearchCV,
 ]
 
 if _check_soft_dependencies("numba", severity="none"):
