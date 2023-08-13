@@ -174,7 +174,7 @@ def test_metric_output_by_instance(metric, multioutput, n_columns):
         y_train=y_true,
     )
 
-    if multioutput == "raw_values":
+    if isinstance(multioutput, str) and multioutput == "raw_values":
         assert isinstance(res, pd.DataFrame)
         assert (res.columns == y_true.columns).all()
     else:
