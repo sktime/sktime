@@ -371,7 +371,6 @@ class ConformalIntervals(BaseForecaster):
             if sample_frac is passed this will have NaN values for 1 - sample_frac
             fraction of the matrix
         """
-        print(y)
         y = convert_to(y, "pd.Series")
 
         n_initial_window = self._parse_initial_window(y, initial_window=initial_window)
