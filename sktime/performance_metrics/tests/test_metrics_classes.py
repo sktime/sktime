@@ -205,7 +205,7 @@ def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
         y_pred=y_pred,
     )
 
-    if multioutput == "raw_values":
+    if isinstance(multioutput, str) and multioutput == "raw_values":
         assert isinstance(res, pd.DataFrame)
         assert (res.columns == y_true.columns).all()
     else:
