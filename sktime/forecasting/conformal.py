@@ -89,6 +89,7 @@ class ConformalIntervals(BaseForecaster):
     recommended use of ConformalIntervals together with ForecastingGridSearch
     is by 1. first running grid search, 2. then ConformalIntervals on the tuned params
     otherwise, nested sliding windows will cause high compute requirement
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.conformal import ConformalIntervals
     >>> from sktime.forecasting.naive import NaiveForecaster

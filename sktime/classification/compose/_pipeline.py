@@ -87,6 +87,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = PCATransformer() * TimeSeriesForestClassifier(n_estimators=5)
     """
 
@@ -400,6 +401,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = t1 * t2 * KNeighborsClassifier()
     """
 
