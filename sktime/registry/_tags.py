@@ -104,6 +104,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
     (
+        "pwtrafo_type",
+        ["transformer-pairwise", "transformer-pairwise-panel"],
+        ("str", ["distance", "kernel", "other"]),
+        "mathematical type of pairwise transformer - distance, kernel, or other",
+    ),
+    (
         "scitype:X",
         "param_est",
         "str",
@@ -134,7 +140,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer", "transformer-pairwise-panel", "param_est"],
+        [
+            "clusterer",
+            "forecaster",
+            "transformer",
+            "transformer-pairwise-panel",
+            "param_est",
+        ],
         (
             "list",
             [
@@ -184,6 +196,12 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "is the transformer capable of carrying out an inverse transform?",
+    ),
+    (
+        "capability:inverse_transform:range",
+        "transformer",
+        "list",
+        "domain of invertibility of transform, must be list [lower, upper] of float",
     ),
     (
         "capability:pred_int",
@@ -407,6 +425,12 @@ ESTIMATOR_TAG_REGISTER = [
         "splitter",
         "bool",
         "whether _split is natively implemented for hierarchical y types",
+    ),
+    (
+        "split_series_uses",
+        "splitter",
+        ("str", ["iloc", "loc", "custom"]),
+        "whether split_series uses split (iloc) or split_loc (loc) to split series",
     ),
     (
         "capabilities:exact",

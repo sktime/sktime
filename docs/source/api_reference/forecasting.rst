@@ -150,6 +150,14 @@ Trend forecasters
     PolynomialTrendForecaster
     STLForecaster
 
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastMSTL
+
 Exponential smoothing based forecasters
 ---------------------------------------
 
@@ -260,6 +268,20 @@ Auto-ARIMA models
     :template: class.rst
 
     StatsForecastAutoARIMA
+
+
+ARCH models
+-----------
+
+.. currentmodule:: sktime.forecasting.arch
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastARCH
+    StatsForecastGARCH
+
 
 Structural time series models
 -----------------------------
@@ -414,6 +436,7 @@ Time series splitters can be used in both evaluation and tuning.
     SingleWindowSplitter
     SlidingWindowSplitter
     ExpandingWindowSplitter
+    ExpandingGreedySplitter
 
 .. autosummary::
     :toctree: auto_generated/

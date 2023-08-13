@@ -194,7 +194,7 @@ def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
 def test_gscv_proba(cv, scoring, error_score):
     """Test ForecastingGridSearchCV with probabilistic metrics."""
-    y = load_airline()
+    y = load_airline()[:36]
 
     forecaster = ARIMA()
     param_grid = {"order": [(1, 0, 0), (1, 1, 0)]}
