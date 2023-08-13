@@ -7,14 +7,14 @@ from sklearn.model_selection import train_test_split
 
 from sktime.datasets import load_arrow_head
 from sktime.datatypes import convert
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("tsfresh", severity="none"),
-    reason="skip test if required soft dependency tsfresh not available",
+    not run_test_for_class(TSFreshFeatureExtractor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("default_fc_parameters", ["minimal"])
 def test_tsfresh_extractor(default_fc_parameters):
@@ -34,8 +34,8 @@ def test_tsfresh_extractor(default_fc_parameters):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("tsfresh", severity="none"),
-    reason="skip test if required soft dependency tsfresh not available",
+    not run_test_for_class(TSFreshFeatureExtractor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_docs_tsfresh_extractor():
     """Test whether doc example runs through."""
@@ -56,8 +56,8 @@ def test_docs_tsfresh_extractor():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("tsfresh", severity="none"),
-    reason="skip test if required soft dependency tsfresh not available",
+    not run_test_for_class(TSFreshFeatureExtractor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_kind_tsfresh_extractor():
     """Test extractor returns an array of expected num of cols."""
