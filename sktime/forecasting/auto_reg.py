@@ -64,6 +64,7 @@ class AutoREG(_StatsModelsAdapter):
     Examples
     --------
     Use AutoREG to forecast univariate data.
+
     >>> from sktime.forecasting.auto_reg import AutoREG  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.base import ForecastingHorizon
@@ -76,6 +77,7 @@ class AutoREG(_StatsModelsAdapter):
 
 
     Use AutoREG to forecast with exogenous data.
+
     >>> from sktime.forecasting.auto_reg import AutoREG  # doctest: +SKIP
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.base import ForecastingHorizon

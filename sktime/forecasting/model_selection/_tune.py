@@ -454,6 +454,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
         Advanced model meta-tuning (model selection) with multiple forecasters
         together with hyper-parametertuning at same time using sklearn notation:
+
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster

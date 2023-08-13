@@ -337,6 +337,7 @@ def evaluate(
     --------
         The type of evaluation that is done by `evaluate` depends on metrics in
         param `scoring`. Default is `MeanAbsolutePercentageError`.
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
@@ -351,11 +352,13 @@ def evaluate(
         i.e., point forecast metrics, interval metrics, quantile forecast metrics.
         https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics
         To evaluate estimators using a specific metric, provide them to the scoring arg.
+
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
         Optionally, users can provide a list of metrics to `scoring` argument.
+
     >>> from sktime.performance_metrics.forecasting import MeanSquaredError
     >>> results = evaluate(
     ...     forecaster=forecaster,
@@ -366,6 +369,7 @@ def evaluate(
 
         An example of an interval metric is the `PinballLoss`.
         It can be used with all probabilistic forecasters.
+
     >>> from sktime.forecasting.naive import NaiveVariance
     >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
     >>> loss = PinballLoss()
