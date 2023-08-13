@@ -6,7 +6,6 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 import pandas as pd
-from scipy.special import erf, erfinv
 
 from sktime.proba.base import BaseDistribution
 
@@ -29,9 +28,19 @@ class Empirical(BaseDistribution):
 
     Example
     -------
-    >>> from sktime.proba.normal import Normal
+    >>> import pandas as pd
+    >>> from sktime.proba.empirical import Empirical
 
-    >>> n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)
+    >>> spl_idx = pd.MultiIndex.from_product(
+    ...     [[0, 1], [0, 1, 2]], names=["sample", "time"]
+    ... )
+    >>> spl = pd.DataFrame(
+    ...     [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]],
+    ...     index=spl_idx,
+    ...     columns=["a", "b"],
+    ... )
+    >>> dist = Empirical(spl)
+    >>> dist.sample(3)
     """
 
     _tags = {
@@ -48,7 +57,10 @@ class Empirical(BaseDistribution):
         self.index = index
         self.columns = columns
 
-        shape0 = len(np.unique(spl.index.get_level_values(-1)))
+        _timestamps = spl.index.get_level_values(-1).unique()
+        self._timestamps = _timestamps
+
+        shape0 = len(np.unique(_timestamps))
         shape = (shape0, spl.shape[1])
 
         if index is None:
@@ -78,15 +90,9 @@ class Empirical(BaseDistribution):
         each row contains one float, self-energy/energy as described above.
         """
         if x is None:
-            sd_arr = self._sigma
-            energy_arr = 2 * np.sum(sd_arr, axis=1) / np.sqrt(np.pi)
-            energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
+            return "todo"
         else:
-            mu_arr, sd_arr = self._mu, self._sigma
-            c_arr = (x - mu_arr) * (2 * self.cdf(x) - 1) + 2 * sd_arr**2 * self.pdf(x)
-            energy_arr = np.sum(c_arr, axis=1)
-            energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
-        return energy
+            return "todo"
 
     def mean(self):
         r"""Return expected value of the distribution.
@@ -99,8 +105,14 @@ class Empirical(BaseDistribution):
         pd.DataFrame with same rows, columns as `self`
         expected value of distribution (entry-wise)
         """
-        mean_arr = self._mu
-        return pd.DataFrame(mean_arr, index=self.index, columns=self.columns)
+        spl = self.spl
+        if self.weights is None:
+            mean_df = spl.groupby(level=0).mean()
+        else:
+            mean_df = spl.groupby(level=0).apply(
+                lambda x: np.average(x, weights=self.weights.loc[x.index], axis=0)
+            )
+        return mean_df
 
     def var(self):
         r"""Return element/entry-wise variance of the distribution.
@@ -113,20 +125,26 @@ class Empirical(BaseDistribution):
         pd.DataFrame with same rows, columns as `self`
         variance of distribution (entry-wise)
         """
-        sd_arr = self._sigma
-        return pd.DataFrame(sd_arr, index=self.index, columns=self.columns) ** 2
+        spl = self.spl
+        if self.weights is None:
+            var_df = spl.groupby(level=0).var(ddof=0)
+        else:
+            var_df = spl.groupby(level=0).apply(
+                lambda x: np.average(
+                    (x - self.mean().loc[x.index])**2,
+                    weights=self.weights.loc[x.index],
+                    axis=0,
+                )
+            )
+        return var_df
 
     def cdf(self, x):
         """Cumulative distribution function."""
-        d = self.loc[x.index, x.columns]
-        cdf_arr = 0.5 + 0.5 * erf((x.values - d.mu) / (d.sigma * np.sqrt(2)))
-        return pd.DataFrame(cdf_arr, index=x.index, columns=x.columns)
+        return "todo"
 
     def ppf(self, p):
         """Quantile function = percent point function = inverse cdf."""
-        d = self.loc[p.index, p.columns]
-        icdf_arr = d.mu + d.sigma * np.sqrt(2) * erfinv(2 * p.values - 1)
-        return pd.DataFrame(icdf_arr, index=p.index, columns=p.columns)
+        return "todo"
 
     def sample(self, n_samples=None):
         """Sample from the distribution.
@@ -145,32 +163,52 @@ class Empirical(BaseDistribution):
         in `pd-multiindex` mtype format convention, with same `columns` as `self`,
         and `MultiIndex` that is product of `RangeIndex(n_samples)` and `self.index`
         """
-
-        def gen_unif():
-            np_unif = np.random.uniform(size=self.shape)
-            return pd.DataFrame(np_unif, index=self.index, columns=self.columns)
+        spl = self.spl
+        timestamps = self._timestamps
+        weights = self.weights
 
         if n_samples is None:
-            return self.ppf(gen_unif())
+            n_samples = 1
+            n_samples_was_none = True
         else:
-            pd_smpl = [self.ppf(gen_unif()) for _ in range(n_samples)]
-            df_spl = pd.concat(pd_smpl, keys=range(n_samples))
-            return df_spl
+            n_samples_was_none = False
+        smpls = []
+
+        for i in range(n_samples):
+            smpls_i = []
+            for t in timestamps:
+                spl_from = spl.loc[(slice(None), t), :]
+                if weights is not None:
+                    spl_weights = weights.loc[(slice(None), t), :]
+                else:
+                    spl_weights = None
+                spl_time = spl_from.sample(n=1, replace=True, weights=spl_weights)
+                spl_time = spl_time.droplevel(0)
+                smpls_i.append(spl_time)
+            spl_i = pd.concat(smpls_i, axis=0)
+            smpls.append(spl_i)
+            print(spl_i)
+
+        spl = pd.concat(smpls, axis=0, keys=range(n_samples))
+        if n_samples_was_none:
+            spl = spl.droplevel(0)
+
+        return spl
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         # params1 is a DataFrame with simple row multiindex
-        spl1_idx = pd.MultiIndex.from_product(
+        spl_idx = pd.MultiIndex.from_product(
             [[0, 1], [0, 1, 2]], names=["sample", "time"]
         )
-        spl1 = pd.DataFrame(
+        spl = pd.DataFrame(
             [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]],
-            index=spl1_idx,
+            index=spl_idx,
             columns=["a", "b"],
         )
         params1 = {
-            "spl": spl1,
+            "spl": spl,
             "weights": None,
             "time_indep": True,
             "index": pd.RangeIndex(3),
@@ -179,8 +217,8 @@ class Empirical(BaseDistribution):
 
         # params2 is weighted
         params2 = {
-            "spl": spl1,
-            "weights": pd.Series([0.5, 0.5, 0.5, 1, 1, 1.1], index=spl1_idx),
+            "spl": spl,
+            "weights": pd.Series([0.5, 0.5, 0.5, 1, 1, 1.1], index=spl_idx),
             "time_indep": False,
             "index": pd.RangeIndex(3),
             "columns": pd.Index(["a", "b"]),
