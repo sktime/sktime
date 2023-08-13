@@ -16,9 +16,14 @@ class Empirical(BaseDistribution):
 
     Parameters
     ----------
-    spl : pd.DataFrame
-        empirical sample, possibly weighted
-        
+    spl : pd.DataFrame with pd.MultiIndex
+        empirical sample
+        last (highest) index is time, first (lowest) index is sample
+    weights : pd.Series, with same index and length as spl, optional, default=None
+        if not passed, ``spl`` is assumed to be unweighted
+    time_indep : bool, optional, default=True
+        if True, ``sample`` will sample individual time indices independently
+        if False, ``sample`` will sample etire instances from ``spl``
     index : pd.Index, optional, default = RangeIndex
     columns : pd.Index, optional, default = RangeIndex
 
@@ -31,19 +36,20 @@ class Empirical(BaseDistribution):
 
     _tags = {
         "capabilities:approx": [],
-        "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
-        "distr:measuretype": "continuous",
+        "capabilities:exact": ["mean", "var", "energy", "cdf", "ppf"],
+        "distr:measuretype": "discrete",
     }
 
-    def __init__(self, mu, sigma, index=None, columns=None):
+    def __init__(self, spl, weights=None, time_indep=True, index=None, columns=None):
 
-        self.mu = mu
-        self.sigma = sigma
+        self.spl = spl
+        self.weights = weights
+        self.time_indep = time_indep
         self.index = index
         self.columns = columns
 
-        self._mu, self._sigma = self._get_bc_params()
-        shape = self._mu.shape
+        shape0 = len(np.unique(spl.index.get_level_values(-1)))
+        shape = (shape0, spl.shape[1])
 
         if index is None:
             index = pd.RangeIndex(shape[0])
@@ -52,16 +58,6 @@ class Empirical(BaseDistribution):
             columns = pd.RangeIndex(shape[1])
 
         super(Empirical, self).__init__(index=index, columns=columns)
-
-    def _get_bc_params(self):
-        """Fully broadcast parameters of self, given param shapes and index, columns."""
-        to_broadcast = [self.mu, self.sigma]
-        if hasattr(self, "index") and self.index is not None:
-            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
-        if hasattr(self, "columns") and self.columns is not None:
-            to_broadcast += [self.columns.to_numpy()]
-        bc = np.broadcast_arrays(*to_broadcast)
-        return bc[0], bc[1]
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -120,20 +116,6 @@ class Empirical(BaseDistribution):
         sd_arr = self._sigma
         return pd.DataFrame(sd_arr, index=self.index, columns=self.columns) ** 2
 
-    def pdf(self, x):
-        """Probability density function."""
-        d = self.loc[x.index, x.columns]
-        pdf_arr = np.exp(-0.5 * ((x.values - d.mu) / d.sigma) ** 2)
-        pdf_arr = pdf_arr / (d.sigma * np.sqrt(2 * np.pi))
-        return pd.DataFrame(pdf_arr, index=x.index, columns=x.columns)
-
-    def log_pdf(self, x):
-        """Logarithmic probability density function."""
-        d = self.loc[x.index, x.columns]
-        lpdf_arr = -0.5 * ((x.values - d.mu) / d.sigma) ** 2
-        lpdf_arr = lpdf_arr - np.log(d.sigma * np.sqrt(2 * np.pi))
-        return pd.DataFrame(lpdf_arr, index=x.index, columns=x.columns)
-
     def cdf(self, x):
         """Cumulative distribution function."""
         d = self.loc[x.index, x.columns]
@@ -178,11 +160,29 @@ class Empirical(BaseDistribution):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        params1 = {"mu": [[0, 1], [2, 3], [4, 5]], "sigma": 1}
+        # params1 is a DataFrame with simple row multiindex
+        spl1_idx = pd.MultiIndex.from_product(
+            [[0, 1], [0, 1, 2]], names=["sample", "time"]
+        )
+        spl1 = pd.DataFrame(
+            [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]],
+            index=spl1_idx,
+            columns=["a", "b"],
+        )
+        params1 = {
+            "spl": spl1,
+            "weights": None,
+            "time_indep": True,
+            "index": pd.RangeIndex(3),
+            "columns": pd.Index(["a", "b"]),
+        }
+
+        # params2 is weighted
         params2 = {
-            "mu": 0,
-            "sigma": 1,
-            "index": pd.Index([1, 2, 5]),
+            "spl": spl1,
+            "weights": pd.Series([0.5, 0.5, 0.5, 1, 1, 1.1], index=spl1_idx),
+            "time_indep": False,
+            "index": pd.RangeIndex(3),
             "columns": pd.Index(["a", "b"]),
         }
         return [params1, params2]
