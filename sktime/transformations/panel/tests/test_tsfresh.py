@@ -39,12 +39,11 @@ def test_tsfresh_extractor(default_fc_parameters):
 )
 def test_docs_tsfresh_extractor():
     """Test whether doc example runs through."""
-    X, y = load_arrow_head(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    X, _ = load_arrow_head(return_X_y=True)[:3]
     ts_eff = TSFreshFeatureExtractor(
         default_fc_parameters="efficient", disable_progressbar=True
     )
-    ts_eff.fit_transform(X_train)
+    ts_eff.fit_transform(X)
     features_to_calc = [
         "dim_0__quantile__q_0.6",
         "dim_0__longest_strike_above_mean",
@@ -53,7 +52,7 @@ def test_docs_tsfresh_extractor():
     ts_custom = TSFreshFeatureExtractor(
         kind_to_fc_parameters=features_to_calc, disable_progressbar=True
     )
-    ts_custom.fit_transform(X_train)
+    ts_custom.fit_transform(X)
 
 
 @pytest.mark.skipif(
