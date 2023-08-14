@@ -105,11 +105,14 @@ class Empirical(BaseDistribution):
         """
         spl = self.spl
         if self.weights is None:
-            mean_df = spl.groupby(level=0).mean()
+            mean_df = spl.groupby(level=-1).mean()
         else:
-            mean_df = spl.groupby(level=0).apply(
+            mean_df = spl.groupby(level=-1).apply(
                 lambda x: np.average(x, weights=self.weights.loc[x.index], axis=0)
             )
+            mean_df = pd.DataFrame(mean_df.tolist(), index=mean_df.index)
+            mean_df.columns = spl.columns
+
         return mean_df
 
     def var(self):
