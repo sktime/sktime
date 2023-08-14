@@ -51,6 +51,7 @@ class ForecastKnownValues(BaseForecaster):
     ForecastKnownValues(...)
 
     The forecast "plays back" the known/prescribed values from y_known
+
     >>> y_pred = fcst.predict()
     """
 

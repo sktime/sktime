@@ -1489,6 +1489,7 @@ class SameLocSplitter(BaseSplitter):
     >>> splitter = SameLocSplitter(cv_tpl, y_template)
 
     these two are the same:
+
     >>> list(cv_tpl.split(y_template)) # doctest: +SKIP
     >>> list(splitter.split(y)) # doctest: +SKIP
     """

@@ -70,15 +70,18 @@ def check_estimator(
 
     Running all tests for ExponentTransformer class,
     this uses all instances from get_test_params and compatible scenarios
+
     >>> results = check_estimator(ExponentTransformer)
     All tests PASSED!
 
     Running all tests for a specific ExponentTransformer
     this uses the instance that is passed and compatible scenarios
+
     >>> results = check_estimator(ExponentTransformer(42))
     All tests PASSED!
 
     Running specific test (all fixtures) for ExponentTransformer
+
     >>> results = check_estimator(ExponentTransformer, tests_to_run="test_clone")
     All tests PASSED!
 
@@ -86,6 +89,7 @@ def check_estimator(
     'test_clone[ExponentTransformer-1]': 'PASSED'}
 
     Running one specific test-fixture-combination for ExponentTransformer
+
     >>> check_estimator(
     ...    ExponentTransformer, fixtures_to_run="test_clone[ExponentTransformer-1]"
     ... )

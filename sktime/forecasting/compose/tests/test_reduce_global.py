@@ -1,6 +1,7 @@
 """Test extraction of features across (shifted) windows."""
 __author__ = ["danbartl"]
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # HistGradientBoostingRegressor requires experimental flag in old sklearn versions
@@ -24,6 +25,7 @@ from sktime.datasets import load_airline
 from sktime.datatypes import get_examples
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import make_reduction
+from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.transformations.series.summarize import WindowSummarizer
@@ -102,6 +104,10 @@ def check_eval(test_input, expected):
         assert expected is None
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(_RecursiveReducer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "y, index_names",
     [
@@ -143,6 +149,10 @@ def test_recursive_reduction(y, index_names):
     check_eval(y_pred.index.names, index_names)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(_DirectReducer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "y, index_names",
     [
@@ -183,6 +193,10 @@ def test_direct_reduction(y, index_names):
     check_eval(y_pred.index.names, index_names)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(_RecursiveReducer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "y, index_names",
     [
@@ -223,6 +237,10 @@ def test_list_reduction(y, index_names):
     check_eval(y_pred.index.names, index_names)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(_RecursiveReducer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "regressor",
     [
@@ -264,6 +282,10 @@ def test_equality_transfo_nontranso(regressor):
     np.testing.assert_almost_equal(recursive_without, recursive_global)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(_RecursiveReducer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_nofreq_pass():
     """Test that recursive reducers return same results with / without freq given."""
     regressor = make_pipeline(
