@@ -638,7 +638,7 @@ def test_auto_arima_case_with_naive():
 
     fh_ = ForecastingHorizon(X.index[5:], is_relative=False)
 
-    a_clf = NaiveForecaster(start_p=2, start_q=2, max_p=5, max_q=5)
+    a_clf = NaiveForecaster()
     clf = a_clf.fit(X=X[:5], y=y[:5])
     y_pred_sk = clf.predict(fh=fh_, X=X[5:])
 
