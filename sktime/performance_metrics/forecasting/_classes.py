@@ -2890,3 +2890,10 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     ):
         self.relative_loss_function = relative_loss_function
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Retrieve test parameters."""
+        params1 = {}
+        params2 = {"relative_loss_function": mean_squared_error}
+        return [params1, params2]

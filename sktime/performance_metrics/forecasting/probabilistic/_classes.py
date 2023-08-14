@@ -727,6 +727,13 @@ class LogLoss(_BaseDistrForecastingMetric):
         else:
             return res
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Retrieve test parameters."""
+        params1 = {}
+        params2 = {"multivariate": True}
+        return [params1, params2]
+
 
 class SquaredDistrLoss(_BaseDistrForecastingMetric):
     r"""Squared loss for distributional predictions.
@@ -775,6 +782,13 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
         else:
             return res
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Retrieve test parameters."""
+        params1 = {}
+        params2 = {"multivariate": True}
+        return [params1, params2]
+
 
 class CRPS(_BaseDistrForecastingMetric):
     r"""Continuous rank probability score for distributional predictions.
@@ -815,3 +829,10 @@ class CRPS(_BaseDistrForecastingMetric):
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         # CRPS(d, y) = E_X,Y as d [abs(Y-y) - 0.5 abs(X-Y)]
         return y_pred.energy(y_true) - y_pred.energy() / 2
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Retrieve test parameters."""
+        params1 = {}
+        params2 = {"multivariate": True}
+        return [params1, params2]

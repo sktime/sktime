@@ -71,6 +71,7 @@ class SeasonalityACF(BaseParamFitter):
 
     Series should be stationary before applying ACF.
     To pipeline SeasonalityACF with the Differencer, use the ParamFitterPipeline:
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
