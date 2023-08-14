@@ -39,7 +39,7 @@ class Empirical(BaseDistribution):
     ...     columns=["a", "b"],
     ... )
     >>> dist = Empirical(spl)
-    >>> dist.sample(3)
+    >>> empirical_sample = dist.sample(3)
     """
 
     _tags = {
