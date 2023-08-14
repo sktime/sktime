@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Extension template for parameter estimators.
 
 Purpose of this implementation template:
@@ -131,8 +130,8 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTimeSeriesParamFitter" to the name of the class
-        super(MyTimeSeriesParamFitter, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

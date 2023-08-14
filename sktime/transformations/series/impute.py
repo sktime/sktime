@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Transformer to impute missing values in series."""
 
@@ -111,7 +110,7 @@ class Imputer(BaseTransformer):
         self.value = value
         self.forecaster = forecaster
         self.random_state = random_state
-        super(Imputer, self).__init__()
+        super().__init__()
 
         # these methods require self._X remembered in _fit and _update
         if method in ["drift", "forecaster", "random"]:
@@ -346,6 +345,7 @@ class Imputer(BaseTransformer):
                     X=self._y[col].fillna(method="ffill").fillna(method="backfill")
                     if self._y is not None
                     else None,
+                    fh=fh,
                 )
 
                 # replace missing values with predicted values
@@ -371,7 +371,12 @@ class Imputer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.forecasting.compose import make_reduction
         from sktime.forecasting.trend import TrendForecaster
+
+        linear_forecaster = make_reduction(LinearRegression(), strategy="multioutput")
 
         return [
             {"method": "drift"},
@@ -384,6 +389,7 @@ class Imputer(BaseTransformer):
             {"method": "pad"},
             {"method": "random"},
             {"method": "forecaster", "forecaster": TrendForecaster()},
+            {"method": "forecaster", "forecaster": linear_forecaster},
         ]
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements reconciled forecasters for hierarchical data."""
@@ -73,6 +72,7 @@ class ReconcilerForecaster(BaseForecaster):
     ...     no_bottom_nodes=3,
     ...     no_levels=1,
     ...     random_seed=123,
+    ...     length=7,
     ... )
     >>> y = agg.fit_transform(y)
     >>> forecaster = NaiveForecaster(strategy="drift")
@@ -112,7 +112,7 @@ class ReconcilerForecaster(BaseForecaster):
         self.forecaster = forecaster
         self.method = method
 
-        super(ReconcilerForecaster, self).__init__()
+        super().__init__()
 
     def _add_totals(self, y):
         """Add total levels to y, using Aggregate."""
@@ -120,7 +120,7 @@ class ReconcilerForecaster(BaseForecaster):
 
         return Aggregator().fit_transform(y)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         Parameters
@@ -190,7 +190,7 @@ class ReconcilerForecaster(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters
@@ -343,7 +343,7 @@ class ReconcilerForecaster(BaseForecaster):
             # higherorder var (only diags)
             resid_corseries = resid**2
             hovar_mat = (resid_corseries.transpose().dot(resid_corseries)) - scale_hovar
-            hovar_mat = (nobs / ((nobs - 1)) ** 3) * hovar_mat
+            hovar_mat = (nobs / (nobs - 1) ** 3) * hovar_mat
 
             # set diagonals to zero
             for i in resid.columns:

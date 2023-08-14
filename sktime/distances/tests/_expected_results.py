@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # The key string (i.e. 'euclidean') must be the same as the name in _registry
 
 _expected_distance_results = {

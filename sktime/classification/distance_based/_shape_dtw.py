@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ShapeDTW classifier.
 
 Nearest neighbour classifier that extracts shapee features.
@@ -134,7 +133,7 @@ class ShapeDTW(BaseClassifier):
             self._shape_descriptor_functions = shape_descriptor_functions
         self.metric_params = metric_params
 
-        super(ShapeDTW, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Train the classifier.

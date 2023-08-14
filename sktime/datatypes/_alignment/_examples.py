@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Example generation for testing.
 
 Exports dict of examples, useful for testing as fixtures.

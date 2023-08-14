@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implements simple conformal forecast intervals.
 
 Code based partially on NaiveVariance by ilyasmoutawwakil.
@@ -77,19 +76,20 @@ class ConformalIntervals(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.conformal import ConformalIntervals
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> y = load_airline()
-    >>> forecaster = NaiveForecaster(strategy="drift")
-    >>> conformal_forecaster = ConformalIntervals(forecaster)
-    >>> conformal_forecaster.fit(y, fh=[1,2,3])
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.forecasting.conformal import ConformalIntervals  # doctest: +SKIP
+    >>> from sktime.forecasting.naive import NaiveForecaster  # doctest: +SKIP
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> forecaster = NaiveForecaster(strategy="drift")  # doctest: +SKIP
+    >>> conformal_forecaster = ConformalIntervals(forecaster)  # doctest: +SKIP
+    >>> conformal_forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
     ConformalIntervals(...)
-    >>> pred_int = conformal_forecaster.predict_interval()
+    >>> pred_int = conformal_forecaster.predict_interval()  # doctest: +SKIP
 
     recommended use of ConformalIntervals together with ForecastingGridSearch
     is by 1. first running grid search, 2. then ConformalIntervals on the tuned params
     otherwise, nested sliding windows will cause high compute requirement
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.conformal import ConformalIntervals
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -97,25 +97,25 @@ class ConformalIntervals(BaseForecaster):
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
     >>> from sktime.param_est.plugin import PluginParamsForecaster
     >>> # part 1 = grid search
-    >>> cv = ExpandingWindowSplitter(fh=[1,2,3])
-    >>> forecaster = NaiveForecaster()
-    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
+    >>> cv = ExpandingWindowSplitter(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> forecaster = NaiveForecaster()  # doctest: +SKIP
+    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}  # doctest: +SKIP
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=forecaster,
     ...     param_grid=param_grid,
     ...     cv=cv,
-    ... )
+    ... )  # doctest: +SKIP
     >>> # part 2 = plug in results of grid search into conformal intervals estimator
     >>> conformal_with_fallback = ConformalIntervals(NaiveForecaster())
     >>> gscv_with_conformal = PluginParamsForecaster(
     ...     gscv,
     ...     conformal_with_fallback,
-    ...     params={"best_forecaster": "forecaster"},
-    ... )
-    >>> y = load_airline()
-    >>> gscv_with_conformal.fit(y, fh=[1, 2, 3])
+    ...     params={"forecaster": "best_forecaster"},
+    ... )  # doctest: +SKIP
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> gscv_with_conformal.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
     PluginParamsForecaster(...)
-    >>> y_pred_quantiles = gscv_with_conformal.predict_quantiles()
+    >>> y_pred_quantiles = gscv_with_conformal.predict_quantiles()  # doctest: +SKIP
     """
 
     _tags = {
@@ -159,7 +159,7 @@ class ConformalIntervals(BaseForecaster):
         self.n_jobs = n_jobs
         self.forecasters_ = []
 
-        super(ConformalIntervals, self).__init__()
+        super().__init__()
 
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -172,7 +172,7 @@ class ConformalIntervals(BaseForecaster):
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         self.fh_early_ = fh is not None
         self.forecaster_ = clone(self.forecaster)
         self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -188,7 +188,7 @@ class ConformalIntervals(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
@@ -204,7 +204,9 @@ class ConformalIntervals(BaseForecaster):
                 update=True,
             )
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -259,7 +261,11 @@ class ConformalIntervals(BaseForecaster):
 
         ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
 
-        cols = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
+        var_names = self._get_varnames(
+            default="Coverage", legacy_interface=legacy_interface
+        )
+
+        cols = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
         for fh_ind, offset in zip(fh_absolute, fh_relative):
             resids = np.diagonal(residuals_matrix, offset=offset)
@@ -295,36 +301,6 @@ class ConformalIntervals(BaseForecaster):
 
         return pred_int.convert_dtypes()
 
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and default _predict_interval
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to predict from.
-        alpha : list of float, optional (default=[0.5])
-            A list of probabilities at which quantile forecasts are computed.
-
-        Returns
-        -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
-        """
-        pred_int = BaseForecaster._predict_quantiles(self, fh, X, alpha)
-
-        return pred_int
-
     def _parse_initial_window(self, y, initial_window=None):
         n_samples = len(y)
 
@@ -345,15 +321,13 @@ class ConformalIntervals(BaseForecaster):
             and (initial_window <= 0 or initial_window >= 1)
         ):
             raise ValueError(
-                "initial_window={0} should be either positive and smaller"
-                " than the number of samples {1} or a float in the "
+                "initial_window={} should be either positive and smaller"
+                " than the number of samples {} or a float in the "
                 "(0, 1) range".format(initial_window, n_samples)
             )
 
         if initial_window is not None and initial_window_type not in ("i", "f"):
-            raise ValueError(
-                "Invalid value for initial_window: {}".format(initial_window)
-            )
+            raise ValueError(f"Invalid value for initial_window: {initial_window}")
 
         if initial_window_type == "f":
             n_initial_window = int(floor(initial_window * n_samples))
@@ -501,6 +475,7 @@ class ConformalIntervals(BaseForecaster):
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-        params_list = {"forecaster": FORECASTER}
+        params1 = {"forecaster": FORECASTER}
+        params2 = {"forecaster": FORECASTER, "method": "conformal", "sample_frac": 0.9}
 
-        return params_list
+        return [params1, params2]

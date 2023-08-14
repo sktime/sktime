@@ -1,15 +1,17 @@
-# -*- coding: utf-8 -*-
 """Time series kshapes."""
 from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
 
-from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
+from sktime.base.adapters._tslearn import _TslearnAdapter
+from sktime.clustering.base import BaseClusterer
 
 
-class TimeSeriesKShapes(BaseClusterer):
-    """Kshape algorithm wrapper tslearns implementation.
+class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
+    """Kshape clustering for time series.
+
+    Direct interface to ``tslearn.clustering.KShape``.
 
     Parameters
     ----------
@@ -49,8 +51,12 @@ class TimeSeriesKShapes(BaseClusterer):
 
     _tags = {
         "capability:multivariate": True,
+        "capability:unequal_length": True,
         "python_dependencies": "tslearn",
     }
+
+    # defines the name of the attribute containing the tslearn estimator
+    _estimator_attr = "_tslearn_k_shapes"
 
     def __init__(
         self,
@@ -74,61 +80,27 @@ class TimeSeriesKShapes(BaseClusterer):
         self.inertia_ = None
         self.n_iter_ = 0
 
-        self._tslearn_k_shapes = None
+        super().__init__(n_clusters=n_clusters)
 
-        super(TimeSeriesKShapes, self).__init__(n_clusters=n_clusters)
+    def _get_tslearn_class(self):
+        """Get tslearn class.
 
-    def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
-        """Fit time series clusterer to training data.
-
-        Parameters
-        ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
-            Training time series instances to cluster.
-        y: ignored, exists for API consistency reasons.
-
-        Returns
-        -------
-        self:
-            Fitted estimator.
+        should import and return tslearn class
         """
         from tslearn.clustering import KShape
 
-        if self._tslearn_k_shapes is None:
-            self._tslearn_k_shapes = KShape(
-                # n_clusters=self.n_clusters,
-                n_clusters=3,
-                max_iter=self.max_iter,
-                tol=self.tol,
-                random_state=self.random_state,
-                n_init=self.n_init,
-                verbose=self.verbose,
-                init=self.init_algorithm,
-            )
+        return KShape
 
-        self._tslearn_k_shapes.fit(X)
-        self._cluster_centers = self._tslearn_k_shapes.cluster_centers_
-        self.labels_ = self._tslearn_k_shapes.labels_
-        self.inertia_ = self._tslearn_k_shapes.inertia_
-        self.n_iter_ = self._tslearn_k_shapes.n_iter_
+    def _get_tslearn_object(self):
+        """Initialize tslearn object.
 
-    def _predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
-        """Predict the closest cluster each sample in X belongs to.
-
-        Parameters
-        ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
-            Time series instances to predict their cluster indexes.
-        y: ignored, exists for API consistency reasons.
-
-        Returns
-        -------
-        np.ndarray (1d array of shape (n_instances,))
-            Index of the cluster each time series in X belongs to.
+        We need to override this due to the different names of
+        init_algorithm, which in tslearn is init
         """
-        return self._tslearn_k_shapes.predict(X)
+        cls = self._get_tslearn_class()
+        params = self.get_params()
+        params["init"] = params.pop("init_algorithm")
+        return cls(**params)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -149,7 +121,15 @@ class TimeSeriesKShapes(BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {
+        params1 = {
+            "n_clusters": 3,
+            "n_init": 2,
+            "max_iter": 2,
+            "tol": 1e-3,
+            "verbose": False,
+            "random_state": 2,
+        }
+        params2 = {
             "n_clusters": 2,
             "init_algorithm": "random",
             "n_init": 1,
@@ -158,6 +138,7 @@ class TimeSeriesKShapes(BaseClusterer):
             "verbose": False,
             "random_state": 1,
         }
+        return [params1, params2]
 
     def _score(self, X, y=None):
         return np.abs(self.inertia_)

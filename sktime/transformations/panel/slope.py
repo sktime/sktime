@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Slope transformer."""
 import math
 import statistics
@@ -42,7 +41,7 @@ class SlopeTransformer(BaseTransformer):
 
     def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
-        super(SlopeTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

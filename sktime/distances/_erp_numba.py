@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Isolated numba imports for _erp."""
 
 __author__ = ["chrisholder", "TonyBagnall"]

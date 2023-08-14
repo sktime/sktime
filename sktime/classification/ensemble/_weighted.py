@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Weighted ensemble of classifiers."""
 
 __author__ = ["fkiraly"]
@@ -149,7 +148,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         else:
             self._metric = metric
 
-        super(WeightedEnsembleClassifier, self).__init__()
+        super().__init__()
 
         # set property tags based on tags of components
         ests = self.classifiers_

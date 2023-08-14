@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for signature method."""
 
 import numpy as np

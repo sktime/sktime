@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Residual Network (ResNet) (minus the final output layer)."""
 
 __author__ = ["James Large", "Withington", "nilesh05apr"]
@@ -39,7 +38,7 @@ class ResNetNetwork(BaseDeepNetwork):
 
     def __init__(self, random_state=0):
         _check_dl_dependencies(severity="error")
-        super(ResNetNetwork, self).__init__()
+        super().__init__()
         self.random_state = random_state
 
     def build_network(self, input_shape, **kwargs):

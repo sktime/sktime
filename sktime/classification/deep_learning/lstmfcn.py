@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
 __author__ = ["jnrusson1", "solen0id"]
 
@@ -77,7 +76,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         random_state=None,
         verbose=0,
     ):
-        super(LSTMFCNClassifier, self).__init__()
+        super().__init__()
 
         self.classes_ = None
         self.input_shape = None

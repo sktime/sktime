@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Unit tests of DateTimeFeatures functionality."""
 
@@ -122,6 +121,7 @@ all_args = [
     "day_of_month",
     "day_of_week",
     "hour_of_day",
+    "hour_of_week",
     "minute_of_hour",
     "second_of_minute",
     "millisecond_of_second",
@@ -286,3 +286,25 @@ def test_month_of_quarter(df_panel):
     yt = t.fit_transform(y)[:13]
     expected = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1])
     assert (expected == yt.values).all()
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(DateTimeFeatures, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+def test_manual_selection_hour_of_week(df_panel):
+    """Tests that "hour_of_week" returns correct result in `manual_selection`."""
+    y = pd.DataFrame(
+        data={"y": range(6)},
+        index=pd.date_range(start="2023-01-01", freq="H", periods=6),
+    )
+    transformer = DateTimeFeatures(
+        manual_selection=["hour_of_week"], keep_original_columns=True
+    )
+
+    yt = transformer.fit_transform(y)
+    expected = pd.DataFrame(
+        data={"y": range(6), "hour_of_week": [144, 145, 146, 147, 148, 149]},
+        index=y.index,
+    )
+    assert_frame_equal(yt, expected)

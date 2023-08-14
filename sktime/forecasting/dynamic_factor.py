@@ -1,15 +1,11 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements DynamicFactor Model as interface to statsmodels."""
-
-import inspect
-
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
-_all_ = ["DynamicFactor"]
+__all__ = ["DynamicFactor"]
 __author__ = ["Ris-Bali", "lbventura"]
 
 
@@ -189,9 +185,9 @@ class DynamicFactor(_StatsModelsAdapter):
         self.flags = flags
         self.low_memory = low_memory
 
-        super(DynamicFactor, self).__init__()
+        super().__init__()
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -212,10 +208,8 @@ class DynamicFactor(_StatsModelsAdapter):
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
-            y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
-        else:
-            y_pred = self._fitted_forecaster.predict(start=start, end=end)
+        y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
+
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
 
@@ -225,7 +219,9 @@ class DynamicFactor(_StatsModelsAdapter):
             )
         return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
-    def _predict_interval(self, fh, X=None, coverage: [float] = None):
+    # todo 0.22.0 - switch legacy_interface default to False
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -279,10 +275,7 @@ class DynamicFactor(_StatsModelsAdapter):
         for coverage in coverage_list:
             alpha = 1 - coverage
 
-            if "exog" in inspect.signature(model.__init__).parameters.keys():
-                y_pred = model.get_forecast(steps=steps, exog=X).conf_int(alpha=alpha)
-            else:
-                y_pred = model.get_forecast(steps=steps).conf_int(alpha=alpha)
+            y_pred = model.get_forecast(steps=steps, exog=X).conf_int(alpha=alpha)
 
             y_pred = y_pred.iloc[ix]
 

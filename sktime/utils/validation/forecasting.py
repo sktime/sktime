@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Validations for use with forecasting module."""
 
 __all__ = [
@@ -509,5 +508,3 @@ def check_interval_df(interval_df, index_to_match):
     levels = interval_df.columns.levels
     if len(levels[0]) != 1:
         raise ValueError("`interval_df` must only contain one variable with interval")
-    if not (levels[0] == "Coverage")[0]:
-        raise ValueError("`interval_df` must have 'Coverage' column label")

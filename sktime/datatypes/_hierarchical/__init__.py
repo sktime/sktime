@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module exports: Hierarchical type checkers, converters and mtype inference."""
 
 from sktime.datatypes._hierarchical._check import check_dict as check_dict_Hierarchical

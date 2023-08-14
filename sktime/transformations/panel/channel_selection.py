@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Channel Selection techniques for Multivariate Time Series Classification.
 
 A transformer that selects a subset of channels/dimensions for time series
@@ -168,6 +167,7 @@ class ElbowClassSum(BaseTransformer):
     >>> Xt = cs.transform(X)
 
     Any sktime compatible distance can be used, e.g., DTW distance:
+
     >>> from sktime.dists_kernels import DtwDist
     >>>
     >>> cs = ElbowClassSum(distance=DtwDist())
@@ -195,7 +195,7 @@ class ElbowClassSum(BaseTransformer):
     def __init__(self, distance=None):
         self.distance = distance
 
-        super(ElbowClassSum, self).__init__()
+        super().__init__()
 
         from sktime.dists_kernels import (
             BasePairwiseTransformerPanel,
@@ -359,7 +359,7 @@ class ElbowClassPairwise(BaseTransformer):
     }
 
     def __init__(self):
-        super(ElbowClassPairwise, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit ECP to a specified X and y.
