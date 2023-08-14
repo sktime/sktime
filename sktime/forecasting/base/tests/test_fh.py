@@ -476,7 +476,7 @@ def test_frequency_setter(freqstr):
 
 # TODO: Replace this long running test with fast unit test
 @pytest.mark.skipif(
-    not run_test_for_class(AutoETS, severity="none"),
+    not run_test_for_class(AutoETS),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_auto_ets():
@@ -521,7 +521,7 @@ def test_auto_ets_case_with_naive():
 
 # TODO: Replace this long running test with fast unit test
 @pytest.mark.skipif(
-    not run_test_for_class(ExponentialSmoothing, severity="none"),
+    not run_test_for_class(ExponentialSmoothing),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_exponential_smoothing():
@@ -576,7 +576,7 @@ def test_exponential_smoothing_case_with_naive():
 
 # TODO: Replace this long running test with fast unit test
 @pytest.mark.skipif(
-    not run_test_for_class(AutoARIMA, severity="none"),
+    not run_test_for_class(AutoARIMA),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_auto_arima():
