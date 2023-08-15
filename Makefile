@@ -28,7 +28,7 @@ test: ## Run unit tests
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	python -m pytest -m "not datadownload"
+	python -m pytest
 
 test_check_suite: ## run only estimator contract tests in TestAll classes
 	-rm -rf ${TEST_DIR}
@@ -51,7 +51,7 @@ test_softdeps_full: ## Run all non-suite unit tests without soft dependencies
 	mkdir -p ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
 	cd ${TEST_DIR}
-	python -m pytest -v --showlocals --durations=20 -k 'not TestAll' -m 'not datadownload' $(PYTESTOPTIONS)
+	python -m pytest -v --showlocals --durations=20 -k 'not TestAll' $(PYTESTOPTIONS)
 
 test_datadownload: ## Run tests for downloads from external sources
 	-rm -rf ${TEST_DIR}
