@@ -151,15 +151,6 @@ class DateTimeFeatures(BaseTransformer):
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         self.keep_original_columns = keep_original_columns
 
-        # todo 0.22.0: change logic for comprehensive to include "hour_of_week"
-        # and remove this warning
-        if self.feature_scope == "comprehensive":
-            warnings.warn(
-                "From 0.22.0 onwards, 'comprehensive' will contain "
-                + "a new feature, 'hour_of_week'.",
-                stacklevel=2,
-            )
-
         super().__init__()
 
     def _transform(self, X, y=None):
