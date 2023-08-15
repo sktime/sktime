@@ -281,7 +281,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             colname_default=self.name,
         )
 
-        if self.multioutput == "raw_values":
+        if isinstance(self.multioutput, str) and self.multioutput == "raw_values":
             eval_result = pd.DataFrame(
                 eval_result.iloc[:, 0].to_list(),
                 index=eval_result.index,
@@ -364,7 +364,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             if multilevel in ["uniform_average", "uniform_average_time"]:
                 out_df = out_df.groupby(level=-1).mean()
 
-        if multioutput == "raw_values":
+        if isinstance(multioutput, str) and multioutput == "raw_values":
             out_df = _coerce_to_df(out_df)
         else:
             out_df = _coerce_to_series(out_df)
@@ -405,7 +405,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         """
         multioutput = self.multioutput
         n = y_true.shape[0]
-        if multioutput == "raw_values":
+        if isinstance(multioutput, str) and multioutput == "raw_values":
             out_series = pd.DataFrame(
                 index=y_true.index, columns=y_true.columns, dtype="float64"
             )
@@ -1242,11 +1242,12 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
 
         raw_values = (y_true - y_pred).abs()
 
-        if multioutput == "raw_values":
-            return raw_values
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return raw_values
 
-        if multioutput == "uniform_average":
-            return raw_values.mean(axis=1)
+            if multioutput == "uniform_average":
+                return raw_values.mean(axis=1)
 
         # else, we expect multioutput to be array-like
         return raw_values.dot(multioutput)
@@ -2889,3 +2890,10 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     ):
         self.relative_loss_function = relative_loss_function
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Retrieve test parameters."""
+        params1 = {}
+        params2 = {"relative_loss_function": mean_squared_error}
+        return [params1, params2]
