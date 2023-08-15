@@ -204,14 +204,21 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         # pass to inner function
         out = self._evaluate_by_index(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
-        if self.score_average and multioutput == "uniform_average":
-            out = out.mean(axis=1)  # average over all
-        if self.score_average and multioutput == "raw_values":
-            out = out.groupby(axis=1, level=0).mean()  # average over scores
-        if not self.score_average and multioutput == "uniform_average":
-            out = out.groupby(axis=1, level=1).mean()  # average over variables
-        if not self.score_average and multioutput == "raw_values":
-            out = out  # don't average
+        if isinstance(multioutput, str):
+            if self.score_average and multioutput == "uniform_average":
+                out = out.mean(axis=1)  # average over all
+            if self.score_average and multioutput == "raw_values":
+                out = out.groupby(axis=1, level=0).mean()  # average over scores
+            if not self.score_average and multioutput == "uniform_average":
+                out = out.groupby(axis=1, level=1).mean()  # average over variables
+            if not self.score_average and multioutput == "raw_values":
+                out = out  # don't average
+        else:  # numpy array
+            if self.score_average:
+                out_raw = out.groupby(axis=1, level=0).mean()
+                out = out_raw.groupby(axis=1, level=1).dot(multioutput)
+            else:
+                out = out.groupby(axis=1, level=1).dot(multioutput)
 
         return out
 
