@@ -2229,6 +2229,15 @@
       ]
     },
     {
+      "login": "janpipek",
+      "name": "Jan Pipek",
+      "avatar_url": "https://avatars.githubusercontent.com/janpipek",
+      "profile": "https://github.com/janpipek",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "Gigi1111",
       "name": "Chung-Fan Tsai",
       "avatar_url": "https://avatars.githubusercontent.com/Gigi1111",
@@ -2275,6 +2284,35 @@
       "profile": "https://github.com/MBristle",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "MCRE-BE",
+      "name": "Mathias Creemers",
+      "avatar_url": "https://avatars.githubusercontent.com/u/99316631",
+      "profile": "https://github.com/MCRE-BE",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "Ram0nB",
+      "name": "Ramon Bussing",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45173421",
+      "profile": "https://github.com/Ram0nB",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "hliebert",
+      "name": "Helge Liebert",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20834265",
+      "profile": "https://github.com/hliebert",
+      "contributions": [
+        "bug",
+        "code"
       ]
     }
   ]

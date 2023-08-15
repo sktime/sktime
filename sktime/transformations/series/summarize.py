@@ -153,6 +153,7 @@ class WindowSummarizer(BaseTransformer):
     >>> y_transformed = transformer.fit_transform(y)
 
         Example with transforming multiple columns of exogeneous features
+
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(X_test.index, is_relative=False)
@@ -169,6 +170,7 @@ class WindowSummarizer(BaseTransformer):
 
         Example with transforming multiple columns of exogeneous features
         as well as the y column
+
     >>> Z_train = pd.concat([X_train, y_train], axis=1)
     >>> Z_test = pd.concat([X_test, y_test], axis=1)
     >>> pipe = ForecastingPipeline(

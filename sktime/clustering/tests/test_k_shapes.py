@@ -4,7 +4,7 @@ import pytest
 
 from sktime.clustering.k_shapes import TimeSeriesKShapes
 from sktime.datasets import load_basic_motions
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 
 expected_results = [
     0,
@@ -100,8 +100,8 @@ expected_score = 0.550860917533926
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(TimeSeriesKShapes, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(TimeSeriesKShapes),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_kshapes():
     """Test implementation of Kshapes."""

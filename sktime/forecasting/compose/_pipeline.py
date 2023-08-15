@@ -372,6 +372,7 @@ class ForecastingPipeline(_Pipeline):
 
         Example 3: using the dunder method
         Note: * (= apply to `y`) has precedence over ** (= apply to `X`)
+
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = (imputer * MinMaxScaler()) ** forecaster
@@ -777,6 +778,7 @@ class TransformedTargetForecaster(_Pipeline):
     >>> y = load_airline()
 
         Example 1: string/estimator pairs
+
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("detrender", Detrender()),
@@ -787,6 +789,7 @@ class TransformedTargetForecaster(_Pipeline):
     >>> y_pred = pipe.predict(fh=[1,2,3])
 
         Example 2: without strings
+
     >>> pipe = TransformedTargetForecaster([
     ...     Imputer(method="mean"),
     ...     Detrender(),
@@ -795,6 +798,7 @@ class TransformedTargetForecaster(_Pipeline):
     ... ])
 
         Example 3: using the dunder method
+
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = imputer * Detrender() * forecaster * ExponentTransformer()
@@ -1231,6 +1235,7 @@ class ForecastX(BaseForecaster):
 
     to forecast only some columns, use the `columns` arg,
     and pass known columns to `predict`:
+
     >>> columns = ["ARMED", "POP"]
     >>> pipe = ForecastX(  # doctest: +SKIP
     ...     forecaster_X=VAR(),
@@ -1629,6 +1634,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.transformations.series.exponent import ExponentTransformer
 
     Simple example: permute sequence of estimator in forecasting pipeline
+
     >>> y = load_airline()
     >>> fh = ForecastingHorizon([1, 2, 3])
     >>> pipe = ForecastingPipeline(
@@ -1644,6 +1650,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> y_pred = permuted.predict()
 
     The permuter is useful in combination with grid search (toy example):
+
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,

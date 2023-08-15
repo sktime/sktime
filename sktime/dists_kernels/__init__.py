@@ -1,6 +1,6 @@
 """Module exports for dist_kernels module."""
 
-from sktime.dists_kernels._base import (
+from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )

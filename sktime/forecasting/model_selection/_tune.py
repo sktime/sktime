@@ -376,9 +376,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Model tuning parameters of the forecaster to evaluate
     scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        if callable, must have signature
+        If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        Metrics in sktime.performance_metrics.forecasting are all of this form.
+        sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
@@ -450,6 +454,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
         Advanced model meta-tuning (model selection) with multiple forecasters
         together with hyper-parametertuning at same time using sklearn notation:
+
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -633,9 +638,13 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         off runtime vs quality of the solution.
     scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        if callable, must have signature
+        If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        Metrics in sktime.performance_metrics.forecasting are all of this form.
+        sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
     n_jobs : int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
@@ -800,9 +809,13 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         If this does not align with n_iter, the last iteration will sample less points
     scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        if callable, must have signature
+        If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        Metrics in sktime.performance_metrics.forecasting are all of this form.
+        sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
     optimizer_kwargs: dict, optional
         Arguments passed to Optimizer to control the bahaviour of the bayesian search.
         For example, {'base_estimator': 'RF'} would use a Random Forest surrogate
