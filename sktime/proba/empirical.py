@@ -56,7 +56,10 @@ class Empirical(BaseDistribution):
         self.columns = columns
 
         _timestamps = spl.index.get_level_values(-1).unique()
+        _spl_instances = spl.index.droplevel(-1).unique()
         self._timestamps = _timestamps
+        self._spl_instances = _spl_instances
+        self._N = len(_spl_instances)
 
         shape0 = len(np.unique(_timestamps))
         shape = (shape0, spl.shape[1])
@@ -87,10 +90,13 @@ class Empirical(BaseDistribution):
         pd.DataFrame with same rows as `self`, single column `"energy"`
         each row contains one float, self-energy/energy as described above.
         """
-        if x is None:
-            return "todo"
-        else:
-            return "todo"
+        # splx, sply = empirical samples of X, Y
+        N = self._N
+        spl = self.spl
+
+        # todo: use energy utility _energy per row/column iloc
+
+        return energy
 
     def mean(self):
         r"""Return expected value of the distribution.
@@ -224,3 +230,52 @@ class Empirical(BaseDistribution):
             "columns": pd.Index(["a", "b"]),
         }
         return [params1, params2]
+
+
+def _energy(spl, x=None, weights=None):
+    r"""Compute sample energy, fast numpy based subroutine.
+
+    Let :math:`X` be the random variable with support being
+    values of `spl`, with probability weights `weights`.
+
+    This function then returns :math:`\mathbb{E}[|X-Y|]`, with :math:`Y` an
+    independent copy of :math:`X`, if `x` is `None`.
+
+    If `x` is passed, returns :math:`\mathbb{E}[|X-x|]`.
+
+    Parameters
+    ----------
+    spl : 1D np.ndarray
+        empirical sample
+    x : None or float, optional, default=None
+        if None, computes self-energy, if float, computes energy wrt x
+    weights : None or 1D np.ndarray, optional, default=None
+        if None, computes unweighted energy, if 1D np.ndarray, computes weighted energy
+        if not None, must be of same length as ``spl``, needs not be normalized
+
+    Returns
+    -------
+    float
+        energy as described above
+    """
+    if weights is None:
+        weights = np.ones(len(spl))
+
+    sorter = np.argsort(spl)
+    spl = spl[sorter]
+    weights = weights[sorter]
+
+    w_sum = np.sum(weights)
+    weights = weights / w_sum
+
+    spl_diff = np.diff(spl)
+
+    if x is None:
+        cum_fwd = np.cumsum(weights[:-1])
+        cum_back = np.cumsum(weights[1::-1])[::-1]
+        energy = 2 * np.sum(cum_fwd * cum_back * spl_diff)
+    else:
+        spl_diff = np.abs(spl - x)
+        energy = np.sum(weights * spl_diff)
+
+    return energy
