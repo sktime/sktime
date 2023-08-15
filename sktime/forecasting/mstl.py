@@ -4,7 +4,7 @@
 __all__ = ["MSTL"]
 __authors__ = ["luca-miniati"]
 
-from typing import Optional
+from typing import Dict, Optional, Sequence, Union
 
 import pandas as pd
 
@@ -37,6 +37,14 @@ class MSTL(BaseTransformer):
         Number of iterations to use to refine the seasonal component.
     stl_kwargs : dict, optional
         Arguments to pass to STL.
+    return_components : bool, default=False
+        if False, will return only the MSTL transformed series
+        if True, will return the transformed series, as well as three components
+            as variables in the returned multivariate series (DataFrame cols)
+            "transformed" - the transformed series
+            "seasonal" - the seasonal component
+            "trend" - the trend component
+            "resid" - the residuals after de-trending, de-seasonalizing
 
     References
     ----------
@@ -56,17 +64,25 @@ class MSTL(BaseTransformer):
     """
 
     _tags = {
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "scitype:instancewise": True,
+        "X_inner_mtype": "pd.Series",
+        "y_inner_mtype": "pd.Series",
+        "transform-returns-same-time-index": True,
+        "univariate-only": True,
+        "fit_is_empty": False,
         "python_dependencies": "statsmodels",
     }
 
     def __init__(
         self,
-        periods=None,
-        windows=None,
-        lmbda=None,
+        periods: Optional[Union[int, Sequence[int]]] = None,
+        windows: Optional[Union[int, Sequence[int]]] = None,
+        lmbda: Optional[Union[float, str]] = None,
         iterate: Optional[int] = 2,
-        stl_kwargs: Optional[dict] = None,
-        return_components=False,
+        stl_kwargs: Optional[Dict[str, Union[int, bool, None]]] = None,
+        return_components: bool = False,
     ):
         self.periods = periods
         self.windows = windows
@@ -74,14 +90,17 @@ class MSTL(BaseTransformer):
         self.iterate = iterate
         self.stl_kwargs = stl_kwargs
         self.return_components = return_components
+        self._X = None
 
         super().__init__()
 
     def _fit(self, X, y=None):
         from statsmodels.tsa.seasonal import MSTL as _MSTL
 
+        self._X = X
+
         self.mstl_ = _MSTL(
-            y,
+            X,
             periods=self.periods,
             windows=self.windows,
             lmbda=self.lmbda,
