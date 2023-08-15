@@ -224,3 +224,52 @@ def test_evaluate_alpha_negative(metric, sample_data):
         # 0.3 not in test quantile data so raise error.
         Loss = metric.create_test_instance().set_params(alpha=0.3)
         res = Loss(y_true=y_true, y_pred=y_pred)  # noqa
+
+
+@pytest.mark.parametrize("metric", all_metrics)
+@pytest.mark.parametrize("score_average", [True, False])
+def test_multioutput_weighted(metric, score_average):
+    """Test output contracts for multioutput weights."""
+    y_true = pd.DataFrame({"var1": [3, -0.5, 2, 7, 2], "var2": [4, 0.5, 3, 8, 3]})
+    y_pred = pd.DataFrame(
+        {
+            ("var1", 0.05): [1.5, -1, 1, 4, 0.65],
+            ("var1", 0.5): [2.5, 0, 2, 8, 1.25],
+            ("var1", 0.95): [3.5, 4, 3, 12, 1.85],
+            ("var2", 0.05): [2.5, 0, 2, 8, 1.25],
+            ("var2", 0.5): [5.0, 1, 4, 16, 2.5],
+            ("var2", 0.95): [7.5, 2, 6, 24, 3.75],
+        }
+    )
+
+    weights = np.array([0.3, 0.7])
+
+    loss = metric.create_test_instance()
+    loss.set_params(score_average=score_average, multioutput=weights)
+
+    eval_loss = loss(y_true, y_pred)
+
+    if loss.get_tag("scitype:y_pred") == "pred_interval":
+        # 1 full interval, lower = 0.05, upper = 0.95
+        expected_score_ix = [0.9]
+    else:
+        # 3 quantile scores, 0.05, 0.5, 0.95
+        expected_score_ix = [0.05, 0.5, 0.95]
+    no_expected_scores = len(expected_score_ix)
+    expected_timepoints = len(y_pred)
+
+    if score_average:
+        assert isinstance(eval_loss, float)
+    else:
+        assert isinstance(eval_loss, pd.Series)
+        assert len(eval_loss) == no_expected_scores
+
+    eval_loss_by_index = loss.evaluate_by_index(y_true, y_pred)
+    assert len(eval_loss_by_index) == expected_timepoints
+
+    if score_average:
+        assert isinstance(eval_loss_by_index, pd.Series)
+    else:
+        assert isinstance(eval_loss_by_index, pd.DataFrame)
+        assert eval_loss_by_index.shape == (expected_timepoints, no_expected_scores)
+        assert eval_loss_by_index.columns.to_list() == expected_score_ix

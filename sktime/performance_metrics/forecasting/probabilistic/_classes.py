@@ -117,14 +117,21 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         # pass to inner function
         out = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
-        if self.score_average and multioutput == "uniform_average":
-            out = float(out.mean(axis=1).iloc[0])  # average over all
-        if self.score_average and multioutput == "raw_values":
-            out = out.groupby(axis=1, level=0).mean()  # average over scores
-        if not self.score_average and multioutput == "uniform_average":
-            out = out.groupby(axis=1, level=1).mean()  # average over variables
-        if not self.score_average and multioutput == "raw_values":
-            out = out  # don't average
+        if isinstance(multioutput, str):
+            if self.score_average and multioutput == "uniform_average":
+                out = float(out.mean(axis=1).iloc[0])  # average over all
+            if self.score_average and multioutput == "raw_values":
+                out = out.groupby(axis=1, level=0).mean()  # average over scores
+            if not self.score_average and multioutput == "uniform_average":
+                out = out.groupby(axis=1, level=1).mean()  # average over variables
+            if not self.score_average and multioutput == "raw_values":
+                out = out  # don't average
+        else:  # is np.array with weights
+            if self.score_average:
+                out_raw = out.groupby(axis=1, level=0).mean()
+                out = out_raw.dot(multioutput)[0]
+            else:
+                out = _groupby_dot(out, multioutput)
 
         if isinstance(out, pd.DataFrame):
             out = out.squeeze(axis=0)
@@ -216,9 +223,9 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         else:  # numpy array
             if self.score_average:
                 out_raw = out.groupby(axis=1, level=0).mean()
-                out = out_raw.groupby(axis=1, level=1).dot(multioutput)
+                out = out_raw.dot(multioutput)
             else:
-                out = out.groupby(axis=1, level=1).dot(multioutput)
+                out = _groupby_dot(out, multioutput)
 
         return out
 
@@ -380,6 +387,27 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         else:
             out = np.average(loss, weights=multioutput)
         return out
+
+
+def _groupby_dot(df, weights):
+    """Groupby dot product.
+
+    Groups df by axis 1, level 1, and applies dot product with weights.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        dataframe to groupby
+    weights : np.array
+        weights to apply to each group
+
+    Returns
+    -------
+    out : pd.DataFrame
+        dataframe with weighted groupby dot product
+    """
+    out = df.groupby(axis=1, level=1).apply(lambda x: x.dot(weights))
+    return out
 
 
 class PinballLoss(_BaseProbaForecastingErrorMetric):
