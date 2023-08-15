@@ -30,7 +30,10 @@ def _check_estimators_type(objs: Union[dict, list, BaseEstimator]) -> None:
     items = objs.values() if isinstance(objs, dict) else objs
     compatible = all(is_initalised_estimator(estimator) for estimator in items)
     if not compatible:
-        raise TypeError("Estimator must be an initialised BaseEstimator object.")
+        raise TypeError(
+            "One or many estimator(s) is not an initialised BaseEstimator "
+            "object(s). Please instantiate the estimator(s) first."
+        )
 
 
 def coerce_estimator_and_id(estimators, estimator_id=None):
