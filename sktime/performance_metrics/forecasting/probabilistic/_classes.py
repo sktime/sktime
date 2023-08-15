@@ -458,7 +458,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     array([0.16233333, 0.465     ])
     >>> pl = PinballLoss(multioutput=np.array([0.3, 0.7]))
     >>> pl(y_true, y_pred).to_numpy()
-    array([0.0735, 0.275 , 0.1385, 0.0475, 1.1   , 0.2475])
+    0.3742000000000001
     """
 
     _tags = {
