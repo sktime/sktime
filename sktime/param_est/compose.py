@@ -81,6 +81,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     12
 
     Alternative construction via dunder method:
+
     >>> pipe = Differencer() * SeasonalityACF()  # doctest: +SKIP
     """
 
