@@ -14,27 +14,6 @@ from sktime.performance_metrics.forecasting._coerce import _coerce_to_scalar
 # TODO: Rework tests now
 
 
-def _groupby_dot(df, weights):
-    """Groupby dot product.
-
-    Groups df by axis 1, level 1, and applies dot product with weights.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        dataframe to groupby
-    weights : np.array
-        weights to apply to each group
-
-    Returns
-    -------
-    out : pd.DataFrame
-        dataframe with weighted groupby dot product
-    """
-    out = df.groupby(axis=1, level=1).apply(lambda x: x.dot(weights))
-    return out
-
-
 class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     """Base class for probabilistic forecasting error metrics in sktime.
 
@@ -408,6 +387,27 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         else:
             out = np.average(loss, weights=multioutput)
         return out
+
+
+def _groupby_dot(df, weights):
+    """Groupby dot product.
+
+    Groups df by axis 1, level 1, and applies dot product with weights.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        dataframe to groupby
+    weights : np.array
+        weights to apply to each group
+
+    Returns
+    -------
+    out : pd.DataFrame
+        dataframe with weighted groupby dot product
+    """
+    out = df.groupby(axis=1, level=1).apply(lambda x: x.dot(weights))
+    return out
 
 
 class PinballLoss(_BaseProbaForecastingErrorMetric):
