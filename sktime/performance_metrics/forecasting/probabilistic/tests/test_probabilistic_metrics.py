@@ -249,18 +249,27 @@ def test_multioutput_weighted(metric, score_average):
 
     eval_loss = loss(y_true, y_pred)
 
+    if loss.get_tag("scitype:y_pred") == "pred_interval":
+        # 1 full interval, lower = 0.05, upper = 0.95
+        expected_score_ix = [0.9]
+    else:
+        # 3 quantile scores, 0.05, 0.5, 0.95
+        expected_score_ix = [0.05, 0.5, 0.95]
+    no_expected_scores = len(expected_score_ix)
+    expected_timepoints = len(y_pred)
+
     if score_average:
         assert isinstance(eval_loss, float)
     else:
         assert isinstance(eval_loss, pd.Series)
-        assert len(eval_loss) == 3
+        assert len(eval_loss) == no_expected_scores
 
     eval_loss_by_index = loss.evaluate_by_index(y_true, y_pred)
-    assert len(eval_loss_by_index) == 5
+    assert len(eval_loss_by_index) == expected_timepoints
 
     if score_average:
         assert isinstance(eval_loss_by_index, pd.Series)
     else:
         assert isinstance(eval_loss_by_index, pd.DataFrame)
-        assert eval_loss_by_index.shape == (5, 3)
-        assert eval_loss_by_index.columns == [0.05, 0.5, 0.95]
+        assert eval_loss_by_index.shape == (expected_timepoints, no_expected_scores)
+        assert eval_loss_by_index.columns.to_list() == expected_score_ix
