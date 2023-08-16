@@ -38,7 +38,8 @@ class BaseAligner(BaseEstimator):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": False,  # does compute/return overall distance?
         "capability:distance-matrix": False,  # does compute/return distance matrix?
-        "X_inner_mtype": "df-list",
+        "alignment_type": "full",  # does the aligner produce full or partial alignment
+        "X_inner_mtype": "df-list",  # mtype of X expected by _fit
     }
 
     def __init__(self):
