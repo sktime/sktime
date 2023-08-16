@@ -293,7 +293,7 @@ def evaluate(
         - len_train_window: (int) Length of train window.
         - cutoff: (int, pd.Timestamp, pd.Period) cutoff = last time index in train fold.
         - y_train: (pd.Series) only present if see `return_data=True`
-          train fold of the i-th split in `cv`, used to fit/update the forecaster.
+        train fold of the i-th split in `cv`, used to fit/update the forecaster.
         - y_pred: (pd.Series) present if see `return_data=True`
           forecasts from fitted forecaster for the i-th test fold indices of `cv`.
         - y_test: (pd.Series) present if see `return_data=True`
@@ -310,27 +310,34 @@ def evaluate(
     (if ``X`` is ``None``, consider these to be ``None`` as well).
 
     0. Set ``i = 1``.
+
     1. ``fit`` the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
     with a ``fh`` to forecast :math:`y_{test, 1}`.
+
     2. ``y_pred = forecaster.predict``
     (or ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``)
     with exogeneous data :math:`X_{test, i}`
+
     3. Compute ``scoring`` on ``y_pred``versus :math:`y_{test, 1}`.
+
     4. If ``i == K``, terminate, otherwise
+
     5. Set ``i = i + 1``
+
     6. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
     how depends on ``strategy``:
 
-        * if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
-        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-        * if ``strategy == "update"``, update ``forecaster`` via ``update``,
-        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-        * if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
-        with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
+    * if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
+    on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+    * if ``strategy == "update"``, update ``forecaster`` via ``update``,
+    on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+    * if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
+    with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
 
     7. Go to 2
 
     Results returned in this function's return are:
+
     * results of ``scoring`` calculations, from 3,  in the `i`-th loop
     * runtimes for fitting and/or predicting, from 1, 2, 6, in the `i`-th loop
     * cutoff state of ``forecaster``, at 2, in the `i`-th loop
