@@ -6,6 +6,7 @@ __author__ = ["fkiraly"]
 from functools import reduce
 from operator import mul
 
+import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
@@ -282,9 +283,9 @@ def test_col_vectorization_correct_col_order():
     Failure case is as in issue #4683 where the column index is correct,
     but the values are in fact coming from forecasters in jumbled order.
     """
-    from sktime.datasets import load_macroeconomic
-
-    y = load_macroeconomic().iloc[:5]
+    cols = ["realgdp", "realcons", "realinv", "realgovt", "realdpi", "cpi", "m1"]
+    vals = np.random.rand(5, 7)
+    y = pd.DataFrame(vals, columns=cols)
 
     f = NaiveForecaster()
     # force univariate tag to trigger vectorization over columns for sure
