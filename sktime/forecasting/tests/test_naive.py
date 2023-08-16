@@ -393,9 +393,7 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     y_pred_ints = forecaster.fit(y).predict_interval(fh=h, coverage=coverage)
 
     expected = pd.DataFrame(
-        columns=pd.MultiIndex.from_product(
-            [[y.name], [coverage], ["lower", "upper"]]
-        ),
+        columns=pd.MultiIndex.from_product([[y.name], [coverage], ["lower", "upper"]]),
         index=y_pred_ints.index,
     )
 
