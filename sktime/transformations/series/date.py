@@ -254,7 +254,7 @@ class DateTimeFeatures(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {"feature_scope": "minimal"}
-        params2 = {"feature_scope": "efficient", "keep_original_columns": True"}
+        params2 = {"feature_scope": "efficient", "keep_original_columns": True}
         params3 = {"manual_selection": ["day_of_year", "day_of_month"]}
         return [params1, params2, params3]
 
