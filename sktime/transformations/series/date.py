@@ -232,6 +232,23 @@ class DateTimeFeatures(BaseTransformer):
 
         return Xt
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {"feature_scope": "minimal"}
+        params2 = {"feature_scope": "efficient", "keep_original_columns": True"}
+        params3 = {"manual_selection": ["day_of_year", "day_of_month"]}
+        return [params1, params2, params3]
+
 
 def _check_manual_selection(manual_selection, DUMMIES):
     if (manual_selection is not None) and (

@@ -28,6 +28,7 @@ __author__ = ["fkiraly"]
 
 from sktime.alignment.utils.utils_align import convert_align_to_align_loc, reindex_iloc
 from sktime.base import BaseEstimator
+from sktime.datatypes import check_is_scitype, convert
 
 
 class BaseAligner(BaseEstimator):
@@ -37,6 +38,7 @@ class BaseAligner(BaseEstimator):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": False,  # does compute/return overall distance?
         "capability:distance-matrix": False,  # does compute/return distance matrix?
+        "X_inner_mtype": "df-list",
     }
 
     def __init__(self):
@@ -67,9 +69,25 @@ class BaseAligner(BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
-        self._fit(X=X, Z=Z)
+        valid, msg, X_metadata = check_is_scitype(
+            X, scitype="Panel", return_metadata=[], var_name="X"
+        )
 
-        self._X = X
+        if not valid:
+            raise TypeError(msg)
+
+        X_mtype = X_metadata["mtype"]
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+
+        self._X_mtype = X_mtype
+
+        X_inner = convert(
+            X, from_type=X_mtype, to_type=X_inner_mtype, as_scitype="Panel"
+        )
+
+        self._fit(X=X_inner, Z=Z)
+
+        self._X = X_inner
         self._Z = Z
 
         self._is_fitted = True
