@@ -191,6 +191,14 @@ class AlignerDTW(BaseAligner):
 
         return distmat
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Test parameters for AlignerDTWdist."""
+        params1 = {}
+        params2 = {"step_pattern": "symmetric1"}
+
+        return [params1, params2]
+
 
 class AlignerDTWfromDist(BaseAligner):
     """Aligner interface for dtw-python using pairwise transformer.
@@ -356,4 +364,7 @@ class AlignerDTWfromDist(BaseAligner):
         # importing inside to avoid circular dependencies
         from sktime.dists_kernels import ScipyDist
 
-        return {"dist_trafo": ScipyDist()}
+        params1 = {"dist_trafo": ScipyDist()}
+        params2 = {"dist_trafo": ScipyDist("cityblock"), "step_pattern": "symmetric1"}
+
+        return 
