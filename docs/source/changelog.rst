@@ -19,9 +19,44 @@ Version 0.21.1 - 2023-08-16
 Highlights
 ~~~~~~~~~~
 
-* multiple holiday feature transformers based on ``holidays`` (:pr:`4893`, :pr:`4909`)  :user:`VyomkeshVyas`, :user:`yarnabrina`
+* holiday feature transformers (country, financial holidays; 1:1 interface) based on ``holidays`` (:pr:`4893`, :pr:`4909`) :user:`VyomkeshVyas`, :user:`yarnabrina`
 * ``DropNA`` transformer to drop rows or columns with nan (:pr:`5049`) :user:`hliebert`
+* ``ExpandingGreedySplitter`` for slicing test sets from end (:pr:`4917`) :user:`davidgilbertson`
+* ``statsforecast`` interfaces: MSTL forecaster, ARCH family forecasters (:pr:`4865`, :pr:`4938`) :user:`luca-miniati`, :user:`eyjo`
 * full rework of time series classification notebook (:pr:`5045`) :user:`fkiraly`
+* improved developer experience - speedups for testing :user:`julia-kraus`, :user:`tarpas`, :user:`benheid`, :user:`fkiraly`, :user:`yarnabrina`
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* all estimators are required to have at least two test parameter sets in
+  ``get_test_params`` to be compliant with ``check_estimator`` contract tests.
+  This requirement was previously stated in the extension template but not enforced.
+  It is now also included in the automated tests via ``check_estimator``.
+* exceptions are, of course, estimators without (unreserved) parameters.
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* Time series aligners now accept all ``Panel`` mtypes as input,
+  from only ``df-list`` previously. This is not a breaking change.
+* Time series aligners now have a tag ``"alignment_type"``, which can have values
+  ``"full"`` and ``"partial"``, to distinguish between a full and partial alignment
+  produced by ``get_alignment``. The tag can depend on parameters of the aligner.
+
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Pairwise transformers now have a tag ``"pwtrafo_type"``, which can have values
+  ``"kernel"``, ``"distance"``, or ``"other"``, to allow the user to inspect
+  whether the transformer is a kernel or distance transformer.
+  This does not impact the interface. The tag is mainly for search and retrieval
+  by the user. This also allows to check against methodological requirements
+  of estimators, e.g., support vector machines requiring a kernel.
+  However, as stated, this is not enforced by the base interface.
 
 Enhancements
 ~~~~~~~~~~~~
