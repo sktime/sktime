@@ -367,4 +367,4 @@ class AlignerDTWfromDist(BaseAligner):
         params1 = {"dist_trafo": ScipyDist()}
         params2 = {"dist_trafo": ScipyDist("cityblock"), "step_pattern": "symmetric1"}
 
-        return 
+        return [params1, params2]
