@@ -104,6 +104,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
     (
+        "pwtrafo_type",
+        ["transformer-pairwise", "transformer-pairwise-panel"],
+        ("str", ["distance", "kernel", "other"]),
+        "mathematical type of pairwise transformer - distance, kernel, or other",
+    ),
+    (
         "scitype:X",
         "param_est",
         "str",

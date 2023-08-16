@@ -22,7 +22,6 @@ from sktime.datasets import load_airline, load_longley
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
-from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -42,14 +41,12 @@ from sktime.performance_metrics.forecasting.probabilistic import (
     LogLoss,
     PinballLoss,
 )
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation._dependencies import (
-    _check_estimator_deps,
-    _check_soft_dependencies,
-)
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def _check_evaluate_output(out, cv, y, scoring):
@@ -300,7 +297,7 @@ def test_evaluate_bigger_X(cls):
 
     Example adapted from bug report #3657.
     """
-    if not _check_estimator_deps(cls, severity="none"):
+    if not run_test_for_class(cls):
         return None
 
     y, X = load_longley()
@@ -316,17 +313,13 @@ def test_evaluate_bigger_X(cls):
 PROBA_METRICS = [CRPS, EmpiricalCoverage, LogLoss, PinballLoss]
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
-)
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("metric", PROBA_METRICS)
 def test_evaluate_probabilistic(n_columns, metric):
     """Check that evaluate works with interval, quantile, and distribution forecasts."""
     y = _make_series(n_columns=n_columns)
 
-    forecaster = AutoETS()
+    forecaster = NaiveForecaster()
     cv = SlidingWindowSplitter()
     scoring = metric()
     try:

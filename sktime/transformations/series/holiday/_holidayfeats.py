@@ -58,6 +58,7 @@ class HolidayFeatures(BaseTransformer):
     >>> X = pd.DataFrame(values, index=index)  # doctest: +SKIP
 
     Returns country holiday features with custom holiday windows
+
     >>> transformer = HolidayFeatures(
     ...    calendar=country_holidays(country="FR"),
     ...    return_categorical=True,
@@ -65,6 +66,7 @@ class HolidayFeatures(BaseTransformer):
     >>> yt = transformer.fit_transform(X)  # doctest: +SKIP
 
     Returns financial holiday features
+
     >>> transformer = HolidayFeatures(
     ...    calendar=financial_holidays(market="NYSE"),
     ...    return_categorical=True,
@@ -72,6 +74,7 @@ class HolidayFeatures(BaseTransformer):
     >>> yt = transformer.fit_transform(X)  # doctest: +SKIP
 
     Returns custom made holiday features
+
     >>> transformer = HolidayFeatures(
     ...    calendar={date(2000,1,14): "Regional Holiday",
     ...              date(2000, 1, 26): "Regional Holiday"},
