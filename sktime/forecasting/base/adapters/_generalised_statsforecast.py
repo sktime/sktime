@@ -1,5 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
+from inspect import signature
+
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
@@ -86,12 +88,26 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         level_arguments = None if levels is None else [100 * level for level in levels]
 
         if fh_type == "in-sample":
-            predictions = self._forecaster.predict_in_sample(level=level_arguments)
+            predict_method = self._forecaster.predict_in_sample
+            # Before v1.5.0 (from statsforecast) not all foreasters
+            # have a "level" keyword argument in `predict_in_sample`
+            level_kw = (
+                {"level": level_arguments}
+                if ("level" in signature(predict_method).parameters.keys())
+                else {}
+            )
+            predictions = predict_method(**level_kw)
             point_predictions = predictions["fitted"]
         elif fh_type == "out-of-sample":
-            predictions = self._forecaster.predict(
-                maximum_forecast_horizon, X=X, level=level_arguments
+            predict_method = self._forecaster.predict
+            # Before v1.5.0 (from statsforecast) not all foreasters
+            # have a "level" keyword argument in `predict`
+            level_kw = (
+                {"level": level_arguments}
+                if ("level" in signature(predict_method).parameters.keys())
+                else {}
             )
+            predictions = predict_method(maximum_forecast_horizon, X=X, **level_kw)
             point_predictions = predictions["mean"]
 
         if isinstance(point_predictions, pandas.Series):
