@@ -308,14 +308,14 @@ def test_row_vectorization_correct_row_order():
     n_instances = 3
     n_points = 5
 
-    t_ix = pd.date_range(start='2022-07-01', periods=n_points * n_instances, freq='D')
+    t_ix = pd.date_range(start="2022-07-01", periods=n_points * n_instances, freq="D")
     y = pd.DataFrame(
         {
-            'y': [i for i in range(n_points * n_instances)],
-            'id': ["T1"] * n_points + ["T2"] * n_points + ["T11"] * n_points,
-            'timestamp': t_ix,
+            "y": [i for i in range(n_points * n_instances)],
+            "id": ["T1"] * n_points + ["T2"] * n_points + ["T11"] * n_points,
+            "timestamp": t_ix,
         }
-    ).set_index(['id', 'timestamp'])
+    ).set_index(["id", "timestamp"])
 
     fh = [1]
 
