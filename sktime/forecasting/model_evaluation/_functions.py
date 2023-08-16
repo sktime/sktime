@@ -312,30 +312,26 @@ def evaluate(
     the train/test folds produced by the generator ``cv_X.split_series(X)``
     (if ``X`` is ``None``, consider these to be ``None`` as well).
 
-    0. Set ``i = 1``
-    1. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
-    with a ``fh`` to forecast :math:`y_{test, 1}`
-
-    2. The ``forecaster`` predict with exogeneous data :math:`X_{test, i}`
-    ``y_pred = forecaster.predict`` (or ``predict_proba`` or ``predict_quantiles``,
-    depending on ``scoring``)
-
-    3. Compute ``scoring`` on ``y_pred`` versus :math:`y_{test, 1}`
-    4. If ``i == K``, terminate, otherwise
-    5. Set ``i = i + 1``
-    6. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
+    1. Set ``i = 1``
+    2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
+       with a ``fh`` to forecast :math:`y_{test, 1}`
+    3. The ``forecaster`` predict with exogeneous data :math:`X_{test, i}`
+        ``y_pred = forecaster.predict`` (or ``predict_proba`` or ``predict_quantiles``,
+        depending on ``scoring``)
+    4. Compute ``scoring`` on ``y_pred`` versus :math:`y_{test, 1}`
+    5. If ``i == K``, terminate, otherwise
+    6. Set ``i = i + 1``
+    7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
     how depends on ``strategy``:
+       a) if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
+       on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`)
 
-    * if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
-    on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}
+       b) if ``strategy == "update"``, update ``forecaster`` via ``update``,
+       on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`)
 
-    * if ``strategy == "update"``, update ``forecaster`` via ``update``,
-    on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-
-    * if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
-    with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
-
-    7. Go to 2
+       c) if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
+       with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
+    7. Go to 3
 
     Results returned in this function's return are:
 
