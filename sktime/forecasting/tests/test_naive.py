@@ -394,12 +394,12 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
 
     expected = pd.DataFrame(
         columns=pd.MultiIndex.from_product(
-            [["Coverage"], [coverage], ["lower", "upper"]]
+            [[y.name], [coverage], ["lower", "upper"]]
         ),
         index=y_pred_ints.index,
     )
 
-    expected[("Coverage", coverage, "lower")] = lower
-    expected[("Coverage", coverage, "upper")] = upper
+    expected[(y.name, coverage, "lower")] = lower
+    expected[(y.name, coverage, "upper")] = upper
 
     pd.testing.assert_frame_equal(y_pred_ints, expected)
