@@ -1,5 +1,7 @@
-"""Implements registry for sktime estimator base classes and tags."""
+"""Registry for sktime estimator base classes, tags, global aliases."""
 
+from sktime.registry._alias import resolve_alias
+from sktime.registry._alias_str import ALIAS_DICT
 from sktime.registry._base_classes import (
     BASE_CLASS_LIST,
     BASE_CLASS_LOOKUP,
@@ -26,7 +28,9 @@ __all__ = [
     "craft",
     "deps",
     "imports",
+    "resolve_alias",
     "scitype",
+    "ALIAS_DICT",
     "ESTIMATOR_TAG_LIST",
     "ESTIMATOR_TAG_REGISTER",
     "BASE_CLASS_REGISTER",

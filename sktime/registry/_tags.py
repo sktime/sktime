@@ -104,6 +104,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
     (
+        "pwtrafo_type",
+        ["transformer-pairwise", "transformer-pairwise-panel"],
+        ("str", ["distance", "kernel", "other"]),
+        "mathematical type of pairwise transformer - distance, kernel, or other",
+    ),
+    (
         "scitype:X",
         "param_est",
         "str",
@@ -334,6 +340,12 @@ ESTIMATOR_TAG_REGISTER = [
         "aligner",
         "bool",
         "does aligner return pairwise distance matrix between aligned series?",
+    ),
+    (
+        "alignment_type",
+        "aligner",
+        ("str", ["full", "partial"]),
+        "does aligner produce a full or partial alignment",
     ),
     (
         "requires-y-train",
