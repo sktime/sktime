@@ -37,3 +37,15 @@ Dynamic time warping
     :template: class.rst
 
     AlignerDtwNumba
+
+
+Edit distance based aligners
+----------------------------
+
+.. currentmodule:: sktime.alignment.edit_numba
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AlignerEditNumba
