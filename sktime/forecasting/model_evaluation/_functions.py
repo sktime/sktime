@@ -227,55 +227,6 @@ def evaluate(
     All-in-one statistical performance benchmarking utility for forecasters
     which runs a simple backtest experiment and returns a summary pd.DataFrame.
 
-    The experiment run is the following:
-
-    Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
-    the train/test folds produced by the generator ``cv.split_series(y)``.
-    Denote by :math:`X_{train, 1}, X_{test, 1}, \dots, X_{train, K}, X_{test, K}`
-    the train/test folds produced by the generator ``cv_X.split_series(X)``
-    (if ``X`` is ``None``, consider these to be ``None`` as well).
-
-    0. Set ``i = 1``.
-
-    1. ``fit`` the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
-    with a ``fh`` to forecast :math:`y_{test, 1}`.
-
-    2. ``y_pred = forecaster.predict``
-    (or ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``)
-    with exogeneous data :math:`X_{test, i}`
-
-    3. Compute ``scoring`` on ``y_pred``versus :math:`y_{test, 1}`.
-
-    4. If ``i == K``, terminate, otherwise
-
-    5. Set ``i = i + 1``
-
-    6. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
-    how depends on ``strategy``:
-
-        * if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
-        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-
-        * if ``strategy == "update"``, update ``forecaster`` via ``update``,
-        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-
-        * if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
-        with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
-
-    7. Go to 2
-
-    Results returned in this function's return are:
-
-    * results of ``scoring`` calculations, from 3,  in the `i`-th loop
-
-    * runtimes for fitting and/or predicting, from 1, 2, 6, in the `i`-th loop
-
-    * cutoff state of ``forecaster``, at 2, in the `i`-th loop
-
-    * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
-
-    A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
-
     Parameters
     ----------
     forecaster : sktime BaseForecaster descendant (concrete forecaster)
@@ -334,8 +285,9 @@ def evaluate(
         Row index is splitter index of train/test fold in `cv`.
         Entries in the i-th row are for the i-th train/test split in `cv`.
         Columns are as follows:
+
         - test_{scoring.name}: (float) Model performance score. If `scoring` is a list,
-            then there is a column withname `test_{scoring.name}` for each scorer.
+        then there is a column withname `test_{scoring.name}` for each scorer.
         - fit_time: (float) Time in sec for `fit` or `update` on train fold.
         - pred_time: (float) Time in sec to `predict` from fitted estimator.
         - len_train_window: (int) Length of train window.
@@ -347,10 +299,49 @@ def evaluate(
         - y_test: (pd.Series) present if see `return_data=True`
           testing fold of the i-th split in `cv`, used to compute the metric.
 
+    Notes
+    -----
+    The experiment run is the following:
+
+    Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
+    the train/test folds produced by the generator ``cv.split_series(y)``.
+    Denote by :math:`X_{train, 1}, X_{test, 1}, \dots, X_{train, K}, X_{test, K}`
+    the train/test folds produced by the generator ``cv_X.split_series(X)``
+    (if ``X`` is ``None``, consider these to be ``None`` as well).
+
+    0. Set ``i = 1``.
+    1. ``fit`` the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
+    with a ``fh`` to forecast :math:`y_{test, 1}`.
+    2. ``y_pred = forecaster.predict``
+    (or ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``)
+    with exogeneous data :math:`X_{test, i}`
+    3. Compute ``scoring`` on ``y_pred``versus :math:`y_{test, 1}`.
+    4. If ``i == K``, terminate, otherwise
+    5. Set ``i = i + 1``
+    6. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
+    how depends on ``strategy``:
+
+        * if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
+        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+        * if ``strategy == "update"``, update ``forecaster`` via ``update``,
+        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+        * if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
+        with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
+
+    7. Go to 2
+
+    Results returned in this function's return are:
+    * results of ``scoring`` calculations, from 3,  in the `i`-th loop
+    * runtimes for fitting and/or predicting, from 1, 2, 6, in the `i`-th loop
+    * cutoff state of ``forecaster``, at 2, in the `i`-th loop
+    * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
+
+    A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
+
     Examples
     --------
-        The type of evaluation that is done by `evaluate` depends on metrics in
-        param `scoring`. Default is `MeanAbsolutePercentageError`.
+    The type of evaluation that is done by `evaluate` depends on metrics in
+    param `scoring`. Default is `MeanAbsolutePercentageError`.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
@@ -361,17 +352,17 @@ def evaluate(
     >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=6, fh=[1, 2, 3])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
-        Optionally, users may select other metrics that can be supplied
-        by `scoring` argument. These can be forecast metrics of any kind,
-        i.e., point forecast metrics, interval metrics, quantile forecast metrics.
-        https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics
-        To evaluate estimators using a specific metric, provide them to the scoring arg.
+    Optionally, users may select other metrics that can be supplied
+    by `scoring` argument. These can be forecast metrics of any kind,
+    i.e., point forecast metrics, interval metrics, quantile forecast metrics.
+    https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics
+    To evaluate estimators using a specific metric, provide them to the scoring arg.
 
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
-        Optionally, users can provide a list of metrics to `scoring` argument.
+    Optionally, users can provide a list of metrics to `scoring` argument.
 
     >>> from sktime.performance_metrics.forecasting import MeanSquaredError
     >>> results = evaluate(
@@ -381,8 +372,8 @@ def evaluate(
     ...     scoring=[MeanSquaredError(square_root=True), MeanAbsoluteError()],
     ... )
 
-        An example of an interval metric is the `PinballLoss`.
-        It can be used with all probabilistic forecasters.
+    An example of an interval metric is the `PinballLoss`.
+    It can be used with all probabilistic forecasters.
 
     >>> from sktime.forecasting.naive import NaiveVariance
     >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
