@@ -9,8 +9,6 @@ from sktime.forecasting.sarimax import SARIMAX
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-df = make_forecasting_problem()
-
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
@@ -19,6 +17,8 @@ df = make_forecasting_problem()
 def test_SARIMAX_against_statsmodels():
     """Compares Sktime's and Statsmodel's SARIMAX."""
     from statsmodels.tsa.api import SARIMAX as _SARIMAX
+
+    df = make_forecasting_problem()
 
     sktime_model = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     sktime_model.fit(df)
@@ -44,6 +44,8 @@ def test_SARIMAX_single_interval_against_statsmodels():
     * Uses a non-default value of 97.5% to test inputs are actually being respected.
     """
     from statsmodels.tsa.api import SARIMAX as _SARIMAX
+
+    df = make_forecasting_problem()
 
     sktime_model = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     sktime_model.fit(df)
@@ -72,11 +74,13 @@ def test_SARIMAX_multiple_intervals_against_statsmodels():
     """
     from statsmodels.tsa.api import SARIMAX as _SARIMAX
 
+    df = make_forecasting_problem()
+
     sktime_model = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     sktime_model.fit(df)
     sktime_pred_int = sktime_model.predict_interval(df.index, coverage=[0.70, 0.80])
-    sktime_pred_int_70 = sktime_pred_int.xs(("Coverage", 0.70), axis="columns")
-    sktime_pred_int_80 = sktime_pred_int.xs(("Coverage", 0.80), axis="columns")
+    sktime_pred_int_70 = sktime_pred_int.xs((0, 0.70), axis="columns")
+    sktime_pred_int_80 = sktime_pred_int.xs((0, 0.80), axis="columns")
 
     stats = _SARIMAX(endog=df, order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     stats_fit = stats.fit()
