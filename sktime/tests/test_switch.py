@@ -39,9 +39,12 @@ def run_test_for_class(cls):
     from sktime.utils.git_diff import is_class_changed
     from sktime.utils.validation._dependencies import _check_estimator_deps
 
+    # if any of the required soft dependencies are not present, do not run the test
     if not all(_check_estimator_deps(x, severity="none") for x in cls):
         return False
 
+    # if ONLY_CHANGED_MODULES is on, run the test if and only if
+    # any of the modules containing any of the classes in the list have changed
     if ONLY_CHANGED_MODULES:
         return any(is_class_changed(x) for x in cls)
 
