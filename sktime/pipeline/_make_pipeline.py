@@ -20,17 +20,10 @@ def make_pipeline(*steps):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-
     Example 1: forecaster pipeline
 
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.pipeline import make_pipeline
     >>> from sktime.transformations.series.exponent import ExponentTransformer
-
-        Example 1: forecaster pipeline
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> pipe = make_pipeline(ExponentTransformer(), PolynomialTrendForecaster())
     >>> type(pipe).__name__
@@ -38,6 +31,8 @@ def make_pipeline(*steps):
 
     Example 2: classifier pipeline
 
+    >>> from sktime.pipeline import make_pipeline
+    >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
     >>> pipe = make_pipeline(ExponentTransformer(), KNeighborsTimeSeriesClassifier())
     >>> type(pipe).__name__
