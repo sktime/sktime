@@ -59,6 +59,8 @@ def test_bagging_forecaster_forecaster_type_error(forecaster):
 )
 def test_calculate_data_quantiles():
     """Test that we calculate quantiles correctly."""
+    y = load_airline()
+
     series_names = ["s1", "s2", "s3"]
     fh = [1, 2]
     alpha = [0, 0.5, 1]
