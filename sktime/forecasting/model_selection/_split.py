@@ -281,43 +281,51 @@ def _check_cutoffs_fh_y(
         raise TypeError("Unsupported type of `cutoffs` and `fh`")
 
 
-def _check_freq_time_index(
+def _get_train_window_via_endpoint(
     y: pd.Index,
-    window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES],
-    failed_infer_error: bool = False,
-) -> Tuple[pd.Index, Union[pd.DateOffset, ACCEPTED_WINDOW_LENGTH_TYPES]]:
-    """Check that combination of inputs is compatible.
+    train_endpoint: VALID_CUTOFF_TYPES,
+    window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
+) -> pd.Index:
+    """
+    Split time series at given end points into a fixed-length training set.
 
     Parameters
     ----------
     y : pd.Index
-        Index of time series
-    window_length : int or timedelta or pd.DateOffset
-        Length of the window.
-    failed_infer_error : bool, default False
-        Whether to raise an error if the frequency cannot be inferred.
+        Index of time series to split
+    train_endpoint : int or timedelta
+        Training window's last time point
+    window_length : int or timedelta
+        Length of window
 
     Returns
     -------
-    y : pd.Index
-        Index of time series with inferred frequency.
-    window_length : pd.DateOffset
-        Length of the window as a dateoffset format.
-    """
-    error_msg = (
-        "Could not infer frequency of time index. To resolve this issue, "
-        "either set 'window_length' input to a DateOffset format, or store "
-        "frequency offsets in the index."
-    )
+    training_window : pd.Index
+        Training window indices
 
+    Notes
+    -----
+    this private function is used to get training window for
+    `CutOffSplitter` and `SingleWindowSplitter`
+    """
     if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
-        if y.freq is None:
-            y.freq = y.inferred_freq
-            if y.freq is None and failed_infer_error:  # failed to infer freq
-                raise ValueError(error_msg)
-        window_length = y.freq * window_length
-        return y, window_length
-    return y, window_length
+        y_train = pd.Series(index=y, dtype=y.dtype)  # convert pd.index to pd.series
+        train_start = train_endpoint - window_length + 1
+        # adjust start point to account for negative time point
+        train_start = 0 if train_start < 0 else train_start
+        train_window = y_train.iloc[train_start : train_endpoint + 1].index
+    else:
+        train_end = y[train_endpoint] if is_int(train_endpoint) else train_endpoint
+        train_window = get_window(
+            pd.Series(index=y[y <= train_end], dtype=y.dtype),
+            window_length=window_length,
+        ).index
+    # when given train end point is negative no training window is provided
+    null = 0 if is_int(train_endpoint) else pd.Timestamp(0)
+    if train_endpoint < null:
+        train_window = []
+    training_window = y.get_indexer(train_window)
+    return training_window
 
 
 class BaseSplitter(BaseObject):
@@ -714,7 +722,7 @@ class CutoffSplitter(BaseSplitter):
     is then trivially equal to :math:`n`.
 
     The sorted array of cutoffs returned by `.get_cutoffs` is then equal to
-    :math:(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
+    :math:`(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
 
     Parameters
     ----------
@@ -752,19 +760,11 @@ class CutoffSplitter(BaseSplitter):
         window_length = check_window_length(
             window_length=self.window_length, n_timepoints=n_timepoints
         )
-        y, window_length = _check_freq_time_index(y, window_length, True)
         _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
 
         for cutoff in cutoffs:
-            null = 0 if is_int(cutoff) else pd.Timestamp(0)
-            if cutoff >= null:
-                train_end = y[cutoff] if is_int(cutoff) else cutoff
-                y_train = pd.Series(index=y[y <= train_end], dtype=y.dtype)
-                training_window = get_window(y_train, window_length=window_length).index
-            else:
-                training_window = []
-            training_window = y.get_indexer(training_window)
+            training_window = _get_train_window_via_endpoint(y, cutoff, window_length)
             test_window = cutoff + fh.to_numpy()
             if is_datetime(x=cutoff):
                 test_window = y.get_indexer(test_window[test_window >= y.min()])
@@ -1359,15 +1359,9 @@ class SingleWindowSplitter(BaseSplitter):
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
-        y, window_length = _check_freq_time_index(y, window_length, True)
         fh = _check_fh(self.fh)
         train_end = _get_end(y_index=y, fh=fh)
-
-        training_window = get_window(
-            pd.Series(index=y[y <= y[train_end]], dtype=y.dtype),
-            window_length=window_length,
-        ).index
-        training_window = y.get_indexer(training_window)
+        training_window = _get_train_window_via_endpoint(y, train_end, window_length)
         if array_is_int(fh):
             test_window = train_end + fh.to_numpy()
         else:
