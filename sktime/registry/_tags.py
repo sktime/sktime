@@ -104,6 +104,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
     (
+        "pwtrafo_type",
+        ["transformer-pairwise", "transformer-pairwise-panel"],
+        ("str", ["distance", "kernel", "other"]),
+        "mathematical type of pairwise transformer - distance, kernel, or other",
+    ),
+    (
         "scitype:X",
         "param_est",
         "str",
@@ -419,6 +425,12 @@ ESTIMATOR_TAG_REGISTER = [
         "splitter",
         "bool",
         "whether _split is natively implemented for hierarchical y types",
+    ),
+    (
+        "split_series_uses",
+        "splitter",
+        ("str", ["iloc", "loc", "custom"]),
+        "whether split_series uses split (iloc) or split_loc (loc) to split series",
     ),
     (
         "capabilities:exact",
