@@ -738,9 +738,10 @@ def test_windowbase_splitter_get_n_split_hierarchical(
 @pytest.mark.parametrize("y", TEST_Y_PANEL_HIERARCHICAL)
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 def test_windowbase_splitter_get_n_split_unequal_series(y, CV):
-    y.iloc[:3, :] = None  # make the first series shorter than the rest
-    y.dropna(inplace=True)
-    cv = CV([1], 25, 1)
-    assert cv.get_n_splits(y) == len(
-        list(cv.split(y))
+    y_unequal = y.copy()  # avoid changing original dataset
+    y_unequal.iloc[:3, :] = None  # make the first series shorter than the rest
+    y_unequal.dropna(inplace=True)
+    cv = CV([1], 24, 1)
+    assert cv.get_n_splits(y_unequal) == len(
+        list(cv.split(y_unequal))
     ), "get_n_splits does not equal the number of splits in the output."
