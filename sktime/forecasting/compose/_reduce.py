@@ -1365,7 +1365,7 @@ def make_reduction(
 
     With `windows_identical = False` we drop the requirement to use the same windows
     for each of the direct models, so more windows can be created for horizons other
-    than the maximum forecasting horizon:
+    than the maximum forecasting horizon.
     `fh = 2`::
 
     |--------------------------- |
