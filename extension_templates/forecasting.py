@@ -136,8 +136,15 @@ class MyForecaster(BaseForecaster):
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if y or X passed contain missing data (nans)
         #
+        # capability:insample = can the forecaster make in-sample point forecasts?
+        "capability:insample": True,
+        # valid values: boolean True (yes), False (no)
+        # if False, exception raised if in-sample forecast is requested via predict
+        #
         # capability:pred_int = does forecaster implement probabilistic forecasts?
-        "capability:pred_int": False,
+        # capability:pred_int:insample = are these also available for in-sample indices?
+        "capability:pred_int": False,  # overall
+        "capability:pred_int:insample": False,  # for in-sample indices
         # valid values: boolean True (yes), False (no)
         # if False, exception raised if proba methods are called (predict_interval etc)
         #
