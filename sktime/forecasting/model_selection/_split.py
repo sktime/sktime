@@ -1005,10 +1005,7 @@ class BaseWindowSplitter(BaseSplitter):
             )
 
         scitype = ["Hierarchical", "Panel"]
-        is_non_single, error, metadata = check_is_scitype(y, scitype, True)
-
-        if error is not None:
-            return error
+        is_non_single, _, metadata = check_is_scitype(y, scitype, True)
 
         # n_splits based on the first instance of the lowest level series cutoffs
         if is_non_single:
