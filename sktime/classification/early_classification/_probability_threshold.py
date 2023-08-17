@@ -304,5 +304,6 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         else:
             est = DummyClassifier()
 
-        params = {"classification_points": [3], "estimator": est}
-        return params
+        params1 = {"classification_points": [3], "estimator": est}
+        params2 = {"probability_threshold": 0.9, "estimator": est}
+        return [params1, params2]

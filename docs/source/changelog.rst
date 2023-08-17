@@ -13,6 +13,267 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.21.1 - 2023-08-16
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* holiday feature transformers (country, financial holidays; 1:1 interface) based on ``holidays`` (:pr:`4893`, :pr:`4909`) :user:`VyomkeshVyas`, :user:`yarnabrina`
+* ``DropNA`` transformer to drop rows or columns with nan (:pr:`5049`) :user:`hliebert`
+* ``ExpandingGreedySplitter`` for slicing test sets from end (:pr:`4917`) :user:`davidgilbertson`
+* ``statsforecast`` interfaces: MSTL forecaster, ARCH family forecasters (:pr:`4865`, :pr:`4938`) :user:`luca-miniati`, :user:`eyjo`
+* full rework of time series classification notebook (:pr:`5045`) :user:`fkiraly`
+* improved developer experience - speedups for testing :user:`julia-kraus`, :user:`tarpas`, :user:`benheid`, :user:`fkiraly`, :user:`yarnabrina`
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* all estimators are required to have at least two test parameter sets in
+  ``get_test_params`` to be compliant with ``check_estimator`` contract tests.
+  This requirement was previously stated in the extension template but not enforced.
+  It is now also included in the automated tests via ``check_estimator``.
+* exceptions are, of course, estimators without (unreserved) parameters.
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* Time series aligners now accept all ``Panel`` mtypes as input,
+  from only ``df-list`` previously. This is not a breaking change.
+* Time series aligners now have a tag ``"alignment_type"``, which can have values
+  ``"full"`` and ``"partial"``, to distinguish between a full and partial alignment
+  produced by ``get_alignment``. The tag can depend on parameters of the aligner.
+
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Pairwise transformers now have a tag ``"pwtrafo_type"``, which can have values
+  ``"kernel"``, ``"distance"``, or ``"other"``, to allow the user to inspect
+  whether the transformer is a kernel or distance transformer.
+  This does not impact the interface. The tag is mainly for search and retrieval
+  by the user. This also allows to check against methodological requirements
+  of estimators, e.g., support vector machines requiring a kernel.
+  However, as stated, this is not enforced by the base interface.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Speed-up ``deep_equals`` - lazy evaluation of costly error message string coercions (:pr:`5044`) :user:`benHeid`
+* [ENH] sktime str/object aliasing registry mechanism (:pr:`5058`) :user:`fkiraly`
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] private ``split_loc`` and tag to control dispatch of ``split_series`` to ``split`` vs ``split_loc`` (:pr:`4903`) :user:`fkiraly`
+* [ENH] applying forecasting metrics disregarding index - docstrings and tests (:pr:`4960`) :user:`fkiraly`
+* [ENH] metrics classes - add testing parameters (:pr:`5097`) :user:`fkiraly`
+* [ENH] tests and fixes for ``numpy`` weights in performance metrics (:pr:`5086`) :user:`fkiraly`
+* [ENH] input checks for ``BaseBenchmark``, allow ``add_estimator`` to accept multiple estimators (:pr:`4877`) :user:`hazrulakmal`
+* [ENH] tests and fixes for ``numpy`` weights in performance metrics - probabilistic metrics (:pr:`5104`) :user:`fkiraly`
+
+Data loaders
+^^^^^^^^^^^^
+
+* [ENH] rework data loader module, ability to specify download mirrors (:pr:`4985`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] improvements to ``_ColumnEstimator`` - refactor to reduce coupling with ``BaseForecaster`` (:pr:`4791`) :user:`fkiraly`
+* [ENH] rewrite ``test_probabilistic_metrics`` using proper ``pytest`` fixtures (:pr:`4946`) :user:`julia-kraus`
+* [ENH] add expanding greedy splitter (:pr:`4917`) :user:`davidgilbertson`
+* [ENH] Interface ``statsforecast`` MSTL, ``statsforecast`` back-adapter (:pr:`4865`) :user:`luca-miniati`
+* [ENH] contiguous ``fh`` option for ``FhPlexForecaster`` (:pr:`4926`) :user:`fkiraly`
+* [ENH] ensure robustness of ``StatsForecastBackAdapter`` w.r.t. change of ``predict_interval`` return format (:pr:`4991`) :user:`fkiraly`
+* [ENH] improve ``SARIMAX`` test parameter coverage (:pr:`4932`) :user:`janpipek`
+* [ENH] interface to ``statsforecast`` ARCH family estimators (:pr:`4938`) :user:`eyjo`
+* [ENH] add test cases for ``Croston`` and ``ExponentialSmoothing`` (:pr:`4935`) :user:`Gigi1111`
+* [ENH] applying forecasting metrics disregarding index - docstrings and tests (:pr:`4960`) :user:`fkiraly`
+* [ENH] alias strings for ``scoring`` argument in forecasting tuners (:pr:`5058`) :user:`fkiraly`
+* [ENH] allow ``YfromX`` to take missing data (:pr:`5062`) :user:`eenticott-shell`
+
+Parameter estimators
+^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] speed up parameter fitter base class boilerplate (:pr:`5057`) :user:`fkiraly`
+
+Probability distributions and simulators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] add length option to ``_bottom_hier_datagen`` hierarchical data generator, speed up ``ReconcilerForecaster`` doctest (:pr:`4979`) :user:`fkiraly`
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] edit distance alignment algorithms from ``sktime`` native ``numba`` based aligners (:pr:`5075`) :user:`fkiraly`
+* [ENH] extend ``BaseAligner.fit`` with input conversion (:pr:`5077`) :user:`fkiraly`
+* [ENH] naive multiple aligners for baseline comparisons (:pr:`5076`) :user:`fkiraly`
+* [ENH] tag for full/partial alignment, exact tests for full alignment output (:pr:`5080`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] full rework of time series classification notebook (:pr:`5045`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Explicit centroid init for ``TimeSeriesLloyds``, ``TimeSeriesKMeans`` and ``TimeSeriesKMedoids`` (:pr:`5001`) :user:`Alex-JG3`
+* [ENH] generalized ``tslearn`` adapter and clusterer refactor (:pr:`4992`) :user:`fkiraly`
+* [ENH] interface to all ``tslearn`` clusterers (:pr:`5037`) :user:`fkiraly`
+
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] distance/kernel tag, uniformize base module (:pr:`5038`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] inverse transform for ``CosineTransformer``, tag handling for limited range of invertibility (:pr:`3671`) :user:`fkiraly`
+* [ENH] Holiday indicator transformers by country or market based on ``holidays`` package (:pr:`4893`) :user:`yarnabrina`
+* [ENH] ``HolidayFeatures`` transformer (:pr:`4909`) :user:`VyomkeshVyas`
+* [ENH] enable use of ``TabularToSeriesAdaptor`` with feature selectors, and passing of ``y`` (:pr:`4978`) :user:`fkiraly`
+* [ENH] speed up ``BaseTransformer`` checks and conversion boilerplate (:pr:`5036`) :user:`fkiraly`
+* [ENH] ``DropNA`` transformer to drop rows or columns with nan (:pr:`5049`) :user:`hliebert`
+* [ENH] speed up ``Lag`` transformer (:pr:`5035`) :user:`fkiraly`
+* [ENH] option to remember data in ``SplitterSummarizer`` (:pr:`5070`) :user:`fkiraly`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* [ENH] speed-up test collection by improvements to ``_testing.scenarios`` (:pr:`4901`) :user:`tarpas`
+* [ENH] test for more than one parameter sets per estimator (:pr:`2862`) :user:`fkiraly`
+* [ENH] remove ``sklearn`` dependency in ``test_get_params`` (:pr:`5011`) :user:`fkiraly`
+* [ENH] testing only estimators from modules that have changed compared to ``main`` (:pr:`5019`) :user:`fkiraly`, :user:`yarnabrina`
+* [ENH] dependency and diff test switch for individual estimators to decorate non-suite tests (:pr:`5084`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] add ``statsforecast`` to the ``pandas2`` compatible dependency set (:pr:`4878`) :user:`fkiraly`
+* [MNT] bound ``dask<2023.7.1`` to diagnose and remove bug #4925 from ``main`` (:pr:`4928`) :user:`fkiraly`
+* [MNT] [Dependabot](deps-dev): Update sphinx-design requirement from <0.5.0 to <0.6.0 (:pr:`4969`) :user:`dependabot[bot]`
+* [MNT] speed up ``test_gscv_proba`` test (:pr:`4962`) :user:`fkiraly`
+* [MNT] speed up ``test_stat`` benchmarking test (:pr:`4990`) :user:`fkiraly`
+* [MNT] speed up clustering dunder test (:pr:`4982`) :user:`fkiraly`
+* [MNT] speed up various tests in the forecasting module (:pr:`4963`) :user:`fkiraly`
+* [MNT] speed up basic ``check_estimator`` tests (:pr:`4980`) :user:`fkiraly`
+* [MNT] speed up costly redundant ``ElasticEnsemble`` classifier doctest (:pr:`4981`) :user:`fkiraly`
+* [MNT] address various deprecation warnings (:pr:`5018`) :user:`fkiraly`
+* [MNT] rename ``TestedMockClass`` to ``MockTestedClass`` (:pr:`5005`) :user:`fkiraly`
+* [MNT] updated sphinx intersphinx links for other libraries (:pr:`5016`) :user:`yarnabrina`
+* [MNT] fix duplication of ``pytest`` ``durations`` parameter in CI (:pr:`5034`) :user:`fkiraly`
+* [MNT] speed up various non-suite tests (:pr:`5027`) :user:`fkiraly`
+* [MNT] speed up various non-suite tests, part 2 (:pr:`5071`) :user:`fkiraly`
+* [MNT] add more soft dependencies to ``show_versions`` (:pr:`5059`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] minor improvements to the dependencies guide (:pr:`4896`) :user:`fkiraly`
+* [DOC] remove outdated references from transformers API (:pr:`4895`) :user:`fkiraly`
+* [DOC] Installation documentation: Pip install without soft dependencies for conda environments (:pr:`4936`) :user:`Verogli`
+* [DOC] clarifications to different installations in install documentation (:pr:`4937`) :user:`julia-kraus`
+* [DOC] Contributors update (:pr:`4892`) :user:`fkiraly`
+* [DOC] correct docstring of ``BaseForecaster.score``, reference to use of non-symmetric MAPE (:pr:`4948`) :user:`MBristle`
+* [DOC] Contributors update (:pr:`4944`) :user:`fkiraly`
+* [DOC] remove duplication of troubleshooting 'matches_not_found' in install instructions (:pr:`4956`) :user:`julia-kraus`
+* [DOC] Contributors update (:pr:`4961`) :user:`fkiraly`
+* [DOC] Resolve broken link (governance) in README.md (:pr:`4942`) :user:`eyjo`
+* [ENH] in doc build, add copy clipboard button for Example sections (#5015) (:pr:`5015`) :user:`yarnabrina`
+* [DOC] improve description of ``scoring`` in docstrings of tuning forecasters such as ``ForecastingGridSearchCV`` (:pr:`5022`) :user:`fkiraly`
+* [DOC] API reference for time series aligners (:pr:`5074`) :user:`fkiraly`
+* [DOC] Contributors update (:pr:`5010`) :user:`fkiraly`
+* [DOC] improve formatting of docstring examples (:pr:`5078`) :user:`yarnabrina`
+* [DOC] Contributors update (:pr:`5085`) :user:`fkiraly`
+* [DOC] docstring example for ``PinballLoss`` (#5068) (:pr:`5068`) :user:`Ram0nB`
+* [DOC] Contributors update (:pr:`5088`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] in ``craft``, fix false positive detection of ``True``, ``False`` as class names (:pr:`5066`) :user:`fkiraly`
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] use correct arguments in ``geometric_mean_absolute_error`` (:pr:`4987`) :user:`yarnabrina`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fix ``vectorize_est`` returning jumbled rows for row vectorization, pd.DataFrame return, if row names were not lexicographically ordered (:pr:`5110`) :user:`fkiraly`, :user:`hoesler`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] clarify forecasting tuning estimators' docstrings and error messages in case of ``refit=False`` (:pr:`4945`) :user:`fkiraly`
+* [BUG] fix ``ConformalIntervals`` failure if wrapped estimator supports hierarchical mtypes (:pr:`5091`, :pr:`5093`) :user:`fkiraly`
+
+Parameter estimators
+^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``PluginParamsForecaster`` in ``params: dict`` case (:pr:`4922`) :user:`fkiraly`
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix missing transpose in ``AlignerDtwNumba`` (:pr:`5080`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``sklearn`` interface non-conformance for estimators in ``_proximity_forest.py``, add further test parameter sets (:pr:`3520`) :user:`Abelarm`, :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] add informative error messages for incompatible ``scitype`` in ``BaseClusterer`` (:pr:`4958`) :user:`achieveordie`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix ``DataConversionWarning`` in ``FeatureSelection`` (:pr:`4883`) :user:`fkiraly`
+* [BUG] Fix forecaster based imputation strategy in ``Imputer`` if forecaster requires ``fh`` in ``fit`` (:pr:`4999`) :user:`MCRE-BE`
+* [BUG] fix ``Differencer`` for integer index (:pr:`4984`) :user:`fkiraly`
+* [BUG] Fix ``Differencer.inverse_transform`` on train data if ``na_handling=fill_zero`` (:pr:`4998`) :user:`benHeid`, :user:`MCRE-BE`
+* [BUG] fix wrong logic for ``index_out="shift"`` in ``Lag`` transformer (:pr:`5069`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Abelarm`,
+:user:`achieveordie`,
+:user:`Alex-JG3`,
+:user:`benHeid`,
+:user:`davidgilbertson`,
+:user:`eenticott-shell`,
+:user:`eyjo`,
+:user:`fkiraly`,
+:user:`Gigi1111`,
+:user:`hazrulakmal`,
+:user:`hliebert`,
+:user:`janpipek`,
+:user:`julia-kraus`,
+:user:`luca-miniati`,
+:user:`MBristle`,
+:user:`MCRE-BE`,
+:user:`Ram0nB`,
+:user:`tarpas`,
+:user:`Verogli`,
+:user:`VyomkeshVyas`,
+:user:`yarnabrina`
+
 Version 0.21.0 - 2023-07-19
 ---------------------------
 
