@@ -32,6 +32,7 @@ from sktime.forecasting.tests._config import (
 )
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
@@ -43,6 +44,10 @@ from sktime.utils.validation import (
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = 30
+TEST_Y_PANEL_HIERARCHICAL = [
+    _make_hierarchical((2, 2), 15, 15),
+    _make_panel(n_instances=2, n_timepoints=15),
+]
 
 
 def _get_windows(cv, y):
@@ -722,9 +727,22 @@ def test_windowbase_splitter_get_n_split_hierarchical(
 ):
     """Test that WindowBaseSplitter.get_n_splits works for hierarchical data."""
     # see bugs 4971
-    y = _make_hierarchical((2, 3), 15, 15)
+    y = TEST_Y_PANEL_HIERARCHICAL[0]  # hierachical data
     if _inputs_are_supported([fh, window_length, step_length]):
         cv = CV(fh, window_length, step_length)
         assert cv.get_n_splits(y) == len(
             list(cv.split(y))
         ), "get_n_splits does not equal the number of splits in the output."
+
+
+@pytest.mark.parametrize("y", TEST_Y_PANEL_HIERARCHICAL)
+@pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
+def test_windowbase_splitter_get_n_split_unequal_series(y, CV):
+    y.iloc[:3, :] = None  # make the first series shorter than the rest
+    y.dropna(inplace=True)
+
+    # default value fh = [1], window_length=10, step_length =1
+    cv = CV()
+    assert cv.get_n_splits(y) == len(
+        list(cv.split(y))
+    ), "get_n_splits does not equal the number of splits in the output."
