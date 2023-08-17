@@ -88,7 +88,14 @@ class BaseAligner(BaseEstimator):
 
         self._fit(X=X_inner, Z=Z)
 
-        self._X = X_inner
+        # convert X to df-list for use in get_aligned, get_alignment_loc
+        if X_inner_mtype != "df-list":
+            self._X = convert(
+                X, from_type=X_mtype, to_type="df-list", as_scitype="Panel"
+            )
+        else:
+            self._X = X_inner
+
         self._Z = Z
 
         self._is_fitted = True

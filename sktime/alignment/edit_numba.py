@@ -113,6 +113,10 @@ class AlignerEditNumba(BaseAligner):
 
     _tags = {
         "symmetric": True,  # all the distances are symmetric
+        "capability:multiple-alignment": False,  # can align more than two sequences?
+        "capability:distance": True,  # does compute/return overall distance?
+        "capability:distance-matrix": True,  # does compute/return distance matrix?
+        "alignment_type": "partial",
         "X_inner_mtype": "numpy3D",
         "python_dependencies": "numba",
     }
@@ -187,8 +191,8 @@ class AlignerEditNumba(BaseAligner):
         """
         from sktime.distances import distance_alignment_path
 
-        X1 = X[0].values.T
-        X2 = X[1].values.T
+        X1 = X[0]
+        X2 = X[1]
 
         metric_key = self.distance
         kwargs = self.kwargs
