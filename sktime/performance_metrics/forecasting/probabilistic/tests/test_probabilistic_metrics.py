@@ -43,9 +43,9 @@ def sample_data(request):
         interval_pred = {}
         for col in range(n_columns):
             if n_columns == 1:
-                y_vals = y_train
+                y_vals = y_test
             else:
-                y_vals = y_train.iloc[:, col]
+                y_vals = y_test.iloc[:, col]
             for coverage in np.array([coverage_or_alpha]).flatten():
                 interval_pred[(col, coverage, "lower")] = (
                     y_vals * np.random.uniform(0.9, 1.1, len(y_vals)) * (1 - coverage)
@@ -60,9 +60,9 @@ def sample_data(request):
         quantile_pred = {}
         for col in range(n_columns):
             if n_columns == 1:
-                y_vals = y_train
+                y_vals = y_test
             else:
-                y_vals = y_train.iloc[:, col]
+                y_vals = y_test.iloc[:, col]
             for alpha in coverage_or_alpha:
                 quantile_pred[(col, alpha)] = (
                     y_vals * np.random.uniform(0.9, 1.1, len(y_vals)) * (0.5 + alpha)
