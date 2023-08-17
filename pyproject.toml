@@ -168,7 +168,7 @@ docs = [
     "sphinx-gallery<0.14.0",
     "sphinx-design<0.6.0",
     "sphinx-version-warning",
-    "Sphinx<7.2.0",
+    "Sphinx<8.0.0,!=7.2.0",
     "tabulate",
 ]
 
