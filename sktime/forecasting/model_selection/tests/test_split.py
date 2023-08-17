@@ -45,8 +45,8 @@ from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = 30
 TEST_Y_PANEL_HIERARCHICAL = [
-    _make_hierarchical((2, 2), 15, 15),
-    _make_panel(n_instances=2, n_timepoints=15),
+    _make_hierarchical((2, 2), N_TIMEPOINTS, N_TIMEPOINTS),
+    _make_panel(n_instances=2, n_timepoints=N_TIMEPOINTS),
 ]
 
 
@@ -740,9 +740,7 @@ def test_windowbase_splitter_get_n_split_hierarchical(
 def test_windowbase_splitter_get_n_split_unequal_series(y, CV):
     y.iloc[:3, :] = None  # make the first series shorter than the rest
     y.dropna(inplace=True)
-
-    # default value fh = [1], window_length=10, step_length =1
-    cv = CV()
+    cv = CV([1], 25, 1)
     assert cv.get_n_splits(y) == len(
         list(cv.split(y))
     ), "get_n_splits does not equal the number of splits in the output."
