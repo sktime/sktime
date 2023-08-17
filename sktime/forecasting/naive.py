@@ -881,6 +881,7 @@ class NaiveVariance(BaseForecaster):
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-        params_list = {"forecaster": FORECASTER}
+        params1 = {"forecaster": FORECASTER}
+        params2 = {"forecaster": FORECASTER, "initial_window": 2}
 
-        return params_list
+        return [params1, params2]
