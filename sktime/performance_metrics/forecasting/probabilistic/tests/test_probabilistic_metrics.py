@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 from sktime.performance_metrics.forecasting.probabilistic import (
     ConstraintViolation,
     EmpiricalCoverage,
@@ -39,20 +38,36 @@ def sample_data(request):
 
     y = _make_series(n_columns=n_columns)
     y_train, y_test = temporal_train_test_split(y)
-    fh = np.arange(len(y_test)) + 1
-
-    # fit model
-    f = NaiveVariance(NaiveForecaster())
-    f.fit(y_train)
-
-    # predict model
 
     if pred_type == "interval":
-        interval_pred = f.predict_interval(fh=fh, coverage=coverage_or_alpha)
+        interval_pred = {}
+        for col in range(n_columns):
+            if n_columns == 1:
+                y_vals = y_train
+            else:
+                y_vals = y_train.iloc[:, col]
+            for coverage in np.array([coverage_or_alpha]).flatten():
+                interval_pred[(col, coverage, "lower")] = (
+                    y_vals * np.random.uniform(0.9, 1.1, len(y_vals)) * (1 - coverage)
+                )
+                interval_pred[(col, coverage, "upper")] = (
+                    y_vals * np.random.uniform(0.9, 1.1, len(y_vals)) * (1 + coverage)
+                )
+        interval_pred = pd.DataFrame.from_dict(interval_pred)
         return y_test, interval_pred
 
     elif pred_type == "quantile":
-        quantile_pred = f.predict_quantiles(fh=fh, alpha=coverage_or_alpha)
+        quantile_pred = {}
+        for col in range(n_columns):
+            if n_columns == 1:
+                y_vals = y_train
+            else:
+                y_vals = y_train.iloc[:, col]
+            for alpha in coverage_or_alpha:
+                quantile_pred[(col, alpha)] = (
+                    y_vals * np.random.uniform(0.9, 1.1, len(y_vals)) * (0.5 + alpha)
+                )
+        quantile_pred = pd.DataFrame.from_dict(quantile_pred)
         return y_test, quantile_pred
 
     return
