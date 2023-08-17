@@ -116,6 +116,7 @@ class AlignerEditNumba(BaseAligner):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
+        "alignment_type": "partial",
         "X_inner_mtype": "numpy3D",
         "python_dependencies": "numba",
     }
