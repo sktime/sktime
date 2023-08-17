@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse.linalg import svds
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 # cumsum varia
 # ------------
@@ -903,7 +903,7 @@ class SignatureKernel(BasePairwiseTransformerPanel):
         Journal of Machine Learning Research.
     """
 
-    _tags = {"X_inner_mtype": "numpy3D"}
+    _tags = {"X_inner_mtype": "numpy3D", "pwtrafo_type": "kernel"}
 
     def __init__(
         self,

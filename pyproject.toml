@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.21.0"
+version = "0.21.1"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
@@ -168,7 +168,7 @@ docs = [
     "sphinx-gallery<0.14.0",
     "sphinx-design<0.6.0",
     "sphinx-version-warning",
-    "Sphinx<8.0.0",
+    "Sphinx<8.0.0,!=7.2.0",
     "tabulate",
 ]
 
