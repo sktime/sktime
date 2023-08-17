@@ -1324,7 +1324,7 @@ def make_reduction(
     - ``x`` = past values of y that are used as features (X) to forecast y
     - ``*`` = observations, past or future, neither part of window nor forecast.
 
-    Assume we have the following training data (14 observations):
+    Assume we have the following training data (14 observations)::
 
     |----------------------------|
     | * * * * * * * * * * * * * *|
@@ -1334,7 +1334,7 @@ def make_reduction(
 
     By construction, a recursive reducer always targets the first data point after
     the window, irrespective of the forecasting horizons requested.
-    In the example the following 5 windows are created:
+    In the example the following 5 windows are created::
 
     |--------------------------- |
     | x x x x x x x x x y * * * *|
@@ -1347,7 +1347,7 @@ def make_reduction(
     Direct Reducers will create multiple models, one for each forecasting horizon.
     With the argument `windows_identical = True` (default) the windows used to train
     the model are defined by the maximum forecasting horizon.
-    Only two complete windows can be defined in this example:
+    Only two complete windows can be defined in this example::
     `fh = 4` (maximum of `fh = [2, 4]`)
 
     |--------------------------- |
@@ -1356,7 +1356,7 @@ def make_reduction(
     |----------------------------|
 
     All other forecasting horizons will also use those two (maximal) windows.
-    `fh = 2`
+    `fh = 2`::
 
     |--------------------------- |
     | x x x x x x x x x * y * * *|
@@ -1366,7 +1366,7 @@ def make_reduction(
     With `windows_identical = False` we drop the requirement to use the same windows
     for each of the direct models, so more windows can be created for horizons other
     than the maximum forecasting horizon:
-    `fh = 2`
+    `fh = 2`::
 
     |--------------------------- |
     | x x x x x x x x x * y * * *|
@@ -1375,7 +1375,7 @@ def make_reduction(
     | * * * x x x x x x x x x * y|
     |----------------------------|
 
-    `fh = 4`
+    `fh = 4`::
 
     |----------------------------|
     | x x x x x x x x x * * * y *|

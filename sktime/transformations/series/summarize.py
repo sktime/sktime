@@ -57,7 +57,7 @@ class WindowSummarizer(BaseTransformer):
 
         For `window = [1, 3]`, we have a `lag` of 1 and
         `window_length` of 3 to target the three last days (exclusive z) that were
-        observed. Summarization is done across windows like this:
+        observed. Summarization is done across windows like this::
 
         |-------------------------- |
         | * * * * * * * * x x x z * |
@@ -65,7 +65,7 @@ class WindowSummarizer(BaseTransformer):
 
         For `window = [0, 3]`, we have a `lag` of 0 and
         `window_length` of 3 to target the three last days (inclusive z) that
-        were observed. Summarization is done across windows like this:
+        were observed. Summarization is done across windows like this::
 
         |-------------------------- |
         | * * * * * * * * x x z * * |
@@ -74,20 +74,20 @@ class WindowSummarizer(BaseTransformer):
 
         Special case ``lag``: Since lags are frequently used and window length is
         redundant, you only need to provide a list of `lag` values.
-        So `window = [1]` will result in the first lag:
+        So `window = [1]` will result in the first lag::
 
         |-------------------------- |
         | * * * * * * * * * * x z * |
         |---------------------------|
 
-        And `window = [1, 4]` will result in the first and fourth lag:
+        And `window = [1, 4]` will result in the first and fourth lag::
 
         |-------------------------- |
         | * * * * * * * x * * x z * |
         |---------------------------|
 
-        key: either custom function call (to be
-                provided by user) or str corresponding to native pandas window function:
+        key: either custom function call (to be provided by user) or
+            str corresponding to native pandas window function:
                 * "sum",
                 * "mean",
                 * "median",
@@ -114,8 +114,8 @@ class WindowSummarizer(BaseTransformer):
             A lag_feature of [[8, 14], [1, 28]] cannot be correctly applied for the
             first 21 resp. 28 observations of the targeted column. Possible values
             to deal with those NAs:
-                * None
-                * "bfill"
+            - None
+            - "bfill"
             None will keep the NAs generated, and would leave it for the user to choose
             an estimator that can correctly deal with observations with missing values,
             "bfill" will fill the NAs by carrying the first observation backwards.
