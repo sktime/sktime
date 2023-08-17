@@ -1314,7 +1314,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return [{}, {"fh": [2, 4], "initial_length": 5, "step_length": 2}]
+        return [{}, {"fh": [2, 4], "initial_window": 5, "step_length": 2}]
 
 
 class ExpandingGreedySplitter(BaseSplitter):
