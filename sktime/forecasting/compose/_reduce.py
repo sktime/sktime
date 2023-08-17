@@ -1380,9 +1380,9 @@ def make_reduction(
 
     Assume we have the following training data (14 observations):
 
-    | |----------------------------|
-    | | * * * * * * * * * * * * * *|
-    | |----------------------------|
+        | |------------------------|
+        | | * * * * * * * * * * * * * *|
+        | |------------------------|
 
     And want to forecast with `window_length = 9` and `fh = [2, 4]`.
 
@@ -1390,13 +1390,13 @@ def make_reduction(
     the window, irrespective of the forecasting horizons requested.
     In the example the following 5 windows are created:
 
-        |--------------------------- |
-        | x x x x x x x x x y * * * *|
-        | * x x x x x x x x x y * * *|
-        | * * x x x x x x x x x y * *|
-        | * * * x x x x x x x x x y *|
-        | * * * * x x x x x x x x x y|
-        |----------------------------|
+    |    |----------------------- |
+    |    | x x x x x x x x x y * * * *|
+    |    | * x x x x x x x x x y * * *|
+    |    | * * x x x x x x x x x y * *|
+    |    | * * * x x x x x x x x x y *|
+    |    | * * * * x x x x x x x x x y|
+    |    |------------------------|
 
     Direct Reducers will create multiple models, one for each forecasting horizon.
     With the argument `windows_identical = True` (default) the windows used to train
@@ -1404,40 +1404,37 @@ def make_reduction(
     Only two complete windows can be defined in this example:
     `fh = 4` (maximum of `fh = [2, 4]`)
 
-        |--------------------------- |
-
-        | x x x x x x x x x * * * y *|
-
-        | * x x x x x x x x x * * * y|
-
-        |----------------------------|
+    |    |----------------------- |
+    |    | x x x x x x x x x * * * y *|
+    |    | * x x x x x x x x x * * * y|
+    |    |------------------------|
 
     All other forecasting horizons will also use those two (maximal) windows.
     `fh = 2`
 
-        |--------------------------- | \
-        | x x x x x x x x x * y * * *| \
-        | * x x x x x x x x x * y * *| \
-        |----------------------------|
+    |    |----------------------- |
+    |    | x x x x x x x x x * y * * *|
+    |    | * x x x x x x x x x * y * *|
+    |    |------------------------|
 
     With `windows_identical = False` we drop the requirement to use the same windows
     for each of the direct models, so more windows can be created for horizons other
     than the maximum forecasting horizon:
     `fh = 2`
 
-        |--------------------------- |
-        | x x x x x x x x x * y * * *|
-        | * x x x x x x x x x * y * *|
-        | * * x x x x x x x x x * y *|
-        | * * * x x x x x x x x x * y|
-        |----------------------------|
+    | |----------------------- |
+    | | x x x x x x x x x * y * * *|
+    | | * x x x x x x x x x * y * *|
+    | | * * x x x x x x x x x * y *|
+    | | * * * x x x x x x x x x * y|
+    | |------------------------|
 
     `fh = 4`
 
-        |--------------------------- |
-        | x x x x x x x x x * * * y *|
-        | * x x x x x x x x x * * * y|
-        |----------------------------|
+    |    |------------------------|
+    |    | x x x x x x x x x * * * y *|
+    |    | * x x x x x x x x x * * * y|
+    |    |------------------------|
 
     Use `windows_identical = True` if you want to compare the forecasting
     performance across different horizons, since all models trained will use the

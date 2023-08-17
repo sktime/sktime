@@ -322,7 +322,7 @@ def evaluate(
     5. If ``i == K``, terminate, otherwise
     6. Set ``i = i + 1``
     7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
-    how depends on ``strategy``:
+       how depends on ``strategy``:
 
     - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
       on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
@@ -357,7 +357,7 @@ def evaluate(
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
     Optionally, users may select other metrics that can be supplied
-    by `scoring` argument. These can be forecast metrics of any kind as `here
+    by `scoring` argument. These can be forecast metrics of any kind as stated `here
     <https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics>`_
     i.e., point forecast metrics, interval metrics, quantile forecast metrics.
     To evaluate estimators using a specific metric, provide them to the scoring arg.
