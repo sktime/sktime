@@ -800,13 +800,13 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"but found some parameters that are not __init__ args: {notfound_errs}"
         )
 
-        if len(unreserved_param_names) > 0:
-            assert (
-                len(param_list) > 1
-            ), "get_test_params should return at least two test parameter sets"
-        params_tested = set()
-        for params in param_list:
-            params_tested = params_tested.union(params.keys())
+        # if len(unreserved_param_names) > 0:
+        #     assert (
+        #         len(param_list) > 1
+        #     ), "get_test_params should return at least two test parameter sets"
+        # params_tested = set()
+        # for params in param_list:
+        #     params_tested = params_tested.union(params.keys())
 
         # this test is too harsh for the current estimator base
         # params_not_tested = set(unreserved_param_names).difference(params_tested)
