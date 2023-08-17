@@ -17,7 +17,7 @@ from sktime.utils.multiindex import flatten_multiindex
 
 
 class WindowSummarizer(BaseTransformer):
-    """Transformer for extracting time series features.
+    r"""Transformer for extracting time series features.
 
     The WindowSummarizer transforms input series to features based
     on a provided dictionary of window summarizer, window shifts
@@ -45,8 +45,10 @@ class WindowSummarizer(BaseTransformer):
         symbols:
 
         ``z`` = time stamp that the window is summarized *to*.
+
         Part of the window if `lag` is between 0 and `1-window_length`, otherwise
         not part of the window.
+
         ``x`` = (other) time stamps in the window which is summarized
         ``*`` = observations, past or future, not part of the window
 
@@ -56,6 +58,7 @@ class WindowSummarizer(BaseTransformer):
         For `window = [1, 3]`, we have a `lag` of 1 and
         `window_length` of 3 to target the three last days (exclusive z) that were
         observed. Summarization is done across windows like this:
+
         |-------------------------- |
         | * * * * * * * * x x x z * |
         |---------------------------|
@@ -63,12 +66,13 @@ class WindowSummarizer(BaseTransformer):
         For `window = [0, 3]`, we have a `lag` of 0 and
         `window_length` of 3 to target the three last days (inclusive z) that
         were observed. Summarization is done across windows like this:
+
         |-------------------------- |
         | * * * * * * * * x x z * * |
         |---------------------------|
 
 
-        Special case ´lag´: Since lags are frequently used and window length is
+        Special case ``lag``: Since lags are frequently used and window length is
         redundant, you only need to provide a list of `lag` values.
         So `window = [1]` will result in the first lag:
 
@@ -152,7 +156,7 @@ class WindowSummarizer(BaseTransformer):
     >>> transformer = WindowSummarizer(**kwargs)
     >>> y_transformed = transformer.fit_transform(y)
 
-        Example with transforming multiple columns of exogeneous features
+    Example with transforming multiple columns of exogeneous features
 
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
@@ -168,8 +172,8 @@ class WindowSummarizer(BaseTransformer):
     >>> pipe_return = pipe.fit(y_train, X_train)
     >>> y_pred1 = pipe_return.predict(fh=fh, X=X_test)
 
-        Example with transforming multiple columns of exogeneous features
-        as well as the y column
+    Example with transforming multiple columns of exogeneous features
+    as well as the y column
 
     >>> Z_train = pd.concat([X_train, y_train], axis=1)
     >>> Z_test = pd.concat([X_test, y_test], axis=1)
