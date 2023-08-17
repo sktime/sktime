@@ -8,65 +8,25 @@ import pandas as pd
 
 from sktime.datatypes._utilities import get_index_for_series
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.split.base import BaseSplitter
 from sktime.split.base._config import (
     ACCEPTED_Y_TYPES,
     FORECASTING_HORIZON_TYPES,
     SPLIT_ARRAY_TYPE,
     SPLIT_GENERATOR_TYPE,
+    _check_fh,
+    _check_inputs_for_compatibility,
+    _get_end,
 )
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     NON_FLOAT_WINDOW_LENGTH_TYPES,
-    all_inputs_are_iloc_like,
-    all_inputs_are_time_like,
     array_is_int,
     check_window_length,
     is_int,
     is_timedelta_or_date_offset,
 )
-from sktime.utils.validation.forecasting import check_fh, check_step_length
-
-
-def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
-    """Check and convert fh to format expected by CV splitters."""
-    return check_fh(fh, enforce_relative=True)
-
-
-def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
-    """Compute the end of the last training window for a forecasting horizon.
-
-    For a time series index `y_index`, `y_index[end]` will give
-    the index of the training window.
-    Correspondingly, for a time series `y` with index `y_index`,
-    `y.iloc[end]` or `y.loc[y_index[end]]`
-    will provide the last index of the training window.
-
-    Parameters
-    ----------
-    y_index : pd.Index
-        Index of time series
-    fh : int, timedelta, list or np.ndarray of ints or timedeltas
-
-    Returns
-    -------
-    end : int
-        0-indexed integer end of the training window
-    """
-    # `fh` is assumed to be ordered and checked by `_check_fh` and `window_length` by
-    # `check_window_length`.
-    n_timepoints = y_index.shape[0]
-    assert isinstance(y_index, pd.Index)
-
-    # For purely in-sample forecasting horizons, the last split point is the end of the
-    # training data.
-    # Otherwise, the last point must ensure that the last horizon is within the data.
-    null = 0 if array_is_int(fh) else pd.Timedelta(0)
-    fh_offset = null if fh.is_all_in_sample() else fh[-1]
-    if array_is_int(fh):
-        return n_timepoints - fh_offset - 1
-    return y_index.get_loc(y_index[-1] - fh_offset)
+from sktime.utils.validation.forecasting import check_step_length
 
 
 def _check_window_lengths(
@@ -133,42 +93,6 @@ def _check_window_lengths(
                 raise ValueError(error_msg_for_incompatible_initial_window)
             if is_timedelta_or_date_offset(x=window_length):
                 raise TypeError(error_msg_for_incompatible_types)
-
-
-def _inputs_are_supported(args: list) -> bool:
-    """Check that combination of inputs is supported.
-
-    Currently, only two cases are allowed:
-    either all inputs are iloc-friendly, or they are all time-like
-
-    Parameters
-    ----------
-    args : list of inputs to check
-
-    Returns
-    -------
-    True if all inputs are compatible, False otherwise
-    """
-    return all_inputs_are_iloc_like(args) or all_inputs_are_time_like(args)
-
-
-def _check_inputs_for_compatibility(args: list) -> None:
-    """Check that combination of inputs is supported.
-
-    Currently, only two cases are allowed:
-    either all inputs are iloc-friendly, or they are time-like
-
-    Parameters
-    ----------
-    args : list of inputs
-
-    Raises
-    ------
-    TypeError
-        if combination of inputs is not supported
-    """
-    if not _inputs_are_supported(args):
-        raise TypeError("Unsupported combination of types")
 
 
 class BaseWindowSplitter(BaseSplitter):

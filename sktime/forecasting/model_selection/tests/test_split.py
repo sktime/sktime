@@ -47,7 +47,8 @@ from sktime.utils.validation.forecasting import check_fh
 N_TIMEPOINTS = 30
 
 warnings.warn(
-    f"The '{__name__}' module is deprecated, use 'sktime.split.tests' instead",
+    "The 'sktime.forecasting.model_selection.tests.test_split' module is "
+    "deprecated, use 'sktime.split.tests' instead",
     DeprecationWarning,
     stacklevel=2,
 )
