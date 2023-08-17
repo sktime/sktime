@@ -875,7 +875,7 @@ class CutoffSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {"cutoffs": np.array([3, 7, 10])}
+        return [{"cutoffs": np.array([3, 7, 10])}, {"cutoffs": [21, 22]}]
 
 
 class BaseWindowSplitter(BaseSplitter):
@@ -1199,6 +1199,26 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
         return self._split_windows_generic(expanding=False, **kwargs)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [{}, {"fh": [2, 4], "window_length": 3, "step_length": 2}]
+
 
 class ExpandingWindowSplitter(BaseWindowSplitter):
     r"""Expanding window splitter.
@@ -1275,6 +1295,26 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
         return self._split_windows_generic(expanding=True, **kwargs)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [{}, {"fh": [2, 4], "initial_length": 5, "step_length": 2}]
 
 
 class ExpandingGreedySplitter(BaseSplitter):
@@ -1477,8 +1517,7 @@ class SingleWindowSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"fh": 3}
-        return params
+        return [{"fh": 3}, {"fh": [2, 4], "window_length": 3}]
 
 
 class SameLocSplitter(BaseSplitter):
@@ -1606,15 +1645,16 @@ class SameLocSplitter(BaseSplitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.datasets import load_airline
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.forecasting.model_selection import (
+            ExpandingWindowSplitter,
+            SingleWindowSplitter,
+        )
 
         y = load_airline()
-        y_template = y[:60]
-        cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
-
-        params = {"cv": cv_tpl, "y_template": y_template}
-
-        return params
+        y_temp = y[:60]
+        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=24)
+        return [{"cv": cv_1, "y_template": y_temp}, {"cv": cv_2, "y_template": y_temp}]
 
 
 class TestPlusTrainSplitter(BaseSplitter):
@@ -1733,13 +1773,14 @@ class TestPlusTrainSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.forecasting.model_selection import (
+            ExpandingWindowSplitter,
+            SingleWindowSplitter,
+        )
 
-        cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
-
-        params = {"cv": cv_tpl}
-
-        return params
+        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=24)
+        return [{"cv": cv_1}, {"cv": cv_2}]
 
 
 def temporal_train_test_split(
