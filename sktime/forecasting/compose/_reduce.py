@@ -1380,9 +1380,9 @@ def make_reduction(
 
     Assume we have the following training data (14 observations):
 
-        |----------------------------|
-        | * * * * * * * * * * * * * *|
-        |----------------------------|
+    | |----------------------------|
+    | | * * * * * * * * * * * * * *|
+    | |----------------------------|
 
     And want to forecast with `window_length = 9` and `fh = [2, 4]`.
 
@@ -1405,16 +1405,19 @@ def make_reduction(
     `fh = 4` (maximum of `fh = [2, 4]`)
 
         |--------------------------- |
+
         | x x x x x x x x x * * * y *|
+
         | * x x x x x x x x x * * * y|
+
         |----------------------------|
 
     All other forecasting horizons will also use those two (maximal) windows.
     `fh = 2`
 
-        |--------------------------- |
-        | x x x x x x x x x * y * * *|
-        | * x x x x x x x x x * y * *|
+        |--------------------------- | \
+        | x x x x x x x x x * y * * *| \
+        | * x x x x x x x x x * y * *| \
         |----------------------------|
 
     With `windows_identical = False` we drop the requirement to use the same windows

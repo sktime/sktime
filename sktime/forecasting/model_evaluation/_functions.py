@@ -323,12 +323,14 @@ def evaluate(
     6. Set ``i = i + 1``
     7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
     how depends on ``strategy``:
+
     - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
       on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
     - if ``strategy == "update"``, update ``forecaster`` via ``update``,
       on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
     - if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
       with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
+
     8. Go to 3
 
     Results returned in this function's return are:
@@ -355,9 +357,9 @@ def evaluate(
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
     Optionally, users may select other metrics that can be supplied
-    by `scoring` argument. These can be forecast metrics of any kind,
+    by `scoring` argument. These can be forecast metrics of any kind as `here
+    <https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics>`_
     i.e., point forecast metrics, interval metrics, quantile forecast metrics.
-    https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics
     To evaluate estimators using a specific metric, provide them to the scoring arg.
 
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
