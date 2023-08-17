@@ -324,12 +324,12 @@ def evaluate(
     7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
        how depends on ``strategy``:
 
-    - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
-      on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-    - if ``strategy == "update"``, update ``forecaster`` via ``update``,
-      on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-    - if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
-      with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
+        - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
+          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+        - if ``strategy == "update"``, update ``forecaster`` via ``update``,
+          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+        - if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
+          with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
 
     8. Go to 3
 

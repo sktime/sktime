@@ -1317,60 +1317,6 @@ def make_reduction(
     time-series regression estimator. During prediction, the last available data is
     used as input to the fitted regression estimator to generate forecasts.
 
-    Parameters
-    ----------
-    estimator : an estimator instance
-        Either a tabular regressor from scikit-learn or a time series regressor from
-        sktime.
-    strategy : str, optional (default="recursive")
-        The strategy to generate forecasts. Must be one of "direct", "recursive" or
-        "multioutput".
-    window_length : int, optional (default=10)
-        Window length used in sliding window transformation.
-    scitype : str, optional (default="infer")
-        Legacy argument for downwards compatibility, should not be used.
-        `make_reduction` will automatically infer the correct type of `estimator`.
-        This internal inference can be force-overridden by the `scitype` argument.
-        Must be one of "infer", "tabular-regressor" or "time-series-regressor".
-        If the scitype cannot be inferred, this is a bug and should be reported.
-    transformers: list of transformers (default = None)
-        A suitable list of transformers that allows for using an en-bloc approach with
-        make_reduction. This means that instead of using the raw past observations of
-        y across the window length, suitable features will be generated directly from
-        the past raw observations. Currently only supports WindowSummarizer (or a list
-        of WindowSummarizers) to generate features e.g. the mean of the past 7
-        observations. Currently only works for RecursiveTimeSeriesRegressionForecaster.
-    pooling: str {"local", "global"}, optional
-        Specifies whether separate models will be fit at the level of each instance
-        (local) of if you wish to fit a single model to all instances ("global").
-        Currently only works for RecursiveTimeSeriesRegressionForecaster.
-    windows_identical: bool, (default = True)
-        Direct forecasting only.
-        Specifies whether all direct models use the same X windows from y (True: Number
-        of windows = total observations + 1 - window_length - maximum forecasting
-        horizon) or a different number of X windows depending on the forecasting horizon
-        (False: Number of windows = total observations + 1 - window_length
-        - forecasting horizon). See pictionary below for more information.
-
-    Returns
-    -------
-    estimator : an Estimator instance
-        A reduction forecaster
-
-    Examples
-    --------
-    >>> from sktime.forecasting.compose import make_reduction
-    >>> from sktime.datasets import load_airline
-    >>> from sklearn.ensemble import GradientBoostingRegressor
-    >>> y = load_airline()
-    >>> regressor = GradientBoostingRegressor()
-    >>> forecaster = make_reduction(regressor, window_length=15, strategy="recursive")
-    >>> forecaster.fit(y)
-    RecursiveTabularRegressionForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
-
-    Notes
-    -----
     Please see below a graphical representation of the make_reduction logic using the
     following symbols:
 
@@ -1440,6 +1386,58 @@ def make_reduction(
     performance across different horizons, since all models trained will use the
     same windows. Use `windows_identical = False` if you want to have the highest
     forecasting accuracy for each forecasting horizon.
+
+    Parameters
+    ----------
+    estimator : an estimator instance
+        Either a tabular regressor from scikit-learn or a time series regressor from
+        sktime.
+    strategy : str, optional (default="recursive")
+        The strategy to generate forecasts. Must be one of "direct", "recursive" or
+        "multioutput".
+    window_length : int, optional (default=10)
+        Window length used in sliding window transformation.
+    scitype : str, optional (default="infer")
+        Legacy argument for downwards compatibility, should not be used.
+        `make_reduction` will automatically infer the correct type of `estimator`.
+        This internal inference can be force-overridden by the `scitype` argument.
+        Must be one of "infer", "tabular-regressor" or "time-series-regressor".
+        If the scitype cannot be inferred, this is a bug and should be reported.
+    transformers: list of transformers (default = None)
+        A suitable list of transformers that allows for using an en-bloc approach with
+        make_reduction. This means that instead of using the raw past observations of
+        y across the window length, suitable features will be generated directly from
+        the past raw observations. Currently only supports WindowSummarizer (or a list
+        of WindowSummarizers) to generate features e.g. the mean of the past 7
+        observations. Currently only works for RecursiveTimeSeriesRegressionForecaster.
+    pooling: str {"local", "global"}, optional
+        Specifies whether separate models will be fit at the level of each instance
+        (local) of if you wish to fit a single model to all instances ("global").
+        Currently only works for RecursiveTimeSeriesRegressionForecaster.
+    windows_identical: bool, (default = True)
+        Direct forecasting only.
+        Specifies whether all direct models use the same X windows from y (True: Number
+        of windows = total observations + 1 - window_length - maximum forecasting
+        horizon) or a different number of X windows depending on the forecasting horizon
+        (False: Number of windows = total observations + 1 - window_length
+        - forecasting horizon). See pictionary below for more information.
+
+    Returns
+    -------
+    estimator : an Estimator instance
+        A reduction forecaster
+
+    Examples
+    --------
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> from sktime.datasets import load_airline
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> y = load_airline()
+    >>> regressor = GradientBoostingRegressor()
+    >>> forecaster = make_reduction(regressor, window_length=15, strategy="recursive")
+    >>> forecaster.fit(y)
+    RecursiveTabularRegressionForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
 
     References
     ----------
