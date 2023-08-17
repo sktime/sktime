@@ -772,10 +772,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             "reserved_params", tag_value_default=None
         )
         reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
-        reserved_set = set(reserved_param_names)
+        # reserved_set = set(reserved_param_names)
 
         param_names = estimator_class.get_param_names()
-        unreserved_param_names = set(param_names).difference(reserved_set)
+        # unreserved_param_names = set(param_names).difference(reserved_set)
 
         key_list = [x.keys() for x in param_list]
 
