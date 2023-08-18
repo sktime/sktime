@@ -50,6 +50,7 @@ class AlignerDTW(BaseAligner):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
+        "alignment_type": "partial",
         "python_dependencies": "dtw-python",
         "python_dependencies_alias": {"dtw-python": "dtw"},
     }
@@ -74,6 +75,11 @@ class AlignerDTW(BaseAligner):
         self.open_begin = open_begin
         self.open_end = open_end
         self.variable_to_align = variable_to_align
+
+        if open_end or open_begin:
+            self.set_tags(**{"alignment_type": "partial"})
+        else:
+            self.set_tags(**{"alignment_type": "full"})
 
     def _fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.
@@ -184,6 +190,14 @@ class AlignerDTW(BaseAligner):
         distmat[1, 0] = self.alignment_.distance
 
         return distmat
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Test parameters for AlignerDTWdist."""
+        params1 = {}
+        params2 = {"step_pattern": "symmetric1"}
+
+        return [params1, params2]
 
 
 class AlignerDTWfromDist(BaseAligner):
@@ -350,4 +364,7 @@ class AlignerDTWfromDist(BaseAligner):
         # importing inside to avoid circular dependencies
         from sktime.dists_kernels import ScipyDist
 
-        return {"dist_trafo": ScipyDist()}
+        params1 = {"dist_trafo": ScipyDist()}
+        params2 = {"dist_trafo": ScipyDist("cityblock"), "step_pattern": "symmetric1"}
+
+        return [params1, params2]
