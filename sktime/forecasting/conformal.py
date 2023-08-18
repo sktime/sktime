@@ -22,7 +22,7 @@ from sktime.forecasting.base import BaseForecaster
 
 class ConformalIntervals(BaseForecaster):
     r"""Empirical and conformal prediction intervals.
-
+ 
     Implements empirical and conformal prediction intervals, on absolute residuals.
     Empirical prediction intervals are based on sliding window empirical quantiles.
     Conformal prediction intervals are implemented as described in [1]_.
