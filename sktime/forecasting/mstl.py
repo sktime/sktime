@@ -193,7 +193,10 @@ class MSTL(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params
         """
-        params1 = {}
+        params1 = {
+            "periods": 24,
+            "windows": 11,
+        }
         params2 = {
             "periods": [1, 12],
             "windows": 9,
