@@ -20,6 +20,13 @@ Maintenance release - dependency updates, scheduled deprecations.
 
 For last non-maintenance content updates, see 0.21.1.
 
+Contents
+~~~~~~~~
+
+* midpoint of change period in column naming convention for univariate probabilistic forecasts,
+  in preparation for 0.23.0 - see below for details for users and developers
+* scheduled 0.22.0 deprecation actions
+
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
@@ -60,6 +67,14 @@ Transformations
   has been added to the ``"comprehensive"`` feature set.
   Users who would like to continue using the previous feature set
   should use the argument ``manual_selection`` instead.
+
+List of PR
+~~~~~~~~~~
+
+* [MNT] ``failfast=False`` in the release workflow (:pr:`5120`) :user:`fkiraly`
+* [MNT] 0.22.0 release action - deprecate ``deprecated`` in 0.21.0, remove in 0.22.0 (:pr:`4822`) :user:`fkiraly`
+* [MNT] 0.22.0 deprecations and change actions (:pr:`5106`) :user:`fkiraly`
+
 
 Version 0.21.1 - 2023-08-16
 ---------------------------
