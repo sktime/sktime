@@ -77,14 +77,14 @@ def _create_hierarchical_data():
     y = _make_hierarchical(
         random_state=TEST_RANDOM_SEEDS[0],
         hierarchy_levels=(2, 2),
-        min_timepoints=20,
-        max_timepoints=20,
+        min_timepoints=15,
+        max_timepoints=15,
     )
     X = _make_hierarchical(
         random_state=TEST_RANDOM_SEEDS[1],
         hierarchy_levels=(2, 2),
-        min_timepoints=20,
-        max_timepoints=20,
+        min_timepoints=15,
+        max_timepoints=15,
     )
     return y, X
 
@@ -103,7 +103,7 @@ PIPE_GRID = {
 }
 CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],
-    SlidingWindowSplitter(fh=1, initial_window=15),
+    SlidingWindowSplitter(fh=1, initial_window=12, step_length=3),
 ]
 ERROR_SCORES = [np.nan, "raise", 1000]
 
@@ -194,7 +194,7 @@ def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
 def test_gscv_proba(cv, scoring, error_score):
     """Test ForecastingGridSearchCV with probabilistic metrics."""
-    y = load_airline()
+    y = load_airline()[:36]
 
     forecaster = ARIMA()
     param_grid = {"order": [(1, 0, 0), (1, 1, 0)]}

@@ -9,12 +9,12 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.fbprophet import Prophet
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("prophet", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(Prophet),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("indextype", ["range", "period"])
 def test_prophet_nonnative_index(indextype):
@@ -42,8 +42,8 @@ def test_prophet_nonnative_index(indextype):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("prophet", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(Prophet),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("convert_to_datetime", [False, True])
 def test_prophet_period_fh(convert_to_datetime):
