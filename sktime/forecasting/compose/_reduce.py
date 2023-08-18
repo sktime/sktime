@@ -1347,8 +1347,8 @@ def make_reduction(
     Direct Reducers will create multiple models, one for each forecasting horizon.
     With the argument `windows_identical = True` (default) the windows used to train
     the model are defined by the maximum forecasting horizon.
-    Only two complete windows can be defined in this example::
-    `fh = 4` (maximum of `fh = [2, 4]`)
+    Only two complete windows can be defined in this example
+    `fh = 4` (maximum of `fh = [2, 4]`)::
 
     |--------------------------- |
     | x x x x x x x x x * * * y *|

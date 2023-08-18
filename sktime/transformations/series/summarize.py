@@ -50,6 +50,7 @@ class WindowSummarizer(BaseTransformer):
         not part of the window.
 
         ``x`` = (other) time stamps in the window which is summarized
+
         ``*`` = observations, past or future, not part of the window
 
         The summarization function is applied to the window consisting of x and
@@ -114,8 +115,10 @@ class WindowSummarizer(BaseTransformer):
             A lag_feature of [[8, 14], [1, 28]] cannot be correctly applied for the
             first 21 resp. 28 observations of the targeted column. Possible values
             to deal with those NAs:
+
             - None
             - "bfill"
+
             None will keep the NAs generated, and would leave it for the user to choose
             an estimator that can correctly deal with observations with missing values,
             "bfill" will fill the NAs by carrying the first observation backwards.
