@@ -1317,76 +1317,6 @@ def make_reduction(
     time-series regression estimator. During prediction, the last available data is
     used as input to the fitted regression estimator to generate forecasts.
 
-    Please see below a graphical representation of the make_reduction logic using the
-    following symbols:
-
-    - ``y`` = forecast target.
-    - ``x`` = past values of y that are used as features (X) to forecast y
-    - ``*`` = observations, past or future, neither part of window nor forecast.
-
-    Assume we have the following training data (14 observations)::
-
-    |----------------------------|
-    | * * * * * * * * * * * * * *|
-    |----------------------------|
-
-    And want to forecast with `window_length = 9` and `fh = [2, 4]`.
-
-    By construction, a recursive reducer always targets the first data point after
-    the window, irrespective of the forecasting horizons requested.
-    In the example the following 5 windows are created::
-
-    |--------------------------- |
-    | x x x x x x x x x y * * * *|
-    | * x x x x x x x x x y * * *|
-    | * * x x x x x x x x x y * *|
-    | * * * x x x x x x x x x y *|
-    | * * * * x x x x x x x x x y|
-    |----------------------------|
-
-    Direct Reducers will create multiple models, one for each forecasting horizon.
-    With the argument `windows_identical = True` (default) the windows used to train
-    the model are defined by the maximum forecasting horizon.
-    Only two complete windows can be defined in this example
-    `fh = 4` (maximum of `fh = [2, 4]`)::
-
-    |--------------------------- |
-    | x x x x x x x x x * * * y *|
-    | * x x x x x x x x x * * * y|
-    |----------------------------|
-
-    All other forecasting horizons will also use those two (maximal) windows.
-    `fh = 2`::
-
-    |--------------------------- |
-    | x x x x x x x x x * y * * *|
-    | * x x x x x x x x x * y * *|
-    |----------------------------|
-
-    With `windows_identical = False` we drop the requirement to use the same windows
-    for each of the direct models, so more windows can be created for horizons other
-    than the maximum forecasting horizon.
-    `fh = 2`::
-
-    |--------------------------- |
-    | x x x x x x x x x * y * * *|
-    | * x x x x x x x x x * y * *|
-    | * * x x x x x x x x x * y *|
-    | * * * x x x x x x x x x * y|
-    |----------------------------|
-
-    `fh = 4`::
-
-    |----------------------------|
-    | x x x x x x x x x * * * y *|
-    | * x x x x x x x x x * * * y|
-    |----------------------------|
-
-    Use `windows_identical = True` if you want to compare the forecasting
-    performance across different horizons, since all models trained will use the
-    same windows. Use `windows_identical = False` if you want to have the highest
-    forecasting accuracy for each forecasting horizon.
-
     Parameters
     ----------
     estimator : an estimator instance
@@ -1426,6 +1356,78 @@ def make_reduction(
     -------
     estimator : an Estimator instance
         A reduction forecaster
+
+    Notes
+    -----
+    Please see below a graphical representation of the make_reduction logic using the
+    following symbols:
+
+    - ``y`` = forecast target.
+    - ``x`` = past values of y that are used as features (X) to forecast y
+    - ``*`` = observations, past or future, neither part of window nor forecast.
+
+    Assume we have the following training data (14 observations)::
+
+    |----------------------------|
+    | * * * * * * * * * * * * * *|
+    |----------------------------|
+
+    And want to forecast with `window_length = 9` and `fh = [2, 4]`.
+
+    By construction, a recursive reducer always targets the first data point after
+    the window, irrespective of the forecasting horizons requested.
+    In the example the following 5 windows are created::
+
+    |----------------------------|
+    | x x x x x x x x x y * * * *|
+    | * x x x x x x x x x y * * *|
+    | * * x x x x x x x x x y * *|
+    | * * * x x x x x x x x x y *|
+    | * * * * x x x x x x x x x y|
+    |----------------------------|
+
+    Direct Reducers will create multiple models, one for each forecasting horizon.
+    With the argument `windows_identical = True` (default) the windows used to train
+    the model are defined by the maximum forecasting horizon.
+    Only two complete windows can be defined in this example
+    `fh = 4` (maximum of `fh = [2, 4]`)::
+
+    |----------------------------|
+    | x x x x x x x x x * * * y *|
+    | * x x x x x x x x x * * * y|
+    |----------------------------|
+
+    All other forecasting horizons will also use those two (maximal) windows.
+    `fh = 2`::
+
+    |----------------------------|
+    | x x x x x x x x x * y * * *|
+    | * x x x x x x x x x * y * *|
+    |----------------------------|
+
+    With `windows_identical = False` we drop the requirement to use the same windows
+    for each of the direct models, so more windows can be created for horizons other
+    than the maximum forecasting horizon.
+    `fh = 2`::
+
+    |----------------------------|
+    | x x x x x x x x x * y * * *|
+    | * x x x x x x x x x * y * *|
+    | * * x x x x x x x x x * y *|
+    | * * * x x x x x x x x x * y|
+    |----------------------------|
+
+    `fh = 4`::
+
+    |----------------------------|
+    | x x x x x x x x x * * * y *|
+    | * x x x x x x x x x * * * y|
+    |----------------------------|
+
+    Use `windows_identical = True` if you want to compare the forecasting
+    performance across different horizons, since all models trained will use the
+    same windows. Use `windows_identical = False` if you want to have the highest
+    forecasting accuracy for each forecasting horizon.
 
     Examples
     --------

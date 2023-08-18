@@ -60,7 +60,7 @@ class WindowSummarizer(BaseTransformer):
         `window_length` of 3 to target the three last days (exclusive z) that were
         observed. Summarization is done across windows like this::
 
-        |-------------------------- |
+        |---------------------------|
         | * * * * * * * * x x x z * |
         |---------------------------|
 
@@ -68,7 +68,7 @@ class WindowSummarizer(BaseTransformer):
         `window_length` of 3 to target the three last days (inclusive z) that
         were observed. Summarization is done across windows like this::
 
-        |-------------------------- |
+        |---------------------------|
         | * * * * * * * * x x z * * |
         |---------------------------|
 
@@ -77,13 +77,13 @@ class WindowSummarizer(BaseTransformer):
         redundant, you only need to provide a list of `lag` values.
         So `window = [1]` will result in the first lag::
 
-        |-------------------------- |
+        |---------------------------|
         | * * * * * * * * * * x z * |
         |---------------------------|
 
         And `window = [1, 4]` will result in the first and fourth lag::
 
-        |-------------------------- |
+        |---------------------------|
         | * * * * * * * x * * x z * |
         |---------------------------|
 
