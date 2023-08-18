@@ -261,7 +261,7 @@ class VectorizedDF:
         if is_self_iter:
             yield from _iter_cols(self.X_multiindex)
         else:
-            for name, group in self.X_multiindex.groupby(level=iter_levels):
+            for name, group in self.X_multiindex.groupby(level=iter_levels, sort=False):
                 yield from _iter_cols(group.droplevel(iter_levels), group_name=name)
 
     def _iter_levels(self, iterate_as):
@@ -593,11 +593,14 @@ class VectorizedDF:
         if return_type == "pd.DataFrame":
             df_long = pd.DataFrame(ret)
             cols_right_order = df_long.loc[:, 1].unique()
+            rows_right_order = df_long.loc[:, 0].unique()
 
             df = df_long.pivot(index=0, columns=1, values=2)
-            # DataFrame.pivot sorts the columns (is this a bug? see #4683)
+            # DataFrame.pivot sorts the rows & columns
+            # (is this a bug? see #4683 and #5108)
             # either way, we need to fix this:
             df = df.reindex(cols_right_order, axis=1)
+            df = df.reindex(rows_right_order, axis=0)
 
             # remove "0" and "1" from index/columns name
             df.index.names = [None] * len(df.index.names)
