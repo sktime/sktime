@@ -52,12 +52,18 @@ class MSTL(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.forecasting.mstl import MSTL  # doctest: +SKIP
-    >>> from sktime.datasets import load_airline
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.mstl import MSTL
+
     >>> y = load_airline()
-    >>> mstl = MSTL()  # doctest: +SKIP
-    >>> res = mstl.fit(y)  # doctest: +SKIP
+    >>> y.index = y.index.to_timestamp()
+
+    >>> mstl = MSTL(return_components=True)  # doctest: +SKIP
+    >>> fitted = mstl.fit(y)  # doctest: +SKIP
+    >>> res = fitted.transform(y)  # doctest: +SKIP
+
     >>> res.plot()  # doctest: +SKIP
     >>> plt.tight_layout()  # doctest: +SKIP
     >>> plt.show()  # doctest: +SKIP
@@ -194,12 +200,12 @@ class MSTL(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params
         """
         params1 = {
-            "periods": 24,
-            "windows": 11,
+            "periods": 3,
+            "windows": 3,
         }
         params2 = {
-            "periods": [1, 12],
-            "windows": 9,
+            "periods": [3, 24],
+            "windows": [3, 9],
             "lmbda": "auto",
             "iterate": 10,
             "stl_kwargs": {"trend_deg": 0},
