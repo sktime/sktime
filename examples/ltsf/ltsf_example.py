@@ -4,7 +4,7 @@ import os
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-from sktime.forecasting.ltsf import LTSFLinearForecaster
+from sktime.networks.ltsf.ltsf import LTSFLinearForecaster
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
