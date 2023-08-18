@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from typing import Iterator, Tuple, Union
+from typing import Iterator, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,7 @@ from sktime.utils.validation import (
     array_is_int,
 )
 from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.series import check_equal_time_index
 
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
@@ -105,3 +106,42 @@ def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     if array_is_int(fh):
         return n_timepoints - fh_offset - 1
     return y_index.get_loc(y_index[-1] - fh_offset)
+
+
+def _split_by_fh(
+    y: ACCEPTED_Y_TYPES, fh: FORECASTING_HORIZON_TYPES, X: Optional[pd.DataFrame] = None
+) -> SPLIT_TYPE:
+    """Split time series with forecasting horizon.
+
+    Handles both relative and absolute horizons.
+    """
+    if X is not None:
+        check_equal_time_index(y, X)
+    index = y.index
+    fh = check_fh(fh, freq=index)
+    idx = fh.to_pandas()
+
+    if fh.is_relative:
+        if not fh.is_all_out_of_sample():
+            raise ValueError("`fh` must only contain out-of-sample values")
+        max_step = idx.max()
+        steps = fh.to_indexer()
+        train = index[:-max_step]
+        test = index[-max_step:]
+
+        y_test = y.loc[test[steps]]
+
+    else:
+        min_step, max_step = idx.min(), idx.max()
+        train = index[index < min_step]
+        test = index[(index <= max_step) & (min_step <= index)]
+
+        y_test = y.loc[idx]
+
+    y_train = y.loc[train]
+    if X is None:
+        return y_train, y_test
+
+    X_train = X.loc[train]
+    X_test = X.loc[test]
+    return y_train, y_test, X_train, X_test
