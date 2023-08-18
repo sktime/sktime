@@ -158,6 +158,14 @@ Trend forecasters
 
     StatsForecastMSTL
 
+.. currentmodule:: sktime.forecasting.mstl
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MSTL
+
 Exponential smoothing based forecasters
 ---------------------------------------
 
