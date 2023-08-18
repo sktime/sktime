@@ -16,6 +16,50 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.22.0 - 2023-08-18
 ---------------------------
 
+Maintenance release - dependency updates, scheduled deprecations.
+
+For last non-maintenance content updates, see 0.21.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* the ``deprecated`` has been removed as a core dependency of ``sktime``.
+  No action is required of users
+  or developers, as the package was used only for internal deprecation actions.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting - change of column naming for univariate probabilistic forecasts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From 0.23.0, returns of forecasters' ``predict_quantiles`` and ``predict_intervals``
+in the univariate case will be made consistent with the multivariate case:
+the name of the uppermost (0-indexed) column level will always be the variable name.
+Previously, in the univariate case, it was always ``Coverage`` or ``Quantiles``.
+
+The transition period is managed by the ``legacy_interface`` argument of the two methods.
+See the 0.21.0 changelog for further details.
+
+In 0.22.0, the ``legacy_interface`` argument defaults have been changed to ``False``,
+which ensures outputs are of the future, post-change naming convention.
+
+Reminder of recommended action for users:
+
+* Users should aim to upgrade dependent code to ``legacy_interface=False`` behaviour by 0.21.last,
+  and to remove ``legacy_interface`` arguments after 0.22.0 and before 0.23.0.
+  Users who need more time to upgrade dependent code can set ``legacy_interface=True`` until 0.22.last.
+
+Extenders should use the new ``"pred_int:legacy_interface:testcfg"`` config field to upgrade their third party extensions,
+this is as described in the 0.21.0 changelog.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* in ``DateTimeFeatures``, the feature ``hour_of_week`` feature
+  has been added to the ``"comprehensive"`` feature set.
+  Users who would like to continue using the previous feature set
+  should use the argument ``manual_selection`` instead.
 
 Version 0.21.1 - 2023-08-16
 ---------------------------
