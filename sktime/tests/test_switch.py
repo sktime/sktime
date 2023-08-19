@@ -41,8 +41,8 @@ def run_test_for_class(cls):
     from sktime.utils.validation._dependencies import _check_estimator_deps
 
     def _required_deps_present(obj):            
-        if hasattr(cls, "get_class_tag"):
-            return _check_estimator_deps(cls, severity="none"):
+        if hasattr(obj, "get_class_tag"):
+            return _check_estimator_deps(obj, severity="none"):
 
     # if any of the required soft dependencies are not present, do not run the test
     if not all(_required_deps_present(x) for x in cls):
