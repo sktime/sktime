@@ -76,11 +76,13 @@ class BaseBenchmark:
     A benchmark consists of a set of tasks and a set of estimators.
     """
 
-    def __init__(self):
+    def __init__(self, entity_id_fomat: Optional[str] = None):
         _check_soft_dependencies("kotsu")
         import kotsu
 
-        self.estimators = kotsu.registration.ModelRegistry()
+        from sktime.benchmarking._base_kotsu import SktimeModelRegistry
+
+        self.estimators = SktimeModelRegistry(entity_id_fomat)
         self.validations = kotsu.registration.ValidationRegistry()
         self.kotsu_run = kotsu.run.run
 

@@ -12,10 +12,10 @@ from kotsu.registration import _Registry, _Spec  # noqa: E402
 
 def _check_entity_id_format(entity_id_format: str, id: str) -> None:
     """Check if given input id followed regex specified in entity_id_format."""
-    if not isinstance(entity_id_format, str):
-        raise TypeError(
-            f"entity_id_format must be a str but receive {type(entity_id_format)}"
-        )
+    # if not isinstance(entity_id_format, (str, None)):
+    #     raise TypeError(
+    #         f"entity_id_format must be a str but receive {type(entity_id_format)}"
+    #     )
 
     if entity_id_format is not None:
         entity_id_re = re.compile(entity_id_format)
@@ -27,7 +27,7 @@ def _check_entity_id_format(entity_id_format: str, id: str) -> None:
             )
 
 
-class _SpecSktime(_Spec):
+class _SktimeSpec(_Spec):
     """A specification for a particular instance of an entity.
 
     Used to register entity and parameters full specification for evaluations.
@@ -75,14 +75,15 @@ class _SpecSktime(_Spec):
         self._kwargs = {} if kwargs is None else kwargs
 
 
-class ModelRegistrySktime(_Registry):
+class SktimeModelRegistry(_Registry):
     """Register an entity by ID.
 
     IDs should remain stable over time and should be guaranteed to resolve to
     the same entity dynamics (or be desupported).
     """
 
-    def __init__(self):
+    def __init__(self, entity_id_fomat: str):
+        self.entity_id_fomat = entity_id_fomat
         super().__init__()
 
     def register(
@@ -123,10 +124,11 @@ class ModelRegistrySktime(_Registry):
                 category=UserWarning,
                 stacklevel=2,
             )
-        self.entity_specs[id] = _SpecSktime(
+        self.entity_specs[id] = _SktimeSpec(
             id,
             entry_point,
             deprecated=deprecated,
             nondeterministic=nondeterministic,
+            entity_id_fomat=self.entity_id_fomat,
             kwargs=kwargs,
         )
