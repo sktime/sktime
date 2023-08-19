@@ -40,7 +40,7 @@ def run_test_for_class(cls):
     from sktime.utils.git_diff import is_class_changed
     from sktime.utils.validation._dependencies import _check_estimator_deps
 
-    def _required_deps_present(obj):            
+    def _required_deps_present(obj):
         if hasattr(obj, "get_class_tag"):
             return _check_estimator_deps(obj, severity="none")
         else:
