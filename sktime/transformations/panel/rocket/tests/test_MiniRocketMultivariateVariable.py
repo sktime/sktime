@@ -8,11 +8,11 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_japanese_vowels
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.rocket import MultiRocketMultivariateVariable
+from sktime.transformations.panel.rocket import MiniRocketMultivariateVariable
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(MultiRocketMultivariateVariable),
+    not run_test_for_class(MiniiRocketMultivariateVariable),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_minirocket_multivariate_variable_on_japanese_vowels():
