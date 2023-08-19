@@ -12,7 +12,7 @@ from sktime.transformations.panel.rocket import MiniRocketMultivariateVariable
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(MiniiRocketMultivariateVariable),
+    not run_test_for_class(MiniRocketMultivariateVariable),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_minirocket_multivariate_variable_on_japanese_vowels():

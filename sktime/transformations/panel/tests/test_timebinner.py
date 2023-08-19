@@ -1,7 +1,7 @@
 """Tests for TimeBinner."""
-
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.datasets import load_basic_motions
 from sktime.tests.test_switch import run_test_for_class
