@@ -42,7 +42,9 @@ def run_test_for_class(cls):
 
     def _required_deps_present(obj):            
         if hasattr(obj, "get_class_tag"):
-            return _check_estimator_deps(obj, severity="none"):
+            return _check_estimator_deps(obj, severity="none")
+        else:
+            return True
 
     # if any of the required soft dependencies are not present, do not run the test
     if not all(_required_deps_present(x) for x in cls):
