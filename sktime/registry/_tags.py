@@ -342,6 +342,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does aligner return pairwise distance matrix between aligned series?",
     ),
     (
+        "alignment_type",
+        "aligner",
+        ("str", ["full", "partial"]),
+        "does aligner produce a full or partial alignment",
+    ),
+    (
         "requires-y-train",
         "metric",
         "bool",

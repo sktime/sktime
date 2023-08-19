@@ -9,11 +9,19 @@ def run_test_for_class(cls):
 
     This checks the following conditions:
 
-    * if a class, and required dependencies are not present, does not run the test
-    * if ONLY_CHANGED_MODULES setting is on, runs the test if and only
-      if the module containing the class has changed according to is_class_changed
+    1. whether all required soft dependencies are present.
+       If not, does not run the test.
+    2. If yes:
+      * if ONLY_CHANGED_MODULES setting is on, runs the test if and only
+      if the module containing the class/func has changed according to is_class_changed
+      * if ONLY_CHANGED_MODULES if off, always runs the test if all soft dependencies
+      are present.
 
-    otherwise, always runs the test.
+    cls can also be a list of classes or functions,
+    in this case the test is run if and only if:
+
+    * all required soft dependencies are present
+    * if yes, if any of the estimators in the list should be tested by criterion 2 above
 
     Parameters
     ----------
@@ -25,19 +33,25 @@ def run_test_for_class(cls):
     bool : True if class should be tested, False otherwise
         if cls was a list, is True iff True for at least one of the classes in the list
     """
-    if isinstance(cls, list):
-        return any(run_test_for_class(x) for x in cls)
+    if not isinstance(cls, list):
+        cls = [cls]
 
     from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
     from sktime.utils.git_diff import is_class_changed
     from sktime.utils.validation._dependencies import _check_estimator_deps
 
-    if hasattr(cls, "get_class_tag"):
-        if not _check_estimator_deps(cls, severity="none"):
-            return False
+    def _required_deps_present(obj):            
+        if hasattr(cls, "get_class_tag"):
+            return _check_estimator_deps(cls, severity="none"):
 
+    # if any of the required soft dependencies are not present, do not run the test
+    if not all(_required_deps_present(x) for x in cls):
+        return False
+
+    # if ONLY_CHANGED_MODULES is on, run the test if and only if
+    # any of the modules containing any of the classes in the list have changed
     if ONLY_CHANGED_MODULES:
-        return is_class_changed(cls)
+        return any(is_class_changed(x) for x in cls)
 
     # otherwise
     # i.e., dependencies are present, and differential testing is disabled
