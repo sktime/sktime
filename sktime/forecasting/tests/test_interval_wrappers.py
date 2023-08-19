@@ -17,6 +17,7 @@ from sktime.forecasting.model_selection import (
 )
 from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
+from sktime.tests.test_switch import run_test_for_class
 
 INTERVAL_WRAPPERS = [ConformalIntervals, NaiveVariance]
 CV_SPLITTERS = [SlidingWindowSplitter, ExpandingWindowSplitter]
@@ -25,6 +26,10 @@ SAMPLE_FRACS = [None, 0.5]
 MTYPES_SERIES = scitype_to_mtype("Series", softdeps="present")
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(INTERVAL_WRAPPERS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("mtype", MTYPES_SERIES)
 @pytest.mark.parametrize("override_y_mtype", [True, False])
 @pytest.mark.parametrize("wrapper", INTERVAL_WRAPPERS)
@@ -62,6 +67,10 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
     assert len(pred_var) == 3
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(INTERVAL_WRAPPERS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("wrapper", INTERVAL_WRAPPERS)
 @pytest.mark.parametrize("splitter", CV_SPLITTERS)
 @pytest.mark.parametrize("strategy", EVALUATE_STRATEGY)
