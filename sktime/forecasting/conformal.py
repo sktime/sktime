@@ -15,7 +15,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.base import clone
 
-from sktime.datatypes import convert, convert_to
+from sktime.datatypes import MTYPE_LIST_SERIES, convert, convert_to
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
 
@@ -125,6 +125,8 @@ class ConformalIntervals(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "X_inner_mtype": MTYPE_LIST_SERIES,
+        "y_inner_mtype": MTYPE_LIST_SERIES,
     }
 
     ALLOWED_METHODS = [
@@ -165,8 +167,6 @@ class ConformalIntervals(BaseForecaster):
             "requires-fh-in-fit",
             "ignores-exogeneous-X",
             "handles-missing-data",
-            "y_inner_mtype",
-            "X_inner_mtype",
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]
@@ -204,9 +204,8 @@ class ConformalIntervals(BaseForecaster):
                 update=True,
             )
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -244,6 +243,35 @@ class ConformalIntervals(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
+        y_pred = self.predict(fh=fh, X=X)
+
+        if not isinstance(self.residuals_matrix_, dict):
+            return self._predict_interval_series(
+                fh=fh,
+                coverage=coverage,
+                y_pred=y_pred,
+                legacy_interface=legacy_interface,
+            )
+
+        # otherwise, we have a hierarchical/multiindex y
+        y_pred = convert_to(y_pred, ["pd-multiindex", "pd_multiindex_hier"])
+
+        y_pred_index = y_pred.index.droplevel(-1)
+
+        pred_ints = {}
+        for ix in y_pred_index:
+            y_pred_ix = y_pred.loc[ix]
+            pred_ints[ix] = self._predict_interval_series(
+                fh=fh,
+                coverage=coverage,
+                y_pred=y_pred_ix,
+                legacy_interface=legacy_interface,
+            )
+        pred_int = pd.concat(pred_ints, axis=0, keys=y_pred_index)
+        return pred_int
+
+    def _predict_interval_series(self, fh, coverage, y_pred, legacy_interface):
+        """Compute prediction intervals predict_interval for series scitype."""
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
         fh_absolute_idx = fh_absolute.to_pandas()
@@ -288,7 +316,6 @@ class ConformalIntervals(BaseForecaster):
 
             pred_int.loc[fh_ind] = pred_int_row
 
-        y_pred = self.predict(fh=fh, X=X)
         y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
         y_pred.index = fh_absolute_idx
 
@@ -371,7 +398,23 @@ class ConformalIntervals(BaseForecaster):
             if sample_frac is passed this will have NaN values for 1 - sample_frac
             fraction of the matrix
         """
-        y = convert_to(y, "pd.Series")
+        y = convert_to(y, ["pd.Series", "pd-multiindex", "pd_multiindex_hier"])
+
+        # vectorize over multiindex if y is hierarchical
+        if isinstance(y.index, pd.MultiIndex):
+            y_index = y.index.droplevel(-1)
+
+            residuals = {}
+            for ix in y_index:
+                if X is not None:
+                    X_ix = X.loc[ix]
+                else:
+                    X_ix = None
+                y_ix = y.loc[ix]
+                residuals[ix] = self._compute_sliding_residuals(
+                    y_ix, X_ix, forecaster, initial_window, sample_frac, update
+                )
+            return residuals
 
         n_initial_window = self._parse_initial_window(y, initial_window=initial_window)
 

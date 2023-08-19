@@ -761,11 +761,13 @@ class SummaryTransformer(BaseTransformer):
 class SplitterSummarizer(BaseTransformer):
     """Create summary values of a time series' splits.
 
-    A series-to-series transformer that applies a series-to-primitives transformer t
-    to each series' train split created using the splitter `s`.
+    A series-to-series transformer that applies the series-to-primitives transformer
+    ``transformer`` to each train split created using the splitter ``splitter``.
 
     The i-th row of the resulting series is equivalent to
-    t.fit_transform(s.split_series(X)[i][0]).
+    ``transformer.fit_transform(splitter.split_series(X)[i][0])``,
+    where ``X`` is the data seen in ``transform``, if ``remember_data=False``; or
+    where ``X`` is all data seen in ``fit``, ``transform``, if ``remember_data=True``
 
     The output series aims to provide a summarization of the input series based on the
     given transformer and splitter.
@@ -782,8 +784,12 @@ class SplitterSummarizer(BaseTransformer):
 
     index : str, optional (default="last")
     Determines the indexing approach for the resulting series.
-    If "last", the index of each series' row is used.
+    If "last", the latest index of the split is used.
     If anything else, the row's number becomes the index.
+
+    remember_data : bool, optional (default=True)
+    if True, memorizes data seen in ``fit``, ``update``, uses it in ``transform``
+    if False, only uses data seen in ``transform`` for splits and summaries.
 
     Methods
     -------
@@ -819,10 +825,11 @@ class SplitterSummarizer(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    def __init__(self, transformer, splitter=None, index="last"):
+    def __init__(self, transformer, splitter=None, index="last", remember_data=False):
         self.transformer = transformer
         self.index = index
         self.splitter = splitter
+        self.remember_data = remember_data
 
         if splitter is None:
             self._splitter = SlidingWindowSplitter(start_with_window=False)
@@ -842,6 +849,9 @@ class SplitterSummarizer(BaseTransformer):
                 "should be an BaseSplitter descendant with a seplit_series method"
             )
 
+        if remember_data:
+            self.set_tags(**{"remember_data": True, "fit_is_empty": False})
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -859,6 +869,9 @@ class SplitterSummarizer(BaseTransformer):
         Xt : pd.DataFrame
             The transformed Data
         """
+        if self.remember_data:
+            X = X.combine_first(self._X)
+
         transformed_series = []
         splits = self._splitter.split_series(X)
 
@@ -909,6 +922,7 @@ class SplitterSummarizer(BaseTransformer):
         params3 = {
             "transformer": SummaryTransformer(),
             "splitter": SlidingWindowSplitter(window_length=3, step_length=2),
+            "remember_data": True,
         }
 
         params4 = {
