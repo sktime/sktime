@@ -269,9 +269,8 @@ class SquaringResiduals(BaseForecaster):
             forecaster.update(X=X, y=y, update_params=update_params)
         return self
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,

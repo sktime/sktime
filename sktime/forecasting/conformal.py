@@ -204,9 +204,8 @@ class ConformalIntervals(BaseForecaster):
                 update=True,
             )
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
