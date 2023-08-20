@@ -32,8 +32,8 @@ class TDistribution(BaseDistribution):
     """
 
     _tags = {
-        "capabilities:approx": ["pdfnorm", "energy", "ppf"],
-        "capabilities:exact": ["mean", "var", "pdf", "log_pdf", "cdf"],
+        "capabilities:approx": ["pdfnorm", "energy"],
+        "capabilities:exact": ["mean", "var", "pdf", "log_pdf", "cdf", "ppf"],
         "distr:measuretype": "continuous",
     }
 
