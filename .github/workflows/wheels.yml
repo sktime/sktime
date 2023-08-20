@@ -32,6 +32,7 @@ jobs:
     name: Test wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         os: [ubuntu-latest, macos-latest]
         python-version: ['3.8', '3.9', '3.10', '3.11']
@@ -61,6 +62,7 @@ jobs:
     name: Test wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
     runs-on: windows-latest
     strategy:
+      fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         include:
           # Window 64 bit

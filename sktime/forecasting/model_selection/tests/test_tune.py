@@ -21,6 +21,7 @@ from sktime.forecasting.model_selection import (
     SingleWindowSplitter,
     SlidingWindowSplitter,
 )
+from sktime.forecasting.model_selection._tune import BaseGridSearch
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
     TEST_N_ITERS,
@@ -34,13 +35,20 @@ from sktime.performance_metrics.forecasting import (
     MeanSquaredError,
 )
 from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 TEST_METRICS_PROBA = [CRPS(), PinballLoss()]
+
+TUNER_CLASSES = [
+    BaseGridSearch,
+    ForecastingGridSearchCV,
+    ForecastingRandomizedSearchCV,
+    ForecastingSkoptSearchCV,
+]
 
 
 def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
@@ -77,14 +85,14 @@ def _create_hierarchical_data():
     y = _make_hierarchical(
         random_state=TEST_RANDOM_SEEDS[0],
         hierarchy_levels=(2, 2),
-        min_timepoints=20,
-        max_timepoints=20,
+        min_timepoints=15,
+        max_timepoints=15,
     )
     X = _make_hierarchical(
         random_state=TEST_RANDOM_SEEDS[1],
         hierarchy_levels=(2, 2),
-        min_timepoints=20,
-        max_timepoints=20,
+        min_timepoints=15,
+        max_timepoints=15,
     )
     return y, X
 
@@ -103,11 +111,15 @@ PIPE_GRID = {
 }
 CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],
-    SlidingWindowSplitter(fh=1, initial_window=15),
+    SlidingWindowSplitter(fh=1, initial_window=12, step_length=3),
 ]
 ERROR_SCORES = [np.nan, "raise", 1000]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastingGridSearchCV),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 )
@@ -131,6 +143,10 @@ def test_gscv(forecaster, param_grid, cv, scoring, error_score):
     _check_fitted_params_keys(gscv.get_fitted_params())
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastingRandomizedSearchCV),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 )
@@ -163,6 +179,10 @@ def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_s
     _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastingGridSearchCV),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 )
@@ -186,8 +206,8 @@ def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    not run_test_for_class([ForecastingGridSearchCV, ARIMA, CRPS, PinballLoss]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("scoring", TEST_METRICS_PROBA)
 @pytest.mark.parametrize("cv", CVs)
@@ -214,8 +234,8 @@ def test_gscv_proba(cv, scoring, error_score):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none"),
-    reason="skip test if required soft dependency not compatible",
+    not run_test_for_class(ForecastingSkoptSearchCV),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
@@ -254,8 +274,8 @@ def test_skoptcv(forecaster, param_grid, cv, scoring, error_score, n_iter):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ForecastingSkoptSearchCV, severity="none"),
-    reason="skip test if required soft dependency not compatible",
+    not run_test_for_class(ForecastingSkoptSearchCV),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_skoptcv_multiple_forecaster():
     """Test ForecastingSkoptSearchCV with multiple forecasters and custom n_iter.

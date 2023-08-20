@@ -11,6 +11,7 @@ from pandas.testing import assert_frame_equal
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.reconcile import ReconcilerForecaster
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -24,6 +25,10 @@ flatten_list = [True, False]
 # test the reconciled predictions are actually hierarchical
 # test the index/columns on the g and s matrices match
 # test it works for named and unnamed indexes
+@pytest.mark.skipif(
+    not run_test_for_class(ReconcilerForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
@@ -44,16 +49,17 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
     agg = Aggregator(flatten_single_levels=flatten)
 
     y = _bottom_hier_datagen(
-        no_bottom_nodes=5,
+        no_bottom_nodes=4,
         no_levels=no_levels,
         random_seed=123,
+        length=10,
     )
     # add aggregate levels
     y = agg.fit_transform(y)
 
     # forecast all levels
     fh = ForecastingHorizon([1, 2], is_relative=True)
-    forecaster = ExponentialSmoothing(trend="add", seasonal="additive", sp=12)
+    forecaster = ExponentialSmoothing(trend="add", seasonal="additive", sp=3)
     reconciler = ReconcilerForecaster(forecaster, method=method)
     reconciler.fit(y)
     prds_recon = reconciler.predict(fh=fh)
@@ -75,6 +81,10 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
 
 
 @pytest.mark.skipif(
+    not run_test_for_class(ReconcilerForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
 )
@@ -86,20 +96,20 @@ def test_reconcilerforecaster_exog(n_columns):
     from sktime.forecasting.sarimax import SARIMAX
 
     y = _make_hierarchical(
-        hierarchy_levels=(2, 4),
+        hierarchy_levels=(2, 3),
         n_columns=n_columns,
-        min_timepoints=24,
-        max_timepoints=24,
+        min_timepoints=12,
+        max_timepoints=12,
         index_type="period",
     )
     y_train = get_window(y, lag=2)
     y_test = get_window(y, window_length=2)
 
     X = _make_hierarchical(
-        hierarchy_levels=(2, 4),
+        hierarchy_levels=(2, 3),
         n_columns=2,
-        min_timepoints=24,
-        max_timepoints=24,
+        min_timepoints=12,
+        max_timepoints=12,
         index_type="period",
     )
     X.columns = ["foo", "bar"]

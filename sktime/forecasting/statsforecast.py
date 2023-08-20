@@ -306,7 +306,10 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"approximation": True, "max_p": 4, "max_Q": 1}
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        params = [{}, {"approximation": True, "max_p": 4, "max_Q": 1}]
+
         return params
 
 
