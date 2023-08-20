@@ -123,6 +123,8 @@ class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
     _tags = {"symmetric": True, "pwtrafo_type": "distance"}
 
+    _inner_params = ["gamma"]
+    
     def __init__(self, normalized=False, gamma=1.0):
         self.normalized = normalized
         self.gamma = gamma
