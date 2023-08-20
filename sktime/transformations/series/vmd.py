@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-from vmdpy import VMD
 from sktime.transformations.base import BaseTransformer
 
+__author__ = ["DaneLyttinen"]
 
 class VmdTransformer(BaseTransformer):
     """Variational Mode Decomposition transformer.
@@ -32,26 +32,26 @@ class VmdTransformer(BaseTransformer):
     energy_loss_coefficient : int, optional (default=0.01)
         decides the acceptable loss of information from the original series when the decomposed modes are summed together as calculated by the energy loss coefficient. Only used if K is None
     alpha : int, optional (default=2000)
-        bandwidth constraint for the generated Intrinsic Mode Functions.
+        bandwidth constraint for the generated Intrinsic Mode Functions, balancing parameter of the data-fidelity constraint
     tau : int, optional (default=0.)
-        noise tolerance of the generated modes
+        noise tolerance of the generated modes, time step of dual ascent
     DC : int, optional (default=0)
         Imposed DC parts
     init : int, optional (default=1)
-        parameter for omegas, default of one will initialize the omegas uniformly
+        parameter for omegas, default of one will initialize the omegas uniformly, 0 = all omegas start at 0, 2 = all omegas are initialized at random
     tol : int, optional (default=1e-7)
-        parameter for omegas, default of one will initialize the omegas uniformly
+        convergence tolerance criterion
 
     """
 
     _tags = {
         "scitype:transform-input": "Series",
-        "scitype:transform-output": "Primitives",
+        "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
-        "univariate-only": False,
+        "univariate-only": True,
         "requires_y": False,
         "remember_data": False,
         "fit_is_empty": False,
@@ -78,8 +78,11 @@ class VmdTransformer(BaseTransformer):
         self.tol = tol
         self.kMax = kMax
         self.energy_loss_coefficient = energy_loss_coefficient
+        self.fit_column_names = None
 
     def _inverse_transform(self, X, y=None):
+        if (X.columns.tolist().sort() != self.fit_column_names.sort()):
+            raise Exception("Column names in fit is not the same as passed into inverse transform!")
         row_sums = X.sum(axis=1)
         return row_sums
 
@@ -89,15 +92,18 @@ class VmdTransformer(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
+        from vmdpy import VMD
         u, u_hat, omega = VMD(X.values, self.alpha, self.tau, self.K, self.DC, self.init, self.tol)
         transposed = u.T
         if (len(u.T[0]) != len(X.values)):
             last_row = transposed[-1, :]
             transposed = np.vstack([transposed, last_row])
         Y = pd.DataFrame(transposed)
+        self.fit_column_names = Y.columns.tolist()
         return Y
 
     def __runVMDUntilCoefficientThreshold(self, data):
+        from vmdpy import VMD
         K = 1
         data = data.flatten()
         while K < self.kMax:
