@@ -132,7 +132,8 @@ class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
     def _get_tslearn_pwtrafo(self):
         """Adapter method to get tslearn pwtrafo."""
         from tslearn.metrics.softdtw_variants import (
-            cdist_soft_dtw, cdist_soft_dtw_normalized
+            cdist_soft_dtw,
+            cdist_soft_dtw_normalized,
         )
 
         if self.normalized:

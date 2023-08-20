@@ -97,7 +97,9 @@ class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         """
         params0 = {}
         params1 = {
-            "max_iter": 20, "global_constraint": "itakura", "itakura_max_slope": 1.5
+            "max_iter": 20,
+            "global_constraint": "itakura",
+            "itakura_max_slope": 1.5,
         }
         params2 = {"global_constraint": "sakoe_chiba", "sakoe_chiba_radius": 2}
 
