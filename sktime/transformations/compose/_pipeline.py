@@ -81,9 +81,11 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
 
         Example 1, option A: construct without strings (unique names are generated for
         the two components t1 and t2)
+
     >>> pipe = TransformerPipeline(steps = [t1, t2])
 
         Example 1, option B: construct with strings to give custom names to steps
+
     >>> pipe = TransformerPipeline(
     ...         steps = [
     ...             ("trafo1", t1),
@@ -92,21 +94,26 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     ...     )
 
         Example 1, option C: for quick construction, the * dunder method can be used
+
     >>> pipe = t1 * t2
 
         Example 2: sklearn transformers can be used in the pipeline.
         If applied to Series, sklearn transformers are applied by series instance.
         If applied to Table, sklearn transformers are applied to the table as a whole.
+
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sktime.transformations.series.summarize import SummaryTransformer
 
         This applies the scaler per series, then summarizes:
+
     >>> pipe = StandardScaler() * SummaryTransformer()
 
         This applies the sumamrization, then scales the full summary table:
+
     >>> pipe = SummaryTransformer() * StandardScaler()
 
         This scales the series, then summarizes, then scales the full summary table:
+
     >>> pipe = StandardScaler() * SummaryTransformer() * StandardScaler()
     """
 

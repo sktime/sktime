@@ -141,10 +141,9 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         """
         return self
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
     @_method_logger
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -326,9 +325,8 @@ class MockForecaster(BaseForecaster):
         """
         return self
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
