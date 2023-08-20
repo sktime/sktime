@@ -51,6 +51,8 @@ class LcssTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
     _tags = {"symmetric": True, "pwtrafo_type": "distance"}
 
+    _is_cdist = False
+
     def __init__(
         self,
         eps=1.0,
