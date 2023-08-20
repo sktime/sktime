@@ -102,12 +102,13 @@ class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
             "max_iter": 20,
             "global_constraint": "itakura",
             "itakura_max_slope": 1.5,
-            "n_components": 3,
+            "n_components": 2,
         }
         params2 = {
             "global_constraint": "sakoe_chiba",
             "sakoe_chiba_radius": 2,
-            "n_components": 3,
+            "n_components": 2,
         }
+        # fails with _components = None - is that a bug?
 
         return [params0, params1, params2]
