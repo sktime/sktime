@@ -53,6 +53,62 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+alignment = [
+    "dtw-python",
+    "numba",
+]
+annotation = [
+    "attrs",
+    "hmmlearn",
+    "numba",
+    "pyod",
+]
+classification = [
+    "esig",
+    "mrsqm",
+    "numba",
+    "tensorflow",
+    "tsfresh",
+]
+clustering = [
+    "numba",
+    "tslearn",
+]
+forecasting = [
+    "hcrystalball",
+    "pmdarima",
+    "prophet",
+    "scikit-optimize",
+    "statsforecast",
+    "statsmodels",
+    "tbats",
+]
+networks = [
+    "tensorflow",
+]
+param_est = [
+    "seasonal",
+    "statsmodels",
+]
+proba = [
+    "tensorflow-probability",
+]
+regression = [
+    "numba",
+    "tensorflow",
+]
+transformations = [
+    "esig",
+    "filterpy",
+    "holidays",
+    "mne",
+    "numba",
+    "pycatch22",
+    "pykalman",
+    "statsmodels",
+    "stumpy",
+    "tsfresh",
+]
 all_extras = [
     "attrs",
     "cloudpickle",
