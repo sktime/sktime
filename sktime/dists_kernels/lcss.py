@@ -35,11 +35,6 @@ class LcssTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         two. In this case, if ``global_constraint`` corresponds to no global
         constraint, a ``RuntimeWarning`` is raised and no global constraint is
         used.
-    verbose : int, optional (default=0)
-        The verbosity level: if non zero, progress messages are printed.
-        Above 50, the output is sent to stdout.
-        The frequency of the messages increases with the verbosity level.
-        If it more than 10, all iterations are reported.
 
     References
     ----------
@@ -59,13 +54,11 @@ class LcssTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         global_constraint=None,
         sakoe_chiba_radius=None,
         itakura_max_slope=None,
-        verbose=0,
     ):
         self.eps = eps
         self.global_constraint = global_constraint
         self.sakoe_chiba_radius = sakoe_chiba_radius
         self.itakura_max_slope = itakura_max_slope
-        self.verbose = verbose
 
         super().__init__()
 
