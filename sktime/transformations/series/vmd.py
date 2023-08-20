@@ -68,7 +68,17 @@ class VmdTransformer(BaseTransformer):
         "python_dependencies": ['vmdpy', 'numpy', 'pandas']
     }
 
-    def __init__(self, K=None, kMax=30, alpha=2000, tau=0., DC=0, init=1, tol=1e-7, energy_loss_coefficient=0.01):
+    def __init__(
+        self,
+        K=None,
+        kMax=30,
+        alpha=2000,
+        tau=0.,
+        DC=0,
+        init=1,
+        tol=1e-7,
+        energy_loss_coefficient=0.01,
+    ):
         super().__init__()
         self.K = K
         self.alpha = alpha
@@ -87,19 +97,21 @@ class VmdTransformer(BaseTransformer):
         return row_sums
 
     def _fit(self, X, y=None):
-        if (self.K == None):
-            self.K = self.__runVMDUntilCoefficientThreshold(X.to_numpy())
+        if self.K is None:
+            self._K = self.__runVMDUntilCoefficientThreshold(X.to_numpy())
+        else:
+            self._K = self.K
+        self.fit_column_names = X.columns
         return self
 
     def _transform(self, X, y=None):
         from vmdpy import VMD
-        u, u_hat, omega = VMD(X.values, self.alpha, self.tau, self.K, self.DC, self.init, self.tol)
+        u, u_hat, omega = VMD(X.values, self.alpha, self.tau, self._K, self.DC, self.init, self.tol)
         transposed = u.T
         if (len(u.T[0]) != len(X.values)):
             last_row = transposed[-1, :]
             transposed = np.vstack([transposed, last_row])
         Y = pd.DataFrame(transposed)
-        self.fit_column_names = Y.columns.tolist()
         return Y
 
     def __runVMDUntilCoefficientThreshold(self, data):
