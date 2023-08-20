@@ -92,6 +92,10 @@ def _check_evaluate_output(out, cv, y, scoring):
         assert np.all(out.loc[:, "len_train_window"] == cv.window_length)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 # Test using MAPE and MASE scorers so that tests cover a metric that doesn't
 # use y_train (MAPE) and one that does use y_train (MASE).
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
