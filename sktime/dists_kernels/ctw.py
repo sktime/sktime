@@ -9,7 +9,7 @@ from sktime.dists_kernels.base.adapters import _TslearnPwTrafoAdapter
 class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
     """Canonical time warping distance, from tslearn.
 
-    Direct interface to ``tslearn.metrics.ctw``.
+    Direct interface to ``tslearn.metrics.cdist_ctw``.
 
     Parameters
     ----------
@@ -59,6 +59,7 @@ class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         global_constraint=None,
         sakoe_chiba_radius=None,
         itakura_max_slope=None,
+        n_jobs=None,
         verbose=0,
     ):
         self.max_iter = max_iter
@@ -66,15 +67,16 @@ class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         self.global_constraint = global_constraint
         self.sakoe_chiba_radius = sakoe_chiba_radius
         self.itakura_max_slope = itakura_max_slope
+        self.n_jobs = n_jobs
         self.verbose = verbose
 
         super().__init__()
 
     def _get_tslearn_pwtrafo(self):
         """Adapter method to get tslearn pwtrafo."""
-        from tslearn.metrics.ctw import ctw
+        from tslearn.metrics.ctw import cdist_ctw
 
-        return ctw
+        return cdist_ctw
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
