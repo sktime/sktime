@@ -98,3 +98,69 @@ class DtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         params2 = {"global_constraint": "sakoe_chiba", "sakoe_chiba_radius": 2}
 
         return [params0, params1, params2]
+
+
+class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
+    """Dynamic time warping distance, from tslearn.
+
+    Direct interface to ``tslearn.metrics.cdist_soft_dtw`` and
+    ``tslearn.metrics.cdist_soft_dtw_normalized``.
+
+    Parameters
+    ----------
+    normalized : bool, default = False
+        Whether the DTW distance should be normalized.
+        If ``False``, interfaces ``tslearn.metrics.cdist_soft_dtw``.
+        If ``True``, interfaces ``tslearn.metrics.cdist_soft_dtw_normalized``.
+    gamma : float (default 1.)
+        Gamma parameter for Soft-DTW
+
+    References
+    ----------
+    .. [1] M. Cuturi, M. Blondel "Soft-DTW: a Differentiable Loss Function for
+       Time-Series," ICML 2017.
+    """
+
+    _tags = {"symmetric": True, "pwtrafo_type": "distance"}
+
+    def __init__(self, normalized=False, gamma=1.0):
+        self.normalized = normalized
+        self.gamma = gamma
+
+        super().__init__()
+
+    def _get_tslearn_pwtrafo(self):
+        """Adapter method to get tslearn pwtrafo."""
+        from tslearn.metrics.softdtw_variants import (
+            cdist_soft_dtw, cdist_soft_dtw_normalized
+        )
+
+        if self.normalized:
+            return cdist_soft_dtw_normalized
+        else:
+            return cdist_soft_dtw
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for distance/kernel transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params0 = {}
+        params1 = {"normalized": True, "gamma": 1.5}
+        params2 = {"gamma": 0.5}
+
+        return [params0, params1, params2]
