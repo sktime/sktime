@@ -5,7 +5,7 @@ __author__ = ["Alex-JG3"]
 
 import numpy as np
 import pandas as pd
-from scipy.special import gamma, hyp2f1, loggamma
+from scipy.special import betaincinv, gamma, hyp2f1, loggamma
 
 from sktime.proba.base import BaseDistribution
 
@@ -131,6 +131,25 @@ class TDistribution(BaseDistribution):
         cdf_arr = cdf_arr * hyp2f1(0.5, (d.df + 1) / 2, 3 / 2, -(x**2) / d.df)
         cdf_arr = 0.5 + cdf_arr / (np.sqrt(np.pi * d.df) * gamma(d.df / 2))
         return pd.DataFrame(cdf_arr, index=x.index, columns=x.columns)
+
+    def ppf(self, p):
+        """Quantile function = percent point function = inverse cdf."""
+        d = self.loc[p.index, p.columns]
+        ppf_arr = p.to_numpy(copy=True)
+        ppf_arr[p.values == 0.5] = 0.0
+        ppf_arr[p.values <= 0] = -np.inf
+        ppf_arr[p.values >= 1] = np.inf
+
+        mask1 = (p.values < 0.5) & (p.values > 0)
+        mask2 = (p.values < 1) & (p.values > 0.5)
+        ppf_arr[mask1] = 1 / betaincinv(0.5 * d.df[mask1], 0.5, 2 * ppf_arr[mask1])
+        ppf_arr[mask2] = 1 / betaincinv(
+            0.5 * d.df[mask2], 0.5, 2 * (1 - ppf_arr[mask2])
+        )
+        ppf_arr[mask1 | mask2] = np.sqrt(ppf_arr[mask1 | mask2] - 1)
+        ppf_arr[mask1 | mask2] = np.sqrt(d.df[mask1 | mask2]) * ppf_arr[mask1 | mask2]
+        ppf_arr[mask1] = -ppf_arr[mask1]
+        return pd.DataFrame(ppf_arr, index=p.index, columns=p.columns)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
