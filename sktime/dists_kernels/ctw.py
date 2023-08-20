@@ -97,7 +97,7 @@ class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params0 = {"n_components": 3}
+        params0 = {"n_components": 2}
         params1 = {
             "max_iter": 20,
             "global_constraint": "itakura",
