@@ -69,7 +69,7 @@ class LcssTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
     def _get_tslearn_pwtrafo(self):
         """Adapter method to get tslearn pwtrafo."""
-        from tslearn.metrics.lcss import lcss
+        from tslearn.metrics import lcss
 
         return lcss
 
