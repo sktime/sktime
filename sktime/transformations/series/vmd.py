@@ -51,7 +51,8 @@ class VmdTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
-        "univariate-only": True,
+        # "univariate-only": True,
+        "univariate-only": False,
         "requires_y": False,
         "remember_data": False,
         "fit_is_empty": False,
@@ -59,7 +60,7 @@ class VmdTransformer(BaseTransformer):
         "enforce_index_type": None,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": True,
-        "skip-inverse-transform": True,
+        "skip-inverse-transform": False,
         "capability:unequal_length": False,
         "capability:unequal_length:removes": False,
         "handles-missing-data": False,
@@ -91,9 +92,8 @@ class VmdTransformer(BaseTransformer):
         self.fit_column_names = None
 
     def _inverse_transform(self, X, y=None):
-        if (X.columns.tolist().sort() != self.fit_column_names.sort()):
-            raise Exception("Column names in fit is not the same as passed into inverse transform!")
         row_sums = X.sum(axis=1)
+        row_sums.columns = self.fit_column_names
         return row_sums
 
     def _fit(self, X, y=None):
