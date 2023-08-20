@@ -29,7 +29,7 @@ class _TslearnPwTrafoAdapter:
 
     _tags = {
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
-        "X_inner_mtype": ["df-list", "numpy3D"],
+        "X_inner_mtype": "df-list",
         # which mtype is used internally in _transform?
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -47,6 +47,14 @@ class _TslearnPwTrafoAdapter:
     # True: the adapted function is cdist-like, it can take Panel data directly
     # False: the adapted function takes two time series and needs to be vectorized
     _is_cdist = True
+
+    # patch for tslearn bug #475
+    # https://github.com/tslearn-team/tslearn/issues/475
+    # check at 0.23.0 whether can be removed
+    # if True, passes pairs of time series individually to cdist,
+    # but as one-series-panel, to avoid bug if panels are unequal size
+    # _bug_patch_cdist = False
+    # not an attr so objects can set it dynamically based on init attrs
 
     def _get_tslearn_pwtrafo(self):
         """Abstract method to get tslearn pwtrafo.
@@ -81,7 +89,11 @@ class _TslearnPwTrafoAdapter:
         params = self.get_params()
         if self._inner_params is not None:
             params = _subset_dict(params, self._inner_params)
+
         return pwtrafo(X, X2, **params)
+
+    def _coerce_df_list_to_list_of_arr(self, X):
+        return [df.values for df in X]
 
     def _eval_tslearn_pwtrafo_vectorized(self, X, X2=None):
         """Evaluate tslearn pwtrafo on two time series panels.
@@ -101,19 +113,19 @@ class _TslearnPwTrafoAdapter:
         if X2 is None:
             X2 = X
 
-        if isinstance(X, np.ndarray):
-            dist_kern_vectorized = np.vectorize(
-                self._eval_tslearn_pwtrafo, signature="(m,k,l),(n,k,l)->(m,n)"
-            )
-            return dist_kern_vectorized(X, X2)
-        else:  # df-list type
-            X_inner = [df.values for df in X]
-            X2_inner = [df.values for df in X]
-            res = np.zeros((len(X), len(X2)))
-            for i in range(len(X)):
-                for j in range(len(X2)):
-                    res[i, j] = self._eval_tslearn_pwtrafo(X_inner[i], X2_inner[j])
-            return res
+        m = len(X)
+        n = len(X2)
+        res = np.zeros((m, n))
+        for i in range(m):
+            for j in range(n):
+                # todo: remove this once fixed - see above init for details
+                # todo 0.23.0 check
+                bug_patch = hasattr(self, "_bug_patch_cdist") and self._bug_patch_cdist
+                if not bug_patch:
+                    res[i, j] = self._eval_tslearn_pwtrafo(X[i], X2[j])
+                else:
+                    res[i, j] = self._eval_tslearn_pwtrafo([X[i]], [X2[j]])
+        return res
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
@@ -137,7 +149,16 @@ class _TslearnPwTrafoAdapter:
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
         """
-        if self._is_cdist:
+        if isinstance(X, list):
+            X = self._coerce_df_list_to_list_of_arr(X)
+        if isinstance(X2, list):
+            X2 = self._coerce_df_list_to_list_of_arr(X2)
+
+        # todo: remove this once fixed - see above init for details
+        # todo 0.23.0 check
+        bug_patch = hasattr(self, "_bug_patch_cdist") and self._bug_patch_cdist
+
+        if self._is_cdist and not bug_patch:
             return self._eval_tslearn_pwtrafo(X, X2)
         else:
             return self._eval_tslearn_pwtrafo_vectorized(X, X2)

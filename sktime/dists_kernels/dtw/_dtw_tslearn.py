@@ -131,6 +131,13 @@ class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
         super().__init__()
 
+        # TODO: remove this when tslearn is fixed
+        # patch for tslearn bug #475
+        # https://github.com/tslearn-team/tslearn/issues/475
+        # check at 0.23.0 whether can be removed
+        if normalized:
+            self._bug_patch_cdist = True
+
     def _get_tslearn_pwtrafo(self):
         """Adapter method to get tslearn pwtrafo."""
         from tslearn.metrics.softdtw_variants import (
