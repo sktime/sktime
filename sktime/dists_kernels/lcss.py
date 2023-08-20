@@ -1,4 +1,4 @@
-"""Canonical time warping distance, from tslearn."""
+"""Longest Common Subsequence similarity distance, from tslearn."""
 
 __author__ = ["fkiraly"]
 
@@ -6,18 +6,15 @@ from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 from sktime.dists_kernels.base.adapters import _TslearnPwTrafoAdapter
 
 
-class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
-    """Canonical time warping distance, from tslearn.
+class LcssTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
+    """Longest Common Subsequence similarity distance, from tslearn.
 
-    Direct interface to ``tslearn.metrics.ctw``.
+    Direct interface to ``tslearn.metrics.lcss``.
 
     Parameters
     ----------
-    max_iter : int (default: 100)
-        Number of iterations for the CTW algorithm.
-    n_components : int (default: None)
-        Number of components to be used for Canonical Correlation Analysis.
-        If None, the minimum number of features of inputs is used.
+    eps : float (default: 1.)
+        Maximum matching distance threshold.
     global_constraint : {"itakura", "sakoe_chiba"} or None (default: None)
         Global constraint to restrict admissible paths for DTW.
     sakoe_chiba_radius : int or None (default: None)
@@ -46,23 +43,23 @@ class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
     References
     ----------
-    .. [1] F. Zhou and F. Torre, "Canonical time warping for alignment of
-       human behavior". NIPS 2009.
+    .. [1] M. Vlachos, D. Gunopoulos, and G. Kollios. 2002. "Discovering
+            Similar Multidimensional Trajectories", In Proceedings of the
+            18th International Conference on Data Engineering (ICDE '02).
+            IEEE Computer Society, USA, 673.
     """
 
     _tags = {"symmetric": True, "pwtrafo_type": "distance"}
 
     def __init__(
         self,
-        max_iter=100,
-        n_components=None,
+        eps=1.0,
         global_constraint=None,
         sakoe_chiba_radius=None,
         itakura_max_slope=None,
         verbose=0,
     ):
-        self.max_iter = max_iter
-        self.n_components = n_components
+        self.eps = eps
         self.global_constraint = global_constraint
         self.sakoe_chiba_radius = sakoe_chiba_radius
         self.itakura_max_slope = itakura_max_slope
@@ -72,9 +69,9 @@ class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
     def _get_tslearn_pwtrafo(self):
         """Adapter method to get tslearn pwtrafo."""
-        from tslearn.metrics.ctw import ctw
+        from tslearn.metrics.lcss import lcss
 
-        return ctw
+        return lcss
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -96,9 +93,7 @@ class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params0 = {}
-        params1 = {
-            "max_iter": 20, "global_constraint": "itakura", "itakura_max_slope": 1.5
-        }
+        params1 = {"eps": 0.9, "global_constraint": "itakura", "itakura_max_slope": 1.5}
         params2 = {"global_constraint": "sakoe_chiba", "sakoe_chiba_radius": 2}
 
         return [params0, params1, params2]
