@@ -1,7 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements DynamicFactor Model as interface to statsmodels."""
-from typing import List, Union
-
 import numpy as np
 import pandas as pd
 
@@ -189,7 +187,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
         super().__init__()
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -221,7 +219,8 @@ class DynamicFactor(_StatsModelsAdapter):
             )
         return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
-    def _predict_interval(self, fh, X=None, coverage: Union[float, List[float]] = None):
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

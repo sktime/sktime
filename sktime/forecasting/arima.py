@@ -438,7 +438,7 @@ class AutoARIMA(_PmdArimaAdapter):
         update_pdq = self.update_pdq
         if update_params:
             if update_pdq:
-                self._fit(y=self._y, X=self._X)
+                self._fit(y=self._y, X=self._X, fh=self._fh)
             else:
                 if X is not None:
                     X = X.loc[y.index]

@@ -2,12 +2,16 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implement transformers for summarizing a time series."""
 
-__author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut"]
-__all__ = ["SummaryTransformer", "WindowSummarizer"]
+__author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut", "BensHamza"]
+__all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 
 import pandas as pd
 from joblib import Parallel, delayed
 
+from sktime.forecasting.model_selection import (
+    ExpandingWindowSplitter,
+    SlidingWindowSplitter,
+)
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
 
@@ -149,6 +153,7 @@ class WindowSummarizer(BaseTransformer):
     >>> y_transformed = transformer.fit_transform(y)
 
         Example with transforming multiple columns of exogeneous features
+
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(X_test.index, is_relative=False)
@@ -165,6 +170,7 @@ class WindowSummarizer(BaseTransformer):
 
         Example with transforming multiple columns of exogeneous features
         as well as the y column
+
     >>> Z_train = pd.concat([X_train, y_train], axis=1)
     >>> Z_test = pd.concat([X_test, y_test], axis=1)
     >>> pipe = ForecastingPipeline(
@@ -748,5 +754,183 @@ class SummaryTransformer(BaseTransformer):
         params2 = {"summary_function": ["mean", "mad", "skew"], "quantiles": None}
         params3 = {"summary_function": ["mad"], "quantiles": (0.7,)}
         params4 = {"summary_function": None, "quantiles": (0.1, 0.2, 0.25)}
+
+        return [params1, params2, params3, params4]
+
+
+class SplitterSummarizer(BaseTransformer):
+    """Create summary values of a time series' splits.
+
+    A series-to-series transformer that applies the series-to-primitives transformer
+    ``transformer`` to each train split created using the splitter ``splitter``.
+
+    The i-th row of the resulting series is equivalent to
+    ``transformer.fit_transform(splitter.split_series(X)[i][0])``,
+    where ``X`` is the data seen in ``transform``, if ``remember_data=False``; or
+    where ``X`` is all data seen in ``fit``, ``transform``, if ``remember_data=True``
+
+    The output series aims to provide a summarization of the input series based on the
+    given transformer and splitter.
+
+    Parameters
+    ----------
+    transformer : `sktime` transformer inheriting from `BaseTransformer`
+    series-to-primitives transformer used to convert series to primitives.
+
+    splitter : `sktime` splitter inheriting from `BaseSplitter`, optional (default=None)
+    splitter used to divide the series.
+    If None, it takes `ExpandingWindowSplitter` with `start_with_window=False`
+    and otherwise default parameters.
+
+    index : str, optional (default="last")
+    Determines the indexing approach for the resulting series.
+    If "last", the latest index of the split is used.
+    If anything else, the row's number becomes the index.
+
+    remember_data : bool, optional (default=True)
+    if True, memorizes data seen in ``fit``, ``update``, uses it in ``transform``
+    if False, only uses data seen in ``transform`` for splits and summaries.
+
+    Methods
+    -------
+    transform(X) : Transforms the series according to the specified
+        series-to-primitives transformer and splitter.
+
+    See Also
+    --------
+    SummaryTransformer: Calculates summary value of a time series.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.summarize import SplitterSummarizer
+    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = SplitterSummarizer(
+    ...     transformer=SummaryTransformer(),
+    ...     splitter=ExpandingWindowSplitter())
+    >>> y_splitsummarized = transformer.fit_transform(y)
+    """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,
+    }
+
+    def __init__(self, transformer, splitter=None, index="last", remember_data=False):
+        self.transformer = transformer
+        self.index = index
+        self.splitter = splitter
+        self.remember_data = remember_data
+
+        if splitter is None:
+            self._splitter = SlidingWindowSplitter(start_with_window=False)
+        else:
+            self._splitter = splitter
+
+        super().__init__()
+
+        if not hasattr(self.transformer, "fit_transform"):
+            raise ValueError(
+                f"Error in {self.__class__.__name__}, transformer parameter "
+                "should be an estimator with a fit_transform method"
+            )
+        if not hasattr(self._splitter, "split_series"):
+            raise ValueError(
+                f"Error in {self.__class__.__name__}, splitter parameter, if passed, "
+                "should be an BaseSplitter descendant with a seplit_series method"
+            )
+
+        if remember_data:
+            self.set_tags(**{"remember_data": True, "fit_is_empty": False})
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
+
+        Parameters
+        ----------
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        Xt : pd.DataFrame
+            The transformed Data
+        """
+        if self.remember_data:
+            X = X.combine_first(self._X)
+
+        transformed_series = []
+        splits = self._splitter.split_series(X)
+
+        for split in splits:
+            tf = self.transformer.clone()
+            transformed_split = tf.fit_transform(split[0])
+            transformed_split.index = [split[0].index[-1]]
+            transformed_series.append(transformed_split)
+
+        Xt = pd.concat(transformed_series)
+
+        if self.index != "last":
+            Xt = Xt.reset_index(drop=True)
+
+        return Xt
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the transformer.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {
+            "transformer": SummaryTransformer(),
+            "splitter": ExpandingWindowSplitter(initial_window=3),
+        }
+
+        params2 = {
+            "transformer": SummaryTransformer(
+                summary_function=["mad"], quantiles=(0.7,)
+            ),
+            "splitter": SlidingWindowSplitter(window_length=3, step_length=2),
+            "index": None,
+        }
+
+        params3 = {
+            "transformer": SummaryTransformer(),
+            "splitter": SlidingWindowSplitter(window_length=3, step_length=2),
+            "remember_data": True,
+        }
+
+        params4 = {
+            "transformer": SummaryTransformer(),
+            "splitter": SlidingWindowSplitter(
+                window_length=3, step_length=2, fh=1, start_with_window=True
+            ),
+            "index": "last",
+        }
 
         return [params1, params2, params3, params4]
