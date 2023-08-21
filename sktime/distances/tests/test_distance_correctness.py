@@ -95,7 +95,7 @@ def test_correctness(dist, uni_multi):
 
     # assert distance between fixtures d, d2 are same as expected
     for j, param in enumerate(param_list):
-        d = dist(trainX[0], trainX[ind2], param)
-        d2 = dist(trainX[0], trainX[ind2], param)
+        d = dist(trainX[0], trainX[ind2], **param)
+        d2 = dist(trainX[0], trainX[ind2], **param)
         assert_almost_equal(d, expected[dist_str][j], 4)
         assert d == d2
