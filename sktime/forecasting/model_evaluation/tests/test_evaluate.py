@@ -146,6 +146,10 @@ def test_evaluate_common_configs(
     np.testing.assert_array_equal(actual, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("return_data", [True, False])
 def test_scoring_list(return_data):
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
@@ -174,6 +178,10 @@ def test_scoring_list(return_data):
         assert "y_test" not in out.columns
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_evaluate_initial_window():
     """Test evaluate initial window."""
     initial_window = 20
@@ -197,6 +205,10 @@ def test_evaluate_initial_window():
     np.testing.assert_equal(actual, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_evaluate_no_exog_against_with_exog():
     """Check that adding exogenous data produces different results."""
     y, X = load_longley()
@@ -211,6 +223,10 @@ def test_evaluate_no_exog_against_with_exog():
     assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
@@ -258,6 +274,10 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
             )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_hierarchical(backend):
     """Check that evaluate works with hierarchical data."""
@@ -317,6 +337,10 @@ def test_evaluate_bigger_X(cls):
 PROBA_METRICS = [CRPS, EmpiricalCoverage, LogLoss, PinballLoss]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([evaluate] + PROBA_METRICS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("metric", PROBA_METRICS)
 def test_evaluate_probabilistic(n_columns, metric):
@@ -341,6 +365,10 @@ def test_evaluate_probabilistic(n_columns, metric):
         pass
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_evaluate_hierarchical_unequal_X_y():
     """Test evaluate with hierarchical X and y where X is larger.
 
