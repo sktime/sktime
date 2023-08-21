@@ -73,10 +73,6 @@ def test_correctness(dist, uni_multi):
     uni_multi = "uni" -> UnitTest: univariate, equal length.
     uni_multi = "multi" -> BasicMotions: multivariate, equal length.
     """
-    # skip test if distance function/class have not changed
-    if not run_test_for_class([dist.dist_func, dist.dist_instance.__class__]):
-        return None
-
     dist_str = dist.canonical_name
     dist = dist.dist_func
 
