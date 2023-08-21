@@ -7,7 +7,7 @@ __all__ = []
 from sktime.utils._testing.scenarios import TestScenario
 
 
-class TestedMockClass:
+class MockTestedClass:
     """Mock class to test TestScenario."""
 
     def __init__(self, a):
@@ -31,7 +31,7 @@ class TestedMockClass:
 
 def test_testscenario_object_args_only():
     """Test basic workflow: construct only with args, call run with minimal args."""
-    obj = TestedMockClass(a="super")
+    obj = MockTestedClass(a="super")
     scenario = TestScenario(
         args={"foo": {"b": "cali"}, "bar": {"c": "fragi", "d": "listic"}}
     )
@@ -43,7 +43,7 @@ def test_testscenario_object_args_only():
 
 def test_testscenario_object_default_method_sequence():
     """Test basic workflow: construct with args and default method sequence."""
-    obj = TestedMockClass(a="super")
+    obj = MockTestedClass(a="super")
     scenario = TestScenario(
         args={"foo": {"b": "cali"}, "bar": {"c": "fragi", "d": "listic"}},
         default_method_sequence=["foo", "bar"],
@@ -56,7 +56,7 @@ def test_testscenario_object_default_method_sequence():
 
 def test_testscenario_object_default_arg_sequence():
     """Test basic workflow: construct with args and default arg sequence."""
-    obj = TestedMockClass(a="super")
+    obj = MockTestedClass(a="super")
     scenario = TestScenario(
         args={"foo": {"b": "cali"}, "bar": {"c": "fragi", "d": "listic"}},
         default_arg_sequence=["foo", "bar"],
@@ -69,7 +69,7 @@ def test_testscenario_object_default_arg_sequence():
 
 def test_testscenario_object_return_all():
     """Test basic workflow: construct with args and default arg sequence."""
-    obj = TestedMockClass(a="super")
+    obj = MockTestedClass(a="super")
     scenario = TestScenario(
         args={"foo": {"b": "cali"}, "bar": {"c": "fragi", "d": "listic"}},
         default_arg_sequence=["foo", "bar"],
@@ -82,7 +82,7 @@ def test_testscenario_object_return_all():
 
 def test_testscenario_object_multi_call_defaults():
     """Test basic workflow: default args where methods are called multiple times."""
-    obj = TestedMockClass(a="super")
+    obj = MockTestedClass(a="super")
     scenario = TestScenario(
         args={
             "foo": {"b": "cali"},
@@ -101,7 +101,7 @@ def test_testscenario_object_multi_call_defaults():
 
 def test_testscenario_object_multi_call_in_run():
     """Test advanced workflow: run args where methods are called multiple times."""
-    obj = TestedMockClass(a="super")
+    obj = MockTestedClass(a="super")
     scenario = TestScenario(
         args={
             "foo": {"b": "cali"},
@@ -122,7 +122,7 @@ def test_testscenario_object_multi_call_in_run():
 
 def test_testscenario_class_full_options():
     """Test advanced workflow: constructor and methods called multiple times."""
-    obj = TestedMockClass
+    obj = MockTestedClass
     scenario = TestScenario(
         args={
             "__init__": {"a": "super"},
@@ -144,7 +144,7 @@ def test_testscenario_class_full_options():
 
 def test_testscenario_class_simple():
     """Test advanced workflow: constructor, but only simple function calls."""
-    obj = TestedMockClass
+    obj = MockTestedClass
     scenario = TestScenario(
         args={
             "__init__": {"a": "super"},

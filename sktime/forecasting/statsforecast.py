@@ -8,14 +8,16 @@ __all__ = [
     "StatsForecastAutoCES",
     "StatsForecastAutoETS",
     "StatsForecastAutoTheta",
+    "StatsForecastMSTL",
 ]
+from typing import Dict, List, Optional, Union
 
-
-from typing import Dict, Optional
-
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
+    StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
@@ -304,7 +306,10 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"approximation": True, "max_p": 4, "max_Q": 1}
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        params = [{}, {"approximation": True, "max_p": 4, "max_Q": 1}]
+
         return params
 
 
@@ -550,5 +555,139 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
         params = [{}, {"season_length": 4, "model": "Z"}]
+
+        return params
+
+
+class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
+    """StatsForecast Multiple Seasonal-Trend decomposition using LOESS model.
+
+    This implementation is a wrapper over Nixtla implementation in
+    statsforecast [1]_.
+
+    The MSTL (Multiple Seasonal-Trend decomposition using LOESS) decomposes the time
+    series in multiple seasonalities using LOESS. Then forecasts the trend using
+    a custom non-seasonal model (`trend_forecaster`) and each seasonality using a
+    SeasonalNaive model. MSTL requires the input time series data to be univariate.
+
+    Parameters
+    ----------
+    season_length : Union[int, List[int]]
+        Number of observations per unit of time. For multiple seasonalities use a
+        list.
+    trend_forecaster : estimator, optional, default=StatsForecastAutoETS()
+        Sktime estimator used to make univariate forecasts. Multivariate estimators are
+        not supported.
+
+    References
+    ----------
+    .. [1]
+        https://nixtla.github.io/statsforecast/src/core/models.html#mstl
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastMSTL
+
+    >>> y = load_airline()
+    >>> model = StatsForecastMSTL(season_length=[3,12]) # doctest: +SKIP
+    >>> fitted_model = model.fit(y=y) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=[1,2,3]) # doctest: +SKIP
+    """
+
+    _tags = {
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast"],
+    }
+
+    def __init__(
+        self,
+        season_length: Union[int, List[int]],
+        trend_forecaster=None,
+    ):
+        super().__init__()
+
+        from sklearn.base import clone
+
+        self.trend_forecaster = trend_forecaster
+        self.season_length = season_length
+        if trend_forecaster:
+            self._trend_forecaster = clone(trend_forecaster)
+        else:
+            self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
+
+        # checks if trend_forecaster is already wrapped with
+        # StatsForecastBackAdapter
+        if not isinstance(self._trend_forecaster, StatsForecastBackAdapter):
+            # if trend_forecaster is sktime forecaster
+            if isinstance(self._trend_forecaster, BaseForecaster):
+                self._trend_forecaster = StatsForecastBackAdapter(
+                    self._trend_forecaster
+                )
+            else:
+                raise TypeError(
+                    "The provided forecaster is not compatible with MSTL. Please ensure"
+                    " that the forecaster you pass into the model is a sktime "
+                    "forecaster."
+                )
+
+    def _instantiate_model(self):
+        """Create underlying forecaster instance."""
+        from statsforecast.models import MSTL
+
+        return MSTL(
+            season_length=self.season_length,
+            trend_forecaster=self._trend_forecaster,
+        )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance,
+            i.e., `MyClass(**params)` or `MyClass(**params[i])` creates a valid
+            test instance. `create_test_instance` uses the first (or only)
+            dictionary in `params`
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        try:
+            _check_soft_dependencies("statsmodels")
+            from sktime.forecasting.theta import ThetaForecaster
+
+            params = [
+                {
+                    "season_length": [3, 12],
+                    "trend_forecaster": ThetaForecaster(),
+                },
+                {
+                    "season_length": 4,
+                },
+            ]
+        except ModuleNotFoundError:
+            from sktime.forecasting.naive import NaiveForecaster
+
+            params = [
+                {
+                    "season_length": [3, 12],
+                    "trend_forecaster": NaiveForecaster(),
+                },
+                {
+                    "season_length": 4,
+                },
+            ]
 
         return params
