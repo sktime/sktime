@@ -28,6 +28,14 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     def __init__(self):
         super().__init__()
 
+        forecaster = self._instantiate_model()
+
+        if "level" not in signature(forecaster.predict_in_sample).parameters.keys():
+            self.set_tags(**{"capability:pred_int": False})
+
+        if "level" not in signature(forecaster.predict).parameters.keys():
+            self.set_tags(**{"capability:pred_int:insample": False})
+
         self._forecaster = None
 
     def _instantiate_model(self):
