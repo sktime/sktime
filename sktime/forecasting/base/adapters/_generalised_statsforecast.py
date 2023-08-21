@@ -1,6 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
 from inspect import signature
+from warnings import warn
 
 import pandas
 
@@ -28,15 +29,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     def __init__(self):
         super().__init__()
 
-        forecaster = self._instantiate_model()
-
-        if "level" not in signature(forecaster.predict_in_sample).parameters.keys():
-            self.set_tags(**{"capability:pred_int:insample": False})
-
-        if "level" not in signature(forecaster.predict).parameters.keys():
-            self.set_tags(**{"capability:pred_int": False})
-
-        self._forecaster = None
+        self._forecaster = self._instantiate_model()
+        self._check_supports_pred_int()
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
@@ -73,8 +67,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         """
         del fh  # avoid being detected as unused by ``vulture`` like tools
 
-        self._forecaster = self._instantiate_model()
-
         y_fit_input = y.to_numpy(copy=False)
 
         X_fit_input = X
@@ -100,9 +92,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             # Before v1.5.0 (from statsforecast) not all foreasters
             # have a "level" keyword argument in `predict_in_sample`
             level_kw = (
-                {"level": level_arguments}
-                if ("level" in signature(predict_method).parameters.keys())
-                else {}
+                {"level": level_arguments} if self._support_pred_int_in_sample else {}
             )
             predictions = predict_method(**level_kw)
             point_predictions = predictions["fitted"]
@@ -110,11 +100,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             predict_method = self._forecaster.predict
             # Before v1.5.0 (from statsforecast) not all foreasters
             # have a "level" keyword argument in `predict`
-            level_kw = (
-                {"level": level_arguments}
-                if ("level" in signature(predict_method).parameters.keys())
-                else {}
-            )
+            level_kw = {"level": level_arguments} if self._support_pred_int else {}
             predictions = predict_method(maximum_forecast_horizon, X=X, **level_kw)
             point_predictions = predictions["mean"]
 
@@ -291,6 +277,53 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         final_interval_predictions = pandas.concat(interval_predictions, copy=False)
 
         return final_interval_predictions
+
+    def _check_supports_pred_int(self):
+        """
+        Check if prediction intervals will work with forecaster.
+
+        Check if `level` argument is available in `predict_in_sample` and
+        `predict` methods from the `statsforecast` forecaster.
+        If that is not the case it will set the corresponding tags
+        (`capability:pred_int:insample`,`capability:pred_int`) to False as well as
+         the corresponding class attributes `_support_pred_int_in_sample`
+         and `_support_pred_int`.
+
+         Furthermore, will throw a warning to let the user know that he should consider
+         upgrading statsforecast versio as both or one of the two methods might
+         not be able to produce confidence intervals.
+
+        """
+        if (
+            "level"
+            not in signature(self._forecaster.predict_in_sample).parameters.keys()
+        ):
+            self.set_tags(**{"capability:pred_int:insample": False})
+            self._support_pred_int_in_sample = False
+            import statsforecast
+
+            warn(
+                f" {self._forecaster.__class__.__name__} from "
+                f"statsforecast v{statsforecast.__version__} "
+                f"does not support prediction of intervals in `predict_in_sample`. "
+                f"Consider upgrading to a newer version."
+            )
+        else:
+            self._support_pred_int_in_sample = True
+
+        if "level" not in signature(self._forecaster.predict).parameters.keys():
+            self.set_tags(**{"capability:pred_int": False})
+            self._support_pred_int = False
+            import statsforecast
+
+            warn(
+                f" {self._forecaster.__class__.__name__} from "
+                f"statsforecast v{statsforecast.__version__} "
+                f"does not support prediction of intervals in `predict`. "
+                f"Consider upgrading to a newer version."
+            )
+        else:
+            self._support_pred_int = True
 
 
 class StatsForecastBackAdapter:
