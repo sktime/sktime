@@ -30,7 +30,15 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         super().__init__()
 
         self._forecaster = self._instantiate_model()
-        self._check_supports_pred_int()
+        (
+            self._support_pred_int_in_sample,
+            self._support_pred_int,
+        ) = self._check_supports_pred_int()
+
+        if not self._support_pred_int_in_sample:
+            self.set_tags(**{"capability:pred_int:insample": False})
+        if not self._support_pred_int:
+            self.set_tags(**{"capability:pred_int": False})
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
@@ -284,22 +292,28 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         Check if `level` argument is available in `predict_in_sample` and
         `predict` methods from the `statsforecast` forecaster.
-        If that is not the case it will set the corresponding tags
-        (`capability:pred_int:insample`,`capability:pred_int`) to False as well as
-         the corresponding class attributes `_support_pred_int_in_sample`
-         and `_support_pred_int`.
+        A tuple of booleans (`support_pred_int_in_sample`, `support_pred_int`)
+        is returned where the user is informed which of the two, if any,
+        support interval predictions.
 
          Furthermore, will throw a warning to let the user know that he should consider
          upgrading statsforecast versio as both or one of the two methods might
          not be able to produce confidence intervals.
 
+        Returns
+        -------
+        Tuple of bool
+            A tuple containing two boolean values:
+            - `support_pred_int_in_sample`: True if prediction intervals are supported
+              in `predict_in_sample`, False otherwise.
+            - `support_pred_int`: True if prediction intervals are supported
+              in `predict`, False otherwise.
         """
         if (
             "level"
             not in signature(self._forecaster.predict_in_sample).parameters.keys()
         ):
-            self.set_tags(**{"capability:pred_int:insample": False})
-            self._support_pred_int_in_sample = False
+            support_pred_int_in_sample = False
             import statsforecast
 
             warn(
@@ -309,11 +323,10 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
                 f"Consider upgrading to a newer version."
             )
         else:
-            self._support_pred_int_in_sample = True
+            support_pred_int_in_sample = True
 
         if "level" not in signature(self._forecaster.predict).parameters.keys():
-            self.set_tags(**{"capability:pred_int": False})
-            self._support_pred_int = False
+            support_pred_int = False
             import statsforecast
 
             warn(
@@ -323,7 +336,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
                 f"Consider upgrading to a newer version."
             )
         else:
-            self._support_pred_int = True
+            support_pred_int = True
+
+        return support_pred_int_in_sample, support_pred_int
 
 
 class StatsForecastBackAdapter:
