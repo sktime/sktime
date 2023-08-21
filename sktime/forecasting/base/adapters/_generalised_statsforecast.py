@@ -31,10 +31,10 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         forecaster = self._instantiate_model()
 
         if "level" not in signature(forecaster.predict_in_sample).parameters.keys():
-            self.set_tags(**{"capability:pred_int": False})
+            self.set_tags(**{"capability:pred_int:insample": False})
 
         if "level" not in signature(forecaster.predict).parameters.keys():
-            self.set_tags(**{"capability:pred_int:insample": False})
+            self.set_tags(**{"capability:pred_int": False})
 
         self._forecaster = None
 
