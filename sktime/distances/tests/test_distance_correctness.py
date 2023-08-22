@@ -45,6 +45,7 @@ unit_test_distances = {
     "ddtw": [80806.0, 76289.0625, 76289.0625],
     "wddtw": [38144.53125, 19121.4927, 1.34957],
     "twe": [242.001, 628.0029999999999, 3387.044],
+    "squared": [384147.0],
 }
 basic_motions_distances = {
     "euclidean": [27.51835240],
@@ -57,6 +58,7 @@ basic_motions_distances = {
     "ddtw": [297.18771, 160.48649, 160.29823],
     "wddtw": [80.149117, 1.458858, 0.0],
     "twe": [1.325876246546281, 14.759114523578294, 218.21301289250758],
+    "squared": [757.259719],
 }
 
 
@@ -72,6 +74,10 @@ def test_correctness(dist, uni_multi):
     uni_multi = "uni" -> UnitTest: univariate, equal length.
     uni_multi = "multi" -> BasicMotions: multivariate, equal length.
     """
+    # msm distance is not implemented for multivariate
+    if uni_multi == "multi" and dist.canonical_name in ["msm"]:
+        return None
+
     dist_str = dist.canonical_name
     dist = dist.dist_func
 
@@ -95,6 +101,11 @@ def test_correctness(dist, uni_multi):
 
     # assert distance between fixtures d, d2 are same as expected
     for j, param in enumerate(param_list):
+        # deal with custom setting of epsilon in multi
+        # this was in the original test before refactoring
+        if "epsilon" in param and "uni_multi" == "multi":
+            param = {"epsilon": param["epsilon"] / 50}
+        # check that distance is same as expected
         d = dist(trainX[0], trainX[ind2], **param)
         d2 = dist(trainX[0], trainX[ind2], **param)
         assert_almost_equal(d, expected[dist_str][j], 4)
