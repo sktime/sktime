@@ -84,6 +84,7 @@ forecasting = [
     "tbats",
 ]
 networks = [
+    "keras-self-attention",
     "tensorflow",
 ]
 param_est = [
