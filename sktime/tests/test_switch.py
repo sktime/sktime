@@ -5,26 +5,27 @@ __author__ = ["fkiraly"]
 
 
 def run_test_for_class(cls):
-    """Check if test should run for a class.
+    """Check if test should run for a class or function.
 
     This checks the following conditions:
 
-    1. whether all required soft dependencies are not present.
+    1. whether all required soft dependencies are present.
        If not, does not run the test.
     2. If yes:
       * if ONLY_CHANGED_MODULES setting is on, runs the test if and only
-      if the module containing the class has changed according to is_class_changed
+      if the module containing the class/func has changed according to is_class_changed
       * if ONLY_CHANGED_MODULES if off, always runs the test if all soft dependencies
       are present.
 
-    cls can also be a list, in this case the test is run if and only if:
+    cls can also be a list of classes or functions,
+    in this case the test is run if and only if:
 
     * all required soft dependencies are present
     * if yes, if any of the estimators in the list should be tested by criterion 2 above
 
     Parameters
     ----------
-    cls : class or list of class
+    cls : class, function or list of classes/functions
         class for which to determine whether it should be tested
 
     Returns
@@ -39,8 +40,14 @@ def run_test_for_class(cls):
     from sktime.utils.git_diff import is_class_changed
     from sktime.utils.validation._dependencies import _check_estimator_deps
 
+    def _required_deps_present(obj):
+        if hasattr(obj, "get_class_tag"):
+            return _check_estimator_deps(obj, severity="none")
+        else:
+            return True
+
     # if any of the required soft dependencies are not present, do not run the test
-    if not all(_check_estimator_deps(x, severity="none") for x in cls):
+    if not all(_required_deps_present(x) for x in cls):
         return False
 
     # if ONLY_CHANGED_MODULES is on, run the test if and only if
