@@ -103,7 +103,7 @@ def test_correctness(dist, uni_multi):
     for j, param in enumerate(param_list):
         # deal with custom setting of epsilon in multi
         # this was in the original test before refactoring
-        if "epsilon" in param and "uni_multi" == "multi":
+        if "epsilon" in param and uni_multi == "multi":
             param = {"epsilon": param["epsilon"] / 50}
         # check that distance is same as expected
         d = dist(trainX[0], trainX[ind2], **param)
