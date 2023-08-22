@@ -101,8 +101,8 @@ class TDistribution(BaseDistribution):
         """
         df_arr = self._df.copy()
         df_arr = df_arr.astype(np.float32)
-        df_arr[df_arr < 2] = np.nan
-        df_arr[df_arr == 2] = np.inf
+        df_arr[df_arr <= 1] = np.nan
+        df_arr[(df_arr <= 2) & (df_arr > 1)] = np.inf
         mask = (df_arr > 2) & (df_arr != np.inf)
         df_arr[mask] = df_arr[mask] / (df_arr[mask] - 2)
         return pd.DataFrame(df_arr, index=self.index, columns=self.columns)
