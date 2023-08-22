@@ -75,10 +75,8 @@ clustering = [
     "tslearn",
 ]
 forecasting = [
-    "hcrystalball",
     "pmdarima",
     "prophet",
-    "scikit-optimize",
     "statsforecast",
     "statsmodels",
     "tbats",
