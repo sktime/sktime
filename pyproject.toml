@@ -91,9 +91,6 @@ param_est = [
     "seasonal",
     "statsmodels",
 ]
-proba = [
-    "tensorflow-probability",
-]
 regression = [
     "numba",
     "tensorflow",
