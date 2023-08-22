@@ -35,9 +35,18 @@ def _extract_class_names(spec):
     -------
     cls_name_list : list of str
         list of all maximal alphanumeric substrings starting with a capital in ``spec``
+        excluding reserved expressions True, False (if they occur)
     """
+    # class names are all UpperCamelCase alphanumeric strings
+    # which is the same as maximal substrings starting with a capital
     pattern = r"\b([A-Z][A-Za-z0-9_]*)\b"
     cls_name_list = re.findall(pattern, spec)
+
+    # we need to exclude expressions that look like classes per the regex
+    # but aren't
+    EXCLUDE_LIST = ["True", "False"]
+    cls_name_list = [x for x in cls_name_list if x not in EXCLUDE_LIST]
+
     return cls_name_list
 
 

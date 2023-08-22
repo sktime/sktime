@@ -268,6 +268,39 @@ class BaseGridSearch(_DelegatedForecaster):
 
         return self
 
+    def _predict(self, fh, X):
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        """
+        if not self.refit:
+            raise RuntimeError(
+                f"In {self.__class__.__name__}, refit must be True to make predictions,"
+                f" but found refit=False. If refit=False, {self.__class__.__name__} can"
+                " be used only to tune hyper-parameters, as a parameter estimator."
+            )
+        return super()._predict(fh=fh, X=X)
+
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
@@ -341,18 +374,35 @@ class ForecastingGridSearchCV(BaseGridSearch):
         "no_update" = neither tuning parameters nor inner estimator are updated
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
-    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        if callable, must have signature
+
+        * sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        Metrics in sktime.performance_metrics.forecasting are all of this form.
+
+        * If str, uses registry.resolve_alias to resolve to one of the above.
+          Valid strings are valid registry.craft specs, which include
+          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+          and keys of registry.ALIAS_DICT referring to metrics.
+
+        * If None, defaults to MeanAbsolutePercentageError()
+
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
-        False = best forecaster remains fitted on the last fold in cv
+        False = no refitting takes place. The forecaster cannot be used to predict.
+        This is to be used to tune the hyperparameters, and then use the estimator
+        as a parameter estimator, e.g., via get_fitted_params or PluginParamsForecaster.
     verbose: int, optional (default=0)
     return_n_best_forecasters : int, default=1
         In case the n best forecaster should be returned, this value can be set
@@ -415,6 +465,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
         Advanced model meta-tuning (model selection) with multiple forecasters
         together with hyper-parametertuning at same time using sklearn notation:
+
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -550,7 +601,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "scoring": mean_absolute_percentage_error,
             "update_behaviour": "inner_only",
         }
-        return [params, params2]
+        params3 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": [3, 4]},
+            "scoring": "MeanAbsolutePercentageError(symmetric=True)",
+            "update_behaviour": "no_update",
+        }
+        return [params, params2, params3]
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
@@ -596,18 +654,35 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
-    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        if callable, must have signature
+
+        * sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        Metrics in sktime.performance_metrics.forecasting are all of this form.
+
+        * If str, uses registry.resolve_alias to resolve to one of the above.
+          Valid strings are valid registry.craft specs, which include
+          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+          and keys of registry.ALIAS_DICT referring to metrics.
+
+        * If None, defaults to MeanAbsolutePercentageError()
+
     n_jobs : int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
-        False = best forecaster remains fitted on the last fold in cv
+        False = no refitting takes place. The forecaster cannot be used to predict.
+        This is to be used to tune the hyperparameters, and then use the estimator
+        as a parameter estimator, e.g., via get_fitted_params or PluginParamsForecaster.
     verbose : int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
@@ -722,8 +797,15 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
         }
+        params3 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"window_length": [3, 4]},
+            "scoring": "MeanAbsolutePercentageError(symmetric=True)",
+            "update_behaviour": "no_update",
+        }
 
-        return [params, params2]
+        return [params, params2, params3]
 
 
 class ForecastingSkoptSearchCV(BaseGridSearch):
@@ -761,11 +843,26 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     n_points : int, default=1
         Number of parameter settings to sample in parallel.
         If this does not align with n_iter, the last iteration will sample less points
-    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        if callable, must have signature
+
+        * sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        Metrics in sktime.performance_metrics.forecasting are all of this form.
+
+        * If str, uses registry.resolve_alias to resolve to one of the above.
+          Valid strings are valid registry.craft specs, which include
+          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+          and keys of registry.ALIAS_DICT referring to metrics.
+
+        * If None, defaults to MeanAbsolutePercentageError()
+
     optimizer_kwargs: dict, optional
         Arguments passed to Optimizer to control the bahaviour of the bayesian search.
         For example, {'base_estimator': 'RF'} would use a Random Forest surrogate
@@ -790,7 +887,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "no_update" = neither tuning parameters nor inner estimator are updated
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
-        False = best forecaster remains fitted on the last fold in cv
+        False = no refitting takes place. The forecaster cannot be used to predict.
+        This is to be used to tune the hyperparameters, and then use the estimator
+        as a parameter estimator, e.g., via get_fitted_params or PluginParamsForecaster.
     verbose : int, optional (default=0)
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
