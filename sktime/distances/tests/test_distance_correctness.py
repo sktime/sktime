@@ -46,6 +46,7 @@ unit_test_distances = {
     "ddtw": [80806.0, 76289.0625, 76289.0625],
     "wddtw": [38144.53125, 19121.4927, 1.34957],
     "twe": [242.001, 628.0029999999999, 3387.044],
+    "squared": [384147.0],
 }
 basic_motions_distances = {
     "euclidean": [27.51835240],
@@ -58,6 +59,7 @@ basic_motions_distances = {
     "ddtw": [297.18771, 160.48649, 160.29823],
     "wddtw": [80.149117, 1.458858, 0.0],
     "twe": [1.325876246546281, 14.759114523578294, 218.21301289250758],
+    "squared": [757.259719],
 }
 
 
@@ -75,6 +77,10 @@ def test_correctness(dist, uni_multi):
     """
     # skip test if distance function/class have not changed
     if not run_test_for_class([dist.dist_func, dist.dist_instance.__class__]):
+        return None
+
+    # msm distance is not implemented for multivariate
+    if uni_multi == "multi" and dist.canonical_name in ["msm"]:
         return None
 
     dist_str = dist.canonical_name
