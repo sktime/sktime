@@ -54,7 +54,7 @@ class MSTL(BaseTransformer):
     --------
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.mstl import MSTL
+    >>> from sktime.transformations.mstl import MSTL
     >>> y = load_airline()
     >>> y.index = y.index.to_timestamp()
     >>> mstl = MSTL(return_components=True)  # doctest: +SKIP
