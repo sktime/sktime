@@ -110,26 +110,26 @@ class TDistribution(BaseDistribution):
     def pdf(self, x):
         """Probability density function."""
         d = self.loc[x.index, x.columns]
-        pdf_arr = gamma((d.df + 1) / 2)
-        pdf_arr = pdf_arr / (np.sqrt(np.pi * d.df) * gamma(d.df / 2))
-        pdf_arr = pdf_arr * (1 + x**2 / d.df) ** (-(d.df + 1) / 2)
+        pdf_arr = gamma((d._df + 1) / 2)
+        pdf_arr = pdf_arr / (np.sqrt(np.pi * d._df) * gamma(d._df / 2))
+        pdf_arr = pdf_arr * (1 + x**2 / d._df) ** (-(d._df + 1) / 2)
         return pd.DataFrame(pdf_arr, index=x.index, columns=x.columns)
 
     def log_pdf(self, x):
         """Logarithmic probability density function."""
         d = self.loc[x.index, x.columns]
-        lpdf_arr = loggamma((d.df + 1) / 2)
-        lpdf_arr = lpdf_arr - 0.5 * np.log(d.df * np.pi)
-        lpdf_arr = lpdf_arr - loggamma(d.df / 2)
-        lpdf_arr = lpdf_arr - ((d.df + 1) / 2) * np.log(1 + x**2 / d.df)
+        lpdf_arr = loggamma((d._df + 1) / 2)
+        lpdf_arr = lpdf_arr - 0.5 * np.log(d._df * np.pi)
+        lpdf_arr = lpdf_arr - loggamma(d._df / 2)
+        lpdf_arr = lpdf_arr - ((d._df + 1) / 2) * np.log(1 + x**2 / d._df)
         return pd.DataFrame(lpdf_arr, index=x.index, columns=x.columns)
 
     def cdf(self, x):
         """Cumulative distribution function."""
         d = self.loc[x.index, x.columns]
-        cdf_arr = x * gamma((d.df + 1) / 2)
-        cdf_arr = cdf_arr * hyp2f1(0.5, (d.df + 1) / 2, 3 / 2, -(x**2) / d.df)
-        cdf_arr = 0.5 + cdf_arr / (np.sqrt(np.pi * d.df) * gamma(d.df / 2))
+        cdf_arr = x * gamma((d._df + 1) / 2)
+        cdf_arr = cdf_arr * hyp2f1(0.5, (d._df + 1) / 2, 3 / 2, -(x**2) / d._df)
+        cdf_arr = 0.5 + cdf_arr / (np.sqrt(np.pi * d._df) * gamma(d._df / 2))
         return pd.DataFrame(cdf_arr, index=x.index, columns=x.columns)
 
     def ppf(self, p):
@@ -142,12 +142,12 @@ class TDistribution(BaseDistribution):
 
         mask1 = (p.values < 0.5) & (p.values > 0)
         mask2 = (p.values < 1) & (p.values > 0.5)
-        ppf_arr[mask1] = 1 / betaincinv(0.5 * d.df[mask1], 0.5, 2 * ppf_arr[mask1])
+        ppf_arr[mask1] = 1 / betaincinv(0.5 * d._df[mask1], 0.5, 2 * ppf_arr[mask1])
         ppf_arr[mask2] = 1 / betaincinv(
-            0.5 * d.df[mask2], 0.5, 2 * (1 - ppf_arr[mask2])
+            0.5 * d._df[mask2], 0.5, 2 * (1 - ppf_arr[mask2])
         )
         ppf_arr[mask1 | mask2] = np.sqrt(ppf_arr[mask1 | mask2] - 1)
-        ppf_arr[mask1 | mask2] = np.sqrt(d.df[mask1 | mask2]) * ppf_arr[mask1 | mask2]
+        ppf_arr[mask1 | mask2] = np.sqrt(d._df[mask1 | mask2]) * ppf_arr[mask1 | mask2]
         ppf_arr[mask1] = -ppf_arr[mask1]
         return pd.DataFrame(ppf_arr, index=p.index, columns=p.columns)
 
