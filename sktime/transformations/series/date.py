@@ -151,15 +151,6 @@ class DateTimeFeatures(BaseTransformer):
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         self.keep_original_columns = keep_original_columns
 
-        # todo 0.22.0: change logic for comprehensive to include "hour_of_week"
-        # and remove this warning
-        if self.feature_scope == "comprehensive":
-            warnings.warn(
-                "From 0.22.0 onwards, 'comprehensive' will contain "
-                + "a new feature, 'hour_of_week'.",
-                stacklevel=2,
-            )
-
         super().__init__()
 
     def _transform(self, X, y=None):
@@ -240,6 +231,23 @@ class DateTimeFeatures(BaseTransformer):
             Xt = df.rename_axis(None, axis="columns")
 
         return Xt
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {"feature_scope": "minimal"}
+        params2 = {"feature_scope": "efficient", "keep_original_columns": True}
+        params3 = {"manual_selection": ["day_of_year", "day_of_month"]}
+        return [params1, params2, params3]
 
 
 def _check_manual_selection(manual_selection, DUMMIES):

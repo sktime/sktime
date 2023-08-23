@@ -205,9 +205,8 @@ class _ProphetAdapter(BaseForecaster):
 
         return y_pred
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
