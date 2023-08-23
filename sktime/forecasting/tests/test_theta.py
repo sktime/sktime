@@ -68,8 +68,8 @@ def test_pred_errors_against_y_test(fh):
 
     # Performance should be good enough that all point forecasts lie within the
     # prediction intervals.
-    assert np.all(y_test > intervals[("Coverage", 0.9, "lower")].values)
-    assert np.all(y_test < intervals[("Coverage", 0.9, "upper")].values)
+    assert np.all(y_test > intervals[(y.name, 0.9, "lower")].values)
+    assert np.all(y_test < intervals[(y.name, 0.9, "upper")].values)
 
 
 @pytest.mark.skipif(
