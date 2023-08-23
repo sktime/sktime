@@ -69,7 +69,8 @@ class TDistribution(BaseDistribution):
         r"""Return expected value of the distribution.
 
         Let :math:`X` be a random variable with the distribution of `self`.
-        Returns the expectation :math:`\mathbb{E}[X]`
+        Returns the expectation :math:`\mathbb{E}[X]`. The expectation,
+        :math:`\mathbb{E}[X]`, as infinite if :math:`\nu \le 1`.
 
         Returns
         -------
