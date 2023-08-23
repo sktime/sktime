@@ -16,9 +16,9 @@ class TDistribution(BaseDistribution):
     Parameters
     ----------
     mean : float or array of float (1D or 2D)
-        mean of the normal distribution
+        mean of the t-distribution distribution
     sd : float or array of float (1D or 2D), must be positive
-        standard deviation of the normal distribution
+        standard deviation of the t-distribution distribution
     df : float or array of float (1D or 2D), must be positive
         Degrees of freedom of the t-distribution
     index : pd.Index, optional, default = RangeIndex
