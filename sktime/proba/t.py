@@ -88,8 +88,7 @@ class TDistribution(BaseDistribution):
         .. math::
             \mathbb{V}[X] = \begin{cases}
                 \frac{\nu}{\nu - 2} & \text{if} \nu > 2, \\
-                \infty              & \text{if} \nu = 2, \\
-                \text{NaN}          & \text{if} \nu < 2.
+                \infty              & \text{if} \nu \le 2, \\
             \begin{cases}
 
         Where :math:`\nu` is the degrees of freedom of the t-distribution.
