@@ -90,6 +90,8 @@ class BaseGridSearch(_DelegatedForecaster):
 
         Mutates self tag with name `tagname`.
         If no mtypes are present of a time series scitype, adds a pandas based one.
+        If only univariate pandas scitype is present for Series ("pd.Series"),
+        also adds the multivariate one ("pd.DataFrame").
 
         Parameters
         ----------
