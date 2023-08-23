@@ -5,7 +5,6 @@ __author__ = ["Withington", "TonyBagnall"]
 from abc import ABC, abstractmethod
 
 import numpy as np
-import torch
 
 from sktime.base import BaseObject
 from sktime.forecasting.base import BaseForecaster
@@ -33,6 +32,10 @@ class BaseDeepNetwork(BaseObject, ABC):
 
 class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
     """Abstract base class for deep learning networks using torch.nn."""
+
+    _tags = {
+        "python_dependencies": "torch",
+    }
 
     def __init__(self):
         super().__init__()
@@ -66,51 +69,63 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
 
     def _predict(self, X, **kwargs):
         """Predict with fitted model."""
+        from torch import cat
+
         dataloader = self.build_pytorch_dataloader(X)
 
         y_pred = []
         for x, _ in dataloader:
             y_pred.append(self.network(x).detach())
-        y_pred = torch.cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
+        y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
         return y_pred
 
     def build_pytorch_dataloader(self, y):
         """Build PyTorch DataLoader for training."""
         from torch.utils.data import DataLoader
 
-        return DataLoader(
-            PyTorchDataset(
+        if self.custom_dataset:
+            if hasattr(self.custom_dataset, "build_dataset") and callable(
+                self.custom_dataset, "build_dataset"
+            ):
+                dataset = self.custom_dataset.build_dataset(
+                    y=y,
+                    seq_len=self.network.seq_len,
+                    pred_len=self.network.pred_len,
+                    scale=self.scale,
+                    target=self.target,
+                    features=self.features,
+                )
+            else:
+                raise NotImplementedError(
+                    "Custom dataset's build_dataset method is not" "available."
+                )
+        else:
+            dataset = PyTorchDataset(
                 y=y,
                 seq_len=self.network.seq_len,
                 pred_len=self.network.pred_len,
                 scale=self.scale,
                 target=self.target,
                 features=self.features,
-            ),
+            )
+
+        return DataLoader(
+            dataset,
             self.batch_size,
             shuffle=self.shuffle,
         )
 
     def get_y_true(self, y):
         """Get y_true values for validation."""
-        # y_true = []
-        # for i in range(len(y) - self.network.seq_len - self.network.pred_len + 1):
-        #     y_true_values = y.iloc[
-        #         i
-        #         + self.network.seq_len : i
-        #         + self.network.seq_len
-        #         + self.network.pred_len
-        #     ]
-        #     y_true.append(y_true_values)
-        # y_true = np.concatenate(y_true, axis=0)
-        # return y_true
         dataloader = self.build_pytorch_dataloader(y)
         y_true = [y.flatten().numpy() for _, y in dataloader]
         return np.concatenate(y_true, axis=0)
 
     def save(self, save_model_path):
         """Save model state dict."""
-        torch.save(self.network.state_dict(), save_model_path)
+        from torch import save
+
+        save(self.network.state_dict(), save_model_path)
 
 
 class PyTorchDataset:
@@ -155,9 +170,11 @@ class PyTorchDataset:
 
     def __getitem__(self, i):
         """Return data point."""
+        from torch import from_numpy, tensor
+
         return (
-            torch.tensor(self.y[i : i + self.seq_len]).float(),
-            torch.from_numpy(
+            tensor(self.y[i : i + self.seq_len]).float(),
+            from_numpy(
                 self.y[i + self.seq_len : i + self.seq_len + self.pred_len]
             ).float(),
         )

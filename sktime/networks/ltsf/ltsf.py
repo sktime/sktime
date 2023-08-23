@@ -121,6 +121,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         self,
         seq_len,  # L : Historical data
         pred_len,  # T : Future predictions
+        *,
         target=None,
         features=None,
         individual=False,
@@ -129,6 +130,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         optimizer=torch.optim.Adam,
         lr=0.001,
         num_epochs=16,
+        custom_dataset=None,
         batch_size=8,
         scale=True,
         shuffle=True,
@@ -138,12 +140,13 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         self.target = target
         self.features = features
         self.individual = individual
+        self.in_channels = in_channels
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr = lr
         self.num_epochs = num_epochs
+        self.custom_dataset = custom_dataset
         self.batch_size = batch_size
-        self.in_channels = in_channels
         self.scale = scale
         self.shuffle = shuffle
         self.network = LTSFLinearNetwork(
