@@ -103,10 +103,16 @@ class BaseGridSearch(_DelegatedForecaster):
         if not isinstance(tagval, list):
             tagval = [tagval]
         scitypes = mtype_to_scitype(tagval, return_unique=True)
+        # if no Series mtypes are present, add pd.DataFrame
         if "Series" not in scitypes:
             tagval = tagval + ["pd.DataFrame"]
+        # ensure we have a Series mtype capable of multivariate
+        elif "pd.Series" in tagval and "pd.DataFrame" not in tagval:
+            tagval = ["pd.DataFrame"] + tagval
+        # if no Panel mtypes are present, add pd.DataFrame based one
         if "Panel" not in scitypes:
             tagval = tagval + ["pd-multiindex"]
+        # if no Hierarchical mtypes are present, add pd.DataFrame based one
         if "Hierarchical" not in scitypes:
             tagval = tagval + ["pd_multiindex_hier"]
         self.set_tags(**{tagname: tagval})
