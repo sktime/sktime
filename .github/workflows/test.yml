@@ -46,7 +46,7 @@ jobs:
 
   test-nodevdeps:
     needs: code-quality
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -66,7 +66,7 @@ jobs:
 
   test-nosoftdeps:
     needs: code-quality
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -88,13 +88,19 @@ jobs:
 
   test-nosoftdeps-full:
     needs: test-nosoftdeps
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.9
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -132,7 +138,7 @@ jobs:
 
   test-mlflow:
     needs: test-nosoftdeps
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -154,7 +160,7 @@ jobs:
 
   test-cython-estimators:
     needs: test-nosoftdeps
-    runs-on: macOS-11
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -182,7 +188,7 @@ jobs:
 
   test-windows:
     needs: test-nosoftdeps
-    runs-on: windows-2019
+    runs-on: windows-latest
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
@@ -190,6 +196,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -213,6 +223,9 @@ jobs:
       - name: Show dependencies
         run: python -m pip list
 
+      - name: Show available branches
+        run: git branch -a
+
       - name: Run tests
         run: |
           mkdir -p testdir/
@@ -229,14 +242,20 @@ jobs:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
-        os: [ubuntu-20.04, macOS-11]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -246,6 +265,9 @@ jobs:
 
       - name: Show dependencies
         run: python -m pip list
+
+      - name: Show available branches
+        run: git branch -a
 
       - name: Run tests
         run: make test
@@ -259,13 +281,19 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -275,6 +303,9 @@ jobs:
 
       - name: Show dependencies
         run: python -m pip list
+
+      - name: Show available branches
+        run: git branch -a
 
       - name: Run tests
         run: make test

@@ -167,6 +167,7 @@ class ElbowClassSum(BaseTransformer):
     >>> Xt = cs.transform(X)
 
     Any sktime compatible distance can be used, e.g., DTW distance:
+
     >>> from sktime.dists_kernels import DtwDist
     >>>
     >>> cs = ElbowClassSum(distance=DtwDist())

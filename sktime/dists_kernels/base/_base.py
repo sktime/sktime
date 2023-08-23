@@ -53,6 +53,7 @@ class BasePairwiseTransformer(BaseEstimator):
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
+        "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
     }
 
     def __init__(self):
@@ -187,6 +188,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
     }
 
     def __init__(self):

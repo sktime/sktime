@@ -22,7 +22,6 @@ from sktime.datasets import load_airline, load_longley
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
-from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -42,14 +41,12 @@ from sktime.performance_metrics.forecasting.probabilistic import (
     LogLoss,
     PinballLoss,
 )
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation._dependencies import (
-    _check_estimator_deps,
-    _check_soft_dependencies,
-)
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def _check_evaluate_output(out, cv, y, scoring):
@@ -95,6 +92,10 @@ def _check_evaluate_output(out, cv, y, scoring):
         assert np.all(out.loc[:, "len_train_window"] == cv.window_length)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 # Test using MAPE and MASE scorers so that tests cover a metric that doesn't
 # use y_train (MAPE) and one that does use y_train (MASE).
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
@@ -145,6 +146,10 @@ def test_evaluate_common_configs(
     np.testing.assert_array_equal(actual, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("return_data", [True, False])
 def test_scoring_list(return_data):
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
@@ -173,6 +178,10 @@ def test_scoring_list(return_data):
         assert "y_test" not in out.columns
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_evaluate_initial_window():
     """Test evaluate initial window."""
     initial_window = 20
@@ -196,6 +205,10 @@ def test_evaluate_initial_window():
     np.testing.assert_equal(actual, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_evaluate_no_exog_against_with_exog():
     """Check that adding exogenous data produces different results."""
     y, X = load_longley()
@@ -210,6 +223,10 @@ def test_evaluate_no_exog_against_with_exog():
     assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
@@ -257,6 +274,10 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
             )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_hierarchical(backend):
     """Check that evaluate works with hierarchical data."""
@@ -300,7 +321,7 @@ def test_evaluate_bigger_X(cls):
 
     Example adapted from bug report #3657.
     """
-    if not _check_estimator_deps(cls, severity="none"):
+    if not run_test_for_class(cls):
         return None
 
     y, X = load_longley()
@@ -317,8 +338,8 @@ PROBA_METRICS = [CRPS, EmpiricalCoverage, LogLoss, PinballLoss]
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class([evaluate] + PROBA_METRICS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("metric", PROBA_METRICS)
@@ -326,7 +347,7 @@ def test_evaluate_probabilistic(n_columns, metric):
     """Check that evaluate works with interval, quantile, and distribution forecasts."""
     y = _make_series(n_columns=n_columns)
 
-    forecaster = AutoETS()
+    forecaster = NaiveForecaster()
     cv = SlidingWindowSplitter()
     scoring = metric()
     try:
@@ -344,6 +365,10 @@ def test_evaluate_probabilistic(n_columns, metric):
         pass
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_evaluate_hierarchical_unequal_X_y():
     """Test evaluate with hierarchical X and y where X is larger.
 
