@@ -69,7 +69,6 @@ class BaseGridSearch(_DelegatedForecaster):
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:insample",
-            "scitype:y",
             "ignores-exogeneous-X",
             "handles-missing-data",
             "y_inner_mtype",
