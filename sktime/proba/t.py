@@ -76,7 +76,10 @@ class TDistribution(BaseDistribution):
         pd.DataFrame with same rows, columns as `self`
         expected value of distribution (entry-wise)
         """
-        mean_arr = self._mu
+        mean_arr = self._mu.copy()
+        if (self._df <= 1).any():
+            mean_arr = mean_arr.astype(np.float32)
+            mean_arr[self._df <= 1] = np.inf
         return pd.DataFrame(mean_arr, index=self.index, columns=self.columns)
 
     def var(self):
