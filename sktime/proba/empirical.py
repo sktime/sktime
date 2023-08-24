@@ -130,7 +130,7 @@ class Empirical(BaseDistribution):
                     x_t = None
                 else:
                     x_t = x.loc[ix, col]
-                energy_row += _energy(spl_t, x_t, weights=weights_t, assume_sorted=True)
+                energy_row += _energy_np(spl_t, x_t, weights_t, assume_sorted=True)
             res.loc[ix, "energy"] = energy_row
         return res
 
@@ -268,7 +268,7 @@ class Empirical(BaseDistribution):
         return [params1, params2]
 
 
-def _energy(spl, x=None, weights=None, assume_sorted=False):
+def _energy_np(spl, x=None, weights=None, assume_sorted=False):
     r"""Compute sample energy, fast numpy based subroutine.
 
     Let :math:`X` be the random variable with support being
