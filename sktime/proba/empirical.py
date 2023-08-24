@@ -34,7 +34,7 @@ class Empirical(BaseDistribution):
     ...     [[0, 1], [0, 1, 2]], names=["sample", "time"]
     ... )
     >>> spl = pd.DataFrame(
-    ...     [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]],
+    ...     [[0, 1], [2, 3], [10, 11], [6, 7], [8, 9], [4, 5]],
     ...     index=spl_idx,
     ...     columns=["a", "b"],
     ... )
@@ -61,18 +61,45 @@ class Empirical(BaseDistribution):
         self._spl_instances = _spl_instances
         self._N = len(_spl_instances)
 
-        shape0 = len(np.unique(_timestamps))
-        shape = (shape0, spl.shape[1])
-
         if index is None:
-            index = pd.RangeIndex(shape[0])
+            index = pd.Index(_timestamps)
 
         if columns is None:
-            columns = pd.RangeIndex(shape[1])
+            columns = spl.columns
 
         super().__init__(index=index, columns=columns)
 
-    def energy(self, x=None):
+        # initialized sorted samples
+        self._init_sorted()
+
+    def _init_sorted(self):
+        """Initialize sorted version of spl."""
+        times = self._timestamps
+        cols = self.columns
+
+        sorted = {}
+        weights = {}
+        weights
+        for t in times:
+            sorted[t] = {}
+            weights[t] = {}
+            for col in cols:
+                spl_t = self.spl.loc[(slice(None), t), col].values
+                sorter = np.argsort(spl_t)
+                spl_t_sorted = spl_t[sorter]
+                sorted[t][col] = spl_t_sorted
+                if self.weights is not None:
+                    weights_t = self.weights.loc[(slice(None), t)].values
+                    weights_t_sorted = weights_t[sorter]
+                    weights[t][col] = weights_t_sorted
+                else:
+                    ones = np.ones(len(spl_t_sorted))
+                    weights[t][col] = ones
+
+        self._sorted = sorted
+        self._weights = weights
+
+    # def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
 
         Let :math:`X, Y` be i.i.d. random variables with the distribution of `self`.
@@ -91,12 +118,12 @@ class Empirical(BaseDistribution):
         each row contains one float, self-energy/energy as described above.
         """
         # splx, sply = empirical samples of X, Y
-        N = self._N
-        spl = self.spl
+        # N = self._N
+        # spl = self.spl
 
         # todo: use energy utility _energy per row/column iloc
 
-        return energy
+        # return energy
 
     def mean(self):
         r"""Return expected value of the distribution.
@@ -209,7 +236,7 @@ class Empirical(BaseDistribution):
             [[0, 1], [0, 1, 2]], names=["sample", "time"]
         )
         spl = pd.DataFrame(
-            [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]],
+            [[0, 1], [2, 3], [10, 11], [6, 7], [8, 9], [4, 5]],
             index=spl_idx,
             columns=["a", "b"],
         )
@@ -232,7 +259,7 @@ class Empirical(BaseDistribution):
         return [params1, params2]
 
 
-def _energy(spl, x=None, weights=None):
+def _energy(spl, x=None, weights=None, assume_sorted=False):
     r"""Compute sample energy, fast numpy based subroutine.
 
     Let :math:`X` be the random variable with support being
@@ -252,6 +279,8 @@ def _energy(spl, x=None, weights=None):
     weights : None or 1D np.ndarray, optional, default=None
         if None, computes unweighted energy, if 1D np.ndarray, computes weighted energy
         if not None, must be of same length as ``spl``, needs not be normalized
+    assume_sorted : bool, optional, default=False
+        if True, assumes that ``spl`` is sorted in ascending order
 
     Returns
     -------
@@ -261,9 +290,10 @@ def _energy(spl, x=None, weights=None):
     if weights is None:
         weights = np.ones(len(spl))
 
-    sorter = np.argsort(spl)
-    spl = spl[sorter]
-    weights = weights[sorter]
+    if not assume_sorted:
+        sorter = np.argsort(spl)
+        spl = spl[sorter]
+        weights = weights[sorter]
 
     w_sum = np.sum(weights)
     weights = weights / w_sum
