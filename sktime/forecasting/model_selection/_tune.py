@@ -85,6 +85,21 @@ class BaseGridSearch(_DelegatedForecaster):
     #     see further details in _DelegatedForecaster docstring
     _delegate_name = "best_forecaster_"
 
+    # ensure informative exception is raised for forecasters_ attribute
+    @property
+    def forecasters_(self):
+        raise AttributeError(
+            f"{self.__class__.__name__}.forecasters_ property should not be called "
+            "as tuning wrappers do not broadcast over instances or variables, "
+            "this is left to the underlying forecaster. "
+            "A previous, erroneous instance of column broadcasting was removed "
+            "in 0.22.1, see issue #5143 for a discussion. "
+            "To tune per column/variable, wrap the tuner in ColumnEnsembleForecaster. "
+            "To tune per instance or hierarchy level, wrap the tuner in "
+            "ForecastByLevel. In both cases, individual tuned forecasters will be "
+            "present in the forecasters_ attribute."
+        )
+
     def _extend_to_all_scitypes(self, tagname):
         """Ensure mtypes for all scitypes are in the tag with tagname.
 
