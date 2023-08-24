@@ -374,6 +374,7 @@ def _cdf_np(spl, x, weights=None, assume_sorted=False):
 
     return cdf_val
 
+
 def _ppf_np(spl, x, weights=None, assume_sorted=False):
     """Compute empirical ppf, fast numpy based subroutine.
 
