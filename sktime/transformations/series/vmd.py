@@ -13,7 +13,7 @@ class VmdTransformer(BaseTransformer):
 
     Overview: This is an :term:`reduction` transformer which uses the Variational Mode Decomposition method
     to decompose an original time series into multiple Intrinsic Mode Functions.
-    The number of Instrinsic Mode Functions created depend on the K parameter and should be optimally defined if known.
+    The number of Intrinsic Mode Functions created depend on the K parameter and should be optimally defined if known.
     If the K parameter is unknown, this transformer will attempt to find a good estimate of it by comparing the
     original time series against the reconstruction of the signals using the energy loss coefficient, default of 0.01.
 
@@ -70,7 +70,6 @@ class VmdTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
-        # "univariate-only": True,
         "univariate-only": False,
         "requires_y": False,
         "remember_data": False,
@@ -102,9 +101,9 @@ class VmdTransformer(BaseTransformer):
         super().__init__()
         self.K = K
         self.alpha = alpha
-        self.tau = tau  # noise-tolerance (no strict fidelity enforcement)
-        self.DC = DC  # no DC part imposed
-        self.init = init  # initialize omegas uniformly
+        self.tau = tau
+        self.DC = DC
+        self.init = init
         self.tol = tol
         self.kMax = kMax
         self.energy_loss_coefficient = energy_loss_coefficient
@@ -125,13 +124,17 @@ class VmdTransformer(BaseTransformer):
 
     def _transform(self, X, y=None):
         from vmdpy import VMD
+
+        # Package truncates last if odd, so make even through duplication then remove duplicate
+        values = X.values
+        if len(values) % 2 == 1:
+            values = np.append(values,values[-1])
         u, u_hat, omega = VMD(
-            X.values, self.alpha, self.tau, self._K, self.DC, self.init, self.tol
+            values, self.alpha, self.tau, self._K, self.DC, self.init, self.tol
         )
         transposed = u.T
-        if len(u.T[0]) != len(X.values):
-            last_row = transposed[-1, :]
-            transposed = np.vstack([transposed, last_row])
+        if len(transposed) != len(X.values):
+            transposed = transposed[:-1]
         Y = pd.DataFrame(transposed)
         return Y
 
@@ -147,11 +150,9 @@ class VmdTransformer(BaseTransformer):
                 data, self.alpha, self.tau, K, self.DC, self.init, self.tol
             )
             reconstruct = sum(u)
-            originalData = data
-            ## The package truncates the last odd data point in series
             energy_loss_coef = (np.linalg.norm(
-                (originalData - reconstruct), 2
-            ) ** 2 / np.linalg.norm(originalData, 2))
+                (data - reconstruct), 2
+            ) ** 2 / np.linalg.norm(data, 2))
             if energy_loss_coef > self.energy_loss_coefficient:
                 K += 1
                 continue
