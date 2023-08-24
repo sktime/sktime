@@ -186,11 +186,11 @@ class Empirical(BaseDistribution):
         spl = self.spl
         N = self._N
         if self.weights is None:
-            var_df = spl.groupby(level=1).var(ddof=0)
+            var_df = spl.groupby(level=-1).var(ddof=0)
         else:
             mean = self.mean()
             means = pd.concat([mean] * N, axis=0, keys=self._spl_instances)
-            var_df = spl.groupby(level=1).apply(
+            var_df = spl.groupby(level=-1).apply(
                 lambda x: np.average(
                     (x - means.loc[x.index]) ** 2,
                     weights=self.weights.loc[x.index],
