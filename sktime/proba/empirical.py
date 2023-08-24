@@ -125,7 +125,7 @@ class Empirical(BaseDistribution):
                 else:
                     x_t = x
                 res.loc[ix, col] = func(spl=spl_t, weights=weights_t, x=x_t, **params)
-        return res
+        return res.convert_dtypes()
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -186,16 +186,17 @@ class Empirical(BaseDistribution):
         spl = self.spl
         N = self._N
         if self.weights is None:
-            var_df = spl.groupby(level=0).var(ddof=0)
+            var_df = spl.groupby(level=1).var(ddof=0)
         else:
-            var_df = spl.groupby(level=0).apply(
+            var_df = spl.groupby(level=1).apply(
                 lambda x: np.average(
                     (x - self.mean().loc[x.index]) ** 2,
                     weights=self.weights.loc[x.index],
                     axis=0,
                 )
             )
-        return var_df * N / (N - 1)
+            var_df = var_df * N / (N - 1)
+        return var_df
 
     def cdf(self, x):
         """Cumulative distribution function."""
@@ -240,7 +241,7 @@ class Empirical(BaseDistribution):
             for t in timestamps:
                 spl_from = spl.loc[(slice(None), t), :]
                 if weights is not None:
-                    spl_weights = weights.loc[(slice(None), t), :]
+                    spl_weights = weights.loc[(slice(None), t)].values
                 else:
                     spl_weights = None
                 spl_time = spl_from.sample(n=1, replace=True, weights=spl_weights)
