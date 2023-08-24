@@ -169,6 +169,7 @@ class Empirical(BaseDistribution):
         variance of distribution (entry-wise)
         """
         spl = self.spl
+        N = self._N
         if self.weights is None:
             var_df = spl.groupby(level=0).var(ddof=0)
         else:
@@ -179,7 +180,7 @@ class Empirical(BaseDistribution):
                     axis=0,
                 )
             )
-        return var_df
+        return var_df * N / (N - 1)
 
     def cdf(self, x):
         """Cumulative distribution function."""
