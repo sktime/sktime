@@ -227,6 +227,44 @@ def evaluate(
     All-in-one statistical performance benchmarking utility for forecasters
     which runs a simple backtest experiment and returns a summary pd.DataFrame.
 
+    The experiment run is the following:
+
+    Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
+    the train/test folds produced by the generator ``cv.split_series(y)``.
+    Denote by :math:`X_{train, 1}, X_{test, 1}, \dots, X_{train, K}, X_{test, K}`
+    the train/test folds produced by the generator ``cv_X.split_series(X)``
+    (if ``X`` is ``None``, consider these to be ``None`` as well).
+
+    1. Set ``i = 1``
+    2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
+       with a ``fh`` to forecast :math:`y_{test, 1}`
+    3. The ``forecaster`` predict with exogeneous data :math:`X_{test, i}`
+       ``y_pred = forecaster.predict`` (or ``predict_proba`` or ``predict_quantiles``,
+       depending on ``scoring``)
+    4. Compute ``scoring`` on ``y_pred`` versus :math:`y_{test, 1}`
+    5. If ``i == K``, terminate, otherwise
+    6. Set ``i = i + 1``
+    7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
+       how depends on ``strategy``:
+
+        - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
+          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+        - if ``strategy == "update"``, update ``forecaster`` via ``update``,
+          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+        - if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
+          with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
+
+    8. Go to 3
+
+    Results returned in this function's return are:
+
+    * results of ``scoring`` calculations, from 4,  in the `i`-th loop
+    * runtimes for fitting and/or predicting, from 2, 3, 7, in the `i`-th loop
+    * cutoff state of ``forecaster``, at 3, in the `i`-th loop
+    * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
+
+    A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
+
     Parameters
     ----------
     forecaster : sktime BaseForecaster descendant (concrete forecaster)
@@ -301,46 +339,6 @@ def evaluate(
 
         - y_test: (pd.Series) present if see `return_data=True`
         testing fold of the i-th split in `cv`, used to compute the metric.
-
-    Notes
-    -----
-    The experiment run is the following:
-
-    Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
-    the train/test folds produced by the generator ``cv.split_series(y)``.
-    Denote by :math:`X_{train, 1}, X_{test, 1}, \dots, X_{train, K}, X_{test, K}`
-    the train/test folds produced by the generator ``cv_X.split_series(X)``
-    (if ``X`` is ``None``, consider these to be ``None`` as well).
-
-    1. Set ``i = 1``
-    2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
-       with a ``fh`` to forecast :math:`y_{test, 1}`
-    3. The ``forecaster`` predict with exogeneous data :math:`X_{test, i}`
-       ``y_pred = forecaster.predict`` (or ``predict_proba`` or ``predict_quantiles``,
-       depending on ``scoring``)
-    4. Compute ``scoring`` on ``y_pred`` versus :math:`y_{test, 1}`
-    5. If ``i == K``, terminate, otherwise
-    6. Set ``i = i + 1``
-    7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
-       how depends on ``strategy``:
-
-        - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
-          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-        - if ``strategy == "update"``, update ``forecaster`` via ``update``,
-          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-        - if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
-          with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
-
-    8. Go to 3
-
-    Results returned in this function's return are:
-
-    * results of ``scoring`` calculations, from 4,  in the `i`-th loop
-    * runtimes for fitting and/or predicting, from 2, 3, 7, in the `i`-th loop
-    * cutoff state of ``forecaster``, at 3, in the `i`-th loop
-    * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
-
-    A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
 
     Examples
     --------
