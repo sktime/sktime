@@ -99,6 +99,34 @@ class Empirical(BaseDistribution):
         self._sorted = sorted
         self._weights = weights
 
+    def _apply_per_ix(self, func, params, x=None):
+        """Apply function per index."""
+        sorted = self._sorted
+        weights = self._weights
+
+        if x is not None and hasattr(x, "index"):
+            index = x.index
+        else:
+            index = self.index
+        if x is not None and hasattr(x, "columns"):
+            cols = x.columns
+        else:
+            cols = self.columns
+
+        res = pd.DataFrame(index=index, columns=cols)
+        for ix in index:
+            for col in cols:
+                spl_t = sorted[ix][col]
+                weights_t = weights[ix][col]
+                if x is None:
+                    x_t = None
+                elif hasattr(x, "loc"):
+                    x_t = x.loc[ix, col]
+                else:
+                    x_t = x
+                res.loc[ix, col] = func(spl=spl_t, weights=weights_t, x=x_t, **params)
+        return res
+
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
 
@@ -117,21 +145,8 @@ class Empirical(BaseDistribution):
         pd.DataFrame with same rows as `self`, single column `"energy"`
         each row contains one float, self-energy/energy as described above.
         """
-        sorted = self._sorted
-        weights = self._weights
-
-        res = pd.DataFrame(index=x.index, columns=["energy"])
-        for ix in x.index:
-            energy_row = 0
-            for col in x.columns:
-                spl_t = sorted[ix][col]
-                weights_t = weights[ix][col]
-                if x is None:
-                    x_t = None
-                else:
-                    x_t = x.loc[ix, col]
-                energy_row += _energy_np(spl_t, x_t, weights_t, assume_sorted=True)
-            res.loc[ix, "energy"] = energy_row
+        energy = self._apply_per_ix(_energy_np, {"assume_sorted": True}, x=x)
+        res = pd.DataFrame(energy.sum(axis=1), columns=["energy"])
         return res
 
     def mean(self):
@@ -184,11 +199,13 @@ class Empirical(BaseDistribution):
 
     def cdf(self, x):
         """Cumulative distribution function."""
-        return "todo"
+        cdf_val = self._apply_per_ix(_cdf_np, {"assume_sorted": True}, x=x)
+        return cdf_val
 
     def ppf(self, p):
         """Quantile function = percent point function = inverse cdf."""
-        return "todo"
+        ppf_val = self._apply_per_ix(_ppf_np, {"assume_sorted": True}, x=p)
+        return ppf_val
 
     def sample(self, n_samples=None):
         """Sample from the distribution.
@@ -319,3 +336,77 @@ def _energy_np(spl, x=None, weights=None, assume_sorted=False):
         energy = np.sum(weights * spl_diff)
 
     return energy
+
+
+def _cdf_np(spl, x, weights=None, assume_sorted=False):
+    """Compute empirical cdf, fast numpy based subroutine.
+
+    Parameters
+    ----------
+    spl : 1D np.ndarray
+        empirical sample
+    x : float
+        value at which to evaluate cdf
+    weights : None or 1D np.ndarray, optional, default=None
+        if None, computes unweighted cdf, if 1D np.ndarray, computes weighted cdf
+        if not None, must be of same length as ``spl``, needs not be normalized
+    assume_sorted : bool, optional, default=False
+        if True, assumes that ``spl`` is sorted in ascending order
+
+    Returns
+    -------
+    cdf_val float
+        cdf-value at x
+    """
+    if weights is None:
+        weights = np.ones(len(spl))
+
+    if not assume_sorted:
+        sorter = np.argsort(spl)
+        spl = spl[sorter]
+        weights = weights[sorter]
+
+    w_sum = np.sum(weights)
+    weights = weights / w_sum
+
+    weights_select = weights[spl <= x]
+    cdf_val = np.sum(weights_select)
+
+    return cdf_val
+
+def _ppf_np(spl, x, weights=None, assume_sorted=False):
+    """Compute empirical ppf, fast numpy based subroutine.
+
+    Parameters
+    ----------
+    spl : 1D np.ndarray
+        empirical sample
+    x : float
+        probability at which to evaluate ppf
+    weights : None or 1D np.ndarray, optional, default=None
+        if None, computes unweighted ppf, if 1D np.ndarray, computes weighted ppf
+        if not None, must be of same length as ``spl``, needs not be normalized
+    assume_sorted : bool, optional, default=False
+        if True, assumes that ``spl`` is sorted in ascending order
+
+    Returns
+    -------
+    ppf_val float
+        ppf-value at p
+    """
+    if weights is None:
+        weights = np.ones(len(spl))
+
+    if not assume_sorted:
+        sorter = np.argsort(spl)
+        spl = spl[sorter]
+        weights = weights[sorter]
+
+    w_sum = np.sum(weights)
+    weights = weights / w_sum
+
+    cum_weights = np.cumsum(weights)
+    ix_val = np.searchsorted(cum_weights, x)
+    ppf_val = spl[ix_val]
+
+    return ppf_val
