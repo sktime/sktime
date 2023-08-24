@@ -99,7 +99,7 @@ class Empirical(BaseDistribution):
         self._sorted = sorted
         self._weights = weights
 
-    # def energy(self, x=None):
+    def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
 
         Let :math:`X, Y` be i.i.d. random variables with the distribution of `self`.
@@ -117,13 +117,22 @@ class Empirical(BaseDistribution):
         pd.DataFrame with same rows as `self`, single column `"energy"`
         each row contains one float, self-energy/energy as described above.
         """
-        # splx, sply = empirical samples of X, Y
-        # N = self._N
-        # spl = self.spl
+        sorted = self._sorted
+        weights = self._weights
 
-        # todo: use energy utility _energy per row/column iloc
-
-        # return energy
+        res = pd.DataFrame(index=x.index, columns=["energy"])
+        for ix in x.index:
+            energy_row = 0
+            for col in x.columns:
+                spl_t = sorted[ix][col]
+                weights_t = weights[ix][col]
+                if x is None:
+                    x_t = None
+                else:
+                    x_t = x.loc[ix, col]
+                energy_row += _energy(spl_t, x_t, weights=weights_t, assume_sorted=True)
+            res.loc[ix, "energy"] = energy_row
+        return res
 
     def mean(self):
         r"""Return expected value of the distribution.
