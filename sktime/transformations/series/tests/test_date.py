@@ -12,7 +12,6 @@ from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.date import DateTimeFeatures
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 if run_test_for_class(DateTimeFeatures):
     # Load multivariate dataset longley and apply calendar extraction
