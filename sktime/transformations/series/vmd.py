@@ -1,44 +1,63 @@
 import numpy as np
 import pandas as pd
+
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["DaneLyttinen"]
 
+
 class VmdTransformer(BaseTransformer):
     """Variational Mode Decomposition transformer.
 
-    An implementation of the Variational Mode Decomposition method.
-    Uses the vmdpy package as the implementation of the transformer as described in the works below
-    Vinícius R. Carvalho, Márcio F.D. Moraes, Antônio P. Braga, Eduardo M.A.M. Mendes, Evaluating five different adaptive decomposition methods for EEG signal seizure detection and classification, Biomedical Signal Processing and Control, Volume 62, 2020, 102073, ISSN 1746-8094, https://doi.org/10.1016/j.bspc.2020.102073.
+    An implementation of the Variational Mode Decomposition method (2014). [1]_
 
-    This transformer will take a single series as input, and decompose the series into multiple Intrinsic Mode Function, the number of Instrinsic Mode Functions created depend on the K parameter.
-    This is useful if you have a complex series and want to decompose it into easier-to-learn IMF's, which when summed together make up an estimate of the original time series with some loss of information.
+    Overview: This is an :term:`reduction` transformer which uses the Variational Mode Decomposition method
+    to decompose an original time series into multiple Intrinsic Mode Functions.
+    The number of Instrinsic Mode Functions created depend on the K parameter and should be optimally defined if known.
+    If the K parameter is unknown, this transformer will attempt to find a good estimate of it by comparing the
+    original time series against the reconstruction of the signals using the energy loss coefficient, default of 0.01.
+
+    This is useful if you have a complex series and want to decompose it into easier-to-learn IMF's,
+    which when summed together make up an estimate of the original time series with some loss of information.
+
+    Uses the vmdpy package as the implementation of the transformer as described in the works below
 
     References
     ----------
     .. [1] K. Dragomiretskiy and D. Zosso, - Variational Mode Decomposition:
         IEEE Transactions on Signal Processing, vol. 62, no. 3, pp. 531-544, Feb.1, 2014, doi: 10.1109/TSP.2013.2288675.
     .. [2] Vinícius R. Carvalho, Márcio F.D. Moraes, Antônio P. Braga, Eduardo M.A.M. Mendes -
-        Evaluating five different adaptive decomposition methods for EEG signal seizure detection and classification, Biomedical Signal Processing and Control, Volume 62, 2020, 102073, ISSN 1746-8094
+        Evaluating five different adaptive decomposition methods for EEG signal seizure detection and classification,
+        Biomedical Signal Processing and Control, Volume 62, 2020, 102073, ISSN 1746-8094
         https://doi.org/10.1016/j.bspc.2020.102073.
     .. [3] https://github.com/vrcarva/vmdpy
 
     Parameters
     ----------
     K : int, optional (default='None')
-        the number of Intrinsic Mode Functions to decompose original series to. If None, will decompose the series iteratively until kMax is reached or the sum of the decomposed modes against the original series is less than the energy_loss_coefficient parameter.
+        the number of Intrinsic Mode Functions to decompose original series to.
+        If None, will decompose the series iteratively until kMax is reached or the sum of the decomposed modes
+         against the original series is less than the energy_loss_coefficient parameter.
     kMax : int, optional (default=30)
-        the limit on the number of Intrinsic Mode Functions to decompose the original series to if the energy_loss_coefficient hasn't been reached. Only used if K is None.
+        the limit on the number of Intrinsic Mode Functions to decompose the original series to
+        if the energy_loss_coefficient hasn't been reached.
+        Only used if K is None.
     energy_loss_coefficient : int, optional (default=0.01)
-        decides the acceptable loss of information from the original series when the decomposed modes are summed together as calculated by the energy loss coefficient. Only used if K is None
+        decides the acceptable loss of information from the original series when the decomposed modes are summed together
+         as calculated by the energy loss coefficient.
+         Only used if K is None
     alpha : int, optional (default=2000)
-        bandwidth constraint for the generated Intrinsic Mode Functions, balancing parameter of the data-fidelity constraint
+        bandwidth constraint for the generated Intrinsic Mode Functions,
+        balancing parameter of the data-fidelity constraint
     tau : int, optional (default=0.)
         noise tolerance of the generated modes, time step of dual ascent
     DC : int, optional (default=0)
         Imposed DC parts
     init : int, optional (default=1)
-        parameter for omegas, default of one will initialize the omegas uniformly, 0 = all omegas start at 0, 2 = all omegas are initialized at random
+        parameter for omegas, default of one will initialize the omegas uniformly,
+        1 = all omegas initialized uniformly
+        0 = all omegas start at 0,
+        2 = all omegas are initialized at random
     tol : int, optional (default=1e-7)
         convergence tolerance criterion
 
@@ -66,7 +85,7 @@ class VmdTransformer(BaseTransformer):
         "handles-missing-data": False,
         "capability:missing_values:removes": False,
         "python_version": None,
-        "python_dependencies": ['vmdpy', 'numpy', 'pandas']
+        "python_dependencies": ["vmdpy", "numpy", "pandas"]
     }
 
     def __init__(
@@ -74,7 +93,7 @@ class VmdTransformer(BaseTransformer):
         K=None,
         kMax=30,
         alpha=2000,
-        tau=0.,
+        tau=0.0,
         DC=0,
         init=1,
         tol=1e-7,
@@ -106,9 +125,11 @@ class VmdTransformer(BaseTransformer):
 
     def _transform(self, X, y=None):
         from vmdpy import VMD
-        u, u_hat, omega = VMD(X.values, self.alpha, self.tau, self._K, self.DC, self.init, self.tol)
+        u, u_hat, omega = VMD(
+            X.values, self.alpha, self.tau, self._K, self.DC, self.init, self.tol
+        )
         transposed = u.T
-        if (len(u.T[0]) != len(X.values)):
+        if len(u.T[0]) != len(X.values):
             last_row = transposed[-1, :]
             transposed = np.vstack([transposed, last_row])
         Y = pd.DataFrame(transposed)
@@ -116,17 +137,22 @@ class VmdTransformer(BaseTransformer):
 
     def __runVMDUntilCoefficientThreshold(self, data):
         from vmdpy import VMD
+
         K = 1
         data = data.flatten()
+        if len(data) % 2 == 1:
+            data = np.append(data,data[-1])
         while K < self.kMax:
-            u, u_hat, omega = VMD(data, self.alpha, self.tau, K, self.DC, self.init, self.tol)
+            u, u_hat, omega = VMD(
+                data, self.alpha, self.tau, K, self.DC, self.init, self.tol
+            )
             reconstruct = sum(u)
             originalData = data
             ## The package truncates the last odd data point in series
-            if (len(data) % 2 == 1):
-                originalData = data[:-1]
-            energy_loss_coef = (np.linalg.norm((originalData - reconstruct), 2) ** 2 / np.linalg.norm(originalData, 2))
-            if (energy_loss_coef > self.energy_loss_coefficient):
+            energy_loss_coef = (np.linalg.norm(
+                (originalData - reconstruct), 2
+            ) ** 2 / np.linalg.norm(originalData, 2))
+            if energy_loss_coef > self.energy_loss_coefficient:
                 K += 1
                 continue
             else:
