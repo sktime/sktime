@@ -61,7 +61,6 @@ def X_many_na():
     X_many_na.loc[:, "POP"] = np.nan
     X_many_na.loc["1960", :] = np.nan
     X_many_na.loc["1962", :] = np.nan
-    X_many_na.dropna(axis=1)
     return X_many_na
 
 
