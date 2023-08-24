@@ -23,7 +23,7 @@ class Laplace(BaseDistribution):
 
     Example
     -------
-    >>> from ssktime.proba.laplace import Laplace
+    >>> from sktime.proba.laplace import Laplace
 
     >>> n = Laplace(mu=[[0, 1], [2, 3], [4, 5]], scale=1)
     """
