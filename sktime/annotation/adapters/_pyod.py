@@ -126,5 +126,5 @@ class PyODAnnotator(BaseSeriesAnnotator):
 
             params = {"estimator": KNN()}
         else:
-            params = {}
+            params = {"estimator": "foo"}
         return params
