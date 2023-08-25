@@ -303,7 +303,7 @@ Detrending and Decomposition
     ConditionalDeseasonalizer
     STLTransformer
 
-.. currentmodule:: sktime.transformations.series.detrend.mstl.py
+.. currentmodule:: sktime.transformations.series.detrend.mstl
 
 .. autosummary::
     :toctree: auto_generated/
