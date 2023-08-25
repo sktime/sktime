@@ -236,7 +236,7 @@ Series-to-series transformers transform individual time series into another time
 
 When applied to panels or hierarchical data, individual series are transformed.
 
-.. currentmodule:: sktime.transformations.mstl
+.. currentmodule:: sktime.transformations.series.detrend.mstl.py
 
 .. autosummary::
     :toctree: auto_generated/
