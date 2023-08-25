@@ -102,6 +102,11 @@ class BaseGridSearch(_DelegatedForecaster):
         self._extend_to_all_scitypes("y_inner_mtype")
         self._extend_to_all_scitypes("X_inner_mtype")
 
+        # this ensures univariate broadcasting over variables
+        # if tune_by_variable is True
+        if tune_by_variable:
+            self.set_tags(**{"scitype:y": "univariate"})
+
     # attribute for _DelegatedForecaster, which then delegates
     #     all non-overridden methods are same as of getattr(self, _delegate_name)
     #     see further details in _DelegatedForecaster docstring
@@ -114,6 +119,9 @@ class BaseGridSearch(_DelegatedForecaster):
         If no mtypes are present of a time series scitype, adds a pandas based one.
         If only univariate pandas scitype is present for Series ("pd.Series"),
         also adds the multivariate one ("pd.DataFrame").
+
+        If tune_by_instance is True, only Series mtypes are added,
+        and potentially present Panel or Hierarchical mtypes are removed.
 
         Parameters
         ----------
@@ -139,6 +147,10 @@ class BaseGridSearch(_DelegatedForecaster):
         # if no Hierarchical mtypes are present, add pd.DataFrame based one
         if "Hierarchical" not in scitypes:
             tagval = tagval + ["pd_multiindex_hier"]
+
+        if self.tune_by_instance:
+            tagval = [x for x in tagval if mtype_to_scitype(x) == "Series"]
+
         self.set_tags(**{tagname: tagval})
 
     def _get_fitted_params(self):
