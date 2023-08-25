@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements grid search functionality to tune forecasters."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "fkiraly", "aiwalter"]
 __all__ = [
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
@@ -11,6 +11,7 @@ __all__ = [
 
 from collections.abc import Sequence
 from typing import Dict, List, Optional, Union
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -36,6 +37,8 @@ class BaseGridSearch(_DelegatedForecaster):
         "capability:pred_int:insample": True,
     }
 
+    # todo 0.24.0: replace all tune_by_variable defaults in this file with False
+    # remove deprecation message in BaseGridSearch.__init__
     def __init__(
         self,
         forecaster,
@@ -50,6 +53,8 @@ class BaseGridSearch(_DelegatedForecaster):
         return_n_best_forecasters=1,
         update_behaviour="full_refit",
         error_score=np.nan,
+        tune_by_instance=False,
+        tune_by_variable=None,
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -63,7 +68,24 @@ class BaseGridSearch(_DelegatedForecaster):
         self.return_n_best_forecasters = return_n_best_forecasters
         self.update_behaviour = update_behaviour
         self.error_score = error_score
+        self.tune_by_instance = tune_by_instance
+        self.tune_by_variable = tune_by_variable
+
         super().__init__()
+
+        # todo 0.24.0: remove this
+        if tune_by_variable is None:
+            warn(
+                f"in {self.__class__.__name__}, the default for tune_by_variable "
+                "will change from True to False in 0.24.0. "
+                "This will tune one parameter setting for all variables, while "
+                "currently it tunes one parameter per variable. "
+                "In order to maintain the current behaviour, ensure to set "
+                "the parameter tune_by_variable to True explicitly before upgrading "
+                "to version 0.24.0."
+            )
+            tune_by_variable = True
+
         tags_to_clone = [
             "requires-fh-in-fit",
             "capability:pred_int",
@@ -84,21 +106,6 @@ class BaseGridSearch(_DelegatedForecaster):
     #     all non-overridden methods are same as of getattr(self, _delegate_name)
     #     see further details in _DelegatedForecaster docstring
     _delegate_name = "best_forecaster_"
-
-    # ensure informative exception is raised for forecasters_ attribute
-    @property
-    def forecasters_(self):
-        raise AttributeError(
-            f"{self.__class__.__name__}.forecasters_ property should not be called "
-            "as tuning wrappers do not broadcast over instances or variables, "
-            "this is left to the underlying forecaster. "
-            "A previous, erroneous instance of column broadcasting was removed "
-            "in 0.22.1, see issue #5143 for a discussion. "
-            "To tune per column/variable, wrap the tuner in ColumnEnsembleForecaster. "
-            "To tune per instance or hierarchy level, wrap the tuner in "
-            "ForecastByLevel. In both cases, individual tuned forecasters will be "
-            "present in the forecasters_ attribute."
-        )
 
     def _extend_to_all_scitypes(self, tagname):
         """Ensure mtypes for all scitypes are in the tag with tagname.
@@ -440,6 +447,22 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+    tune_by_instance : bool, optional (default=False)
+        Whether to tune parameter by each time series instance separately,
+        in case of Panel or Hierarchical data passed to the tuning estimator.
+        Only applies if time series passed are Panel or Hierarchical.
+        If True, clones of the forecaster will be fit to each instance separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ForecastByLevel wrapper to self.
+        If False, the same best parameter is selected for all instances.
+    tune_by_variable : bool, optional (default=True)
+        Whether to tune parameter by each time series variable separately,
+        in case of multivariate data passed to the tuning estimator.
+        Only applies if time series passed are strictly multivariate.
+        If True, clones of the forecaster will be fit to each variable separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
+        If False, the same best parameter is selected for all variables.
 
     Attributes
     ----------
@@ -463,6 +486,12 @@ class ForecastingGridSearchCV(BaseGridSearch):
     n_best_scores_: list of float
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
+    forecasters_ : pd.DataFramee
+        DataFrame with all fitted forecasters and their parameters.
+        Only present if tune_by_instance=True or tune_by_variable=True,
+        and at least one of the two is applicable.
+        In this case, the other attributes are not present in self,
+        only in the fields of forecasters_.
 
     Examples
     --------
@@ -542,6 +571,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
+        tune_by_instance=False,
+        tune_by_variable=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -556,6 +587,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
+            tune_by_instance=tune_by_instance,
+            tune_by_variable=tune_by_variable,
         )
         self.param_grid = param_grid
 
@@ -723,6 +756,22 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+    tune_by_instance : bool, optional (default=False)
+        Whether to tune parameter by each time series instance separately,
+        in case of Panel or Hierarchical data passed to the tuning estimator.
+        Only applies if time series passed are Panel or Hierarchical.
+        If True, clones of the forecaster will be fit to each instance separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ForecastByLevel wrapper to self.
+        If False, the same best parameter is selected for all instances.
+    tune_by_variable : bool, optional (default=True)
+        Whether to tune parameter by each time series variable separately,
+        in case of multivariate data passed to the tuning estimator.
+        Only applies if time series passed are strictly multivariate.
+        If True, clones of the forecaster will be fit to each variable separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
+        If False, the same best parameter is selected for all variables.
 
     Attributes
     ----------
@@ -740,6 +789,12 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     n_best_scores_: list of float
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
+    forecasters_ : pd.DataFramee
+        DataFrame with all fitted forecasters and their parameters.
+        Only present if tune_by_instance=True or tune_by_variable=True,
+        and at least one of the two is applicable.
+        In this case, the other attributes are not present in self,
+        only in the fields of forecasters_.
     """
 
     def __init__(
@@ -759,6 +814,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
+        tune_by_instance=False,
+        tune_by_variable=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -773,6 +830,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
+            tune_by_instance=tune_by_instance,
+            tune_by_variable=tune_by_variable,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -928,6 +987,22 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     backend : str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
+    tune_by_instance : bool, optional (default=False)
+        Whether to tune parameter by each time series instance separately,
+        in case of Panel or Hierarchical data passed to the tuning estimator.
+        Only applies if time series passed are Panel or Hierarchical.
+        If True, clones of the forecaster will be fit to each instance separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ForecastByLevel wrapper to self.
+        If False, the same best parameter is selected for all instances.
+    tune_by_variable : bool, optional (default=True)
+        Whether to tune parameter by each time series variable separately,
+        in case of multivariate data passed to the tuning estimator.
+        Only applies if time series passed are strictly multivariate.
+        If True, clones of the forecaster will be fit to each variable separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
+        If False, the same best parameter is selected for all variables.
 
     Attributes
     ----------
@@ -945,6 +1020,12 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     n_best_scores_: list of float
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
+    forecasters_ : pd.DataFramee
+        DataFrame with all fitted forecasters and their parameters.
+        Only present if tune_by_instance=True or tune_by_variable=True,
+        and at least one of the two is applicable.
+        In this case, the other attributes are not present in self,
+        only in the fields of forecasters_.
 
     Examples
     --------
@@ -1004,6 +1085,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         backend: str = "loky",
         update_behaviour: str = "full_refit",
         error_score=np.nan,
+        tune_by_instance=False,
+        tune_by_variable=None,
     ):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -1023,6 +1106,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
+            tune_by_instance=tune_by_instance,
+            tune_by_variable=tune_by_variable,
         )
 
     def _fit(self, y, X=None, fh=None):
