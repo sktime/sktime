@@ -31,7 +31,7 @@ class MSTL(BaseTransformer):
         components.
     lmbda : {float, str, None}, optional
         The lambda parameter for the Box-Cox transform to be applied to endog prior to
-        decomposition. If None, no transform is applied. If “auto”, a value will be
+        decomposition. If None, no transform is applied. If `auto`, a value will be
         estimated that maximizes the log-likelihood function.
     iterate : int, optional
         Number of iterations to use to refine the seasonal component.
