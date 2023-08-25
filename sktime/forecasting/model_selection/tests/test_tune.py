@@ -1,9 +1,8 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Test grid search CV."""
+"""Test forecasting tuners."""
 
 __author__ = ["mloning", "fkiraly"]
-__all__ = ["test_gscv", "test_rscv"]
 
 import numpy as np
 import pytest
@@ -145,6 +144,10 @@ def test_gscv(forecaster, param_grid, cv, scoring, error_score, multivariate):
         cv=cv,
         scoring=scoring,
         error_score=error_score,
+        # todo 0.24.0: remove this
+        # and/or add a test for tune_by_column=True
+        # in this case, the forecaster is expeceted to vectorize over columns
+        tune_by_column=False,
     )
     gscv.fit(y, X)
 
@@ -210,6 +213,10 @@ def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score, n_c
         cv=cv,
         scoring=scoring,
         error_score=error_score,
+        # todo 0.24.0: remove this
+        # and/or add a test for tune_by_column=True
+        # in this case, the forecaster is expeceted to vectorize over columns
+        tune_by_column=False,
     )
     gscv.fit(y, X)
 
