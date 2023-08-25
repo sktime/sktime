@@ -51,19 +51,16 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         X : iterable-style or map-style dataset
             see (https://pytorch.org/docs/stable/data.html) for more information
         """
-        dataloader = self.build_pytorch_dataloader(y)
+        dataloader = self.build_pytorch_train_dataloader(y)
         self.network.train()
-
-        criterion = self.criterion()
-        optimizer = self.optimizer(self.network.parameters(), lr=self.lr)
 
         for _ in range(self.num_epochs):
             for x, y in dataloader:
                 y_pred = self.network(x)
-                loss = criterion(y_pred, y)
-                optimizer.zero_grad()
+                loss = self.criterion(y_pred, y)
+                self._optimizer.zero_grad()
                 loss.backward()
-                optimizer.step()
+                self._optimizer.step()
 
         self._fh = self.pred_len
 
@@ -71,7 +68,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         """Predict with fitted model."""
         from torch import cat
 
-        dataloader = self.build_pytorch_dataloader(X)
+        dataloader = self.build_pytorch_pred_dataloader(X)
 
         y_pred = []
         for x, _ in dataloader:
@@ -79,25 +76,51 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
         return y_pred
 
-    def build_pytorch_dataloader(self, y):
+    def build_pytorch_train_dataloader(self, y):
         """Build PyTorch DataLoader for training."""
         from torch.utils.data import DataLoader
 
-        if self.custom_dataset:
-            if hasattr(self.custom_dataset, "build_dataset") and callable(
-                self.custom_dataset, "build_dataset"
-            ):
-                dataset = self.custom_dataset.build_dataset(
-                    y=y,
-                    seq_len=self.network.seq_len,
-                    pred_len=self.network.pred_len,
-                    scale=self.scale,
-                    target=self.target,
-                    features=self.features,
-                )
+        if hasattr(self, "custom_dataset_train"):
+            if hasattr(self.custom_dataset_train, "build_dataset") and \
+                    callable(self.custom_dataset_train.build_dataset):
+                self.custom_dataset_train.build_dataset(y)
+                dataset = self.custom_dataset_train
             else:
                 raise NotImplementedError(
-                    "Custom dataset's build_dataset method is not" "available."
+                    "Custom Dataset `build_dataset` method is not available. Please"
+                    f"refer to the {self.__class__.__name__}.build_dataset"
+                    "documentation."
+                )
+        else:
+            dataset = PyTorchDataset(
+                y=y,
+                seq_len=self.network.seq_len,
+                pred_len=self.network.pred_len,
+                scale=self.scale,
+                target=self.target,
+                features=self.features,
+            )
+
+        return DataLoader(
+            dataset,
+            self.batch_size,
+            shuffle=self.shuffle,
+        )
+
+    def build_pytorch_pred_dataloader(self, y):
+        """Build PyTorch DataLoader for prediction."""
+        from torch.utils.data import DataLoader
+
+        if hasattr(self, "custom_dataset_pred"):
+            if hasattr(self.custom_dataset_pred, "build_dataset") and \
+                    callable(self.custom_dataset_pred.build_dataset):
+                self.custom_dataset_train.build_dataset(y)
+                dataset = self.custom_dataset_train
+            else:
+                raise NotImplementedError(
+                    "Custom Dataset `build_dataset` method is not available. Please"
+                    f"refer to the {self.__class__.__name__}.build_dataset"
+                    "documentation."
                 )
         else:
             dataset = PyTorchDataset(
@@ -117,7 +140,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
 
     def get_y_true(self, y):
         """Get y_true values for validation."""
-        dataloader = self.build_pytorch_dataloader(y)
+        dataloader = self.build_pytorch_pred_dataloader(y)
         y_true = [y.flatten().numpy() for _, y in dataloader]
         return np.concatenate(y_true, axis=0)
 
