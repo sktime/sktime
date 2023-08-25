@@ -236,13 +236,6 @@ Series-to-series transformers transform individual time series into another time
 
 When applied to panels or hierarchical data, individual series are transformed.
 
-.. currentmodule:: sktime.transformations.series.detrend.mstl.py
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MSTL
 
 Lagging
 ~~~~~~~
@@ -309,6 +302,14 @@ Detrending
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
+
+.. currentmodule:: sktime.transformations.series.detrend.mstl.py
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MSTL
 
 .. currentmodule:: sktime.transformations.series.clear_sky
 
