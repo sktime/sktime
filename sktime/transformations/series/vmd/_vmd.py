@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.transformations.series.vmd._vmdpy import VMD
 
 __author__ = ["DaneLyttinen", "vcarvo"]
 
@@ -101,8 +102,6 @@ class VmdTransformer(BaseTransformer):
         "capability:unequal_length:removes": False,
         "handles-missing-data": False,
         "capability:missing_values:removes": False,
-        "python_version": None,
-        "python_dependencies": ["vmdpy", "numpy", "pandas"]
     }
 
     def __init__(
@@ -141,8 +140,6 @@ class VmdTransformer(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        from vmdpy import VMD
-
         # Package truncates last if odd, so make even
         # through duplication then remove duplicate
         values = X.values
@@ -158,8 +155,6 @@ class VmdTransformer(BaseTransformer):
         return Y
 
     def __runVMDUntilCoefficientThreshold(self, data):
-        from vmdpy import VMD
-
         K = 1
         data = data.flatten()
         if len(data) % 2 == 1:
