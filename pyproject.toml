@@ -87,7 +87,6 @@ all_extras = [
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
-    "vmdpy>=0.2"
 ]
 
 all_extras_pandas2 = [
@@ -123,7 +122,6 @@ all_extras_pandas2 = [
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
-    "vmdpy>=0.2"
 ]
 
 cython_extras = [
