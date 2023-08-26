@@ -194,7 +194,7 @@ class MyTransformer(BaseTransformer):
         # if False, exception is raised if inverse_transform is called,
         #   unless the skip-inverse-transform tag is set to True
         #
-        # capability:inverse_transform:range = domain of intvertibility of transform
+        # capability:inverse_transform:range = domain of invertibility of transform
         "capability:inverse_transform:range": None,
         # valid values: None (no range), list of two floats [min, max]
         # if None, inverse_transform is assumed to be defined for all values
