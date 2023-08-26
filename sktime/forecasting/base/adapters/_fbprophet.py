@@ -88,9 +88,9 @@ class _ProphetAdapter(BaseForecaster):
 
         # Add seasonality/seasonalities
         if self.add_seasonality:
-            if type(self.add_seasonality) == dict:
+            if isinstance(self.add_seasonality, dict):
                 self._forecaster.add_seasonality(**self.add_seasonality)
-            elif type(self.add_seasonality) == list:
+            elif isinstance(self.add_seasonality, list):
                 for seasonality in self.add_seasonality:
                     self._forecaster.add_seasonality(**seasonality)
 
