@@ -1,6 +1,7 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
 
-from sktime.forecasting.deep_learning.base import BaseDeepNetworkPyTorch
+from sktime.networks.base import BaseDeepNetworkPyTorch
+from sktime.networks.ltsf.ltsf import LTSFLinearNetwork
 
 
 class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
@@ -79,9 +80,19 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             pred_len,
             in_channels,
             individual,
-        ).build()
+        )._build()
 
-        self._optimizer = type(optimizer)(self.network.parameters(), self.lr)
+        import torch
+
+        if self.criterion:
+            self._criterion = self.criterion()
+        else:
+            self._criterion = torch.nn.MSELoss()
+
+        if self.optimizer:
+            self._optimizer = self.optimizer(self.network.parameters(), lr=self.lr)
+        else:
+            self._optimizer = torch.optim.Adam(self.network.parameters(), lr=self.lr)
 
         super().__init__()
 
@@ -100,11 +111,14 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
+        import torch
+
         params = [
             {
                 "seq_len": 4,
                 "pred_len": 1,
                 "lr": 0.005,
+                "optimizer": torch.optim.Adam,
                 "batch_size": 32,
                 "num_epochs": 1,
                 "individual": True,

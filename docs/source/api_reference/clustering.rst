@@ -20,7 +20,6 @@ Clustering models
     :template: class.rst
 
     TimeSeriesKMeans
-    TimeSeriesKMeansTslearn
 
 .. currentmodule:: sktime.clustering.k_medoids
 

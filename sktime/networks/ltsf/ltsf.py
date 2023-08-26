@@ -1,7 +1,5 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
 
-from sktime.networks.base import BaseDeepNetworkPyTorch
-
 
 class LTSFLinearNetwork:
     """LSTF-Linear Network.
@@ -32,13 +30,14 @@ class LTSFLinearNetwork:
     }
         [Source]: https://github.com/cure-lab/LTSF-Linear/blob/main/models/Linear.py
     """
+
     def __init__(self, seq_len, pred_len, in_channels=1, individual=False):
         self.seq_len = seq_len
         self.pred_len = pred_len
         self.in_channels = in_channels
         self.individual = individual
 
-    def build(self):
+    def _build(self):
         import torch.nn as nn
 
         class _LTSFLinearNetwork(nn.Module):
@@ -60,11 +59,9 @@ class LTSFLinearNetwork:
                 if self.individual:
                     self.Linear = nn.ModuleList()
                     for _ in range(self.in_channels):
-                        self.Linear.append(
-                            nn.Linear(self.seq_len, self.pred_len, dtype=float)
-                        )
+                        self.Linear.append(nn.Linear(self.seq_len, self.pred_len))
                 else:
-                    self.Linear = nn.Linear(self.seq_len, self.pred_len, dtype=float)
+                    self.Linear = nn.Linear(self.seq_len, self.pred_len)
 
             def forward(self, x):
                 """Forward pass for LSTF-Linear Network.
@@ -93,8 +90,5 @@ class LTSFLinearNetwork:
                 return x  # [Batch, Output Length, Channel]
 
         return _LTSFLinearNetwork(
-            self.seq_len,
-            self.pred_len,
-            self.in_channels,
-            self.individual
+            self.seq_len, self.pred_len, self.in_channels, self.individual
         )

@@ -57,12 +57,12 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         for _ in range(self.num_epochs):
             for x, y in dataloader:
                 y_pred = self.network(x)
-                loss = self.criterion(y_pred, y)
+                loss = self._criterion(y_pred, y)
                 self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
 
-        self._fh = self.pred_len
+        # self._fh = self.pred_len
 
     def _predict(self, X, **kwargs):
         """Predict with fitted model."""
@@ -80,15 +80,16 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         """Build PyTorch DataLoader for training."""
         from torch.utils.data import DataLoader
 
-        if hasattr(self, "custom_dataset_train"):
-            if hasattr(self.custom_dataset_train, "build_dataset") and \
-                    callable(self.custom_dataset_train.build_dataset):
+        if self.custom_dataset_train:
+            if hasattr(self.custom_dataset_train, "build_dataset") and callable(
+                self.custom_dataset_train.build_dataset
+            ):
                 self.custom_dataset_train.build_dataset(y)
                 dataset = self.custom_dataset_train
             else:
                 raise NotImplementedError(
-                    "Custom Dataset `build_dataset` method is not available. Please"
-                    f"refer to the {self.__class__.__name__}.build_dataset"
+                    "Custom Dataset `build_dataset` method is not available. Please "
+                    f"refer to the {self.__class__.__name__}.build_dataset "
                     "documentation."
                 )
         else:
@@ -97,8 +98,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
                 seq_len=self.network.seq_len,
                 pred_len=self.network.pred_len,
                 scale=self.scale,
-                target=self.target,
-                features=self.features,
             )
 
         return DataLoader(
@@ -111,9 +110,10 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         """Build PyTorch DataLoader for prediction."""
         from torch.utils.data import DataLoader
 
-        if hasattr(self, "custom_dataset_pred"):
-            if hasattr(self.custom_dataset_pred, "build_dataset") and \
-                    callable(self.custom_dataset_pred.build_dataset):
+        if self.custom_dataset_pred:
+            if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
+                self.custom_dataset_pred.build_dataset
+            ):
                 self.custom_dataset_train.build_dataset(y)
                 dataset = self.custom_dataset_train
             else:
@@ -128,8 +128,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
                 seq_len=self.network.seq_len,
                 pred_len=self.network.pred_len,
                 scale=self.scale,
-                target=self.target,
-                features=self.features,
             )
 
         return DataLoader(
@@ -154,30 +152,10 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
 class PyTorchDataset:
     """Dataset for use in sktime deep learning forecasters."""
 
-    def __init__(self, y, seq_len, pred_len, scale, target, features=None):
+    def __init__(self, y, seq_len, pred_len, scale):
         self.y = y
         self.seq_len = seq_len
         self.pred_len = pred_len
-        self.target = target
-        self.features = features
-
-        if not target:
-            if len(y.shape) > 1:
-                raise TypeError(
-                    "Forecaster received multidimensional data, but received no target"
-                    "column. Please specify target column in `target` init parameter."
-                    "Optionally, specify which columns to include as features using"
-                    "`features`."
-                )
-        elif isinstance(self.target, str):
-            self.target = [self.target]
-
-        if self.features:
-            if isinstance(self.features, str):
-                self.features = [self.features]
-            y = y[self.features + self.target]
-        else:
-            y = y[target]
 
         if scale:
             from sklearn.preprocessing import StandardScaler

@@ -418,7 +418,7 @@ Binning and segmentation
     IntervalSegmenter
     RandomIntervalSegmenter
 
-Missing value treatment
+Missing value imputation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.impute
@@ -427,7 +427,6 @@ Missing value treatment
     :toctree: auto_generated/
     :template: class.rst
 
-    DropNA
     Imputer
 
 Seasonality and Date-Time Features
@@ -440,16 +439,6 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     DateTimeFeatures
-
-.. currentmodule:: sktime.transformations.series.holiday
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    HolidayFeatures
-    CountryHolidaysTransformer
-    FinancialHolidaysTransformer
 
 .. currentmodule:: sktime.transformations.series.time_since
 
