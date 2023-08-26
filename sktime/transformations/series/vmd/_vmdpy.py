@@ -114,7 +114,7 @@ def VMD(f, alpha, tau, K, DC, init, tol):
     while uDiff > tol and n < Niter - 1:  # not converged and below iterations limit
         # update first mode accumulator
         k = 0
-        sum_uk = u_hat_plus[n, :, K-1] + sum_uk - u_hat_plus[n, :, 0]
+        sum_uk = u_hat_plus[n, :, K - 1] + sum_uk - u_hat_plus[n, :, 0]
 
         # update spectrum of first mode through Wiener filter of residuals
         u_hat_plus_enumerator = f_hat_plus - sum_uk - lambda_hat[n, :] / 2
