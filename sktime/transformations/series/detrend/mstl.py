@@ -16,6 +16,18 @@ class MSTL(BaseTransformer):
 
     Direct interface for `statsmodels.tsa.seasonal.MSTL`.
 
+    `fit` stores the decomposed values in self.trend_, self.seasonal_, and self.resid_.
+    If `return_components=False`, then `transform` returns a pd.Series of the
+    deseasonalized values. The seasonal and residual components can be found in
+    self.trend_ and self.resid_.
+    If `return_components=True`, then `transform` returns the transformed series, as
+    well as three components as variables in the returned multivariate series
+    (DataFrame cols)
+        "transformed" - the transformed series
+        "seasonal" - the seasonal component(s)
+        "trend" - the trend component
+        "resid" - the residuals after de-trending, de-seasonalizing
+
     Parameters
     ----------
     endog : array_like
@@ -42,9 +54,21 @@ class MSTL(BaseTransformer):
         if True, will return the transformed series, as well as three components
             as variables in the returned multivariate series (DataFrame cols)
             "transformed" - the transformed series
-            "seasonal" - the seasonal component
+            "seasonal" - the seasonal component(s)
             "trend" - the trend component
             "resid" - the residuals after de-trending, de-seasonalizing
+
+    Attributes
+    ----------
+    trend_ : pd.Series
+        Trend component of series seen in fit.
+    seasonal_ : pd.Series or list of pd.Series
+        If `periods` is a single value, this contains the seasonal component of the
+        series observed during fitting.
+        If `periods` is a list of values, this can contain multiple pd.Series, each
+        corresponding to a different period.
+    resid_ : pd.Series
+        Residuals component of series seen in fit.
 
     References
     ----------
