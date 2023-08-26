@@ -96,6 +96,7 @@ class VmdTransformer(BaseTransformer):
         "enforce_index_type": None,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": True,
+        "capability:inverse_transform:exact": False,
         "skip-inverse-transform": False,
         "capability:unequal_length": False,
         "capability:unequal_length:removes": False,
