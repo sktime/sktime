@@ -156,6 +156,12 @@ class MSTL(BaseTransformer):
 
         return ret_obj
 
+    def _inverse_transform(self, X, y=None):
+        if len(self.seasonal_.shape) > 1:
+            return self.seasonal_.sum(axis=1) + self.resid_ + self.trend_
+        else:
+            return self.seasonal_ + self.resid_ + self.trend_
+
     def _make_return_object(self, X, mstl):
         if len(mstl.seasonal.shape) > 1:
             seasonal = mstl.seasonal.sum(axis=1)
