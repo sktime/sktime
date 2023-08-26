@@ -204,6 +204,12 @@ ESTIMATOR_TAG_REGISTER = [
         "domain of invertibility of transform, must be list [lower, upper] of float",
     ),
     (
+        "capability:inverse_transform:exact",
+        "transformer",
+        "bool",
+        "whether inverse_transform is expected to be an exact inverse to transform",
+    ),
+    (
         "capability:pred_int",
         "forecaster",
         "bool",
