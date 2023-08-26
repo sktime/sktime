@@ -236,7 +236,6 @@ Series-to-series transformers transform individual time series into another time
 
 When applied to panels or hierarchical data, individual series are transformed.
 
-
 Lagging
 ~~~~~~~
 
