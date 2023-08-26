@@ -33,6 +33,8 @@ SOFTWARE.
 """
 import numpy as np
 
+__author__ = ["vcarvo"]
+
 
 def VMD(f, alpha, tau, K, DC, init, tol):
     """Variational mode decomposition.
