@@ -79,7 +79,6 @@ class VmdTransformer(BaseTransformer):
         2 = all omegas are initialized at random
     tol : int, optional (default=1e-7)
         convergence tolerance criterion
-
     """
 
     _tags = {
