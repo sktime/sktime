@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/afi/Documents/repos/sktime/examples/mlruns/0/6e937bc228d441cca9a8e9f3f7f6c7f8/artifacts
+end_time: 1692557279676
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 6e937bc228d441cca9a8e9f3f7f6c7f8
+run_name: debonair-sloth-778
+run_uuid: 6e937bc228d441cca9a8e9f3f7f6c7f8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1692557279664
+status: 3
+tags: []
+user_id: afi

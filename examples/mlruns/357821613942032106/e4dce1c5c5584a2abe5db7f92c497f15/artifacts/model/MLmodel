@@ -1,0 +1,18 @@
+artifact_path: model
+flavors:
+  mlflow_sktime:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: pickle
+    sktime_version: 0.22.0
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: sktime.utils.mlflow_sktime
+    model_path: model.pkl
+    python_version: 3.9.17
+mlflow_version: 2.6.0
+model_uuid: caa94d0100ed44028932b30b689628bf
+run_id: e4dce1c5c5584a2abe5db7f92c497f15
+utc_time_created: '2023-08-24 18:54:53.323119'
