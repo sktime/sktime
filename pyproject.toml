@@ -54,56 +54,56 @@ dependencies = [
 
 [project.optional-dependencies]
 alignment = [
-    "dtw-python",
-    "numba",
+    "dtw-python>=1.3,<1.4",
+    "numba>=0.53,<0.58",
 ]
 annotation = [
-    "attrs",
-    "hmmlearn",
-    "numba",
-    "pyod",
+    "attrs>=23,<23.2",
+    "hmmlearn>=0.2.7,<0.4",
+    "numba>=0.53,<0.58",
+    "pyod>=0.8.0,<1.2",
 ]
 classification = [
-    "esig",
-    "mrsqm",
-    "numba",
-    "tensorflow",
-    "tsfresh",
+    "esig>=0.9.7,<0.10",
+    "mrsqm>=0.0.3,<0.1",
+    "numba>=0.53,<0.58",
+    "tensorflow>=2,<=2.14",
+    "tsfresh>=0.17,<0.21",
 ]
 clustering = [
-    "numba",
-    "tslearn",
+    "numba>=0.53,<0.58",
+    "tslearn>=0.5.2,<0.6.3",
 ]
 forecasting = [
-    "pmdarima",
-    "prophet",
-    "statsforecast",
-    "statsmodels",
-    "tbats",
+    "pmdarima>=1.8,!=1.8.1,<2.1",
+    "prophet>=1.1,<1.2",
+    "statsforecast>=0.5.2,<1.6",
+    "statsmodels>=0.12.1,<0.15",
+    "tbats>=1.1,<1.2",
 ]
 networks = [
-    "keras-self-attention",
-    "tensorflow",
+    "keras-self-attention>=0.51,<0.52",
+    "tensorflow>=2,<=2.14",
 ]
 param_est = [
-    "seasonal",
-    "statsmodels",
+    "seasonal>=0.3.1,<0.4",
+    "statsmodels>=0.12.1,<0.15",
 ]
 regression = [
-    "numba",
-    "tensorflow",
+    "numba>=0.53,<0.58",
+    "tensorflow>=2,<=2.14",
 ]
 transformations = [
-    "esig",
-    "filterpy",
-    "holidays",
-    "mne",
-    "numba",
-    "pycatch22",
-    "pykalman",
-    "statsmodels",
-    "stumpy",
-    "tsfresh",
+    "esig>=0.9.7,<0.10",
+    "filterpy>=1.4.5,<1.5",
+    "holidays>=0.29,<0.32",
+    "mne>=1.5,<1.6",
+    "numba>=0.53,<0.58",
+    "pycatch22>=0.4,<0.5",
+    "pykalman>=0.9.5,<0.10",
+    "statsmodels>=0.12.1,<0.15",
+    "stumpy>=1.5.1,<1.13",
+    "tsfresh>=0.17,<0.21",
 ]
 all_extras = [
     "attrs",
