@@ -51,7 +51,7 @@ class MrSQM(_DelegatedClassifier):
 
     _tags = {
         "X_inner_mtype": "nested_univ",
-        "python_dependencies": "mrsqm",
+        "python_dependencies": "mrsqm>=0.0.2",
         "requires_cython": True,
     }
 
@@ -124,15 +124,12 @@ class MrSQM(_DelegatedClassifier):
         """
         params1 = {}
 
-        # known problem: nsfa > 0 causes estimator to be non-pickleable
-        # see https://github.com/mlgig/mrsqm/issues/7
-        # fix this problem once the pickling issue is resolved
         params2 = {
             "strat": "SR",
             "features_per_rep": 200,
             "selection_per_rep": 1000,
             "nsax": 2,
-            "nsfa": 0,
+            "nsfa": 1,
             "sfa_norm": False,
         }
 
