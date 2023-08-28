@@ -180,7 +180,7 @@ class Pipeline(BaseEstimator):
                     if step_name == step_information["name"]:
                         step_information["skobject"].set_params(**{n_key: value})
 
-        self = Pipeline(step_informations=new_step_infos)
+        self.__init__(step_informations=new_step_infos)
         return self
 
     def _get_step(self, name):
