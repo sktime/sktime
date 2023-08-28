@@ -93,3 +93,19 @@ the following files need to be updated:
 
 *  `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__,
    adding the dependency or version bounds in the ``dev`` dependency set.
+
+Maintenance of bounds for soft dependencies
+-------------------------------------------
+
+*  As of this writing, it has been decided that all soft-dependencies will have lower
+   and upper bounds specified mandatorily.
+*  The soft-dependencies will be specified in separate extras per each component of
+   ``sktime``, for example ``forecasting``, ``classification``, ``regression``, etc.
+*  It is possible to have different upper and lower bounds for a single package when
+   present in different extras, and can be modified in one without affecting the others.
+*  Upper bounds will be preferred to be set up as the next ``minor`` release of the
+   package, as ``patch`` updates should never contains breaking changes by convention of
+   semantic versioning. For stable packages, next ``major`` verion can be used as well.
+*  Upper bounds will be automatically updated using ``dependabot``. It has been set up
+   to run daily based on releases on ``PyPI``.
+*  Lower bounds maintenance planning is in progress and will be updated here soon.
