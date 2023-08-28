@@ -175,7 +175,7 @@ class Pipeline(BaseEstimator):
         for key, value in params.items():
             if "__" in key:
                 step_name = key.split("__")[0]
-                n_key = key[len(step_name) + 2:]
+                n_key = key[len(step_name) + 2 :]
                 for step_information in new_step_infos:
                     if step_name == step_information["name"]:
                         step_information["skobject"].set_params(**{n_key: value})
