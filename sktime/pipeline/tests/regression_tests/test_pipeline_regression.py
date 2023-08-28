@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 import pytest
+from forecasting.arima import ARIMA
+from forecasting.compose import ForecastX
+from forecasting.var import VAR
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
@@ -30,7 +33,7 @@ def test_transformer_regression():
         {"skobject": ExponentTransformer(), "name": "exponent", "edges": {"X": "X"}},
         {"skobject": BoxCoxTransformer(), "name": "BoxCOX", "edges": {"X": "exponent"}},
     ]:
-        general_pipeline.add_step(**step)
+        general_pipeline = general_pipeline.add_step(**step)
     general_pipeline.fit(X=X)
     result_general = general_pipeline.transform(X)
     pd.testing.assert_frame_equal(result, result_general)
@@ -52,7 +55,7 @@ def test_classifier_regression():
             "edges": {"X": "exponent", "y": "y"},
         },
     ]:
-        general_pipeline.add_step(**step)
+        general_pipeline = general_pipeline.add_step(**step)
     general_pipeline.fit(X=X, y=y)
     result_general = general_pipeline.predict(X)
     np.testing.assert_array_equal(result, result_general)
@@ -94,7 +97,7 @@ def test_forecaster_regression(method):
             "method": "inverse_transform",
         },
     ]:
-        general_pipeline.add_step(**step)
+        general_pipeline = general_pipeline.add_step(**step)
     general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result_general = getattr(general_pipeline, method)(X=X_test)
     np.testing.assert_array_equal(result, result_general)
@@ -121,7 +124,7 @@ def test_exogenous_transform_regression():
             "edges": {"X": "exponent", "y": "y"},
         },
     ]:
-        general_pipeline.add_step(**step)
+        general_pipeline = general_pipeline.add_step(**step)
     general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result_general = general_pipeline.predict(X=X_test)
     result_pi_general = general_pipeline.predict_interval(X=X_test)
@@ -158,7 +161,7 @@ def test_endogenous_exogenous_transform_regression():
             "method": "inverse_transform",
         },
     ]:
-        general_pipeline.add_step(**step)
+        general_pipeline = general_pipeline.add_step(**step)
     general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result_general = general_pipeline.predict(X=X_test)
     result_pi_general = general_pipeline.predict_interval(X=X_test)
@@ -186,7 +189,7 @@ def test_feature_union_regression():
             "edges": {"X": ["id", "differencer", "lag"]},
         },
     ]:
-        general_pipeline.add_step(**step)
+        general_pipeline = general_pipeline.add_step(**step)
     result_general = general_pipeline.fit_transform(X=X)
     np.testing.assert_array_equal(result, result_general)
 
@@ -213,7 +216,7 @@ def test_feature_union_subsetting_regression():
             "edges": {"X": ["id", "differencer", "lag"]},
         },
     ]:
-        general_pipeline.add_step(**step)
+        general_pipeline = general_pipeline.add_step(**step)
     result_general = general_pipeline.fit_transform(X=X)
     np.testing.assert_array_equal(result, result_general)
 
@@ -256,8 +259,29 @@ def test_varying_mtypes(data, testing_method):
             "edges": {"X": "detrender"},
         },
     ]:
-        general_pipeline.add_step(**step)
+        general_pipeline = general_pipeline.add_step(**step)
     general_pipeline.fit(X=data)
     general_pipeline.transform(X=data)
     result_general = general_pipeline.predict(data)
     testing_method(result, result_general)
+
+
+def test_forecasterX_regression():
+    y, X = load_longley()
+    pipe = ForecastX(
+        forecaster_X=VAR(),
+        forecaster_y=ARIMA(),
+    )
+    pipe.fit(y, X=X, fh=[1, 2, 3])
+    result = pipe.predict()
+
+    general_pipeline = Pipeline()
+    general_pipeline = general_pipeline.add_step(
+        skobject=VAR(), name="forecastX", edges={"y": "X"}
+    )
+    general_pipeline = general_pipeline.add_step(
+        skobject=ARIMA(), name="forecastY", edges={"X": "forecastX", "y": "y"}
+    )
+    general_pipeline.fit(y=y, X=X, fh=[1, 2, 3])
+    result_general = general_pipeline.predict(None, None)
+    pd.testing.assert_series_equal(result, result_general)

@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.datasets import load_longley
 from sktime.pipeline.pipeline import MethodNotImplementedError, Pipeline
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
@@ -40,28 +41,32 @@ from sktime.transformations.series.exponent import ExponentTransformer
 def test_add_steps(steps):
     pipeline = Pipeline()
     for step in steps:
-        pipeline.add_step(**step)
+        pipeline = pipeline.add_step(**step)
     # Plus 2 because of the two start steps
-    assert len(steps) + 2 == len(pipeline.steps)
+    assert len(steps) == len(pipeline.step_informations)
 
 
 def test_add_steps_name_conflict():
     exponent = ExponentTransformer()
     pipe = Pipeline()
-    pipe.add_step(exponent, "exponent", {"X": "X"})
+    pipe = pipe.add_step(exponent, "exponent", {"X": "X"})
     expected_message = (
         "You try to add a step with a name 'exponent' to the pipeline "
         "that already exists. Try to use an other name."
     )
+    pipe = pipe.add_step(exponent, "exponent", {"X": "X"})
     with pytest.raises(ValueError, match=expected_message):
-        pipe.add_step(exponent, "exponent", {"X": "X"})
+        pipe.fit(MagicMock(), MagicMock())
 
 
 def test_add_step_cloned():
+    y, X = load_longley()
+
     exponent = ExponentTransformer()
     pipe = Pipeline()
-    pipe.add_step(exponent, "exponent-1", {"X": "X"})
-    pipe.add_step(exponent, "exponent-again", {"X": "X"})
+    pipe = pipe.add_step(exponent, "exponent-1", {"X": "X"})
+    pipe = pipe.add_step(exponent, "exponent-again", {"X": "X"})
+    pipe.fit(X=X)
 
     assert id(pipe.steps["exponent-1"].skobject) == id(
         pipe.steps["exponent-again"].skobject
@@ -158,7 +163,7 @@ def test_method(method, mro, allowed_method):
 def test_pipeline_call_not_available(steps, method, expected_message):
     pipeline = Pipeline()
     for step in steps:
-        pipeline.add_step(**step)
+        pipeline = pipeline.add_step(**step)
     with pytest.raises(MethodNotImplementedError, match=expected_message):
         getattr(pipeline, method)(None, None)
 
@@ -166,8 +171,8 @@ def test_pipeline_call_not_available(steps, method, expected_message):
 def test_get_params():
     exponent = ExponentTransformer()
     pipe = Pipeline()
-    pipe.add_step(exponent, "exponent-1", {"X": "X"})
-    pipe.add_step(exponent, "exponent-again", {"X": "X"})
+    pipe = pipe.add_step(exponent, "exponent-1", {"X": "X"})
+    pipe = pipe.add_step(exponent, "exponent-again", {"X": "X"})
 
     params = pipe.get_params()
     pipe2 = Pipeline(**params)

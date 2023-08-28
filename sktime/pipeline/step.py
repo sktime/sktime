@@ -3,6 +3,7 @@ import inspect
 from copy import deepcopy
 
 import pandas as pd
+from forecasting.base import BaseForecaster
 
 ALLOWED_METHODS = [
     "transform",
@@ -109,8 +110,6 @@ class Step:
         input_data, self.mode, all_none = self._fetch_input_data(
             fit, required_method, mro, kwargs
         )
-        if all_none:
-            return StepResult(None, "")
 
         # 2. Get the method that should be called on skobject
         if self.method is not None:
@@ -119,8 +118,25 @@ class Step:
             kwargs_ = self._extract_kwargs("fit", kwargs)
             self.skobject.fit(**input_data, **kwargs_)
 
+            # if the skobject is a forecaster, passby the input
+            # data if is fitted in the same call
+            if isinstance(self.skobject, BaseForecaster):
+                return StepResult(input_data["y"], mode=self.mode)
+
         for method in mro:
             if hasattr(self.skobject, method):
+                non_default_parameter = any(
+                    map(
+                        lambda x: x.default == inspect.Parameter.empty,
+                        inspect.signature(
+                            getattr(self.skobject, method)
+                        ).parameters.values(),
+                    )
+                )
+                if all_none and non_default_parameter:
+                    # Skip method if all input data is None and the method
+                    # requires parameters.
+                    continue
                 kwargs_ = self._extract_kwargs(method, kwargs)
                 if "fh" in kwargs_ and fit:
                     # Perform in sample prediction if the get_result is called
@@ -174,6 +190,8 @@ class Step:
                 )
                 self._store_to_buffer(result)
                 return StepResult(result, self.mode)
+
+        return StepResult(None, "")
 
     def _fetch_input_data(self, fit, required_method, mro, kwargs):
         input_data = {}

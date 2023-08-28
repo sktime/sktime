@@ -1,6 +1,6 @@
 """class that implements a graph pipeline."""
 import weakref
-from copy import deepcopy
+from copy import copy, deepcopy
 
 from sktime.base import BaseEstimator
 from sktime.pipeline.step import Step
@@ -127,7 +127,7 @@ class Pipeline(BaseEstimator):
 
     def __init__(self, step_informations=None):
         super().__init__()
-
+        self._assembled = False
         self.id_to_true_id = {}
         self.id_to_obj = {}
         self.counter = 0
@@ -137,10 +137,9 @@ class Pipeline(BaseEstimator):
         }
         self.model_dict = {}
         self.kwargs = {}
-        self.step_informations = []
-        if step_informations is not None:
-            for step_info in step_informations:
-                self.add_step(**step_info)
+        self.step_informations = (
+            step_informations if step_informations is not None else []
+        )
 
     def _get_unique_id(self, skobject):
         self.counter += 1
@@ -154,6 +153,22 @@ class Pipeline(BaseEstimator):
             self.id_to_obj[id(skobject)] = weakref.ref(skobject)
             self.id_to_true_id[id(skobject)] = self.counter
         return self.id_to_true_id[id(skobject)]
+
+    def set_params(self, **params):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with get_params().
+
+        Parameters
+        ----------
+        params : dict, parameter names mapped to their values.
+
+        Returns
+        -------
+        self : Pipeline, this estimator
+        """
+        self.kwargs = params
+        return self
 
     def _get_step(self, name):
         if name in self.steps:
@@ -185,38 +200,53 @@ class Pipeline(BaseEstimator):
             skobject if fit/predict/.. is called.
 
         """
-        unique_id = self._get_unique_id(skobject)
-        if unique_id not in self.model_dict:
-            self.model_dict[unique_id] = skobject.clone()
-        cloned_skobject = self.model_dict[unique_id]
-
-        input_steps = {}
-        for key, edge in edges.items():
-            edge = edge if isinstance(edge, list) else [edge]
-            for edg in edge:
-                if "__" in edg and edg not in self.steps:
-                    # Just semantic sugar..
-                    self._create_subsetter(edg)
-                input_steps[key] = [self._get_step(edg) for edg in edge]
-
-        step = Step(cloned_skobject, name, input_steps, method=method, params=kwargs)
-        if name in self.steps:
-            raise ValueError(
-                f"You try to add a step with a name '{name}' to the pipeline"
-                f" that already exists. Try to use an other name."
-            )
-
-        self.steps[name] = step
-        self._last_step_name = name
         new_step_info = {key: value for key, value in kwargs.items()}
         new_step_info.update(
             {
                 "skobject": skobject,
                 "name": name,
                 "edges": edges,
+                "method": method,
+                "kwargs": kwargs,
             }
         )
-        self.step_informations.append(new_step_info)
+        step_informations = copy(self.step_informations)
+        step_informations.append(new_step_info)
+        return Pipeline(step_informations=step_informations)
+
+    def _assemble_steps(self):
+        for step_info in self.step_informations:
+            skobject = step_info["skobject"]
+            edges = step_info["edges"]
+            name = step_info["name"]
+            method = step_info["method"]
+            kwargs = step_info["kwargs"]
+            unique_id = self._get_unique_id(skobject)
+            if unique_id not in self.model_dict:
+                self.model_dict[unique_id] = skobject.clone()
+            cloned_skobject = self.model_dict[unique_id]
+
+            input_steps = {}
+            for key, edge in edges.items():
+                edge = edge if isinstance(edge, list) else [edge]
+                for edg in edge:
+                    if "__" in edg and edg not in self.steps:
+                        # Just semantic sugar..
+                        self._create_subsetter(edg)
+                    input_steps[key] = [self._get_step(edg) for edg in edge]
+
+            step = Step(
+                cloned_skobject, name, input_steps, method=method, params=kwargs
+            )
+            if name in self.steps:
+                raise ValueError(
+                    f"You try to add a step with a name '{name}' to the pipeline"
+                    f" that already exists. Try to use an other name."
+                )
+
+            self.steps[name] = step
+            self._last_step_name = name
+        self._assembled = True
 
     def fit(self, X, y=None, **kwargs):
         """Fit graph pipeline to training data.
@@ -288,8 +318,8 @@ class Pipeline(BaseEstimator):
         MethodNotImplementedError if a step in the pipeline does not implement
          `transform`
         """
-        self._method_allowed("transform")
         self._initiate_call(X, y, kwargs)
+        self._method_allowed("transform")
 
         return (
             self.steps[self._last_step_name]
@@ -321,8 +351,8 @@ class Pipeline(BaseEstimator):
         MethodNotImplementedError if a step in the pipeline does not implement
         `transform` or `predict`
         """
-        self._method_allowed("predict")
         self._initiate_call(X, y, kwargs)
+        self._method_allowed("predict")
 
         return (
             self.steps[self._last_step_name]
@@ -355,8 +385,8 @@ class Pipeline(BaseEstimator):
         MethodNotImplementedError if a step in the pipeline does not implement
         `transform`, `predict`, or `predict_interval`
         """
-        self._method_allowed("predict_interval")
         self._initiate_call(X, y, kwargs)
+        self._method_allowed("predict_interval")
 
         return (
             self.steps[self._last_step_name]
@@ -390,8 +420,8 @@ class Pipeline(BaseEstimator):
         MethodNotImplementedError if a step in the pipeline does not implement
         `transform`, `predict`, or `predict_quantiles`
         """
-        self._method_allowed("predict_quantiles")
         self._initiate_call(X, y, kwargs)
+        self._method_allowed("predict_quantiles")
 
         return (
             self.steps[self._last_step_name]
@@ -436,6 +466,8 @@ class Pipeline(BaseEstimator):
         return inner_y - y_pred
 
     def _initiate_call(self, X, y, kwargs):
+        if not self._assembled:
+            self._assemble_steps()
         for step in self.steps.values():
             step.reset()
         self.steps["X"].buffer = X
@@ -460,3 +492,11 @@ class Pipeline(BaseEstimator):
         keys = edg.split("__")[-1].split("_")
         column_select = ColumnSelect(columns=keys)
         self.add_step(column_select, edg, {"X": edg.split("__")[0]})
+        step = Step(
+            column_select,
+            edg,
+            {"X": [self.steps[edg.split("__")[0]]]},
+            method="transform",
+            params={},
+        )
+        self.steps[edg] = step
