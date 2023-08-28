@@ -3,7 +3,8 @@ import inspect
 from copy import deepcopy
 
 import pandas as pd
-from forecasting.base import BaseForecaster
+
+from sktime.forecasting.base import BaseForecaster
 
 ALLOWED_METHODS = [
     "transform",
