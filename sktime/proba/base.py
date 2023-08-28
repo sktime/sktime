@@ -158,6 +158,18 @@ class BaseDistribution(BaseObject):
         else:
             return msg
 
+    def _get_bc_params(self, to_broadcast, dtype=None):
+        """Fully broadcast parameters of self, given param shapes and index, columns."""
+        length = len(to_broadcast)
+        if hasattr(self, "index") and self.index is not None:
+            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
+        if hasattr(self, "columns") and self.columns is not None:
+            to_broadcast += [self.columns.to_numpy()]
+        bc = np.broadcast_arrays(*to_broadcast)
+        if dtype is not None:
+            bc = [array.astype(dtype) for array in bc]
+        return bc[:length]
+
     def pdf(self, x):
         r"""Probability density function.
 
