@@ -93,7 +93,7 @@ class Pipeline(BaseEstimator):
     ...     {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
     ...     {"skobject": BoxCoxTransformer(), "name": "box", "edges": {"X": "exp"}},
     ...     ]:
-    ...     general_pipeline.add_step(**step)
+    ...     general_pipeline = general_pipeline.add_step(**step)
     >>> general_pipeline.fit(X=X) # doctest: +SKIP
     >>> result_general = general_pipeline.transform(X) # doctest: +SKIP
 
@@ -106,7 +106,7 @@ class Pipeline(BaseEstimator):
     ...     {"skobject": KNeighborsTimeSeriesClassifier(),
     ...      "name": "knnclassifier",
     ...      "edges": {"X": "exp", "y": "y"}}]:
-    ...     general_pipeline.add_step(**step)
+    ...     general_pipeline = general_pipeline.add_step(**step)
     >>> general_pipeline.fit(X=X, y=y) # doctest: +SKIP
     >>> result_general = general_pipeline.predict(X) # doctest: +SKIP
         Example 3: Forecasting pipeline with exogenous features using the
@@ -120,7 +120,7 @@ class Pipeline(BaseEstimator):
     ...     {"skobject": SARIMAX(),
     ...      "name": "SARIMAX",
     ...      "edges": {"X": "exp", "y": "y"}}]:
-    ...     general_pipeline.add_step(**step)
+    ...     general_pipeline = general_pipeline.add_step(**step)
     >>> general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4]) # doctest: +SKIP
     >>> result_general = general_pipeline.predict(X=X_test) # doctest: +SKIP
     """
