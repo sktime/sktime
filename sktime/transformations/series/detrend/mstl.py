@@ -97,6 +97,7 @@ class MSTL(BaseTransformer):
         "y_inner_mtype": "pd.Series",
         "transform-returns-same-time-index": True,
         "univariate-only": True,
+        "capability:inverse_transform": True,
         "fit_is_empty": False,
         "python_dependencies": "statsmodels",
     }
