@@ -141,6 +141,9 @@ class Pipeline(BaseEstimator):
             step_informations if step_informations is not None else []
         )
 
+        for step_information in self.step_informations:
+            self.clone_tags(step_information["skobject"])
+
     def _get_unique_id(self, skobject):
         self.counter += 1
         # Check if not already an skobject cloned from the provided
@@ -168,6 +171,16 @@ class Pipeline(BaseEstimator):
         self : Pipeline, this estimator
         """
         self.kwargs = params
+        new_step_infos = copy(self.step_informations)
+        for key, value in params.items():
+            if "__" in key:
+                step_name = key.split("__")[0]
+                n_key = key[len(step_name) + 2:]
+                for step_information in new_step_infos:
+                    if step_name == step_information["name"]:
+                        step_information["skobject"].set_params(**{n_key: value})
+
+        self = Pipeline(step_informations=new_step_infos)
         return self
 
     def _get_step(self, name):
