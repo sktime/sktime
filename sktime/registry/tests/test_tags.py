@@ -11,7 +11,9 @@ def test_tag_register_type():
     for tag in ESTIMATOR_TAG_REGISTER:
         assert len(tag) == 4
         assert isinstance(tag[0], str)
-        assert isinstance(tag[1], str)
+        assert isinstance(tag[1], (str, list))
+        if isinstance(tag[1], list):
+            assert all(isinstance(x, str) for x in tag[1])
         assert isinstance(tag[2], (str, tuple))
         if isinstance(tag[2], tuple):
             assert len(tag[2]) == 2
