@@ -94,6 +94,8 @@ class ForecastingBenchmark(BaseBenchmark):
         -------
         A dictionary of benchmark results for that forecaster
         """
+        if not (callable(dataset_loader) or isinstance(dataset_loader, tuple)):
+            raise TypeError("dataset_loader must be a callable or a tuple")
         task_kwargs = {
             "dataset_loader": dataset_loader,
             "cv_splitter": cv_splitter,
@@ -108,7 +110,7 @@ class ForecastingBenchmark(BaseBenchmark):
             self._factory_forecasting_validation, task_kwargs, task_id=task_id
         )
 
-    def _prepare_forecasting_validation(
+    def prepare_forecasting_validation(
         self,
         dataset_loader: Callable,
         cv_splitter: BaseSplitter,
@@ -133,6 +135,8 @@ class ForecastingBenchmark(BaseBenchmark):
         -------
         Dictionary of benchmark results for that forecaster
         """
+        # TODO:
+        # handle X variable via dataset loader object
         if callable(dataset_loader):
             y, X = dataset_loader(), None
         else:
