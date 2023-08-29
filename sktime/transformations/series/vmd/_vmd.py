@@ -79,6 +79,14 @@ class VmdTransformer(BaseTransformer):
         2 = all omegas are initialized at random
     tol : int, optional (default=1e-7)
         convergence tolerance criterion
+
+    Examples
+    ----------
+    >>> from sktime.transformations.series.vmd import VmdTransformer
+    >>> from sktime.datasets import load_solar
+    >>> y = load_solar()
+    >>> transformer = VmdTransformer() # doctest: +SKIP
+    >>> modes = transformer.fit_transform(y) # doctest: +SKIP
     """
 
     _tags = {

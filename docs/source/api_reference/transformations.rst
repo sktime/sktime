@@ -288,7 +288,7 @@ Depending on the transformer, the transformation parameters can be fitted.
     ExponentTransformer
     SqrtTransformer
 
-Detrending
+Detrending and decomposition
 ~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.detrend
@@ -301,6 +301,14 @@ Detrending
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
+
+.. currentmodule:: sktime.transformations.series.vmd
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VmdTransformer
 
 .. currentmodule:: sktime.transformations.series.clear_sky
 
