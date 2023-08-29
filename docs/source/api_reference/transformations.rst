@@ -310,6 +310,14 @@ Detrending and Decomposition
 
     MSTL
 
+.. currentmodule:: sktime.transformations.series.vmd
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VmdTransformer
+
 .. currentmodule:: sktime.transformations.series.clear_sky
 
 .. autosummary::
