@@ -8,8 +8,6 @@ from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
 
-# from benchmarks import BaseBenchmark
-
 
 def forecasting_validation(
     dataset_loader: Callable,
@@ -70,13 +68,13 @@ class ForecastingBenchmark(BaseBenchmark):
 
     Parameters
     ----------
-    entity_id_fomat: str, optional (defualt=None)
+    id_fomat: str, optional (defualt=None)
         A regex used to enforce task/estimator ID to match a certain format
 
     """
 
-    def __init__(self, entity_id_fomat: Optional[str] = None):
-        super().__init__(entity_id_fomat)
+    def __init__(self, id_fomat: Optional[str] = None):
+        super().__init__(id_fomat)
 
     def add_task(
         self,

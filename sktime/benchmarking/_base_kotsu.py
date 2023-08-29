@@ -7,19 +7,17 @@ from typing import Callable, Optional, Union
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
-def _check_entity_id_format(entity_id_format: str, id: str) -> None:
-    """Check if given input ID follows regex specified in entity_id_format."""
-    if entity_id_format is not None:
-        if not isinstance(entity_id_format, str):
-            raise TypeError(
-                f"entity_id_format must be str but receive {type(entity_id_format)}"
-            )
-        entity_id_re = re.compile(entity_id_format)
+def _check_id_format(id_format: str, id: str) -> None:
+    """Check if given input ID follows regex specified in id_format."""
+    if id_format is not None:
+        if not isinstance(id_format, str):
+            raise TypeError(f"entity_id must be str but receive {type(id_format)}")
+        entity_id_re = re.compile(id_format)
         match = entity_id_re.search(id)
         if not match:
             raise ValueError(
                 f"Attempted to register malformed entity ID: [id={id}]. "
-                f"(Currently all IDs must be of the form {entity_id_re.pattern}.)"
+                f"All IDs must be of the form {entity_id_re.pattern}."
             )
 
 
@@ -65,7 +63,7 @@ if _check_soft_dependencies("kotsu", severity="none"):  # for dependency isolati
             entity_id_fomat: str = None,
             kwargs: Optional[dict] = None,
         ):
-            _check_entity_id_format(entity_id_fomat, id)
+            _check_id_format(entity_id_fomat, id)
             self.id = id
             self.entry_point = entry_point
             self.deprecated = deprecated
@@ -131,10 +129,3 @@ if _check_soft_dependencies("kotsu", severity="none"):  # for dependency isolati
 
     SktimeModelRegistry = SktimeRegistry
     SktimeValidationRegistry = SktimeRegistry
-
-# else:
-
-#     class SktimeModelRegistry:
-#         """Empty Classes for dependency handling."""
-
-#         pass
