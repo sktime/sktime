@@ -52,7 +52,9 @@ class TFNormal(_BaseTFDistribution):
         # and broadcast of parameters.
         # move this functionality to the base class
         # 0.19.0?
-        self._mu, self._sigma = self._get_bc_params(self.mu, self.sigma, dtype="float")
+        self._mu, self._sigma = self._get_bc_params(
+            *(self.mu, self.sigma), dtype="float"
+        )
         distr = tfd.Normal(loc=self._mu, scale=self._sigma)
         shape = self._mu.shape
 

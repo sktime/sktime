@@ -45,7 +45,7 @@ class TDistribution(BaseDistribution):
         self.columns = columns
 
         self._mu, self._sigma, self._df = self._get_bc_params(
-            self.mu, self.sigma, self.df
+            *(self.mu, self.sigma, self.df)
         )
         shape = self._mu.shape
 
