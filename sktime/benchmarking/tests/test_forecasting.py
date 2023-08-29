@@ -121,7 +121,7 @@ def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
 @pytest.mark.parametrize(
     "estimators",
     [
-        ({"N-v1": NaiveForecaster(), "T-v1": TrendForecaster()}),
+        ({"N": NaiveForecaster(), "T": TrendForecaster()}),
         ([NaiveForecaster(), TrendForecaster()]),
     ],
 )

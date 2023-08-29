@@ -2,13 +2,13 @@
 import functools
 from typing import Callable, Dict, List, Optional, Union
 
-# from sktime.benchmarking.benchmarks import BaseBenchmark
-from benchmarks import BaseBenchmark
-
+from sktime.benchmarking.benchmarks import BaseBenchmark
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
+
+# from benchmarks import BaseBenchmark
 
 
 def forecasting_validation(

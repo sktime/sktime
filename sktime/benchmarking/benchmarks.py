@@ -80,8 +80,9 @@ class BaseBenchmark:
         _check_soft_dependencies("kotsu")
         import kotsu
 
-        # from sktime.benchmarking._base_kotsu import SktimeModelRegistry
-        from _base_kotsu import SktimeModelRegistry
+        from sktime.benchmarking._base_kotsu import SktimeModelRegistry
+
+        # from _base_kotsu import SktimeModelRegistry
 
         self.estimators = SktimeModelRegistry(entity_id_fomat)
         self.validations = kotsu.registration.ValidationRegistry()
