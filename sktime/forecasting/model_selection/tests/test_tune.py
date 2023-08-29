@@ -132,7 +132,6 @@ ERROR_SCORES = [np.nan, "raise", 1000]
 @pytest.mark.parametrize("multivariate", [True, False])
 def test_gscv(forecaster, param_grid, cv, scoring, error_score, multivariate):
     """Test ForecastingGridSearchCV."""
-    y, X = load_longley()
     if multivariate:
         X, y = load_longley()
     else:
