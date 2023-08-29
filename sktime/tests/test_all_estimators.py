@@ -18,7 +18,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.pipeline.pipeline import Pipeline
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.dists_kernels.base import (
@@ -27,6 +26,7 @@ from sktime.dists_kernels.base import (
 )
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
+from sktime.pipeline.pipeline import Pipeline
 from sktime.registry import all_estimators
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
