@@ -5,7 +5,6 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_arrow_head, load_longley
-from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import ForecastX
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
