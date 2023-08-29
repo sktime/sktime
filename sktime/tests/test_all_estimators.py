@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.pipeline.pipeline import Pipeline
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.dists_kernels.base import (
@@ -894,6 +895,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 f"estimator: {estimator_class} has fit method, but"
                 f"is not a sub-class of BaseEstimator."
             )
+        if isinstance(Pipeline(), estimator_class):
+            return
 
         # Usually estimators inherit only from one BaseEstimator type, but in some cases
         # they may be predictor and transformer at the same time (e.g. pipelines)

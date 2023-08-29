@@ -175,7 +175,8 @@ def test_get_params():
     pipe = pipe.add_step(exponent, "exponent-again", {"X": "X"})
 
     params = pipe.get_params()
-    pipe2 = Pipeline(**params)
+    pipe2 = Pipeline(params["step_informations"])
 
+    assert len(params) == 1 + len(exponent.get_params(deep=True))  * 2
     assert len(params["step_informations"]) == 2
     assert pipe2 == pipe

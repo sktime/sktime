@@ -137,11 +137,12 @@ class Pipeline(BaseEstimator):
         }
         self.model_dict = {}
         self.kwargs = {}
-        self.step_informations = (
+        self.step_informations = step_informations
+        self._step_informations = (
             step_informations if step_informations is not None else []
         )
 
-        for step_information in self.step_informations:
+        for step_information in self._step_informations:
             self.clone_tags(step_information["skobject"])
 
     def _get_unique_id(self, skobject):
@@ -157,10 +158,31 @@ class Pipeline(BaseEstimator):
             self.id_to_true_id[id(skobject)] = self.counter
         return self.id_to_true_id[id(skobject)]
 
+    def get_params(self, deep=True):
+        """Get the parameters of the pipeline.
+
+        Parameters
+        ----------
+        deep : boolean, optional, default=True
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators
+
+        Returns
+        -------
+        params : dict, parameter names mapped to their values.
+        """
+        params = {"step_informations": self.step_informations}
+        if deep:
+            for step_information in self._step_informations:
+                for key, value in step_information["skobject"].get_params(deep).items():
+                    params.update({step_information["name"] + "__" + key: value})
+        return params
+
     def set_params(self, **params):
         """Set the parameters of this estimator.
 
         Valid parameter keys can be listed with get_params().
+        Note if step_informations is provided the other parameters are ignored.
 
         Parameters
         ----------
@@ -171,7 +193,7 @@ class Pipeline(BaseEstimator):
         self : Pipeline, this estimator
         """
         self.kwargs = params
-        new_step_infos = copy(self.step_informations)
+        new_step_infos = copy(self._step_informations)
         for key, value in params.items():
             if "__" in key:
                 step_name = key.split("__")[0]
@@ -180,6 +202,8 @@ class Pipeline(BaseEstimator):
                     if step_name == step_information["name"]:
                         step_information["skobject"].set_params(**{n_key: value})
 
+        if "step_informations" in params:
+            new_step_infos = params["step_informations"]
         self.__init__(step_informations=new_step_infos)
         return self
 
@@ -223,12 +247,12 @@ class Pipeline(BaseEstimator):
                 "kwargs": kwargs,
             }
         )
-        step_informations = copy(self.step_informations)
+        step_informations = copy(self._step_informations)
         step_informations.append(new_step_info)
         return Pipeline(step_informations=step_informations)
 
     def _assemble_steps(self):
-        for step_info in self.step_informations:
+        for step_info in self._step_informations:
             skobject = step_info["skobject"]
             edges = step_info["edges"]
             name = step_info["name"]
