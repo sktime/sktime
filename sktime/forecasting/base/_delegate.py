@@ -1,7 +1,7 @@
 """Delegator mixin that delegates all methods to wrapped forecaster.
 
 Useful for building estimators where all but one or a few methods are delegated. For
-that purpose, inherit from this estimator and then override only the methods     that
+that purpose, inherit from this estimator and then override only the methods that
 are not delegated.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -13,7 +13,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class _DelegatedForecaster(BaseForecaster):
-    """Delegator mixin that delegateas all methods to wrapped forecaster.
+    """Delegator mixin that delegates all methods to wrapped forecaster.
 
     Delegates inner forecaster methods to a wrapped estimator.
         Wrapped estimator is value of attribute with name self._delegate_name.
