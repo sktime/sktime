@@ -8,8 +8,8 @@ from sktime.datasets import load_arrow_head, load_longley
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import ForecastX
 from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
-from sktime.forecasting.var import VAR
 from sktime.pipeline.pipeline import Pipeline
 from sktime.transformations.compose import Id
 from sktime.transformations.series.boxcox import BoxCoxTransformer
@@ -269,18 +269,18 @@ def test_varying_mtypes(data, testing_method):
 def test_forecasterX_regression():
     y, X = load_longley()
     pipe = ForecastX(
-        forecaster_X=VAR(),
-        forecaster_y=ARIMA(),
+        forecaster_X=NaiveForecaster(),
+        forecaster_y=SARIMAX(),
     )
     pipe.fit(y, X=X, fh=[1, 2, 3])
     result = pipe.predict()
 
     general_pipeline = Pipeline()
     general_pipeline = general_pipeline.add_step(
-        skobject=VAR(), name="forecastX", edges={"y": "X"}
+        skobject=NaiveForecaster(), name="forecastX", edges={"y": "X"}
     )
     general_pipeline = general_pipeline.add_step(
-        skobject=ARIMA(), name="forecastY", edges={"X": "forecastX", "y": "y"}
+        skobject=SARIMAX(), name="forecastY", edges={"X": "forecastX", "y": "y"}
     )
     general_pipeline.fit(y=y, X=X, fh=[1, 2, 3])
     result_general = general_pipeline.predict(None, None)
