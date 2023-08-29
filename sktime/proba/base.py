@@ -162,9 +162,9 @@ class BaseDistribution(BaseObject):
         """Fully broadcast tuple of parameters given param shapes and index, columns."""
         number_of_params = len(args)
         if hasattr(self, "index") and self.index is not None:
-            args += tuple(self.index.to_numpy().reshape(-1, 1))
+            args += (self.index.to_numpy().reshape(-1, 1),)
         if hasattr(self, "columns") and self.columns is not None:
-            args += tuple(self.columns.to_numpy())
+            args += (self.columns.to_numpy(),)
         bc = np.broadcast_arrays(*args)
         if dtype is not None:
             bc = [array.astype(dtype) for array in bc]
