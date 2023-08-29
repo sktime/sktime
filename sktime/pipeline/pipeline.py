@@ -79,7 +79,7 @@ class Pipeline(BaseEstimator):
     >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
     >>> from sktime.datasets import load_arrow_head, load_longley
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
-    >>> from sktime.forecasting.sarimax import SARIMAX
+    >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.pipeline.pipeline import Pipeline
     >>> from sktime.transformations.compose import Id
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
@@ -117,7 +117,7 @@ class Pipeline(BaseEstimator):
     >>> general_pipeline = Pipeline()
     >>> for step in [
     ...     {"skobject": ExponentTransformer(), "name": "exp", "edges": {"X": "X"}},
-    ...     {"skobject": SARIMAX(),
+    ...     {"skobject": NaiveForecaster(),
     ...      "name": "SARIMAX",
     ...      "edges": {"X": "exp", "y": "y"}}]:
     ...     general_pipeline = general_pipeline.add_step(**step)

@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.classification.dummy import DummyClassifier
 from sktime.datasets import load_arrow_head, load_longley
 from sktime.forecasting.compose import ForecastX
 from sktime.forecasting.model_selection import temporal_train_test_split
@@ -41,7 +41,7 @@ def test_transformer_regression():
 def test_classifier_regression():
     np.random.seed(42)
     X, y = load_arrow_head(split="train", return_X_y=True)
-    clf_pipe = ExponentTransformer() * KNeighborsTimeSeriesClassifier()
+    clf_pipe = ExponentTransformer() * DummyClassifier()
     clf_pipe.fit(X, y)
     result = clf_pipe.predict(X)
 
@@ -49,8 +49,8 @@ def test_classifier_regression():
     for step in [
         {"skobject": ExponentTransformer(), "name": "exponent", "edges": {"X": "X"}},
         {
-            "skobject": KNeighborsTimeSeriesClassifier(),
-            "name": "knnclassifier",
+            "skobject": DummyClassifier(),
+            "name": "classifier",
             "edges": {"X": "exponent", "y": "y"},
         },
     ]:
@@ -265,6 +265,10 @@ def test_varying_mtypes(data, testing_method):
     testing_method(result, result_general)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_forecasterX_regression():
     y, X = load_longley()
     pipe = ForecastX(
