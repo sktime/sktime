@@ -81,12 +81,12 @@ class VmdTransformer(BaseTransformer):
         convergence tolerance criterion
 
     Examples
-    ----------
-    >>> from sktime.transformations.series.vmd import VmdTransformer
-    >>> from sktime.datasets import load_solar
-    >>> y = load_solar()
-    >>> transformer = VmdTransformer() # doctest: +SKIP
-    >>> modes = transformer.fit_transform(y) # doctest: +SKIP
+    --------
+    >>> from sktime.transformations.series.vmd import VmdTransformer  # doctest: +SKIP
+    >>> from sktime.datasets import load_solar  # doctest: +SKIP
+    >>> y = load_solar()  # doctest: +SKIP
+    >>> transformer = VmdTransformer()  # doctest: +SKIP
+    >>> modes = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {
