@@ -78,8 +78,10 @@ class ForecastingBenchmark(BaseBenchmark):
 
         Parameters
         ----------
-        dataset_loader : Callable
-            A function which returns a dataset, like from `sktime.datasets`.
+        dataset_loader : Callable or a tuple
+            if Callable. a function which returns a dataset, like from `sktime.datasets`
+            if Tuple, must be in the format of (Y, X) where Y is the target variable
+            and X is exogenous variabele where both must be sktime pd.DataFrame MTYPE
         cv_splitter : BaseSplitter object
             Splitter used for generating validation folds.
         scorers : a list of BaseMetric objects
@@ -106,7 +108,7 @@ class ForecastingBenchmark(BaseBenchmark):
             self._factory_forecasting_validation, task_kwargs, task_id=task_id
         )
 
-    def prepare_forecasting_validation(
+    def _prepare_forecasting_validation(
         self,
         dataset_loader: Callable,
         cv_splitter: BaseSplitter,
@@ -132,11 +134,13 @@ class ForecastingBenchmark(BaseBenchmark):
         Dictionary of benchmark results for that forecaster
         """
         if callable(dataset_loader):
-            dataset_loader = dataset_loader()
+            y, X = dataset_loader(), None
+        else:
+            y, X = dataset_loader
 
         results = {}
         scores_df = evaluate(
-            forecaster=estimator, y=dataset_loader, cv=cv_splitter, scoring=scorers
+            forecaster=estimator, y=y, X=X, cv=cv_splitter, scoring=scorers
         )
         for scorer in scorers:
             scorer_name = scorer.name
