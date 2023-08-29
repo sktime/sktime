@@ -98,6 +98,7 @@ class MSTL(BaseTransformer):
         "transform-returns-same-time-index": True,
         "univariate-only": True,
         "capability:inverse_transform": True,
+        "capability:inverse_transform:exact": False,
         "fit_is_empty": False,
         "python_dependencies": "statsmodels",
     }
