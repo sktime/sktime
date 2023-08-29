@@ -39,7 +39,7 @@ class MrSEQL(_DelegatedClassifier):
 
     _tags = {
         "X_inner_mtype": "nested_univ",
-        "python_dependencies": "mrseql",
+        "python_dependencies": ["mrseql", "numba"],
         "requires_cython": True,
     }
 
