@@ -42,8 +42,8 @@ def test_basebenchmark(tmp_path):
     expected_results_df = pd.DataFrame(
         [
             (
-                "factory_estimator_class_task-v1",
-                "NaiveForecaster-v1",
+                "factory_estimator_class_task",
+                "NaiveForecaster",
                 "<class 'sktime.forecasting.naive.NaiveForecaster'>",
             )
         ],
