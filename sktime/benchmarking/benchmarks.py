@@ -51,17 +51,13 @@ def coerce_estimator_and_id(estimators, estimator_id=None):
     estimators : dict
         Dict with estimator_id as key and estimator as value.
     """
-    DEFAULT_ID = "{}-v1"
     _check_estimators_type(estimators)
     if isinstance(estimators, dict):
         return estimators
     elif isinstance(estimators, list):
-        return {
-            DEFAULT_ID.format(estimator.__class__.__name__): estimator
-            for estimator in estimators
-        }
+        return {estimator.__class__.__name__: estimator for estimator in estimators}
     elif is_initalised_estimator(estimators):
-        estimator_id = estimator_id or DEFAULT_ID.format(estimators.__class__.__name__)
+        estimator_id = estimator_id or estimators.__class__.__name__
         return {estimator_id: estimators}
     else:
         raise TypeError(
@@ -74,18 +70,27 @@ class BaseBenchmark:
     """Base class for benchmarks.
 
     A benchmark consists of a set of tasks and a set of estimators.
+
+    Parameters
+    ----------
+    entity_id_fomat: str, optional (defualt=None)
+        A regex used to enforce task/estimator ID to match a certain format
+
     """
 
     def __init__(self, entity_id_fomat: Optional[str] = None):
         _check_soft_dependencies("kotsu")
         import kotsu
 
-        from sktime.benchmarking._base_kotsu import SktimeModelRegistry
+        from sktime.benchmarking._base_kotsu import (
+            SktimeModelRegistry,
+            SktimeValidationRegistry,
+        )
 
-        # from _base_kotsu import SktimeModelRegistry
+        # from _base_kotsu import SktimeModelRegistry, SktimeValidationRegistry
 
         self.estimators = SktimeModelRegistry(entity_id_fomat)
-        self.validations = kotsu.registration.ValidationRegistry()
+        self.validations = SktimeValidationRegistry(entity_id_fomat)
         self.kotsu_run = kotsu.run.run
 
     def add_estimator(
@@ -119,9 +124,9 @@ class BaseBenchmark:
     ):
         """Register a task to the benchmark."""
         task_id = task_id or (
-            f"{task_entrypoint}-v1"
+            f"{task_entrypoint}"
             if isinstance(task_entrypoint, str)
-            else f"{task_entrypoint.__name__}-v1"
+            else f"{task_entrypoint.__name__}"
         )
         self.validations.register(
             id=task_id, entry_point=task_entrypoint, kwargs=task_kwargs

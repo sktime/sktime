@@ -6,24 +6,25 @@ from typing import Callable, Optional, Union
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("kotsu", severity="none"):
+
+def _check_entity_id_format(entity_id_format: str, id: str) -> None:
+    """Check if given input ID follows regex specified in entity_id_format."""
+    if entity_id_format is not None:
+        if not isinstance(entity_id_format, str):
+            raise TypeError(
+                f"entity_id_format must be str but receive {type(entity_id_format)}"
+            )
+        entity_id_re = re.compile(entity_id_format)
+        match = entity_id_re.search(id)
+        if not match:
+            raise ValueError(
+                f"Attempted to register malformed entity ID: [id={id}]. "
+                f"(Currently all IDs must be of the form {entity_id_re.pattern}.)"
+            )
+
+
+if _check_soft_dependencies("kotsu", severity="none"):  # for dependency isolation
     from kotsu.registration import _Registry, _Spec  # noqa: E402
-
-    def _check_entity_id_format(entity_id_format: str, id: str) -> None:
-        """Check if given input id followed regex specified in entity_id_format."""
-        # if not isinstance(entity_id_format, (str, None)):
-        #     raise TypeError(
-        #         f"entity_id_format must be a str but receive {type(entity_id_format)}"
-        #     )
-
-        if entity_id_format is not None:
-            entity_id_re = re.compile(entity_id_format)
-            match = entity_id_re.search(id)
-            if not match:
-                raise ValueError(
-                    f"Attempted to register malformed entity ID: [id={id}]. "
-                    f"(Currently all IDs must be of the form {entity_id_re.pattern}.)"
-                )
 
     class _SktimeSpec(_Spec):
         """A specification for a particular instance of an entity.
@@ -33,8 +34,7 @@ if _check_soft_dependencies("kotsu", severity="none"):
         Parameters
         ----------
         id: str
-            A unique entity ID. Required format; [username/](entity-name)-v(version)
-            [username/] is optional.
+            A unique entity ID.
         entry_point: Callable or str
             The python entrypoint of the entity class. Should be one of:
             - the string path to the python object (e.g.module.name:factory_func, or
@@ -72,7 +72,7 @@ if _check_soft_dependencies("kotsu", severity="none"):
             self.nondeterministic = nondeterministic
             self._kwargs = {} if kwargs is None else kwargs
 
-    class SktimeModelRegistry(_Registry):
+    class SktimeRegistry(_Registry):
         """Register an entity by ID.
 
         IDs should remain stable over time and should be guaranteed to resolve to
@@ -96,8 +96,7 @@ if _check_soft_dependencies("kotsu", severity="none"):
             Parameters
             ----------
             id: str
-                A unique entity ID. Required format; [username/](entity-name)-v(version)
-                [username/] is optional.
+                A unique entity ID.
             entry_point: Callable or str
                 The python entrypoint of the entity class. Should be one of:
                 - the string path to the python object (e.g.module.name:factory_func, or
@@ -130,9 +129,12 @@ if _check_soft_dependencies("kotsu", severity="none"):
                 kwargs=kwargs,
             )
 
-else:
+    SktimeModelRegistry = SktimeRegistry
+    SktimeValidationRegistry = SktimeRegistry
 
-    class SktimeModelRegistry:
-        """Empty Classes for dependency handling."""
+# else:
 
-        pass
+#     class SktimeModelRegistry:
+#         """Empty Classes for dependency handling."""
+
+#         pass

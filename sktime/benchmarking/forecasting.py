@@ -67,7 +67,16 @@ class ForecastingBenchmark(BaseBenchmark):
     Run a series of forecasters against a series of tasks defined via dataset loaders,
     cross validation splitting strategies and performance metrics, and return results as
     a df (as well as saving to file).
+
+    Parameters
+    ----------
+    entity_id_fomat: str, optional (defualt=None)
+        A regex used to enforce task/estimator ID to match a certain format
+
     """
+
+    def __init__(self, entity_id_fomat: Optional[str] = None):
+        super().__init__(entity_id_fomat)
 
     def add_task(
         self,
@@ -102,6 +111,6 @@ class ForecastingBenchmark(BaseBenchmark):
         if task_id is None:
             task_id = (
                 f"[dataset={dataset_loader.__name__}]"
-                f"_[cv_splitter={cv_splitter.__class__.__name__}]-v1"
+                f"_[cv_splitter={cv_splitter.__class__.__name__}]"
             )
         self._add_task(_factory_forecasting_validation, task_kwargs, task_id=task_id)
