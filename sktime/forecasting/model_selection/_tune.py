@@ -82,7 +82,8 @@ class BaseGridSearch(_DelegatedForecaster):
                 "currently it tunes one parameter per variable. "
                 "In order to maintain the current behaviour, ensure to set "
                 "the parameter tune_by_variable to True explicitly before upgrading "
-                "to version 0.24.0."
+                "to version 0.24.0.",
+                DeprecationWarning,
             )
             tune_by_variable = True
 
