@@ -47,6 +47,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     >>> from sktime.datasets import load_longley
 
     Using integers (column iloc references) for indexing:
+
     >>> y = load_longley()[1][["GNP", "UNEMP"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
@@ -58,6 +59,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     >>> y_pred = forecaster.predict()
 
     Using strings for indexing:
+
     >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
     >>> fc = ColumnEnsembleForecaster(
     ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
@@ -67,6 +69,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     >>> y_pred = fc.predict()
 
     Applying one forecaster to multiple columns, multivariate:
+
     >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
     >>> fc = ColumnEnsembleForecaster(
     ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
@@ -222,9 +225,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         """
         return self._by_column("predict", fh=fh, X=X)
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=True):
+    def _predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -270,9 +272,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             out.columns = out.columns.droplevel(level=1)
         return out
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh=None, X=None, coverage=None, legacy_interface=True):
+    def _predict_interval(self, fh=None, X=None, coverage=None, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

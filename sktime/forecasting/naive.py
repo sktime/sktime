@@ -111,6 +111,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
+        "ignores-exogeneous-X": True,
         "scitype:y": "univariate",
         "capability:pred_var": True,
         "capability:pred_int": True,
@@ -406,9 +407,8 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return y_pred
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
@@ -700,9 +700,8 @@ class NaiveVariance(BaseForecaster):
             )
         return self
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
@@ -881,6 +880,7 @@ class NaiveVariance(BaseForecaster):
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-        params_list = {"forecaster": FORECASTER}
+        params1 = {"forecaster": FORECASTER}
+        params2 = {"forecaster": FORECASTER, "initial_window": 2}
 
-        return params_list
+        return [params1, params2]
