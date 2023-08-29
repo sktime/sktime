@@ -94,7 +94,7 @@ class MSTL(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "X_inner_mtype": "pd.Series",
-        "y_inner_mtype": "pd.Series",
+        "y_inner_mtype": "None",
         "transform-returns-same-time-index": True,
         "univariate-only": True,
         "capability:inverse_transform": True,
