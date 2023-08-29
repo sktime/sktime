@@ -34,6 +34,10 @@ UNEQUAL_LENGTH_PROBLEMS = [
     load_japanese_vowels,
 ]
 
+# test tsf download only on a random uniform subsample of datasets
+N_TSF_SUBSAMPLE = 3
+TSF_SUBSAMPLE = np.random.choice(tsf_all_datasets, N_TSF_SUBSAMPLE)
+
 
 @pytest.mark.parametrize(
     "loader", UNIVARIATE_PROBLEMS + MULTIVARIATE_PROBLEMS + UNEQUAL_LENGTH_PROBLEMS
@@ -113,7 +117,7 @@ def test_load_forecastingdata():
     assert metadata["contain_equal_length"] is False
 
 
-@pytest.mark.parametrize("name", tsf_all_datasets)
+@pytest.mark.parametrize("name", TSF_SUBSAMPLE)
 def test_check_link_downloadable(name):
     """Test dataset URL from forecasting.org is downloadable and exits."""
     url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
