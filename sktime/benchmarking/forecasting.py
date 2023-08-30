@@ -37,9 +37,13 @@ def forecasting_validation(
     Dictionary of benchmark results for that forecaster
     """
     # TODO:
-    # handle X variable via dataset loader object
+    # dataset_loader accept sktime dataset object (future plan)
     if callable(dataset_loader):
-        y, X = dataset_loader(), None
+        data = dataset_loader()
+        if isinstance(data, tuple):
+            y, X = data
+        else:
+            y, X = data, None
     else:
         y, X = dataset_loader
 
