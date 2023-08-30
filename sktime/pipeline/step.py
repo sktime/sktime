@@ -122,6 +122,7 @@ class Step:
             # if the skobject is a forecaster, passby the input
             # data if is fitted in the same call
             if isinstance(self.skobject, BaseForecaster):
+                self._store_to_buffer(input_data["y"])
                 return StepResult(input_data["y"], mode=self.mode)
 
         for method in mro:

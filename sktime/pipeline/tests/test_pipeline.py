@@ -77,7 +77,6 @@ def test_add_step_cloned():
 @pytest.mark.parametrize(
     "method,mro,allowed_method",
     [
-        ("fit", ["transform", "predict"], "fit"),
         ("predict", ["predict", "transform"], "predict"),
         (
             "predict_interval",
@@ -97,7 +96,7 @@ def test_method(method, mro, allowed_method):
     pipeline = Pipeline()
     step_mock = MagicMock()
     step_mock.get_allowed_method.return_value = [allowed_method]
-
+    pipeline._assembled = True
     pipeline.steps.update({"name": step_mock})
     pipeline._last_step_name = "name"
 

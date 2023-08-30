@@ -142,7 +142,7 @@ class Pipeline(BaseEstimator):
             "X": Step(None, "X", None, None, {}),
             "y": Step(None, "y", None, None, {}),
         }
-        self.model_dict = {}
+
         self.kwargs = {}
         self.step_informations = step_informations
         self._step_informations = (
@@ -259,6 +259,16 @@ class Pipeline(BaseEstimator):
         return Pipeline(step_informations=step_informations)
 
     def _assemble_steps(self):
+        # Reset steps and id mappings
+        self.steps = {
+            "X": Step(None, "X", None, None, {}),
+            "y": Step(None, "y", None, None, {}),
+        }
+        self.id_to_true_id = {}
+        self.id_to_obj = {}
+        self.counter = 0
+        model_dict = {}
+
         for step_info in self._step_informations:
             skobject = step_info["skobject"]
             edges = step_info["edges"]
@@ -269,9 +279,9 @@ class Pipeline(BaseEstimator):
             # Ensure that the pipelines contained cloned skobject and that
             # if a skobject is already cloned, that the cloned skobject is used
             unique_id = self._get_unique_id(skobject)
-            if unique_id not in self.model_dict:
-                self.model_dict[unique_id] = skobject.clone()
-            cloned_skobject = self.model_dict[unique_id]
+            if unique_id not in model_dict:
+                model_dict[unique_id] = skobject.clone()
+            cloned_skobject = model_dict[unique_id]
 
             input_steps = {}
             for key, edge in edges.items():
@@ -312,6 +322,7 @@ class Pipeline(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" in the skobjects of the pipeline and sets is_fitted flag to True.
         """
+        self._assembled = False
         self._initiate_call(X, y, kwargs)
         self._y = y
         self._X = X
@@ -322,7 +333,16 @@ class Pipeline(BaseEstimator):
             mro=["transform", "predict"],
             kwargs=self.kwargs,
         )
+        self._is_fitted = True
+        self._set_attributes(X, y)
         return self
+
+    def _set_attributes(self, X, y):
+        self._X = X
+        self._y = y
+        for step in self.steps.values():
+            if hasattr(step.skobject, "cutoff"):
+                self.cutoff = step.skobject.cutoff
 
     def fit_transform(self, X, y=None, **kwargs):
         """Fit graph pipeline to training data and call transform afterward.
