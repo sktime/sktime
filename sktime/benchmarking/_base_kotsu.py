@@ -43,7 +43,7 @@ if _check_soft_dependencies("kotsu", severity="none"):  # for dependency isolati
             considered deprecated and replaced by a more recent/better validation/model
         nondeterministic: Bool, optional (default=False)
             Whether this entity is non-deterministic even after seeding
-        entity_id_fomat: str, optional (default=None)
+        entity_id_format: str, optional (default=None)
             Specifying regex to make sure ID follow certain desired format.
         kwargs: Dict, optional (default=None)
             The kwargs to pass to the entity entry point when instantiating the entity
@@ -60,10 +60,10 @@ if _check_soft_dependencies("kotsu", severity="none"):  # for dependency isolati
             entry_point: Union[Callable, str],
             deprecated: bool = False,
             nondeterministic: bool = False,
-            entity_id_fomat: str = None,
+            entity_id_format: str = None,
             kwargs: Optional[dict] = None,
         ):
-            _check_id_format(entity_id_fomat, id)
+            _check_id_format(entity_id_format, id)
             self.id = id
             self.entry_point = entry_point
             self.deprecated = deprecated
@@ -77,8 +77,8 @@ if _check_soft_dependencies("kotsu", severity="none"):  # for dependency isolati
         the same entity dynamics (or be desupported).
         """
 
-        def __init__(self, entity_id_fomat: str):
-            self.entity_id_fomat = entity_id_fomat
+        def __init__(self, entity_id_format: str):
+            self.entity_id_format = entity_id_format
             super().__init__()
 
         def register(
@@ -105,8 +105,6 @@ if _check_soft_dependencies("kotsu", severity="none"):  # for dependency isolati
                 and considered deprecated and replaced by a more recent/better model
             nondeterministic: Bool, optional (default=False)
                 Whether this entity is non-deterministic even after seeding
-            entity_id_fomat: str, optional (default=None)
-                Specifying regex to make sure ID follow certain desired format.
             kwargs: Dict, optional (default=None)
                 kwargs to pass to the entity entry point when instantiating the entity.
             """
@@ -123,7 +121,7 @@ if _check_soft_dependencies("kotsu", severity="none"):  # for dependency isolati
                 entry_point,
                 deprecated=deprecated,
                 nondeterministic=nondeterministic,
-                entity_id_fomat=self.entity_id_fomat,
+                entity_id_format=self.entity_id_format,
                 kwargs=kwargs,
             )
 

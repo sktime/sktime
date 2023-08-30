@@ -68,13 +68,13 @@ class ForecastingBenchmark(BaseBenchmark):
 
     Parameters
     ----------
-    id_fomat: str, optional (defualt=None)
+    id_format: str, optional (defualt=None)
         A regex used to enforce task/estimator ID to match a certain format
 
     """
 
-    def __init__(self, id_fomat: Optional[str] = None):
-        super().__init__(id_fomat)
+    def __init__(self, id_format: Optional[str] = None):
+        super().__init__(id_format)
 
     def add_task(
         self,

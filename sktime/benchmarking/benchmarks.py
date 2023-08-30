@@ -73,13 +73,13 @@ class BaseBenchmark:
 
     Parameters
     ----------
-    id_fomat: str, optional (defualt=None)
+    id_format: str, optional (defualt=None)
         A regex used to enforce task/estimator ID to match a certain format
         if None, no format is enforced on task/estimator ID
 
     """
 
-    def __init__(self, id_fomat: Optional[str] = None):
+    def __init__(self, id_format: Optional[str] = None):
         _check_soft_dependencies("kotsu")
         import kotsu
 
@@ -88,8 +88,8 @@ class BaseBenchmark:
             SktimeValidationRegistry,
         )
 
-        self.estimators = SktimeModelRegistry(id_fomat)
-        self.validations = SktimeValidationRegistry(id_fomat)
+        self.estimators = SktimeModelRegistry(id_format)
+        self.validations = SktimeValidationRegistry(id_format)
         self.kotsu_run = kotsu.run.run
 
     def add_estimator(
