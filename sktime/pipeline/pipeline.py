@@ -116,9 +116,9 @@ class Pipeline(BaseEstimator):
     ...     general_pipeline = general_pipeline.add_step(**step)
     >>> general_pipeline.fit(X=X, y=y) # doctest: +SKIP
     >>> result_general = general_pipeline.predict(X) # doctest: +SKIP
+
         Example 3: Forecasting pipeline with exogenous features using the
         generalized non-sequential pipeline implementation
-
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> general_pipeline = Pipeline()

@@ -8,7 +8,7 @@ The :mod:`sktime.pipeline` module contains the implementation of the graphical p
 Pipeline
 -----------
 
-.. currentmodule:: sktime.pipeline
+.. currentmodule:: sktime.pipeline.pipeline
 
 .. autosummary::
     :toctree: auto_generated/
