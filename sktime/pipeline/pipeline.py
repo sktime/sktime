@@ -6,6 +6,9 @@ from sktime.base import BaseEstimator
 from sktime.pipeline.step import Step
 from sktime.transformations.series.subset import ColumnSelect
 
+__author__ = ["benHeid"]
+__all__ = ["Pipeline"]
+
 
 class MethodNotImplementedError(Exception):
     """MethodNotImplementedError.
@@ -27,6 +30,12 @@ class Pipeline(BaseEstimator):
     is not linear. I.e., the each element of the pipeline can be the input of multiple
     other steps and not only one sucessors.
 
+    **Acknowledgements**
+    This graphical pipeline is inspired by pyWATTS that is developed by the Institute
+    for Automation and Applied Informatics (IAI) at Karlsruhe Institute of Technology.
+    The implementation is supported by IAI and the author benHeid is funded by
+    HelmholtzAI.
+
     `fit(y, X, *args)` - changes state by running `fit` on all sktime estimators and
         transformers in the pipeline. Note that depending on the sktime estimators and
         transformers that are added to the pipeline, different keywords are required.
@@ -39,13 +48,11 @@ class Pipeline(BaseEstimator):
     `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`,
         with `predict_interval` or `predict_quantiles` substituted for `predict`.
     `predict_var`, `predict_proba` - are currently not supported
-
     `get_params`, `set_params` uses `sklearn` compatible nesting interface
         if list is unnamed, names are generated as names of classes
         if names are non-unique, `f"_{str(i)}"` is appended to each name string
             where `i` is the total count of occurrence of a non-unique string
             inside the list of names leading up to it (inclusive)
-
     `add_step(skobject, name, edges, method, **kwargs)` - adds a skobject to the
         pipeline and setting the name as identifier and the steps specified with
         edges as input steps (predecessors). Therby the method that should be
@@ -258,6 +265,9 @@ class Pipeline(BaseEstimator):
             name = step_info["name"]
             method = step_info["method"]
             kwargs = step_info["kwargs"]
+
+            # Ensure that the pipelines contained cloned skobject and that
+            # if a skobject is already cloned, that the cloned skobject is used
             unique_id = self._get_unique_id(skobject)
             if unique_id not in self.model_dict:
                 self.model_dict[unique_id] = skobject.clone()
@@ -266,11 +276,11 @@ class Pipeline(BaseEstimator):
             input_steps = {}
             for key, edge in edges.items():
                 edge = edge if isinstance(edge, list) else [edge]
+                # Create subsetter for taking a specific column of the input.
                 for edg in edge:
                     if "__" in edg and edg not in self.steps:
-                        # Just semantic sugar..
                         self._create_subsetter(edg)
-                    input_steps[key] = [self._get_step(edg) for edg in edge]
+                input_steps[key] = [self._get_step(edg) for edg in edge]
 
             step = Step(
                 cloned_skobject, name, input_steps, method=method, params=kwargs
