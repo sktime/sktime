@@ -79,9 +79,10 @@ class ForecastingBenchmark(BaseBenchmark):
         Parameters
         ----------
         dataset_loader : Callable or a tuple
-            if Callable. a function which returns a dataset, like from `sktime.datasets`
-            if Tuple, must be in the format of (Y, X) where Y is the target variable
-            and X is exogenous variabele where both must be sktime pd.DataFrame MTYPE
+            If Callable. a function which returns a dataset, like from `sktime.datasets`
+            If Tuple, must be in the format of (Y, X) where Y is the target variable
+            and X is exogenous variabele where both must be sktime pd.DataFrame MTYPE.
+            When tuple is given, task_id argument must be filled.
         cv_splitter : BaseSplitter object
             Splitter used for generating validation folds.
         scorers : a list of BaseMetric objects
@@ -102,6 +103,10 @@ class ForecastingBenchmark(BaseBenchmark):
             "scorers": scorers,
         }
         if task_id is None:
+            if isinstance(dataset_loader, tuple):
+                raise ValueError(
+                    "Unable to use default task_id naming. Please insert them manually"
+                )
             task_id = (
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]-v1"
