@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
-__author__ = ["danbartl", "KishManani", "VyomkeshVyas"]
+__author__ = ["danbartl", "KishManani", "VyomkeshVyas", "ali-parizad"]
 __all__ = ["DateTimeFeatures"]
 
 import warnings
@@ -30,6 +30,8 @@ _RAW_DUMMIES = [
     ["second", "minute", "second", "minimal"],
     ["millisecond", "second", "millisecond", "minimal"],
     ["day", "week", "is_weekend", "comprehensive"],
+    ["hour", "day", "is_peak_hour", "comprehensive"],
+    ["hour", "day", "is_working_hour", "comprehensive"],
 ]
 
 
@@ -81,6 +83,10 @@ class DateTimeFeatures(BaseTransformer):
         * day_of_quarter
         * is_weekend
         * year (special case with no lower frequency).
+    is_peak_hour: int, optional (default = [12, 18])
+        the peak hour range may be selcted in form of [peak_hour_start, peak_hour_end]
+    is_working_hour: int, optional (default = [8, 18])
+        the working hour range may be selcted in form of [working_hour_start, working_hour_end]
     keep_original_columns :  boolean, optional, default=False
         Keep original columns in X passed to `.transform()`.
 
@@ -114,6 +120,23 @@ class DateTimeFeatures(BaseTransformer):
 
     >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="minimal")
     >>> y_hat = transformer.fit_transform(y)
+
+    Examples for hourly data (use case of 'is_peak_hour', 'is_working_hour')
+    --------
+    >>> from sktime.transformations.series.date import DateTimeFeatures
+    >>> from sktime.datasets import load_solar
+    >>> y =  load_solar(start='2022-05-01', return_full_df=True, end='2022-06-18', api_version="v4")
+    >>> y = y.tz_localize(None)
+    >>> y = y.asfreq("H")
+
+    Returns columns `y`, year', 'quarter_of_year', 'month_of_year', 'week_of_year',
+       'day_of_year', 'month_of_quarter', 'week_of_quarter', 'day_of_quarter',
+       'week_of_month', 'day_of_month', 'day_of_week', 'hour_of_day',
+       'hour_of_week', 'is_weekend', 'is_peak_hour', 'is_working_hour'
+
+    >>> transformer = DateTimeFeatures(ts_freq="H", feature_scope="comprehensive", is_peak_hour_range = [13, 17] , is_working_hour_range = [9, 18])
+    >>> y_hat = transformer.fit_transform(y)
+
     """
 
     _tags = {
@@ -143,11 +166,15 @@ class DateTimeFeatures(BaseTransformer):
         ts_freq=None,
         feature_scope="minimal",
         manual_selection=None,
+        is_peak_hour_range=[12, 18], 
+        is_working_hour_range=[8, 18],
         keep_original_columns=False,
     ):
         self.ts_freq = ts_freq
         self.feature_scope = feature_scope
         self.manual_selection = manual_selection
+        self.is_peak_hour_range = is_peak_hour_range
+        self.is_working_hour_range = is_working_hour_range
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         self.keep_original_columns = keep_original_columns
 
@@ -173,6 +200,8 @@ class DateTimeFeatures(BaseTransformer):
         _check_ts_freq(self.ts_freq, self.dummies)
         _check_feature_scope(self.feature_scope)
         _check_manual_selection(self.manual_selection, self.dummies)
+        _check_is_peak_hour_range(self.is_peak_hour_range)
+        _check_is_working_hour_range(self.is_working_hour_range)
 
         if isinstance(X.index, pd.MultiIndex):
             time_index = X.index.get_level_values(-1)
@@ -219,7 +248,7 @@ class DateTimeFeatures(BaseTransformer):
                 ]
 
         df = [
-            _calendar_dummies(x_df, dummy) for dummy in calendar_dummies["dummy_func"]
+            _calendar_dummies(x_df, self.is_peak_hour_range, self.is_working_hour_range, dummy) for dummy in calendar_dummies["dummy_func"]
         ]
         df = pd.concat(df, axis=1)
         df.columns = calendar_dummies["dummy"]
@@ -260,6 +289,48 @@ def _check_manual_selection(manual_selection, DUMMIES):
         )
 
 
+def _check_is_peak_hour_range(is_peak_hour_range): 
+    if min(is_peak_hour_range) < 0 or max(is_peak_hour_range) > 23:
+        print(
+            f"you selected min(is_peak_hour_range) = {min(is_peak_hour_range)}, max(is_peak_hour_range) = {max(is_peak_hour_range)}"
+        )
+        raise ValueError(
+            "Invalid is_peak_hour_range specified,"
+            + "must be in range of 0 - 23 hour"
+            + "(min peak hour = 0, max peak hour = 23)"
+        )
+    if is_peak_hour_range[0] > is_peak_hour_range[-1]: 
+        print(
+            f"you selected min(is_peak_hour_range) = {min(is_peak_hour_range)}, max(is_peak_hour_range) = {max(is_peak_hour_range)}"
+        )
+        raise ValueError(
+            "Invalid is_peak_hour_range specified,"
+            + "min is_peak_hour_range (peak_hour_start) must be less than max is_peak_hour_range (peak_hour_end)"
+            + "(min peak hour = 0, max peak hour = 23)"
+        )
+
+
+def _check_is_working_hour_range(is_working_hour_range): 
+    if min(is_working_hour_range) < 0 or max(is_working_hour_range) > 23:
+        print(
+            f"you selected min(is_working_hour_range) = {min(is_working_hour_range)}, max(is_working_hour_range) = {max(is_working_hour_range)}"
+        )
+        raise ValueError(
+            "Invalid is_working_hour_range specified,"
+            + "must be in range of 0 - 23 hour"
+            + "(min peak hour = 0, max peak hour = 23)"
+        )
+    if is_working_hour_range[0] > is_working_hour_range[-1]:
+        print(
+            f"you selected min(is_working_hour_range) = {min(is_working_hour_range)}, max(is_working_hour_range) = {max(is_working_hour_range)}"
+        )
+        raise ValueError(
+            "Invalid is_working_hour_range specified,"
+            + "min is_working_hour_range (peak_hour_start) must be less than max is_working_hour_range (peak_hour_end)"
+            + "(min peak hour = 0, max peak hour = 23)"
+        )
+    
+
 def _check_feature_scope(feature_scope):
     if feature_scope not in ["minimal", "efficient", "comprehensive"]:
         raise ValueError(
@@ -277,7 +348,7 @@ def _check_ts_freq(ts_freq, DUMMIES):
         )
 
 
-def _calendar_dummies(x, funcs):
+def _calendar_dummies(x, is_peak_hour_range, is_working_hour_range, funcs):
     date_sequence = x["date_sequence"].dt
     if funcs == "week_of_year":
         # The first week of an ISO year is the first (Gregorian)
@@ -325,6 +396,10 @@ def _calendar_dummies(x, funcs):
         cd = date_sequence.day_of_week * 24 + date_sequence.hour
     elif funcs == "is_weekend":
         cd = date_sequence.day_of_week > 4
+    elif funcs == "is_peak_hour":
+        cd = (date_sequence.hour >= is_peak_hour_range[0]) & (date_sequence.hour <= is_peak_hour_range[1])  
+    elif funcs == "is_working_hour":
+        cd = (date_sequence.hour >= is_working_hour_range[0]) & (date_sequence.hour <= is_working_hour_range[1]) 
     else:
         cd = getattr(date_sequence, funcs)
     cd = pd.DataFrame(cd)
@@ -367,6 +442,13 @@ def _prep_dummies(DUMMIES):
     DUMMIES.loc[
         DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]
     ] = "is_weekend"
+
+    DUMMIES.loc[
+    DUMMIES["dummy_func"] == "is_peak_hour", ["dummy", "fourier"]
+    ] = "is_peak_hour"
+    DUMMIES.loc[
+        DUMMIES["dummy_func"] == "is_working_hour", ["dummy", "fourier"]
+    ] = "is_working_hour"
 
     DUMMIES["child"] = (
         DUMMIES["child"].astype("category").cat.reorder_categories(date_order)
