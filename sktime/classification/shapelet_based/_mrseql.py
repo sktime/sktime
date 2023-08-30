@@ -39,7 +39,7 @@ class MrSEQL(_DelegatedClassifier):
 
     _tags = {
         "X_inner_mtype": "nested_univ",
-        "python_dependencies": ["mrseql", "numba"],
+        "python_dependencies": "mrseql",
         "requires_cython": True,
     }
 
@@ -57,6 +57,9 @@ class MrSEQL(_DelegatedClassifier):
             self._symrep = [symrep]
         else:
             self._symrep = symrep
+
+        if "sfa" in self._symrep:
+            self.set_tags(**{"python_dependencies": ["mrseql", "numba"]})
 
         super().__init__()
 
@@ -108,11 +111,18 @@ class MrSEQL(_DelegatedClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         params1 = {}
+
+        if not _check_soft_dependencies("numba", severity="none"):
+            symrep = ["sax"]
+        else:
+            symrep = ["sax", "sfa"]
 
         params2 = {
             "seql_mode": "fs",
-            "symrep": ["sax", "sfa"],
+            "symrep": symrep,
         }
 
         return [params1, params2]
