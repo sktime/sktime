@@ -149,4 +149,86 @@ class ForecastingBenchmark(BaseBenchmark):
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]-v1"
             )
-        self._add_task(_factory_forecasting_validation, task_kwargs, task_id=task_id)
+        self._add_task(self._factory_forecasting_validation, task_kwargs, task_id)
+
+    def validation_step(self, estimator, y, X, cv_splitter, scorers):
+        """Workflows used to evaluate an estimator."""
+        results = {}
+        scores_df = evaluate(
+            forecaster=estimator,
+            y=y,
+            X=X,
+            cv=cv_splitter,
+            scoring=scorers,
+            return_data=True,
+        )
+        for scorer in scorers:
+            scorer_name = scorer.name
+            for ix, row in scores_df.iterrows():
+                results[f"{scorer_name}_fold_{ix}_test"] = row[f"test_{scorer_name}"]
+                results[f"y_train_fold_{ix}"] = row["y_train"]
+                results[f"y_test_fold_{ix}"] = row["y_test"]
+                results[f"y_pred_fold_{ix}"] = row["y_pred"]
+            results[f"{scorer_name}_mean"] = scores_df[f"test_{scorer_name}"].mean()
+            results[f"{scorer_name}_std"] = scores_df[f"test_{scorer_name}"].std()
+        return results
+
+    def _prepare_dataset(self, dataset_loader):
+        """Prepare and validate datasets."""
+        # TODO:
+        # dataset_loader accept sktime dataset object (future plan)
+        if callable(dataset_loader):
+            data = dataset_loader()
+            if isinstance(data, tuple):
+                y, X = data
+            else:
+                y, X = data, None
+        else:
+            y, X = dataset_loader
+        return y, X
+
+    def _forecasting_validation(
+        self,
+        dataset_loader: Callable,
+        cv_splitter: BaseSplitter,
+        scorers: List[BaseMetric],
+        estimator: BaseForecaster,
+        **kwargs,
+    ) -> Dict[str, Union[float, str]]:
+        """Run validation for a forecasting estimator.
+
+        Parameters
+        ----------
+        dataset_loader : Callable or a tuple
+            If Callable. a function which returns a dataset, like from `sktime.datasets`
+            If Tuple, must be in the format of (Y, X) where Y is the target variable
+            and X is exogenous variabele where both must be sktime pd.DataFrame MTYPE.
+            When tuple is given, task_id argument must be filled.
+        cv_splitter : BaseSplitter object
+            Splitter used for generating validation folds.
+        scorers : a list of BaseMetric objects
+            Each BaseMetric output will be included in the results.
+        estimator : BaseForecaster object
+            Estimator to benchmark.
+
+        Returns
+        -------
+        Dictionary of benchmark results for that forecaster
+        """
+        y, X = self._prepare_dataset(dataset_loader)
+        results = self.validation_step(estimator, y, X, cv_splitter, scorers)
+        return results
+
+    def _factory_forecasting_validation(
+        self,
+        dataset_loader: Callable,
+        cv_splitter: BaseSplitter,
+        scorers: List[BaseMetric],
+    ) -> Callable:
+        """Build validation func which just takes a forecasting estimator."""
+        return functools.partial(
+            self._forecasting_validation,
+            dataset_loader,
+            cv_splitter,
+            scorers,
+        )
