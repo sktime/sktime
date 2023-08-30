@@ -225,9 +225,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         """
         return self._by_column("predict", fh=fh, X=X)
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=True):
+    def _predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -273,9 +272,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             out.columns = out.columns.droplevel(level=1)
         return out
 
-    # todo 0.22.0 - switch legacy_interface default to False
     # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh=None, X=None, coverage=None, legacy_interface=True):
+    def _predict_interval(self, fh=None, X=None, coverage=None, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

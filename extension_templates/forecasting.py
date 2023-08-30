@@ -500,10 +500,10 @@ class MyForecaster(BaseForecaster):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        # import tensorflow_probability as tfp
-        # tensorflow probability import should happen inside this function
-        #
         # implement here
+        # returned BaseDistribution should have same index and columns
+        # as the predict return
+        #
         # implementing the marginal=False case is optional and can be omitted
 
     # todo: consider implementing this, optional
