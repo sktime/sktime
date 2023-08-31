@@ -45,7 +45,7 @@ classifiers = [
 requires-python = ">=3.8,<3.12"
 dependencies = [
     "numpy>=1.21.0,<1.26",
-    "pandas>=1.1.0,<2.1.0",
+    "pandas>=1.1.0,<2.2.0",
     "packaging",
     "scikit-base<0.6.0",
     "scikit-learn>=0.24.0,<1.4.0",
@@ -153,7 +153,7 @@ mlflow_tests = [
 
 binder = [
     "jupyter",
-    "pandas<3.0.0",
+    "pandas<2.0.0",
 ]
 
 docs = [
@@ -176,7 +176,7 @@ dl = [
 ]
 
 pandas1 = [
-    "pandas<3.0.0",
+    "pandas<2.0.0",
 ]
 
 [project.urls]
