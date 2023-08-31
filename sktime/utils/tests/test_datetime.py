@@ -129,7 +129,7 @@ def test_set_freq_hier():
     """Test that setting frequency on a DatetimeIndex MultiIndex works."""
     # from pandas 2.1.0 on, freq is preserved correctly,
     # so in that case we artificially destroy the freq attribute
-    pandas_210 = _check_soft_dependencies("pandas>2.1.0", severity="none")
+    pandas_210 = _check_soft_dependencies("pandas>=2.1.0", severity="none")
 
     y = load_airline()
 
