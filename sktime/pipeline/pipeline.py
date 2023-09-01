@@ -202,12 +202,27 @@ class Pipeline(BaseEstimator):
         self.kwargs = params
         new_step_infos = copy(self._step_informations)
         for key, value in params.items():
-            if "__" in key:
-                step_name = key.split("__")[0]
-                n_key = key[len(step_name) + 2 :]
-                for step_information in new_step_infos:
-                    if step_name == step_information["name"]:
-                        step_information["skobject"].set_params(**{n_key: value})
+            keys = key.split("__")
+            # keys length is at least three:
+            # step_name, skobject_or_edges, parameter_name
+            if len(keys) >= 3:
+                step_name, skobject_or_edges = keys[:2]
+                parameter_name = "__".join(keys[2:])
+
+                # Only one element with the same name is allowed
+                step_information = list(
+                    filter(lambda x: x["name"] == step_name, new_step_infos)
+                )[0]
+                if skobject_or_edges == "skobject":
+                    step_information["skobject"].set_params(**{parameter_name: value})
+                elif skobject_or_edges == "edges":
+                    assert parameter_name in [
+                        "X",
+                        "y",
+                    ], "Only X and y are allowed as edges"
+                    step_information["edges"][parameter_name] = value
+                else:
+                    raise Exception("Invalid parameter name")
 
         if "step_informations" in params:
             new_step_infos = params["step_informations"]
