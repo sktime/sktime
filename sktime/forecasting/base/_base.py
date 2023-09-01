@@ -1200,7 +1200,7 @@ class BaseForecaster(BaseEstimator):
 
         y_pred = self.predict(fh=fh, X=X)
 
-        if not type(y_pred) == type(y):
+        if not type(y_pred) is type(y):
             y = convert_to(y, self._y_mtype_last_seen)
 
         y_res = y - y_pred

@@ -167,6 +167,10 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("skip-inverse-transform", False):
             return None
 
+        # skip this test if inverse_transform is not assumed an exact inverse
+        if not estimator_instance.get_tag("capability:inverse_transform:exact", True):
+            return None
+
         X = scenario.args["transform"]["X"]
         Xt = scenario.run(estimator_instance, method_sequence=["fit", "transform"])
         Xit = estimator_instance.inverse_transform(Xt)
