@@ -9,7 +9,7 @@ from numpy.testing import assert_array_equal
 
 from sktime.datasets import load_airline
 from sktime.forecasting.ets import AutoETS
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 # test results against R implementation on airline dataset
 y = load_airline()
@@ -22,8 +22,8 @@ inf_ic_ts = pd.Series(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(AutoETS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_airline_default():
     """Default condition.
@@ -47,8 +47,8 @@ def test_airline_default():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(AutoETS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.xfail(reason="flaky results on linux")
 def test_airline_allow_multiplicative_trend():
@@ -75,8 +75,8 @@ def test_airline_allow_multiplicative_trend():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(AutoETS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_inf_ic_true():
     """Ignore infinite IC models when ignore_inf_ic is `True`."""
@@ -92,8 +92,8 @@ def test_inf_ic_true():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(AutoETS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.xfail
 def test_inf_ic_false():

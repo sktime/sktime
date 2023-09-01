@@ -113,6 +113,16 @@ Dynamic Time Warping Distances
     :template: class.rst
 
     DtwDist
+    DtwDistTslearn
+    SoftDtwDistTslearn
+
+.. currentmodule:: sktime.dists_kernels.ctw
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CtwDistTslearn
 
 Time warping distances can also be obtained by composing ``DistFromAligner`` with
 a time warping aligner, see docstring of ``DistFromAligner``:
@@ -137,6 +147,14 @@ Edit Distances
 
     EditDist
 
+.. currentmodule:: sktime.dists_kernels.lcss
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LcssTslearn
+
 Time Series Kernels
 ~~~~~~~~~~~~~~~~~~~
 
@@ -155,6 +173,14 @@ See docstring of ``AggrDist`` and ``FlatDist``.
     FlatDist
 
 Advanced time series kernels that cannot be expressed as aggrgates or flat applicates:
+
+.. currentmodule:: sktime.dists_kernels.gak
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    GAKernel
 
 .. currentmodule:: sktime.dists_kernels.signature_kernel
 

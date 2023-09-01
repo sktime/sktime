@@ -5,11 +5,11 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.classification.dummy import DummyClassifier
+from sktime.forecasting.dummy import ForecastKnownValues
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.estimator_checks import check_estimator
-from sktime.utils.estimators import MockForecaster
 
-EXAMPLE_CLASSES = [DummyClassifier, MockForecaster, ExponentTransformer]
+EXAMPLE_CLASSES = [DummyClassifier, ForecastKnownValues, ExponentTransformer]
 
 
 @pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
