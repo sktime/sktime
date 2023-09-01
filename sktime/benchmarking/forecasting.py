@@ -56,6 +56,8 @@ def forecasting_validation(
         scoring=scorers,
         return_data=True,
     )
+
+    # converting pd.Dataframe to Dict
     for scorer in scorers:
         scorer_name = scorer.name
         for ix, row in scores_df.iterrows():
