@@ -4,6 +4,7 @@
 __author__ = ["fkiraly"]
 
 import pandas as pd
+from frouros.detectors.base import BaseDetector
 
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.datatypes._utilities import get_window
@@ -15,6 +16,55 @@ TAGS_TO_KEEP = ["fit_is_empty", "X_inner_mtype", "y_inner_mtype"]
 # mtype tags are set so X/y is passed through, conversions happen in wrapped estimator
 TAGS_TO_CLONE = _DelegatedForecaster().get_tags().keys()
 TAGS_TO_CLONE = list(set(TAGS_TO_CLONE).difference(TAGS_TO_KEEP))
+
+class UpdateModelEveryDrift(_DelegatedForecaster):
+    """Refits or updates model upon concept drift detection
+
+
+    Parameters
+    ----------
+    drift_detector : a drift detector from the frouros package
+    update_strategy : strategy to update the model on drift, either one of 'update' or 'refit'
+    """
+
+    _delegate_name = "forecaster_"
+
+    _tags = {
+        "fit_is_empty": False,
+        "requires-fh-in-fit": False,
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+    }
+
+    def __init__(
+        self, forecaster, drift_detector: BaseDetector=None, update_strategy=None
+    ):
+        self.forecaster = forecaster
+        self.forecaster_ = forecaster.clone()
+
+        self.drift_detector = drift_detector
+        self.update_strategy = update_strategy
+
+        super().__init__()
+
+        self.clone_tags(forecaster, TAGS_TO_CLONE)
+
+    def _fit(self, y, X, fh):
+        ### Need to fit some of the detectors, as used in the BaseDataDrift class which has fit method
+
+        # estimator = self._get_delegate()
+        # estimator.fit(y=y, fh=fh, X=X)
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        ## Need to update the drift detector, seems like this can be achieved with the concept drift detectorss but not dataDetectors
+        ## Can maybe create either two different UpdateRefit or two parameters where only one should be used? (Concept drift or data drift detector)
+        return self
+
+    @classmethod
+    def get_test_params(cls):
+        ## Only return drift detector? Or maybe the params used in the detector as well
+        pass
 
 
 class UpdateRefitsEvery(_DelegatedForecaster):
