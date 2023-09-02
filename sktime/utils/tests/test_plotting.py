@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.plotting import plot_correlations, plot_lags, plot_series
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import VALID_DATA_TYPES
@@ -48,6 +49,11 @@ def valid_data_types():
     return valid_data_types
 
 
+# test for equal output with with named/unnamed indexes
+@pytest.mark.skipif(
+    not run_test_for_class(plot_series),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 @pytest.mark.skipif(
     not _check_soft_dependencies("matplotlib", severity="none"),
@@ -73,6 +79,10 @@ def test_plot_series_runs_without_error(series_to_plot):
     plt.close()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(plot_series),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
 @pytest.mark.skipif(
     not _check_soft_dependencies("matplotlib", severity="none"),
@@ -94,6 +104,10 @@ def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_
             _plot_series(series_to_plot)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(plot_series),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "series_to_plot", [(y_airline_true, y_airline_test.reset_index(drop=True))]
 )
@@ -110,6 +124,10 @@ def test_plot_series_with_unequal_index_type_raises_error(
         _plot_series(series_to_plot)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(plot_series),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 @pytest.mark.skipif(
     not _check_soft_dependencies("matplotlib", severity="none"),
@@ -131,6 +149,10 @@ def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
         _plot_series(series_to_plot, markers=markers)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(plot_series),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 @pytest.mark.skipif(
     not _check_soft_dependencies("matplotlib", severity="none"),
@@ -152,6 +174,10 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
         _plot_series(series_to_plot, labels=labels)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(plot_series),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 @pytest.mark.skipif(
     not _check_soft_dependencies("matplotlib", severity="none"),
@@ -192,6 +218,10 @@ def test_plot_series_output_type(series_to_plot):
 
 
 @pytest.mark.skipif(
+    not run_test_for_class(plot_series),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.skipif(
     not _check_soft_dependencies("matplotlib", severity="none"),
     reason="skip test if required soft dependency for matplotlib not available",
 )
@@ -215,6 +245,10 @@ def test_plot_series_uniform_treatment_of_int64_range_index_types():
 
 
 # Generically test whether plots only accepting univariate input run
+@pytest.mark.skipif(
+    not run_test_for_class(univariate_plots),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
 @pytest.mark.skipif(
@@ -235,6 +269,10 @@ def test_univariate_plots_run_without_error(series_to_plot, plot_func):
 
 # Generically test whether plots only accepting univariate input
 # raise an error when invalid input type is found
+@pytest.mark.skipif(
+    not run_test_for_class(univariate_plots),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
 @pytest.mark.parametrize("plot_func", univariate_plots)
 @pytest.mark.skipif(
@@ -259,6 +297,10 @@ def test_univariate_plots_invalid_input_type_raises_error(
 
 
 # Generically test output of plots only accepting univariate input
+@pytest.mark.skipif(
+    not run_test_for_class(univariate_plots),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
 @pytest.mark.skipif(
@@ -288,6 +330,10 @@ def test_univariate_plots_output_type(series_to_plot, plot_func):
 
 # For plots that only accept univariate input, from here onwards are
 # tests specific to a given plot. E.g. to test specific arguments or functionality.
+@pytest.mark.skipif(
+    not run_test_for_class(plot_lags),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("lags", [2, (1, 2, 3)])
 @pytest.mark.parametrize("suptitle", ["Lag Plot", None])
@@ -309,6 +355,10 @@ def test_plot_lags_arguments(series_to_plot, lags, suptitle):
     plt.close()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(plot_correlations),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("lags", [6, 12, 24, 36])
 @pytest.mark.parametrize("suptitle", ["Correlation Plot", None])
