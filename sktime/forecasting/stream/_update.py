@@ -39,6 +39,8 @@ class UpdateModelEveryDrift(_DelegatedForecaster):
     def __init__(
         self, forecaster, drift_detector: BaseDetector=None, update_strategy=None
     ):
+        ## would love to have a gridsearcher class as a parameter so the model can search for the hyperparams
+        ## in case of drift, does this follow the conventions of Sktime?
         self.forecaster = forecaster
         self.forecaster_ = forecaster.clone()
 
