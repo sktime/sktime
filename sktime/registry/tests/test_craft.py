@@ -86,7 +86,7 @@ def test_imports():
     pipe_imports = (
         "from sktime.forecasting.compose._pipeline import TransformedTargetForecast"
         "er\nfrom sktime.forecasting.exp_smoothing import ExponentialSmoothing\nfrom"
-        " sktime.forecasting.model_selection._split import ExpandingWindowSplitter\nf"
+        " sktime.split.expandingwindow import ExpandingWindowSplitter\nf"
         "rom sktime.forecasting.model_selection._tune import ForecastingGridSearch"
         "CV\nfrom sktime.forecasting.naive import NaiveForecaster\nfrom sktime.fore"
         "casting.naive import NaiveForecaster\nfrom sktime.forecasting.theta impor"
