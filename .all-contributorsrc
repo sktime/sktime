@@ -2327,16 +2327,15 @@
         "bug",
         "code"
       ]
-    }
-  ]
-}
-{
-      "login": “ale”xfilothodoros,
-      "name": “Alexandros Filothodoros”,
+    },
+    {
+      "login": "alexfilothodoros",
+      "name": "Alexandros Filothodoros",
       "avatar_url": "https://avatars.githubusercontent.com/u/6419847?v=4",
       "profile": "https://github.com/alexfilothodoros",
       "contributions": [
-        “example”,
+        "doc",
+        "maintenance"
       ]
     }
   ]
