@@ -110,6 +110,7 @@ class BaseTransformer(BaseEstimator):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
         "capability:inverse_transform:range": None,
+        "capability:inverse_transform:exact": True,
         # inverting range of inverse transform = domain of invertibility of transform
         "univariate-only": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
