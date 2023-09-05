@@ -7,7 +7,7 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -38,6 +38,30 @@ def _check_strategy(strategy):
     valid_strategies = ("refit", "update", "no-update_params")
     if strategy not in valid_strategies:
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
+
+
+def _check_scores(metrics) -> Dict:
+    """Validate and coerce Metric objects and aggregrate them based on predict type."""
+    if not isinstance(metrics, List):
+        metrics = [metrics]
+
+    metrics_type = {}
+    for metric in metrics:
+        metric = check_scoring(metric)  # validate and convert to sktime BaseMetric
+        # collect predict type
+        # I think there's no need to check for attribute "get_tag" as all metric class
+        # has that method, no? I dont see the need to do if here, did i miss anything?.
+        # if hasattr(metric, "get_tag"):
+        scitype = metric.get_tag(
+            "scitype:y_pred", raise_error=False, tag_value_default="pred_point"
+        )
+        # else:  # If no scitype exists then metric is a point forecast type
+        #     scitype = "pred_point"
+        if scitype not in metrics_type.keys():
+            metrics_type[scitype] = [metric]
+        else:
+            metrics_type[scitype].append(metric)
+    return metrics_type
 
 
 def _split(
@@ -137,13 +161,13 @@ def _evaluate_window(
             forecaster.update(y_train, X_train, update_params=update_params)
         fit_time = time.perf_counter() - start_fit
 
+        # predict
         pred_type = {
             "pred_quantiles": "predict_quantiles",
             "pred_interval": "predict_interval",
             "pred_proba": "predict_proba",
             None: "predict",
         }
-        # predict
         start_pred = time.perf_counter()
 
         if hasattr(scoring, "metric_args"):
@@ -151,11 +175,11 @@ def _evaluate_window(
         else:
             metric_args = {}
 
-        if hasattr(scoring, "get_tag"):
-            scitype = scoring.get_tag("scitype:y_pred", raise_error=False)
-        else:
-            # If no scitype exists then metric is not proba and no args needed
-            scitype = None
+        # if hasattr(scoring, "get_tag"):
+        #     scitype = scoring.get_tag("scitype:y_pred", raise_error=False)
+        # else:
+        #     # If no scitype exists then metric is not proba and no args needed
+        #     scitype = None
 
         methodname = pred_type[scitype]
         method = getattr(forecaster, methodname)
@@ -392,10 +416,11 @@ def evaluate(
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
-    if isinstance(scoring, List):
-        scoring = [check_scoring(s) for s in scoring]
-    else:
-        scoring = check_scoring(scoring)
+    scoring = _check_scores(scoring)
+    # if isinstance(scoring, List):
+    #     scoring = [check_scoring(s) for s in scoring]
+    # else:
+    #     scoring = check_scoring(scoring)
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
@@ -426,7 +451,7 @@ def evaluate(
     _evaluate_window_kwargs = {
         "fh": cv.fh,
         "forecaster": forecaster,
-        "scoring": scoring if not isinstance(scoring, List) else scoring[0],
+        "scoring": scoring,  # if not isinstance(scoring, List) else scoring[0],
         "strategy": strategy,
         "return_data": True,
         "error_score": error_score,
