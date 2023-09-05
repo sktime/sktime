@@ -63,7 +63,7 @@ def _check_scores(metrics) -> Dict:
         # has that method, no? I dont see the need to do if here, did i miss anything?.
         # if hasattr(metric, "get_tag"):
         scitype = metric.get_tag(
-            "scitype:y_pred", raise_error=False, tag_value_default=None
+            "scitype:y_pred", raise_error=False, tag_value_default="pred_point"
         )
         # else:  # If no scitype exists then metric is a point forecast type
         #     scitype = None
@@ -152,11 +152,11 @@ def _evaluate_window(
 ):
     # set default result values in case estimator fitting fails
     score = error_score
-    temp_result = dict()
     fit_time = np.nan
     pred_time = np.nan
     cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
     y_pred = pd.NA
+    temp_result = dict()
 
     if fh is None:
         fh = _select_fh_from_y(y_test)
@@ -177,7 +177,7 @@ def _evaluate_window(
             "pred_quantiles": ("predict_quantiles", "_quantiles"),
             "pred_interval": ("predict_interval", "_interval"),
             "pred_proba": ("predict_proba", "_proba"),
-            None: ("predict", ""),
+            "pred_point": ("predict", ""),
         }
         for metric_scitype in scoring:
             for metric in scoring.get(metric_scitype):
@@ -204,7 +204,12 @@ def _evaluate_window(
     except Exception as e:
         if error_score == "raise":
             raise e
-        else:
+        else:  # default value when fitting failed
+            scoring_name = list(scoring.values())[0][0].name  # get the first metrics
+            temp_result[f"test_{scoring_name}"] = [score]
+            temp_result["pred_time"] = [pred_time]
+            if return_data:
+                temp_result["y_pred"] = [y_pred]
             warnings.warn(
                 f"""
                 In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
