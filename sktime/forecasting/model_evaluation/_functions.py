@@ -152,6 +152,7 @@ def _evaluate_window(
 ):
     # set default result values in case estimator fitting fails
     score = error_score
+    temp_result = dict()
     fit_time = np.nan
     pred_time = np.nan
     cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
@@ -178,7 +179,6 @@ def _evaluate_window(
             "pred_proba": ("predict_proba", "_proba"),
             None: ("predict", ""),
         }
-        temp_result = dict()
         for metric_scitype in scoring:
             for metric in scoring.get(metric_scitype):
                 if hasattr(metric, "metric_args"):
