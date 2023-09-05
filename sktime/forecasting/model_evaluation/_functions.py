@@ -572,19 +572,6 @@ def evaluate(
 
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
-    # if isinstance(scoring, List):
-    #     for s in scoring[1:]:
-    #         results[f"test_{s.name}"] = np.nan
-    #         for row in results.index:
-    #             results.loc[row, f"test_{s.name}"] = s(
-    #                 results["y_test"].loc[row],
-    #                 results["y_pred"].loc[row],
-    #                 y_train=results["y_train"].loc[row],
-    #             )
-
-    # drop pointer to data if not requested
-    # if not return_data:
-    #     results = results.drop(columns=["y_train", "y_test", "y_pred"])
     results = results.astype({"len_train_window": int})
 
     return results
