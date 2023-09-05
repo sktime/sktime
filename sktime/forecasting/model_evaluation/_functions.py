@@ -41,7 +41,17 @@ def _check_strategy(strategy):
 
 
 def _check_scores(metrics) -> Dict:
-    """Validate and coerce Metric objects and segregate them based on predict type."""
+    """Validate and coerce Metric objects and segregate them based on predict type.
+
+    Parameters
+    ----------
+    metrics : sktime accepted metrics or a list of them or None
+
+    Return
+    ------
+    metrics_type : Dict
+        The key is metric types and its value is a list of its corresponding metrics.
+    """
     if not isinstance(metrics, List):
         metrics = [metrics]
 
@@ -212,6 +222,7 @@ def _evaluate_window(
     else:
         cutoff_ind = cutoff[0]
 
+    # Storing the remaining evaluate detail
     temp_result["fit_time"] = [fit_time]
     temp_result["len_train_window"] = [len(y_train)]
     temp_result["cutoff"] = [cutoff_ind]
@@ -219,19 +230,7 @@ def _evaluate_window(
         temp_result["y_train"] = [y_train]
         temp_result["y_test"] = [y_test]
     temp_result = dict(sorted(temp_result.items()))
-    result = pd.DataFrame(
-        # {
-        #     score_name: [score],
-        #     "fit_time": [fit_time],
-        #     "pred_time": [pred_time],
-        #     "len_train_window": [len(y_train)],
-        #     "cutoff": [cutoff_ind],
-        #     "y_train": [y_train if return_data else pd.NA],
-        #     "y_test": [y_test if return_data else pd.NA],
-        #     "y_pred": [y_pred if return_data else pd.NA],
-        # }
-        temp_result
-    ).astype({"cutoff": cutoff_dtype})
+    result = pd.DataFrame(temp_result).astype({"cutoff": cutoff_dtype})
 
     # Return forecaster if "update"
     if strategy == "update" or (strategy == "no-update_params" and i == 0):
