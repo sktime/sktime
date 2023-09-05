@@ -443,108 +443,29 @@ the CC must exercise the responsibilities of the treasurer role, as a committee.
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The treasurer's responsibilities are as follows.
+The treasurer will work closely with the Core Committee (CC) to set financial goals, allocate resources, and ensure ethical fiscal management.
 
-Budgeting and fiscal management:
+Responsibilities include budgeting, fiscal management, financial reporting, internal policy compliance, and cash management.
 
-* works with the CC to establish financial goals and allocation of resources
-* works with the CC to ensure that fiscal assets are managed
-  effectively, responsibly, and ethically
-* works with the CC on financial planning, especially fundraising activities,
-  finances for event planning, and upskilling/mentoring programme
+First order of business will be to create a budget that reflect the how the funds have been allocated so far this year.
 
-Fiscal reporting and book-keeping:
+Eligibility and appointment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* compiling budgets and statements, to be published on the
-  ``sktime`` community GitHub repo.
-* The monthly and yearly statements should include:
-  * a summary of assets and liabilities. This should include assets and liabilities
-    directly of the ``sktime`` project, as well as clearly associated assets and
-    liabilities, such as funding pots administered on behalf of ``sktime``.
-  * a report on income and expenditures in the last monthly period, with
-    associated decisions for expenditures.
-  * reports for any accounts held by or administered on behalf of the ``sktime``
-    project.
-* The monthly and yearly budgets should include:
-  * projected income and planned expenses, at least for the coming period
-  * status of approvals with respect to planned expenses, references to decisions.
-* The statements should be published no later than
-  one calendar month after the reporting period has ended, or two months after
-  the appointment of the treasurer, whichever is later.
-* The budgets should be published no later than two weeks before the budgeted period
+The interim treasurer role is open to core developers of the sktime project.
 
-Controls and compliance:
+Non-core developers must be nominated as core developers before being considered for the treasurer role.
 
-* ensuring that decision making on funding and expenditures are carried out according to
-  internal policy by the decision making committees.
-  They should recuse themselves from any decision making on funding and expenditures.
-* complies with the ``sktime`` code of conduct at any time,
-  especially provisions on fiscal transparency, and ensures the code of conduct
-  is upheld in fiscal reporting and decision making
-* ensures ``sktime`` is compliant with external requirements,
-  e.g., tax regulations, charitable purpose, where applicable
-* conducts regular audit reviews with regards to the above or ensures
-  they are conducted by independent external parties where applicable
+The CC will appoint the interim treasurer through a vote among the candidates.
 
-Banking and cash management:
+Tenure and removal
+^^^^^^^^^^^^^^^^^^
 
-* handles bank accounts and assets directly controlled by the ``sktime`` project,
-  on behalf of the ``sktime`` project as represented by the CC
-* handles sponsoring and donation pipelines directly controlled by the ``sktime``
-  project, on behalf of the ``sktime`` project as represented by the CC
-* ensures fully transparent views of the above are shared with all individual
-  members of the CC and the CC as a committee
+The interim treasurer will serve a one-year term with the possibility of re-appointment.
 
-Eligibility
-^^^^^^^^^^^
+Inactivity may result in removal if the treasurer fails to compile budgets or financial statements as required.
 
-Only core developers are eligible for appointment as treasurers.
-Non-core-developers can be nominated, but this must be accompanied
-by a nomination for core developer, and a core developer appointment vote
-(see below).
-
-A person previously removed from the role of treasurer due to inactivity
-is not eligible for appointment within a calendar year after removal.
-
-A person previously removed from the role of treasurer due to code of conduct
-violations is not eligible for appointment.
-
-Appointment
-^^^^^^^^^^^
-
-The treasurer is appointed by the CC, as below.
-
-An appointment vote is held at the earliest possibility in a situation where
-the treasurer role is unfilled.
-
-The vote starts with a 2 calendar week period in which prospective candidates can
-register. A core developer needs a proposer and a seconder (both core developers)
-to register as a candidate.
-
-The CC appoints the treasurer among the candidates with a simple relative majority
-among all candidates, subject to standard decision making procedures of the CC.
-
-End of tenure
-^^^^^^^^^^^^^
-
-Appointment as a treasurer is for a term of one calendar year.
-Re-appointment is possible, except in the case of removal due to inactivity (see below).
-
-The treasurer can resign voluntarily at any point in time, by informing
-the CC in writing.
-
-The treasurer can be removed due to inactivity if both the following conditions are met:
-
-* the treasurer fails to compile a budget or statement within one calendar month
-  of when it is due (e.g., two months after the reporting period for statements)
-* at least one member of the CC requests removal of the treasurer on grounds
-  of inactivity
-
-The treasurer can also be removed by the CoC committee upon a violation of the
-CoC provisions on resource allocation and fiscal transparency.
-Any investigation of the CoC committee that results in potential removal of the
-treasurer must have been upon request or complaint by at least two members of the CC.
-The investigation is subject to standard CoC investigation procedures.
+Removal for code of conduct violations related to fiscal transparency requires a CoC investigation.
 
 .. _decision-making:
 
