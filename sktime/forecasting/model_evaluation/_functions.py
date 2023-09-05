@@ -41,7 +41,7 @@ def _check_strategy(strategy):
 
 
 def _check_scores(metrics) -> Dict:
-    """Validate and coerce Metric objects and aggregrate them based on predict type."""
+    """Validate and coerce Metric objects and segregate them based on predict type."""
     if not isinstance(metrics, List):
         metrics = [metrics]
 
@@ -53,10 +53,10 @@ def _check_scores(metrics) -> Dict:
         # has that method, no? I dont see the need to do if here, did i miss anything?.
         # if hasattr(metric, "get_tag"):
         scitype = metric.get_tag(
-            "scitype:y_pred", raise_error=False, tag_value_default="pred_point"
+            "scitype:y_pred", raise_error=False, tag_value_default=None
         )
         # else:  # If no scitype exists then metric is a point forecast type
-        #     scitype = "pred_point"
+        #     scitype = None
         if scitype not in metrics_type.keys():
             metrics_type[scitype] = [metric]
         else:
@@ -64,6 +64,7 @@ def _check_scores(metrics) -> Dict:
     return metrics_type
 
 
+# should we remove _split since this is no longer being used?
 def _split(
     y,
     X,
@@ -136,7 +137,6 @@ def _evaluate_window(
     strategy,
     scoring,
     return_data,
-    score_name,
     error_score,
     cutoff_dtype,
 ):
@@ -162,32 +162,32 @@ def _evaluate_window(
         fit_time = time.perf_counter() - start_fit
 
         # predict
-        pred_type = {
-            "pred_quantiles": "predict_quantiles",
-            "pred_interval": "predict_interval",
-            "pred_proba": "predict_proba",
-            None: "predict",
+        pred_type = {  # tuple indicates (method for predict, naming)
+            "pred_quantiles": ("predict_quantiles", "_quantiles"),
+            "pred_interval": ("predict_interval", "_interval"),
+            "pred_proba": ("predict_proba", "_proba"),
+            None: ("predict", ""),
         }
-        start_pred = time.perf_counter()
+        temp_result = dict()
+        for metric_scitype in scoring:
+            for metric in scoring.get(metric_scitype):
+                if hasattr(metric, "metric_args"):
+                    metric_args = metric.metric_args
+                else:
+                    metric_args = {}
+                methodname = pred_type[metric_scitype][0]
+                method = getattr(forecaster, methodname)
 
-        if hasattr(scoring, "metric_args"):
-            metric_args = scoring.metric_args
-        else:
-            metric_args = {}
+                start_pred = time.perf_counter()
+                y_pred = method(fh, X_test, **metric_args)
+                pred_time = time.perf_counter() - start_pred
 
-        # if hasattr(scoring, "get_tag"):
-        #     scitype = scoring.get_tag("scitype:y_pred", raise_error=False)
-        # else:
-        #     # If no scitype exists then metric is not proba and no args needed
-        #     scitype = None
+                score = metric(y_test, y_pred, y_train=y_train)
+                temp_result[f"test_{metric.name}"] = [score]
 
-        methodname = pred_type[scitype]
-        method = getattr(forecaster, methodname)
-
-        y_pred = method(fh, X_test, **metric_args)
-        pred_time = time.perf_counter() - start_pred
-        # score
-        score = scoring(y_test, y_pred, y_train=y_train)
+                temp_result[f"pred_time{pred_type[metric_scitype][1]}"] = [pred_time]
+                if return_data:
+                    temp_result[f"y_pred{pred_type[metric_scitype][1]}"] = [y_pred]
         # get cutoff
         cutoff = forecaster.cutoff
 
@@ -212,17 +212,25 @@ def _evaluate_window(
     else:
         cutoff_ind = cutoff[0]
 
+    temp_result["fit_time"] = [fit_time]
+    temp_result["len_train_window"] = [len(y_train)]
+    temp_result["cutoff"] = [cutoff_ind]
+    if return_data:
+        temp_result["y_train"] = [y_train]
+        temp_result["y_test"] = [y_test]
+    temp_result = dict(sorted(temp_result.items()))
     result = pd.DataFrame(
-        {
-            score_name: [score],
-            "fit_time": [fit_time],
-            "pred_time": [pred_time],
-            "len_train_window": [len(y_train)],
-            "cutoff": [cutoff_ind],
-            "y_train": [y_train if return_data else pd.NA],
-            "y_test": [y_test if return_data else pd.NA],
-            "y_pred": [y_pred if return_data else pd.NA],
-        }
+        # {
+        #     score_name: [score],
+        #     "fit_time": [fit_time],
+        #     "pred_time": [pred_time],
+        #     "len_train_window": [len(y_train)],
+        #     "cutoff": [cutoff_ind],
+        #     "y_train": [y_train if return_data else pd.NA],
+        #     "y_test": [y_test if return_data else pd.NA],
+        #     "y_pred": [y_pred if return_data else pd.NA],
+        # }
+        temp_result
     ).astype({"cutoff": cutoff_dtype})
 
     # Return forecaster if "update"
@@ -417,10 +425,6 @@ def evaluate(
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = _check_scores(scoring)
-    # if isinstance(scoring, List):
-    #     scoring = [check_scoring(s) for s in scoring]
-    # else:
-    #     scoring = check_scoring(scoring)
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
@@ -442,20 +446,14 @@ def evaluate(
             )
         X = convert_to(X, to_type=PANDAS_MTYPES)
 
-    score_name = (
-        f"test_{scoring.name}"
-        if not isinstance(scoring, List)
-        else f"test_{scoring[0].name}"
-    )
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
         "fh": cv.fh,
         "forecaster": forecaster,
-        "scoring": scoring,  # if not isinstance(scoring, List) else scoring[0],
+        "scoring": scoring,
         "strategy": strategy,
-        "return_data": True,
+        "return_data": return_data,
         "error_score": error_score,
-        "score_name": score_name,
         "cutoff_dtype": cutoff_dtype,
     }
 
@@ -544,7 +542,6 @@ def evaluate(
         results = dd.from_delayed(
             results,
             meta={
-                score_name: "float",
                 "fit_time": "float",
                 "pred_time": "float",
                 "len_train_window": "int",
@@ -576,19 +573,19 @@ def evaluate(
 
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
-    if isinstance(scoring, List):
-        for s in scoring[1:]:
-            results[f"test_{s.name}"] = np.nan
-            for row in results.index:
-                results.loc[row, f"test_{s.name}"] = s(
-                    results["y_test"].loc[row],
-                    results["y_pred"].loc[row],
-                    y_train=results["y_train"].loc[row],
-                )
+    # if isinstance(scoring, List):
+    #     for s in scoring[1:]:
+    #         results[f"test_{s.name}"] = np.nan
+    #         for row in results.index:
+    #             results.loc[row, f"test_{s.name}"] = s(
+    #                 results["y_test"].loc[row],
+    #                 results["y_pred"].loc[row],
+    #                 y_train=results["y_train"].loc[row],
+    #             )
 
     # drop pointer to data if not requested
-    if not return_data:
-        results = results.drop(columns=["y_train", "y_test", "y_pred"])
+    # if not return_data:
+    #     results = results.drop(columns=["y_train", "y_test", "y_pred"])
     results = results.astype({"len_train_window": int})
 
     return results
