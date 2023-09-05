@@ -2337,6 +2337,15 @@
         "doc",
         "maintenance"
       ]
+    },
+    {
+      "login": "ali-parizad",
+      "name": "Ali Parizad",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13907016?s=96&v=4",
+      "profile": "https://github.com/ali-parizad",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }
