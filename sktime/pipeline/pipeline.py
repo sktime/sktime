@@ -140,8 +140,7 @@ class Pipeline(BaseEstimator):
     >>> general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4]) # doctest: +SKIP
     >>> result_general = general_pipeline.predict(X=X_test) # doctest: +SKIP
 
-    Acknowledgements
-    ----------------
+    **Acknowledgements**
     This graphical pipeline is inspired by pyWATTS that is developed by the Institute
     for Automation and Applied Informatics (IAI) at Karlsruhe Institute of Technology.
     The implementation is supported by IAI and the author benHeid is funded by
@@ -151,8 +150,7 @@ class Pipeline(BaseEstimator):
 
     References
     ----------
-    .. [1]  Network originally defined in:
-    @article{heidrich2021pywatts,
+    .. [1]  @article{heidrich2021pywatts,
       title={pyWATTS: Python workflow automation tool for time series},
       author={Heidrich, Benedikt and Bartschat, Andreas and Turowski, Marian and
               Neumann, Oliver and Phipps, Kaleb and Meisenbacher, Stefan and
