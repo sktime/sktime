@@ -43,10 +43,6 @@ class Pipeline(BaseEstimator):
         with `predict_interval` or `predict_quantiles` substituted for `predict`.
     `predict_var`, `predict_proba` - are currently not supported
     `get_params`, `set_params` uses `sklearn` compatible nesting interface
-        if list is unnamed, names are generated as names of classes
-        if names are non-unique, `f"_{str(i)}"` is appended to each name string
-            where `i` is the total count of occurrence of a non-unique string
-            inside the list of names leading up to it (inclusive)
     `add_step(skobject, name, edges, method, **kwargs)` - adds a skobject to the
         pipeline and setting the name as identifier and the steps specified with
         edges as input steps (predecessors). Therby the method that should be
