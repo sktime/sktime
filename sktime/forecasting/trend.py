@@ -71,7 +71,7 @@ class TrendForecaster(BaseForecaster):
         self.regressor = regressor
         super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -211,7 +211,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         self.regressor_ = self.regressor
         super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -472,7 +472,7 @@ class STLForecaster(BaseForecaster):
         self.forecaster_resid = forecaster_resid
         super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         Parameters
@@ -532,7 +532,7 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend_.fit(y=self.trend_, X=X, fh=fh)
         self.forecaster_resid_.fit(y=self.resid_, X=X, fh=fh)
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters

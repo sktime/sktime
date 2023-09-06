@@ -41,6 +41,7 @@ __all__ = [
 ]
 
 import os
+import zipfile
 from urllib.error import HTTPError, URLError
 from warnings import warn
 
@@ -48,10 +49,13 @@ import numpy as np
 import pandas as pd
 
 from sktime.datasets._data_io import (
+    _download_and_extract,
+    _list_available_datasets,
     _load_dataset,
     _load_provided_dataset,
     load_tsf_to_dataframe,
 )
+from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
@@ -1267,3 +1271,102 @@ def load_covid_3month(split=None, return_X_y=True):
     """
     name = "Covid3Month"
     return _load_dataset(name, split, return_X_y)
+
+
+def load_forecastingdata(
+    name,
+    replace_missing_vals="NAN",
+    value_column_name="series_value",
+    return_type="default_tsf",
+    extract_path=None,
+):
+    """Fetch forecasting datasets from Monash Time Series Forecasting Archive.
+
+    Downloads and extracts dataset if not already downloaded. Fetched dataset is
+    in the standard .tsf format. See https://forecastingdata.org/ for more details.
+
+    Parameters
+    ----------
+    name: str
+        Name of data set. If a dataset that is listed in tsf_all_dataset is given,
+        this function will look in the extract_path first, and if it is not present,
+        attempt to download the data from https://forecastingdata.org/, saving it to
+        the extract_path.
+    replace_missing_vals: str, default="NAN"
+        A term to indicate the missing values in series in the returning dataframe.
+    value_column_name: str, default="series_value"
+        Any name that is preferred to have as the name of the column containing series
+        values in the returning dataframe.
+    return_type : str - "pd_multiindex_hier", "default_tsf" (default), or valid sktime
+        mtype string for in-memory data container format specification of the
+        return type:
+        - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`
+        - "default_tsf" = container that faithfully mirrors tsf format from the original
+            implementation in: https://github.com/rakshitha123/TSForecasting/
+            blob/master/utils/data_loader.py.
+        - other valid mtype strings are Panel or Hierarchical mtypes in
+            datatypes.MTYPE_REGISTER. If Panel or Hierarchical mtype str is given, a
+            conversion to that mtype will be attempted
+        For tutorials and detailed specifications, see
+        examples/AA_datatypes_and_datasets.ipynb
+    extract_path : str, optional (default=None)
+        the path to look for the data. If no path is provided, the function
+        looks in `sktime/datasets/data/`. If a path is given, it can be absolute,
+        e.g. C:/Temp or relative, e.g. Temp or ./Temp.
+
+    Returns
+    -------
+    loaded_data: pd.DataFrame
+        The converted dataframe containing the time series.
+    metadata: dict
+        The metadata for the forecasting problem. The dictionary keys are:
+        "frequency", "forecast_horizon", "contain_missing_values",
+        "contain_equal_length"
+    """
+    # Allow user to have non standard extract path
+    if extract_path is not None:
+        local_module = os.path.dirname(extract_path)
+        local_dirname = extract_path
+    else:  # this is the default path for downloaded dataset
+        local_module = MODULE
+        local_dirname = DIRNAME
+
+    if not os.path.exists(os.path.join(local_module, local_dirname)):
+        os.makedirs(os.path.join(local_module, local_dirname))
+
+    path_to_data_dir = os.path.join(local_module, local_dirname)
+    # TODO should create a function to check if dataset exists
+    if name not in _list_available_datasets(path_to_data_dir, "forecastingorg"):
+        # Dataset is not already present in the datasets directory provided.
+        # If it is not there, download and install it.
+
+        # TODO: create a registry function to lookup
+        # valid dataset names for classification, regression, forecasting datasets repo
+        if name not in list(tsf_all_datasets):
+            raise ValueError(
+                {name}
+                + " is not a valid dataset name. \
+                    List of valid dataset names can be found at \
+                    sktime.datasets.tsf_dataset_names.tsf_all_datasets"
+            )
+
+        url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
+
+        # This also tests the validitiy of the URL, can't rely on the html
+        # status code as it always returns 200
+        try:
+            _download_and_extract(
+                url,
+                extract_path=path_to_data_dir,
+            )
+        except zipfile.BadZipFile as e:
+            raise ValueError(
+                f"Invalid dataset name ={name} is not available on extract path ="
+                f"{extract_path}. Nor is it available on "
+                f"https://forecastingdata.org/.",
+            ) from e
+
+    path_to_file = os.path.join(path_to_data_dir, f"{name}/{name}.tsf")
+    return load_tsf_to_dataframe(
+        path_to_file, replace_missing_vals, value_column_name, return_type
+    )
