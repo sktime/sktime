@@ -456,10 +456,9 @@ The treasurer role is open to core developers of the sktime project.
 
 Non-core developers must be confirmed as core developers before being considered for the treasurer role.
 
-The CC appoints the treasurer through majority vote,
-among suitable candidates for the role.
-The CC should solicit nominations from the community in transparent communication channels,
-when the role  needs to be filled.
+The CC appoints the treasurer through majority vote, among suitable candidates for the role.
+
+The CC should solicit nominations from the community in transparent communication channels, when the role  needs to be filled.
 
 Tenure and removal
 ^^^^^^^^^^^^^^^^^^
