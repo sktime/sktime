@@ -8,7 +8,7 @@ and the make_pipeline function for creating linear pipelines.
 make_pipeline
 -------------
 
-.. currentmodule:: sktime._make_pipeline.make_pipeline
+.. currentmodule:: sktime.pipeline._make_pipeline
 
 .. autosummary::
     :toctree: auto_generated/
