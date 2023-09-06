@@ -210,7 +210,7 @@ class Pipeline(BaseEstimator):
         -------
         params : dict, parameter names mapped to their values.
         """
-        params = {"step_informations": self.steps}
+        params = {"steps": self.steps}
         if deep:
             for step_information in self._steps:
                 for key, value in step_information["skobject"].get_params(deep).items():
@@ -221,7 +221,7 @@ class Pipeline(BaseEstimator):
         """Set the parameters of this estimator.
 
         Valid parameter keys can be listed with get_params().
-        Note if step_informations is provided the other parameters are ignored.
+        Note if steps is provided the other parameters are ignored.
 
         Parameters
         ----------
@@ -256,8 +256,8 @@ class Pipeline(BaseEstimator):
                 else:
                     raise Exception("Invalid parameter name")
 
-        if "step_informations" in params:
-            new_step_infos = params["step_informations"]
+        if "steps" in params:
+            new_step_infos = params["steps"]
         self.__init__(steps=new_step_infos)
         return self
 
@@ -291,8 +291,8 @@ class Pipeline(BaseEstimator):
             skobject if fit/predict/.. is called.
 
         """
-        new_step_info = {key: value for key, value in kwargs.items()}
-        new_step_info.update(
+        step = {key: value for key, value in kwargs.items()}
+        step.update(
             {
                 "skobject": skobject,
                 "name": name,
@@ -301,9 +301,9 @@ class Pipeline(BaseEstimator):
                 "kwargs": kwargs,
             }
         )
-        step_informations = copy(self._steps)
-        step_informations.append(new_step_info)
-        return Pipeline(steps=step_informations)
+        steps = copy(self._steps)
+        steps.append(step)
+        return Pipeline(steps=steps)
 
     def _assemble_steps(self):
         # Reset steps and id mappings
