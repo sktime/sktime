@@ -443,25 +443,28 @@ the CC must exercise the responsibilities of the treasurer role, as a committee.
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The treasurer will work closely with the Core Committee (CC) to set financial goals, allocate resources, and ensure ethical fiscal management.
+The treasurer will work closely with the CC to set financial goals, allocate resources, and ensure ethical fiscal management.
 
 Responsibilities include budgeting, fiscal management, financial reporting, internal policy compliance, and cash management.
 
-First order of business will be to create a budget that reflect the how the funds have been allocated so far this year.
+The treasurer's primary responsibility is to produce the financial statements and budgets for the project in a timely manner.
 
 Eligibility and appointment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The interim treasurer role is open to core developers of the sktime project.
+The treasurer role is open to core developers of the sktime project.
 
-Non-core developers must be nominated as core developers before being considered for the treasurer role.
+Non-core developers must be confirmed as core developers before being considered for the treasurer role.
 
-The CC will appoint the interim treasurer through a vote among the candidates.
+The CC appoints the treasurer through majority vote,
+among suitable candidates for the role.
+The CC should solicit nominations from the community in transparent communication channels,
+when the role  needs to be filled.
 
 Tenure and removal
 ^^^^^^^^^^^^^^^^^^
 
-The interim treasurer will serve a one-year term with the possibility of re-appointment.
+The treasurer serves a one-year term with the possibility of re-appointment.
 
 Inactivity may result in removal if the treasurer fails to compile budgets or financial statements as required.
 
