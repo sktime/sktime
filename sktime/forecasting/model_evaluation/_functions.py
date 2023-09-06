@@ -63,10 +63,10 @@ def _check_scores(metrics) -> Dict:
         # has that method, no? I dont see the need to do if here, did i miss anything?.
         # if hasattr(metric, "get_tag"):
         scitype = metric.get_tag(
-            "scitype:y_pred", raise_error=False, tag_value_default="pred_point"
+            "scitype:y_pred", raise_error=False, tag_value_default="pred"
         )
         # else:  # If no scitype exists then metric is a point forecast type
-        #     scitype = None
+        #     scitype = pred
         if scitype not in metrics_type.keys():
             metrics_type[scitype] = [metric]
         else:
@@ -91,10 +91,9 @@ def _get_metada_for_dask(metric_types: Dict, return_data: bool, cutoff_dtype) ->
     }
     dynamic_metadata = {}
     for scitype in metric_types:
-        scitype_naming = "" if scitype == "pred_point" else scitype.split("d")[1]
-        dynamic_metadata[f"pred_time{scitype_naming}"] = "float"
+        dynamic_metadata[f"{scitype}_time"] = "float"
         if return_data:
-            dynamic_metadata[f"y_pred{scitype_naming}"] = "object"
+            dynamic_metadata[f"y_{scitype}"] = "object"
         for metric in metric_types.get(scitype):
             dynamic_metadata[f"test_{metric.name}"] = "float"
     default_metadata.update(dynamic_metadata)
@@ -203,18 +202,18 @@ def _evaluate_window(
 
         # predict based on metrics
         pred_type = {  # tuple indicates (method for predict, naming)
-            "pred_quantiles": ("predict_quantiles", "_quantiles"),
-            "pred_interval": ("predict_interval", "_interval"),
-            "pred_proba": ("predict_proba", "_proba"),
-            "pred_point": ("predict", ""),
+            "pred_quantiles": "predict_quantiles",
+            "pred_interval": "predict_interval",
+            "pred_proba": "predict_proba",
+            "pred": "predict",
         }
-        for metric_scitype in scoring:
-            for metric in scoring.get(metric_scitype):
+        for scitype in scoring:
+            for metric in scoring.get(scitype):
                 if hasattr(metric, "metric_args"):
                     metric_args = metric.metric_args
                 else:
                     metric_args = {}
-                methodname = pred_type[metric_scitype][0]
+                methodname = pred_type[scitype]
                 method = getattr(forecaster, methodname)
 
                 start_pred = time.perf_counter()
@@ -224,22 +223,22 @@ def _evaluate_window(
                 score = metric(y_test, y_pred, y_train=y_train)
                 temp_result[f"test_{metric.name}"] = [score]
 
-                temp_result[f"pred_time{pred_type[metric_scitype][1]}"] = [pred_time]
+                temp_result[f"{scitype}_time"] = [pred_time]
                 if return_data:
-                    temp_result[f"y_pred{pred_type[metric_scitype][1]}"] = [y_pred]
+                    temp_result[f"y_{scitype}"] = [y_pred]
         # get cutoff
         cutoff = forecaster.cutoff
 
     except Exception as e:
         if error_score == "raise":
             raise e
-        else:  # default value when fitting failed
-            for metric_scitype in scoring:
-                for metric in scoring.get(metric_scitype):
+        else:  # assign default value when fitting failed
+            for scitype in scoring:
+                temp_result[f"{scitype}_time"] = [pred_time]
+                if return_data:
+                    temp_result[f"y_{scitype}"] = [y_pred]
+                for metric in scoring.get(scitype):
                     temp_result[f"test_{metric.name}"] = [score]
-            temp_result["pred_time"] = [pred_time]
-            if return_data:
-                temp_result["y_pred"] = [y_pred]
             warnings.warn(
                 f"""
                 In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
