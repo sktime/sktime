@@ -545,15 +545,15 @@ def evaluate(
             )
         results = dd.from_delayed(
             results,
-            meta={
-                "fit_time": "float",
-                "pred_time": "float",
-                "len_train_window": "int",
-                "cutoff": cutoff_dtype,
-                "y_train": "object",
-                "y_test": "object",
-                "y_pred": "object",
-            },
+            # meta={
+            #     "fit_time": "float",
+            #     "pred_time": "float",
+            #     "len_train_window": "int",
+            #     "cutoff": cutoff_dtype,
+            #     "y_train": "object",
+            #     "y_test": "object",
+            #     "y_pred": "object",
+            # },
         )
         if compute:
             results = results.compute()
