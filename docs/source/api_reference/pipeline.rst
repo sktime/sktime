@@ -12,7 +12,7 @@ make_pipeline
 
 .. autosummary::
     :toctree: auto_generated/
-    :template: class.rst
+    :template: function.rst
 
     make_pipeline
 
