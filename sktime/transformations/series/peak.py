@@ -24,7 +24,7 @@ _RAW_DUMMIES = [
     ["week", "month", "week_of_month", "efficient"],
     ["day", "month", "day", "efficient"],
     ["day", "week", "weekday", "efficient"],
-    ["hour", "day", "hour", "efficient"],
+    ["hour", "day", "hour", "minimal"],
     #["hour", "week", "hour_of_week", "comprehensive"],
     #["minute", "hour", "minute", "minimal"],
     #["second", "minute", "second", "minimal"],
@@ -33,16 +33,17 @@ _RAW_DUMMIES = [
     ["hour", "day", "is_peak_hour", "minimal"],
     ["hour", "day", "is_working_hour", "minimal"],
 ] 
-# TODO: Add is_working_hour for two intervals
+# TODO: Add is_working_hour for two or more intervals
 # TODO: Add is_peak_week, is_peak_month, etc. if needed
+# Note: For now, I commented some other features so that later we use it if needed, e.g., for adding is_peak_week
 
 class PeakHourFeatures(BaseTransformer):
     """PeakHour feature extraction for use in e.g. tree based models.
 
-    PeakHourFeatures uses a date index column and generates peak/working features
+    PeakHourFeatures uses a datetime index column and generates peak/working features
     for e.g. peak hours, working hours, peak weak, peak month, etc. 
 
-    Parameters # TODO: Will be updated
+    Parameters # TODO: docstring will be updated
     ----------
     ts_freq : str, optional (default="day")
         Restricts selection of items to those with a frequency lower than
@@ -67,9 +68,7 @@ class PeakHourFeatures(BaseTransformer):
         * S - second
         * L - millisecond
     feature_scope: str, optional (default="minimal")
-        Specify how many calendar features you want to be returned.
-        E.g., rarely used features like week of quarter will only be returned
-        with feature_scope =  "comprehensive".
+        Specify how many features you want to be returned.
         * "minimal"
         * "efficient"
         * "comprehensive"
@@ -86,10 +85,10 @@ class PeakHourFeatures(BaseTransformer):
         * year (special case with no lower frequency).
         * is_peak_hour
         * is_working_hour
-    is_peak_hour: list
-        the peak hour range may be selcted in form of [peak_hour_start, peak_hour_end]
-    is_working_hour: list
-        the working hour range may be selcted in form of [working_hour_start, working_hour_end]
+    is_peak_hour_range: list, e.g., is_peak_hour_range = {"start_peak_hour1": 6, "end_peak_hour1": 9, "start_peak_hour2": 17, "end_peak_hour2": 20}
+        the peak hour range may be selcted in form of {"start_peak_hour1": 6, "end_peak_hour1": 9, "start_peak_hour2": 17, "end_peak_hour2": 20}
+    is_working_hour_range: list, e.g., is_working_hour_range = {"start_working_hour": 9, "end_working_hour": 16}
+        the working hour range may be selcted in form of {"start_working_hour": 9, "end_working_hour": 16}
     keep_original_columns :  boolean, optional, default=False
         Keep original columns in X passed to `.transform()`.
 
@@ -101,16 +100,23 @@ class PeakHourFeatures(BaseTransformer):
     >>> y = y.tz_localize(None)
     >>> y = y.asfreq("H")
 
-    --> Example one interval (e.g., {"start_peak_hour1": 1, "end_peak_hour1": 2})for peak hours
+    --> Example one interval (e.g., {"start_peak_hour1": 6, "end_peak_hour1": 9})for peak hours
     Returns columns `y`, 'is_peak_hour', 'is_working_hour'
 
-    >>> transformer_peak = PeakHourFeatures(ts_freq="H", feature_scope="minimal", is_peak_hour_range = {"start_peak_hour1": 1, "end_peak_hour1": 2}, is_working_hour_range = {"start_working_hour": 1, "end_working_hour": 5})
+    >>> transformer_peak = PeakHourFeatures(ts_freq="H", manual_selection=["is_peak_hour", 'is_working_hour'], is_peak_hour_range = {"start_peak_hour1": 6, "end_peak_hour1": 9}, is_working_hour_range = {"start_working_hour": 9, "end_working_hour": 16})
     >>> y_hat = transformer.fit_transform(y)
 
-    --> Example more than one interval (e.g.,three : {"start_peak_hour1": 1, "end_peak_hour1": 2, "start_peak_hour2": 3, "end_peak_hour2": 4, "start_peak_hour3": 7, "end_peak_hour3": 9}) for peak hours
+     --> Example two intervals (e.g., Three) for peak hours
     Returns columns `y`, 'is_peak_hour', 'is_working_hour'
 
-    >>> transformer_peak = PeakHourFeatures(ts_freq="H", feature_scope="minimal", is_peak_hour_range = {"start_peak_hour1": 1, "end_peak_hour1": 2, "start_peak_hour2": 3, "end_peak_hour2": 4, "start_peak_hour3": 7, "end_peak_hour3": 9}, is_working_hour_range = {"start_working_hour": 1, "end_working_hour": 5})#minimal comprehensive efficient
+    >>> transformer_peak = PeakHourFeatures(ts_freq="H", manual_selection=["is_peak_hour", 'is_working_hour'], is_peak_hour_range = {"start_peak_hour1": 6, "end_peak_hour1": 9, "start_peak_hour2": 17, "end_peak_hour2": 20}, is_working_hour_range = {"start_working_hour": 9, "end_working_hour": 16})
+    >>> y_hat = transformer.fit_transform(y)   
+
+
+    --> Example more than two interval (e.g.,three : {"start_peak_hour1": 1, "end_peak_hour1": 2, "start_peak_hour2": 3, "end_peak_hour2": 4, "start_peak_hour3": 7, "end_peak_hour3": 9}) for peak hours
+    Returns columns `y`, 'is_peak_hour', 'is_working_hour'
+
+    >>> transformer_peak = PeakHourFeatures(ts_freq="H", manual_selection=["is_peak_hour",'is_working_hour'], is_peak_hour_range = {"start_peak_hour1": 1, "end_peak_hour1": 2, "start_peak_hour2": 3, "end_peak_hour2": 4, "start_peak_hour3": 7, "end_peak_hour3": 9}, is_working_hour_range = {"start_working_hour": 9, "end_working_hour": 16})
     >>> y_hat = transformer.fit_transform(y)
 
     """
@@ -272,7 +278,6 @@ def _check_is_peak_hour_range(is_peak_hour_range):
         for idx in range (int(len(is_peak_hour_range)/2)):
             start_peak_hour = is_peak_hour_range[f'start_peak_hour{idx+1}']
             end_peak_hour = is_peak_hour_range[f'end_peak_hour{idx+1}']
-            print(start_peak_hour, end_peak_hour)
 
             if start_peak_hour < 0 or end_peak_hour > 23:
                 print(
@@ -414,7 +419,7 @@ def _prep_dummies(self, DUMMIES):
     frequency (e.g. year has a lower frequency than week).
     """
     DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
-
+# Note: For now, I commented some other features so that later we use it if needed, e.g., for adding is_peak_week
     date_order = [
         #"year",
         #"quarter",
