@@ -74,6 +74,35 @@ def _check_scores(metrics) -> Dict:
     return metrics_type
 
 
+def _get_metada_for_dask(metric_types: Dict, return_data: bool, cutoff_dtype) -> Dict:
+    """Get the column name and input datatype of resuls.
+
+    This metadata is required to avoid unexpected results from dask parallelisation
+    see https://docs.dask.org/en/latest/generated/dask.dataframe.from_delayed.html
+    """
+    default_metadata = {
+        "fit_time": "float",
+        "len_train_window": "int",
+        "cutoff": cutoff_dtype,
+    }
+    y_metadata = {
+        "y_train": "object",
+        "y_test": "object",
+    }
+    dynamic_metadata = {}
+    for scitype in metric_types:
+        scitype_naming = "" if scitype == "pred_point" else scitype.split("d")[1]
+        dynamic_metadata[f"pred_time{scitype_naming}"] = "float"
+        if return_data:
+            dynamic_metadata[f"y_pred{scitype_naming}"] = "object"
+        for metric in metric_types.get(scitype):
+            dynamic_metadata[f"test_{metric.name}"] = "float"
+    default_metadata.update(dynamic_metadata)
+    if return_data:
+        default_metadata.update(y_metadata)
+    return dict(sorted(default_metadata.items()))
+
+
 # should we remove _split since this is no longer being used?
 def _split(
     y,
@@ -172,7 +201,7 @@ def _evaluate_window(
             forecaster.update(y_train, X_train, update_params=update_params)
         fit_time = time.perf_counter() - start_fit
 
-        # predict
+        # predict based on metrics
         pred_type = {  # tuple indicates (method for predict, naming)
             "pred_quantiles": ("predict_quantiles", "_quantiles"),
             "pred_interval": ("predict_interval", "_interval"),
@@ -205,8 +234,9 @@ def _evaluate_window(
         if error_score == "raise":
             raise e
         else:  # default value when fitting failed
-            scoring_name = list(scoring.values())[0][0].name  # get the first metrics
-            temp_result[f"test_{scoring_name}"] = [score]
+            for metric_scitype in scoring:
+                for metric in scoring.get(metric_scitype):
+                    temp_result[f"test_{metric.name}"] = [score]
             temp_result["pred_time"] = [pred_time]
             if return_data:
                 temp_result["y_pred"] = [y_pred]
@@ -532,6 +562,7 @@ def evaluate(
         from dask import delayed as dask_delayed
 
         results = []
+        metadata = _get_metada_for_dask(scoring, return_data, cutoff_dtype)
         for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             results.append(
                 dask_delayed(_evaluate_window)(
@@ -545,15 +576,7 @@ def evaluate(
             )
         results = dd.from_delayed(
             results,
-            # meta={
-            #     "fit_time": "float",
-            #     "pred_time": "float",
-            #     "len_train_window": "int",
-            #     "cutoff": cutoff_dtype,
-            #     "y_train": "object",
-            #     "y_test": "object",
-            #     "y_pred": "object",
-            # },
+            meta=metadata,
         )
         if compute:
             results = results.compute()
