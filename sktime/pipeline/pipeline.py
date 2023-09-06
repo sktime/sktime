@@ -30,12 +30,6 @@ class Pipeline(BaseEstimator):
     is not linear. I.e., the each element of the pipeline can be the input of multiple
     other steps and not only one sucessors.
 
-    **Acknowledgements**
-    This graphical pipeline is inspired by pyWATTS that is developed by the Institute
-    for Automation and Applied Informatics (IAI) at Karlsruhe Institute of Technology.
-    The implementation is supported by IAI and the author benHeid is funded by
-    HelmholtzAI.
-
     `fit(y, X, *args)` - changes state by running `fit` on all sktime estimators and
         transformers in the pipeline. Note that depending on the sktime estimators and
         transformers that are added to the pipeline, different keywords are required.
@@ -61,7 +55,22 @@ class Pipeline(BaseEstimator):
 
     Parameters
     ----------
-    param step_informations : what it is, what it does
+    param steps : A list of dicts that specify the steps of the pipeline. Further
+        steps can be added by using add_step method.
+        The dict requires the following keys:
+            * skobject: `sktime` object, the skobject that should be added to the
+                 pipeline
+            * name: str, the name of the step that is created
+            * edges: dict, a dict with string keys to string values. Identifying the
+                 predcessors.  The keys of the edges dict specify to which argument
+                 of fit/predict/.. the output of the predessors (the value of the
+                 dict specifies the predessors name) shuold be passed.
+            * method: str, an optional argument allowing to determine the method that
+                should be executed when the pipeline calls the provided skobject.
+                If not specified, the pipeline selects the method based on the method
+                that is called on the pipeline (e.g., predict, transform, ..)
+            * kwargs: additional kwargs are parameters that are provided to the
+                skobject if fit/predict/.. is called.
 
     Attributes
     ----------
@@ -130,26 +139,49 @@ class Pipeline(BaseEstimator):
     ...     general_pipeline = general_pipeline.add_step(**step)
     >>> general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4]) # doctest: +SKIP
     >>> result_general = general_pipeline.predict(X=X_test) # doctest: +SKIP
+
+    Acknowledgements
+    ----------------
+    This graphical pipeline is inspired by pyWATTS that is developed by the Institute
+    for Automation and Applied Informatics (IAI) at Karlsruhe Institute of Technology.
+    The implementation is supported by IAI and the author benHeid is funded by
+    HelmholtzAI.
+    Furthermore, we also want to credit @ViktorKaz for his independent pipeline design
+    that is similar to this one.
+
+    References
+    ----------
+    .. [1]  Network originally defined in:
+    @article{heidrich2021pywatts,
+      title={pyWATTS: Python workflow automation tool for time series},
+      author={Heidrich, Benedikt and Bartschat, Andreas and Turowski, Marian and
+              Neumann, Oliver and Phipps, Kaleb and Meisenbacher, Stefan and
+              Schmieder, Kai and Ludwig, Nicole and Mikut, Ralf and Hagenmeyer, Veit},
+      journal={arXiv preprint arXiv:2106.10157},
+      year={2021}
+    }
     """
 
-    def __init__(self, step_informations=None):
+    def __init__(self, steps=None):
         super().__init__()
         self._assembled = False
         self.id_to_true_id = {}
         self.id_to_obj = {}
         self.counter = 0
-        self.steps = {
+        self.assembled_steps = {
             "X": Step(None, "X", None, None, {}),
             "y": Step(None, "y", None, None, {}),
         }
 
         self.kwargs = {}
-        self.step_informations = step_informations
-        self._step_informations = (
-            step_informations if step_informations is not None else []
-        )
+        self.steps = steps
+        self._steps = steps if steps is not None else []
 
-        for step_information in self._step_informations:
+        for step_information in self._steps:
+            if "method" not in step_information:
+                step_information["method"] = None
+            if "kwargs" not in step_information:
+                step_information["kwargs"] = {}
             self.clone_tags(step_information["skobject"])
 
     def _get_unique_id(self, skobject):
@@ -178,9 +210,9 @@ class Pipeline(BaseEstimator):
         -------
         params : dict, parameter names mapped to their values.
         """
-        params = {"step_informations": self.step_informations}
+        params = {"step_informations": self.steps}
         if deep:
-            for step_information in self._step_informations:
+            for step_information in self._steps:
                 for key, value in step_information["skobject"].get_params(deep).items():
                     params.update({step_information["name"] + "__" + key: value})
         return params
@@ -200,7 +232,7 @@ class Pipeline(BaseEstimator):
         self : Pipeline, this estimator
         """
         self.kwargs = params
-        new_step_infos = copy(self._step_informations)
+        new_step_infos = copy(self._steps)
         for key, value in params.items():
             keys = key.split("__")
             # keys length is at least three:
@@ -226,12 +258,12 @@ class Pipeline(BaseEstimator):
 
         if "step_informations" in params:
             new_step_infos = params["step_informations"]
-        self.__init__(step_informations=new_step_infos)
+        self.__init__(steps=new_step_infos)
         return self
 
     def _get_step(self, name):
-        if name in self.steps:
-            return self.steps[name]
+        if name in self.assembled_steps:
+            return self.assembled_steps[name]
         raise Exception("Required Input does not exist")
 
     def add_step(self, skobject, name, edges, method=None, **kwargs):
@@ -269,13 +301,13 @@ class Pipeline(BaseEstimator):
                 "kwargs": kwargs,
             }
         )
-        step_informations = copy(self._step_informations)
+        step_informations = copy(self._steps)
         step_informations.append(new_step_info)
-        return Pipeline(step_informations=step_informations)
+        return Pipeline(steps=step_informations)
 
     def _assemble_steps(self):
         # Reset steps and id mappings
-        self.steps = {
+        self.assembled_steps = {
             "X": Step(None, "X", None, None, {}),
             "y": Step(None, "y", None, None, {}),
         }
@@ -284,7 +316,7 @@ class Pipeline(BaseEstimator):
         self.counter = 0
         model_dict = {}
 
-        for step_info in self._step_informations:
+        for step_info in self._steps:
             skobject = step_info["skobject"]
             edges = step_info["edges"]
             name = step_info["name"]
@@ -303,20 +335,20 @@ class Pipeline(BaseEstimator):
                 edge = edge if isinstance(edge, list) else [edge]
                 # Create subsetter for taking a specific column of the input.
                 for edg in edge:
-                    if "__" in edg and edg not in self.steps:
+                    if "__" in edg and edg not in self.assembled_steps:
                         self._create_subsetter(edg)
                 input_steps[key] = [self._get_step(edg) for edg in edge]
 
             step = Step(
                 cloned_skobject, name, input_steps, method=method, params=kwargs
             )
-            if name in self.steps:
+            if name in self.assembled_steps:
                 raise ValueError(
                     f"You try to add a step with a name '{name}' to the pipeline"
                     f" that already exists. Try to use an other name."
                 )
 
-            self.steps[name] = step
+            self.assembled_steps[name] = step
             self._last_step_name = name
         self._assembled = True
 
@@ -342,7 +374,7 @@ class Pipeline(BaseEstimator):
         self._y = y
         self._X = X
 
-        self.steps[self._last_step_name].get_result(
+        self.assembled_steps[self._last_step_name].get_result(
             fit=True,
             required_method=None,
             mro=["transform", "predict"],
@@ -355,7 +387,7 @@ class Pipeline(BaseEstimator):
     def _set_attributes(self, X, y):
         self._X = X
         self._y = y
-        for step in self.steps.values():
+        for step in self.assembled_steps.values():
             if hasattr(step.skobject, "cutoff"):
                 self.cutoff = step.skobject.cutoff
 
@@ -404,7 +436,7 @@ class Pipeline(BaseEstimator):
         self._method_allowed("transform")
 
         return (
-            self.steps[self._last_step_name]
+            self.assembled_steps[self._last_step_name]
             .get_result(
                 fit=False,
                 required_method="transform",
@@ -437,7 +469,7 @@ class Pipeline(BaseEstimator):
         self._method_allowed("predict")
 
         return (
-            self.steps[self._last_step_name]
+            self.assembled_steps[self._last_step_name]
             .get_result(
                 fit=False,
                 required_method="predict",
@@ -471,7 +503,7 @@ class Pipeline(BaseEstimator):
         self._method_allowed("predict_interval")
 
         return (
-            self.steps[self._last_step_name]
+            self.assembled_steps[self._last_step_name]
             .get_result(
                 fit=False,
                 required_method="predict_interval",
@@ -506,7 +538,7 @@ class Pipeline(BaseEstimator):
         self._method_allowed("predict_quantiles")
 
         return (
-            self.steps[self._last_step_name]
+            self.assembled_steps[self._last_step_name]
             .get_result(
                 fit=False,
                 required_method="predict_quantiles",
@@ -550,14 +582,14 @@ class Pipeline(BaseEstimator):
     def _initiate_call(self, X, y, kwargs):
         if not self._assembled:
             self._assemble_steps()
-        for step in self.steps.values():
+        for step in self.assembled_steps.values():
             step.reset()
-        self.steps["X"].buffer = X
-        self.steps["y"].buffer = y
+        self.assembled_steps["X"].buffer = X
+        self.assembled_steps["y"].buffer = y
         self.kwargs.update(kwargs)
 
     def _method_allowed(self, method):
-        for _step_name, step in self.steps.items():
+        for _step_name, step in self.assembled_steps.items():
             if "transform" in step.get_allowed_method():
                 pass  # This would be okay
             elif method in step.get_allowed_method():
@@ -577,8 +609,8 @@ class Pipeline(BaseEstimator):
         step = Step(
             column_select,
             edg,
-            {"X": [self.steps[edg.split("__")[0]]]},
+            {"X": [self.assembled_steps[edg.split("__")[0]]]},
             method="transform",
             params={},
         )
-        self.steps[edg] = step
+        self.assembled_steps[edg] = step

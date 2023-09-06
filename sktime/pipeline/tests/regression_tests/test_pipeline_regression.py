@@ -27,12 +27,21 @@ def test_transformer_regression():
     result = trafo_pipe.transform(X)
 
     np.random.seed(42)
-    general_pipeline = Pipeline()
-    for step in [
-        {"skobject": ExponentTransformer(), "name": "exponent", "edges": {"X": "X"}},
-        {"skobject": BoxCoxTransformer(), "name": "BoxCOX", "edges": {"X": "exponent"}},
-    ]:
-        general_pipeline = general_pipeline.add_step(**step)
+    general_pipeline = Pipeline(
+        [
+            {
+                "skobject": ExponentTransformer(),
+                "name": "exponent",
+                "edges": {"X": "X"},
+            },
+            {
+                "skobject": BoxCoxTransformer(),
+                "name": "BoxCOX",
+                "edges": {"X": "exponent"},
+            },
+        ]
+    )
+
     general_pipeline.fit(X=X)
     result_general = general_pipeline.transform(X)
     pd.testing.assert_frame_equal(result, result_general)

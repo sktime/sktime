@@ -43,7 +43,7 @@ def test_add_steps(steps):
     for step in steps:
         pipeline = pipeline.add_step(**step)
     # Plus 2 because of the two start steps
-    assert len(steps) == len(pipeline.step_informations)
+    assert len(steps) == len(pipeline.steps)
 
 
 def test_add_steps_name_conflict():
@@ -68,10 +68,10 @@ def test_add_step_cloned():
     pipe = pipe.add_step(exponent, "exponent-again", {"X": "X"})
     pipe.fit(X=X)
 
-    assert id(pipe.steps["exponent-1"].skobject) == id(
-        pipe.steps["exponent-again"].skobject
+    assert id(pipe.assembled_steps["exponent-1"].skobject) == id(
+        pipe.assembled_steps["exponent-again"].skobject
     )
-    assert id(exponent) != id(pipe.steps["exponent-1"].skobject)
+    assert id(exponent) != id(pipe.assembled_steps["exponent-1"].skobject)
 
 
 @pytest.mark.parametrize(
@@ -97,7 +97,7 @@ def test_method(method, mro, allowed_method):
     step_mock = MagicMock()
     step_mock.get_allowed_method.return_value = [allowed_method]
     pipeline._assembled = True
-    pipeline.steps.update({"name": step_mock})
+    pipeline.assembled_steps.update({"name": step_mock})
     pipeline._last_step_name = "name"
 
     x_data = MagicMock()
@@ -105,8 +105,8 @@ def test_method(method, mro, allowed_method):
 
     getattr(pipeline, method)(X=x_data, y=y_data, additional_kwarg=42)
 
-    assert pipeline.steps["X"].buffer == x_data
-    assert pipeline.steps["y"].buffer == y_data
+    assert pipeline.assembled_steps["X"].buffer == x_data
+    assert pipeline.assembled_steps["y"].buffer == y_data
 
     step_mock.get_result.assert_called_with(
         fit=True if method == "fit" else False,

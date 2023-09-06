@@ -1,9 +1,20 @@
 .. _regression_ref:
 
-Graphical Pipeline
-======================
+Pipeline
+=========
+The :mod:`sktime.pipeline` module contains the implementation of the graphical pipeline
+and the make_pipeline function for creating linear pipelines.
 
-The :mod:`sktime.pipeline` module contains the implementation of the graphical pipeline.
+make_pipeline
+-------------
+
+.. currentmodule:: sktime._make_pipeline.make_pipeline
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    make_pipeline
 
 Pipeline
 -----------
