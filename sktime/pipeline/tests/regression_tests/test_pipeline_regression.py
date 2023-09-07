@@ -54,16 +54,20 @@ def test_classifier_regression():
     clf_pipe.fit(X, y)
     result = clf_pipe.predict(X)
 
-    general_pipeline = Pipeline()
-    for step in [
-        {"skobject": ExponentTransformer(), "name": "exponent", "edges": {"X": "X"}},
-        {
-            "skobject": DummyClassifier(),
-            "name": "classifier",
-            "edges": {"X": "exponent", "y": "y"},
-        },
-    ]:
-        general_pipeline = general_pipeline.add_step(**step)
+    general_pipeline = Pipeline(
+        [
+            {
+                "skobject": ExponentTransformer(),
+                "name": "exponent",
+                "edges": {"X": "X"},
+            },
+            {
+                "skobject": DummyClassifier(),
+                "name": "classifier",
+                "edges": {"X": "exponent", "y": "y"},
+            },
+        ]
+    )
     general_pipeline.fit(X=X, y=y)
     result_general = general_pipeline.predict(X)
     np.testing.assert_array_equal(result, result_general)
@@ -88,24 +92,24 @@ def test_forecaster_regression(method):
     pipe = Differencer() * SARIMAX()
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = getattr(pipe, method)(X=X_test)
-
-    general_pipeline = Pipeline()
     differencer = Differencer()
-    for step in [
-        {"skobject": differencer, "name": "differencer", "edges": {"X": "y"}},
-        {
-            "skobject": SARIMAX(),
-            "name": "SARIMAX",
-            "edges": {"X": "X", "y": "differencer"},
-        },
-        {
-            "skobject": differencer,
-            "name": "differencer_inverse",
-            "edges": {"X": "SARIMAX"},
-            "method": "inverse_transform",
-        },
-    ]:
-        general_pipeline = general_pipeline.add_step(**step)
+
+    general_pipeline = Pipeline(
+        [
+            {"skobject": differencer, "name": "differencer", "edges": {"X": "y"}},
+            {
+                "skobject": SARIMAX(),
+                "name": "SARIMAX",
+                "edges": {"X": "X", "y": "differencer"},
+            },
+            {
+                "skobject": differencer,
+                "name": "differencer_inverse",
+                "edges": {"X": "SARIMAX"},
+                "method": "inverse_transform",
+            },
+        ]
+    )
     general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result_general = getattr(general_pipeline, method)(X=X_test)
     np.testing.assert_array_equal(result, result_general)
@@ -123,16 +127,21 @@ def test_exogenous_transform_regression():
     result = pipe.predict(X=X_test)
     result_pi = pipe.predict_interval(X=X_test)
 
-    general_pipeline = Pipeline()
-    for step in [
-        {"skobject": ExponentTransformer(), "name": "exponent", "edges": {"X": "X"}},
-        {
-            "skobject": SARIMAX(),
-            "name": "SARIMAX",
-            "edges": {"X": "exponent", "y": "y"},
-        },
-    ]:
-        general_pipeline = general_pipeline.add_step(**step)
+    general_pipeline = Pipeline(
+        [
+            {
+                "skobject": ExponentTransformer(),
+                "name": "exponent",
+                "edges": {"X": "X"},
+            },
+            {
+                "skobject": SARIMAX(),
+                "name": "SARIMAX",
+                "edges": {"X": "exponent", "y": "y"},
+            },
+        ]
+    )
+
     general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result_general = general_pipeline.predict(X=X_test)
     result_pi_general = general_pipeline.predict_interval(X=X_test)
@@ -151,25 +160,29 @@ def test_endogenous_exogenous_transform_regression():
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = pipe.predict(X=X_test)
     result_pi = pipe.predict_interval(X=X_test)
-
-    general_pipeline = Pipeline()
     differencer = Differencer()
-    for step in [
-        {"skobject": differencer, "name": "differencer", "edges": {"X": "y"}},
-        {"skobject": ExponentTransformer(), "name": "exponent", "edges": {"X": "X"}},
-        {
-            "skobject": SARIMAX(),
-            "name": "SARIMAX",
-            "edges": {"X": "exponent", "y": "differencer"},
-        },
-        {
-            "skobject": differencer,
-            "name": "differencer_inverse",
-            "edges": {"X": "SARIMAX"},
-            "method": "inverse_transform",
-        },
-    ]:
-        general_pipeline = general_pipeline.add_step(**step)
+
+    general_pipeline = Pipeline(
+        [
+            {"skobject": differencer, "name": "differencer", "edges": {"X": "y"}},
+            {
+                "skobject": ExponentTransformer(),
+                "name": "exponent",
+                "edges": {"X": "X"},
+            },
+            {
+                "skobject": SARIMAX(),
+                "name": "SARIMAX",
+                "edges": {"X": "exponent", "y": "differencer"},
+            },
+            {
+                "skobject": differencer,
+                "name": "differencer_inverse",
+                "edges": {"X": "SARIMAX"},
+                "method": "inverse_transform",
+            },
+        ]
+    )
     general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result_general = general_pipeline.predict(X=X_test)
     result_pi_general = general_pipeline.predict_interval(X=X_test)
@@ -182,22 +195,23 @@ def test_feature_union_regression():
     pipe = Id() + Differencer() + Lag([1, 2], index_out="original")
     result = pipe.fit_transform(X)
 
-    general_pipeline = Pipeline()
-    for step in [
-        {"skobject": Id(), "name": "id", "edges": {"X": "X"}},
-        {"skobject": Differencer(), "name": "differencer", "edges": {"X": "X"}},
-        {
-            "skobject": Lag([1, 2], index_out="original"),
-            "name": "lag",
-            "edges": {"X": "X"},
-        },
-        {
-            "skobject": Id(),
-            "name": "combined",
-            "edges": {"X": ["id", "differencer", "lag"]},
-        },
-    ]:
-        general_pipeline = general_pipeline.add_step(**step)
+    general_pipeline = Pipeline(
+        [
+            {"skobject": Id(), "name": "id", "edges": {"X": "X"}},
+            {"skobject": Differencer(), "name": "differencer", "edges": {"X": "X"}},
+            {
+                "skobject": Lag([1, 2], index_out="original"),
+                "name": "lag",
+                "edges": {"X": "X"},
+            },
+            {
+                "skobject": Id(),
+                "name": "combined",
+                "edges": {"X": ["id", "differencer", "lag"]},
+            },
+        ]
+    )
+
     result_general = general_pipeline.fit_transform(X=X)
     np.testing.assert_array_equal(result, result_general)
 
@@ -209,22 +223,23 @@ def test_feature_union_subsetting_regression():
     pipe = Id() + Differencer()["c0"] + Lag([1, 2], index_out="original")[["c1", "c0"]]
     result = pipe.fit_transform(X)
 
-    general_pipeline = Pipeline()
-    for step in [
-        {"skobject": Id(), "name": "id", "edges": {"X": "X"}},
-        {"skobject": Differencer(), "name": "differencer", "edges": {"X": "X__c0"}},
-        {
-            "skobject": Lag([1, 2], index_out="original"),
-            "name": "lag",
-            "edges": {"X": "X__c1_c0"},
-        },
-        {
-            "skobject": Id(),
-            "name": "combined",
-            "edges": {"X": ["id", "differencer", "lag"]},
-        },
-    ]:
-        general_pipeline = general_pipeline.add_step(**step)
+    general_pipeline = Pipeline(
+        [
+            {"skobject": Id(), "name": "id", "edges": {"X": "X"}},
+            {"skobject": Differencer(), "name": "differencer", "edges": {"X": "X__c0"}},
+            {
+                "skobject": Lag([1, 2], index_out="original"),
+                "name": "lag",
+                "edges": {"X": "X__c1_c0"},
+            },
+            {
+                "skobject": Id(),
+                "name": "combined",
+                "edges": {"X": ["id", "differencer", "lag"]},
+            },
+        ]
+    )
+
     result_general = general_pipeline.fit_transform(X=X)
     np.testing.assert_array_equal(result, result_general)
 
@@ -258,16 +273,17 @@ def test_varying_mtypes(data, testing_method):
     pipe.fit(X=data)
     result = pipe.transform(X=data)
 
-    general_pipeline = Pipeline()
-    for step in [
-        {"skobject": Detrender(), "name": "detrender", "edges": {"X": "X"}},
-        {
-            "skobject": ExponentTransformer(),
-            "name": "ExponentTransformer",
-            "edges": {"X": "detrender"},
-        },
-    ]:
-        general_pipeline = general_pipeline.add_step(**step)
+    general_pipeline = Pipeline(
+        [
+            {"skobject": Detrender(), "name": "detrender", "edges": {"X": "X"}},
+            {
+                "skobject": ExponentTransformer(),
+                "name": "ExponentTransformer",
+                "edges": {"X": "detrender"},
+            },
+        ]
+    )
+
     general_pipeline.fit(X=data)
     general_pipeline.transform(X=data)
     result_general = general_pipeline.predict(data)
@@ -287,13 +303,17 @@ def test_forecasterX_regression():
     pipe.fit(y, X=X, fh=[1, 2, 3])
     result = pipe.predict()
 
-    general_pipeline = Pipeline()
-    general_pipeline = general_pipeline.add_step(
-        skobject=NaiveForecaster(), name="forecastX", edges={"y": "X"}
+    general_pipeline = Pipeline(
+        [
+            {"skobject": NaiveForecaster(), "name": "forecastX", "edges": {"y": "X"}},
+            {
+                "skobject": SARIMAX(),
+                "name": "forecastY",
+                "edges": {"X": "forecastX", "y": "y"},
+            },
+        ]
     )
-    general_pipeline = general_pipeline.add_step(
-        skobject=SARIMAX(), name="forecastY", edges={"X": "forecastX", "y": "y"}
-    )
+
     general_pipeline.fit(y=y, X=X, fh=[1, 2, 3])
     result_general = general_pipeline.predict(None, None)
     pd.testing.assert_series_equal(result, result_general)
