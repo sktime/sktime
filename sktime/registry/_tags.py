@@ -204,6 +204,12 @@ ESTIMATOR_TAG_REGISTER = [
         "domain of invertibility of transform, must be list [lower, upper] of float",
     ),
     (
+        "capability:inverse_transform:exact",
+        "transformer",
+        "bool",
+        "whether inverse_transform is expected to be an exact inverse to transform",
+    ),
+    (
         "capability:pred_int",
         "forecaster",
         "bool",
@@ -340,6 +346,12 @@ ESTIMATOR_TAG_REGISTER = [
         "aligner",
         "bool",
         "does aligner return pairwise distance matrix between aligned series?",
+    ),
+    (
+        "alignment_type",
+        "aligner",
+        ("str", ["full", "partial"]),
+        "does aligner produce a full or partial alignment",
     ),
     (
         "requires-y-train",

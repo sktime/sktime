@@ -42,8 +42,8 @@ def test_basebenchmark(tmp_path):
     expected_results_df = pd.DataFrame(
         [
             (
-                "factory_estimator_class_task-v1",
-                "NaiveForecaster-v1",
+                "factory_estimator_class_task",
+                "NaiveForecaster",
                 "<class 'sktime.forecasting.naive.NaiveForecaster'>",
             )
         ],
@@ -114,3 +114,19 @@ def test_add_task_string_entrypoint(tmp_path):
     results_df = benchmark.run(results_file)
 
     assert results_df.iloc[0, 3] == "<class 'sktime.forecasting.naive.NaiveForecaster'>"
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("kotsu", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+def test_raise_id_restraint():
+    """Test to ensure ID format is raised for malformed input ID."""
+    # format of the form [username/](entity-name)-v(major).(minor)
+    id_format = r"^(?:[\w:-]+\/)?([\w:.\-{}=\[\]]+)-v([\d.]+)$"
+    error_msg = "Attempted to register malformed entity ID"
+    benchmark = benchmarks.BaseBenchmark(id_format)
+    with pytest.raises(ValueError) as exc_info:
+        benchmark.add_estimator(NaiveForecaster(), "test_id")
+    assert exc_info.type is ValueError, "Must raise a ValueError"
+    assert error_msg in exc_info.value.args[0], "Error msg is not raised"
