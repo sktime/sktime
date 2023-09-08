@@ -153,7 +153,7 @@ mlflow_tests = [
 
 binder = [
     "jupyter",
-    "pandas<2.0.0",
+    "pandas<3.0.0",
 ]
 
 docs = [
@@ -176,7 +176,7 @@ dl = [
 ]
 
 pandas1 = [
-    "pandas<2.0.0",
+    "pandas<3.0.0",
 ]
 
 [project.urls]
