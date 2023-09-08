@@ -199,7 +199,7 @@ def _evaluate_window(
         fit_time = time.perf_counter() - start_fit
 
         # predict based on metrics
-        pred_type = {  # tuple indicates (method for predict, naming)
+        pred_type = {
             "pred_quantiles": "predict_quantiles",
             "pred_interval": "predict_interval",
             "pred_proba": "predict_proba",

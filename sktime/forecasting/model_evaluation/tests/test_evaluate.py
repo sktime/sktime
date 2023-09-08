@@ -48,6 +48,8 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
+SCORES = [MeanAbsolutePercentageError(symmetric=True), MeanAbsoluteScaledError()]
+
 
 def _check_evaluate_output(out, cv, y, scoring):
     assert isinstance(out, pd.DataFrame)
@@ -160,10 +162,7 @@ def test_scoring_list(return_data):
         forecaster=forecaster,
         y=y,
         cv=cv,
-        scoring=[
-            MeanAbsolutePercentageError(symmetric=True),
-            MeanAbsoluteScaledError(),
-        ],
+        scoring=SCORES,
         return_data=return_data,
     )
     assert "test_MeanAbsolutePercentageError" in out.columns
@@ -235,7 +234,8 @@ def test_evaluate_no_exog_against_with_exog():
 @pytest.mark.parametrize("return_data", [True, False])
 @pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
-def test_evaluate_error_score(error_score, return_data, strategy, backend):
+@pytest.mark.parametrize("scores", [[MeanAbsolutePercentageError()], SCORES])
+def test_evaluate_error_score(error_score, return_data, strategy, backend, scores):
     """Test evaluate to raise warnings and exceptions according to error_score value."""
     # skip test for dask backend if dask is not installed
     if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
@@ -246,22 +246,24 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
     # add NaN to make ExponentialSmoothing fail
     y.iloc[1] = np.nan
     fh = [1, 2, 3]
-    cv = ExpandingWindowSplitter(step_length=48, initial_window=12, fh=fh)
+    cv = SlidingWindowSplitter(step_length=33, initial_window=36, fh=fh)
+    scoring_name = [f"test_{score.name}" for score in scores]
     if error_score in [np.nan, 1000]:
         with pytest.warns(FitFailedWarning):
             results = evaluate(
                 forecaster=forecaster,
                 y=y,
                 cv=cv,
+                scoring=scores,
                 return_data=return_data,
                 error_score=error_score,
                 strategy=strategy,
                 backend=backend,
             )
         if isinstance(error_score, type(np.nan)):
-            assert results["test_MeanAbsolutePercentageError"].isna().sum() > 0
+            assert all(results[scoring_name].isna().sum() > 0)
         if error_score == 1000:
-            assert results["test_MeanAbsolutePercentageError"].max() == 1000
+            assert all(results[scoring_name].max() == 1000)
     if error_score == "raise":
         with pytest.raises(Exception):  # noqa: B017
             evaluate(
