@@ -41,11 +41,11 @@ def _check_strategy(strategy):
 
 
 def _check_scores(metrics) -> Dict:
-    """Validate and coerce Metric objects and segregate them based on predict type.
+    """Validate and coerce to BaseMetric and segregate them based on predict type.
 
     Parameters
     ----------
-    metrics : sktime accepted metrics or a list of them or None
+    metrics : sktime accepted metrics object or a list of them or None
 
     Return
     ------
@@ -57,16 +57,14 @@ def _check_scores(metrics) -> Dict:
 
     metrics_type = {}
     for metric in metrics:
-        metric = check_scoring(metric)  # validate and convert to sktime BaseMetric
+        metric = check_scoring(metric)
         # collect predict type
-        # I think there's no need to check for attribute "get_tag" as all metric class
-        # has that method, no? I dont see the need to do if here, did i miss anything?.
-        # if hasattr(metric, "get_tag"):
-        scitype = metric.get_tag(
-            "scitype:y_pred", raise_error=False, tag_value_default="pred"
-        )
-        # else:  # If no scitype exists then metric is a point forecast type
-        #     scitype = pred
+        if hasattr(metric, "get_tag"):
+            scitype = metric.get_tag(
+                "scitype:y_pred", raise_error=False, tag_value_default="pred"
+            )
+        else:  # If no scitype exists then metric is a point forecast type
+            scitype = "pred"
         if scitype not in metrics_type.keys():
             metrics_type[scitype] = [metric]
         else:
@@ -74,7 +72,7 @@ def _check_scores(metrics) -> Dict:
     return metrics_type
 
 
-def _get_metada_for_dask(metric_types: Dict, return_data: bool, cutoff_dtype) -> Dict:
+def _get_metadata_for_dask(metric_types: Dict, return_data: bool, cutoff_dtype) -> Dict:
     """Get the column name and input datatype of resuls.
 
     This metadata is required to avoid unexpected results from dask parallelisation
@@ -561,7 +559,7 @@ def evaluate(
         from dask import delayed as dask_delayed
 
         results = []
-        metadata = _get_metada_for_dask(scoring, return_data, cutoff_dtype)
+        metadata = _get_metadata_for_dask(scoring, return_data, cutoff_dtype)
         for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             results.append(
                 dask_delayed(_evaluate_window)(
