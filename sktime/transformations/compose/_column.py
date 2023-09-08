@@ -84,7 +84,6 @@ class ColumnEnsembleTransformer(
 
     Examples
     --------
-
     .. Doctest::
 
         >>> import pandas as pd

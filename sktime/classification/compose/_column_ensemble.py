@@ -220,7 +220,6 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
     Examples
     --------
-
     .. Doctest::
         >>> from sktime.classification.dictionary_based import ContractableBOSS
         >>> from sktime.classification.interval_based import CanonicalIntervalForest
