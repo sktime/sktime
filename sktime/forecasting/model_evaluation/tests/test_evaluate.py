@@ -105,13 +105,7 @@ def _check_evaluate_output(out, cv, y, scoring):
 @pytest.mark.parametrize("window_length", [7, 10])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
 @pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
-@pytest.mark.parametrize(
-    "scoring",
-    [
-        MeanAbsolutePercentageError(symmetric=True),
-        MeanAbsoluteScaledError(),
-    ],
-)
+@pytest.mark.parametrize("scoring", SCORES)
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_common_configs(
     CV, fh, window_length, step_length, strategy, scoring, backend
