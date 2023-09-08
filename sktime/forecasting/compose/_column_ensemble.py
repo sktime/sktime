@@ -55,7 +55,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     ... ]
     >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y, fh=[1, 2, 3])
-    ColumnEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
 
     Using strings for indexing:
@@ -65,7 +64,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
     ... )
     >>> fc.fit(df, fh=[1, 42])
-    ColumnEnsembleForecaster(...)
     >>> y_pred = fc.predict()
 
     Applying one forecaster to multiple columns, multivariate:
@@ -75,7 +73,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
     ... )
     >>> fc.fit(df, fh=[1, 42])
-    ColumnEnsembleForecaster(...)
     >>> y_pred = fc.predict()
     """
 
