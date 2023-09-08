@@ -72,14 +72,11 @@ def _check_scores(metrics) -> Dict:
     return metrics_type
 
 
-def _get_metadata_for_dask(metric_types: Dict, return_data: bool, cutoff_dtype) -> Dict:
-    """Get the column name and input datatype of resuls.
-
-    This metadata is required to avoid unexpected results from dask parallelisation
-    see https://docs.dask.org/en/latest/generated/dask.dataframe.from_delayed.html
-    """
-    default_metadata = {
-        "fit_time": "float",
+def _get_column_order_and_datatype(
+    metric_types: Dict, return_data: bool = True, cutoff_dtype=None
+) -> Dict:
+    """Get the ordered column name and input datatype of results."""
+    others_metadata = {
         "len_train_window": "int",
         "cutoff": cutoff_dtype,
     }
@@ -87,17 +84,18 @@ def _get_metadata_for_dask(metric_types: Dict, return_data: bool, cutoff_dtype) 
         "y_train": "object",
         "y_test": "object",
     }
-    dynamic_metadata = {}
+    fit_metadata, metrics_metadata = {"fit_time": "float"}, {}
     for scitype in metric_types:
-        dynamic_metadata[f"{scitype}_time"] = "float"
+        fit_metadata[f"{scitype}_time"] = "float"
         if return_data:
-            dynamic_metadata[f"y_{scitype}"] = "object"
+            y_metadata[f"y_{scitype}"] = "object"
         for metric in metric_types.get(scitype):
-            dynamic_metadata[f"test_{metric.name}"] = "float"
-    default_metadata.update(dynamic_metadata)
+            metrics_metadata[f"test_{metric.name}"] = "float"
+    fit_metadata.update(others_metadata)
     if return_data:
-        default_metadata.update(y_metadata)
-    return dict(sorted(default_metadata.items()))
+        fit_metadata.update(y_metadata)
+    metrics_metadata.update(fit_metadata)
+    return metrics_metadata.copy()
 
 
 # should we remove _split since this is no longer being used?
@@ -211,9 +209,7 @@ def _evaluate_window(
                     metric_args = metric.metric_args
                 else:
                     metric_args = {}
-                methodname = pred_type[scitype]
-                method = getattr(forecaster, methodname)
-
+                method = getattr(forecaster, pred_type[scitype])
                 start_pred = time.perf_counter()
                 y_pred = method(fh, X_test, **metric_args)
                 pred_time = time.perf_counter() - start_pred
@@ -261,8 +257,11 @@ def _evaluate_window(
     if return_data:
         temp_result["y_train"] = [y_train]
         temp_result["y_test"] = [y_test]
-    temp_result = dict(sorted(temp_result.items()))
-    result = pd.DataFrame(temp_result).astype({"cutoff": cutoff_dtype})
+    # temp_result = dict(sorted(temp_result.items()))
+    result = pd.DataFrame(temp_result)
+    result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
+    column_order = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+    result = result.reindex(columns=column_order.keys())
 
     # Return forecaster if "update"
     if strategy == "update" or (strategy == "no-update_params" and i == 0):
@@ -559,7 +558,7 @@ def evaluate(
         from dask import delayed as dask_delayed
 
         results = []
-        metadata = _get_metadata_for_dask(scoring, return_data, cutoff_dtype)
+        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
         for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             results.append(
                 dask_delayed(_evaluate_window)(
@@ -597,6 +596,5 @@ def evaluate(
 
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
-    results = results.astype({"len_train_window": int})
 
     return results
