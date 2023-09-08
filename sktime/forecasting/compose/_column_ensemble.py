@@ -40,40 +40,43 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
     Examples
     --------
-    >>> import pandas as pd
-    >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_longley
+>>> import pandas as pd
+>>> from sktime.forecasting.compose import ColumnEnsembleForecaster
+>>> from sktime.forecasting.naive import NaiveForecaster
+>>> from sktime.forecasting.trend import PolynomialTrendForecaster
+>>> from sktime.datasets import load_longley
 
     Using integers (column iloc references) for indexing:
 
-    >>> y = load_longley()[1][["GNP", "UNEMP"]]
-    >>> forecasters = [
-    ...     ("trend", PolynomialTrendForecaster(), 0),
-    ...     ("naive", NaiveForecaster(), 1),
-    ... ]
-    >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y, fh=[1, 2, 3])
-    >>> y_pred = forecaster.predict()
+>>> y = load_longley()[1][["GNP", "UNEMP"]]
+>>> forecasters = [
+...     ("trend", PolynomialTrendForecaster(), 0),
+...     ("naive", NaiveForecaster(), 1),
+... ]
+>>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
+>>> forecaster.fit(y, fh=[1, 2, 3])
+ColumnEnsembleForecaster(...)
+>>> y_pred = forecaster.predict()
 
     Using strings for indexing:
 
-    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-    >>> fc = ColumnEnsembleForecaster(
-    ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
-    ... )
-    >>> fc.fit(df, fh=[1, 42])
-    >>> y_pred = fc.predict()
+>>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+>>> fc = ColumnEnsembleForecaster(
+...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
+... )
+>>> fc.fit(df, fh=[1, 42])
+ColumnEnsembleForecaster(...)
+>>> y_pred = fc.predict()
 
     Applying one forecaster to multiple columns, multivariate:
 
-    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
-    >>> fc = ColumnEnsembleForecaster(
-    ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
-    ... )
-    >>> fc.fit(df, fh=[1, 42])
-    >>> y_pred = fc.predict()
+>>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+>>> fc = ColumnEnsembleForecaster(
+...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
+... )
+>>> fc.fit(df, fh=[1, 42])
+ColumnEnsembleForecaster(...)
+>>> y_pred = fc.predict()
     """
 
     _tags = {
