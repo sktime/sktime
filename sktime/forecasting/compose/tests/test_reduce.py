@@ -30,11 +30,11 @@ from sktime.forecasting.model_selection import (
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
-from sktime.forecasting.model_selection.tests.test_split import _get_windows
 from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
+from sktime.split.tests.test_split import _get_windows
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
