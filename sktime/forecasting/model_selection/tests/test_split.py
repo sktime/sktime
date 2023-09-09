@@ -30,6 +30,7 @@ from sktime.forecasting.tests._config import (
     TEST_YS,
     VALID_INDEX_FH_COMBINATIONS,
 )
+from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
@@ -656,6 +657,52 @@ def test_split_series_hier():
         assert len(test) == 1 * n_instances
         assert inst_index(train) == inst_index(y)
         assert inst_index(test) == inst_index(y)
+
+
+def test_expandingwindowsplit():
+    """Test that ExpandingWindowSplitter is consistent between time and int index.
+
+    Tests failure case of bug report #4885.
+    """
+    timestamp = pd.date_range("2022-07-01 00:00:00", "2022-07-7 23:00:00", freq="H")
+    y_time = pd.DataFrame(
+        {
+            "y": range(7 * 24),
+            "objectid": [1] * 7 * 24,
+            "timestamp": timestamp,
+        }
+    ).set_index(["objectid", "timestamp"])
+
+    fh = pd.timedelta_range(start=0, end=pd.Timedelta(days=1), closed="right", freq="H")
+    initial_window = pd.Timedelta(days=1)
+    step_length = pd.Timedelta(days=1)
+    splitter_time = ExpandingWindowSplitter(
+        fh=fh, initial_window=initial_window, step_length=step_length
+    )
+
+    splits_time = list(splitter_time.split(y_time))
+
+    y_int = pd.DataFrame(
+        {"y": range(7 * 24), "objectid": [1] * 7 * 24, "timestamp": range(7 * 24)}
+    ).set_index(["objectid", "timestamp"])
+
+    fh = range(1, 25)
+    initial_window = 24
+    step_length = 24
+    splitter_int = ExpandingWindowSplitter(
+        fh=fh, initial_window=initial_window, step_length=step_length
+    )
+
+    splits_int = list(splitter_int.split(y_int))
+
+    assert splitter_int.get_n_splits(y_int) == 6
+    assert len(splits_int) == 6
+
+    # failure case of bug report #4885 - generates only first 5 splits
+    assert splitter_time.get_n_splits(y_time) == 6
+    assert len(splits_time) == 6
+
+    assert deep_equals(splits_int, splits_time)
 
 
 def test_same_loc_splitter():
