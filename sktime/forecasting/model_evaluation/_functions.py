@@ -257,7 +257,6 @@ def _evaluate_window(
     if return_data:
         temp_result["y_train"] = [y_train]
         temp_result["y_test"] = [y_test]
-    # temp_result = dict(sorted(temp_result.items()))
     result = pd.DataFrame(temp_result)
     result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
     column_order = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
@@ -454,7 +453,7 @@ def evaluate(
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
-    # remove line 457-461 in v0.23.0
+    # remove line 456-460 in v0.23.0
     if isinstance(scoring, list):
         raise_warn, num = True, len(scoring)
     else:
@@ -602,7 +601,7 @@ def evaluate(
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
 
-    # TODO remove 602-612 in v0.23.0
+    # TODO remove 605-618 in v0.23.0
     if raise_warn:
         warnings.warn(
             "Starting v0.23.0 all multiple metrics columns will be arranged "
