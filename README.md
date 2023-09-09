@@ -123,14 +123,17 @@ pip install sktime[all_extras]
 For curated sets of soft dependencies for specific learning tasks:
 
 ```bash
-pip install sktime[forecasting]
+pip install sktime[forecasting]  # for selected forecasting dependencies
+pip install sktime[forecasting,transformations]  # forecasters and transformers
 ```
 
 or similar. Valid sets are `forecasting`, `transformations`, `classification`,
 `regression`, `clustering`, `param_est`,`networks`, `annotation`, `alignment`.
 
 ### conda
-You can also install sktime from `conda` via the `conda-forge` channel. For the feedstock including the build recipe and configuration, check out [this repository](https://github.com/conda-forge/sktime-feedstock).
+You can also install sktime from `conda` via the `conda-forge` channel.
+The feedstock including the build recipe and configuration is maintained
+in [this conda-forge repository](https://github.com/conda-forge/sktime-feedstock).
 
 ```bash
 conda install -c conda-forge sktime
@@ -141,6 +144,9 @@ or, with maximum dependencies,
 ```bash
 conda install -c conda-forge sktime-all-extras
 ```
+
+(as `conda` does not support dependency sets,
+flexible choice of soft dependencies is unavailable via `conda`)
 
 ## :zap: Quickstart
 
