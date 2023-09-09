@@ -166,7 +166,7 @@ def check_cv(cv, enforce_start_with_window=False):
     ValueError
         if cv does not have the required attributes.
     """
-    from sktime.forecasting.model_selection._split import BaseSplitter
+    from sktime.split.base import BaseSplitter
 
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
