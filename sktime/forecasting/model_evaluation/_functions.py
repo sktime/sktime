@@ -203,23 +203,24 @@ def _evaluate_window(
             "pred_proba": "predict_proba",
             "pred": "predict",
         }
+        # cache prediction from the first scitype and reuse it to compute other metrics
         for scitype in scoring:
-            for metric in scoring.get(scitype):
-                if hasattr(metric, "metric_args"):
-                    metric_args = metric.metric_args
-                else:
-                    metric_args = {}
-                method = getattr(forecaster, pred_type[scitype])
-                start_pred = time.perf_counter()
-                y_pred = method(fh, X_test, **metric_args)
-                pred_time = time.perf_counter() - start_pred
-
-                score = metric(y_test, y_pred, y_train=y_train)
+            cache_y_pred = pd.NA
+            for idx, metric in enumerate(scoring.get(scitype)):
+                if idx == 0:
+                    if hasattr(metric, "metric_args"):
+                        metric_args = metric.metric_args
+                    else:
+                        metric_args = {}
+                    method = getattr(forecaster, pred_type[scitype])
+                    start_pred = time.perf_counter()
+                    cache_y_pred = method(fh, X_test, **metric_args)
+                    pred_time = time.perf_counter() - start_pred
+                    temp_result[f"{scitype}_time"] = [pred_time]
+                score = metric(y_test, cache_y_pred, y_train=y_train)
                 temp_result[f"test_{metric.name}"] = [score]
-
-                temp_result[f"{scitype}_time"] = [pred_time]
-                if return_data:
-                    temp_result[f"y_{scitype}"] = [y_pred]
+            if return_data:
+                temp_result[f"y_{scitype}"] = [cache_y_pred]
         # get cutoff
         cutoff = forecaster.cutoff
 
@@ -453,11 +454,8 @@ def evaluate(
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
-    # remove line 456-460 in v0.23.0
-    if isinstance(scoring, list):
-        raise_warn, num = True, len(scoring)
-    else:
-        raise_warn, num = False, 1
+    # TODO: remove lines 457-458 and 602-608 in v0.24.0
+    raise_warn = True if isinstance(scoring, list) else False
     scoring = _check_scores(scoring)
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
@@ -601,18 +599,11 @@ def evaluate(
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
 
-    # TODO remove 605-618 in v0.23.0
+    # TODO: remove lines 602-608 and 457-458 in v0.24.0
     if raise_warn:
         warnings.warn(
-            "Starting v0.23.0 all multiple metrics columns will be arranged "
-            "at the left of the result DataFrame",
+            "Please ensure using loc references when addressing the columns' result",
             DeprecationWarning,
             stacklevel=2,
         )
-        columns = results.columns.to_list()
-        non_first_metrics = []
-        for _ in range(1, num):
-            metric = columns.pop(1)
-            non_first_metrics.append(metric)
-        results = results.reindex(columns=columns + non_first_metrics)
     return results
