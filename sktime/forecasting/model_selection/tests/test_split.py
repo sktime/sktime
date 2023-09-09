@@ -718,6 +718,17 @@ def test_same_loc_splitter_hierarchical():
         assert np.all(tt1 == tt2)
 
 
+def test_hierachical_singlewindowsplitter():
+    """Test for bugs in SingleWindowSplitter with hierarchical data.
+
+    See #4972
+    """
+    y = _make_hierarchical(hierarchy_levels=(2, 3), random_state=0)
+    splitter = SingleWindowSplitter(fh=[1, 2], window_length=10)
+    splits = list(splitter.split(y))
+    assert len(splits) == 1, "Should only be one split"
+
+
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
