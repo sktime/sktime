@@ -1051,7 +1051,7 @@ class BaseWindowSplitter(BaseSplitter):
         n_splits : int
             The number of splits.
         """
-        from sktime.datatypes import check_is_scitype, convert_to
+        from sktime.datatypes import check_is_scitype, convert
 
         if y is None:
             raise ValueError(
@@ -1059,15 +1059,20 @@ class BaseWindowSplitter(BaseSplitter):
                 f"number of splits."
             )
 
-        scitype = ["Hierarchical", "Panel"]
-        is_non_single, _, metadata = check_is_scitype(y, scitype, True)
+        multi_scitypes = ["Hierarchical", "Panel"]
+        is_non_single, _, metadata = check_is_scitype(y, multi_scitypes, [])
 
         # n_splits based on the first instance of the lowest level series cutoffs
         if is_non_single:
-            if metadata.get("scitype") == "Panel":
-                y = convert_to(y, "pd-multiindex")
+            from_mtype = metadata.get("mtype")
+            scitype = metadata.get("scitype")
+            if scitype == "Panel":
+                to_mtype = "pd-multiindex"
             else:
-                y = convert_to(y, "pd_multiindex_hier")
+                to_mtype = "pd_multiindex_hier"
+
+            y = convert(y, from_type=from_mtype, to_type=to_mtype, as_scitype=scitype)
+
             index = self._coerce_to_index(y)
             for _, values in y.groupby(index.droplevel(-1)):
                 # convert to a single ts
