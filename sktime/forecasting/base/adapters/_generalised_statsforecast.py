@@ -29,16 +29,38 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     def __init__(self):
         super().__init__()
 
-        self._forecaster = self._instantiate_model()
-        (
-            self._support_pred_int_in_sample,
-            self._support_pred_int,
-        ) = self._check_supports_pred_int()
+        self._forecaster = None
+        pred_supported = self._check_supports_pred_int()
+        self._support_pred_int_in_sample = pred_supported[0]
+        self._support_pred_int = pred_supported[1]
 
-        if not self._support_pred_int_in_sample:
-            self.set_tags(**{"capability:pred_int:insample": False})
-        if not self._support_pred_int:
-            self.set_tags(**{"capability:pred_int": False})
+        self.set_tags(
+            **{"capability:pred_int:insample": self._support_pred_int_in_sample}
+        )
+        self.set_tags(**{"capability:pred_int": self._support_pred_int})
+
+    def _get_statsforecast_class(self):
+        raise NotImplementedError("abstract method")
+
+    def _get_init_statsforecast_params(self):
+        statsforecast_class = self._get_statsforecast_class()
+        return list(signature(statsforecast_class.__init__).parameters.keys())
+
+    def _validate_init_params(self, **sktime_params):
+        sktime_params = sktime_params.copy()
+        statsforecast_params = self._get_init_statsforecast_params()
+
+        for sktime_param in sktime_params.keys():
+            if sktime_param not in statsforecast_params:
+                sktime_params.pop(sktime_param)
+                warn(
+                    f"Keyword argument '{sktime_param}' will be omitted as it is"
+                    f" not found in the __init__ method "
+                    f"from {self._get_statsforecast_class()}. "
+                    f"Check your statsforecast version"
+                    f"to find out the right API parameters."
+                )
+        return sktime_params
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
@@ -74,6 +96,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         self : reference to self
         """
         del fh  # avoid being detected as unused by ``vulture`` like tools
+
+        self._forecaster = self._instantiate_model()
 
         y_fit_input = y.to_numpy(copy=False)
 
@@ -309,15 +333,16 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             - `support_pred_int`: True if prediction intervals are supported
               in `predict`, False otherwise.
         """
+        statsforecast_class = self._get_statsforecast_class()
         if (
             "level"
-            not in signature(self._forecaster.predict_in_sample).parameters.keys()
+            not in signature(statsforecast_class.predict_in_sample).parameters.keys()
         ):
             support_pred_int_in_sample = False
             import statsforecast
 
             warn(
-                f" {self._forecaster.__class__.__name__} from "
+                f" {statsforecast_class.__name__} from "
                 f"statsforecast v{statsforecast.__version__} "
                 f"does not support prediction of intervals in `predict_in_sample`. "
                 f"Consider upgrading to a newer version."
@@ -325,12 +350,12 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         else:
             support_pred_int_in_sample = True
 
-        if "level" not in signature(self._forecaster.predict).parameters.keys():
+        if "level" not in signature(statsforecast_class.predict).parameters.keys():
             support_pred_int = False
             import statsforecast
 
             warn(
-                f" {self._forecaster.__class__.__name__} from "
+                f" {statsforecast_class.__name__} from "
                 f"statsforecast v{statsforecast.__version__} "
                 f"does not support prediction of intervals in `predict`. "
                 f"Consider upgrading to a newer version."

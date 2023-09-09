@@ -247,6 +247,12 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import AutoARIMA
+
+        return AutoARIMA
+
     def _instantiate_model(self):
         # import inside method to avoid hard dependency
         from statsforecast.models import AutoARIMA as _AutoARIMA
@@ -360,15 +366,23 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import AutoTheta
+
+        return AutoTheta
+
     def _instantiate_model(self):
         """Create underlying forecaster instance."""
         from statsforecast.models import AutoTheta
 
-        return AutoTheta(
+        params = self._validate_init_params(
             season_length=self.season_length,
             decomposition_type=self.decomposition_type,
             model=self.model,
         )
+
+        return AutoTheta(**params)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -452,6 +466,12 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
+    def _get_statsforecast_class(self):
+        """Create underlying forecaster instance."""
+        from statsforecast.models import AutoETS
+
+        return AutoETS
+
     def _instantiate_model(self):
         """Create underlying forecaster instance."""
         from statsforecast.models import AutoETS
@@ -526,6 +546,12 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         self.model = model
 
         super().__init__()
+
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import AutoCES
+
+        return AutoCES
 
     def _instantiate_model(self):
         """Create underlying forecaster instance."""
@@ -632,6 +658,11 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                     " that the forecaster you pass into the model is a sktime "
                     "forecaster."
                 )
+
+    def _get_statsforecast_class(self):
+        from statsforecast.models import MSTL
+
+        return MSTL
 
     def _instantiate_model(self):
         """Create underlying forecaster instance."""
