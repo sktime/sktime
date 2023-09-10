@@ -1740,8 +1740,16 @@
       "name": "Benedikt Heidrich",
       "profile": "https://github.com/benheid",
       "contributions": [
+        "bug",
         "code",
-        "doc"
+        "design",
+        "doc",
+        "example",
+        "ideas",
+        "mentoring",
+        "question",
+        "review",
+        "tutorial"
       ]
     },
     {

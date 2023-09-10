@@ -1,59 +1,49 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Probability distribution objects with tensorflow-probability back-end."""
+"""Laplace probability distribution."""
 
 __author__ = ["fkiraly"]
 
 import numpy as np
 import pandas as pd
 
-from sktime.proba.base import _BaseTFDistribution
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.proba.base import BaseDistribution
 
 
-class TFNormal(_BaseTFDistribution):
-    """Normal distribution with tensorflow-probability back-end.
+class Laplace(BaseDistribution):
+    """Laplace distribution.
 
     Parameters
     ----------
     mean : float or array of float (1D or 2D)
-        mean of the normal distribution
-    sd : float or array of float (1D or 2D), must be positive
-        standard deviation of the normal distribution
+        mean of the distribution
+    scale : float or array of float (1D or 2D), must be positive
+        scale parameter of the distribution, same as standard deviation / sqrt(2)
     index : pd.Index, optional, default = RangeIndex
     columns : pd.Index, optional, default = RangeIndex
 
     Example
     -------
-    >>> from sktime.proba.tfp import TFNormal  # doctest: +SKIP
+    >>> from sktime.proba.laplace import Laplace
 
-    >>> n = TFNormal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)  # doctest: +SKIP
+    >>> n = Laplace(mu=[[0, 1], [2, 3], [4, 5]], scale=1)
     """
 
     _tags = {
-        "python_dependencies": "tensorflow_probability",
         "capabilities:approx": ["pdfnorm"],
-        "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf"],
+        "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
         "distr:measuretype": "continuous",
     }
 
-    def __init__(self, mu, sigma, index=None, columns=None):
+    def __init__(self, mu, scale, index=None, columns=None):
         self.mu = mu
-        self.sigma = sigma
+        self.scale = scale
         self.index = index
         self.columns = columns
-
-        _check_estimator_deps(self)
-
-        import tensorflow_probability as tfp
-
-        tfd = tfp.distributions
 
         # todo: untangle index handling
         # and broadcast of parameters.
         # move this functionality to the base class
-        # 0.19.0?
-        self._mu, self._sigma = self._get_bc_params(self.mu, self.sigma, dtype="float")
-        distr = tfd.Normal(loc=self._mu, scale=self._sigma)
+        self._mu, self._scale = self._get_bc_params()
         shape = self._mu.shape
 
         if index is None:
@@ -62,7 +52,17 @@ class TFNormal(_BaseTFDistribution):
         if columns is None:
             columns = pd.RangeIndex(shape[1])
 
-        super().__init__(index=index, columns=columns, distr=distr)
+        super().__init__(index=index, columns=columns)
+
+    def _get_bc_params(self):
+        """Fully broadcast parameters of self, given param shapes and index, columns."""
+        to_broadcast = [self.mu, self.scale]
+        if hasattr(self, "index") and self.index is not None:
+            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
+        if hasattr(self, "columns") and self.columns is not None:
+            to_broadcast += [self.columns.to_numpy()]
+        bc = np.broadcast_arrays(*to_broadcast)
+        return bc[0], bc[1]
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -83,13 +83,15 @@ class TFNormal(_BaseTFDistribution):
         each row contains one float, self-energy/energy as described above.
         """
         if x is None:
-            sd_arr = self._sigma
-            energy_arr = 2 * np.sum(sd_arr, axis=1) / np.sqrt(np.pi)
+            sc_arr = self._scale
+            energy_arr = np.sum(sc_arr, axis=1) * 1.5
             energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
         else:
-            mu_arr, sd_arr = self._mu, self._sigma
-            c_arr = (x - mu_arr) * (2 * self.cdf(x) - 1) + 2 * sd_arr**2 * self.pdf(x)
-            energy_arr = np.sum(c_arr, axis=1)
+            d = self.loc[x.index, x.columns]
+            mu_arr, sc_arr = d.mu, d.scale
+            y_arr = np.abs((x.values - mu_arr) / sc_arr)
+            c_arr = y_arr + np.exp(-y_arr)
+            energy_arr = np.sum(sc_arr * c_arr, axis=1)
             energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
         return energy
 
@@ -118,16 +120,45 @@ class TFNormal(_BaseTFDistribution):
         pd.DataFrame with same rows, columns as `self`
         variance of distribution (entry-wise)
         """
-        sd_arr = self._sigma
+        sd_arr = self._scale / np.sqrt(2)
         return pd.DataFrame(sd_arr, index=self.index, columns=self.columns) ** 2
+
+    def pdf(self, x):
+        """Probability density function."""
+        d = self.loc[x.index, x.columns]
+        pdf_arr = np.exp(-np.abs((x.values - d.mu) / d.scale))
+        pdf_arr = pdf_arr / (2 * d.scale)
+        return pd.DataFrame(pdf_arr, index=x.index, columns=x.columns)
+
+    def log_pdf(self, x):
+        """Logarithmic probability density function."""
+        d = self.loc[x.index, x.columns]
+        lpdf_arr = -np.abs((x.values - d.mu) / d.scale)
+        lpdf_arr = lpdf_arr - np.log(2 * d.scale)
+        return pd.DataFrame(lpdf_arr, index=x.index, columns=x.columns)
+
+    def cdf(self, x):
+        """Cumulative distribution function."""
+        d = self.loc[x.index, x.columns]
+        sgn_arr = np.sign(x.values - d.mu)
+        exp_arr = np.exp(-np.abs((x.values - d.mu) / d.scale))
+        cdf_arr = 0.5 + 0.5 * sgn_arr * (1 - exp_arr)
+        return pd.DataFrame(cdf_arr, index=x.index, columns=x.columns)
+
+    def ppf(self, p):
+        """Quantile function = percent point function = inverse cdf."""
+        d = self.loc[p.index, p.columns]
+        sgn_arr = np.sign(p.values - 0.5)
+        icdf_arr = d.mu - d.scale * sgn_arr * np.log(1 - 2 * np.abs(p.values - 0.5))
+        return pd.DataFrame(icdf_arr, index=p.index, columns=p.columns)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        params1 = {"mu": [[0, 1], [2, 3], [4, 5]], "sigma": 1}
+        params1 = {"mu": [[0, 1], [2, 3], [4, 5]], "scale": 1}
         params2 = {
             "mu": 0,
-            "sigma": 1,
+            "scale": 1,
             "index": pd.Index([1, 2, 5]),
             "columns": pd.Index(["a", "b"]),
         }
