@@ -5,6 +5,7 @@ __author__ = ["fkiraly"]
 
 import pandas as pd
 import pytest
+from forecasting.naive import NaiveForecaster
 
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.naive import NaiveForecaster
