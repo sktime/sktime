@@ -5,6 +5,7 @@ __author__ = ["fkiraly"]
 
 import pandas as pd
 import pytest
+from forecasting.naive import NaiveForecaster
 
 from sktime.datasets import load_airline, load_longley
 from sktime.transformations.series.subset import ColumnSelect, IndexSubset
@@ -49,3 +50,10 @@ def test_columnselect_int():
     X_subset = transformer.fit_transform(X=X)
 
     assert X_subset.columns.equals(X.columns[[0, 2, 4]])
+
+
+def test_columnselect_as_first_step_in_transformedtargetforecaster():
+    y = load_longley()[1][["GNP", "UNEMP"]]
+    fc = ColumnSelect(["GNP"]) * NaiveForecaster()
+    fc.fit(y)
+    fc.predict(fh=[1])
