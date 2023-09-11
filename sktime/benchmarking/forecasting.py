@@ -54,7 +54,6 @@ def forecasting_validation(
         X=X,
         cv=cv_splitter,
         scoring=scorers,
-        return_data=True,
     )
 
     # converting pd.Dataframe to Dict
