@@ -31,7 +31,7 @@ class BaseLogger(ABC):
         """For logging cvsplit metadata.
 
         Log cv split metadata such as cuttoff time, len, number of splits
-        I think this is a better aproach than saving them as a multiple small
+        I think this is a better aproach than saving them as multiple small
         dataset chuncks. Managing datasets is delegated to dataset class so that
         we have more control?
         """
