@@ -30,7 +30,6 @@ EXPECTED_RESULTS_1 = pd.DataFrame(
     },
     index=[0],
 )
-
 EXPECTED_RESULTS_2 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_simple]_"
