@@ -205,22 +205,16 @@ def _evaluate_window(
         }
         # cache prediction from the first scitype and reuse it to compute other metrics
         for scitype in scoring:
-            cache_y_pred = pd.NA
-            for idx, metric in enumerate(scoring.get(scitype)):
-                if idx == 0:
-                    if hasattr(metric, "metric_args"):
-                        metric_args = metric.metric_args
-                    else:
-                        metric_args = {}
-                    method = getattr(forecaster, pred_type[scitype])
-                    start_pred = time.perf_counter()
-                    cache_y_pred = method(fh, X_test, **metric_args)
-                    pred_time = time.perf_counter() - start_pred
-                    temp_result[f"{scitype}_time"] = [pred_time]
-                score = metric(y_test, cache_y_pred, y_train=y_train)
+            method = getattr(forecaster, pred_type[scitype])
+            start_pred = time.perf_counter()
+            y_pred = method(fh, X_test)
+            pred_time = time.perf_counter() - start_pred
+            temp_result[f"{scitype}_time"] = [pred_time]
+            for metric in scoring.get(scitype):
+                score = metric(y_test, y_pred, y_train=y_train)
                 temp_result[f"test_{metric.name}"] = [score]
             if return_data:
-                temp_result[f"y_{scitype}"] = [cache_y_pred]
+                temp_result[f"y_{scitype}"] = [y_pred]
         # get cutoff
         cutoff = forecaster.cutoff
 
