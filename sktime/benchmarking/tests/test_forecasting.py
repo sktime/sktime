@@ -139,6 +139,10 @@ def test_multiple_estimators(estimators):
     ), "add_estimator does not register all estimators."
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("kotsu", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_dataset_different_format(tmp_path):
     """Test to check different dataset formats to output identical results."""
     y_1, X_1 = load_longley()
