@@ -1,7 +1,6 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
 
 from sktime.networks.base import BaseDeepNetworkPyTorch
-from sktime.networks.ltsf.ltsf import LTSFLinearNetwork
 
 
 class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
@@ -37,7 +36,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     _tags = {
         "scitype:y": "both",
         "y_inner_mtype": "pd.DataFrame",
-        "requires-fh-in-fit": False,
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": True,
         "python_dependencies": "torch",
     }
 
@@ -52,6 +52,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         in_channels=1,
         criterion=None,
         optimizer=None,
+        criterion_kwargs=None,
+        optimizer_kwargs=None,
         lr=0.001,
         num_epochs=16,
         custom_dataset_train=None,
@@ -68,6 +70,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         self.in_channels = in_channels
         self.criterion = criterion
         self.optimizer = optimizer
+        self.criterion_kwargs = criterion_kwargs
+        self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.num_epochs = num_epochs
         self.custom_dataset_train = custom_dataset_train
@@ -75,26 +79,36 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         self.batch_size = batch_size
         self.scale = scale
         self.shuffle = shuffle
-        self.network = LTSFLinearNetwork(
-            seq_len,
-            pred_len,
-            in_channels,
-            individual,
-        )._build()
 
         import torch
 
-        if self.criterion:
-            self._criterion = self.criterion()
-        else:
-            self._criterion = torch.nn.MSELoss()
+        self.criterions = {
+            "L1": torch.nn.L1Loss,
+            "MSE": torch.nn.MSELoss,
+            "CrossEntropy": torch.nn.CrossEntropyLoss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
 
-        if self.optimizer:
-            self._optimizer = self.optimizer(self.network.parameters(), lr=self.lr)
-        else:
-            self._optimizer = torch.optim.Adam(self.network.parameters(), lr=self.lr)
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
         super().__init__()
+
+    def _build_network(self, fh):
+        from sktime.networks.ltsf import LTSFLinearNetwork
+
+        return LTSFLinearNetwork(
+            self.seq_len,
+            fh,
+            self.in_channels,
+            self.individual,
+        )._build()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -111,15 +125,13 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
-        import torch
-
         params = [
             {
-                "seq_len": 4,
+                "seq_len": 2,
                 "pred_len": 1,
                 "lr": 0.005,
-                "optimizer": torch.optim.Adam,
-                "batch_size": 32,
+                "optimizer": "Adam",
+                "batch_size": 1,
                 "num_epochs": 1,
                 "individual": True,
             }
