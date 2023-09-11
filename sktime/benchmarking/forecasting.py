@@ -62,17 +62,11 @@ def forecasting_validation(
         scorer_name = scorer.name
         for ix, row in scores_df.iterrows():
             results[f"{scorer_name}_fold_{ix}_test"] = row[f"test_{scorer_name}"]
-            results[f"y_train_fold_{ix}"] = row["y_train"]
-            results[f"y_test_fold_{ix}"] = row["y_test"]
-            results[f"y_pred_fold_{ix}"] = row["y_pred"]
         results[f"{scorer_name}_mean"] = scores_df[f"test_{scorer_name}"].mean()
         results[f"{scorer_name}_std"] = scores_df[f"test_{scorer_name}"].std()
 
     # Alternative post-processing results form evaluate
     # for ix, row in scores_df.iterrows():
-    #     results[f"y_train_fold_{ix}"] = row["y_train"]
-    #     results[f"y_test_fold_{ix}"] = row["y_test"]
-    #     results[f"y_pred_fold_{ix}"] = row["y_pred"]
     #     for scorer in scorers:
     #         scorer_name = scorer.name
     #         results[f"{scorer_name}_fold_{ix}_test"] = row[f"test_{scorer_name}"]
