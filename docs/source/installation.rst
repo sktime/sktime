@@ -46,7 +46,7 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
 .. warning::
     Some of the dependencies included in ``all_extras`` do not work on mac ARM-based processors, such
-    as M1, M2, M1Pro, M1Max or M1Ultra. This may cause an error during installation. Mode details can
+    as M1, M2, M1Pro, M1Max or M1Ultra. This may cause an error during installation. More details can
     be found in the :ref:`troubleshooting section<Dependency error on mac ARM>` below.
 
 .. warning::
@@ -170,7 +170,7 @@ In the ``anaconda prompt`` terminal:
 
 3. Navigate to your local sktime folder, :code:`cd sktime` or similar
 
-4. Create new environment with a supported python version: :code:`conda create -n sktime-dev python=3.8` (or :code:`python=3.11` etc)
+4. Create a new environment with a supported python version: :code:`conda create -n sktime-dev python=3.8` (or :code:`python=3.11` etc)
 
    .. warning::
        If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this.
