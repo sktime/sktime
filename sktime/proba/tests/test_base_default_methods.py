@@ -34,7 +34,7 @@ class _DistrDefaultMethodTester(BaseDistribution):
         self.index = index
         self.columns = columns
 
-        self._mu, self._sigma = self._get_bc_params()
+        self._mu, self._sigma = self._get_bc_params(self.mu, self.sigma)
         shape = self._mu.shape
 
         if index is None:

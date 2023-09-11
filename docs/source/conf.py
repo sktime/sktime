@@ -51,6 +51,7 @@ extensions = [
     "sphinx_design",
     "sphinx_issues",
     "versionwarning.extension",
+    "sphinx.ext.doctest",
 ]
 
 # Recommended by sphinx_design when using the MyST Parser
