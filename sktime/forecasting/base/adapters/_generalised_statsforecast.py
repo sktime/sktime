@@ -42,6 +42,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     def _get_statsforecast_class(self):
         raise NotImplementedError("abstract method")
 
+    def _get_statsforecast_params(self):
+        raise NotImplementedError("abstract method")
+
     def _get_init_statsforecast_params(self):
         statsforecast_class = self._get_statsforecast_class()
         return list(signature(statsforecast_class.__init__).parameters.keys())
@@ -63,7 +66,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         return sktime_params
 
     def _instantiate_model(self):
-        raise NotImplementedError("abstract method")
+        cls = self._get_statsforecast_class()
+        params = self._validate_init_params(**self._get_statsforecast_params())
+        return cls(**params)
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
