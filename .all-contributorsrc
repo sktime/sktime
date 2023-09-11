@@ -1741,7 +1741,15 @@
       "profile": "https://github.com/benheid",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "design",
+        "doc",
+        "example",
+        "ideas",
+        "mentoring",
+        "question",
+        "review",
+        "tutorial"
       ]
     },
     {
