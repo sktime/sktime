@@ -111,6 +111,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
+        "ignores-exogeneous-X": True,
         "scitype:y": "univariate",
         "capability:pred_var": True,
         "capability:pred_int": True,

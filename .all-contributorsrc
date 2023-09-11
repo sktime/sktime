@@ -1740,6 +1740,7 @@
       "name": "Benedikt Heidrich",
       "profile": "https://github.com/benheid",
       "contributions": [
+        "bug",
         "code"
       ]
     },
@@ -2307,6 +2308,18 @@
       ]
     },
     {
+      "login": "hazrulakmal",
+      "name": "Hazrul Akmal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24774385?v=4",
+      "profile": "https://github.com/hazrulakmal",
+      "contributions": [
+        "code",
+        "doc",
+        "bug",
+        "test"
+      ]
+    },
+    {
       "login": "hliebert",
       "name": "Helge Liebert",
       "avatar_url": "https://avatars.githubusercontent.com/u/20834265",
@@ -2314,6 +2327,16 @@
       "contributions": [
         "bug",
         "code"
+      ]
+    },
+    {
+      "login": "alexfilothodoros",
+      "name": "Alexandros Filothodoros",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6419847?v=4",
+      "profile": "https://github.com/alexfilothodoros",
+      "contributions": [
+        "doc",
+        "maintenance"
       ]
     }
   ]
