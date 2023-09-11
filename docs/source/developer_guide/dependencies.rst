@@ -58,8 +58,8 @@ Estimators with a soft dependency need to ensure the following:
    This prevents crashes for any users running ``check_estimator`` on all estimators, or a full local ``pytest`` run without the required soft dependency.
    See the tests in ``forecasting.tests.test_pmdarima`` for a concrete example.
 
-Adding a new soft dependency
-----------------------------
+Adding and maintaining soft dependencies
+----------------------------------------
 
 When adding a new soft dependency or changing the version of an existing one,
 the following need to be updated:
@@ -76,6 +76,22 @@ It should be checked that new soft dependencies do not imply
 upper bounds on ``sktime`` core dependencies, or severe limitations to the user
 installation workflow.
 In such a case, it is strongly suggested not to add the soft dependency.
+
+For maintenance purposes, it has been decided that all soft-dependencies will have lower
+and upper bounds specified mandatorily. The soft-dependencies will be specified in
+separate extras per each component of ``sktime``, for example ``forecasting``,
+``classification``, ``regression``, etc. It is possible to have different upper and
+lower bounds for a single package when present in different extras, and can be modified in one without affecting the others.
+
+Upper bounds will be preferred to be set up as the next ``minor`` release of the
+packages, as ``patch`` updates should never contain breaking changes by convention of
+semantic versioning. For stable packages, next ``major`` verion can be used as well.
+
+Upper bounds will be automatically updated using ``dependabot``, which has been set up
+to run daily based on releases on ``PyPI``. The CI introducing newer upper bound will be
+merged into ``main`` branch only if all unit tests for the affected component(s) pass.
+
+Lower bounds maintenance planning is in progress and will be updated here soon.
 
 Adding a core or developer dependency
 -------------------------------------

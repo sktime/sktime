@@ -1282,7 +1282,7 @@ def load_forecastingdata(
 ):
     """Fetch forecasting datasets from Monash Time Series Forecasting Archive.
 
-    Downloads and extracts dataset if not already downloaded. Data is assumed to be
+    Downloads and extracts dataset if not already downloaded. Fetched dataset is
     in the standard .tsf format. See https://forecastingdata.org/ for more details.
 
     Parameters
@@ -1297,7 +1297,7 @@ def load_forecastingdata(
     value_column_name: str, default="series_value"
         Any name that is preferred to have as the name of the column containing series
         values in the returning dataframe.
-    return_type : str - "pd_multiindex_hier" (default), "default_tsf", or valid sktime
+    return_type : str - "pd_multiindex_hier", "default_tsf" (default), or valid sktime
         mtype string for in-memory data container format specification of the
         return type:
         - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`

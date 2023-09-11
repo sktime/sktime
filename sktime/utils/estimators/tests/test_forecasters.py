@@ -54,9 +54,8 @@ def test_mock_univariate_forecaster_log(y, X_train, X_pred, fh):
         ("_update", {"y": y_series, "X": _X_train, "update_params": fh}),
         (
             "_predict_quantiles",
-            # todo 0.22.0: change the value of "legacy_interface" to False
             # todo 0.23.0: remove the key "legacy_interface"
-            {"fh": fh, "X": _X_pred, "alpha": [0.1, 0.9], "legacy_interface": True},
+            {"fh": fh, "X": _X_pred, "alpha": [0.1, 0.9], "legacy_interface": False},
         ),
     ]
 

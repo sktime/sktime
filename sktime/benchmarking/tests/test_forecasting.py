@@ -19,44 +19,30 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 # Manual test is labor intensive, need to refactor the tests for fast iteration
 EXPECTED_RESULTS_1 = pd.DataFrame(
     data={
-        "validation_id": [
-            "[dataset=data_loader_simple]_[cv_splitter=ExpandingWindowSplitter]-v1"
-        ],
-        "model_id": ["NaiveForecaster-v1"],
-        "MeanSquaredPercentageError_fold_0_test": [0.0],
-        "y_train_fold_0": [pd.DataFrame([2])],
-        "y_test_fold_0": [pd.DataFrame([2], index=[1])],
-        "y_pred_fold_0": [pd.DataFrame([2.0], index=[1])],
-        "MeanSquaredPercentageError_fold_1_test": [0.111],
-        "y_train_fold_1": [pd.DataFrame([2, 2])],
-        "y_test_fold_1": [pd.DataFrame([3], index=[2])],
-        "y_pred_fold_1": [pd.DataFrame([2.0], index=[2])],
-        "MeanSquaredPercentageError_mean": [0.0555],
-        "MeanSquaredPercentageError_std": [0.0785],
+        "validation_id": "[dataset=data_loader_simple]_"
+        + "[cv_splitter=ExpandingWindowSplitter]",
+        "model_id": "NaiveForecaster",
+        "MeanSquaredPercentageError_fold_0_test": 0.0,
+        "MeanSquaredPercentageError_fold_1_test": 0.111,
+        "MeanSquaredPercentageError_mean": 0.0555,
+        "MeanSquaredPercentageError_std": 0.0785,
     },
     index=[0],
 )
 
 EXPECTED_RESULTS_2 = pd.DataFrame(
     data={
-        "validation_id": [
-            "[dataset=data_loader_simple]_[cv_splitter=ExpandingWindowSplitter]-v1"
-        ],
-        "model_id": ["NaiveForecaster-v1"],
-        "MeanAbsolutePercentageError_fold_0_test": [0.0],
-        "y_train_fold_0": [pd.DataFrame([2])],
-        "y_test_fold_0": [pd.DataFrame([2], index=[1])],
-        "y_pred_fold_0": [pd.DataFrame([2.0], index=[1])],
-        "MeanAbsolutePercentageError_fold_1_test": [0.333],
-        "y_train_fold_1": [pd.DataFrame([2, 2])],
-        "y_test_fold_1": [pd.DataFrame([3], index=[2])],
-        "y_pred_fold_1": [pd.DataFrame([2.0], index=[2])],
-        "MeanAbsolutePercentageError_mean": [0.1666],
-        "MeanAbsolutePercentageError_std": [0.2357],
-        "MeanAbsoluteError_fold_0_test": [0.0],
-        "MeanAbsoluteError_fold_1_test": [1.0],
-        "MeanAbsoluteError_mean": [0.5],
-        "MeanAbsoluteError_std": [0.7071],
+        "validation_id": "[dataset=data_loader_simple]_"
+        + "[cv_splitter=ExpandingWindowSplitter]",
+        "model_id": "NaiveForecaster",
+        "MeanAbsolutePercentageError_fold_0_test": 0.0,
+        "MeanAbsolutePercentageError_fold_1_test": 0.333,
+        "MeanAbsolutePercentageError_mean": 0.1666,
+        "MeanAbsolutePercentageError_std": 0.2357,
+        "MeanAbsoluteError_fold_0_test": 0.0,
+        "MeanAbsoluteError_fold_1_test": 1.0,
+        "MeanAbsoluteError_mean": 0.5,
+        "MeanAbsoluteError_std": 0.7071,
     },
     index=[0],
 )
@@ -64,22 +50,22 @@ EXPECTED_RESULTS_2 = pd.DataFrame(
 COER_CASES = [
     (
         NaiveForecaster(),
-        "NaiveForecaster-v1",
-        {"NaiveForecaster-v1": NaiveForecaster()},
+        "NaiveForecaster",
+        {"NaiveForecaster": NaiveForecaster()},
     ),
-    (NaiveForecaster(), None, {"NaiveForecaster-v1": NaiveForecaster()}),
+    (NaiveForecaster(), None, {"NaiveForecaster": NaiveForecaster()}),
     (
         [NaiveForecaster(), TrendForecaster()],
         None,
         {
-            "NaiveForecaster-v1": NaiveForecaster(),
-            "TrendForecaster-v1": TrendForecaster(),
+            "NaiveForecaster": NaiveForecaster(),
+            "TrendForecaster": TrendForecaster(),
         },
     ),
     (
-        {"estimator_1-v1": NaiveForecaster()},
+        {"estimator_1": NaiveForecaster()},
         None,
-        {"estimator_1-v1": NaiveForecaster()},
+        {"estimator_1": NaiveForecaster()},
     ),
 ]
 
@@ -138,7 +124,7 @@ def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
 @pytest.mark.parametrize(
     "estimators",
     [
-        ({"N-v1": NaiveForecaster(), "T-v1": TrendForecaster()}),
+        ({"N": NaiveForecaster(), "T": TrendForecaster()}),
         ([NaiveForecaster(), TrendForecaster()]),
     ],
 )
