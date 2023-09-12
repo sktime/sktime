@@ -269,7 +269,7 @@ class ConformalIntervals(BaseForecaster):
         pred_int = pd.concat(pred_ints, axis=0, keys=y_pred_index)
         return pred_int
 
-    def _predict_interval_series(self, fh, coverage, y_pred, legacy_interface):
+    def _predict_interval_series(self, fh, coverage, y_pred):
         """Compute prediction intervals predict_interval for series scitype."""
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
@@ -288,9 +288,7 @@ class ConformalIntervals(BaseForecaster):
 
         ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
 
-        var_names = self._get_varnames(
-            default="Coverage", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
 
         cols = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
