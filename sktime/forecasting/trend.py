@@ -309,7 +309,7 @@ class STLForecaster(BaseForecaster):
 
     The STLForecaster applies the following algorithm, also see [1]_.
 
-    in `fit`:
+    In `fit`:
 
     1. Use `statsmodels` `STL` [2]_ to decompose the given series `y` into
        the three components: `trend`, `season` and `residuals`.
@@ -324,9 +324,9 @@ class STLForecaster(BaseForecaster):
        `y_pred_seasonal` from `forecaster_seasonal_`, and
        `y_pred_residual` from `forecaster_resid_`, using `X`, `fh`, from `predict`.
     2. Recompose `y_pred` as `y_pred = y_pred_trend + y_pred_seasonal + y_pred_residual`
-    3. return `y_pred`
+    3. Return `y_pred`
 
-    `update` refits entirely, i.e., behaves as `fit` on all data seen so far.
+        `update` refits entirely, i.e., behaves as `fit` on all data seen so far.
 
     Parameters
     ----------
