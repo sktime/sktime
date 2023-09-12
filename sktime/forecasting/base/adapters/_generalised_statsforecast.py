@@ -1,6 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
 from inspect import signature
+from typing import Dict
 from warnings import warn
 
 import pandas
@@ -31,8 +32,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         self._forecaster = None
         pred_supported = self._check_supports_pred_int()
-        self._support_pred_int_in_sample = pred_supported[0]
-        self._support_pred_int = pred_supported[1]
+        self._support_pred_int_in_sample = pred_supported["int_in_sample"]
+        self._support_pred_int = pred_supported["int"]
 
         self.set_tags(
             **{"capability:pred_int:insample": self._support_pred_int_in_sample}
@@ -315,7 +316,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_interval_predictions
 
-    def _check_supports_pred_int(self):
+    def _check_supports_pred_int(self) -> Dict[str, bool]:
         """
         Check if prediction intervals will work with forecaster.
 
@@ -326,13 +327,13 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         support interval predictions.
 
          Furthermore, will throw a warning to let the user know that he should consider
-         upgrading statsforecast versio as both or one of the two methods might
+         upgrading statsforecast version as both or one of the two methods might
          not be able to produce confidence intervals.
 
         Returns
         -------
-        Tuple of bool
-            A tuple containing two boolean values:
+        Dict of bool
+            A dict containing two boolean values:
             - `support_pred_int_in_sample`: True if prediction intervals are supported
               in `predict_in_sample`, False otherwise.
             - `support_pred_int`: True if prediction intervals are supported
@@ -368,7 +369,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         else:
             support_pred_int = True
 
-        return support_pred_int_in_sample, support_pred_int
+        return {"int_in_sample": support_pred_int_in_sample, "int": support_pred_int}
 
 
 class StatsForecastBackAdapter:
