@@ -407,8 +407,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return y_pred
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
@@ -442,9 +441,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             np.sqrt(pred_var.to_numpy().reshape(len(pred_var), 1)) * z_scores
         ).reshape(len(y_pred), len(alpha))
 
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
 
         pred_quantiles = pd.DataFrame(
             errors + y_pred.values.reshape(len(y_pred), 1),
@@ -700,8 +697,7 @@ class NaiveVariance(BaseForecaster):
             )
         return self
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
@@ -734,9 +730,7 @@ class NaiveVariance(BaseForecaster):
         z_scores = norm.ppf(alpha)
         errors = [pred_var**0.5 * z for z in z_scores]
 
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         index = pd.MultiIndex.from_product([var_names, alpha])

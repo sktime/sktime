@@ -198,8 +198,7 @@ class _StatsForecastAdapter(BaseForecaster):
         else:
             return pd.Series(mean, index=fh_abs.to_pandas())
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -240,9 +239,7 @@ class _StatsForecastAdapter(BaseForecaster):
         fh_is_oosample = fh.is_all_out_of_sample(cutoff)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = self._get_varnames(
-            default="Coverage", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])

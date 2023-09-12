@@ -206,8 +206,7 @@ class ConformalIntervals(BaseForecaster):
                 update=True,
             )
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -252,7 +251,6 @@ class ConformalIntervals(BaseForecaster):
                 fh=fh,
                 coverage=coverage,
                 y_pred=y_pred,
-                legacy_interface=legacy_interface,
             )
 
         # otherwise, we have a hierarchical/multiindex y
@@ -267,7 +265,6 @@ class ConformalIntervals(BaseForecaster):
                 fh=fh,
                 coverage=coverage,
                 y_pred=y_pred_ix,
-                legacy_interface=legacy_interface,
             )
         pred_int = pd.concat(pred_ints, axis=0, keys=y_pred_index)
         return pred_int
