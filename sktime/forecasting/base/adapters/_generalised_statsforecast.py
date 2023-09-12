@@ -44,31 +44,33 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         raise NotImplementedError("abstract method")
 
     def _get_statsforecast_params(self):
-        raise NotImplementedError("abstract method")
+        return self.get_params()
 
     def _get_init_statsforecast_params(self):
         statsforecast_class = self._get_statsforecast_class()
         return list(signature(statsforecast_class.__init__).parameters.keys())
 
-    def _validate_init_params(self, **sktime_params):
-        sktime_params = sktime_params.copy()
+    def _get_validated_statsforecast_params(self):
+        sktime_params = self._get_statsforecast_params()
+        sktime_default_params = self.get_param_defaults().keys()
         statsforecast_params = self._get_init_statsforecast_params()
 
         for sktime_param in sktime_params.keys():
             if sktime_param not in statsforecast_params:
                 sktime_params.pop(sktime_param)
-                warn(
-                    f"Keyword argument '{sktime_param}' will be omitted as it is"
-                    f" not found in the __init__ method "
-                    f"from {self._get_statsforecast_class()}. "
-                    f"Check your statsforecast version"
-                    f"to find out the right API parameters."
-                )
+                if sktime_param not in sktime_default_params:
+                    warn(
+                        f"Keyword argument '{sktime_param}' will be omitted as it is"
+                        f" not found in the __init__ method "
+                        f"from {self._get_statsforecast_class()}. "
+                        f"Check your statsforecast version"
+                        f"to find out the right API parameters."
+                    )
         return sktime_params
 
     def _instantiate_model(self):
         cls = self._get_statsforecast_class()
-        params = self._validate_init_params(**self._get_statsforecast_params())
+        params = self._get_validated_statsforecast_params()
         return cls(**params)
 
     def _fit(self, y, X, fh):
