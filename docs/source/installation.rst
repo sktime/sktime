@@ -44,17 +44,23 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
     pip install sktime[all_extras]
 
+``sktime`` also comes with dependency sets specific to learning task, i.e., estimator scitype.
+These are curated selections of the most common soft dependencies for the respective learning task.
+The available dependency sets are of the same names as the respective modules:
+``forecasting``, ``transformations``, ``classification``, ``regression``, ``clustering``, ``param_est``,
+``networks``, ``annotation``, ``alignment``.
+
 .. warning::
-    Some of the dependencies included in ``all_extras`` do not work on mac ARM-based processors, such
-    as M1, M2, M1Pro, M1Max or M1Ultra. This may cause an error during installation. More details can
-    be found in the :ref:`troubleshooting section<Dependency error on mac ARM>` below.
+
+    Some of the soft dependencies included in ``all_extras`` and the curated soft dependency sets do not work on mac ARM-based processors, such
+    as M1, M2, M1Pro, M1Max or M1Ultra. This may cause an error during installation. Mode details can be found in the :ref:`troubleshooting section<Dependency error on mac ARM>` below.
 
 .. warning::
     The soft dependencies with ``all_extras`` are only necessary to have all estimators available, or to run all tests.
     However, this slows down the downloads, and multiples test time.
     For most user or developer scenarios, downloading ``all_extras`` will
-    not be necessary.
-
+    not be necessary. If you are unsure, install ``sktime`` with core dependencies, and install soft dependencies as needed.
+    Alternatively, install dependency sets specific to learning task, see above.
 
 Installing sktime from conda
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
