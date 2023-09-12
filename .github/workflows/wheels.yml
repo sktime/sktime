@@ -7,10 +7,10 @@ on:
 jobs:
   build_wheels:
     name: Build wheels
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v4
         with:
@@ -22,7 +22,7 @@ jobs:
           python -m build --wheel --sdist --outdir wheelhouse
 
       - name: Store wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: wheelhouse/*
@@ -32,17 +32,18 @@ jobs:
     name: Test wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        os: [ubuntu-20.04, macOS-11]
+        os: [ubuntu-latest, macos-latest]
         python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: wheels
           path: wheelhouse
@@ -51,7 +52,7 @@ jobs:
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $GITHUB_ENV
 
       - name: Install wheel and extras
-        run: python -m pip install "${{ env.WHEELNAME }}[all_extras,dev]"
+        run: python -m pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
 
       - name: Run tests
         run: make test
@@ -59,34 +60,35 @@ jobs:
   test_windows_wheels:
     needs: build_wheels
     name: Test wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
-    runs-on: windows-2019
+    runs-on: windows-latest
     strategy:
+      fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         include:
           # Window 64 bit
-          - os: windows-2019
+          - os: windows-latest
             python: 38
             python-version: '3.8'
             bitness: 64
             platform_id: win_amd64
-          - os: windows-2019
+          - os: windows-latest
             python: 39
             python-version: '3.9'
             bitness: 64
             platform_id: win_amd64
-          - os: windows-2019
+          - os: windows-latest
             python: 310
             python-version: '3.10'
             bitness: 64
             platform_id: win_amd64
-          - os: windows-2019
+          - os: windows-latest
             python: 311
             python-version: '3.11'
             bitness: 64
             platform_id: win_amd64
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: test
@@ -97,7 +99,7 @@ jobs:
       - run: conda --version
       - run: which python
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: wheels
           path: wheelhouse
@@ -115,7 +117,7 @@ jobs:
         run: conda activate test
 
       - name: Install wheel and extras
-        run: python -m pip install "${env:WHEELNAME}[all_extras,dev]"
+        run: python -m pip install "${env:WHEELNAME}[all_extras_pandas2,dev]"
 
       - name: Show conda packages
         run: conda list -n test
@@ -133,7 +135,7 @@ jobs:
     needs: [build_wheels,test_unix_wheels,test_windows_wheels]
 
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: wheels
           path: wheelhouse

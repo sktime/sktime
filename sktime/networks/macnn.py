@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multi-scale Attention Convolutional Neural Network (MACNN)."""
 
 __author__ = ["jnrusson1"]
@@ -47,7 +46,7 @@ class MACNNNetwork(BaseDeepNetwork):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super(MACNNNetwork, self).__init__()
+        super().__init__()
 
         self.padding = padding
         self.pool_size = pool_size

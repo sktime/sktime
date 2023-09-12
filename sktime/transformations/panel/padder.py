@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Padding transformer, pad unequal length panel to max length or fixed length."""
 import numpy as np
 import pandas as pd
@@ -39,7 +38,7 @@ class PaddingTransformer(BaseTransformer):
     def __init__(self, pad_length=None, fill_value=0):
         self.pad_length = pad_length
         self.fill_value = fill_value
-        super(PaddingTransformer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

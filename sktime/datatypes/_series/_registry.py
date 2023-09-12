@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
 """Registry of mtypes for Series scitype.
 
 See datatypes._registry for API.
 """
-
-import pandas as pd
 
 __all__ = [
     "MTYPE_REGISTER_SERIES",
@@ -39,4 +36,4 @@ MTYPE_REGISTER_SERIES = [
 
 MTYPE_SOFT_DEPS_SERIES = {"xr.DataArray": "xarray", "dask_series": "dask"}
 
-MTYPE_LIST_SERIES = pd.DataFrame(MTYPE_REGISTER_SERIES)[0].values
+MTYPE_LIST_SERIES = [x[0] for x in MTYPE_REGISTER_SERIES]

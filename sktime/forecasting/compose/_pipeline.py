@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements pipelines for forecasting."""
 
@@ -162,6 +161,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
+                        # todo 0.23.0 - get rid of the "Coverage" case treatment
                         # deal with the "Coverage" case, we need to get rid of this
                         #   i.d., special 1st level name of prediction objet
                         #   in the case where there is only one variable
@@ -372,6 +372,7 @@ class ForecastingPipeline(_Pipeline):
 
         Example 3: using the dunder method
         Note: * (= apply to `y`) has precedence over ** (= apply to `X`)
+
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = (imputer * MinMaxScaler()) ** forecaster
@@ -394,7 +395,7 @@ class ForecastingPipeline(_Pipeline):
     def __init__(self, steps):
         self.steps = steps
         self.steps_ = self._check_steps(steps, allow_postproc=False)
-        super(ForecastingPipeline, self).__init__()
+        super().__init__()
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
@@ -459,7 +460,7 @@ class ForecastingPipeline(_Pipeline):
         else:
             return ForecastingPipeline(steps=list(zip(new_names, new_ests)))
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -509,7 +510,8 @@ class ForecastingPipeline(_Pipeline):
         X = self._transform(X=X)
         return self.forecaster_.predict(fh, X)
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -542,9 +544,12 @@ class ForecastingPipeline(_Pipeline):
                 at quantile probability in second-level col index, for each row index.
         """
         X = self._transform(X=X)
-        return self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        return self.forecaster_.predict_quantiles(
+            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
+        )
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -581,7 +586,9 @@ class ForecastingPipeline(_Pipeline):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         X = self._transform(X=X)
-        return self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
+        return self.forecaster_.predict_interval(
+            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
+        )
 
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.
@@ -769,6 +776,7 @@ class TransformedTargetForecaster(_Pipeline):
     >>> y = load_airline()
 
         Example 1: string/estimator pairs
+
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("detrender", Detrender()),
@@ -779,6 +787,7 @@ class TransformedTargetForecaster(_Pipeline):
     >>> y_pred = pipe.predict(fh=[1,2,3])
 
         Example 2: without strings
+
     >>> pipe = TransformedTargetForecaster([
     ...     Imputer(method="mean"),
     ...     Detrender(),
@@ -787,6 +796,7 @@ class TransformedTargetForecaster(_Pipeline):
     ... ])
 
         Example 3: using the dunder method
+
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = imputer * Detrender() * forecaster * ExponentTransformer()
@@ -806,7 +816,7 @@ class TransformedTargetForecaster(_Pipeline):
     def __init__(self, steps):
         self.steps = steps
         self.steps_ = self._check_steps(steps, allow_postproc=True)
-        super(TransformedTargetForecaster, self).__init__()
+        super().__init__()
 
         # set the tags based on forecaster
         tags_to_clone = [
@@ -943,7 +953,7 @@ class TransformedTargetForecaster(_Pipeline):
         else:
             return TransformedTargetForecaster(steps=list(zip(new_names, new_ests)))
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1069,7 +1079,8 @@ class TransformedTargetForecaster(_Pipeline):
         Z = check_series(Z)
         return self._get_inverse_transform(self.transformers_pre_, Z, X)
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1101,13 +1112,16 @@ class TransformedTargetForecaster(_Pipeline):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        pred_int = self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        pred_int = self.forecaster_.predict_quantiles(
+            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
+        )
         pred_int_transformed = self._get_inverse_transform(
             self.transformers_pre_, pred_int, mode="proba"
         )
         return pred_int_transformed
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -1143,7 +1157,9 @@ class TransformedTargetForecaster(_Pipeline):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
+        pred_int = self.forecaster_.predict_interval(
+            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
+        )
         pred_int_transformed = self._get_inverse_transform(
             self.transformers_pre_, pred_int, mode="proba"
         )
@@ -1215,6 +1231,7 @@ class ForecastX(BaseForecaster):
 
     to forecast only some columns, use the `columns` arg,
     and pass known columns to `predict`:
+
     >>> columns = ["ARMED", "POP"]
     >>> pipe = ForecastX(  # doctest: +SKIP
     ...     forecaster_X=VAR(),
@@ -1235,6 +1252,7 @@ class ForecastX(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "handles-missing-data": True,
     }
 
     def __init__(
@@ -1255,7 +1273,7 @@ class ForecastX(BaseForecaster):
         self.behaviour = behaviour
         self.columns = columns
 
-        super(ForecastX, self).__init__()
+        super().__init__()
 
         tags_to_clone_from_forecaster_y = [
             "capability:pred_int",
@@ -1270,7 +1288,7 @@ class ForecastX(BaseForecaster):
         # }
         # self.set_tags(**tag_translate_dict)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1391,7 +1409,8 @@ class ForecastX(BaseForecaster):
 
         return self
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -1423,10 +1442,13 @@ class ForecastX(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X, coverage=coverage)
+        y_pred = self.forecaster_y_.predict_interval(
+            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
+        )
         return y_pred
 
-    def _predict_quantiles(self, fh, X, alpha):
+    # todo 0.23.0 - remove legacy_interface arg
+    def _predict_quantiles(self, fh, X=None, alpha=None, legacy_interface=False):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1453,7 +1475,9 @@ class ForecastX(BaseForecaster):
                 at quantile probability in second col index, for the row index.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        y_pred = self.forecaster_y_.predict_quantiles(
+            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
+        )
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -1604,6 +1628,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.transformations.series.exponent import ExponentTransformer
 
     Simple example: permute sequence of estimator in forecasting pipeline
+
     >>> y = load_airline()
     >>> fh = ForecastingHorizon([1, 2, 3])
     >>> pipe = ForecastingPipeline(
@@ -1619,6 +1644,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> y_pred = permuted.predict()
 
     The permuter is useful in combination with grid search (toy example):
+
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,
@@ -1656,7 +1682,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self.permutation = permutation
         self.steps_arg = steps_arg
 
-        super(Permute, self).__init__()
+        super().__init__()
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:insample",

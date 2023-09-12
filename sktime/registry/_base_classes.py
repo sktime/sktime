@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Register of estimator base classes corresponding to sktime scitypes.
 
 This module exports the following:
@@ -62,7 +61,7 @@ from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
-from sktime.dists_kernels._base import (
+from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )

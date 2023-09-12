@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for time series k-means."""
 import numpy as np
 import pytest
@@ -6,7 +5,7 @@ from sklearn import metrics
 
 from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_basic_motions
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 
 expected_results = {
     "mean": [
@@ -108,8 +107,8 @@ expected_labels = {
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(TimeSeriesKMeans, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(TimeSeriesKMeans),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_kmeans():
     """Test implementation of Kmeans."""
@@ -144,8 +143,8 @@ def test_kmeans():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(TimeSeriesKMeans, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(TimeSeriesKMeans),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_kmeans_dba():
     """Test implementation of Kmeans using dba."""

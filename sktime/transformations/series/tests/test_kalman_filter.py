@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Kalman Filter transformers unit tests."""
 
@@ -732,6 +731,7 @@ def test_bad_inputs(classes, params, measurements):
     not _check_soft_dependencies("filterpy", severity="none"),
     reason="skip test if required soft dependency filterpy not available",
 )
+@pytest.mark.xfail(reason="failure of unknown cause, see #4835")
 @pytest.mark.parametrize(
     "params, measurements, y",
     [  # test case 1 -

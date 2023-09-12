@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Dummy forecasters."""
 
@@ -52,6 +51,7 @@ class ForecastKnownValues(BaseForecaster):
     ForecastKnownValues(...)
 
     The forecast "plays back" the known/prescribed values from y_known
+
     >>> y_pred = fcst.predict()
     """
 
@@ -69,7 +69,7 @@ class ForecastKnownValues(BaseForecaster):
         self.fill_value = fill_value
         self.limit = limit
 
-        super(ForecastKnownValues, self).__init__()
+        super().__init__()
 
         PANDAS_DF_TYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
@@ -84,7 +84,7 @@ class ForecastKnownValues(BaseForecaster):
             self.set_tags(**{"y_inner_mtype": mtypes})
             self.set_tags(**{"X_inner_mtype": mtypes})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -116,7 +116,7 @@ class ForecastKnownValues(BaseForecaster):
         # no fitting, we already know the forecast values
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests common to all transformers."""
 
@@ -7,7 +6,7 @@ __all__ = []
 
 import pandas as pd
 
-from sktime.datatypes import check_is_scitype
+from sktime.datatypes import check_is_scitype, convert_to
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
@@ -168,13 +167,34 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("skip-inverse-transform", False):
             return None
 
+        # skip this test if inverse_transform is not assumed an exact inverse
+        if not estimator_instance.get_tag("capability:inverse_transform:exact", True):
+            return None
+
         X = scenario.args["transform"]["X"]
         Xt = scenario.run(estimator_instance, method_sequence=["fit", "transform"])
         Xit = estimator_instance.inverse_transform(Xt)
-        if estimator_instance.get_tag("transform-returns-same-time-index"):
+
+        # if inversion produces more indices, we subset to the original X indices
+        if not estimator_instance.get_tag("transform-returns-same-time-index"):
+            if isinstance(X, pd.DataFrame):
+                X = X.loc[Xit.index]
+
+        # check that the inverse transform is indeed the inverse
+        # we check this only on entries within range of invertibility, if specified
+        inv_range = estimator_instance.get_tag("capability:inverse_transform:range")
+        if inv_range is None:
             _assert_array_almost_equal(X, Xit)
-        elif isinstance(X, pd.DataFrame):
-            _assert_array_almost_equal(X.loc[Xit.index], Xit)
+        else:
+            # convert to pd.DataFrame so that we can use masks
+            df_types = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+            X = convert_to(X, df_types)
+            Xit = convert_to(Xit, df_types)
+
+            # mask entries of X outside range of invertibility
+            # then compare for identity
+            inside_mask = (X >= inv_range[0]) * (X <= inv_range[1])
+            _assert_array_almost_equal(X[inside_mask], Xit[inside_mask])
 
 
 # todo: add testing of inverse_transform

@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 """Arsenal test code."""
 import pytest
 
 from sktime.classification.kernel_based import Arsenal
 from sktime.datasets import load_unit_test
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(Arsenal),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_contracted_arsenal():
     """Test of contracted Arsenal on unit test data."""

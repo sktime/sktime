@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Mutli-scale Attention Convolutional Neural Classifier."""
 
 __author__ = ["jnrusson1"]
@@ -101,7 +100,7 @@ class MACNNClassifier(BaseDeepClassifier):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super(MACNNClassifier, self).__init__()
+        super().__init__()
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for numpy metrics in _functions module."""
 from inspect import getmembers, isfunction
 
@@ -16,12 +15,21 @@ numpy_metrics = [x for x in numpy_metrics if not x[0].startswith(exclude_starts_
 
 names, metrics = zip(*numpy_metrics)
 
+MULTIOUTPUT = ["uniform_average", "raw_values", "numpy"]
+
 
 @pytest.mark.parametrize("n_columns", [1, 2])
-@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+@pytest.mark.parametrize("multioutput", MULTIOUTPUT)
 @pytest.mark.parametrize("metric", metrics, ids=names)
 def test_metric_output(metric, multioutput, n_columns):
     """Test output is correct class."""
+    # create numpy weights based on n_columns
+    if multioutput == "numpy":
+        if n_columns == 1:
+            return None
+        multioutput = np.random.rand(n_columns)
+
+    # create test data
     y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
     y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
 
@@ -37,7 +45,7 @@ def test_metric_output(metric, multioutput, n_columns):
         y_train=y_true,
     )
 
-    if multioutput == "uniform_average":
+    if isinstance(multioutput, np.ndarray) or multioutput == "uniform_average":
         assert isinstance(res, float)
     elif multioutput == "raw_values":
         assert isinstance(res, np.ndarray)

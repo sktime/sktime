@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Composable time series forest."""
 
 __author__ = ["mloning", "AyushmaanSeth"]
@@ -212,7 +211,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         self.max_samples = max_samples
 
         # Pass on params.
-        super(ComposableTimeSeriesForestClassifier, self).__init__(
+        super().__init__(
             base_estimator=None,
             n_estimators=n_estimators,
             estimator_params=None,
@@ -255,13 +254,13 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
                 "n_estimators must be an integer, "
-                "got {0}.".format(type(self.n_estimators))
+                "got {}.".format(type(self.n_estimators))
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
                 "n_estimators must be greater than zero, "
-                "got {0}.".format(self.n_estimators)
+                "got {}.".format(self.n_estimators)
             )
 
         # Set base estimator

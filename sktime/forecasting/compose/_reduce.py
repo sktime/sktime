@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Composition functionality for reduction approaches to forecasting."""
 
@@ -128,6 +127,8 @@ def _sliding_window_transform(
     window_length = check_window_length(window_length, n_timepoints)
 
     if pooling == "global":
+        n_cut = -window_length
+
         if len(transformers) == 1:
             tf_fit = transformers[0].fit(y)
         else:
@@ -135,11 +136,11 @@ def _sliding_window_transform(
             tf_fit = FeatureUnion(feat).fit(y)
         X_from_y = tf_fit.transform(y)
 
-        X_from_y_cut = _cut_df(X_from_y, n_obs=n_timepoints - window_length)
-        yt = _cut_df(y, n_obs=n_timepoints - window_length)
+        X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
+        yt = _cut_df(y, n_obs=n_cut)
 
         if X is not None:
-            X_cut = _cut_df(X, n_obs=n_timepoints - window_length)
+            X_cut = _cut_df(X, n_obs=n_cut)
             Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
         else:
             Xt = X_from_y_cut
@@ -209,7 +210,7 @@ class _Reducer(_BaseWindowForecaster):
         transformers=None,
         pooling="local",
     ):
-        super(_Reducer, self).__init__(window_length=window_length)
+        super().__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
@@ -400,7 +401,7 @@ class _DirectReducer(_Reducer):
         windows_identical=True,
     ):
         self.windows_identical = windows_identical
-        super(_DirectReducer, self).__init__(
+        super().__init__(
             estimator=estimator,
             window_length=window_length,
             transformers=transformers,
@@ -420,7 +421,7 @@ class _DirectReducer(_Reducer):
             windows_identical=self.windows_identical,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -627,7 +628,7 @@ class _MultioutputReducer(_Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -728,7 +729,7 @@ class _RecursiveReducer(_Reducer):
             pooling=self.pooling,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -915,7 +916,7 @@ class _RecursiveReducer(_Reducer):
                     X_pred = X_pred.reshape(1, -1)
 
                 # Generate predictions.
-                y_pred[i] = self.estimator_.predict(X_pred)
+                y_pred[i] = self.estimator_.predict(X_pred)[0]
 
                 # Update last window with previous prediction.
                 last[:, 0, window_length + i] = y_pred[i]
@@ -958,7 +959,7 @@ class _DirRecReducer(_Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1062,7 +1063,7 @@ class _DirRecReducer(_Reducer):
             if self._estimator_scitype == "tabular-regressor":
                 X_pred = X_pred.reshape(1, -1)
 
-            y_pred[i] = self.estimators_[i].predict(X_pred)
+            y_pred[i] = self.estimators_[i].predict(X_pred)[0]
 
             # Update the last window with previously predicted value.
             X_full[:, :, window_length + i] = y_pred[i]
@@ -1309,12 +1310,82 @@ def make_reduction(
     pooling="local",
     windows_identical=True,
 ):
-    """Make forecaster based on reduction to tabular or time-series regression.
+    r"""Make forecaster based on reduction to tabular or time-series regression.
 
     During fitting, a sliding-window approach is used to first transform the
     time series into tabular or panel data, which is then used to fit a tabular or
     time-series regression estimator. During prediction, the last available data is
     used as input to the fitted regression estimator to generate forecasts.
+
+    Please see below a graphical representation of the make_reduction logic using the
+    following symbols:
+
+    - ``y`` = forecast target.
+    - ``x`` = past values of y that are used as features (X) to forecast y
+    - ``*`` = observations, past or future, neither part of window nor forecast.
+
+    Assume we have the following training data (14 observations)::
+
+    |----------------------------|
+    | * * * * * * * * * * * * * *|
+    |----------------------------|
+
+    And want to forecast with `window_length = 9` and `fh = [2, 4]`.
+
+    By construction, a recursive reducer always targets the first data point after
+    the window, irrespective of the forecasting horizons requested.
+    In the example the following 5 windows are created::
+
+    |----------------------------|
+    | x x x x x x x x x y * * * *|
+    | * x x x x x x x x x y * * *|
+    | * * x x x x x x x x x y * *|
+    | * * * x x x x x x x x x y *|
+    | * * * * x x x x x x x x x y|
+    |----------------------------|
+
+    Direct Reducers will create multiple models, one for each forecasting horizon.
+    With the argument `windows_identical = True` (default) the windows used to train
+    the model are defined by the maximum forecasting horizon.
+    Only two complete windows can be defined in this example
+    `fh = 4` (maximum of `fh = [2, 4]`)::
+
+    |----------------------------|
+    | x x x x x x x x x * * * y *|
+    | * x x x x x x x x x * * * y|
+    |----------------------------|
+
+    All other forecasting horizons will also use those two (maximal) windows.
+    `fh = 2`::
+
+    |----------------------------|
+    | x x x x x x x x x * y * * *|
+    | * x x x x x x x x x * y * *|
+    |----------------------------|
+
+    With `windows_identical = False` we drop the requirement to use the same windows
+    for each of the direct models, so more windows can be created for horizons other
+    than the maximum forecasting horizon.
+    `fh = 2`::
+
+    |----------------------------|
+    | x x x x x x x x x * y * * *|
+    | * x x x x x x x x x * y * *|
+    | * * x x x x x x x x x * y *|
+    | * * * x x x x x x x x x * y|
+    |----------------------------|
+
+    `fh = 4`::
+
+    |----------------------------|
+    | x x x x x x x x x * * * y *|
+    | * x x x x x x x x x * * * y|
+    |----------------------------|
+
+    Use `windows_identical = True` if you want to compare the forecasting
+    performance across different horizons, since all models trained will use the
+    same windows. Use `windows_identical = False` if you want to have the highest
+    forecasting accuracy for each forecasting horizon.
 
     Parameters
     ----------
@@ -1350,67 +1421,6 @@ def make_reduction(
         horizon) or a different number of X windows depending on the forecasting horizon
         (False: Number of windows = total observations + 1 - window_length
         - forecasting horizon). See pictionary below for more information.
-
-    Please see below a graphical representation of the make_reduction logic using the
-    following symbols:
-        ``y`` = forecast target.
-        ``x`` = past values of y that are used as features (X) to forecast y
-        ``*`` = observations, past or future, neither part of window nor forecast.
-
-        Assume we have the following training data (14 observations):
-            |----------------------------|
-            | * * * * * * * * * * * * * *|
-            |----------------------------|
-
-        And want to forecast with `window_length = 9` and `fh = [2, 4]`.
-
-        By construction, a recursive reducer always targets the first data point after
-        the window, irrespective of the forecasting horizons requested.
-        In the example the following 5 windows are created:
-            |--------------------------- |
-            | x x x x x x x x x y * * * *|
-            | * x x x x x x x x x y * * *|
-            | * * x x x x x x x x x y * *|
-            | * * * x x x x x x x x x y *|
-            | * * * * x x x x x x x x x y|
-            |----------------------------|
-
-        Direct Reducers will create multiple models, one for each forecasting horizon.
-        With the argument `windows_identical = True` (default) the windows used to train
-        the model are defined by the maximum forecasting horizon.
-        Only two complete windows can be defined in this example:
-        `fh = 4` (maximum of `fh = [2, 4]`)
-            |--------------------------- |
-            | x x x x x x x x x * * * y *|
-            | * x x x x x x x x x * * * y|
-            |----------------------------|
-
-        All other forecasting horizons will also use those two (maximal) windows.
-        `fh = 2`
-            |--------------------------- |
-            | x x x x x x x x x * y * * *|
-            | * x x x x x x x x x * y * *|
-            |----------------------------|
-        With `windows_identical = False` we drop the requirement to use the same windows
-        for each of the direct models, so more windows can be created for horizons other
-        than the maximum forecasting horizon:
-        `fh = 2`
-            |--------------------------- |
-            | x x x x x x x x x * y * * *|
-            | * x x x x x x x x x * y * *|
-            | * * x x x x x x x x x * y *|
-            | * * * x x x x x x x x x * y|
-            |----------------------------|
-        `fh = 4`
-            |--------------------------- |
-            | x x x x x x x x x * * * y *|
-            | * x x x x x x x x x * * * y|
-            |----------------------------|
-
-        Use `windows_identical = True` if you want to compare the forecasting
-        performance across different horizons, since all models trained will use the
-        same windows. Use `windows_identical = False` if you want to have the highest
-        forecasting accuracy for each forecasting horizon.
 
     Returns
     -------
@@ -1513,7 +1523,9 @@ def _get_forecaster(scitype, strategy):
 
 
 def _cut_df(X, n_obs=1, type="tail"):
-    """Cut input at tail or tail, supports grouping."""
+    """Cut input at tail or head, supports grouping."""
+    if n_obs == 0:
+        return X.copy()
     if isinstance(X.index, pd.MultiIndex):
         Xi_grp = X.index.names[0:-1]
         if type == "tail":
@@ -1784,7 +1796,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
-        super(DirectReductionForecaster, self).__init__()
+        super().__init__()
 
         warn(
             "DirectReductionForecaster is experimental, and interfaces may change. "
@@ -1812,7 +1824,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # therefore this is commented out until sktime and sklearn are better aligned
         # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit dispatcher based on X_treatment."""
         methodname = f"_fit_{self.X_treatment}"
         return getattr(self, methodname)(y=y, X=X, fh=fh)
@@ -2118,7 +2130,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
-        super(RecursiveReductionForecaster, self).__init__()
+        super().__init__()
 
         warn(
             "RecursiveReductionForecaster is experimental, and interfaces may change. "
@@ -2141,7 +2153,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -2446,6 +2458,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
+        "handles-missing-data": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
@@ -2453,7 +2466,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     def __init__(self, estimator, pooling="local"):
         self.estimator = estimator
         self.pooling = pooling
-        super(YfromX, self).__init__()
+        super().__init__()
 
         if pooling == "local":
             mtypes = "pd.DataFrame"
@@ -2470,7 +2483,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit

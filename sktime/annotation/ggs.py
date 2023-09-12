@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Greedy Gaussian Segmentation (GGS).
 
 The method approximates solutions for the problem of breaking a
@@ -456,7 +455,7 @@ class GreedyGaussianSegmentation(BaseEstimator):
         self.random_state = random_state
 
         _check_estimator_deps(self)
-        super(GreedyGaussianSegmentation, self).__init__()
+        super().__init__()
 
         self._adaptee_class = get_GGS()
         self._adaptee = self._adaptee_class(

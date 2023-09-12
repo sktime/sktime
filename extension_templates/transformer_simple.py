@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extension template for transformers, SIMPLE version.
 
 Contains only bare minimum of implementation requirements for a functional transformer.
 Also assumes *no composition*, i.e., no transformer or other estimator components.
 For advanced cases (inverse transform, composition, etc),
-    see full extension template in forecasting.py
+    see full extension template in transformer.py
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -182,8 +181,8 @@ class MyTransformer(BaseTransformer):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTransformer" to the name of the class
-        super(MyTransformer, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

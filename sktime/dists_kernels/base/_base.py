@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base class templates for distances or kernels between time series and tabular data.
 
@@ -54,10 +53,11 @@ class BasePairwiseTransformer(BaseEstimator):
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
+        "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
     }
 
     def __init__(self):
-        super(BasePairwiseTransformer, self).__init__()
+        super().__init__()
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -188,10 +188,11 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
     }
 
     def __init__(self):
-        super(BasePairwiseTransformerPanel, self).__init__()
+        super().__init__()
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -353,17 +354,17 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         Pairwise transformer (e.g., distance kernel) subsetted to the index.
 
-        Keys must be valid inputs for `columns` in `ColumnSubset`.
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following TransformerPipeline object:
-            ColumnSubset(columns) * self
+            ColumnSelect(columns) * self
             where `columns` only item in `key`
         """
         from sktime.transformations.series.subset import ColumnSelect

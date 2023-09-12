@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Normal/Gaussian probability distribution."""
 
@@ -46,7 +45,7 @@ class Normal(BaseDistribution):
         # and broadcast of parameters.
         # move this functionality to the base class
         # 0.19.0?
-        self._mu, self._sigma = self._get_bc_params()
+        self._mu, self._sigma = self._get_bc_params(self.mu, self.sigma)
         shape = self._mu.shape
 
         if index is None:
@@ -55,17 +54,7 @@ class Normal(BaseDistribution):
         if columns is None:
             columns = pd.RangeIndex(shape[1])
 
-        super(Normal, self).__init__(index=index, columns=columns)
-
-    def _get_bc_params(self):
-        """Fully broadcast parameters of self, given param shapes and index, columns."""
-        to_broadcast = [self.mu, self.sigma]
-        if hasattr(self, "index") and self.index is not None:
-            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
-        if hasattr(self, "columns") and self.columns is not None:
-            to_broadcast += [self.columns.to_numpy()]
-        bc = np.broadcast_arrays(*to_broadcast)
-        return bc[0], bc[1]
+        super().__init__(index=index, columns=columns)
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.

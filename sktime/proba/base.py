@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base classes for probability distribution objects."""
 
@@ -34,7 +33,7 @@ class BaseDistribution(BaseObject):
         self.index = index
         self.columns = columns
 
-        super(BaseDistribution, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     @property
@@ -158,6 +157,43 @@ class BaseDistribution(BaseObject):
             return msg_approx
         else:
             return msg
+
+    def _get_bc_params(self, *args, dtype=None):
+        """Fully broadcast tuple of parameters given param shapes and index, columns.
+
+        Parameters
+        ----------
+        args : float, int, array of floats, or array of ints (1D or 2D)
+            Distribution parameters that are to be made broadcastable. If no positional
+            arguments are provided, all parameters of `self` are used except for `index`
+            and `columns`.
+        dtype : str, optional
+            broadcasted arrays are cast to all have datatype `dtype`. If None, then no
+            datatype casting is done.
+
+        Returns
+        -------
+        Tuple of float or integer arrays
+            Each element of the tuple represents a different broadcastable distribution
+            parameter.
+        """
+        number_of_params = len(args)
+        if number_of_params == 0:
+            # Handle case where no positional arguments are provided
+            params = self.get_params()
+            params.pop("index")
+            params.pop("columns")
+            args = tuple(params.values())
+            number_of_params = len(args)
+
+        if hasattr(self, "index") and self.index is not None:
+            args += (self.index.to_numpy().reshape(-1, 1),)
+        if hasattr(self, "columns") and self.columns is not None:
+            args += (self.columns.to_numpy(),)
+        bc = np.broadcast_arrays(*args)
+        if dtype is not None:
+            bc = [array.astype(dtype) for array in bc]
+        return bc[:number_of_params]
 
     def pdf(self, x):
         r"""Probability density function.
@@ -509,7 +545,7 @@ class _BaseTFDistribution(BaseDistribution):
     def __init__(self, index=None, columns=None, distr=None):
         self.distr = distr
 
-        super(_BaseTFDistribution, self).__init__(index=index, columns=columns)
+        super().__init__(index=index, columns=columns)
 
     def __str__(self):
         return self.to_str()

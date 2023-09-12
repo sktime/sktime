@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interface module to scipy.
 
 Interface module to scipy.spatial's pairwise distance function cdist     exposes
@@ -11,7 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cdist
 
-from sktime.dists_kernels._base import BasePairwiseTransformer
+from sktime.dists_kernels.base import BasePairwiseTransformer
 
 
 class ScipyDist(BasePairwiseTransformer):
@@ -70,7 +69,7 @@ class ScipyDist(BasePairwiseTransformer):
         self.var_weights = var_weights
         self.metric_kwargs = metric_kwargs
 
-        super(ScipyDist, self).__init__()
+        super().__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.

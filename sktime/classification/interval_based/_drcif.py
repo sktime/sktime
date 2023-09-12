@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DrCIF classifier.
 
 interval based DrCIF classifier extracting catch22 features from random intervals on
@@ -196,7 +195,7 @@ class DrCIF(BaseClassifier):
         self._min_interval = min_interval
         self._max_interval = max_interval
 
-        super(DrCIF, self).__init__()
+        super().__init__()
 
         if isinstance(base_estimator, str):
             if base_estimator.lower() == "dtc":

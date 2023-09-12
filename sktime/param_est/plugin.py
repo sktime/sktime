@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for seasonality."""
 
@@ -45,7 +44,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         list of str: parameters in the list are plugged into parameters of the same name
             only parameters present in both `forecaster` and `param_est` are plugged in
         str: considered as a one-element list of str with the string as single element
-        dict: parameter with name of key is plugged into parameter with name of value
+        dict: parameter with name of value is plugged into parameter with name of key
             only keys present in `param_est` and values in `forecaster` are plugged in
     update_params : bool, optional, default=False
         whether fitted parameters by param_est_ are to be updated in self.update
@@ -56,6 +55,9 @@ class PluginParamsForecaster(_DelegatedForecaster):
         this clone is fitted in the pipeline when `fit` is called
     forecaster_ : sktime forecaster, clone of forecaster in `forecaster`
         this clone is fitted in the pipeline when `fit` is called
+    param_map_ : dict
+        mapping of parameters from `param_est_` to `forecaster_` used in `fit`,
+        after filtering for parameters present in both
 
     Examples
     --------
@@ -76,6 +78,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     12
 
     using dictionary to plug "foo" parameter into "sp"
+
     >>> from sktime.param_est.fixed import FixedParams
     >>> sp_plugin = PluginParamsForecaster(
     ...     FixedParams({"foo": 12}), NaiveForecaster(), params={"foo": "sp"}
@@ -103,14 +106,14 @@ class PluginParamsForecaster(_DelegatedForecaster):
         self.params = params
         self.update_params = update_params
 
-        super(PluginParamsForecaster, self).__init__()
+        super().__init__()
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
         # todo: only works for single series now
         #   think about how to deal with vectorization later
         self.set_tags(**{"y_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"]})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -182,7 +185,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         self.param_map_ = param_map
 
         # obtain the values of fitted params, and set forecaster to those
-        new_params = {x: fitted_params[x] for x in param_map}
+        new_params = {k: fitted_params[v] for k, v in param_map.items()}
         forecaster.set_params(**new_params)
 
         # fit the forecaster, with the fitted parameter values

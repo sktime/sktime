@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for applying different univariates on hierarchical data."""
 
@@ -111,7 +110,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.forecasters = forecasters
         self.by = by
         self.default = default
-        super(HierarchyEnsembleForecaster, self).__init__(forecasters=forecasters)
+        super().__init__(forecasters=forecasters)
 
         if isinstance(forecasters, BaseForecaster):
             tags_to_clone = [
@@ -156,7 +155,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         return Aggregator().fit_transform(y)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base class template for parameter estimator scitype.
 
@@ -28,7 +27,7 @@ from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
     check_is_scitype,
-    convert_to,
+    convert,
     scitype_to_mtype,
     update_data,
 )
@@ -68,7 +67,7 @@ class BaseParamFitter(BaseEstimator):
 
         self._X = None
 
-        super(BaseParamFitter, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):
@@ -272,11 +271,13 @@ class BaseParamFitter(BaseEstimator):
         if not X_valid:
             raise TypeError(msg + mtypes_msg)
         X_scitype = X_metadata["scitype"]
+        X_mtype = X_metadata["mtype"]
         # end checking X
 
         # converts X, converts None to None if X is None
-        X_inner = convert_to(
+        X_inner = convert(
             X,
+            from_type=X_mtype,
             to_type=X_inner_mtype,
             as_scitype=X_scitype,
         )

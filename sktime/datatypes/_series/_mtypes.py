@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type inference for Series scitype.
 
 Exports mtype dictionaries for Series scitype:

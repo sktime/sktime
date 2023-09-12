@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """TDE classifiers - numba methods."""
 
 __author__ = ["MatthewMiddlehurst"]

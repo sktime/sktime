@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 def convert_from_multiindex_to_listdataset(trainDF, class_val_list=None):
     """Output a dataset in ListDataset format compatible with gluonts.
 

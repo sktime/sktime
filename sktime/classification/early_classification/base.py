@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Abstract base class for early time series classifiers.
 
@@ -89,7 +88,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         """
         self.state_info = None
 
-        super(BaseEarlyClassifier, self).__init__()
+        super().__init__()
 
     def fit(self, X, y):
         """Fit time series classifier to training data.

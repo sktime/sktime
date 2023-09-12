@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
 
 Hybrid ensemble of classifiers from 4 separate time series classification
@@ -98,6 +97,7 @@ class HIVECOTEV1(BaseClassifier):
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "hybrid",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -133,7 +133,7 @@ class HIVECOTEV1(BaseClassifier):
         self._rise = None
         self._cboss = None
 
-        super(HIVECOTEV1, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit HIVE-COTE 1.0 to training data.
