@@ -127,8 +127,20 @@ pip install sktime[forecasting]  # for selected forecasting dependencies
 pip install sktime[forecasting,transformations]  # forecasters and transformers
 ```
 
-or similar. Valid sets are `forecasting`, `transformations`, `classification`,
-`regression`, `clustering`, `param_est`,`networks`, `annotation`, `alignment`.
+or similar. Valid sets are:
+
+* `forecasting`
+* `transformations`
+* `classification`
+* `regression`
+* `clustering`
+* `param_est`
+* `networks`
+* `annotation`
+* `alignment`
+
+Cave: in general, not all soft dependencies for a learning task are installed,
+only a curated selection.
 
 ### conda
 You can also install sktime from `conda` via the `conda-forge` channel.
