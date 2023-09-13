@@ -44,11 +44,12 @@ class MLFlowLogger(BaseLogger):
 
     @property
     def save_dir(self) -> str:
-        """Root directory for saving MLflow experiments..
+        """Root directory for saving MLflow experiments.
 
-        Return:
-            Local path to the root experiment directory if the tracking URI is loca.
-            Otherwise returns `None`.
+        Returns
+        -------
+        Local path to the root experiment directory if the tracking URI is local.
+        Otherwise returns `None`. Check
         """
         if self._tracking_uri.startswith(LOCAL_URI_PREFIX):
             return self._tracking_uri.lstrip(LOCAL_URI_PREFIX)
