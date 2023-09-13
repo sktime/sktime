@@ -1,6 +1,7 @@
 """Uniform interface of different experiment tracking packages."""
 
 import os
+from abc import property
 from typing import Any, Dict, Optional
 
 from sktime.base._base import BaseEstimator
@@ -10,11 +11,11 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 # mlflavour no seperation of dependencies.
 if _check_soft_dependencies("mlflow", severity="warning"):
     import mlflow
-    from mlflow.tracking import MlflowCient
+    from mlflow.client import MlflowClient
 
     from sktime.utils import mlflow_sktime
 
-LOCAL_FILE_URI_PREFIX = "file:"
+LOCAL_URI_PREFIX = "file:"
 DEFAULT_ENV = os.getenv("MLFLOW_TRACKING_URI")
 
 
@@ -24,25 +25,55 @@ class MLFlowLogger(BaseLogger):
     def __init__(
         self,
         experiment_name: str = "benchmark_logs",
-        run_name: Optional[str] = None,
         tags: Optional[Dict[str, Any]] = None,
         save_dir: Optional[str] = "./benchmarkruns",
         tracking_uri: Optional[str] = DEFAULT_ENV,
         artifact_location: Optional[str] = None,
-        run_id: Optional[str] = None,
     ):
         _check_soft_dependencies("mlflow", severity="error")
         if tracking_uri is None:
-            os.getenv("MLFLOW_TRACKING_URI")
-            tracking_uri = f"{LOCAL_FILE_URI_PREFIX}{save_dir}"
+            tracking_uri = f"{LOCAL_URI_PREFIX}{save_dir}"
 
         self._experiment_name = experiment_name
-        self._run_name = run_name
         self.tags = tags
         self._save_dir = save_dir
         self._artifact_location = artifact_location
-        self._run_id = run_id
-        self._client = MlflowCient(tracking_uri)
+
+        self._has_experiment = False
+        self._client = MlflowClient(tracking_uri)
+
+    @property
+    def save_dir(self) -> str:
+        """Root directory for saving MLflow experiments..
+
+        Return:
+            Local path to the root experiment directory if the tracking URI is loca.
+            Otherwise returns `None`.
+        """
+        if self._tracking_uri.startswith(LOCAL_URI_PREFIX):
+            return self._tracking_uri.lstrip(LOCAL_URI_PREFIX)
+        return None
+
+    def _start_experiment(self) -> None:
+        self._has_experiment = True
+        mlflow.set_tracking_uri(self._tracking_uri)
+        self._client.create_experiment(
+            name=self._experiment_name,
+            artifact_location=self._artifact_location,
+            tags=self.tags,
+        )
+
+    def start_run(
+        self, run_name: Optional[str] = None, run_id: Optional[str] = None
+    ) -> None:
+        """Start a new active run. If there is an active run, shut it down first."""
+        if not self._has_initialised:
+            self._start_experiment()
+
+        if mlflow.active_run() is not None:
+            mlflow.end_run()
+
+        mlflow.start_run(run_name=run_name, run_id=run_id)
 
     def log_metric(self, metric_name: str, metric_values: float) -> None:
         """Log a metric under the current run."""
