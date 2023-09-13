@@ -26,7 +26,8 @@ def _get_X_numpy_int_from_pandas(x):
 class TrendForecaster(BaseForecaster):
     r"""Trend based forecasts of time series data, regressing values on index.
 
-    Uses a `sklearn regressor` to regress values of time series on index:
+    Uses a `sklearn` regressor specified by the `regressor` parameter to perform regression
+    on time series values against their corresponding indices, providing trend-based forecasts:
 
     In `fit`, for input time series :math:`(v_i, t_i), i = 1, \dots, T`,
     where :math:`v_i` are values and :math:`t_i` are time stamps,
@@ -152,8 +153,8 @@ class TrendForecaster(BaseForecaster):
 class PolynomialTrendForecaster(BaseForecaster):
     r"""Forecast time series data with a polynomial trend.
 
-    Uses a `sklearn regressor` to regress values of time series on index,
-    after extraction of polynomial features.
+    Uses a `sklearn` regressor specified by the `regressor` parameter to perform regression
+    on time series values against their corresponding indices, after extraction of polynomial features.
     Same `TrendForecaster` where `regressor` is pipelined with transformation step
     `PolynomialFeatures(degree, with_intercept)` applied to time, at the start.
 
