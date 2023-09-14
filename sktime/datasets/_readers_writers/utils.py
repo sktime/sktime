@@ -150,6 +150,7 @@ def _write_header(
     return file
 
 
+# research function?
 def write_results_to_uea_format(
     estimator_name,
     dataset_name,
