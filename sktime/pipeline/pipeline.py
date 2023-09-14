@@ -163,7 +163,7 @@ class Pipeline(BaseEstimator):
             "Thus, there are usual risk with cutting edge features. "
             "If you are searching in a mature feature, please use the "
             "the existing sequential pipeline, e.g. ForecastingPipeline.",
-            stacklevel=1
+            stacklevel=1,
         )
         super().__init__()
         self._assembled = False
