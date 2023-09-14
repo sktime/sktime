@@ -4,7 +4,7 @@ import os
 from abc import property
 from typing import Any, Dict, Optional
 
-from sktime.base._base import BaseEstimator
+from sktime.base import BaseEstimator
 from sktime.benchmarking.experimental._base import BaseLogger
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
