@@ -1,14 +1,15 @@
 """Uniform interface of different experiment tracking packages."""
 
 import os
-from abc import property
+
+# from abc import property
 from typing import Any, Dict, Optional
 
 from sktime.base import BaseEstimator
 from sktime.benchmarking.experimental._base import BaseLogger
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-# mlflavour no seperation of dependencies.
+# mlflavour has no seperation of dependencies.
 if _check_soft_dependencies("mlflow", severity="warning"):
     import mlflow
     from mlflow.client import MlflowClient
@@ -32,7 +33,7 @@ class MLFlowLogger(BaseLogger):
     ):
         _check_soft_dependencies("mlflow", severity="error")
         if tracking_uri is None:
-            tracking_uri = f"{LOCAL_URI_PREFIX}{save_dir}"
+            self._tracking_uri = f"{LOCAL_URI_PREFIX}{save_dir}"
 
         self._experiment_name = experiment_name
         self.tags = tags

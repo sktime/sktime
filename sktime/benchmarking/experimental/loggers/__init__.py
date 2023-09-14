@@ -6,4 +6,4 @@ __all__ = [
     "MLFlowLogger",
 ]
 
-from sktime.benchmarking.experimental.loggers.mlflow import MLFlowLogger
+from sktime.benchmarking.experimental.loggers._mlflow import MLFlowLogger
