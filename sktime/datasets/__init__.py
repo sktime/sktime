@@ -42,13 +42,15 @@ __all__ = [
 
 from sktime.datasets._data_io import (
     generate_example_long_table,
+    make_multi_index_dataframe,
+)
+from sktime.datasets._readers_writers import (
     load_from_arff_to_dataframe,
     load_from_long_to_dataframe,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
     load_from_ucr_tsv_to_dataframe,
     load_tsf_to_dataframe,
-    make_multi_index_dataframe,
     write_dataframe_to_tsfile,
     write_ndarray_to_tsfile,
     write_panel_to_tsfile,
