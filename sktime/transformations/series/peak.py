@@ -1,123 +1,122 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract peak/working hour features from datetimeindex."""
-__author__ = ["ali-parizad","VyomkeshVyas"]
-__all__ = ["PeakHourFeatures"]
+__author__ = ["ali-parizad", "VyomkeshVyas"]
+__all__ = ["PeakTimeFeature"]
 
-import warnings
 
-import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 
-_RAW_DUMMIES = [
-    ["child", "parent", "dummy_func", "feature_scope"],
-    #["year", "year", "year", "minimal"],
-    #["quarter", "year", "quarter", "efficient"],
-    ["month", "year", "month", "comprehensive"],
-    ["week", "year", "week_of_year", "comprehensive"],
-    ["day", "year", "day_of_year", "comprehensive"],
-    #["month", "quarter", "month_of_quarter", "comprehensive"],
-    #["week", "quarter", "week_of_quarter", "comprehensive"],
-    #["day", "quarter", "day_of_quarter", "comprehensive"],
-    ["week", "month", "week_of_month", "efficient"],
-    ["day", "month", "day", "efficient"],
-    ["day", "week", "weekday", "efficient"],
-    ["hour", "day", "hour", "minimal"],
-    #["hour", "week", "hour_of_week", "comprehensive"],
-    #["minute", "hour", "minute", "minimal"],
-    #["second", "minute", "second", "minimal"],
-    #["millisecond", "second", "millisecond", "minimal"],
-    ##["day", "week", "is_weekend", "comprehensive"],
-    ["hour", "day", "is_peak_hour", "minimal"],
-    ["hour", "day", "is_working_hour", "minimal"],
-] 
-# TODO: Add is_working_hour for two or more intervals
-# TODO: Add is_peak_week, is_peak_month, etc. if needed
-# Note: For now, I commented some other features so that later we use it if needed, e.g., for adding is_peak_week
 
-class PeakHourFeatures(BaseTransformer):
-    """PeakHour feature extraction for use in e.g. tree based models.
+class PeakTimeFeature(BaseTransformer):
+    """PeakTime feature extraction for use in e.g. tree based models.
 
-    PeakHourFeatures uses a datetime index column and generates peak/working features
-    for e.g. peak hours, working hours, peak weak, peak month, etc. 
+    PeakTimeFeature uses a datetime index column and generates peak/working features
+    for e.g. peak hours, peak weak, peak month, working hours, etc. It works based on
+    the input intervals, e.g., peak_hour_start=[6], peak_hour_end=[9]
 
-    Parameters # TODO: docstring will be updated
+    Parameters
     ----------
-    ts_freq : str, optional (default="day")
+    ts_freq : str,
         Restricts selection of items to those with a frequency lower than
         the frequency of the time series given by ts_freq.
-        E.g. if monthly data is provided and ts_freq = ("M"), it does not make
-        sense to derive dummies with higher frequency like weekly dummies.
-        Has to be provided by the user due to the abundance of different
-        frequencies supported by Pandas (e.g. every pandas allows freq of every 4 days).
-        Interaction with other arguments:
-        Used to narrow down feature selection for feature_scope, since only
-        features with a frequency lower than ts_freq are considered. Will be ignored
-        for the calculation of manually specified features, but when provided will
-        raise a warning if manual features have a frequency higher than ts_freq.
-        Only supports the following frequencies:
+        E.g., if daily data is provided and ts_freq = ("D"), it does not make
+        sense to derive PeakTimeFeature with higher frequency like hourly features. So,
+        the outpul will be is_peak_day, is_peak_week, is_peak_month, is_peak_quarter,
+        is_peak_year. Only supports the following frequencies:
         * Y - year
         * Q - quarter
         * M - month
         * W - week
         * D - day
         * H - hour
-        * T - minute
-        * S - second
-        * L - millisecond
-    feature_scope: str, optional (default="minimal")
-        Specify how many features you want to be returned.
-        * "minimal"
-        * "efficient"
-        * "comprehensive"
-    manual_selection: str, optional (default=None)
-        Manual selection of dummys. Notation is child of parent for precise notation.
-        Will ignore specified feature_scope, but will still check with warning against
-        a specified ts_freq.
-        Examples for possible values:
-        * None
-        * day_of_year
-        * day_of_month
-        * day_of_quarter
-        * is_weekend
-        * year (special case with no lower frequency).
-        * is_peak_hour
-        * is_working_hour
-    is_peak_hour_range: list, e.g., is_peak_hour_range = {"start_peak_hour1": 6, "end_peak_hour1": 9, "start_peak_hour2": 17, "end_peak_hour2": 20}
-        the peak hour range may be selcted in form of {"start_peak_hour1": 6, "end_peak_hour1": 9, "start_peak_hour2": 17, "end_peak_hour2": 20}
-    is_working_hour_range: list, e.g., is_working_hour_range = {"start_working_hour": 9, "end_working_hour": 16}
-        the working hour range may be selcted in form of {"start_working_hour": 9, "end_working_hour": 16}
+
+    peak_[*]_start, peak_[*]_end : list,
+        peak start and peak end should be specified in form of
+        peak_[*]_start = [start1, start2, ...], peak_[*]_end = [end1, end2, ...].
+        E.g. 1, one peak interval: peak_hour_start=[6], peak_hour_end=[9] means we
+        have just ONW peak hour interval where peak starts at 6am and peak ends at 9am.
+        E.g. 2, two peak intervals: peak_hour_start=[6, 16], peak_hour_end=[9, 20]
+        means we have TWO peak hour intervals where the first peak starts at 6 am
+        and ends at 9 am. The second peak starts at 16 am and ends at 20.
+        - we may have more than TWO intervals.
+        The * can be one of the following:
+        * Y - year
+        * Q - quarter
+        * M - month
+        * W - week
+        * D - day
+        * H - hour
+
+    working_[^]_start, working_[^]_end : list,
+        working start and working end should be specified in form of:
+        working_[*]_start = [start1, start2, ...],
+        working_[*]_end = [end1, end2, ...].
+        E.g. 1, one working interval: working_hour_start=[8], working_hour_end=[16]
+        means we have just ONW working hour interval where work starts at 8 am and
+        work ends at 16. E.g. 2, two working intervals: working_hour_start=[8, 15],
+        working_hour_end=[12, 19] means we have TWO working hour intervals where the
+        first starts at 8 am and ends at 15. The second  starts at 15 am and ends at 19.
+        - we may have more than TWO intervals.
+        The ^ can be one of the following:
+        ^ H - hour
+
     keep_original_columns :  boolean, optional, default=False
         Keep original columns in X passed to `.transform()`.
+    keep_original_PeakTimeFeature_columns: boolean, optional, default=False
+        Keep original PeakTimeFeature dataframe columns including all separate
+        peak/working columns, e.g., peak_hour_1, peak_hour_2, peak_week_1,
+        peak_week_2, ...
 
-    Examples for hourly data (use case of 'is_peak_hour', 'is_working_hour')
+
+    Examples
     --------
-    >>> from sktime.transformations.series.date import DateTimeFeatures
+    >>> from sktime.transformations.series.peak import PeakTimeFeature
     >>> from sktime.datasets import load_solar
-    >>> y =  load_solar(start='2022-05-01', return_full_df=True, end='2022-06-18', api_version="v4")
+    >>> y =  load_solar()
     >>> y = y.tz_localize(None)
     >>> y = y.asfreq("H")
 
-    --> Example one interval (e.g., {"start_peak_hour1": 6, "end_peak_hour1": 9})for peak hours
-    Returns columns `y`, 'is_peak_hour', 'is_working_hour'
+    --> Example ONE interval for peak hour and working hour
+    Returns columns is_peak_hour, is_working_hour (based on one start/end interval)
 
-    >>> transformer_peak = PeakHourFeatures(ts_freq="H", manual_selection=["is_peak_hour", 'is_working_hour'], is_peak_hour_range = {"start_peak_hour1": 6, "end_peak_hour1": 9}, is_working_hour_range = {"start_working_hour": 9, "end_working_hour": 16})
-    >>> y_hat = transformer.fit_transform(y)
-
-     --> Example two intervals (e.g., Three) for peak hours
-    Returns columns `y`, 'is_peak_hour', 'is_working_hour'
-
-    >>> transformer_peak = PeakHourFeatures(ts_freq="H", manual_selection=["is_peak_hour", 'is_working_hour'], is_peak_hour_range = {"start_peak_hour1": 6, "end_peak_hour1": 9, "start_peak_hour2": 17, "end_peak_hour2": 20}, is_working_hour_range = {"start_working_hour": 9, "end_working_hour": 16})
-    >>> y_hat = transformer.fit_transform(y)   
+    >>> transformer = PeakTimeFeature(ts_freq="H",
+                                        peak_hour_start=[6], peak_hour_end=[9],
+                                        working_hour_start=[8], working_hour_end=[16]
+                                        )
+    >>> y_hat_peak = transformer.fit_transform(y)
+    >>> y_hat_peak
 
 
-    --> Example more than two interval (e.g.,three : {"start_peak_hour1": 1, "end_peak_hour1": 2, "start_peak_hour2": 3, "end_peak_hour2": 4, "start_peak_hour3": 7, "end_peak_hour3": 9}) for peak hours
-    Returns columns `y`, 'is_peak_hour', 'is_working_hour'
+    --> Example TWO intervals for peak hour and  working hour
+    Returns columns is_peak_hour, is_working_hour (based on two start/end intervals)
 
-    >>> transformer_peak = PeakHourFeatures(ts_freq="H", manual_selection=["is_peak_hour",'is_working_hour'], is_peak_hour_range = {"start_peak_hour1": 1, "end_peak_hour1": 2, "start_peak_hour2": 3, "end_peak_hour2": 4, "start_peak_hour3": 7, "end_peak_hour3": 9}, is_working_hour_range = {"start_working_hour": 9, "end_working_hour": 16})
-    >>> y_hat = transformer.fit_transform(y)
+    >>> transformer = PeakTimeFeature(ts_freq="H",
+                                peak_hour_start=[6, 16], peak_hour_end=[9, 20],
+                                working_hour_start=[8, 15], working_hour_end=[12, 19]
+                                    )
+    >>> y_hat_peak = transformer.fit_transform(y)
+    >>> y_hat_peak
+
+
+    --> Example TWO intervals, We may have peak for different seasonality
+    -- Here an example for peak hour, peak day, peak week, peak month
+       Returns columns is_peak_hour, is_peak_day, is_peak_week, is_peak_month
+       (based on two start/end intervals)
+
+    >>> transformer = PeakTimeFeature(ts_freq="H",
+                                    peak_hour_start=[6, 16], peak_hour_end=[9, 20],
+                                    peak_day_start=[1, 2], peak_day_end=[2, 3],
+                                    peak_week_start=[35, 45], peak_week_end=[40, 52],
+                                    peak_month_start=[1, 7], peak_month_end=[6, 12]
+                                    )
+    >>> y_hat_peak = transformer.fit_transform(y)Z
+    >>> y_hat_peak
+
+
+    * Note: we may have more than TWO intervals.
 
     """
 
@@ -146,19 +145,42 @@ class PeakHourFeatures(BaseTransformer):
     def __init__(
         self,
         ts_freq=None,
-        feature_scope="minimal",
-        manual_selection=None,
-        is_peak_hour_range=None,
-        is_working_hour_range=None,
+        peak_hour_start=None,
+        peak_hour_end=None,
+        peak_day_start=None,
+        peak_day_end=None,
+        peak_week_start=None,
+        peak_week_end=None,
+        peak_month_start=None,
+        peak_month_end=None,
+        peak_quarter_start=None,
+        peak_quarter_end=None,
+        peak_year_start=None,
+        peak_year_end=None,
+        working_hour_start=None,
+        working_hour_end=None,
         keep_original_columns=False,
+        keep_original_PeakTimeFeature_columns=False,
     ):
         self.ts_freq = ts_freq
-        self.feature_scope = feature_scope
-        self.manual_selection = manual_selection
-        self.is_peak_hour_range = is_peak_hour_range
-        self.is_working_hour_range = is_working_hour_range
-        self.dummies = _prep_dummies(self, _RAW_DUMMIES)
+        self.peak_hour_start = peak_hour_start
+        self.peak_hour_end = peak_hour_end
+        self.peak_day_start = peak_day_start
+        self.peak_day_end = peak_day_end
+        self.peak_week_start = peak_week_start
+        self.peak_week_end = peak_week_end
+        self.peak_month_start = peak_month_start
+        self.peak_month_end = peak_month_end
+        self.peak_quarter_start = peak_quarter_start
+        self.peak_quarter_end = peak_quarter_end
+        self.peak_year_start = peak_year_start
+        self.peak_year_end = peak_year_end
+        self.working_hour_start = working_hour_start
+        self.working_hour_end = working_hour_end
         self.keep_original_columns = keep_original_columns
+        self.keep_original_PeakTimeFeature_columns = (
+            keep_original_PeakTimeFeature_columns
+        )
 
         super().__init__()
 
@@ -166,24 +188,28 @@ class PeakHourFeatures(BaseTransformer):
         """Transform X and return a transformed version.
 
         private _transform containing the core logic, called from transform
-
         Parameters
         ----------
         X : pd.Series or pd.DataFrame
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
-
         Returns
         -------
         Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X
         """
-        _check_ts_freq(self.ts_freq, self.dummies)
-        _check_feature_scope(self.feature_scope)
-        _check_manual_selection(self.manual_selection, self.dummies)
-        _check_is_peak_hour_range(self.is_peak_hour_range)
-        _check_is_working_hour_range(self.is_working_hour_range)
+        _check_inputs(self.peak_hour_start, self.peak_hour_end, "peak_hour", 0, 23)
+        _check_inputs(self.peak_day_start, self.peak_day_end, "peak_day", 0, 6)
+        _check_inputs(self.peak_week_start, self.peak_week_end, "peak_week", 1, 53)
+        _check_inputs(self.peak_month_start, self.peak_month_end, "peak_month", 1, 12)
+        _check_inputs(
+            self.peak_quarter_start, self.peak_quarter_end, "peak_quarter", 1, 4
+        )
+        _check_inputs(self.peak_year_start, self.peak_year_end, "peak_year", 1900, 2100)
+        _check_inputs(
+            self.working_hour_start, self.working_hour_end, "working_hour", 0, 23
+        )
 
         if isinstance(X.index, pd.MultiIndex):
             time_index = X.index.get_level_values(-1)
@@ -198,50 +224,19 @@ class PeakHourFeatures(BaseTransformer):
         else:
             raise ValueError("Index type not supported")
 
-        if self.manual_selection is None:
-            if self.ts_freq is not None:
-                supported = _get_supported_calendar(self.ts_freq, DUMMIES=self.dummies)
-                supported = supported[supported["feature_scope"] <= self.feature_scope]
-                calendar_dummies = supported[["dummy_func", "dummy"]]
-            else:
-                supported = self.dummies[
-                    self.dummies["feature_scope"] <= self.feature_scope
-                ]
-                calendar_dummies = supported[["dummy_func", "dummy"]]
-        else:
-            if self.ts_freq is not None:
-                supported = _get_supported_calendar(self.ts_freq, DUMMIES=self.dummies)
-                if not all(
-                    elem in supported["dummy"] for elem in self.manual_selection
-                ):
-                    warnings.warn(
-                        "Level of selected dummy variable "
-                        + " lower level than base ts_frequency.",
-                        stacklevel=2,
-                    )
-                calendar_dummies = self.dummies.loc[
-                    self.dummies["dummy"].isin(self.manual_selection),
-                    ["dummy_func", "dummy"],
-                ]
-            else:
-                calendar_dummies = self.dummies.loc[
-                    self.dummies["dummy"].isin(self.manual_selection),
-                    ["dummy_func", "dummy"],
-                ]
+        cd = _extract_datetime_features(x_df)
 
-        df = [
-            _calendar_dummies(self, x_df, dummy) for dummy in calendar_dummies["dummy_func"]
-        ]
+        datetime_freq = _datetime_frequency_rank()
 
+        # check time series freq
+        _check_ts_freq(x_df, datetime_freq, self.ts_freq)
 
-        df = pd.concat(df, axis=1)
-        df.columns = calendar_dummies["dummy"]
+        df = _extract_peaktime_features(self, cd, datetime_freq)
 
         if self.keep_original_columns:
             Xt = pd.concat([X, df], axis=1, copy=True)
         else:
-            # Remove the name `"dummy"` from column index.
-            Xt = df.rename_axis(None, axis="columns")
+            Xt = df
 
         return Xt
 
@@ -257,234 +252,200 @@ class PeakHourFeatures(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {"feature_scope": "minimal"}
-        params2 = {"feature_scope": "efficient", "keep_original_columns": True}
-        params3 = {"manual_selection": ["day_of_year", "day_of_month"]}
-        return [params1, params2, params3]
+        params1 = {
+            "peak_day_start": [1, 4],
+            "peak_day_end": [2, 5],
+            "keep_original_columns": True,
+        }
+        params2 = {
+            "peak_week_start": [35, 45],
+            "peak_week_end": [40, 52],
+            "working_hour_start": [8, 15],
+            "working_hour_end": [12, 20],
+            "keep_original_columns": False,
+            "keep_original_PeakTimeFeature_columns": True,
+        }
+        return [params1, params2]
 
 
-def _check_manual_selection(manual_selection, DUMMIES):
-    if (manual_selection is not None) and (
-        not all(elem in DUMMIES["dummy"].unique() for elem in manual_selection)
-    ):
-        raise ValueError(
-            "Invalid manual_selection specified, must be in: "
-            + ", ".join(DUMMIES["dummy"].unique())
-        )
+def _datetime_frequency_rank():
+    column_names = ["date_order", "frequency", "rank"]
+    date_order = [
+        ["year", "Y", 0],
+        ["quarter", "Q", 1],
+        ["month", "M", 2],
+        ["week", "W", 3],
+        ["day", "D", 4],
+        ["hour", "H", 5],
+    ]
+    datetime_freq = pd.DataFrame(date_order, columns=column_names)
+    return datetime_freq
 
 
-def _check_is_peak_hour_range(is_peak_hour_range):
-    if (is_peak_hour_range is not None): 
-        for idx in range (int(len(is_peak_hour_range)/2)):
-            start_peak_hour = is_peak_hour_range[f'start_peak_hour{idx+1}']
-            end_peak_hour = is_peak_hour_range[f'end_peak_hour{idx+1}']
-
-            if start_peak_hour < 0 or end_peak_hour > 23:
-                print(
-                    f"you selected start_peak_hour{idx+1} = {start_peak_hour}, end_peak_hour{idx+1} = {end_peak_hour}"
-                )
-                raise ValueError(
-                    "Invalid is_peak_hour_range specified,"
-                    + "must be in range of 0 - 23 hour"
-                    + "(min peak hour = 0, max peak hour = 23)"
-                )
-            if start_peak_hour > end_peak_hour: 
-                print(
-                    f"you selected start_peak_hour{idx+1} = {start_peak_hour}, end_peak_hour{idx+1} = {end_peak_hour}"
-                )
-                raise ValueError(
-                    "Invalid is_peak_hour_range specified,"
-                    + "min is_peak_hour_range (start_peak_hour) must be less than max is_peak_hour_range (end_peak_hour)"
-                    + "(min peak hour = 0, max peak hour = 23)"
-                )
-
-
-def _check_is_working_hour_range(is_working_hour_range): 
-    if (is_working_hour_range is not None): 
-        if is_working_hour_range["start_working_hour"] < 0 or is_working_hour_range["end_working_hour"] > 23:
-            print(
-                f"you selected min(is_working_hour_range) = {is_working_hour_range['start_working_hour']}, max(is_working_hour_range) = {is_working_hour_range['end_working_hour']}"
-            )
-            raise ValueError(
-                "Invalid is_working_hour_range specified,"
-                + "must be in range of 0 - 23 hour"
-                + "(min peak hour = 0, max peak hour = 23)"
-            )
-        if is_working_hour_range["start_working_hour"] > is_working_hour_range["end_working_hour"]:
-            print(
-                f"you selected min(is_working_hour_range) = {is_working_hour_range['start_working_hour']}, max(is_working_hour_range) = {is_working_hour_range['end_working_hour']}"
-            )
-            raise ValueError(
-                "Invalid is_working_hour_range specified,"
-                + "min is_working_hour_range (peak_hour_start) must be less than max is_working_hour_range (peak_hour_end)"
-                + "(min peak hour = 0, max peak hour = 23)"
-            )
-    
-
-def _check_feature_scope(feature_scope):
-    if feature_scope not in ["minimal", "efficient", "comprehensive"]:
-        raise ValueError(
-            "Invalid feature_scope specified,"
-            + "must be in minimal,efficient,comprehensive"
-            + "(minimal lowest number of variables)"
-        )
-
-
-def _check_ts_freq(ts_freq, DUMMIES):
-    if (ts_freq is not None) & (ts_freq not in DUMMIES["ts_frequency"].unique()):
-        raise ValueError(
-            "Invalid ts_freq specified, must be in: "
-            + ", ".join(DUMMIES["ts_frequency"].unique())
-        )
-
-
-def _calendar_dummies(self, x, funcs):
-    date_sequence = x["date_sequence"].dt
-    if funcs == "week_of_year":
-        # The first week of an ISO year is the first (Gregorian)
-        # calendar week of a year containing a Thursday.
-        # So it is possible that a week in the new year is still
-        # indexed starting in last year (week 52 or 53)
-        cd = date_sequence.isocalendar()["week"]
-    elif funcs == "week_of_month":
-        cd = (date_sequence.day - 1) // 7 + 1
-    elif funcs == "month_of_quarter":
-        cd = (date_sequence.month.astype(np.int64) + 2) % 3 + 1
-    elif funcs == "week_of_quarter":
-        col_names = x.columns
-        x_columns = col_names.intersection(["year", "quarter", "week"]).to_list()
-        x_columns.append("date_sequence")
-        df = x.copy(deep=True)
-        df = df[x_columns]
-        if "year" not in x_columns:
-            df["year"] = df["date_sequence"].dt.year
-        if "quarter" not in x_columns:
-            df["quarter"] = df["date_sequence"].dt.quarter
-        if "week" not in x_columns:
-            df["week"] = df["date_sequence"].dt.isocalendar()["week"]
-        df["qdate"] = (
-            df["date_sequence"] + pd.tseries.offsets.DateOffset(days=1)
-        ) - pd.tseries.offsets.QuarterBegin(startingMonth=1)
-        df["qweek"] = df["qdate"].dt.isocalendar()["week"]
-        df.loc[(df["quarter"] == 1) & (df["week"] < 52), "qweek"] = 0
-        cd = df["week"] - df["qweek"] + 1
-    elif funcs == "millisecond":
-        cd = date_sequence.microsecond * 1000
-    elif funcs == "day_of_quarter":
-        quarter = date_sequence.quarter
-        quarter_start = pd.DatetimeIndex(
-            date_sequence.year.map(str)
-            + "-"
-            + (3 * quarter - 2).map(int).map(str)
-            + "-01"
-        )
-        values = (
-            (x["date_sequence"] - quarter_start) / pd.to_timedelta("1D") + 1
-        ).astype(int)
-        cd = values
-    elif funcs == "hour_of_week":
-        cd = date_sequence.day_of_week * 24 + date_sequence.hour
-    elif funcs == "is_weekend":
-        cd = date_sequence.day_of_week > 4
-    elif (funcs == "is_peak_hour") & (self.is_peak_hour_range is not None):
-        cd_combined= []
-        for idx in range (int(len(self.is_peak_hour_range)/2)):
-            cd_temp = (date_sequence.hour >= self.is_peak_hour_range[f'start_peak_hour{idx+1}']) & (date_sequence.hour <= self.is_peak_hour_range[f'end_peak_hour{idx+1}'])  
-            cd_combined.append(cd_temp)
-        cd_combined_concat = pd.concat(cd_combined, axis = 1)
-        cd = cd_combined_concat.any(axis=1)
-
-    elif (funcs == "is_working_hour")  & (self.is_working_hour_range is not None):
-        cd = (date_sequence.hour >= self.is_working_hour_range["start_working_hour"]) & (date_sequence.hour <= self.is_working_hour_range["end_working_hour"])
-
-    else:
-        cd = getattr(date_sequence, funcs)
-    cd = pd.DataFrame(cd)
-    cd = cd.rename(columns={cd.columns[0]: funcs})
-    cd[funcs] = np.int64(cd[funcs])
+def _extract_datetime_features(x):
+    date_sequence = x["date_sequence"]
+    cd = pd.DataFrame()
+    cd["hour"] = date_sequence.dt.hour
+    cd["day_of_week"] = date_sequence.dt.dayofweek
+    cd["day_of_year"] = date_sequence.dt.dayofyear
+    cd["week_of_year"] = date_sequence.dt.isocalendar().week
+    cd["month_of_year"] = date_sequence.dt.month
+    cd["quarter"] = date_sequence.dt.quarter
+    cd["year"] = date_sequence.dt.year
     return cd
 
 
-def _get_supported_calendar(ts_freq, DUMMIES):
-    rank = DUMMIES.loc[DUMMIES["ts_frequency"] == ts_freq, "rank"].max()
-    matches = DUMMIES.loc[DUMMIES["rank"] <= rank]
-    if matches.shape[0] == 0:
-        raise ValueError("Seasonality or Frequency not supported")
-    return matches
+# Check all input (start and end) intervals
+def _check_inputs(start_values, end_values, feature_name, start_range, end_range):
+    if start_values is None or end_values is None:
+        return
 
-def _prep_dummies(self, DUMMIES):
-    """Use to prepare dummy data.
-
-    Includes defining function call names and ranking of date information based on
-    frequency (e.g. year has a lower frequency than week).
-    """
-    DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
-# Note: For now, I commented some other features so that later we use it if needed, e.g., for adding is_peak_week
-    date_order = [
-        #"year",
-        #"quarter",
-        "month",
-        "week",
-        "day",
-        "hour",
-        #"minute",
-        #"second",
-        #"millisecond",
-    ]
-
-    DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
-    DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
-    #DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
-    #DUMMIES.loc[
-    #    DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]
-   #] = "is_weekend"
-
-    if self.is_peak_hour_range is not None:
-        DUMMIES.loc[
-            DUMMIES["dummy_func"] == "is_peak_hour", ["dummy", "fourier"]
-        ] = "is_peak_hour"
-    elif self.is_peak_hour_range is None:
-        DUMMIES = DUMMIES[DUMMIES.dummy_func != "is_peak_hour"]
+    for start, end in zip(start_values, end_values):
+        if start is not None and (start < start_range or start > end_range):
+            raise ValueError(
+                f"Invalid {feature_name}_start value: {start}. It should be between"
+                f" {start_range} and {end_range}."
+            )
+        if end is not None and (end < start_range or end > end_range):
+            raise ValueError(
+                f"Invalid {feature_name}_end value: {end}. It should be between"
+                f" {start_range} and {end_range}."
+            )
 
 
-    if self.is_working_hour_range is not None:
-        DUMMIES.loc[
-            DUMMIES["dummy_func"] == "is_working_hour", ["dummy", "fourier"]
-        ] = "is_working_hour"
-    elif self.is_working_hour_range is None:
-        DUMMIES = DUMMIES[DUMMIES.dummy_func != "is_working_hour"]
+def _check_ts_freq(x_df, datetime_freq, ts_freq):
+    # Check 1: Determine whether input ts_freq is valid or not
+    freq_list = datetime_freq["frequency"].tolist()  # {"H", "D", "W", "M", "Q", "Y"}
+    if (ts_freq is not None) & (ts_freq not in freq_list):
+        raise ValueError(f"Invalid ts_freq specified, must be in: {freq_list}")
 
-    DUMMIES["child"] = (
-        DUMMIES["child"].astype("category").cat.reorder_categories(date_order)
-    )
+    # Check 2: Compare the frequency of main dataframe with 'ts_freq'
+    # 2-1: Determine frequency of main DataFrame, find in ranking
+    main_df_datetime_freq = pd.infer_freq(x_df["date_sequence"])[0]
+    rank_main_df = datetime_freq.loc[
+        datetime_freq["frequency"] == main_df_datetime_freq, "rank"
+    ].max()
+    rank_ts_freq = datetime_freq.loc[
+        datetime_freq["frequency"] == ts_freq, "rank"
+    ].max()
+    # 2-2: Compare the frequency of main df with 'ts_freq'
+    if rank_main_df < rank_ts_freq:
+        raise ValueError(
+            "Level of base dataframe ts_frequency  is lower than selected ts_freq"
+        )
 
-    flist = ["minimal", "efficient", "comprehensive"]
 
-    DUMMIES["feature_scope"] = (
-        DUMMIES["feature_scope"].astype("category").cat.reorder_categories(flist)
-    )
+def _extract_peaktime_features(
+    self,
+    cd,
+    datetime_freq,
+):
+    peaktime_data = cd.copy()
 
-    DUMMIES["feature_scope"] = pd.Categorical(DUMMIES["feature_scope"], ordered=True)
+    # Create is_peak_ columns
+    peak_config = {
+        "hour": ("H", self.peak_hour_start, self.peak_hour_end, "is_peak_hour"),
+        "day_of_week": ("D", self.peak_day_start, self.peak_day_end, "is_peak_day"),
+        "week_of_year": ("W", self.peak_week_start, self.peak_week_end, "is_peak_week"),
+        "month_of_year": (
+            "M",
+            self.peak_month_start,
+            self.peak_month_end,
+            "is_peak_month",
+        ),
+        "quarter": (
+            "Q",
+            self.peak_quarter_start,
+            self.peak_quarter_end,
+            "is_peak_quarter",
+        ),
+        "year": ("Y", self.peak_year_start, self.peak_year_end, "is_peak_year"),
+    }
 
-    DUMMIES["rank"] = DUMMIES["child"].cat.codes
+    for freq_name, (
+        freq_short,
+        start_values,
+        end_values,
+        is_peak_col,
+    ) in peak_config.items():
+        if (
+            start_values is not None
+            and end_values is not None
+            and self.ts_freq
+            in datetime_freq.loc[
+                datetime_freq["rank"]
+                >= (
+                    datetime_freq.loc[
+                        datetime_freq["frequency"] == freq_short, "rank"
+                    ].max()
+                )
+            ]["frequency"].tolist()
+        ):
+            for i, (start, end) in enumerate(zip(start_values, end_values)):
+                peaktime_data[f"{is_peak_col}_{i+1}"] = (
+                    (peaktime_data[f"{freq_name}"] >= start)
+                    & (peaktime_data[f"{freq_name}"] <= end)
+                ).astype(bool)
 
-    col = DUMMIES["child"]
-    DUMMIES.insert(0, "ts_frequency", col)
+            peak_columns = [
+                col
+                for col in peaktime_data.columns
+                if col.startswith(f"{is_peak_col}_")
+            ]
+            peaktime_data[is_peak_col] = (
+                peaktime_data[peak_columns].any(axis=1).astype(int)
+            )
 
-    DUMMIES = DUMMIES.replace(
-        {
-            "ts_frequency": {
-                "year": "Y",
-                "quarter": "Q",
-                "month": "M",
-                "week": "W",
-                "day": "D",
-                "hour": "H",
-                "minute": "T",
-                "second": "S",
-                "millisecond": "L",
-            }
-        }
-    )
+    # Create is_working_ columns
+    work_config = {
+        "hour": (
+            "H",
+            self.working_hour_start,
+            self.working_hour_end,
+            "is_working_hour",
+        ),
+    }
 
-    return DUMMIES
+    for freq_name, (
+        freq_short,
+        start_values,
+        end_values,
+        is_working_col,
+    ) in work_config.items():
+        if (
+            start_values is not None
+            and end_values is not None
+            and self.ts_freq
+            in datetime_freq.loc[
+                datetime_freq["rank"]
+                >= (
+                    datetime_freq.loc[
+                        datetime_freq["frequency"] == freq_short, "rank"
+                    ].max()
+                )
+            ]["frequency"].tolist()
+        ):
+            for i, (start, end) in enumerate(zip(start_values, end_values)):
+                peaktime_data[f"{is_working_col}_{i+1}"] = (
+                    (peaktime_data[f"{freq_name}"] >= start)
+                    & (peaktime_data[f"{freq_name}"] <= end)
+                ).astype(bool)
+
+            peak_columns = [
+                col
+                for col in peaktime_data.columns
+                if col.startswith(f"{is_working_col}_")
+            ]
+            peaktime_data[is_working_col] = (
+                peaktime_data[peak_columns].any(axis=1).astype(int)
+            )
+
+    if not self.keep_original_PeakTimeFeature_columns:
+        columns_to_drop = [
+            col
+            for col in peaktime_data.columns
+            if not col.startswith("is_") or col[-1].isdigit()
+        ]
+        peaktime_data.drop(columns=columns_to_drop, inplace=True)
+
+    return peaktime_data
