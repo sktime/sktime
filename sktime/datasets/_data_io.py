@@ -17,7 +17,7 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
-from sktime.datasets import load_from_tsfile
+from sktime.datasets._readers_writers.ts import load_from_tsfile
 from sktime.datasets._readers_writers.utils import _alias_mtype_check
 from sktime.datatypes import convert
 from sktime.datatypes._panel._convert import _make_column_names
