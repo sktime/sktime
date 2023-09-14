@@ -149,6 +149,7 @@ Trend forecasters
     TrendForecaster
     PolynomialTrendForecaster
     STLForecaster
+    FunctionForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
