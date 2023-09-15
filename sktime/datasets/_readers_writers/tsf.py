@@ -79,6 +79,7 @@ def _convert_tsf_to_hierarchical(
     return df
 
 
+# TODO: depreciate this and rename it load_from_tsf_to_dataframe for consistency
 def load_tsf_to_dataframe(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
