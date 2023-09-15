@@ -112,7 +112,7 @@ class PeakTimeFeature(BaseTransformer):
     ... peak_week_start=[35, 45], peak_week_end=[40, 52],
     ... peak_month_start=[1, 7], peak_month_end=[6, 12]
     ... )
-    >>> y_hat_peak = transformer.fit_transform(y)Z
+    >>> y_hat_peak = transformer.fit_transform(y)
     >>> y_hat_peak
 
     Note: we may have more than TWO intervals.
