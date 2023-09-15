@@ -145,7 +145,7 @@ all_extras_pandas2 = [
     "attrs",
     "cloudpickle",
     "dash!=2.9.0",
-    "dask<2023.7.1",
+    "dask<2023.9.3",
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5; python_version < '3.11'",
