@@ -75,48 +75,47 @@ class PeakTimeFeature(BaseTransformer):
     --------
     >>> from sktime.transformations.series.peak import PeakTimeFeature
     >>> from sktime.datasets import load_solar
-    >>> y =  load_solar()
+    >>> y = load_solar()
     >>> y = y.tz_localize(None)
     >>> y = y.asfreq("H")
 
-    --> Example ONE interval for peak hour and working hour
+    Example ONE interval for peak hour and working hour
     Returns columns is_peak_hour, is_working_hour (based on one start/end interval)
 
     >>> transformer = PeakTimeFeature(ts_freq="H",
-                                        peak_hour_start=[6], peak_hour_end=[9],
-                                        working_hour_start=[8], working_hour_end=[16]
-                                        )
+    ... peak_hour_start=[6], peak_hour_end=[9],
+    ... working_hour_start=[8], working_hour_end=[16]
+    ... )
     >>> y_hat_peak = transformer.fit_transform(y)
     >>> y_hat_peak
 
 
-    --> Example TWO intervals for peak hour and  working hour
+    Example TWO intervals for peak hour and  working hour
     Returns columns is_peak_hour, is_working_hour (based on two start/end intervals)
 
     >>> transformer = PeakTimeFeature(ts_freq="H",
-                                peak_hour_start=[6, 16], peak_hour_end=[9, 20],
-                                working_hour_start=[8, 15], working_hour_end=[12, 19]
-                                    )
+    ... peak_hour_start=[6, 16], peak_hour_end=[9, 20],
+    ... working_hour_start=[8, 15], working_hour_end=[12, 19]
+    ... )
     >>> y_hat_peak = transformer.fit_transform(y)
     >>> y_hat_peak
 
 
-    --> Example TWO intervals, We may have peak for different seasonality
-    -- Here an example for peak hour, peak day, peak week, peak month
-       Returns columns is_peak_hour, is_peak_day, is_peak_week, is_peak_month
-       (based on two start/end intervals)
+    Example TWO intervals, We may have peak for different seasonality
+    Here an example for peak hour, peak day, peak week, peak month
+    Returns columns is_peak_hour, is_peak_day, is_peak_week, is_peak_month
+    (based on two start/end intervals)
 
     >>> transformer = PeakTimeFeature(ts_freq="H",
-                                    peak_hour_start=[6, 16], peak_hour_end=[9, 20],
-                                    peak_day_start=[1, 2], peak_day_end=[2, 3],
-                                    peak_week_start=[35, 45], peak_week_end=[40, 52],
-                                    peak_month_start=[1, 7], peak_month_end=[6, 12]
-                                    )
+    ... peak_hour_start=[6, 16], peak_hour_end=[9, 20],
+    ... peak_day_start=[1, 2], peak_day_end=[2, 3],
+    ... peak_week_start=[35, 45], peak_week_end=[40, 52],
+    ... peak_month_start=[1, 7], peak_month_end=[6, 12]
+    ... )
     >>> y_hat_peak = transformer.fit_transform(y)Z
     >>> y_hat_peak
 
-
-    * Note: we may have more than TWO intervals.
+    Note: we may have more than TWO intervals.
 
     """
 
