@@ -64,7 +64,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.forecasting.model_selection import SlidingWindowSplitter
+    >>> from sktime.split import SlidingWindowSplitter
     >>> ts = np.arange(10)
     >>> splitter = SlidingWindowSplitter(fh=[2, 4], window_length=3, step_length=2)
     >>> list(splitter.split(ts)) # doctest: +SKIP

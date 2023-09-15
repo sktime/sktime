@@ -58,7 +58,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> ts = np.arange(10)
     >>> splitter = ExpandingWindowSplitter(fh=[2, 4], initial_window=5, step_length=2)
     >>> list(splitter.split(ts)) # doctest: +SKIP

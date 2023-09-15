@@ -32,7 +32,7 @@ class SameLocSplitter(BaseSplitter):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import (
+    >>> from sktime.split import (
     ...    ExpandingWindowSplitter,
     ...    SameLocSplitter,
     ... )
@@ -109,7 +109,7 @@ class SameLocSplitter(BaseSplitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.datasets import load_airline
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.split import ExpandingWindowSplitter
 
         y = load_airline()
         y_template = y[:60]

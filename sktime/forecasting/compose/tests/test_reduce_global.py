@@ -26,8 +26,8 @@ from sktime.datatypes import get_examples
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+from sktime.split import temporal_train_test_split
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 

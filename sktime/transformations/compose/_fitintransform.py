@@ -39,7 +39,7 @@ class FitInTransform(BaseTransformer):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.transformations.compose import FitInTransform
     >>> from sktime.transformations.series.impute import Imputer
     >>> y, X = load_longley()

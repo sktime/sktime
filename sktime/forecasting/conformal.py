@@ -94,7 +94,7 @@ class ConformalIntervals(BaseForecaster):
     >>> from sktime.forecasting.conformal import ConformalIntervals
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.param_est.plugin import PluginParamsForecaster
     >>> # part 1 = grid search
     >>> cv = ExpandingWindowSplitter(fh=[1, 2, 3])  # doctest: +SKIP

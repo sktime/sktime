@@ -509,9 +509,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     Examples
     --------
     >>> from sktime.datasets import load_shampoo_sales
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.split import (
     ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()

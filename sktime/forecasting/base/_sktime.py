@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
-from sktime.forecasting.model_selection import CutoffSplitter
+from sktime.split import CutoffSplitter
 from sktime.utils.datetime import _shift
 
 

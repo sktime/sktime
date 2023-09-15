@@ -5,7 +5,6 @@ import pytest
 
 from sktime.benchmarking.benchmarks import coerce_estimator_and_id
 from sktime.benchmarking.forecasting import ForecastingBenchmark
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import TrendForecaster
 from sktime.performance_metrics.forecasting import (
@@ -13,6 +12,7 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanSquaredPercentageError,
 )
+from sktime.split import ExpandingWindowSplitter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 EXPECTED_RESULTS_1 = pd.DataFrame(

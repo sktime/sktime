@@ -13,8 +13,8 @@ import pytest
 
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import temporal_train_test_split
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 

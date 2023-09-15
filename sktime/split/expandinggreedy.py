@@ -39,7 +39,7 @@ class ExpandingGreedySplitter(BaseSplitter):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.forecasting.model_selection import ExpandingGreedySplitter
+    >>> from sktime.split import ExpandingGreedySplitter
 
     >>> ts = np.arange(10)
     >>> splitter = ExpandingGreedySplitter(test_size=3, folds=2)

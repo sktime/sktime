@@ -7,7 +7,7 @@ import pytest
 from numpy.testing import assert_array_equal
 
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 

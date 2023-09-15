@@ -4,7 +4,7 @@ __author__ = ["aiwalter", "fkiraly"]
 from numpy.testing import assert_array_equal
 
 from sktime.datasets import load_longley
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
 from sktime.transformations.compose import YtoX
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag

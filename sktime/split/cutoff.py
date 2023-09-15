@@ -144,7 +144,7 @@ class CutoffSplitter(BaseSplitter):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.forecasting.model_selection import CutoffSplitter
+    >>> from sktime.split import CutoffSplitter
     >>> ts = np.arange(10)
     >>> splitter = CutoffSplitter(fh=[2, 4], cutoffs=np.array([3, 5]), window_length=3)
     >>> list(splitter.split(ts)) # doctest: +SKIP

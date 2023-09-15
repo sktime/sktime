@@ -197,7 +197,7 @@ class VARMAX(_StatsModelsAdapter):
     --------
     >>> from sktime.forecasting.varmax import VARMAX
     >>> from sktime.datasets import load_macroeconomic
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_macroeconomic()  # doctest: +SKIP
     >>> forecaster = VARMAX(suppress_warnings=True)  # doctest: +SKIP
     >>> forecaster.fit(y[['realgdp', 'unemp']])  # doctest: +SKIP

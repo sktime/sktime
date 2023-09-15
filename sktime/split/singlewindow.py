@@ -52,7 +52,7 @@ class SingleWindowSplitter(BaseSplitter):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.forecasting.model_selection import SingleWindowSplitter
+    >>> from sktime.split import SingleWindowSplitter
     >>> ts = np.arange(10)
     >>> splitter = SingleWindowSplitter(fh=[2, 4], window_length=3)
     >>> list(splitter.split(ts)) # doctest: +SKIP

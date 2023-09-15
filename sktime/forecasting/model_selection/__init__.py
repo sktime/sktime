@@ -17,12 +17,7 @@ __all__ = [
     "ForecastingSkoptSearchCV",
 ]
 
-from sktime.forecasting.model_selection._tune import (
-    ForecastingGridSearchCV,
-    ForecastingRandomizedSearchCV,
-    ForecastingSkoptSearchCV,
-)
-from sktime.split import (
+from sktime.forecasting.model_selection._split import (
     CutoffSplitter,
     ExpandingGreedySplitter,
     ExpandingWindowSplitter,
@@ -31,4 +26,9 @@ from sktime.split import (
     SlidingWindowSplitter,
     TestPlusTrainSplitter,
     temporal_train_test_split,
+)
+from sktime.forecasting.model_selection._tune import (
+    ForecastingGridSearchCV,
+    ForecastingRandomizedSearchCV,
+    ForecastingSkoptSearchCV,
 )

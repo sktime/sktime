@@ -11,12 +11,9 @@ from sktime.datasets import load_airline
 from sktime.datatypes import convert_to, scitype_to_mtype
 from sktime.forecasting.conformal import ConformalIntervals
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    SlidingWindowSplitter,
-)
 from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
+from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.tests.test_switch import run_test_for_class
 
 INTERVAL_WRAPPERS = [ConformalIntervals, NaiveVariance]

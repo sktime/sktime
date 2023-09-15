@@ -28,7 +28,7 @@ class TestPlusTrainSplitter(BaseSplitter):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
 
     >>> y = load_airline()
     >>> y_template = y[:60]
@@ -101,7 +101,7 @@ class TestPlusTrainSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.split import ExpandingWindowSplitter
 
         cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
 
