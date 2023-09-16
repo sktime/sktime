@@ -87,7 +87,7 @@ class FunctionForecaster(BaseForecaster):
         t = fh.to_relative(self.cutoff)
         return pd.Series(
             self.function(np.array(t), *self.params_[0]),
-            index=pd.DatetimeIndex(fh.to_absolute(self.cutoff)),
+            index=list(fh.to_absolute(self.cutoff)),
         )
 
     @classmethod
