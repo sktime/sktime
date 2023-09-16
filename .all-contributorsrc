@@ -2346,6 +2346,16 @@
         "doc",
         "maintenance"
       ]
+    },
+    {
+      "login": "BensHamza",
+      "name": "Hamza Benslimane",
+      "avatar_url": "https://avatars.githubusercontent.com/u/96446862?v=4",
+      "profile": "https://github.com/BensHamza",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }
