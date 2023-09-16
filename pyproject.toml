@@ -77,7 +77,7 @@ clustering = [
 forecasting = [
     "pmdarima>=1.8,!=1.8.1,<2.1",
     "prophet>=1.1,<1.2",
-    "statsforecast>=0.5.2,<1.6",
+    "statsforecast>=0.5.2,<1.7",
     "statsmodels>=0.12.1,<0.15",
     "tbats>=1.1,<1.2",
 ]
