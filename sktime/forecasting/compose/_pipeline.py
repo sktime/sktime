@@ -676,12 +676,16 @@ class ForecastingPipeline(_Pipeline):
         return self
 
     def _transform(self, X=None, y=None):
-        if isinstance(y, ForecastingHorizon):
-            y = y.to_absolute_index(self.cutoff)
-            y = pd.DataFrame(index=y)
         # If X is not given or ignored, just passthrough the data without transformation
         if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
             for _, _, transformer in self._iter_transformers():
+                y_mtype = transformer.get_tag("y_inner_mtype", "None")
+                uses_y = y_mtype not in [None, "None"]
+                if isinstance(y, ForecastingHorizon) and uses_y:
+                    y = y.to_absolute_index(self.cutoff)
+                    y = pd.DataFrame(index=y)
+                else:
+                    y = None
                 X = transformer.transform(X=X, y=y)
         return X
 
