@@ -57,7 +57,9 @@ class FunctionForecaster(BaseForecaster):
         self : reference to self
         """
         t = ForecastingHorizon(y.index, is_relative=False).to_relative(self.cutoff)
-        self.params_ = curve_fit(self.function, np.array(t), y.values, self.initial_params)
+        self.params_ = curve_fit(
+            self.function, np.array(t), y.values, self.initial_params
+        )
         return self
 
     def _predict(self, fh, X=None):
