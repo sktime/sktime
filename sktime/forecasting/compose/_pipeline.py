@@ -251,7 +251,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         """
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.compose._reduce import YfromX
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.detrend import Detrender
@@ -267,12 +267,12 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", DirectReductionForecaster.create_test_instance()),
+            ("forecaster", YfromX.create_test_instance()),
         ]
         params2 = {"steps": STEPS2}
 
         params3 = {
-            "steps": [Detrender(), DirectReductionForecaster.create_test_instance()]
+            "steps": [Detrender(), YfromX.create_test_instance()]
         }
 
         return [params1, params2, params3]
@@ -679,9 +679,8 @@ class ForecastingPipeline(_Pipeline):
         # If X is not given or ignored, just passthrough the data without transformation
         if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
             for _, _, transformer in self._iter_transformers():
-                y_mtype = transformer.get_tag("y_inner_mtype", "None")
-                uses_y = y_mtype not in [None, "None"]
-                if isinstance(y, ForecastingHorizon) and uses_y:
+                requires_y = transformer.get_tag("requires_y", False)
+                if isinstance(y, ForecastingHorizon) and requires_y:
                     y = y.to_absolute_index(self.cutoff)
                     y = pd.DataFrame(index=y)
                 else:
