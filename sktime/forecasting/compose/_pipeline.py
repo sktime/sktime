@@ -620,7 +620,8 @@ class ForecastingPipeline(_Pipeline):
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
         """
-        X = self._transform(X=X)
+        
+        X = self._transform(X=X, y=y)
         return self.forecaster_.predict_var(fh=fh, X=X, cov=cov)
 
     # todo: does not work properly for multivariate or hierarchical
