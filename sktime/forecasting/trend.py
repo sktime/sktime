@@ -154,10 +154,11 @@ class TrendForecaster(BaseForecaster):
 class PolynomialTrendForecaster(BaseForecaster):
     r"""Forecast time series data with a polynomial trend.
 
-    Uses a `sklearn` regressor specified by the `regressor` parameter to perform regression
-    on time series values against their corresponding indices, after extraction of polynomial features.
-    Same `TrendForecaster` where `regressor` is pipelined with transformation step
-    `PolynomialFeatures(degree, with_intercept)` applied to time, at the start.
+    Uses a `sklearn` regressor specified by the `regressor` parameter
+    to perform regression on time series values against their corresponding indices,
+    after extraction of polynomial features.
+    Same as `TrendForecaster` where `regressor` is pipelined with transformation step
+    `PolynomialFeatures(degree, with_intercept)` applied to time index, at the start.
 
     In `fit`, for input time series :math:`(v_i, p(t_i)), i = 1, \dots, T`,
     where :math:`v_i` are values, :math:`t_i` are time stamps,
