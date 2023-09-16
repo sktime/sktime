@@ -6,8 +6,10 @@ __all__ = [
     "TrendForecaster",
     "PolynomialTrendForecaster",
     "STLForecaster",
+    "FunctionForecaster",
 ]
 
+from sktime.forecasting.trend._function_forecaster import FunctionForecaster
 from sktime.forecasting.trend._polynomial_trend_forecaster import (
     PolynomialTrendForecaster,
 )
