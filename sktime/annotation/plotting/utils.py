@@ -139,10 +139,10 @@ def plot_time_series_with_profiles(
 
     for a in ax:
         for tick in a.xaxis.get_major_ticks():
-            tick.label.set_fontsize(font_size)
+            tick.label1.set_fontsize(font_size)
 
         for tick in a.yaxis.get_major_ticks():
-            tick.label.set_fontsize(font_size)
+            tick.label1.set_fontsize(font_size)
 
     if true_cps is not None:
         for idx, true_cp in enumerate(true_cps):

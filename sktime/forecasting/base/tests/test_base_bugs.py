@@ -73,4 +73,4 @@ def test_predict_residuals_conversion():
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = pipe.predict_residuals()
 
-    assert type(result) == type(y_train)
+    assert type(result) is type(y_train)

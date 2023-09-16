@@ -185,6 +185,8 @@ class ConformalIntervals(BaseForecaster):
                 initial_window=self.initial_window,
                 sample_frac=self.sample_frac,
             )
+        else:
+            self.residuals_matrix_ = None
 
         return self
 
