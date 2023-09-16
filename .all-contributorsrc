@@ -1740,7 +1740,16 @@
       "name": "Benedikt Heidrich",
       "profile": "https://github.com/benheid",
       "contributions": [
-        "code"
+        "bug",
+        "code",
+        "design",
+        "doc",
+        "example",
+        "ideas",
+        "mentoring",
+        "question",
+        "review",
+        "tutorial"
       ]
     },
     {
@@ -2336,6 +2345,16 @@
       "contributions": [
         "doc",
         "maintenance"
+      ]
+    },
+    {
+      "login": "BensHamza",
+      "name": "Hamza Benslimane",
+      "avatar_url": "https://avatars.githubusercontent.com/u/96446862?v=4",
+      "profile": "https://github.com/BensHamza",
+      "contributions": [
+        "bug",
+        "code"
       ]
     }
   ]

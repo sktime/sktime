@@ -81,6 +81,42 @@ class ColumnEnsembleTransformer(
         ``remainder`` parameter. If there are remaining columns, then
         ``len(transformers_)==len(transformations)+1``, otherwise
         ``len(transformers_)==len(transformations)``.
+
+    Examples
+    --------
+    .. Doctest::
+
+        >>> import pandas as pd
+        >>> from sktime.transformations.compose import ColumnEnsembleTransformer
+        >>> from sktime.transformations.series.detrend import Detrender
+        >>> from sktime.transformations.series.difference import Differencer
+        >>> from sktime.datasets import load_longley
+
+    Using integers (column iloc references) for indexing:
+
+    .. Doctest::
+
+        >>> y = load_longley()[1][["GNP", "UNEMP"]]
+        >>> transformer = ColumnEnsembleTransformer([("difference", Differencer(), 1),
+        ...                                 ("trend", Detrender(), 0),
+        ...                                 ])
+        >>> y_transformed = transformer.fit_transform(y)
+
+    Using strings for indexing:
+
+    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    >>> transformer = ColumnEnsembleTransformer(
+    ...     [("foo", Differencer(), "a"), ("bar", Detrender(), "b")]
+    ... )
+    >>> transformed_df = transformer.fit_transform(df)
+
+    Applying one transformer to multiple columns, multivariate:
+
+    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+    >>> transformer = ColumnEnsembleTransformer(
+    ...    [("ab", Differencer(), ["a", 1]), ("c", Detrender(), 2)]
+    ... )
+    >>> transformed_df = transformer.fit_transform(df)
     """
 
     _tags = {
