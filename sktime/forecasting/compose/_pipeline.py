@@ -161,16 +161,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.23.0 - get rid of the "Coverage" case treatment
-                        # deal with the "Coverage" case, we need to get rid of this
-                        #   i.d., special 1st level name of prediction objet
-                        #   in the case where there is only one variable
-                        if len(yt[ix].columns) == 1:
-                            temp = yt[ix].columns
-                            yt[ix].columns = self._y.columns
                         yt[ix] = transformer.inverse_transform(yt[ix], X)
-                        if len(yt[ix].columns) == 1:
-                            yt[ix].columns = temp
                     y = pd.concat(yt, axis=1)
                     flipcols = [n - 1] + list(range(n - 1))
                     y.columns = y.columns.reorder_levels(flipcols)
