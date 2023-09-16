@@ -107,6 +107,8 @@ def y_dict():
     y_numeric.index = pd.to_numeric(y_numeric.index)
     y_dict["y_numeric"] = y_numeric
 
+    return y_dict
+
 
 # Get different WindowSummarizer functions
 kwargs = WindowSummarizer.get_test_params()[0]

@@ -1875,6 +1875,32 @@ def temporal_train_test_split(
     References
     ----------
     .. [1]  adapted from https://github.com/alkaline-ml/pmdarima/
+
+    Examples
+    --------
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.datasets import load_airline, load_osuleaf
+    >>> from sktime.utils._testing.panel import _make_panel
+
+    >>> # univariate time series
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=36)
+    >>> y_test.shape
+    (36,)
+
+    >>> # panel time series
+    >>> y = _make_panel(n_instances = 2, n_timepoints = 20)
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=5)
+    >>> # last 5 timepoints for each instance
+    >>> y_test.shape
+    (10, 1)
+
+    >>> # time series w/ exogenous variables
+    >>> X, y = load_osuleaf(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = temporal_train_test_split(
+    ...     X, y, test_size=100)
+    >>> X_test.shape, y_test.shape
+    ((100, 1), (100,))
     """
     if fh is not None:
         if test_size is not None or train_size is not None:
