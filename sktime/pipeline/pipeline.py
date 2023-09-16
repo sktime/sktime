@@ -159,12 +159,12 @@ class Pipeline(BaseEstimator):
 
     def __init__(self, steps=None):
         warnings.warn(
-            "This generalised graphical pipeline is experimental. "
-            "Thus, there are usual risk with cutting edge features. "
-            "Mature pipelines are Pipelines as ForecastingPipeline,"
-            "ClassificationPipeline, etc."
-            "Do learn about them you might want to take a look into "
-            "the notebooks 01_forecasting.ipynb and "
+            "This generalised graphical pipeline is experimental, "
+            "with all the usual risks of edge features. "
+            "For mature alternatives, use single-purpose pipelines and compositors, "
+            "such as TransformedTargetForecaster, ForecastingPipeline, "
+            "ClassificationPipeline, etc., see for instance "
+            "notebooks 01_forecasting.ipynb and "
             "02_classification.ipynb at"
             "https://github.com/sktime/sktime/blob/main/examples/.",
             stacklevel=1,
