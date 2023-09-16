@@ -271,9 +271,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {
-            "steps": [Detrender(), YfromX.create_test_instance()]
-        }
+        params3 = {"steps": [Detrender(), YfromX.create_test_instance()]}
 
         return [params1, params2, params3]
 
