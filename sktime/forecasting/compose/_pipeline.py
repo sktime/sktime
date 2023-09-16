@@ -161,7 +161,9 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.23.0 - get rid of the "Coverage" case treatment
+                        # todo 0.24.0 - check why this cannot be easily removed
+                        # in theory, we should get rid of the "Coverage" case treatment
+                        # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
                         #   i.d., special 1st level name of prediction objet
                         #   in the case where there is only one variable
