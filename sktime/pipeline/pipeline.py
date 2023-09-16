@@ -93,7 +93,7 @@ class Pipeline(BaseEstimator):
     >>> from sktime.datasets import load_arrow_head, load_longley
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.pipeline.pipeline import Pipeline
+    >>> from sktime.pipeline import Pipeline
     >>> from sktime.transformations.compose import Id
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.transformations.series.exponent import ExponentTransformer
