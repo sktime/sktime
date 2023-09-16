@@ -47,7 +47,7 @@ class FunctionForecaster(BaseForecaster):
         y : pd.DataFrame
             time series to which to fit the forecaster.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Ignored in fit
         X : pd.DataFrame, optional (default=None)
             Ignored in fit
@@ -56,11 +56,7 @@ class FunctionForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        t = ForecastingHorizon(y.index, is_relative=False).to_relative(
-            pd.DatetimeIndex(
-                [self._y.index[0]], name=self.cutoff.name, freq=self.cutoff.freq
-            )
-        )
+        t = ForecastingHorizon(y.index, is_relative=False).to_relative(self.cutoff)
         self.params_ = curve_fit(self.function, list(t), y.values, self.initial_params)
         return self
 
@@ -86,11 +82,7 @@ class FunctionForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        t = fh.to_relative(
-            pd.DatetimeIndex(
-                [self._y.index[0]], name=self.cutoff.name, freq=self.cutoff.freq
-            )
-        )
+        t = fh.to_relative(self.cutoff)
         return pd.Series(
             self.function(np.array(t), *self.params_[0]),
             index=pd.DatetimeIndex(fh.to_absolute(self.cutoff)),
@@ -118,7 +110,7 @@ class FunctionForecaster(BaseForecaster):
 
         params = {
             "function": test_function,
-            "initial_params": {"shift": 0, "offset": 0},
+            "initial_params": [0, 0],
         }
 
         return params
