@@ -312,22 +312,24 @@ class STLForecaster(BaseForecaster):
 
     The STLForecaster applies the following algorithm, also see [1]_.
 
-    in `fit`:
-    1. use `statsmodels` `STL` [2]_ to decompose the given series `y` into
-        the three components: `trend`, `season` and `residuals`.
-    2. fit clones of `forecaster_trend` to `trend`, `forecaster_seasonal` to `season`,
-        and `forecaster_resid` to `residuals`, using `y`, `X`, `fh` from `fit`.
-        The forecasters are fitted as clones, stored in the attributes
-        `forecaster_trend_`, `forecaster_seasonal_`, `forecaster_resid_`.
+    In `fit`:
+
+    1. Use `statsmodels` `STL` [2]_ to decompose the given series `y` into
+       the three components: `trend`, `season` and `residuals`.
+    2. Fit clones of `forecaster_trend` to `trend`, `forecaster_seasonal` to `season`,
+       and `forecaster_resid` to `residuals`, using `y`, `X`, `fh` from `fit`.
+       The forecasters are fitted as clones, stored in the attributes
+       `forecaster_trend_`, `forecaster_seasonal_`, `forecaster_resid_`.
 
     In `predict`, forecasts as follows:
-    1. obtain forecasts `y_pred_trend` from `forecaster_trend_`,
-        `y_pred_seasonal` from `forecaster_seasonal_`, and
-        `y_pred_residual` from `forecaster_resid_`, using `X`, `fh`, from `predict`.
-    2. recompose `y_pred` as `y_pred = y_pred_trend + y_pred_seasonal + y_pred_residual`
-    3. return `y_pred`
 
-    `update` refits entirely, i.e., behaves as `fit` on all data seen so far.
+    1. Obtain forecasts `y_pred_trend` from `forecaster_trend_`,
+       `y_pred_seasonal` from `forecaster_seasonal_`, and
+       `y_pred_residual` from `forecaster_resid_`, using `X`, `fh`, from `predict`.
+    2. Recompose `y_pred` as `y_pred = y_pred_trend + y_pred_seasonal + y_pred_residual`
+    3. Return `y_pred`
+
+        `update` refits entirely, i.e., behaves as `fit` on all data seen so far.
 
     Parameters
     ----------
