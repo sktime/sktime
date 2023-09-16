@@ -28,14 +28,13 @@ def _generate_vmd_testdata(T=1000, f_1=2, f_2=24, f_3=288, noise=0.1):
     noise : float
         noise level
     """
-
-    #. Time Domain 0 to T
+    # Time Domain 0 to T
     T = 1000
     fs = 1/T
     t = np.arange(1, T + 1) /T
     freqs = 2*np.pi*(t-0.5-fs)/(fs)
 
-    #. modes
+    # modes
     v_1 = (np.cos(2 * np.pi * f_1 * t))
     v_2 = 1/4*(np.cos(2 * np.pi * f_2 * t))
     v_3 = 1/16*(np.cos(2 * np.pi * f_3 * t))
