@@ -679,6 +679,8 @@ class ForecastingPipeline(_Pipeline):
         # If X is not given or ignored, just passthrough the data without transformation
         if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
             for _, _, transformer in self._iter_transformers():
+                # if y is required but not passed,
+                # we create a zero-column y from the forecasting horizon
                 requires_y = transformer.get_tag("requires_y", False)
                 if isinstance(y, ForecastingHorizon) and requires_y:
                     y = y.to_absolute_index(self.cutoff)
