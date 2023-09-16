@@ -1,8 +1,8 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements trend based forecasters."""
+"""Implements STLForecaster based on statsmodels."""
 
-__author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "benheid"]
+__author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"]
 __all__ = ["STLForecaster"]
 
 import pandas as pd
