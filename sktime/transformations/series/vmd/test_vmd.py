@@ -3,8 +3,8 @@
 
 __author__ = ["fkiraly", "DaneLyttinen"]
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.trend import TrendForecaster
@@ -30,14 +30,12 @@ def _generate_vmd_testdata(T=1000, f_1=2, f_2=24, f_3=288, noise=0.1):
     """
     # Time Domain 0 to T
     T = 1000
-    fs = 1/T
-    t = np.arange(1, T + 1) /T
-    freqs = 2*np.pi*(t-0.5-fs)/(fs)
+    t = np.arange(1, T + 1) / T
 
     # modes
-    v_1 = (np.cos(2 * np.pi * f_1 * t))
-    v_2 = 1/4*(np.cos(2 * np.pi * f_2 * t))
-    v_3 = 1/16*(np.cos(2 * np.pi * f_3 * t))
+    v_1 = np.cos(2 * np.pi * f_1 * t)
+    v_2 = 1 / 4 * (np.cos(2 * np.pi * f_2 * t))
+    v_3 = 1 / 16 * (np.cos(2 * np.pi * f_3 * t))
 
     f = v_1 + v_2 + v_3 + noise * np.random.randn(v_1.size)
 
