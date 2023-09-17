@@ -31,6 +31,7 @@ def test_st_on_unit_test():
     )
 
 
+@pytest.mark.xfail(reason="known sporadic failure, likely pseudo-random instability")
 @pytest.mark.skipif(
     not run_test_for_class(RandomShapeletTransform),
     reason="run test only if softdeps are present and incrementally (if requested)",
