@@ -1,4 +1,3 @@
-#!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract peak/working hour features from datetimeindex."""
 __author__ = ["ali-parizad", "VyomkeshVyas"]
@@ -87,8 +86,6 @@ class PeakTimeFeature(BaseTransformer):
     ... working_hour_start=[8], working_hour_end=[16]
     ... )
     >>> y_hat_peak = transformer.fit_transform(y)
-    >>> y_hat_peak
-
 
     Example TWO intervals for peak hour and  working hour
     Returns columns is_peak_hour, is_working_hour (based on two start/end intervals)
@@ -98,8 +95,6 @@ class PeakTimeFeature(BaseTransformer):
     ... working_hour_start=[8, 15], working_hour_end=[12, 19]
     ... )
     >>> y_hat_peak = transformer.fit_transform(y)
-    >>> y_hat_peak
-
 
     Example TWO intervals, We may have peak for different seasonality
     Here an example for peak hour, peak day, peak week, peak month
@@ -113,10 +108,6 @@ class PeakTimeFeature(BaseTransformer):
     ... peak_month_start=[1, 7], peak_month_end=[6, 12]
     ... )
     >>> y_hat_peak = transformer.fit_transform(y)
-    >>> y_hat_peak
-
-    Note: we may have more than TWO intervals.
-
     """
 
     _tags = {
