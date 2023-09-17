@@ -293,12 +293,12 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     if extract_path is None:
         extract_path = os.path.join(MODULE, "local_data")
 
-    if name in _list_available_datasets(extract_path):
-        return _get_data_from(extract_path)
-
     # now we know the dataset is not in the download/cache path
     # so we need to download it
     _mkdir_if_not_exist(extract_path)
+
+    if name in _list_available_datasets(extract_path):
+        return _get_data_from(extract_path)
 
     # download the dataset from CLASSIF_URLS
     # will try multiple mirrors if necessary
