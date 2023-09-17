@@ -195,8 +195,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -234,14 +233,10 @@ class ThetaForecaster(ExponentialSmoothing):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = BaseForecaster._predict_interval(
-            self, fh, X, coverage, legacy_interface
-        )
-
+        pred_int = BaseForecaster._predict_interval(self, fh, X, coverage)
         return pred_int
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -265,9 +260,7 @@ class ThetaForecaster(ExponentialSmoothing):
                 at quantile probability in second col index, for the row index.
         """
         # prepare return data frame
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
         index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)
