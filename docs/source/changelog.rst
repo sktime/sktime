@@ -21,7 +21,7 @@ Highlights
 
 * Graphical Pipelines for any learning task (polymorphic) - ``Pipeline`` (:pr:`4652`) :user:`benHeid`
 * all ``tslearn`` distances and kernels are now available in ``sktime`` (:pr:`5039`) :user:`fkiraly`
-* new transformer: ``VmdTransformer`` (variational mode decomposition) - ``vmdpy`` is now maintained in ``sktime`` (:pr:`5129`) :user:`DaneLyttinen`, :user:`vcarvo`
+* new transformer: ``VmdTransformer`` (variational mode decomposition) - ``vmdpy`` is now maintained in ``sktime`` (:pr:`5129`) :user:`DaneLyttinen`, :user:`vrcarva`
 * new transformer: interface to ``statsmodels`` MSTL (:pr:`5125`) :user:`luca-miniati`
 * new classifier: ``MrSEQL`` time series classifier (:pr:`5178`) :user:`lnthach`, :user:`heerme`, :user:`fkiraly`
 * new ``sktime`` native probability distributions: Cauchy, empirical, Laplace, Student t (:pr:`5050`, :pr:`5094`, :pr:`5161`) :user:`Alex-JG3`, :user:`fkiraly`
@@ -222,7 +222,7 @@ Contributors
 :user:`Ram0nB`,
 :user:`SmirnGregHM`,
 :user:`sniafas`,
-:user:`vcarvo`,
+:user:`vrcarva`,
 :user:`yarnabrina`
 
 Version 0.22.0 - 2023-08-18
