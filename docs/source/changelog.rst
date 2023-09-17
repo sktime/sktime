@@ -13,8 +13,38 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
-Version 0.23.0 - 2023-09-1X
+Version 0.23.0 - 2023-09-17
 ---------------------------
+
+Maintenance release - scheduled deprecations.
+
+For last non-maintenance content updates, see 0.22.1.
+
+Contents
+~~~~~~~~
+
+* end of change period in column naming convention for univariate probabilistic forecasts,
+  see below for details for users and developers
+* scheduled 0.23.0 deprecation actions
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting - change of column naming for univariate probabilistic forecasts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Returns of forecasters' ``predict_quantiles`` and ``predict_intervals``
+are now consistent between the univariate case and multivariate cases:
+the name of the uppermost (0-indexed) column level is always be the variable name.
+
+Previously, in the univariate case, it was always ``Coverage`` or ``Quantiles``.
+
+This has been preceded by a change transition period since 0.21.0.
+See the 0.21.0 and 0.22.0 changelogs for further details.
+
+Users and extenders who have not yet completed their downstream actions
+should remain on 0.22.1 until they have completed their actions, and then upgrade
+to 0.23.0 or later.
 
 
 Version 0.22.1 - 2023-09-17
