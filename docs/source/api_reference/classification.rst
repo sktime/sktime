@@ -177,6 +177,7 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
+    MrSEQL
     MrSQM
 
 sklearn
