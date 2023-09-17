@@ -26,7 +26,9 @@ def _get_X_numpy_int_from_pandas(x):
 class TrendForecaster(BaseForecaster):
     r"""Trend based forecasts of time series data, regressing values on index.
 
-    Uses a `sklearn` regressor `regressor` to regress values of time series on index:
+    Uses a `sklearn` regressor specified by the `regressor` parameter
+    to perform regression on time series values against their corresponding indices,
+    providing trend-based forecasts:
 
     In `fit`, for input time series :math:`(v_i, t_i), i = 1, \dots, T`,
     where :math:`v_i` are values and :math:`t_i` are time stamps,
@@ -152,10 +154,11 @@ class TrendForecaster(BaseForecaster):
 class PolynomialTrendForecaster(BaseForecaster):
     r"""Forecast time series data with a polynomial trend.
 
-    Uses a `sklearn` regressor `regressor` to regress values of time series on index,
+    Uses a `sklearn` regressor specified by the `regressor` parameter
+    to perform regression on time series values against their corresponding indices,
     after extraction of polynomial features.
-    Same `TrendForecaster` where `regressor` is pipelined with transformation step
-    `PolynomialFeatures(degree, with_intercept)` applied to time, at the start.
+    Same as `TrendForecaster` where `regressor` is pipelined with transformation step
+    `PolynomialFeatures(degree, with_intercept)` applied to time index, at the start.
 
     In `fit`, for input time series :math:`(v_i, p(t_i)), i = 1, \dots, T`,
     where :math:`v_i` are values, :math:`t_i` are time stamps,
@@ -309,22 +312,24 @@ class STLForecaster(BaseForecaster):
 
     The STLForecaster applies the following algorithm, also see [1]_.
 
-    in `fit`:
-    1. use `statsmodels` `STL` [2]_ to decompose the given series `y` into
-        the three components: `trend`, `season` and `residuals`.
-    2. fit clones of `forecaster_trend` to `trend`, `forecaster_seasonal` to `season`,
-        and `forecaster_resid` to `residuals`, using `y`, `X`, `fh` from `fit`.
-        The forecasters are fitted as clones, stored in the attributes
-        `forecaster_trend_`, `forecaster_seasonal_`, `forecaster_resid_`.
+    In `fit`:
+
+    1. Use `statsmodels` `STL` [2]_ to decompose the given series `y` into
+       the three components: `trend`, `season` and `residuals`.
+    2. Fit clones of `forecaster_trend` to `trend`, `forecaster_seasonal` to `season`,
+       and `forecaster_resid` to `residuals`, using `y`, `X`, `fh` from `fit`.
+       The forecasters are fitted as clones, stored in the attributes
+       `forecaster_trend_`, `forecaster_seasonal_`, `forecaster_resid_`.
 
     In `predict`, forecasts as follows:
-    1. obtain forecasts `y_pred_trend` from `forecaster_trend_`,
-        `y_pred_seasonal` from `forecaster_seasonal_`, and
-        `y_pred_residual` from `forecaster_resid_`, using `X`, `fh`, from `predict`.
-    2. recompose `y_pred` as `y_pred = y_pred_trend + y_pred_seasonal + y_pred_residual`
-    3. return `y_pred`
 
-    `update` refits entirely, i.e., behaves as `fit` on all data seen so far.
+    1. Obtain forecasts `y_pred_trend` from `forecaster_trend_`,
+       `y_pred_seasonal` from `forecaster_seasonal_`, and
+       `y_pred_residual` from `forecaster_resid_`, using `X`, `fh`, from `predict`.
+    2. Recompose `y_pred` as `y_pred = y_pred_trend + y_pred_seasonal + y_pred_residual`
+    3. Return `y_pred`
+
+        `update` refits entirely, i.e., behaves as `fit` on all data seen so far.
 
     Parameters
     ----------
