@@ -35,7 +35,7 @@ Forecasting - change of column naming for univariate probabilistic forecasts
 
 Returns of forecasters' ``predict_quantiles`` and ``predict_intervals``
 are now consistent between the univariate case and multivariate cases:
-the name of the uppermost (0-indexed) column level is always be the variable name.
+the name of the uppermost (0-indexed) column level is always the variable name.
 
 Previously, in the univariate case, it was always ``Coverage`` or ``Quantiles``.
 
@@ -43,7 +43,7 @@ This has been preceded by a change transition period since 0.21.0.
 See the 0.21.0 and 0.22.0 changelogs for further details.
 
 Users and extenders who have not yet completed their downstream actions
-should remain on 0.22.1 until they have completed their actions, and then upgrade
+should remain on 0.22.X until they have completed their actions, and then upgrade
 to 0.23.0 or later.
 
 
