@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Configuration file for the Sphinx documentation builder."""
 
+import datetime
 import os
 import sys
 from importlib import import_module
@@ -18,8 +19,9 @@ if not ON_READTHEDOCS:
     sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
+current_year = datetime.datetime.now().year
 project = "sktime"
-project_copyright = "2019 - present (BSD-3-Clause License)"
+project_copyright = f"2019 - {current_year} (BSD-3-Clause License)"
 author = "sktime developers"
 
 # The full version, including alpha/beta/rc tags
@@ -51,6 +53,7 @@ extensions = [
     "sphinx_design",
     "sphinx_issues",
     "versionwarning.extension",
+    "sphinx.ext.doctest",
 ]
 
 # Recommended by sphinx_design when using the MyST Parser

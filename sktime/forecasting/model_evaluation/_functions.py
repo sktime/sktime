@@ -131,7 +131,7 @@ def _evaluate_window(
         start_fit = time.perf_counter()
         if i == 0 or strategy == "refit":
             forecaster = forecaster.clone()
-            forecaster.fit(y_train, X_train, fh=fh)
+            forecaster.fit(y=y_train, X=X_train, fh=fh)
         else:  # if strategy in ["update", "no-update_params"]:
             update_params = strategy == "update"
             forecaster.update(y_train, X_train, update_params=update_params)
@@ -160,7 +160,7 @@ def _evaluate_window(
         methodname = pred_type[scitype]
         method = getattr(forecaster, methodname)
 
-        y_pred = method(fh, X_test, **metric_args)
+        y_pred = method(fh=fh, X=X_test, **metric_args)
         pred_time = time.perf_counter() - start_pred
         # score
         score = scoring(y_test, y_pred, y_train=y_train)

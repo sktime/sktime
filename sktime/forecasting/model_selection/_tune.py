@@ -285,7 +285,7 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Refit model with best parameters.
         if self.refit:
-            self.best_forecaster_.fit(y, X, fh)
+            self.best_forecaster_.fit(y=y, X=X, fh=fh)
 
         # Sort values according to rank
         results = results.sort_values(
@@ -302,7 +302,7 @@ class BaseGridSearch(_DelegatedForecaster):
             forecaster = self.forecaster.clone().set_params(**params)
             # Refit model with best parameters.
             if self.refit:
-                forecaster.fit(y, X, fh)
+                forecaster.fit(y=y, X=X, fh=fh)
             self.n_best_forecasters_.append((rank, forecaster))
             # Save score
             score = results[f"mean_{scoring_name}"].iloc[i]

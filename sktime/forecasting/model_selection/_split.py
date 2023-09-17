@@ -281,6 +281,53 @@ def _check_cutoffs_fh_y(
         raise TypeError("Unsupported type of `cutoffs` and `fh`")
 
 
+def _get_train_window_via_endpoint(
+    y: pd.Index,
+    train_endpoint: VALID_CUTOFF_TYPES,
+    window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
+) -> pd.Index:
+    """
+    Split time series at given end points into a fixed-length training set.
+
+    Parameters
+    ----------
+    y : pd.Index
+        Index of time series to split
+    train_endpoint : int or timedelta
+        Training window's last time point
+    window_length : int or timedelta
+        Length of window
+
+    Returns
+    -------
+    training_window : pd.Index
+        Training window indices
+
+    Notes
+    -----
+    this private function is used to get training window for
+    `CutOffSplitter` and `SingleWindowSplitter`
+    """
+    if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
+        y_train = pd.Series(index=y, dtype=y.dtype)  # convert pd.index to pd.series
+        train_start = train_endpoint - window_length + 1
+        # adjust start point to account for negative time point
+        train_start = 0 if train_start < 0 else train_start
+        train_window = y_train.iloc[train_start : train_endpoint + 1].index
+    else:
+        train_end = y[train_endpoint] if is_int(train_endpoint) else train_endpoint
+        train_window = get_window(
+            pd.Series(index=y[y <= train_end], dtype=y.dtype),
+            window_length=window_length,
+        ).index
+    # when given train end point is negative no training window is provided
+    null = 0 if is_int(train_endpoint) else pd.Timestamp(0)
+    if train_endpoint < null:
+        train_window = []
+    training_window = y.get_indexer(train_window)
+    return training_window
+
+
 class BaseSplitter(BaseObject):
     r"""Base class for temporal cross-validation splitters.
 
@@ -730,7 +777,7 @@ class CutoffSplitter(BaseSplitter):
     is then trivially equal to :math:`n`.
 
     The sorted array of cutoffs returned by `.get_cutoffs` is then equal to
-    :math:(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
+    :math:`(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
 
     Parameters
     ----------
@@ -768,20 +815,11 @@ class CutoffSplitter(BaseSplitter):
         window_length = check_window_length(
             window_length=self.window_length, n_timepoints=n_timepoints
         )
-        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
-            window_length = y.freq * window_length
         _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
 
         for cutoff in cutoffs:
-            null = 0 if is_int(cutoff) else pd.Timestamp(0)
-            if cutoff >= null:
-                train_end = y[cutoff] if is_int(cutoff) else cutoff
-                y_train = pd.Series(index=y[y <= train_end], dtype=y.dtype)
-                training_window = get_window(y_train, window_length=window_length).index
-            else:
-                training_window = []
-            training_window = y.get_indexer(training_window)
+            training_window = _get_train_window_via_endpoint(y, cutoff, window_length)
             test_window = cutoff + fh.to_numpy()
             if is_datetime(x=cutoff):
                 test_window = y.get_indexer(test_window[test_window >= y.min()])
@@ -846,7 +884,7 @@ class CutoffSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {"cutoffs": np.array([3, 7, 10])}
+        return [{"cutoffs": np.array([3, 7, 10])}, {"cutoffs": [21, 22]}]
 
 
 class BaseWindowSplitter(BaseSplitter):
@@ -1051,12 +1089,38 @@ class BaseWindowSplitter(BaseSplitter):
         n_splits : int
             The number of splits.
         """
+        from sktime.datatypes import check_is_scitype, convert
+
         if y is None:
             raise ValueError(
                 f"{self.__class__.__name__} requires `y` to compute the "
                 f"number of splits."
             )
-        return len(self.get_cutoffs(y))
+
+        multi_scitypes = ["Hierarchical", "Panel"]
+        is_non_single, _, metadata = check_is_scitype(y, multi_scitypes, [])
+
+        # n_splits based on the first instance of the lowest level series cutoffs
+        if is_non_single:
+            from_mtype = metadata.get("mtype")
+            scitype = metadata.get("scitype")
+            if scitype == "Panel":
+                to_mtype = "pd-multiindex"
+            else:
+                to_mtype = "pd_multiindex_hier"
+
+            y = convert(y, from_type=from_mtype, to_type=to_mtype, as_scitype=scitype)
+
+            index = self._coerce_to_index(y)
+            for _, values in y.groupby(index.droplevel(-1)):
+                # convert to a single ts
+                instance_series = values.reset_index().iloc[:, -2:]
+                instance_series.set_index(instance_series.columns[0], inplace=True)
+                n_splits = len(self.get_cutoffs(instance_series))
+                break
+        else:
+            n_splits = len(self.get_cutoffs(y))
+        return n_splits
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
@@ -1170,6 +1234,26 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
         return self._split_windows_generic(expanding=False, **kwargs)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [{}, {"fh": [2, 4], "window_length": 3, "step_length": 2}]
+
 
 class ExpandingWindowSplitter(BaseWindowSplitter):
     r"""Expanding window splitter.
@@ -1246,6 +1330,26 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
         return self._split_windows_generic(expanding=True, **kwargs)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [{}, {"fh": [2, 4], "initial_window": 5, "step_length": 2}]
 
 
 class ExpandingGreedySplitter(BaseSplitter):
@@ -1376,16 +1480,9 @@ class SingleWindowSplitter(BaseSplitter):
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
-        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
-            window_length = y.freq * window_length
         fh = _check_fh(self.fh)
         train_end = _get_end(y_index=y, fh=fh)
-
-        training_window = get_window(
-            pd.Series(index=y[y <= y[train_end]], dtype=y.dtype),
-            window_length=window_length,
-        ).index
-        training_window = y.get_indexer(training_window)
+        training_window = _get_train_window_via_endpoint(y, train_end, window_length)
         if array_is_int(fh):
             test_window = train_end + fh.to_numpy()
         else:
@@ -1455,8 +1552,7 @@ class SingleWindowSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"fh": 3}
-        return params
+        return [{"fh": 3}, {"fh": [2, 4], "window_length": 3}]
 
 
 class SameLocSplitter(BaseSplitter):
@@ -1584,15 +1680,16 @@ class SameLocSplitter(BaseSplitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.datasets import load_airline
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.forecasting.model_selection import (
+            ExpandingWindowSplitter,
+            SingleWindowSplitter,
+        )
 
         y = load_airline()
-        y_template = y[:60]
-        cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
-
-        params = {"cv": cv_tpl, "y_template": y_template}
-
-        return params
+        y_temp = y[:60]
+        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=24)
+        return [{"cv": cv_1, "y_template": y_temp}, {"cv": cv_2, "y_template": y_temp}]
 
 
 class TestPlusTrainSplitter(BaseSplitter):
@@ -1711,13 +1808,14 @@ class TestPlusTrainSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.forecasting.model_selection import (
+            ExpandingWindowSplitter,
+            SingleWindowSplitter,
+        )
 
-        cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
-
-        params = {"cv": cv_tpl}
-
-        return params
+        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=24)
+        return [{"cv": cv_1}, {"cv": cv_2}]
 
 
 def temporal_train_test_split(
@@ -1777,6 +1875,32 @@ def temporal_train_test_split(
     References
     ----------
     .. [1]  adapted from https://github.com/alkaline-ml/pmdarima/
+
+    Examples
+    --------
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.datasets import load_airline, load_osuleaf
+    >>> from sktime.utils._testing.panel import _make_panel
+
+    >>> # univariate time series
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=36)
+    >>> y_test.shape
+    (36,)
+
+    >>> # panel time series
+    >>> y = _make_panel(n_instances = 2, n_timepoints = 20)
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=5)
+    >>> # last 5 timepoints for each instance
+    >>> y_test.shape
+    (10, 1)
+
+    >>> # time series w/ exogenous variables
+    >>> X, y = load_osuleaf(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = temporal_train_test_split(
+    ...     X, y, test_size=100)
+    >>> X_test.shape, y_test.shape
+    ((100, 1), (100,))
     """
     if fh is not None:
         if test_size is not None or train_size is not None:

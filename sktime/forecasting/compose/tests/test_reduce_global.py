@@ -44,6 +44,7 @@ def y_dict():
 
     # y train will be univariate data set
     y_train, y_test = temporal_train_test_split(y)
+    y_dict["y_train"] = y_train
 
     # Create train and test panel sample data
     mi = pd.MultiIndex.from_product(
@@ -106,6 +107,8 @@ def y_dict():
     y_numeric = y_train.copy()
     y_numeric.index = pd.to_numeric(y_numeric.index)
     y_dict["y_numeric"] = y_numeric
+
+    return y_dict
 
 
 # Get different WindowSummarizer functions
