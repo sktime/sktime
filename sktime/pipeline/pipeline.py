@@ -1,4 +1,5 @@
 """class that implements a graph pipeline."""
+import warnings
 import weakref
 from copy import copy, deepcopy
 
@@ -157,6 +158,17 @@ class Pipeline(BaseEstimator):
     """
 
     def __init__(self, steps=None):
+        warnings.warn(
+            "This generalised graphical pipeline is experimental, "
+            "with all the usual risks of edge features. "
+            "For mature alternatives, use single-purpose pipelines and compositors, "
+            "such as TransformedTargetForecaster, ForecastingPipeline, "
+            "ClassificationPipeline, etc., see for instance "
+            "notebooks 01_forecasting.ipynb and "
+            "02_classification.ipynb at"
+            "https://github.com/sktime/sktime/blob/main/examples/.",
+            stacklevel=1,
+        )
         super().__init__()
         self._assembled = False
         self.id_to_true_id = {}

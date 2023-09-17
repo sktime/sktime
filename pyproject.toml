@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.22.0"
+version = "0.22.1"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
@@ -77,7 +77,7 @@ clustering = [
 forecasting = [
     "pmdarima>=1.8,!=1.8.1,<2.1",
     "prophet>=1.1,<1.2",
-    "statsforecast>=0.5.2,<1.6",
+    "statsforecast>=0.5.2,<1.7",
     "statsmodels>=0.12.1,<0.15",
     "tbats>=1.1,<1.2",
 ]
@@ -96,7 +96,7 @@ regression = [
 transformations = [
     "esig>=0.9.7,<0.10",
     "filterpy>=1.4.5,<1.5",
-    "holidays>=0.29,<0.32",
+    "holidays>=0.29,<0.33",
     "mne>=1.5,<1.6",
     "numba>=0.53,<0.58",
     "pycatch22>=0.4,<0.5",
@@ -177,7 +177,9 @@ all_extras_pandas2 = [
 ]
 
 cython_extras = [
+    "mrseql",
     "mrsqm; python_version < '3.11'",
+    "numba",
 ]
 
 dev = [

@@ -44,6 +44,7 @@ def y_dict():
 
     # y train will be univariate data set
     y_train, y_test = temporal_train_test_split(y)
+    y_dict["y_train"] = y_train
 
     # Create train and test panel sample data
     mi = pd.MultiIndex.from_product(

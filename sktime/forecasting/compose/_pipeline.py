@@ -10,6 +10,7 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
@@ -252,7 +253,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         """
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.compose._reduce import YfromX
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.detrend import Detrender
@@ -268,13 +269,11 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", DirectReductionForecaster.create_test_instance()),
+            ("forecaster", YfromX.create_test_instance()),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {
-            "steps": [Detrender(), DirectReductionForecaster.create_test_instance()]
-        }
+        params3 = {"steps": [Detrender(), YfromX.create_test_instance()]}
 
         return [params1, params2, params3]
 
@@ -509,7 +508,7 @@ class ForecastingPipeline(_Pipeline):
         y_pred : pd.Series
             Point predictions
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict(fh, X)
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -544,7 +543,7 @@ class ForecastingPipeline(_Pipeline):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
     def _predict_interval(self, fh, X, coverage):
@@ -583,7 +582,7 @@ class ForecastingPipeline(_Pipeline):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
 
     def _predict_var(self, fh, X=None, cov=False):
@@ -616,7 +615,7 @@ class ForecastingPipeline(_Pipeline):
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_var(fh=fh, X=X, cov=cov)
 
     # todo: does not work properly for multivariate or hierarchical
@@ -643,7 +642,7 @@ class ForecastingPipeline(_Pipeline):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
 
     def _update(self, y, X=None, update_params=True):
@@ -674,6 +673,14 @@ class ForecastingPipeline(_Pipeline):
         # If X is not given or ignored, just passthrough the data without transformation
         if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
             for _, _, transformer in self._iter_transformers():
+                # if y is required but not passed,
+                # we create a zero-column y from the forecasting horizon
+                requires_y = transformer.get_tag("requires_y", False)
+                if isinstance(y, ForecastingHorizon) and requires_y:
+                    y = y.to_absolute_index(self.cutoff)
+                    y = pd.DataFrame(index=y)
+                else:
+                    y = None
                 X = transformer.transform(X=X, y=y)
         return X
 
