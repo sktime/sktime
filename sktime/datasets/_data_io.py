@@ -235,7 +235,7 @@ def _mkdir_if_not_exist(*path):
 
 CLASSIF_URLS = [
     "https://timeseriesclassification.com/aeon-toolkit",  # main mirror (UEA)
-    "https://github.com/sktime/sktime-datasets/blob/main/TSC",  # backup mirror (sktime)
+    "https://github.com/sktime/sktime-datasets/raw/main/TSC",  # backup mirror (sktime)
 ]
 
 
