@@ -521,3 +521,25 @@ def test_forecastx_attrib_broadcast():
     assert hasattr(model_2, "forecaster_y_")
     assert isinstance(model_2.forecaster_y_, NaiveForecaster)
     assert model_2.forecaster_y_.is_fitted
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_featurizer_forecastingpipeline_logic():
+    """Test that ForecastingPipeline works with featurizer transformers without exog."""
+    from sktime.forecasting.sarimax import SARIMAX
+    from sktime.transformations.compose import YtoX
+    from sktime.transformations.series.impute import Imputer
+    from sktime.transformations.series.lag import Lag
+
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+
+    lagged_y_trafo = YtoX() * Lag(1, index_out="original") * Imputer()
+    # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
+    forecaster = lagged_y_trafo ** SARIMAX()  # this uses lagged_y_trafo to generate X
+
+    forecaster.fit(y_train, X=X_train, fh=[1])  # try to forecast next year
+    forecaster.predict(X=X_test)  # dummy X to predict next year

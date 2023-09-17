@@ -1,4 +1,5 @@
 """class that implements a graph pipeline."""
+import warnings
 import weakref
 from copy import copy, deepcopy
 
@@ -92,7 +93,7 @@ class Pipeline(BaseEstimator):
     >>> from sktime.datasets import load_arrow_head, load_longley
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.pipeline.pipeline import Pipeline
+    >>> from sktime.pipeline import Pipeline
     >>> from sktime.transformations.compose import Id
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.transformations.series.exponent import ExponentTransformer
@@ -157,6 +158,17 @@ class Pipeline(BaseEstimator):
     """
 
     def __init__(self, steps=None):
+        warnings.warn(
+            "This generalised graphical pipeline is experimental, "
+            "with all the usual risks of edge features. "
+            "For mature alternatives, use single-purpose pipelines and compositors, "
+            "such as TransformedTargetForecaster, ForecastingPipeline, "
+            "ClassificationPipeline, etc., see for instance "
+            "notebooks 01_forecasting.ipynb and "
+            "02_classification.ipynb at"
+            "https://github.com/sktime/sktime/blob/main/examples/.",
+            stacklevel=1,
+        )
         super().__init__()
         self._assembled = False
         self.id_to_true_id = {}
