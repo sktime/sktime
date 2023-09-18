@@ -2461,6 +2461,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         "handles-missing-data": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "capability:pred_int": True,
     }
 
     def __init__(self, estimator, pooling="local"):
@@ -2480,8 +2481,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
                 "regressor, or an skpro probabilistic regressor."
             )
 
-        if _est_type == "regressor_proba":
-            self.set_tags(**{"capability:pred_int": True})
+        # has probabilistic mode iff the estimator is of type regressor_proba
+        self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
 
         self._est_type = _est_type
 
