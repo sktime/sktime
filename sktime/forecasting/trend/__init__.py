@@ -8,8 +8,8 @@ __all__ = [
     "STLForecaster",
 ]
 
-from sktime.forecasting.trend.polynomial_trend_forecaster import (
+from sktime.forecasting.trend._polynomial_trend_forecaster import (
     PolynomialTrendForecaster,
 )
-from sktime.forecasting.trend.stl_forecaster import STLForecaster
-from sktime.forecasting.trend.trend_forecaster import TrendForecaster
+from sktime.forecasting.trend._stl_forecaster import STLForecaster
+from sktime.forecasting.trend._trend_forecaster import TrendForecaster
