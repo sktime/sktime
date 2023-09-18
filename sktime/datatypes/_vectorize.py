@@ -650,9 +650,9 @@ class VectorizedDF:
 
         return (group_name, col_name, est_i_result)
 
-    def _vectorize_est_none(self, vec_zip):
+    def _vectorize_est_none(self, vec_zip, meta):
         """Vectorize application of estimator method via simple loop."""
-        ret = [self._vectorize_est_single(vec_tuple) for vec_tuple in vec_zip]
+        ret = [self._vectorize_est_single(vec_tuple, meta) for vec_tuple in vec_zip]
         return ret
 
     def _vectorize_est_joblib(self, vec_zip, backend):
