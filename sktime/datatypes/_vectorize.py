@@ -15,6 +15,7 @@ import pandas as pd
 from sktime.datatypes._check import check_is_scitype, mtype
 from sktime.datatypes._convert import convert_to
 from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.parallel import parallelize
 
 
 class VectorizedDF:
@@ -590,15 +591,7 @@ class VectorizedDF:
             "colname_default": colname_default,
         }
 
-        if backend is None:
-            ret = self._vectorize_est_none(vec_zip, meta=meta)
-        elif backend in ["loky", "multiprocessing", "threading"]:
-            ret = self._vectorize_est_joblib(vec_zip, meta=meta, backend=backend)
-        elif backend in ["dask", "dask_lazy"]:
-            ret = self._vectorize_est_dask(vec_zip, meta=meta, backend=backend)
-
-        if backend == "dask_lazy":
-            return ret
+        ret = parallelize(self, self._vectorize_est_single, vec_zip, meta, backend)
 
         if return_type == "pd.DataFrame":
             df_long = pd.DataFrame(ret)
@@ -649,33 +642,6 @@ class VectorizedDF:
             col_name = colname_default
 
         return (group_name, col_name, est_i_result)
-
-    def _vectorize_est_none(self, vec_zip, meta):
-        """Vectorize application of estimator method via simple loop."""
-        ret = [self._vectorize_est_single(vec_tuple, meta) for vec_tuple in vec_zip]
-        return ret
-
-    def _vectorize_est_joblib(self, vec_zip, meta, backend):
-        """Vectorize application of estimator method via joblib Parallel."""
-        from joblib import Parallel, delayed
-
-        ret = Parallel(n_jobs=-1, backend=backend)(
-            delayed(self._vectorize_est_single)(vec_tpl, meta) for vec_tpl in vec_zip
-        )
-        return ret
-
-    def _vectorize_est_dask(self, vec_zip, meta, backend):
-        """Vectorize application of estimator method via dask."""
-        from dask import compute, delayed
-
-        lazy = [
-            delayed(self._vectorize_est_single)(vec_tuple, meta=meta)
-            for vec_tuple in vec_zip
-        ]
-        if backend == "dask":
-            return compute(*lazy)
-        else:
-            return lazy
 
 
 def _enforce_index_freq(item: pd.Series) -> pd.Series:
