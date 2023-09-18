@@ -392,7 +392,8 @@ def evaluate(
         warnings.warn(
             "the compute argument of evaluate is deprecated and will be removed "
             "in sktime 0.25.0. For the same behaviour in the future, "
-            'use backend="dask_lazy"'
+            'use backend="dask_lazy"',
+            stacklevel=2,
         )
         backend = "dask_lazy"
 
