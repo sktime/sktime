@@ -448,11 +448,12 @@ def evaluate(
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
-    # TODO: remove lines 451-455 (four lines below) and 599-612 in v0.25.0
+    # TODO: remove lines(four lines below) and 599-612 in v0.25.0
     if isinstance(scoring, list):
         raise_warn, num = True, len(scoring)
     else:
         raise_warn, num = False, 1
+    # removal until here
     scoring = _check_scores(scoring)
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
@@ -596,7 +597,7 @@ def evaluate(
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
 
-    # TODO: remove lines 599-612 (13 lines below) and 451-455 in v0.25.0
+    # TODO: remove lines (13 lines below) and 451-455 in v0.25.0
     if raise_warn:
         warnings.warn(
             "Starting v0.25.0 all metric columns will be arranged at the left of the "
@@ -610,4 +611,5 @@ def evaluate(
             metric = columns.pop(1)
             non_first_metrics.append(metric)
         results = results.reindex(columns=columns + non_first_metrics)
+    #  removal until here
     return results
