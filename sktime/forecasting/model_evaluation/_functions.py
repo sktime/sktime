@@ -478,8 +478,11 @@ def evaluate(
     # generator for y and X splits to iterate over below
     yx_splits = gen_y_X_train_test(y, X, cv, cv_X)
 
+    # sequential strategies cannot be parallelized
+    not_parallel = strategy in ["update", "no-update_params"]
+
     # dispatch by backend and strategy
-    if strategy in ["update", "no-update_params"]:
+    if not_parallel:
         # Run temporal cross-validation sequentially
         results = []
         for x in enumerate(yx_splits):
@@ -491,12 +494,16 @@ def evaluate(
                 result = _evaluate_window(x, _evaluate_window_kwargs)
             results.append(result)
     else:
+        if backend == "dask":
+            backend_in = "dask_lazy"
+        else:
+            backend_in = backend
         results = parallelize(
-            _evaluate_window, enumerate(yx_splits), _evaluate_window_kwargs, backend
+            _evaluate_window, enumerate(yx_splits), _evaluate_window_kwargs, backend_in
         )
 
     # final formatting of dask dataframes
-    if backend in ["dask", "dask_lazy"]:
+    if backend in ["dask", "dask_lazy"] and not not_parallel:
         import dask.dataframe as dd
 
         results = dd.from_delayed(
