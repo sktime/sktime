@@ -490,10 +490,10 @@ def evaluate(
             else:
                 result = _evaluate_window(x, _evaluate_window_kwargs)
             results.append(result)
-
-    results = parallelize(
-        _evaluate_window, enumerate(yx_splits), _evaluate_window_kwargs, backend
-    )
+    else:
+        results = parallelize(
+            _evaluate_window, enumerate(yx_splits), _evaluate_window_kwargs, backend
+        )
 
     # final formatting of dask dataframes
     if backend in ["dask", "dask_lazy"]:
