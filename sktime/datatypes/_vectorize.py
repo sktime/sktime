@@ -655,12 +655,12 @@ class VectorizedDF:
         ret = [self._vectorize_est_single(vec_tuple, meta) for vec_tuple in vec_zip]
         return ret
 
-    def _vectorize_est_joblib(self, vec_zip, backend):
+    def _vectorize_est_joblib(self, vec_zip, meta, backend):
         """Vectorize application of estimator method via joblib Parallel."""
         from joblib import Parallel, delayed
 
         ret = Parallel(n_jobs=-1, backend=backend)(
-            delayed(self._vectorize_est_single)(vec_tuple) for vec_tuple in vec_zip
+            delayed(self._vectorize_est_single)(vec_tpl, meta) for vec_tpl in vec_zip
         )
         return ret
 
