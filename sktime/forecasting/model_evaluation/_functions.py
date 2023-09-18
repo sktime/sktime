@@ -390,10 +390,10 @@ def evaluate(
             )
     if backend == "dask" and not compute:
         warnings.warn(
-                "the compute argument of evaluate is deprecated and will be removed "
-                "in sktime 0.25.0. For the same behaviour in the future, "
-                'use backend="dask_lazy"'
-            )
+            "the compute argument of evaluate is deprecated and will be removed "
+            "in sktime 0.25.0. For the same behaviour in the future, "
+            'use backend="dask_lazy"'
+        )
         backend = "dask_lazy"
 
     _check_strategy(strategy)
