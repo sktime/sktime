@@ -600,7 +600,7 @@ def evaluate(
     # TODO: remove 13 lines below and 451-455 in v0.25.0
     if raise_warn:
         warnings.warn(
-            "Starting v0.25.0 all metric columns will be arranged at the left of the "
+            "Starting v0.25.0 all metric columns will be rearranged to the left of the "
             "result DataFrame. Please use loc references when addressing the columns.",
             DeprecationWarning,
             stacklevel=2,
