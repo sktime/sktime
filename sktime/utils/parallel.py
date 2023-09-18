@@ -3,7 +3,7 @@
 
 New parallelization or iteration backends can be added easily as follows:
 
-* Add a new backend name to ``backend_dict``, syntax is 
+* Add a new backend name to ``backend_dict``, syntax is
   backend_name: backend_type, where backend_type collects backend options,
   e.g., multiple options for a single parallelization backend.
 * Add a new function to ``para_dict``, should have name
