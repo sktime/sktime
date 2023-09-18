@@ -17,7 +17,7 @@ New parallelization or iteration backends can be added easily as follows:
 __author__ = ["fkiraly"]
 
 
-def parallelize(self, fun, iter, meta=None, backend=None):
+def parallelize(fun, iter, meta=None, backend=None):
     """Parallelize loop over iter via backend.
 
     Executes ``fun(x, meta)`` in parallel for ``x`` in ``iter``,
@@ -48,7 +48,7 @@ def parallelize(self, fun, iter, meta=None, backend=None):
     backend_name = backend_dict[backend]
     para_fun = para_dict[backend_name]
 
-    ret = para_fun(self, fun=fun, iter=iter, meta=meta, backend=backend)
+    ret = para_fun(fun=fun, iter=iter, meta=meta, backend=backend)
     return ret
 
 
@@ -63,7 +63,7 @@ backend_dict = {
 para_dict = {}
 
 
-def _parallelize_none(self, fun, iter, meta, backend):
+def _parallelize_none(fun, iter, meta, backend):
     """Execute loop via simple sequential list comprehension."""
     ret = [fun(x, meta=meta) for x in iter]
     return ret
@@ -72,7 +72,7 @@ def _parallelize_none(self, fun, iter, meta, backend):
 para_dict["none"] = _parallelize_none
 
 
-def _parallelize_joblib(self, fun, iter, meta, backend):
+def _parallelize_joblib(fun, iter, meta, backend):
     """Parallelize loop via joblib Parallel."""
     from joblib import Parallel, delayed
 
@@ -83,7 +83,7 @@ def _parallelize_joblib(self, fun, iter, meta, backend):
 para_dict["joblib"] = _parallelize_joblib
 
 
-def _parallelize_dask(self, fun, iter, meta, backend):
+def _parallelize_dask(fun, iter, meta, backend):
     """Parallelize loop via dask."""
     from dask import compute, delayed
 
