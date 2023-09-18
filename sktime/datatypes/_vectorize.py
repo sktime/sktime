@@ -591,7 +591,7 @@ class VectorizedDF:
             "colname_default": colname_default,
         }
 
-        ret = parallelize(self, self._vectorize_est_single, vec_zip, meta, backend)
+        ret = parallelize(self._vectorize_est_single, vec_zip, meta, backend)
 
         if return_type == "pd.DataFrame":
             df_long = pd.DataFrame(ret)
