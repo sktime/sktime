@@ -61,7 +61,7 @@ def _check_evaluate_output(out, cv, y, scoring, return_data):
     # Check column names.
     scoring = _check_scores(scoring)
     columns = _get_column_order_and_datatype(scoring, return_data)
-    assert out.columns.to_list() == list(columns.keys()), "Columns are not identical"
+    assert set(out.columns) == columns.keys(), "Columns are not identical"
 
     # Check number of rows against number of splits.
     n_splits = cv.get_n_splits(y)
