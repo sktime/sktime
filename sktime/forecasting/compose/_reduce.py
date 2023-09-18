@@ -2468,6 +2468,21 @@ class YfromX(BaseForecaster, _ReducerMixin):
         self.pooling = pooling
         super().__init__()
 
+        # self._est_type encodes information what type of estimator is passed
+        if hasattr(estimator, "get_tags"):
+            _est_type = estimator.get_tag("object_type", "regressor", False)
+        else:
+            _est_type = "regressor"
+
+        if _est_type not in ["regressor", "regressor_proba"]:
+            raise TypeError(
+                "error in YfromX, estimator must be either an sklearn compatible "
+                "regressor, or an skpro probabilistic regressor."
+            )
+
+        if _est_type == "regressor_proba":
+            self.set_tags(**{"capability:pred_int": True})
+
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
