@@ -483,7 +483,8 @@ def evaluate(
         # Run temporal cross-validation sequentially
         results = []
         for x in enumerate(yx_splits):
-            if strategy == "update" or (strategy == "no-update_params" and i == 0):
+            is_first = x[0] == 0  # first iteration
+            if strategy == "update" or (strategy == "no-update_params" and is_first):
                 result, forecaster = _evaluate_window(x, _evaluate_window_kwargs)
                 _evaluate_window_kwargs["forecaster"] = forecaster
             else:
