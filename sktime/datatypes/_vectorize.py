@@ -666,7 +666,7 @@ class VectorizedDF:
 
     def _vectorize_est_dask(self, vec_zip, meta, backend):
         """Vectorize application of estimator method via dask."""
-        from dask import delayed, compute
+        from dask import compute, delayed
 
         lazy = [
             delayed(self._vectorize_est_single)(vec_tuple, meta=meta)
