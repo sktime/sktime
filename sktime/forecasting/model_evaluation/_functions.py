@@ -597,7 +597,7 @@ def evaluate(
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
 
-    # TODO: remove lines (13 lines below) and 451-455 in v0.25.0
+    # TODO: remove 13 lines below and 451-455 in v0.25.0
     if raise_warn:
         warnings.warn(
             "Starting v0.25.0 all metric columns will be arranged at the left of the "
