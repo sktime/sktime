@@ -44,7 +44,7 @@ classifiers = [
 ]
 requires-python = ">=3.8,<3.12"
 dependencies = [
-    "numpy>=1.21.0,<1.26",
+    "numpy>=1.21.0,<1.27",
     "pandas>=1.1.0,<2.2.0",
     "packaging",
     "scikit-base<0.6.0",
