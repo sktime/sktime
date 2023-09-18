@@ -2766,6 +2766,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
 
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         params1 = {
             "estimator": LinearRegression(),
             "pooling": "local",
@@ -2776,4 +2778,15 @@ class YfromX(BaseForecaster, _ReducerMixin):
             "pooling": "global",  # all internal mtypes are tested across scenarios
         }
 
-        return [params1, params2]
+        params = [params1, params2]
+
+        if _check_soft_dependencies("skpro", severity="none"):
+            from skpro.regression.residual import ResidualDouble
+
+            params3 = {
+                "estimator": ResidualDouble.create_test_instance(),
+                "pooling": "global",
+            }
+            params = params + [params3]
+
+        return params
