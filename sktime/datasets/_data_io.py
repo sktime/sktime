@@ -51,6 +51,7 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
+# TODO: if user gives numpyflat or numpy3D this code will break
 # Return appropriate return_type in case an alias was used
 def _alias_mtype_check(return_type):
     if return_type is None:
