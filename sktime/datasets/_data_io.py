@@ -233,7 +233,10 @@ def _mkdir_if_not_exist(*path):
     return full_path
 
 
-CLASSIF_URLS = ["https://timeseriesclassification.com/ClassificationDownloads"]
+CLASSIF_URLS = [
+    "https://timeseriesclassification.com/aeon-toolkit",  # main mirror (UEA)
+    "https://github.com/sktime/sktime-datasets/raw/main/TSC",  # backup mirror (sktime)
+]
 
 
 def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
@@ -290,12 +293,15 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     if extract_path is None:
         extract_path = os.path.join(MODULE, "local_data")
 
+    # in either case below, we need to ensure the directory exists
+    _mkdir_if_not_exist(extract_path)
+
+    # search if the dataset is already in the extract path after download
     if name in _list_available_datasets(extract_path):
         return _get_data_from(extract_path)
 
     # now we know the dataset is not in the download/cache path
     # so we need to download it
-    _mkdir_if_not_exist(extract_path)
 
     # download the dataset from CLASSIF_URLS
     # will try multiple mirrors if necessary
