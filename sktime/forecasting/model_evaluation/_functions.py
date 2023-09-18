@@ -482,26 +482,12 @@ def evaluate(
     if strategy in ["update", "no-update_params"]:
         # Run temporal cross-validation sequentially
         results = []
-        for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
+        for x in enumerate(yx_splits):
             if strategy == "update" or (strategy == "no-update_params" and i == 0):
-                result, forecaster = _evaluate_window(
-                    y_train,
-                    y_test,
-                    X_train,
-                    X_test,
-                    i,
-                    **_evaluate_window_kwargs,
-                )
+                result, forecaster = _evaluate_window(x, _evaluate_window_kwargs)
                 _evaluate_window_kwargs["forecaster"] = forecaster
             else:
-                result = _evaluate_window(
-                    y_train,
-                    y_test,
-                    X_train,
-                    X_test,
-                    i,
-                    **_evaluate_window_kwargs,
-                )
+                result = _evaluate_window(x, _evaluate_window_kwargs)
             results.append(result)
 
     results = parallelize(
