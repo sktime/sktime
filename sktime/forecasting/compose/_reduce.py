@@ -2483,6 +2483,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
         if _est_type == "regressor_proba":
             self.set_tags(**{"capability:pred_int": True})
 
+        self._est_type = _est_type
+
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2520,6 +2522,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
         -------
         self : reference to self
         """
+        _est_type = self._est_type
+
         if X is None:
             from sklearn.dummy import DummyRegressor
 
@@ -2529,8 +2533,9 @@ class YfromX(BaseForecaster, _ReducerMixin):
             X = _coerce_col_str(X)
             estimator = clone(self.estimator)
 
-        y = _coerce_col_str(y)
-        y = y.values.flatten()
+        if _est_type == "regressor":
+            y = _coerce_col_str(y)
+            y = y.values.flatten()
 
         estimator.fit(X, y)
         self.estimator_ = estimator
@@ -2556,7 +2561,173 @@ class YfromX(BaseForecaster, _ReducerMixin):
         y_pred : pd.DataFrame, same type as y in _fit
             Point predictions
         """
+        _est_type = self._est_type
+
         fh_idx = self._get_expected_pred_idx(fh=fh)
+
+        X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
+        y_pred = self.estimator_.predict(X_idx)
+
+        if _est_type == "regressor":
+            y_cols = self._y.columns
+            y_pred = pd.DataFrame(y_pred, index=fh_idx, columns=y_cols)
+
+        return y_pred
+
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
+        y_pred = self.estimator_.predict_quantiles(X_idx, alpha=alpha)
+        return y_pred
+
+    def _predict_interval(self, fh, X, coverage):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
+        y_pred = self.estimator_.predict_interval(X_idx, coverage=coverage)
+        return y_pred
+
+    def _predict_var(self, fh, X=None, cov=False):
+        """Forecast variance at future horizon.
+
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+                Note: no covariance forecasts are returned between different variables.
+        """
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
+        y_pred = self.estimator_.predict_var(X_idx)
+        return y_pred
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : sktime time series object, optional (default=None)
+                Exogeneous time series for the forecast
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain fh.index and y.index both
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+        """
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
+        y_pred = self.estimator_.predict_proba(X_idx)
+        return y_pred
+
+    def _get_pred_X(self, X, fh_idx):
         y_cols = self._y.columns
 
         if X is not None and self._X is not None:
@@ -2571,11 +2742,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         X_pool = _coerce_col_str(X_pool)
 
         X_idx = X_pool.loc[fh_idx]
-
-        y_pred = self.estimator_.predict(X_idx)
-        y_pred = pd.DataFrame(y_pred, index=fh_idx, columns=y_cols)
-
-        return y_pred
+        return X_idx
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
