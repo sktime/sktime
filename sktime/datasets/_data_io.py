@@ -24,7 +24,10 @@ from sktime.datatypes._panel._convert import _make_column_names
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
-CLASSIF_URLS = ["https://timeseriesclassification.com/ClassificationDownloads"]
+CLASSIF_URLS = [
+    "https://timeseriesclassification.com/aeon-toolkit",  # main mirror (UEA)
+    "https://github.com/sktime/sktime-datasets/raw/main/TSC",  # backup mirror (sktime)
+]
 
 
 def _download_and_extract(url, extract_path=None):
@@ -196,12 +199,6 @@ def _mkdir_if_not_exist(*path):
     if not os.path.exists(full_path):
         os.makedirs(full_path)
     return full_path
-
-
-CLASSIF_URLS = [
-    "https://timeseriesclassification.com/aeon-toolkit",  # main mirror (UEA)
-    "https://github.com/sktime/sktime-datasets/raw/main/TSC",  # backup mirror (sktime)
-]
 
 
 def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
