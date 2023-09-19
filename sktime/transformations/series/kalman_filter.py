@@ -685,7 +685,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
 
         This method performs the transformation of the input data
         according to the constructor input parameter `denoising`.
-        If `denoising` is True - then denoise data using 
+        If `denoising` is True - then denoise data using
         `pykalman-bardo`'s `smooth` function.
         Else, infer hidden state using `pykalman-bardo`'s `filter` function.
 
@@ -801,7 +801,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         return F, H, Q, R, transition_offsets, measurement_offsets, X0, P0
 
     def _get_estimate_matrices(self):
-        """Map parameter names to `pykalman-bardo` names 
+        """Map parameter names to `pykalman-bardo` names
         for use of `pykalman-bardo` `em`.
 
         Returns
@@ -914,7 +914,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     See Also
     --------
     KalmanFilterTransformerPK :
-        Kalman Filter transformer, adapter for the `pykalman-bardo` package 
+        Kalman Filter transformer, adapter for the `pykalman-bardo` package
         into `sktime`.
 
     Notes
@@ -1052,8 +1052,9 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             self: reference to self
         """
         # The below call to `_check_conditional_dependency` checks the installation
-        # of `pykalman-bardo` package, if needed. `pykalman-bardo` is used when the user requires
-        # matrices estimation (`estimate_matrices` is not None).
+        # of `pykalman-bardo` package, if needed. `pykalman-bardo`
+        # is used when the user requires matrices estimation
+        # (`estimate_matrices` is not None).
         # This conditioned dependency check can be performed in
         # `__init__` for early user feedback.
         _check_conditional_dependency(
