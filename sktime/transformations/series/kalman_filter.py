@@ -534,6 +534,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "python_dependencies": "pykalman-bardo",
+        "python_dependencies_alias": {"pykalman-bardo": "pykalman"},
     }
 
     def __init__(

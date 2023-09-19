@@ -200,7 +200,7 @@ def init_kf_filterpy(measurements, adapter, n=10, y=None):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pykalman-bardo", severity="none"),
+    not _check_soft_dependencies("pykalman-bardo", package_import_alias={"pykalman-bardo": "pykalman"}, severity="none"),
     reason="skip test if required soft dependency pykalman-bardo not available",
 )
 @pytest.mark.parametrize(
@@ -345,7 +345,7 @@ def test_transform_and_smooth_pk(params, measurements):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pykalman-bardo", "filterpy", severity="none"),
+    not _check_soft_dependencies("pykalman-bardo", "filterpy", package_import_alias={"pykalman-bardo": "pykalman"}, severity="none"),
     reason="skip test if required soft dependencies pykalman-bardo, filterpy not available",
 )
 @pytest.mark.parametrize(
@@ -580,7 +580,7 @@ def test_em(classes, params, measurements):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("-bardo", "filterpy", severity="none"),
+    not _check_soft_dependencies("pykalman-bardo", "filterpy", package_import_alias={"pykalman-bardo": "pykalman"}, severity="none"),
     reason="skip test if required soft dependencies pykalman-bardo, filterpy not available",
 )
 @pytest.mark.parametrize(
