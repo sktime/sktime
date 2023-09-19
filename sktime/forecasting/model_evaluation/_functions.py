@@ -597,11 +597,13 @@ def evaluate(
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
 
-    # TODO: remove 13 lines below and 451-455 in v0.25.0
+    # TODO: remove 16 lines below and 451-455 in v0.25.0
     if raise_warn:
         warnings.warn(
-            "Starting v0.25.0 all metric columns will be rearranged to the left of the "
-            "result DataFrame. Please use loc references when addressing the columns.",
+            "Starting v0.25.0 model_evaluation.evaluate module will rearrange "
+            "all metric columns to the left of its output result DataFrame. "
+            "Please use loc references when addressing the columns. You can "
+            "safely ignore this warning if you don't use evaluate function directly.",
             DeprecationWarning,
             stacklevel=2,
         )
