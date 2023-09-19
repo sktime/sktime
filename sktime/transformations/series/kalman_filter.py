@@ -801,8 +801,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         return F, H, Q, R, transition_offsets, measurement_offsets, X0, P0
 
     def _get_estimate_matrices(self):
-        """Map parameter names to `pykalman-bardo` names
-        for use of `pykalman-bardo` `em`.
+        """Map parameter names to `pykalman-bardo` names for use of `em`.
 
         Returns
         -------
