@@ -81,9 +81,6 @@ def test_load_numpy2d_multivariate_raises(loader):
         X, y = loader(return_type="numpy2d")
 
 
-@pytest.mark.xfail(
-    reason="repeated upstream location failures, see 4754. xfail until fixed."
-)
 def test_load_UEA():
     """Test loading of a random subset of the UEA data, to check API."""
     from sktime.datasets.tsc_dataset_names import multivariate, univariate

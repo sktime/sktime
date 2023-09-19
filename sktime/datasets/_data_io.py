@@ -198,6 +198,85 @@ def _mkdir_if_not_exist(*path):
     return full_path
 
 
+CLASSIF_URLS = [
+    "https://timeseriesclassification.com/aeon-toolkit",  # main mirror (UEA)
+    "https://github.com/sktime/sktime-datasets/raw/main/TSC",  # backup mirror (sktime)
+]
+
+
+def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
+    """Load time series classification datasets (helper function).
+
+    Parameters
+    ----------
+    name : string, file name to load from
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
+    extract_path : string, optional (default: None)
+        path to extract downloaded zip to
+        None defaults to sktime/datasets/data if the data exists there, otherwise
+        defaults to sktime/datasets/local_data and downloads data there
+
+    Returns
+    -------
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
+    """
+    # Allow user to have non standard extract path
+    if extract_path is None:
+        # default for first check is sktime/datasets/data
+        check_path = os.path.join(MODULE, "data")
+
+    def _get_data_from(path):
+        return _load_provided_dataset(name, split, return_X_y, return_type, path)
+
+    # if the dataset exists in check_path = sktime/datasets/data, retrieve it from there
+    if name in _list_available_datasets(check_path):
+        return _get_data_from(check_path)
+
+    # now we know the dataset is not in check_path
+    # so we need to check whether it is already in the download/cache path
+    # download path is extract_path/local_data, defaults to sktime/datasets/local_data
+    if extract_path is None:
+        extract_path = os.path.join(MODULE, "local_data")
+
+    # in either case below, we need to ensure the directory exists
+    _mkdir_if_not_exist(extract_path)
+
+    # search if the dataset is already in the extract path after download
+    if name in _list_available_datasets(extract_path):
+        return _get_data_from(extract_path)
+
+    # now we know the dataset is not in the download/cache path
+    # so we need to download it
+
+    # download the dataset from CLASSIF_URLS
+    # will try multiple mirrors if necessary
+    # if fails, will raise a RuntimeError
+    _cache_dataset(CLASSIF_URLS, name, extract_path=extract_path)
+
+    # if we reach this, the data has been downloaded, now we can load it
+    return _get_data_from(extract_path)
+
+
 def _load_provided_dataset(
     name,
     split=None,
@@ -275,76 +354,6 @@ def _load_provided_dataset(
         X["class_val"] = pd.Series(y)
         X = convert(X, from_type="nested_univ", to_type=return_type)
         return X
-
-
-def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
-    """Load time series classification datasets (helper function).
-
-    Parameters
-    ----------
-    name : string, file name to load from
-    split: None or one of "TRAIN", "TEST", optional (default=None)
-        Whether to load the train or test instances of the problem.
-        By default it loads both train and test instances (in a single container).
-    return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for features and the target.
-    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
-        Memory data format specification to return X in, None = "nested_univ" type.
-        str can be any supported sktime Panel mtype,
-            for list of mtypes, see datatypes.MTYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        commonly used specifications:
-            "nested_univ: nested pd.DataFrame, pd.Series in cells
-            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
-            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
-            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
-        Exception is raised if the data cannot be stored in the requested type.
-    extract_path : string, optional (default: None)
-        path to extract downloaded zip to
-        None defaults to sktime/datasets/data if the data exists there, otherwise
-        defaults to sktime/datasets/local_data and downloads data there
-
-    Returns
-    -------
-    X: sktime data container, following mtype specification `return_type`
-        The time series data for the problem, with n instances
-    y: 1D numpy array of length n, only returned if return_X_y if True
-        The class labels for each time series instance in X
-        If return_X_y is False, y is appended to X instead.
-    """
-    # Allow user to have non standard extract path
-    if extract_path is None:
-        # default for first check is sktime/datasets/data
-        check_path = os.path.join(MODULE, "data")
-
-    def _get_data_from(path):
-        return _load_provided_dataset(name, split, return_X_y, return_type, path)
-
-    # if the dataset exists in check_path = sktime/datasets/data, retrieve it from there
-    if name in _list_available_datasets(check_path):
-        return _get_data_from(check_path)
-
-    # now we know the dataset is not in check_path
-    # so we need to check whether it is already in the download/cache path
-    # download path is extract_path/local_data, defaults to sktime/datasets/local_data
-    if extract_path is None:
-        extract_path = os.path.join(MODULE, "local_data")
-
-    if name in _list_available_datasets(extract_path):
-        return _get_data_from(extract_path)
-
-    # now we know the dataset is not in the download/cache path
-    # so we need to download it
-    _mkdir_if_not_exist(extract_path)
-
-    # download the dataset from CLASSIF_URLS
-    # will try multiple mirrors if necessary
-    # if fails, will raise a RuntimeError
-    _cache_dataset(CLASSIF_URLS, name, extract_path=extract_path)
-
-    # if we reach this, the data has been downloaded, now we can load it
-    return _get_data_from(extract_path)
 
 
 # left here for now, better elsewhere later perhaps

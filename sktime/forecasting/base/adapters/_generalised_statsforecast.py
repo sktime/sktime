@@ -1,5 +1,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
+from inspect import signature
+from typing import Dict
+from warnings import warn
+
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
@@ -27,9 +31,47 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         super().__init__()
 
         self._forecaster = None
+        pred_supported = self._check_supports_pred_int()
+        self._support_pred_int_in_sample = pred_supported["int_in_sample"]
+        self._support_pred_int = pred_supported["int"]
+
+        self.set_tags(
+            **{"capability:pred_int:insample": self._support_pred_int_in_sample}
+        )
+        self.set_tags(**{"capability:pred_int": self._support_pred_int})
+
+    def _get_statsforecast_class(self):
+        raise NotImplementedError("abstract method")
+
+    def _get_statsforecast_params(self):
+        return self.get_params()
+
+    def _get_init_statsforecast_params(self):
+        statsforecast_class = self._get_statsforecast_class()
+        return list(signature(statsforecast_class.__init__).parameters.keys())
+
+    def _get_validated_statsforecast_params(self):
+        sktime_params = self._get_statsforecast_params()
+        sktime_default_params = self.get_param_defaults().keys()
+        statsforecast_params = self._get_init_statsforecast_params()
+
+        for sktime_param in sktime_params.keys():
+            if sktime_param not in statsforecast_params:
+                sktime_params.pop(sktime_param)
+                if sktime_param not in sktime_default_params:
+                    warn(
+                        f"Keyword argument '{sktime_param}' will be omitted as it is"
+                        f" not found in the __init__ method "
+                        f"from {self._get_statsforecast_class()}. "
+                        f"Check your statsforecast version"
+                        f"to find out the right API parameters."
+                    )
+        return sktime_params
 
     def _instantiate_model(self):
-        raise NotImplementedError("abstract method")
+        cls = self._get_statsforecast_class()
+        params = self._get_validated_statsforecast_params()
+        return cls(**params)
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -75,9 +117,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return self
 
-    def _predict_in_or_out_of_sample(
-        self, fh, fh_type, X=None, levels=None, legacy_interface=True
-    ):
+    def _predict_in_or_out_of_sample(self, fh, fh_type, X=None, levels=None):
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
 
         absolute_horizons = fh.to_absolute_index(self.cutoff)
@@ -86,12 +126,20 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         level_arguments = None if levels is None else [100 * level for level in levels]
 
         if fh_type == "in-sample":
-            predictions = self._forecaster.predict_in_sample(level=level_arguments)
+            predict_method = self._forecaster.predict_in_sample
+            # Before v1.5.0 (from statsforecast) not all foreasters
+            # have a "level" keyword argument in `predict_in_sample`
+            level_kw = (
+                {"level": level_arguments} if self._support_pred_int_in_sample else {}
+            )
+            predictions = predict_method(**level_kw)
             point_predictions = predictions["fitted"]
         elif fh_type == "out-of-sample":
-            predictions = self._forecaster.predict(
-                maximum_forecast_horizon, X=X, level=level_arguments
-            )
+            predict_method = self._forecaster.predict
+            # Before v1.5.0 (from statsforecast) not all foreasters
+            # have a "level" keyword argument in `predict`
+            level_kw = {"level": level_arguments} if self._support_pred_int else {}
+            predictions = predict_method(maximum_forecast_horizon, X=X, **level_kw)
             point_predictions = predictions["mean"]
 
         if isinstance(point_predictions, pandas.Series):
@@ -104,9 +152,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         if levels is None:
             return final_point_predictions
 
-        var_names = self._get_varnames(
-            default="Coverage", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         interval_predictions_indices = pandas.MultiIndex.from_product(
@@ -199,8 +245,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_point_predictions
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -249,7 +294,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
                 in_sample_horizon,
                 "in-sample",
                 levels=coverage,
-                legacy_interface=legacy_interface,
             )
             interval_predictions.append(in_sample_interval_predictions)
 
@@ -259,13 +303,67 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
                 "out-of-sample",
                 X=X_predict_input,
                 levels=coverage,
-                legacy_interface=legacy_interface,
             )
             interval_predictions.append(out_of_sample_interval_predictions)
 
         final_interval_predictions = pandas.concat(interval_predictions, copy=False)
 
         return final_interval_predictions
+
+    def _check_supports_pred_int(self) -> Dict[str, bool]:
+        """
+        Check if prediction intervals will work with forecaster.
+
+        Check if `level` argument is available in `predict_in_sample` and
+        `predict` methods from the `statsforecast` forecaster.
+        A tuple of booleans (`support_pred_int_in_sample`, `support_pred_int`)
+        is returned where the user is informed which of the two, if any,
+        support interval predictions.
+
+         Furthermore, will throw a warning to let the user know that he should consider
+         upgrading statsforecast version as both or one of the two methods might
+         not be able to produce confidence intervals.
+
+        Returns
+        -------
+        Dict of bool
+            A dict containing two boolean values:
+            - `support_pred_int_in_sample`: True if prediction intervals are supported
+              in `predict_in_sample`, False otherwise.
+            - `support_pred_int`: True if prediction intervals are supported
+              in `predict`, False otherwise.
+        """
+        statsforecast_class = self._get_statsforecast_class()
+        if (
+            "level"
+            not in signature(statsforecast_class.predict_in_sample).parameters.keys()
+        ):
+            support_pred_int_in_sample = False
+            import statsforecast
+
+            warn(
+                f" {statsforecast_class.__name__} from "
+                f"statsforecast v{statsforecast.__version__} "
+                f"does not support prediction of intervals in `predict_in_sample`. "
+                f"Consider upgrading to a newer version."
+            )
+        else:
+            support_pred_int_in_sample = True
+
+        if "level" not in signature(statsforecast_class.predict).parameters.keys():
+            support_pred_int = False
+            import statsforecast
+
+            warn(
+                f" {statsforecast_class.__name__} from "
+                f"statsforecast v{statsforecast.__version__} "
+                f"does not support prediction of intervals in `predict`. "
+                f"Consider upgrading to a newer version."
+            )
+        else:
+            support_pred_int = True
+
+        return {"int_in_sample": support_pred_int_in_sample, "int": support_pred_int}
 
 
 class StatsForecastBackAdapter:

@@ -247,45 +247,48 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        # import inside method to avoid hard dependency
-        from statsforecast.models import AutoARIMA as _AutoARIMA
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import AutoARIMA
 
-        return _AutoARIMA(
-            d=self.d,
-            D=self.D,
-            max_p=self.max_p,
-            max_q=self.max_q,
-            max_P=self.max_P,
-            max_Q=self.max_Q,
-            max_order=self.max_order,
-            max_d=self.max_d,
-            max_D=self.max_D,
-            start_p=self.start_p,
-            start_q=self.start_q,
-            start_P=self.start_P,
-            start_Q=self.start_Q,
-            stationary=self.stationary,
-            seasonal=self.seasonal,
-            ic=self.information_criterion,
-            stepwise=self.stepwise,
-            nmodels=self.n_fits,
-            trace=self.trace,
-            approximation=self.approximation,
-            method=self.method,
-            truncate=self.truncate,
-            test=self.test,
-            test_kwargs=self.offset_test_args,
-            seasonal_test=self.seasonal_test,
-            seasonal_test_kwargs=self.seasonal_test_args,
-            allowdrift=self.trend,
-            allowmean=self.with_intercept,
-            blambda=self.blambda,
-            biasadj=self.biasadj,
-            parallel=self.parallel,
-            num_cores=self.n_jobs,
-            season_length=self.sp,
-        )
+        return AutoARIMA
+
+    def _get_statsforecast_params(self):
+        return {
+            "d": self.d,
+            "D": self.D,
+            "max_p": self.max_p,
+            "max_q": self.max_q,
+            "max_P": self.max_P,
+            "max_Q": self.max_Q,
+            "max_order": self.max_order,
+            "max_d": self.max_d,
+            "max_D": self.max_D,
+            "start_p": self.start_p,
+            "start_q": self.start_q,
+            "start_P": self.start_P,
+            "start_Q": self.start_Q,
+            "stationary": self.stationary,
+            "seasonal": self.seasonal,
+            "ic": self.information_criterion,
+            "stepwise": self.stepwise,
+            "nmodels": self.n_fits,
+            "trace": self.trace,
+            "approximation": self.approximation,
+            "method": self.method,
+            "truncate": self.truncate,
+            "test": self.test,
+            "test_kwargs": self.offset_test_args,
+            "seasonal_test": self.seasonal_test,
+            "seasonal_test_kwargs": self.seasonal_test_args,
+            "allowdrift": self.trend,
+            "allowmean": self.with_intercept,
+            "blambda": self.blambda,
+            "biasadj": self.biasadj,
+            "parallel": self.parallel,
+            "num_cores": self.n_jobs,
+            "season_length": self.sp,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -360,15 +363,18 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        """Create underlying forecaster instance."""
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
         from statsforecast.models import AutoTheta
 
-        return AutoTheta(
-            season_length=self.season_length,
-            decomposition_type=self.decomposition_type,
-            model=self.model,
-        )
+        return AutoTheta
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "decomposition_type": self.decomposition_type,
+            "model": self.model,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -452,13 +458,18 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
+    def _get_statsforecast_class(self):
         """Create underlying forecaster instance."""
         from statsforecast.models import AutoETS
 
-        return AutoETS(
-            season_length=self.season_length, model=self.model, damped=self.damped
-        )
+        return AutoETS
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "model": self.model,
+            "damped": self.damped,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -527,11 +538,17 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        """Create underlying forecaster instance."""
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
         from statsforecast.models import AutoCES
 
-        return AutoCES(season_length=self.season_length, model=self.model)
+        return AutoCES
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "model": self.model,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -633,14 +650,16 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                     "forecaster."
                 )
 
-    def _instantiate_model(self):
-        """Create underlying forecaster instance."""
+    def _get_statsforecast_class(self):
         from statsforecast.models import MSTL
 
-        return MSTL(
-            season_length=self.season_length,
-            trend_forecaster=self._trend_forecaster,
-        )
+        return MSTL
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "trend_forecaster": self._trend_forecaster,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
