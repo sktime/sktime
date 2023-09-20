@@ -13,7 +13,7 @@ __all__ = ["KNeighborsTimeSeriesRegressor"]
 
 from sklearn.neighbors import KNeighborsRegressor
 
-from sktime.distances._distance import pairwise_distance
+from sktime.distances import pairwise_distance
 from sktime.regression.base import BaseRegressor
 
 # add new distance string codes here
