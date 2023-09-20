@@ -16,7 +16,9 @@ from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
 class TrendForecaster(BaseForecaster):
     r"""Trend based forecasts of time series data, regressing values on index.
 
-    Uses a `sklearn` regressor `regressor` to regress values of time series on index:
+    Uses a `sklearn` regressor specified by the `regressor` parameter
+    to perform regression on time series values against their corresponding indices,
+    providing trend-based forecasts:
 
     In `fit`, for input time series :math:`(v_i, t_i), i = 1, \dots, T`,
     where :math:`v_i` are values and :math:`t_i` are time stamps,
