@@ -429,9 +429,12 @@ def _check_regressor_input(
     # Check y if passed
     if y is not None:
         # Check y valid input
-        if not isinstance(y, (pd.Series, np.ndarray)):
+        if not isinstance(y, (pd.Series, np.ndarray)) and not (
+            isinstance(y, pd.DataFrame) and y.shape[1] == 1
+        ):
             raise ValueError(
-                f"y must be a np.array or a pd.Series, but found type: {type(y)}"
+                f"y must be a np.array, pd.Series or a 1-D pd.DataFrame,"
+                f"but found type: {type(y)}"
             )
         # Check matching number of labels
         n_labels = y.shape[0]

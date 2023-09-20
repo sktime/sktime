@@ -6,7 +6,7 @@ from typing import Union
 
 import numpy as np
 
-from sktime.distances import pairwise_distance
+from sktime.distances._distance import pairwise_distance
 from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
