@@ -108,7 +108,9 @@ def _init_matrix(matrices, transform_func, default_val):
     return transform_func(matrices)
 
 
-def _check_conditional_dependency(obj, condition, package, severity, msg=None):
+def _check_conditional_dependency(
+    obj, condition, package, severity, package_import_alias=None, msg=None
+):
     """If `condition` applies, check the soft dependency `package` installation.
 
     Call _check_soft_dependencies.
@@ -123,6 +125,9 @@ def _check_conditional_dependency(obj, condition, package, severity, msg=None):
         Error message to attach to ModuleNotFoundError.
     package : str
         Package name for soft dependency check.
+    package_import_alias : dict with str keys and values or None, optional, default=None
+        import name is str used in python import, i.e., from import_name import ...
+        should be provided if import name differs from package name
     severity : str
         'error' or 'warning'.
 
@@ -140,7 +145,12 @@ def _check_conditional_dependency(obj, condition, package, severity, msg=None):
                 f"install the `{package}` package. "
             )
         try:
-            _check_soft_dependencies(package, severity=severity, obj=obj)
+            _check_soft_dependencies(
+                package,
+                package_import_alias=package_import_alias,
+                severity=severity,
+                obj=obj,
+            )
         except ModuleNotFoundError as e:
             raise ModuleNotFoundError(msg) from e
 
@@ -1060,6 +1070,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             obj=self,
             condition=(self.estimate_matrices is not None),
             package="pykalman-bardo",
+            package_import_alias={"pykalman-bardo": "pykalman"},
             severity="error",
             msg=(
                 f"{self.__class__.__name__}'s matrix parameter estimation "
