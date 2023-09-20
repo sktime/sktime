@@ -2537,8 +2537,15 @@ class YfromX(BaseForecaster, _ReducerMixin):
         if X is None:
             from sklearn.dummy import DummyRegressor
 
+            if _est_type == "regressor":
+                estimator = DummyRegressor()
+            else:  # "proba_regressor"
+                from skpro.regression.residual import ResidualDouble
+
+                dummy = DummyRegressor()
+                estimator = ResidualDouble(dummy)
+
             X = _coerce_col_str(y)
-            estimator = DummyRegressor()
         else:
             X = _coerce_col_str(X)
             estimator = clone(self.estimator)
