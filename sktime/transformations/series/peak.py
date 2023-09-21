@@ -1,6 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract peak/working hour features from datetimeindex."""
-__author__ = ["ali-parizad", "VyomkeshVyas"]
+__author__ = ["ali-parizad"]
 __all__ = ["PeakTimeFeature"]
 
 
@@ -527,7 +527,8 @@ def _check_inputs(start_values, end_values, feature_name, start_range, end_range
 def _check_ts_freq(x_df, datetime_freq, ts_freq):
     """Check input frequency (main dataframe) with ts_freq.
 
-    _extended_summary_
+    check 1- Determine whether input ts_freq is valid or not.
+    check 2- Compare the frequency of main dataframe with 'ts_freq'.
 
     Parameters
     ----------
