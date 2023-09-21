@@ -19,7 +19,7 @@ class BaseDataset(ABC):
         self,
         metadata: BaseDatasetMetadata,
         save_dir: str,
-        return_data_type: str = "pd.DataFrame",
+        return_data_type: str,
     ) -> None:
         super().__init__()
         self._metadata = metadata
@@ -49,7 +49,7 @@ class BaseDataset(ABC):
         if self._metadata.backup_urls:
             urls = urls + [
                 f"{url}/{name}.{format}" for url in self._metadata.backup_urls
-            ]  # noqa
+            ]
         if not self._save_dir.exists():
             self._save_dir.mkdir(parents=True, exist_ok=True)
             self._fallback_download(urls, repeats, verbose)

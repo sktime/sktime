@@ -318,7 +318,7 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     return _get_data_from(extract_path)
 
 
-# Can depreciate this function in favor of dataset object
+# TODO: Can depreciate this function in favor of dataset object
 def _load_provided_dataset(
     name,
     split=None,
