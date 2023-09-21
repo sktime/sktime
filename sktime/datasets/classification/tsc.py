@@ -18,16 +18,17 @@ class TSCDataset(TSDatasetLoader):
 
     def __init__(
         self,
-        name,
+        name: str,
         split: Optional[str] = None,
         save_dir: Optional[str] = None,
-        return_data_type: str = "pd.DataFrame",
+        return_data_type: str = "nested_univ",
     ):
         metadata = ExternalDatasetMetadata(
             name=name,
             task_type="classification",
-            url="https://timeseriesclassification.com",
+            url="https://timeseriesclassification.com/aeon-toolkit",
             backup_urls=["https://github.com/sktime/sktime-datasets/raw/main/TSC"],
+            download_file_format="zip",
             citation=CITATION,
         )
         if save_dir is None:
@@ -35,11 +36,10 @@ class TSCDataset(TSDatasetLoader):
         else:
             save_dir = Path(save_dir, name)
         super().__init__(metadata, save_dir, return_data_type)
-        self._split = split
+        self._split = split.upper() if split is not None else split
 
-    @classmethod
     def _load_train_test(self, split: str):
-        file_path = Path(self._save_dir, f"_{split}.ts")
+        file_path = Path(self.save_dir, f"{self._metadata.name}_{split}.ts")
         return self._load_from_file(file_path)
 
     def _preprocess(self, X_train, y_train, X_test, y_test):

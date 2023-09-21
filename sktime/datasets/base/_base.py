@@ -3,7 +3,7 @@ import tempfile
 import zipfile
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Tuple
+from typing import Optional, Tuple
 from urllib.request import urlretrieve
 
 import pandas as pd
@@ -27,7 +27,7 @@ class BaseDataset(ABC):
         self._return_data_type = return_data_type
 
     @property
-    def get_save_dir(self):
+    def save_dir(self):
         """Return the save directory."""
         return self._save_dir
 
@@ -37,56 +37,65 @@ class BaseDataset(ABC):
         raise NotImplementedError()
 
     def load(self) -> Tuple[pd.DataFrame, pd.Series]:
-        """Load the dataset."""
-        # check directory
-        # download if not exists
+        """Load the dataset. If not exists, download it first."""
         self.download()
         return self._load()
 
-    def download(self) -> None:
+    def download(self, repeats: Optional[int] = 2, verbose: Optional[bool] = False):
         """Download the dataset."""
-        url = f"{self._metadata.url}/{self._metadata.name}.{self._metadata.download_format}"  # noqa
-        # TODO: cahce logic here
+        name = self._metadata.name
+        format = self._metadata.download_file_format
+        urls = [f"{self._metadata.url}/{name}.{format}"]
+        if self._metadata.backup_urls:
+            urls = urls + [
+                f"{url}/{name}.{format}" for url in self._metadata.backup_urls
+            ]  # noqa
         if not self._save_dir.exists():
             self._save_dir.mkdir(parents=True, exist_ok=True)
-            zip_file, temp_dir = self._download(url)
-            if self._metadata.download_file_format == "zip":
-                self._extract_zipfile(zip_file, temp_dir)
+            self._fallback_download(urls, repeats, verbose)
 
-    def _download(self, url: str) -> None:
+    def delete(self):
+        """Delete the dataset."""
+        shutil.rmtree(self._save_dir)
+
+    def _download_extract(self, url: str) -> None:
         """Download zip file to a temp directory and extract it."""
         temp_dir = tempfile.mkdtemp()  # create a temp directory
         zip_file_save_to = Path(temp_dir, self._metadata.name)
         urlretrieve(url, zip_file_save_to)
-        return zip_file_save_to, temp_dir
-
-    def _extract_zipfile(self, zip_file, temp_dir) -> None:
         try:
-            zipfile.ZipFile(zip_file, "r").extractall(self._save_dir)
-            shutil.rmtree(temp_dir)  # delete temp directory with all its contents
+            zipfile.ZipFile(zip_file_save_to, "r").extractall(self._save_dir)
         except zipfile.BadZipFile:
-            shutil.rmtree(temp_dir)
-            self._fallback_download()
             raise zipfile.BadZipFile(
                 "Could not unzip dataset. Please make sure the URL is valid."
             )
+        finally:
+            shutil.rmtree(temp_dir)  # delete temp directory with all its contents
 
-    def _fallback_download(self) -> None:
+    def _fallback_download(self, urls, repeats, verbose) -> None:
         """Download the dataset from a fallback URL."""
-        for url in self._metadata.backup_urls:
-            try:
-                self._download_extract(url)
-                return
-            except zipfile.BadZipFile:
-                pass
-        raise zipfile.BadZipFile(
-            "Could not unzip dataset. Please make sure the URL is valid."
-        )
-
-    @property
-    def is_dataset_exits(self) -> bool:
-        """Check if the dataset exists."""
-        raise NotImplementedError()
+        for url in urls:
+            for repeat in range(repeats):
+                if verbose:
+                    print(  # noqa: T201
+                        f"Downloading dataset {self._metadata.name} from {url} "
+                        f"to {self._save_dir} (attempt {repeat} of {repeats} total). "
+                    )
+                try:
+                    self._download_extract(url)
+                    return  # exit loop when download is successful
+                except zipfile.BadZipFile:
+                    if verbose:
+                        if repeat < repeats - 1:
+                            print(  # noqa: T201
+                                "Download failed, continuing with next attempt. "
+                            )
+                        else:
+                            print(  # noqa: T201
+                                "All attempts for mirror failed, "
+                                "continuing with next mirror."
+                            )
+                            shutil.rmtree(self._save_dir)  # delete directory
 
 
 class TSDatasetLoader(BaseDataset):
