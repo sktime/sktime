@@ -6,15 +6,16 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from sktime.datasets.base._base import TSDatasetLoader
+from sktime.datasets._data_io import load_from_tsfile
+from sktime.datasets.base._base import BaseDataset
 from sktime.datasets.base._metadata import ExternalDatasetMetadata
 
 DEFAULT_PATH = Path.cwd().parent / "data"
 CITATION = ""
 
 
-class TSCDataset(TSDatasetLoader):
-    """Base class for all sktime datasets."""
+class TSCDatasetLoader(BaseDataset):
+    """Classification dataset from UCR UEA time series archive."""
 
     def __init__(
         self,
@@ -26,8 +27,10 @@ class TSCDataset(TSDatasetLoader):
         metadata = ExternalDatasetMetadata(
             name=name,
             task_type="classification",
-            url="https://timeseriesclassification.com/aeon-toolkit",
-            backup_urls=["https://github.com/sktime/sktime-datasets/raw/main/TSC"],
+            url=[
+                "https://timeseriesclassification.com/aeon-toolkit",
+                "https://github.com/sktime/sktime-datasets/raw/main/TSC",
+            ],
             download_file_format="zip",
             citation=CITATION,
         )
@@ -38,9 +41,13 @@ class TSCDataset(TSDatasetLoader):
         super().__init__(metadata, save_dir, return_data_type)
         self._split = split.upper() if split is not None else split
 
-    def _load_train_test(self, split: str):
+    def _load_from_file(self, split: str):
+        """Load .ts format dataset."""
         file_path = Path(self.save_dir, f"{self._metadata.name}_{split}.ts")
-        return self._load_from_file(file_path)
+        X, y = load_from_tsfile(
+            full_file_path_and_name=file_path, return_data_type=self._return_data_type
+        )
+        return X, y
 
     def _preprocess(self, X_train, y_train, X_test, y_test):
         """Preprocess the dataset."""

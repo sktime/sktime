@@ -1,6 +1,5 @@
 """Metadata for sktime datasets."""
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -18,9 +17,8 @@ class BaseDatasetMetadata:
 class ExternalDatasetMetadata(BaseDatasetMetadata):
     """Metadata for external datasets."""
 
-    url: str
+    url: list[str]
     citation: str
-    backup_urls: Optional[list[str]]
 
 
 @dataclass

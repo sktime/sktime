@@ -8,7 +8,7 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 
-from sktime.datasets._data_io import load_from_tsfile  # _alias_mtype_check
+from sktime.datasets._data_io import load_from_tsfile
 from sktime.datasets.base._metadata import BaseDatasetMetadata
 
 
@@ -45,11 +45,7 @@ class BaseDataset(ABC):
         """Download the dataset."""
         name = self._metadata.name
         format = self._metadata.download_file_format
-        urls = [f"{self._metadata.url}/{name}.{format}"]
-        if self._metadata.backup_urls:
-            urls = urls + [
-                f"{url}/{name}.{format}" for url in self._metadata.backup_urls
-            ]
+        urls = [f"{url}/{name}.{format}" for url in self._metadata.url]
         if not self._save_dir.exists():
             self._save_dir.mkdir(parents=True, exist_ok=True)
             self._fallback_download(urls, repeats, verbose)
@@ -84,7 +80,7 @@ class BaseDataset(ABC):
                 try:
                     self._download_extract(url)
                     return  # exit loop when download is successful
-                except zipfile.BadZipFile:
+                except Exception as error:
                     if verbose:
                         if repeat < repeats - 1:
                             print(  # noqa: T201
@@ -96,6 +92,7 @@ class BaseDataset(ABC):
                                 "continuing with next mirror."
                             )
                             shutil.rmtree(self._save_dir)  # delete directory
+                    print(f"Exception occurred: {error}")  # noqa: T201
 
 
 class TSDatasetLoader(BaseDataset):
