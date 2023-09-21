@@ -515,9 +515,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
 
     def _check_predict_proba(self, pred_dist, y_train, fh_int):
-        from sktime.proba.base import BaseDistribution
+        assert hasattr(pred_dist, "get_tag")
+        obj_type = pred_dist.get_tag("object_type", None, False)
+        assert obj_type == "distribution"
 
-        assert isinstance(pred_dist, BaseDistribution)
         pred_cols = pred_dist.columns
         pred_index = pred_dist.index
 
