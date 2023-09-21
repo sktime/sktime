@@ -137,6 +137,9 @@ class Imputer(BaseTransformer):
                 }
             )
 
+        if method in "forecaster":
+            self.set_tags(**{"y_inner_mtype": ["pd.DataFrame"]})
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
