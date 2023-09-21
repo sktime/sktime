@@ -1,5 +1,10 @@
+import shutil
+import tempfile
+import zipfile
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Tuple
+from urllib.request import urlretrieve
 
 import pandas as pd
 
@@ -21,26 +26,62 @@ class BaseDataset(ABC):
         self._save_dir = save_dir
         self._return_data_type = return_data_type
 
-    def load(self) -> Tuple[pd.DataFrame, pd.Series]:
-        """Load the dataset."""
-        return self._load()
+    @property
+    def get_save_dir(self):
+        """Return the save directory."""
+        return self._save_dir
 
     @abstractmethod
     def _load(self) -> Tuple[pd.DataFrame, pd.Series]:
         """Load the dataset."""
         raise NotImplementedError()
 
+    def load(self) -> Tuple[pd.DataFrame, pd.Series]:
+        """Load the dataset."""
+        # check directory
+        # download if not exists
+        self.download()
+        return self._load()
+
     def download(self) -> None:
         """Download the dataset."""
-        raise NotImplementedError()
+        url = f"{self._metadata.url}/{self._metadata.name}.{self._metadata.download_format}"  # noqa
+        # TODO: cahce logic here
+        if not self._save_dir.exists():
+            self._save_dir.mkdir(parents=True, exist_ok=True)
+            zip_file, temp_dir = self._download(url)
+            if self._metadata.download_file_format == "zip":
+                self._extract_zipfile(zip_file, temp_dir)
 
-    def _extract_from_zipfile(self) -> None:
-        """Extract the dataset from a zip file."""
-        raise NotImplementedError()
+    def _download(self, url: str) -> None:
+        """Download zip file to a temp directory and extract it."""
+        temp_dir = tempfile.mkdtemp()  # create a temp directory
+        zip_file_save_to = Path(temp_dir, self._metadata.name)
+        urlretrieve(url, zip_file_save_to)
+        return zip_file_save_to, temp_dir
+
+    def _extract_zipfile(self, zip_file, temp_dir) -> None:
+        try:
+            zipfile.ZipFile(zip_file, "r").extractall(self._save_dir)
+            shutil.rmtree(temp_dir)  # delete temp directory with all its contents
+        except zipfile.BadZipFile:
+            shutil.rmtree(temp_dir)
+            self._fallback_download()
+            raise zipfile.BadZipFile(
+                "Could not unzip dataset. Please make sure the URL is valid."
+            )
 
     def _fallback_download(self) -> None:
         """Download the dataset from a fallback URL."""
-        raise NotImplementedError()
+        for url in self._metadata.backup_urls:
+            try:
+                self._download_extract(url)
+                return
+            except zipfile.BadZipFile:
+                pass
+        raise zipfile.BadZipFile(
+            "Could not unzip dataset. Please make sure the URL is valid."
+        )
 
     @property
     def is_dataset_exits(self) -> bool:

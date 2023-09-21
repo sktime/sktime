@@ -9,6 +9,7 @@ class BaseDatasetMetadata:
 
     name: str
     task_type: str  # classification, regression, forecasting
+    download_file_format: str  # zip, .ts, .arff, .csv
     # is_univariate: bool
     # dimensions: tuple
 
@@ -18,8 +19,8 @@ class ExternalDatasetMetadata(BaseDatasetMetadata):
     """Metadata for external datasets."""
 
     url: str
-    backup_urls: Optional[list[str]] = None
     citation: str
+    backup_urls: Optional[list[str]]
 
 
 @dataclass

@@ -9,7 +9,7 @@ import pandas as pd
 from sktime.datasets.base._base import TSDatasetLoader
 from sktime.datasets.base._metadata import ExternalDatasetMetadata
 
-DEFAULT_PATH = Path(__file__, "../data/")
+DEFAULT_PATH = Path.cwd().parent / "data"
 CITATION = ""
 
 
@@ -21,23 +21,33 @@ class TSCDataset(TSDatasetLoader):
         name,
         split: Optional[str] = None,
         save_dir: Optional[str] = None,
+        return_data_type: str = "pd.DataFrame",
     ):
         metadata = ExternalDatasetMetadata(
             name=name,
             task_type="classification",
-            url="https://timeseriesclassification.com/",
+            url="https://timeseriesclassification.com",
             backup_urls=["https://github.com/sktime/sktime-datasets/raw/main/TSC"],
             citation=CITATION,
         )
-
-        save_dir = Path(DEFAULT_PATH, name) if save_dir is None else Path(save_dir)
-        super().__init__(metadata, save_dir)
+        if save_dir is None:
+            save_dir = Path(DEFAULT_PATH, name)
+        else:
+            save_dir = Path(save_dir, name)
+        super().__init__(metadata, save_dir, return_data_type)
         self._split = split
 
     @classmethod
     def _load_train_test(self, split: str):
         file_path = Path(self._save_dir, f"_{split}.ts")
         return self._load_from_file(file_path)
+
+    def _preprocess(self, X_train, y_train, X_test, y_test):
+        """Preprocess the dataset."""
+        X = pd.concat([X_train, X_test])
+        X = X.reset_index(drop=True)
+        y = np.concatenate([y_train, y_test])
+        return X, y
 
     def _load(self):
         """Load the dataset into memory."""
@@ -49,10 +59,3 @@ class TSCDataset(TSDatasetLoader):
             return X_test, y_test
 
         return self._preprocess(X_train, y_train, X_test, y_test)
-
-    def _preprocess(self, X_train, y_train, X_test, y_test):
-        """Preprocess the dataset."""
-        X = pd.concat([X_train, X_test])
-        X = X.reset_index(drop=True)
-        y = np.concatenate([y_train, y_test])
-        return X, y
