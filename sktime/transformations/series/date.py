@@ -73,13 +73,41 @@ class DateTimeFeatures(BaseTransformer):
     manual_selection: str, optional (default=None)
         Manual selection of dummys. Notation is child of parent for precise notation.
         Will ignore specified feature_scope, but will still check with warning against
-        a specified ts_freq.
-        Examples for possible values:
+        a specified ts_freq. All columns returned are integer based.
+        Supported values:
         * None
+        * quarter_of_year
+            1-based index
+        * month_of_year
+            1-based offset to January
+        * week_of_year
+            1-based offset to the first week of an ISO year
         * day_of_year
-        * day_of_month
+            1-based offset to first of January
+        * month_of_quarter
+            1-based index
+        * week_of_quarter
+            1-based index
         * day_of_quarter
+            1-based index
+        * week_of_month
+            1-based index
+        * day_of_month
+            1-based offset to first day of each month
+        * day_of_week
+            0-based offset to Monday
+        * hour_of_week
+            0-based offset to Monday(00:00:00+00:00)
+        * hour_of_day
+            0-based offset to 00:00:00+00:00
+        * minute_of_hour
+            0-based offset to 00:00:00
+        * second_of_minute
+            0-based offset to 00:00:00
+        * millisecond_of_second
+            0-based offset to 00:00:00.0000
         * is_weekend
+            1 indicates weekend, 0 indicates it is not a weekend
         * year (special case with no lower frequency).
     keep_original_columns :  boolean, optional, default=False
         Keep original columns in X passed to `.transform()`.
