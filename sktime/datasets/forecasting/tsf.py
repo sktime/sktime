@@ -48,4 +48,5 @@ class TSFDatasetLoader(BaseDataset):
     @property
     def metadata(self):
         """Return the dataset metadata."""
+        # TODO: comine with self._metadata class
         return self._info

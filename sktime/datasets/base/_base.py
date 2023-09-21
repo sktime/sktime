@@ -8,7 +8,6 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 
-from sktime.datasets._data_io import load_from_tsfile
 from sktime.datasets.base._metadata import BaseDatasetMetadata
 
 
@@ -93,25 +92,6 @@ class BaseDataset(ABC):
                             )
                             shutil.rmtree(self._save_dir)  # delete directory
                     print(f"Exception occurred: {error}")  # noqa: T201
-
-
-class TSDatasetLoader(BaseDataset):
-    """Base class for .ts fromat datasets."""
-
-    def __init__(self, metadata, save_dir, return_data_type):
-        super().__init__(metadata, save_dir, return_data_type)
-
-    def _load_from_file(self, file_path):
-        """Load .ts format dataset."""
-        X, y = load_from_tsfile(
-            full_file_path_and_name=file_path, return_data_type=self._return_data_type
-        )
-        return X, y
-
-    @abstractmethod
-    def _preprocess(self, *args, **kwargs):
-        """Preprocess the dataset."""
-        pass
 
 
 class CSVDatasetLoader(BaseDataset):
