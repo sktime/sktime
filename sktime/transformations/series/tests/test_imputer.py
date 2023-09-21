@@ -63,9 +63,8 @@ def test_imputer_forecaster_y():
     """
     from sklearn.linear_model import LinearRegression
 
-    from sktime.transformations.compose import YtoX
-
     from sktime.datasets import load_airline
+    from sktime.transformations.compose import YtoX
 
     X = load_airline()
     y = load_airline()
