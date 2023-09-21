@@ -390,6 +390,7 @@ class BaseSplitter(BaseObject):
     """
 
     _tags = {
+        "object_type": "splitter",  # type of object
         "split_hierarchical": False,
         # split_hierarchical: whether _split supports hierarchical types natively
         # if not, splitter broadcasts over instances
