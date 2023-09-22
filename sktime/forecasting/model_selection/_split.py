@@ -34,8 +34,8 @@ from sktime.split import (
 )
 
 warnings.warn(
-    "Please import splitters from `sktime.split`. Importing splitters from "
-    "sktime.forecasting.model_selection is deprecated and will be removed in release "
+    "Please import sktime splitters from `sktime.split`. Importing splitters from "
+    "`sktime.forecasting.model_selection` is deprecated and will be removed in release "
     "0.25.0",
     DeprecationWarning,
     stacklevel=2,
