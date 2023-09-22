@@ -43,11 +43,11 @@ def _make_augmentation_pipeline(augmentation_list):
     if augmentation_list is not None:
         if isinstance(augmentation_list, str):
             augmentation_list = (augmentation_list,)
-    assert all(
-        [x in list(AUGMENTATIONS.keys()) for x in augmentation_list]
-    ), "augmentation_list must only contain string elements from {}. Given: {}.".format(
-        list(AUGMENTATIONS.keys()), augmentation_list
-    )
+        assert all(
+            [x in list(AUGMENTATIONS.keys()) for x in augmentation_list]
+        ), "augmentation_list must only contain string elements from {}. Given: {}.".format(
+            list(AUGMENTATIONS.keys()), augmentation_list
+        )
 
     # Setup pipeline
     if augmentation_list is not None:
