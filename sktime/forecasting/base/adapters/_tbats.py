@@ -79,7 +79,7 @@ class _TbatsAdapter(BaseForecaster):
             context=self.context,
         )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -124,7 +124,7 @@ class _TbatsAdapter(BaseForecaster):
         if update_params:
             # update model state and refit parameters
             # _fit re-runs model instantiation which triggers refit
-            self._fit(y=self._y)
+            self._fit(y=self._y, X=None, fh=self._fh)
 
         else:
             # update model state without refitting parameters
@@ -133,7 +133,7 @@ class _TbatsAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters
@@ -286,22 +286,24 @@ class _TbatsAdapter(BaseForecaster):
         cutoff = self.cutoff
 
         # accumulator of results
-        var_names = ["Coverage"]
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx, index=fh.to_absolute_index(cutoff))
 
         for c in coverage:
             # separate treatment for "0" coverage: upper/lower = point prediction
             if c == 0:
-                pred_int[("Coverage", 0, "lower")] = self._tbats_forecast(fh)
-                pred_int[("Coverage", 0, "upper")] = pred_int[("Coverage", 0, "lower")]
+                pred_int[(var_name, 0, "lower")] = self._tbats_forecast(fh)
+                pred_int[(var_name, 0, "upper")] = pred_int[(var_name, 0, "lower")]
                 continue
 
             # tbats prediction intervals
             tbats_pred_int = self._tbats_forecast_interval(fh, c)
 
-            pred_int[("Coverage", c, "lower")] = tbats_pred_int["lower"]
-            pred_int[("Coverage", c, "upper")] = tbats_pred_int["upper"]
+            pred_int[(var_name, c, "lower")] = tbats_pred_int["lower"]
+            pred_int[(var_name, c, "upper")] = tbats_pred_int["upper"]
 
         return pred_int
 

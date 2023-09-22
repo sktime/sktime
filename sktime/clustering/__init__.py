@@ -2,6 +2,5 @@
 __all__ = [
     "BaseClusterer",
 ]
-__author__ = ["chrisholder", "TonyBagnall"]
 
 from sktime.clustering.base import BaseClusterer

@@ -5,7 +5,7 @@ __author__ = ["fkiraly"]
 import numpy as np
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
@@ -47,6 +47,7 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     >>> dist_mat = sum_dist.transform(X)
 
     the same can also be done more compactly using dunders:
+
     >>> sum_dist = DtwDist() + DtwDist(weighted=True)
     >>> dist_mat = sum_dist(X)
     """

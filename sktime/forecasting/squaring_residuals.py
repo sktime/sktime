@@ -123,7 +123,7 @@ class SquaringResiduals(BaseForecaster):
         if self.residual_forecaster is None:
             self.residual_forecaster = NaiveForecaster()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -198,7 +198,7 @@ class SquaringResiduals(BaseForecaster):
             self._res_forecasters[step_ahead] = res_step_forecaster_
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -269,7 +269,7 @@ class SquaringResiduals(BaseForecaster):
             forecaster.update(X=X, y=y, update_params=update_params)
         return self
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -313,10 +313,13 @@ class SquaringResiduals(BaseForecaster):
 
         errors = [pred_var * z for z in z_scores]
 
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
+        index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)
         for a, error in zip(alpha, errors):
-            pred_quantiles[("Quantiles", a)] = y_pred + error
+            pred_quantiles[(var_name, a)] = y_pred + error
 
         pred_quantiles.index = fh_abs.to_pandas()
 

@@ -27,7 +27,7 @@ from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
     check_is_scitype,
-    convert_to,
+    convert,
     scitype_to_mtype,
     update_data,
 )
@@ -271,11 +271,13 @@ class BaseParamFitter(BaseEstimator):
         if not X_valid:
             raise TypeError(msg + mtypes_msg)
         X_scitype = X_metadata["scitype"]
+        X_mtype = X_metadata["mtype"]
         # end checking X
 
         # converts X, converts None to None if X is None
-        X_inner = convert_to(
+        X_inner = convert(
             X,
+            from_type=X_mtype,
             to_type=X_inner_mtype,
             as_scitype=X_scitype,
         )

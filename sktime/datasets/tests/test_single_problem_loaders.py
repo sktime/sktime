@@ -1,4 +1,6 @@
 """Test single problem loaders with varying return types."""
+from urllib.request import Request, urlopen
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -7,6 +9,7 @@ from sktime.datasets import (  # Univariate; Unequal length; Multivariate
     load_acsf1,
     load_arrow_head,
     load_basic_motions,
+    load_forecastingdata,
     load_italy_power_demand,
     load_japanese_vowels,
     load_osuleaf,
@@ -14,6 +17,7 @@ from sktime.datasets import (  # Univariate; Unequal length; Multivariate
     load_UCR_UEA_dataset,
     load_unit_test,
 )
+from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 
 UNIVARIATE_PROBLEMS = [
     load_acsf1,
@@ -29,6 +33,10 @@ UNEQUAL_LENGTH_PROBLEMS = [
     load_plaid,
     load_japanese_vowels,
 ]
+
+# test tsf download only on a random uniform subsample of datasets
+N_TSF_SUBSAMPLE = 3
+TSF_SUBSAMPLE = np.random.choice(tsf_all_datasets, N_TSF_SUBSAMPLE)
 
 
 @pytest.mark.parametrize(
@@ -93,3 +101,37 @@ def test_load_UEA():
 
     for mult_name in mult_names:
         load_UCR_UEA_dataset(mult_name)
+
+
+def test_load_forecastingdata():
+    """Test loading downloaded dataset from forecasting.org."""
+    file = "UnitTest"
+    loaded_datasets, metadata = load_forecastingdata(name=file)
+    assert len(loaded_datasets) == 1
+    assert metadata["frequency"] == "yearly"
+    assert metadata["forecast_horizon"] == 4
+    assert metadata["contain_missing_values"] is False
+    assert metadata["contain_equal_length"] is False
+
+
+@pytest.mark.parametrize("name", TSF_SUBSAMPLE)
+def test_check_link_downloadable(name):
+    """Test dataset URL from forecasting.org is downloadable and exits."""
+    url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
+
+    # Send a GET request to check if the link exists without downloading the file
+    # response = requests.get(url, stream=True)
+    req = Request(url, method="HEAD")
+    response = urlopen(req)
+
+    # Check if the response status code is 200 (OK)
+    assert (
+        response.status == 200
+    ), f"URL is not valid or does not exist. Error code {response.status}."
+
+    # Check if the response headers indicate that the content is downloadable
+    content_type = response.headers.get("Content-Type")
+    content_disposition = response.headers.get("Content-Disposition")
+
+    assert "application/octet-stream" in content_type, "URL is not downloadable."
+    assert "attachment" in content_disposition, "URL is not downloadable."

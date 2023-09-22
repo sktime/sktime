@@ -233,17 +233,17 @@ class BaseForecaster(BaseEstimator):
         First index does subsetting of exogeneous input data.
         Second index does subsetting of the forecast (but not of endogeneous data).
 
-        Keys must be valid inputs for `columns` in `ColumnSubset`.
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following composite pipeline object:
-            ColumnSubset(columns1) ** self * ColumnSubset(columns2)
+            ColumnSelect(columns1) ** self * ColumnSelect(columns2)
             where `columns1` is first or only item in `key`, and `columns2` is the last
             if only one item is passed in `key`, only `columns1` is applied to input
         """
@@ -558,17 +558,15 @@ class BaseForecaster(BaseEstimator):
         else:
             # otherwise we call the vectorized version of predict_quantiles
             quantiles = self._vectorize(
-                "predict_quantiles", fh=fh, X=X_inner, alpha=alpha
+                "predict_quantiles",
+                fh=fh,
+                X=X_inner,
+                alpha=alpha,
             )
 
         return quantiles
 
-    def predict_interval(
-        self,
-        fh=None,
-        X=None,
-        coverage=0.90,
-    ):
+    def predict_interval(self, fh=None, X=None, coverage=0.90):
         """Compute/return prediction interval forecasts.
 
         If coverage is iterable, multiple intervals will be calculated.
@@ -635,7 +633,10 @@ class BaseForecaster(BaseEstimator):
         else:
             # otherwise we call the vectorized version of predict_interval
             pred_int = self._vectorize(
-                "predict_interval", fh=fh, X=X_inner, coverage=coverage
+                "predict_interval",
+                fh=fh,
+                X=X_inner,
+                coverage=coverage,
             )
 
         return pred_int
@@ -1128,11 +1129,8 @@ class BaseForecaster(BaseEstimator):
 
         y_pred = self.predict(fh=fh, X=X)
 
-        if not type(y_pred) == type(y):
-            raise TypeError(
-                "y must have same type, dims, index as expected predict return. "
-                f"expected type {type(y_pred)}, but found {type(y)}"
-            )
+        if not type(y_pred) is type(y):
+            y = convert_to(y, self._y_mtype_last_seen)
 
         y_res = y - y_pred
 
@@ -1143,7 +1141,7 @@ class BaseForecaster(BaseEstimator):
         return y_res
 
     def score(self, y, X=None, fh=None):
-        """Scores forecast against ground truth, using MAPE.
+        """Scores forecast against ground truth, using MAPE (non-symmetric).
 
         Parameters
         ----------
@@ -1163,7 +1161,7 @@ class BaseForecaster(BaseEstimator):
         Returns
         -------
         score : float
-            sMAPE loss of self.predict(fh, X) with respect to y_test.
+            MAPE loss of self.predict(fh, X) with respect to y_test.
 
         See Also
         --------
@@ -1171,12 +1169,12 @@ class BaseForecaster(BaseEstimator):
         """
         # no input checks needed here, they will be performed
         # in predict and loss function
-        # symmetric=True is default for mean_absolute_percentage_error
         from sktime.performance_metrics.forecasting import (
             mean_absolute_percentage_error,
         )
 
-        return mean_absolute_percentage_error(y, self.predict(fh, X))
+        # specify non-symmetric explicitly as it changed in the past
+        return mean_absolute_percentage_error(y, self.predict(fh, X), symmetric=False)
 
     def get_fitted_params(self, deep=True):
         """Get fitted parameters.
@@ -1321,10 +1319,11 @@ class BaseForecaster(BaseEstimator):
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
         FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
 
+        mtypes_messages = []
         for scitype in ALLOWED_SCITYPES:
             mtypes = set(scitype_to_mtype(scitype))
             mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
-            mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
+            mtypes_messages.append(f'"For {scitype} scitype: {mtypes}. ')
 
         # checking y
         if y is not None:
@@ -1343,7 +1342,7 @@ class BaseForecaster(BaseEstimator):
             )
             msg = (
                 "y must be in an sktime compatible format, "
-                "of scitype Series, Panel or Hierarchical, "
+                f"of scitype {', '.join(ALLOWED_SCITYPES)}, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 " See the forecasting tutorial examples/01_forecasting.ipynb, or"
@@ -1351,10 +1350,10 @@ class BaseForecaster(BaseEstimator):
                 "If you think y is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
                 "where mtype is the string of the type specification you want for y. "
-                "Possible mtype specification strings are as follows. "
+                "Possible mtype specification strings are as follows: "
             )
             if not y_valid:
-                raise TypeError(msg + mtypes_msg)
+                raise TypeError(msg + ", ".join(mtypes_messages))
 
             y_scitype = y_metadata["scitype"]
             self._y_mtype_last_seen = y_metadata["mtype"]
@@ -1409,7 +1408,7 @@ class BaseForecaster(BaseEstimator):
                 "Possible mtype specification strings are as follows. "
             )
             if not X_valid:
-                raise TypeError(msg + mtypes_msg)
+                raise TypeError(msg + ", ".join(mtypes_messages))
 
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype
@@ -1431,7 +1430,7 @@ class BaseForecaster(BaseEstimator):
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
                 # currently, check_equal_time_index only works for Series
-                # todo: fix this so the check is general, using get_time_index
+                # TODO: fix this so the check is general, using get_time_index
                 if not self.get_tag("ignores-exogeneous-X") and X_scitype == "Series":
                     check_equal_time_index(X, y, mode="contains")
 
@@ -1439,7 +1438,7 @@ class BaseForecaster(BaseEstimator):
                 raise TypeError("X and y must have the same scitype")
         # end compatibility checking X and y
 
-        # todo: add tests that :
+        # TODO: add tests that :
         #   y_inner_scitype are same as X_inner_scitype
         #   y_inner_scitype always includes "less index" scitypes
 
@@ -1768,7 +1767,7 @@ class BaseForecaster(BaseEstimator):
                 y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -1799,7 +1798,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -1915,7 +1914,7 @@ class BaseForecaster(BaseEstimator):
         self.update(y=y, X=X, update_params=update_params)
         return self.predict(fh=fh, X=X)
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -1975,9 +1974,7 @@ class BaseForecaster(BaseEstimator):
         idx = pred_int.columns
         # variable names (unique, in same order)
         var_names = idx.get_level_values(0).unique()
-        # if was univariate & unnamed variable, replace default
-        if len(var_names) == 1 and var_names == ["Quantiles"]:
-            var_names = ["Coverage"]
+
         # idx returned by _predict_interval should be
         #   3-level MultiIndex with variable names, coverage, lower/upper
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
@@ -2050,9 +2047,7 @@ class BaseForecaster(BaseEstimator):
             idx = pred_int.columns
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
-            # if was univariate & unnamed variable, replace default
-            if len(var_names) == 1 and var_names == ["Coverage"]:
-                var_names = ["Quantiles"]
+
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
             int_idx = pd.MultiIndex.from_product([var_names, alpha])
@@ -2151,10 +2146,6 @@ class BaseForecaster(BaseEstimator):
             # put together to pd.DataFrame
             #   the indices and column names are already correct
             pred_var = pd.DataFrame(vars_dict)
-
-            # check whether column format was "nameless", set it to RangeIndex then
-            if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
-                pred_var.columns = pd.RangeIndex(1)
 
         return pred_var
 
@@ -2304,6 +2295,24 @@ class BaseForecaster(BaseEstimator):
                     store_behaviour="freeze",
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
+
+    def _get_varnames(self):
+        """Return variable column for DataFrame-like returns.
+
+        Developer note: currently a helper for predict_interval, predict_quantiles,
+        valid only in the univariate case. Can be extended later.
+        """
+        y = self._y
+        if isinstance(y, pd.Series):
+            var_name = self._y.name
+        elif isinstance(y, pd.DataFrame):
+            return y.columns
+        else:
+            var_name = 0
+        if var_name is None:
+            var_name = 0
+
+        return [var_name]
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):

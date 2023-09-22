@@ -20,6 +20,7 @@ from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
     NNLSEnsemble,
     NormalHedgeEnsemble,
 )
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
@@ -28,6 +29,10 @@ cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency for hmmlearn not available",
+)
+@pytest.mark.skipif(
+    not run_test_for_class(OnlineEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_weights_for_airline_averaging():
     """Test weights."""
@@ -58,6 +63,10 @@ def test_weights_for_airline_averaging():
     np.testing.assert_allclose(forecaster.weights, expected, rtol=1e-8)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(OnlineEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_weights_for_airline_normal_hedge():
     """Test weights."""
     y = load_airline()
@@ -81,6 +90,10 @@ def test_weights_for_airline_normal_hedge():
     np.testing.assert_allclose(forecaster.weights, expected, atol=1e-8)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(OnlineEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_weights_for_airline_nnls():
     """Test weights."""
     y = load_airline()

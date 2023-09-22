@@ -70,7 +70,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
         self.clone_tags(forecaster, TAGS_TO_CLONE)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -251,7 +251,7 @@ class UpdateEvery(_DelegatedForecaster):
 
         self.clone_tags(forecaster, TAGS_TO_KEEP)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit

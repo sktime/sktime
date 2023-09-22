@@ -155,7 +155,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         return Aggregator().fit_transform(y)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters

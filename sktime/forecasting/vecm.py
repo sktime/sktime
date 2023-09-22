@@ -24,15 +24,17 @@ class VECM(_StatsModelsAdapter):
     freq : str, optional
         See :class:`statsmodels.tsa.base.tsa_model.TimeSeriesModel` for more
         information.
-    missing : str, optional
+    missing : str, optional, default="none"
         See :class:`statsmodels.base.model.Model` for more information.
-    k_ar_diff : int
+    k_ar_diff : int, optional, default=1
         Number of lagged differences in the model. Equals :math:`k_{ar} - 1` in
         the formula above.
-    coint_rank : int
+    coint_rank : int, optional, default=1
         Cointegration rank, equals the rank of the matrix :math:`\\Pi` and the
         number of columns of :math:`\\alpha` and :math:`\\beta`.
-    deterministic : str {``"n"``, ``"co"``, ``"ci"``, ``"lo"``, ``"li"``}
+    deterministic : str, optional, default="n"
+        must be one of {``"n"``, ``"co"``, ``"ci"``, ``"lo"``, ``"li"``}
+
         * ``"n"`` - no deterministic terms
         * ``"co"`` - constant outside the cointegration relation
         * ``"ci"`` - constant within the cointegration relation
@@ -45,16 +47,16 @@ class VECM(_StatsModelsAdapter):
         (i.e. ``"ci"``) or leave it unrestricted (i.e. ``"co"``). Do not use
         both ``"ci"`` and ``"co"``. The same applies for ``"li"`` and ``"lo"``
         when using a linear term. See the Notes-section for more information.
-    seasons : int, default: 0
+    seasons : int, optional, default: 0
         Number of periods in a seasonal cycle. 0 means no seasons.
-    first_season : int, default: 0
+    first_season : int, optional, default: 0
         Season of the first observation.
     method : str {"ml"}, default: "ml"
         Estimation method to use. "ml" stands for Maximum Likelihood.
-    exog_coint : a scalar (float), 1D ndarray of size nobs,
+    exog_coint : optional, a scalar (float), 1D ndarray of size nobs,
         2D ndarray/pd.DataFrame of size (any, neqs)
         Deterministic terms inside the cointegration relation.
-    exog_coint_fc : a scalar (float), 1D ndarray of size nobs,
+    exog_coint_fc : optional, a scalar (float), 1D ndarray of size nobs,
         2D ndarray/pd.DataFrame of size (any, neqs)
         Forcasted value of exog_coint
 
@@ -152,7 +154,7 @@ class VECM(_StatsModelsAdapter):
         self._fitted_forecaster = self._forecaster.fit(method=self.method)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Wrapper for statsmodel's VECM (_VECM) predict method
@@ -208,7 +210,7 @@ class VECM(_StatsModelsAdapter):
 
         return y_pred
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -274,3 +276,27 @@ class VECM(_StatsModelsAdapter):
         )
 
         return pred_int
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"k_ar_diff": 2}
+
+        return [params1, params2]

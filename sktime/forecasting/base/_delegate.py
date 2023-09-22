@@ -1,7 +1,7 @@
 """Delegator mixin that delegates all methods to wrapped forecaster.
 
 Useful for building estimators where all but one or a few methods are delegated. For
-that purpose, inherit from this estimator and then override only the methods     that
+that purpose, inherit from this estimator and then override only the methods that
 are not delegated.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -13,7 +13,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class _DelegatedForecaster(BaseForecaster):
-    """Delegator mixin that delegateas all methods to wrapped forecaster.
+    """Delegator mixin that delegates all methods to wrapped forecaster.
 
     Delegates inner forecaster methods to a wrapped estimator.
         Wrapped estimator is value of attribute with name self._delegate_name.
@@ -38,7 +38,7 @@ class _DelegatedForecaster(BaseForecaster):
     def _get_delegate(self):
         return getattr(self, self._delegate_name)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -71,7 +71,7 @@ class _DelegatedForecaster(BaseForecaster):
         estimator.fit(y=y, fh=fh, X=X)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -149,7 +149,7 @@ class _DelegatedForecaster(BaseForecaster):
             y=y, fh=fh, X=X, update_params=update_params
         )
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -184,7 +184,7 @@ class _DelegatedForecaster(BaseForecaster):
         estimator = self._get_delegate()
         return estimator.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

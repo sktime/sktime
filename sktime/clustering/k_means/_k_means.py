@@ -19,9 +19,15 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
         centroids to generate.
-    init_algorithm: str, defaults = 'random'
-        Method for initializing cluster centers. Any of the following are valid:
-        ['kmeans++', 'random', 'forgy']
+    init_algorithm: str, np.ndarray (3d array of shape (n_clusters, n_dimensions,
+        series_length)), defaults = 'random'
+        Method for initializing cluster centers or an array of initial cluster centers.
+        If string, any of the following strings are valid:
+            ['kmeans++', 'random', 'forgy'].
+        If 3D np.ndarray, initializes cluster centers with the provided array. The array
+            must have shape (n_clusters, n_dimensions, series_length) and the number of
+            clusters in the array must be the same as what is provided to the n_clusters
+            argument.
     metric: str or Callable, defaults = 'dtw'
         Distance metric to compute similarity between time series. Any of the following
         are valid: ['dtw', 'euclidean', 'erp', 'edr', 'lcss', 'squared', 'ddtw', 'wdtw',
@@ -63,6 +69,17 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         the sample weights if provided.
     n_iter_: int
         Number of iterations run.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_arrow_head
+    >>> from sktime.clustering.k_means import TimeSeriesKMeans
+    >>> X_train, y_train = load_arrow_head(split="train")
+    >>> X_test, y_test = load_arrow_head(split="test")
+    >>> clusterer = TimeSeriesKMeans(n_clusters=3)  # doctest: +SKIP
+    >>> clusterer.fit(X_train)  # doctest: +SKIP
+    TimeSeriesKMeans(n_clusters=3)
+    >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {"python_dependencies": "numba"}
@@ -193,10 +210,20 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {
+        params1 = {
             "n_clusters": 2,
             "metric": "euclidean",
+            "init_algorithm": "random",
             "n_init": 1,
             "max_iter": 10,
             "random_state": 0,
         }
+        params2 = {
+            "n_clusters": 3,
+            "metric": "dtw",
+            "init_algorithm": np.random.normal(size=(3, 4, 10)),
+            "n_init": 1,
+            "max_iter": 15,
+            "random_state": 1,
+        }
+        return [params1, params2]

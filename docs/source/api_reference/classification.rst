@@ -50,6 +50,8 @@ Deep learning
     InceptionTimeClassifier
     MACNNClassifier
     MLPClassifier
+    MCDCNNClassifier
+    SimpleRNNClassifier
     TapNetClassifier
 
 Dictionary-based
@@ -175,6 +177,7 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
+    MrSEQL
     MrSQM
 
 sklearn

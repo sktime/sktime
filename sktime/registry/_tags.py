@@ -104,6 +104,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
     (
+        "pwtrafo_type",
+        ["transformer-pairwise", "transformer-pairwise-panel"],
+        ("str", ["distance", "kernel", "other"]),
+        "mathematical type of pairwise transformer - distance, kernel, or other",
+    ),
+    (
         "scitype:X",
         "param_est",
         "str",
@@ -134,7 +140,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer", "transformer-pairwise-panel", "param_est"],
+        [
+            "clusterer",
+            "forecaster",
+            "transformer",
+            "transformer-pairwise-panel",
+            "param_est",
+        ],
         (
             "list",
             [
@@ -184,6 +196,18 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "is the transformer capable of carrying out an inverse transform?",
+    ),
+    (
+        "capability:inverse_transform:range",
+        "transformer",
+        "list",
+        "domain of invertibility of transform, must be list [lower, upper] of float",
+    ),
+    (
+        "capability:inverse_transform:exact",
+        "transformer",
+        "bool",
+        "whether inverse_transform is expected to be an exact inverse to transform",
     ),
     (
         "capability:pred_int",
@@ -324,6 +348,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does aligner return pairwise distance matrix between aligned series?",
     ),
     (
+        "alignment_type",
+        "aligner",
+        ("str", ["full", "partial"]),
+        "does aligner produce a full or partial alignment",
+    ),
+    (
         "requires-y-train",
         "metric",
         "bool",
@@ -372,6 +402,13 @@ ESTIMATOR_TAG_REGISTER = [
         "python dependencies of estimator as str or list of str",
     ),
     (
+        "python_dependencies_alias",
+        "estimator",
+        "dict",
+        "should be provided if import name differs from package name, \
+        key-value pairs are package name, import name",
+    ),
+    (
         "requires_cython",
         "estimator",
         "bool",
@@ -394,6 +431,18 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         ("list", "str"),
         "parameters reserved by the base class and present in all child estimators",
+    ),
+    (
+        "split_hierarchical",
+        "splitter",
+        "bool",
+        "whether _split is natively implemented for hierarchical y types",
+    ),
+    (
+        "split_series_uses",
+        "splitter",
+        ("str", ["iloc", "loc", "custom"]),
+        "whether split_series uses split (iloc) or split_loc (loc) to split series",
     ),
     (
         "capabilities:exact",

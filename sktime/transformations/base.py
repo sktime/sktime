@@ -58,6 +58,7 @@ from sktime.datatypes import (
     VectorizedDF,
     check_is_mtype,
     check_is_scitype,
+    convert,
     convert_to,
     mtype_to_scitype,
     update_data,
@@ -108,6 +109,9 @@ class BaseTransformer(BaseEstimator):
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
+        "capability:inverse_transform:range": None,
+        "capability:inverse_transform:exact": True,
+        # inverting range of inverse transform = domain of invertibility of transform
         "univariate-only": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
@@ -326,17 +330,17 @@ class BaseTransformer(BaseEstimator):
 
         First index does input subsetting, second index does output subsetting.
 
-        Keys must be valid inputs for `columns` in `ColumnSubset`.
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following TransformerPipeline object:
-            ColumnSubset(columns1) * self * ColumnSubset(columns2)
+            ColumnSelect(columns1) * self * ColumnSelect(columns2)
             where `columns1` is first or only item in `key`, and `columns2` is the last
             if only one item is passed in `key`, only `columns1` is applied to input
         """
@@ -541,7 +545,9 @@ class BaseTransformer(BaseEstimator):
         output_conv = configs["output_conversion"]
 
         # convert to output mtype
-        if input_conv and output_conv:
+        if X is None:
+            X_out = Xt
+        elif input_conv and output_conv:
             X_out = self._convert_output(Xt, metadata=metadata)
         else:
             X_out = Xt
@@ -677,7 +683,13 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        configs = self.get_config()
+        output_conv = configs["output_conversion"]
+
+        if output_conv != "off":
+            X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        else:
+            X_out = Xt
 
         return X_out
 
@@ -868,7 +880,10 @@ class BaseTransformer(BaseEstimator):
         ValueError if self.get_tag("requires_y")=True but y is None
         """
         if X is None:
-            raise TypeError("X cannot be None, but found None")
+            if return_metadata:
+                return X, y, {}
+            else:
+                return X, y
 
         # skip conversion if it is turned off
         if self.get_config()["input_conversion"] != "on":
@@ -914,6 +929,7 @@ class BaseTransformer(BaseEstimator):
 
         # checking X
         X_metadata_required = ["is_univariate"]
+
         X_valid, msg, X_metadata = check_is_scitype(
             X,
             scitype=ALLOWED_SCITYPES,
@@ -985,6 +1001,7 @@ class BaseTransformer(BaseEstimator):
                 raise TypeError("y " + msg_invalid_input)
 
             y_scitype = y_metadata["scitype"]
+            y_mtype = y_metadata["mtype"]
 
         else:
             # y_scitype is used below - set to None if y is None
@@ -1010,7 +1027,9 @@ class BaseTransformer(BaseEstimator):
                 as_scitype = "Panel"
             else:
                 as_scitype = "Hierarchical"
-            X = convert_to_scitype(X, to_scitype=as_scitype, from_scitype=X_scitype)
+            X, X_mtype = convert_to_scitype(
+                X, to_scitype=as_scitype, from_scitype=X_scitype, return_to_mtype=True
+            )
             X_scitype = as_scitype
             # then pass to case 1, which we've reduced to, X now has inner scitype
 
@@ -1019,8 +1038,9 @@ class BaseTransformer(BaseEstimator):
         #   and does not require vectorization because of cols (multivariate)
         if not requires_vectorization:
             # converts X
-            X_inner = convert_to(
+            X_inner = convert(
                 X,
+                from_type=X_mtype,
                 to_type=X_inner_mtype,
                 store=metadata["_converter_store_X"],
                 store_behaviour="reset",
@@ -1028,8 +1048,9 @@ class BaseTransformer(BaseEstimator):
 
             # converts y, returns None if y is None
             if y_inner_mtype != ["None"] and y is not None:
-                y_inner = convert_to(
+                y_inner = convert(
                     y,
+                    from_type=y_mtype,
                     to_type=y_inner_mtype,
                     as_scitype=y_scitype,
                 )
@@ -1132,11 +1153,17 @@ class BaseTransformer(BaseEstimator):
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
             #   this happens only for Series, not Panel
             if X_input_scitype == "Series":
+                if X_input_mtype == "pd.Series":
+                    Xt_metadata_required = ["is_univariate"]
+                else:
+                    Xt_metadata_required = []
+
                 valid, msg, metadata = check_is_mtype(
                     Xt,
                     ["pd.DataFrame", "pd.Series", "np.ndarray"],
-                    return_metadata=True,
+                    return_metadata=Xt_metadata_required,
                 )
+
                 if not valid:
                     raise TypeError(
                         f"_transform output of {type(self)} does not comply "
@@ -1144,9 +1171,20 @@ class BaseTransformer(BaseEstimator):
                         " for mtype specifications. Returned error message:"
                         f" {msg}. Returned object: {Xt}"
                     )
-                if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
+                if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
+                # Xt_mtype = metadata["mtype"]
+            # else:
+            #     Xt_mtype = X_input_mtype
 
+            # Xt = convert(
+            #     Xt,
+            #     from_type=Xt_mtype,
+            #     to_type=X_output_mtype,
+            #     as_scitype=X_input_scitype,
+            #     store=_converter_store_X,
+            #     store_behaviour="freeze",
+            # )
             Xt = convert_to(
                 Xt,
                 to_type=X_output_mtype,

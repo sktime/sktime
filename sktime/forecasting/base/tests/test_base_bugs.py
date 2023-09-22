@@ -9,9 +9,11 @@ from sktime.forecasting.model_selection import (
     ExpandingWindowSplitter,
     ForecastingGridSearchCV,
 )
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
@@ -58,3 +60,17 @@ def test_heterogeneous_get_fitted_params():
 
     reconciler.fit(y_agg)
     reconciler.get_fitted_params()  # triggers an error pre-fix
+
+
+def test_predict_residuals_conversion():
+    """Regression test for bugfix #4766, related to predict_residuals internal type."""
+    from sktime.datasets import load_longley
+    from sktime.forecasting.model_selection import temporal_train_test_split
+
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+    pipe = Differencer() * NaiveForecaster()
+    pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
+    result = pipe.predict_residuals()
+
+    assert type(result) is type(y_train)

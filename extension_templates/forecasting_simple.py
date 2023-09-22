@@ -124,7 +124,7 @@ class MyForecaster(BaseForecaster):
         # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -167,7 +167,7 @@ class MyForecaster(BaseForecaster):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -189,7 +189,8 @@ class MyForecaster(BaseForecaster):
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : sktime time series object
+            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
 

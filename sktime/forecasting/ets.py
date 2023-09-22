@@ -409,7 +409,7 @@ class AutoETS(_StatsModelsAdapter):
                 return_params=self.return_params,
             )
 
-    def _predict(self, fh, X=None, **simulate_kwargs):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -420,7 +420,6 @@ class AutoETS(_StatsModelsAdapter):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        **simulate_kwargs : see statsmodels ETSResults.get_prediction
 
         Returns
         -------

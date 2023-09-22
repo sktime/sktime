@@ -336,7 +336,7 @@ class VARMAX(_StatsModelsAdapter):
     # for two reasons:
     # 1. to pass in `dynamic`, `information_set` and `signal_only`
     # 2. to deal with statsmodel integer indexing issue
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Wrap Statmodel's VARMAX forecast method.
 
         Parameters

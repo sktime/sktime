@@ -121,9 +121,10 @@ class PyODAnnotator(BaseSeriesAnnotator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        _check_soft_dependencies("pyod", severity="error")
+        if _check_soft_dependencies("pyod", severity="none"):
+            from pyod.models.knn import KNN
 
-        from pyod.models.knn import KNN
-
-        params = {"estimator": KNN()}
+            params = {"estimator": KNN()}
+        else:
+            params = {"estimator": "foo"}
         return params

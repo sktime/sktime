@@ -44,6 +44,17 @@ class DummyRegressor(BaseRegressor):
         The quantile to predict using the "quantile" strategy. A quantile of
         0.5 corresponds to the median, while 0.0 to the minimum and 1.0 to the
         maximum.
+
+    Examples
+    --------
+    >>> from sktime.regression.dummy import DummyRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> regressor = DummyRegressor(strategy="median") # doctest: +SKIP
+    >>> regressor.fit(X_train,y_train) # doctest: +SKIP
+    DummyRegressor(strategy='median')
+    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {

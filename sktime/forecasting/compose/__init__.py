@@ -2,8 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements composite forecasters."""
 
-__author__ = ["mloning"]
-
 __all__ = [
     "HierarchyEnsembleForecaster",
     "ColumnEnsembleForecaster",
@@ -24,6 +22,7 @@ __all__ = [
     "MultiplexForecaster",
     "make_reduction",
     "BaggingForecaster",
+    "FhPlexForecaster",
     "ForecastByLevel",
     "Permute",
     "YfromX",
@@ -35,6 +34,7 @@ from sktime.forecasting.compose._ensemble import (
     AutoEnsembleForecaster,
     EnsembleForecaster,
 )
+from sktime.forecasting.compose._fhplex import FhPlexForecaster
 from sktime.forecasting.compose._grouped import ForecastByLevel
 from sktime.forecasting.compose._hierarchy_ensemble import HierarchyEnsembleForecaster
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster

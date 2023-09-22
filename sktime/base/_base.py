@@ -132,8 +132,10 @@ class BaseObject(_BaseObject):
         path = Path(path) if isinstance(path, str) else path
         path.mkdir()
 
-        pickle.dump(type(self), open(path / "_metadata", "wb"))
-        pickle.dump(self, open(path / "_obj", "wb"))
+        with open(path / "_metadata", "wb") as file:
+            pickle.dump(type(self), file)
+        with open(path / "_obj", "wb") as file:
+            pickle.dump(self, file)
 
         shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
@@ -356,6 +358,9 @@ class BaseEstimator(BaseObject):
 
     Extends sktime's BaseObject to include basic functionality for fittable estimators.
     """
+
+    # global dependency alias tag for sklearn dependency management
+    _tags = {"python_dependencies_alias": {"scikit-learn": "sklearn"}}
 
     def __init__(self):
         self._is_fitted = False

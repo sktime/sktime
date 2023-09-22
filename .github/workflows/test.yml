@@ -12,7 +12,7 @@ jobs:
   code-quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
@@ -31,7 +31,7 @@ jobs:
     needs: code-quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -46,9 +46,9 @@ jobs:
 
   test-nodevdeps:
     needs: code-quality
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -66,9 +66,9 @@ jobs:
 
   test-nosoftdeps:
     needs: code-quality
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -88,13 +88,19 @@ jobs:
 
   test-nosoftdeps-full:
     needs: test-nosoftdeps
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.9
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -110,9 +116,9 @@ jobs:
 
   test-mlflow:
     needs: test-nosoftdeps
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -132,9 +138,14 @@ jobs:
 
   test-cython-estimators:
     needs: test-nosoftdeps
-    runs-on: macOS-11
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -160,14 +171,18 @@ jobs:
 
   test-windows:
     needs: test-nosoftdeps
-    runs-on: windows-2019
+    runs-on: windows-latest
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -186,17 +201,20 @@ jobs:
         run: conda install -c anaconda libpython
 
       - name: Install sktime and dependencies
-        run: python -m pip install .[all_extras,dev]
+        run: python -m pip install .[all_extras_pandas2,dev]
 
       - name: Show dependencies
         run: python -m pip list
+
+      - name: Show available branches
+        run: git branch -a
 
       - name: Run tests
         run: |
           mkdir -p testdir/
           cp .coveragerc testdir/
           cp setup.cfg testdir/
-          python -m pytest -v
+          python -m pytest
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
@@ -207,23 +225,32 @@ jobs:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
-        os: [ubuntu-20.04, macOS-11]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev] --no-cache-dir
+          python -m pip install .[all_extras_pandas2,dev] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list
+
+      - name: Show available branches
+        run: git branch -a
 
       - name: Run tests
         run: make test
@@ -237,13 +264,19 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -253,6 +286,9 @@ jobs:
 
       - name: Show dependencies
         run: python -m pip list
+
+      - name: Show available branches
+        run: git branch -a
 
       - name: Run tests
         run: make test

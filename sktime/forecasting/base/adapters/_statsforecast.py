@@ -35,7 +35,7 @@ class _StatsForecastAdapter(BaseForecaster):
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -69,7 +69,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -198,7 +198,7 @@ class _StatsForecastAdapter(BaseForecaster):
         else:
             return pd.Series(mean, index=fh_abs.to_pandas())
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -239,7 +239,9 @@ class _StatsForecastAdapter(BaseForecaster):
         fh_is_oosample = fh.is_all_out_of_sample(cutoff)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = ["Coverage"]
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
@@ -256,8 +258,8 @@ class _StatsForecastAdapter(BaseForecaster):
         if fh_is_in_sample or fh_is_oosample:
             # needs to be replaced, also seems duplicative, identical to part A
             for intervals, a in zip(y_pred_int, coverage):
-                pred_int[("Coverage", a, "lower")] = intervals["lower"]
-                pred_int[("Coverage", a, "upper")] = intervals["upper"]
+                pred_int[(var_name, a, "lower")] = intervals["lower"]
+                pred_int[(var_name, a, "upper")] = intervals["upper"]
             return pred_int
 
         # both in-sample and out-of-sample values (we reach this line only then)
@@ -265,7 +267,7 @@ class _StatsForecastAdapter(BaseForecaster):
         _, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
         _, y_oos_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
         for ins_int, oos_int, a in zip(y_ins_pred_int, y_oos_pred_int, coverage):
-            pred_int[("Coverage", a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
-            pred_int[("Coverage", a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
+            pred_int[(var_name, a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
+            pred_int[(var_name, a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
 
         return pred_int

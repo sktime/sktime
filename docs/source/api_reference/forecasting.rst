@@ -6,7 +6,7 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
-All clusterers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
+All forecasters in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="forecaster"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
@@ -50,6 +50,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ForecastByLevel
     Permute
     HierarchyEnsembleForecaster
+    FhPlexForecaster
 
 Reduction
 ---------
@@ -149,6 +150,14 @@ Trend forecasters
     PolynomialTrendForecaster
     STLForecaster
 
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastMSTL
+
 Exponential smoothing based forecasters
 ---------------------------------------
 
@@ -168,6 +177,15 @@ Exponential smoothing based forecasters
 
     AutoETS
 
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastAutoETS
+    StatsForecastAutoCES
+
 .. currentmodule:: sktime.forecasting.theta
 
 .. autosummary::
@@ -176,19 +194,31 @@ Exponential smoothing based forecasters
 
     ThetaForecaster
 
-.. currentmodule:: sktime.forecasting.croston
+.. currentmodule:: sktime.forecasting.statsforecast
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    Croston
+    StatsForecastAutoTheta
 
 AR/MA type forecasters
 ----------------------
 
 Forecasters with AR or MA component.
-All "ARIMA" models below include SARIMAX capability.
+
+All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
+
+(V)AR(I)MAX models
+~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.auto_reg
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AutoREG
 
 .. currentmodule:: sktime.forecasting.arima
 
@@ -196,19 +226,7 @@ All "ARIMA" models below include SARIMAX capability.
     :toctree: auto_generated/
     :template: class.rst
 
-    AutoARIMA
     ARIMA
-
-.. currentmodule:: sktime.forecasting.statsforecast
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    StatsForecastAutoARIMA
-    StatsForecastAutoCES
-    StatsForecastAutoETS
-    StatsForecastAutoTheta
 
 .. currentmodule:: sktime.forecasting.sarimax
 
@@ -233,6 +251,37 @@ All "ARIMA" models below include SARIMAX capability.
     :template: class.rst
 
     VARMAX
+
+Auto-ARIMA models
+~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AutoARIMA
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastAutoARIMA
+
+
+ARCH models
+-----------
+
+.. currentmodule:: sktime.forecasting.arch
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastARCH
+    StatsForecastGARCH
+
 
 Structural time series models
 -----------------------------
@@ -276,6 +325,17 @@ Structural time series models
     :template: class.rst
 
     DynamicFactor
+
+Intermittent time series forecasters
+------------------------------------
+
+.. currentmodule:: sktime.forecasting.croston
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Croston
 
 Ensembles and stacking
 ----------------------
@@ -348,6 +408,7 @@ Model selection and tuning
 
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
+    ForecastingSkoptSearchCV
 
 Model Evaluation (Backtesting)
 ------------------------------
@@ -375,6 +436,7 @@ Time series splitters can be used in both evaluation and tuning.
     SingleWindowSplitter
     SlidingWindowSplitter
     ExpandingWindowSplitter
+    ExpandingGreedySplitter
 
 .. autosummary::
     :toctree: auto_generated/

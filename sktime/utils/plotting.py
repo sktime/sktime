@@ -163,10 +163,11 @@ def plot_series(
 
 def plot_interval(ax, interval_df):
     cov = interval_df.columns.levels[1][0]
+    var_name = interval_df.columns.levels[0][0]
     ax.fill_between(
         ax.get_lines()[-1].get_xdata(),
-        interval_df["Coverage"][cov]["lower"].astype("float64"),
-        interval_df["Coverage"][cov]["upper"].astype("float64"),
+        interval_df[var_name][cov]["lower"].astype("float64"),
+        interval_df[var_name][cov]["upper"].astype("float64"),
         alpha=0.2,
         color=ax.get_lines()[-1].get_c(),
         label=f"{int(cov * 100)}% prediction interval",

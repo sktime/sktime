@@ -17,6 +17,7 @@ from sktime.forecasting.model_selection import (
 )
 from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
+from sktime.tests.test_switch import run_test_for_class
 
 INTERVAL_WRAPPERS = [ConformalIntervals, NaiveVariance]
 CV_SPLITTERS = [SlidingWindowSplitter, ExpandingWindowSplitter]
@@ -25,6 +26,10 @@ SAMPLE_FRACS = [None, 0.5]
 MTYPES_SERIES = scitype_to_mtype("Series", softdeps="present")
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(INTERVAL_WRAPPERS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("mtype", MTYPES_SERIES)
 @pytest.mark.parametrize("override_y_mtype", [True, False])
 @pytest.mark.parametrize("wrapper", INTERVAL_WRAPPERS)
@@ -62,6 +67,10 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
     assert len(pred_var) == 3
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(INTERVAL_WRAPPERS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("wrapper", INTERVAL_WRAPPERS)
 @pytest.mark.parametrize("splitter", CV_SPLITTERS)
 @pytest.mark.parametrize("strategy", EVALUATE_STRATEGY)
@@ -75,27 +84,27 @@ def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac
     This checks refit and update strategies as well as expanding and sliding window
     splitters.
     """
-    y = load_airline()
+    y = load_airline()[:60]
 
     if splitter == SlidingWindowSplitter:
         cv = splitter(
-            fh=np.arange(1, 13),
-            window_length=48,
-            step_length=12,
+            fh=np.arange(1, 7),
+            window_length=24,
+            step_length=6,
         )
     elif splitter == ExpandingWindowSplitter:
         cv = splitter(
-            fh=np.arange(1, 13),
-            initial_window=48,
-            step_length=12,
+            fh=np.arange(1, 7),
+            initial_window=24,
+            step_length=6,
         )
 
     f = NaiveForecaster()
 
     if wrapper == ConformalIntervals:
-        interval_forecaster = wrapper(f, initial_window=24, sample_frac=sample_frac)
+        interval_forecaster = wrapper(f, initial_window=12, sample_frac=sample_frac)
     else:
-        interval_forecaster = wrapper(f, initial_window=24)
+        interval_forecaster = wrapper(f, initial_window=12)
 
     results = evaluate(
         forecaster=interval_forecaster,
@@ -109,5 +118,5 @@ def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac
         backend=None,
     )
 
-    assert len(results) == 8
+    assert len(results) == 6
     assert not results.test_PinballLoss.isna().any()

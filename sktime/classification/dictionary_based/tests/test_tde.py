@@ -4,12 +4,12 @@ import pytest
 
 from sktime.classification.dictionary_based._tde import TemporalDictionaryEnsemble
 from sktime.datasets import load_unit_test
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(TemporalDictionaryEnsemble),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_tde_train_estimate():
     """Test of TDE train estimate on unit test data."""
@@ -33,8 +33,8 @@ def test_tde_train_estimate():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(TemporalDictionaryEnsemble),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_contracted_tde():
     """Test of contracted TDE on unit test data."""

@@ -10,6 +10,7 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
@@ -161,6 +162,9 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
+                        # todo 0.24.0 - check why this cannot be easily removed
+                        # in theory, we should get rid of the "Coverage" case treatment
+                        # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
                         #   i.d., special 1st level name of prediction objet
                         #   in the case where there is only one variable
@@ -249,7 +253,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         """
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.compose._reduce import YfromX
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.detrend import Detrender
@@ -265,13 +269,11 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", DirectReductionForecaster.create_test_instance()),
+            ("forecaster", YfromX.create_test_instance()),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {
-            "steps": [Detrender(), DirectReductionForecaster.create_test_instance()]
-        }
+        params3 = {"steps": [Detrender(), YfromX.create_test_instance()]}
 
         return [params1, params2, params3]
 
@@ -371,6 +373,7 @@ class ForecastingPipeline(_Pipeline):
 
         Example 3: using the dunder method
         Note: * (= apply to `y`) has precedence over ** (= apply to `X`)
+
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = (imputer * MinMaxScaler()) ** forecaster
@@ -458,7 +461,7 @@ class ForecastingPipeline(_Pipeline):
         else:
             return ForecastingPipeline(steps=list(zip(new_names, new_ests)))
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -505,10 +508,10 @@ class ForecastingPipeline(_Pipeline):
         y_pred : pd.Series
             Point predictions
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict(fh, X)
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -540,10 +543,10 @@ class ForecastingPipeline(_Pipeline):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -579,7 +582,7 @@ class ForecastingPipeline(_Pipeline):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
 
     def _predict_var(self, fh, X=None, cov=False):
@@ -612,7 +615,7 @@ class ForecastingPipeline(_Pipeline):
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_var(fh=fh, X=X, cov=cov)
 
     # todo: does not work properly for multivariate or hierarchical
@@ -639,7 +642,7 @@ class ForecastingPipeline(_Pipeline):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
 
     def _update(self, y, X=None, update_params=True):
@@ -670,6 +673,14 @@ class ForecastingPipeline(_Pipeline):
         # If X is not given or ignored, just passthrough the data without transformation
         if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
             for _, _, transformer in self._iter_transformers():
+                # if y is required but not passed,
+                # we create a zero-column y from the forecasting horizon
+                requires_y = transformer.get_tag("requires_y", False)
+                if isinstance(y, ForecastingHorizon) and requires_y:
+                    y = y.to_absolute_index(self.cutoff)
+                    y = pd.DataFrame(index=y)
+                else:
+                    y = None
                 X = transformer.transform(X=X, y=y)
         return X
 
@@ -768,6 +779,7 @@ class TransformedTargetForecaster(_Pipeline):
     >>> y = load_airline()
 
         Example 1: string/estimator pairs
+
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("detrender", Detrender()),
@@ -778,6 +790,7 @@ class TransformedTargetForecaster(_Pipeline):
     >>> y_pred = pipe.predict(fh=[1,2,3])
 
         Example 2: without strings
+
     >>> pipe = TransformedTargetForecaster([
     ...     Imputer(method="mean"),
     ...     Detrender(),
@@ -786,6 +799,7 @@ class TransformedTargetForecaster(_Pipeline):
     ... ])
 
         Example 3: using the dunder method
+
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = imputer * Detrender() * forecaster * ExponentTransformer()
@@ -942,7 +956,7 @@ class TransformedTargetForecaster(_Pipeline):
         else:
             return TransformedTargetForecaster(steps=list(zip(new_names, new_ests)))
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1068,7 +1082,7 @@ class TransformedTargetForecaster(_Pipeline):
         Z = check_series(Z)
         return self._get_inverse_transform(self.transformers_pre_, Z, X)
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1106,7 +1120,7 @@ class TransformedTargetForecaster(_Pipeline):
         )
         return pred_int_transformed
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -1214,6 +1228,7 @@ class ForecastX(BaseForecaster):
 
     to forecast only some columns, use the `columns` arg,
     and pass known columns to `predict`:
+
     >>> columns = ["ARMED", "POP"]
     >>> pipe = ForecastX(  # doctest: +SKIP
     ...     forecaster_X=VAR(),
@@ -1234,6 +1249,7 @@ class ForecastX(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "handles-missing-data": True,
     }
 
     def __init__(
@@ -1269,7 +1285,7 @@ class ForecastX(BaseForecaster):
         # }
         # self.set_tags(**tag_translate_dict)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1390,7 +1406,7 @@ class ForecastX(BaseForecaster):
 
         return self
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -1425,7 +1441,7 @@ class ForecastX(BaseForecaster):
         y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X, coverage=coverage)
         return y_pred
 
-    def _predict_quantiles(self, fh, X, alpha):
+    def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1603,6 +1619,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.transformations.series.exponent import ExponentTransformer
 
     Simple example: permute sequence of estimator in forecasting pipeline
+
     >>> y = load_airline()
     >>> fh = ForecastingHorizon([1, 2, 3])
     >>> pipe = ForecastingPipeline(
@@ -1618,6 +1635,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> y_pred = permuted.predict()
 
     The permuter is useful in combination with grid search (toy example):
+
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,

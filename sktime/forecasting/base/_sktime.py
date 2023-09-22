@@ -21,7 +21,7 @@ class _BaseWindowForecaster(BaseForecaster):
         self.window_length = window_length
         self.window_length_ = None
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Predict core logic."""
         kwargs = {"X": X}
 
@@ -41,6 +41,10 @@ class _BaseWindowForecaster(BaseForecaster):
             y_oos = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
+
+            if isinstance(y_ins, pd.DataFrame) and isinstance(y_oos, pd.Series):
+                y_oos = y_oos.to_frame(y_ins.columns[0])
+
             y_pred = pd.concat([y_ins, y_oos])
 
         # ensure pd.Series name attribute is preserved

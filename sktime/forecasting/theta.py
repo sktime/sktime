@@ -108,7 +108,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.se_ = None
         super().__init__(initial_level=initial_level, sp=sp)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -135,7 +135,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.initialization_method = "known" if self.initial_level else "estimated"
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
-        super()._fit(y, fh=fh)
+        super()._fit(y, X=None, fh=fh)
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute and store historical residual standard error
@@ -146,7 +146,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -195,7 +195,48 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_interval(self, fh, X, coverage):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        pred_int = BaseForecaster._predict_interval(self, fh, X, coverage)
+        return pred_int
+
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -219,7 +260,9 @@ class ThetaForecaster(ExponentialSmoothing):
                 at quantile probability in second col index, for the row index.
         """
         # prepare return data frame
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+        index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)
 
         sem = self.sigma_ * np.sqrt(
@@ -230,7 +273,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         # we assume normal additive noise with sem variance
         for a in alpha:
-            pred_quantiles[("Quantiles", a)] = y_pred + norm.ppf(a) * sem
+            pred_quantiles[(var_name, a)] = y_pred + norm.ppf(a) * sem
         # todo: should this not increase with the horizon?
         # i.e., sth like norm.ppf(a) * sem * fh.to_absolute(cutoff) ?
         # I've just refactored this so will leave it for now
@@ -424,7 +467,7 @@ class ThetaModularForecaster(BaseForecaster):
             _forecasters = forecasters
         return _forecasters
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         self.pipe_.fit(y=y, X=X, fh=fh)
         return self
 

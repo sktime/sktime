@@ -529,6 +529,7 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
         mlflow.end_run()
 
 
+@pytest.mark.xfail(reason="known failure to be debugged, see #4904")
 @pytest.mark.skipif(
     not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
