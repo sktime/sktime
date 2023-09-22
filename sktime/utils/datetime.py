@@ -1,10 +1,10 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """Time format related utilities."""
 
 __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
+import warnings
 from functools import singledispatch
 from typing import Optional, Tuple, Union
 
@@ -88,6 +88,44 @@ def _get_freq(x):
         return None
 
 
+def set_hier_freq(x):
+    """Set frequency for multiindex dataframes without frequency.
+
+    As of pandas 1.5.1, only a pd.PeriodIndex time index can have freq other None in
+    a pandas multiindex data set. A DatetimeIndex will always have a frequency equal
+    to None.
+    This function converts the DatetimeIndex to a PeriodIndex, which supports
+    frequency arguments.
+
+    Parameters
+    ----------
+    y : Panel, or Hierarchical object, or VectorizedDF with timeindex as
+        pd.DatetimeIndex or pd.PeriodIndex
+
+    Returns
+    -------
+    Series, Panel, or Hierarchical object, or VectorizedDF with pd.PeriodIndex as
+    time index and freq set.
+    """
+    if not isinstance(x.index, pd.MultiIndex):
+        raise ValueError("Only intended for use with MultiIndex.")
+
+    timepoints = get_time_index(x)
+    if not isinstance(timepoints, (pd.DatetimeIndex)):
+        raise ValueError("Set_freq only supported for DatetimeIndex.")
+
+    if timepoints.freq is not None:
+        warnings.warn("Frequency already set.", stacklevel=2)
+    else:
+        time_names = x.index.names[-1]
+        x = (
+            x.reset_index(-1)
+            .groupby(level=0, group_keys=True)
+            .apply(lambda df: df.set_index(time_names).to_period())
+        )
+    return x
+
+
 @singledispatch
 def infer_freq(y=None) -> Optional[str]:
     """Infer frequency string from the time series object.
@@ -134,7 +172,7 @@ def _infer_freq_from_index(index: pd.Index) -> Optional[str]:
         return index.freqstr
     else:
         try:
-            return pd.infer_freq(index, warn=False)
+            return pd.infer_freq(index)
         except (TypeError, ValueError):
             return None
 
@@ -172,7 +210,7 @@ def _shift(x, by=1, return_index=False):
 
     # if we want index, we can simply use add dunder or shift
     if return_index:
-        if idx.is_integer():
+        if pd.api.types.is_integer_dtype(idx):
             return idx + by
         else:
             return idx.shift(by)

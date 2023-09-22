@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimator with fixed parameters."""
 
@@ -23,35 +22,6 @@ class FixedParams(BaseParamFitter):
     ----------
     param_dict : dict
         fixed parameter values written to `self`
-
-    Examples
-    --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.seasonality import SeasonalityACF
-    >>>
-    >>> X = load_airline().diff()[1:]
-    >>> sp_est = SeasonalityACF()
-    >>> sp_est.fit(X)
-    SeasonalityACF(...)
-    >>> sp_est.get_fitted_params()["sp"]
-    12
-    >>> sp_est.get_fitted_params()["sp_significant"]
-    array([12, 11])
-
-    Series should be stationary before applying ACF.
-    To pipeline SeasonalityACF with the Differencer, use the ParamFitterPipeline:
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.seasonality import SeasonalityACF
-    >>> from sktime.transformations.series.difference import Differencer
-    >>>
-    >>> X = load_airline()
-    >>> sp_est = Differencer() * SeasonalityACF()
-    >>> sp_est.fit(X)
-    ParamFitterPipeline(...)
-    >>> sp_est.get_fitted_params()["sp"]
-    12
-    >>> sp_est.get_fitted_params()["sp_significant"]
-    array([12, 11])
     """
 
     _tags = {
@@ -65,7 +35,7 @@ class FixedParams(BaseParamFitter):
 
     def __init__(self, param_dict):
         self.param_dict = param_dict
-        super(FixedParams, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.

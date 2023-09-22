@@ -1,25 +1,32 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common timeseries plotting functionality."""
 
 __all__ = ["plot_series", "plot_correlations", "plot_windows"]
-__author__ = ["mloning", "RNKuhns", "Drishti Bhasin"]
+__author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro"]
 
 import math
-from warnings import simplefilter
+from warnings import simplefilter, warn
 
 import numpy as np
 import pandas as pd
 
 from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_interval_df, check_y
 from sktime.utils.validation.series import check_consistent_index_type
 
 
 def plot_series(
-    *series, labels=None, markers=None, x_label=None, y_label=None, ax=None
+    *series,
+    labels=None,
+    markers=None,
+    colors=None,
+    title=None,
+    x_label=None,
+    y_label=None,
+    ax=None,
+    pred_interval=None,
 ):
     """Plot one or more time series.
 
@@ -32,6 +39,13 @@ def plot_series(
     markers: list, default = None
         Markers of data points, if None the marker "o" is used by default.
         The length of the list has to match with the number of series.
+    colors: list, default = None
+        The colors to use for plotting each series. Must contain one color per series
+    title: str, default = None
+        The text to use as the figure's suptitle
+    pred_interval: pd.DataFrame, default = None
+        Output of `forecaster.predict_interval()`. Contains columns for lower
+        and upper boundaries of confidence interval.
 
     Returns
     -------
@@ -43,7 +57,7 @@ def plot_series(
     >>> from sktime.utils.plotting import plot_series
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> fig, ax = plot_series(y)
+    >>> fig, ax = plot_series(y)  # doctest: +SKIP
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
@@ -97,11 +111,12 @@ def plot_series(
     if _ax_kwarg_is_none:
         fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
 
-    colors = sns.color_palette("colorblind", n_colors=n_series)
+    # colors
+    if colors is None or not _check_colors(colors, n_series):
+        colors = sns.color_palette("colorblind", n_colors=n_series)
 
     # plot series
     for x, y, color, label, marker in zip(xs, series, colors, labels, markers):
-
         # scatter if little data is available or index is not complete
         if len(x) <= 3 or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
             plot_func = sns.scatterplot
@@ -124,6 +139,10 @@ def plot_series(
     ax.xaxis.set_major_formatter(FuncFormatter(format_fn))
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
+    # Set the figure's title
+    if title is not None:
+        fig.suptitle(title, size="xx-large")
+
     # Label the x and y axes
     if x_label is not None:
         ax.set_xlabel(x_label)
@@ -133,10 +152,28 @@ def plot_series(
 
     if legend:
         ax.legend()
+    if pred_interval is not None:
+        check_interval_df(pred_interval, series[-1].index)
+        ax = plot_interval(ax, pred_interval)
     if _ax_kwarg_is_none:
         return fig, ax
     else:
         return ax
+
+
+def plot_interval(ax, interval_df):
+    cov = interval_df.columns.levels[1][0]
+    var_name = interval_df.columns.levels[0][0]
+    ax.fill_between(
+        ax.get_lines()[-1].get_xdata(),
+        interval_df[var_name][cov]["lower"].astype("float64"),
+        interval_df[var_name][cov]["upper"].astype("float64"),
+        alpha=0.2,
+        color=ax.get_lines()[-1].get_c(),
+        label=f"{int(cov * 100)}% prediction interval",
+    )
+    ax.legend()
+    return ax
 
 
 def plot_lags(series, lags=1, suptitle=None):
@@ -281,7 +318,7 @@ def plot_correlations(
     >>> y = load_airline()
     >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
-    _check_soft_dependencies(("matplotlib", "statsmodels"))
+    _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt
     from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
@@ -322,6 +359,18 @@ def plot_correlations(
         fig.suptitle(suptitle, size="xx-large")
 
     return fig, np.array(fig.get_axes())
+
+
+def _check_colors(colors, n_series):
+    """Verify color list is correct length and contains only colors."""
+    from matplotlib.colors import is_color_like
+
+    if n_series == len(colors) and all([is_color_like(c) for c in colors]):
+        return True
+    warn(
+        "Color list must be same length as `series` and contain only matplotlib colors"
+    )
+    return False
 
 
 def _get_windows(cv, y):
@@ -397,5 +446,5 @@ def plot_windows(cv, y, title=""):
         xticklabels=y.index,
     )
     # remove duplicate labels/handles
-    handles, labels = [(leg[:2]) for leg in ax.get_legend_handles_labels()]
+    handles, labels = ((leg[:2]) for leg in ax.get_legend_handles_labels())
     ax.legend(handles, labels)

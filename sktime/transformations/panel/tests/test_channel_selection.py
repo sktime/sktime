@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Channel selection test code."""
 from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.channel_selection import ElbowClassPairwise

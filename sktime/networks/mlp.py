@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
 """Multi Layer Perceptron (MLP) (minus the final output layer)."""
 
 __author__ = ["James-Large", "Withington", "AurumnPegasus"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class MLPNetwork(BaseDeepNetwork):
@@ -42,7 +39,7 @@ class MLPNetwork(BaseDeepNetwork):
     ):
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
-        super(MLPNetwork, self).__init__()
+        super().__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.

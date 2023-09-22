@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Frequency filters."""
 
 __author__ = ["sveameyer13"]
@@ -7,9 +6,6 @@ __all__ = ["Filter"]
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("mne", severity="warning")
 
 
 class Filter(BaseTransformer):
@@ -72,7 +68,7 @@ class Filter(BaseTransformer):
                 raise ValueError("Negative values not supported")
             if l_freq > h_freq:
                 raise ValueError("High frequency must be higher" " than low frequency")
-        super(Filter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None) -> np.ndarray:
         """Transform data.

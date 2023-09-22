@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
-"""Test function of elastic distance nearest neighbour classifiers."""
+"""Tests for KNeighborsTimeSeriesClassifier."""
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.alignment.dtw_python import AlignerDTW
@@ -8,6 +8,7 @@ from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datasets import load_unit_test
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 distance_functions = [
@@ -43,6 +44,10 @@ expected_correct_window = {
 }
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(KNeighborsTimeSeriesClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("distance_key", distance_functions)
 def test_knn_on_unit_test(distance_key):
     """Test function for elastic knn, to be reinstated soon."""
@@ -61,6 +66,10 @@ def test_knn_on_unit_test(distance_key):
     assert correct == expected_correct[distance_key]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(KNeighborsTimeSeriesClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("distance_key", distance_functions)
 def test_knn_bounding_matrix(distance_key):
     """Test knn with custom bounding parameters."""
@@ -109,3 +118,30 @@ def test_knn_with_aggrdistance():
     clf = KNeighborsTimeSeriesClassifier(distance=aggr_dist)
 
     clf.fit(X, y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(KNeighborsTimeSeriesClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_knn_kneighbors():
+    """Tests kneighbors method and absence of bug #3798."""
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    Xtrain = _make_hierarchical(hierarchy_levels=(3,), n_columns=3)
+    Xtest = _make_hierarchical(hierarchy_levels=(5,), n_columns=3)
+
+    ytrain = pd.Series(["label_1", "label_2", "label_3"])
+
+    kntsc = KNeighborsTimeSeriesClassifier(n_neighbors=1)
+    kntsc.fit(Xtrain, ytrain)
+
+    ret = kntsc.kneighbors(Xtest)
+    assert isinstance(ret, tuple)
+    assert len(ret) == 2
+
+    dist, ind = ret
+    assert isinstance(dist, np.ndarray)
+    assert dist.shape == (5, 1)
+    assert isinstance(ind, np.ndarray)
+    assert ind.shape == (5, 1)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Dictionary based time series classifiers."""
 __all__ = [
     "IndividualBOSS",

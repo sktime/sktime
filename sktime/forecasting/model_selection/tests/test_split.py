@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for splitters."""
 
@@ -12,7 +11,9 @@ from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import (
     CutoffSplitter,
+    ExpandingGreedySplitter,
     ExpandingWindowSplitter,
+    SameLocSplitter,
     SingleWindowSplitter,
     SlidingWindowSplitter,
     temporal_train_test_split,
@@ -31,6 +32,7 @@ from sktime.forecasting.tests._config import (
 )
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
@@ -42,6 +44,10 @@ from sktime.utils.validation import (
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = 30
+TEST_Y_PANEL_HIERARCHICAL = [
+    _make_hierarchical((2, 2), N_TIMEPOINTS, N_TIMEPOINTS),
+    _make_panel(n_instances=2, n_timepoints=N_TIMEPOINTS),
+]
 
 
 def _get_windows(cv, y):
@@ -325,6 +331,92 @@ def test_sliding_window_splitter_start_with_empty_window(
             )
 
 
+def test_expanding_greedy_splitter_lengths():
+    """Test that ExpandingGreedySplitter returns the correct lengths."""
+    y = np.arange(10)
+    cv = ExpandingGreedySplitter(test_size=2, folds=3)
+
+    lengths = [(len(trn), len(tst)) for trn, tst in cv.split_series(y)]
+    assert lengths == [(4, 2), (6, 2), (8, 2)]
+
+
+def test_expanding_greedy_splitter_dates():
+    """Test that ExpandingGreedySplitter splits on dates correctly."""
+    ts = _make_series(index_type="period")
+    first_date = ts.index[0]
+    last_date = ts.index[-1]
+    cv = ExpandingGreedySplitter(test_size=2, folds=3)
+
+    train_starts = []
+    train_ends = []
+    test_starts = []
+    test_ends = []
+
+    for trn, tst in cv.split_series(ts):
+        train_starts.append(trn.index[0])
+        train_ends.append(trn.index[-1])
+        test_starts.append(tst.index[0])
+        test_ends.append(tst.index[-1])
+
+    assert train_starts == [first_date, first_date, first_date]
+    assert train_ends == [last_date - 6, last_date - 4, last_date - 2]
+    assert test_starts == [last_date - 5, last_date - 3, last_date - 1]
+    assert test_ends == [last_date - 4, last_date - 2, last_date]
+
+
+def test_expanding_greedy_splitter_hierarchy():
+    """Test that ExpandingGreedySplitter handles uneven hierarchical data."""
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(2, 4),
+        max_timepoints=20,
+        min_timepoints=10,
+        same_cutoff=False,
+    )
+
+    cv = ExpandingGreedySplitter(test_size=2, folds=3)
+
+    # Since same_cutoff=False above, we will have a potentially different end date for
+    # each instance in the hierarchy. Below we test that the final fold ends at the
+    # correct end date for each instance
+    last_test_fold = list(cv.split_series(y_panel))[-1][1]
+
+    last_test_dates_actual = (
+        last_test_fold.reset_index(-1)
+        .groupby(last_test_fold.index.names[:-1])
+        .tail(1)["time"]
+    )
+    last_test_dates_expected = (
+        y_panel.reset_index(-1).groupby(y_panel.index.names[:-1]).tail(1)["time"]
+    )
+
+    assert last_test_dates_actual.eq(last_test_dates_expected).all()
+
+
+def test_expanding_greedy_splitter_consecutive():
+    """Test that ExpandingGreedySplitter results in consecutive test periods."""
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(2, 4),
+        max_timepoints=20,
+        min_timepoints=10,
+        same_cutoff=False,
+    )
+
+    cv = ExpandingGreedySplitter(test_size=2, folds=3)
+
+    test_dfs = [tst for _, tst in cv.split_series(y_panel)]
+
+    combined_test_df = pd.concat(test_dfs).sort_index()
+
+    # We check the .diff(). Equal diffs = uniformly spaced timestamps
+    has_consecutive_index = (
+        combined_test_df.reset_index(-1)
+        .groupby(combined_test_df.index.names[:-1])["time"]
+        .agg(lambda s: len(s.diff().value_counts()) == 1)
+    )
+
+    assert has_consecutive_index.all()
+
+
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
@@ -400,7 +492,6 @@ def test_expanding_window_splitter_start_with_empty_window(
             fh=fh,
             initial_window=initial_window,
             step_length=step_length,
-            start_with_window=True,
         )
         train_windows, test_windows, _, n_splits = _check_cv(cv, y)
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
@@ -415,7 +506,6 @@ def test_expanding_window_splitter_start_with_empty_window(
                 fh=fh,
                 initial_window=initial_window,
                 step_length=step_length,
-                start_with_window=True,
             )
 
 
@@ -430,7 +520,6 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
             fh=fh,
             initial_window=initial_window,
             step_length=step_length,
-            start_with_window=True,
         )
         train_windows, test_windows, _, n_splits = _check_cv(cv, y)
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
@@ -445,7 +534,6 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
                 fh=fh,
                 initial_window=initial_window,
                 step_length=step_length,
-                start_with_window=True,
             )
 
 
@@ -552,7 +640,7 @@ def test_split_series_hier():
         assert len(train) == 10 * n_instances
         assert isinstance(test, np.ndarray)
         assert test.ndim == 1
-        assert test.dtype == np.int64
+        assert pd.api.types.is_integer_dtype(test.dtype)
         assert len(test) == 1 * n_instances
 
     for train, test in cv.split_loc(y):
@@ -573,3 +661,98 @@ def test_split_series_hier():
         assert len(test) == 1 * n_instances
         assert inst_index(train) == inst_index(y)
         assert inst_index(test) == inst_index(y)
+
+
+def test_same_loc_splitter():
+    """Test that SameLocSplitter works as intended."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    y_template = y[:60]
+    cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+
+    splitter = SameLocSplitter(cv_tpl, y_template)
+
+    # these should be the same
+    # not in general, but only because y is longer only at the end
+    split_template_iloc = list(cv_tpl.split(y_template))
+    split_templated_iloc = list(splitter.split(y))
+
+    for (t1, tt1), (t2, tt2) in zip(split_template_iloc, split_templated_iloc):
+        assert np.all(t1 == t2)
+        assert np.all(tt1 == tt2)
+
+    # these should be in general the same
+    split_template_loc = list(cv_tpl.split_loc(y_template))
+    split_templated_loc = list(splitter.split_loc(y))
+
+    for (t1, tt1), (t2, tt2) in zip(split_template_loc, split_templated_loc):
+        assert np.all(t1 == t2)
+        assert np.all(tt1 == tt2)
+
+
+def test_same_loc_splitter_hierarchical():
+    """Test that SameLocSplitter works as intended for hierarchical data."""
+    hierarchy_levels1 = (2, 2)
+    hierarchy_levels2 = (3, 4)
+    n1 = 7
+    n2 = 2 * n1
+    y_template = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels1, max_timepoints=n1, min_timepoints=n1
+    )
+
+    y = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels2, max_timepoints=n2, min_timepoints=n2
+    )
+
+    cv_tpl = ExpandingWindowSplitter(fh=[1, 2], initial_window=1, step_length=2)
+
+    splitter = SameLocSplitter(cv_tpl, y_template)
+
+    # these should be in general the same
+    split_template_loc = list(cv_tpl.split_loc(y_template))
+    split_templated_loc = list(splitter.split_loc(y))
+
+    for (t1, tt1), (t2, tt2) in zip(split_template_loc, split_templated_loc):
+        assert np.all(t1 == t2)
+        assert np.all(tt1 == tt2)
+
+
+def test_hierachical_singlewindowsplitter():
+    """Test for bugs in SingleWindowSplitter with hierarchical data.
+
+    See #4972
+    """
+    y = _make_hierarchical(hierarchy_levels=(2, 3), random_state=0)
+    splitter = SingleWindowSplitter(fh=[1, 2], window_length=10)
+    splits = list(splitter.split(y))
+    assert len(splits) == 1, "Should only be one split"
+
+
+@pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+def test_windowbase_splitter_get_n_split_hierarchical(
+    CV, fh, window_length, step_length
+):
+    """Test that WindowBaseSplitter.get_n_splits works for hierarchical data."""
+    # see bugs 4971
+    y = TEST_Y_PANEL_HIERARCHICAL[0]  # hierachical data
+    if _inputs_are_supported([fh, window_length, step_length]):
+        cv = CV(fh, window_length, step_length)
+        assert cv.get_n_splits(y) == len(
+            list(cv.split(y))
+        ), "get_n_splits does not equal the number of splits in the output."
+
+
+@pytest.mark.parametrize("y", TEST_Y_PANEL_HIERARCHICAL)
+@pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
+def test_windowbase_splitter_get_n_split_unequal_series(y, CV):
+    y_unequal = y.copy()  # avoid changing original dataset
+    y_unequal.iloc[:3, :] = None  # make the first series shorter than the rest
+    y_unequal.dropna(inplace=True)
+    cv = CV([1], 24, 1)
+    assert cv.get_n_splits(y_unequal) == len(
+        list(cv.split(y_unequal))
+    ), "get_n_splits does not equal the number of splits in the output."

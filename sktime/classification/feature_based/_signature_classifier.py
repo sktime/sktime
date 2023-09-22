@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implementation of a SignatureClassifier.
 
 Utilises the signature method of feature extraction.
@@ -92,6 +91,7 @@ class SignatureClassifier(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
+        "capability:predict_proba": True,
         "classifier_type": "feature",
         "python_dependencies": "esig",
         "python_version": "<3.10",
@@ -121,7 +121,7 @@ class SignatureClassifier(BaseClassifier):
         self.depth = depth
         self.random_state = random_state
 
-        super(SignatureClassifier, self).__init__()
+        super().__init__()
 
         self.signature_method = SignatureTransformer(
             augmentation_list,

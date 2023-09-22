@@ -1,13 +1,18 @@
-# -*- coding: utf-8 -*-
 """RandomIntervals test code."""
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.supervised_intervals import SupervisedIntervals
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(RandomIntervals),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_random_intervals_on_basic_motions():
     """Test of RandomIntervals on basic motions data."""
     # load basic motions data
@@ -24,6 +29,10 @@ def test_random_intervals_on_basic_motions():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SupervisedIntervals),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_supervised_intervals_on_basic_motions():
     """Test of SupervisedIntervals on basic motions data."""
     # load basic motions data

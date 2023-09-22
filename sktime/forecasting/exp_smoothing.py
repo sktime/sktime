@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Holt-Winters exponential smoothing."""
@@ -103,10 +102,12 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = load_airline()
-    >>> forecaster = ExponentialSmoothing(trend='add', seasonal='multiplicative', sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = ExponentialSmoothing(
+    ...     trend='add', seasonal='multiplicative', sp=12
+    ... )  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ExponentialSmoothing(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _fitted_param_names = (
@@ -194,3 +195,52 @@ class ExponentialSmoothing(_StatsModelsAdapter):
             minimize_kwargs=self.minimize_kwargs,
             use_brute=self.use_brute,
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str , default = "default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params :dict or list of dict , default = {}
+            arameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params
+        """
+        params = [
+            {},
+            {
+                "trend": "mul",
+                "damped_trend": True,
+                "seasonal": "mul",
+                "sp": 2,
+                "use_boxcox": False,
+                "initialization_method": "heuristic",
+                "smoothing_level": 0.1,
+                "smoothing_trend": 0.1,
+                "damping_trend": 0.42,
+                "method": "least_squares",
+            },
+            {
+                "trend": "add",
+                "damped_trend": False,
+                "seasonal": "add",
+                "sp": 2,
+                "use_boxcox": True,
+                "initialization_method": "estimated",
+                "smoothing_level": 0.3,
+                "smoothing_trend": 0.5,
+                "damping_trend": 0.28,
+                "method": "SLSQP",
+            },
+        ]
+
+        return params

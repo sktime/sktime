@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Rotation Forest test code."""
 import numpy as np
 

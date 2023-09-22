@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test the signature module augmentations."""
 import numpy as np
 

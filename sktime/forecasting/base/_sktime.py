@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""sktime window forecaster base class."""
+"""Sktime window forecaster base class."""
 
-__author__ = ["@mloning", "@big-o", "fkiraly"]
+__author__ = ["mloning", "big-o", "fkiraly"]
 __all__ = ["_BaseWindowForecaster"]
 
 import numpy as np
@@ -18,23 +17,23 @@ class _BaseWindowForecaster(BaseForecaster):
     """Base class for forecasters that use sliding windows."""
 
     def __init__(self, window_length=None):
-        super(_BaseWindowForecaster, self).__init__()
+        super().__init__()
         self.window_length = window_length
         self.window_length_ = None
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Predict core logic."""
         kwargs = {"X": X}
 
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
-            return self._predict_fixed_cutoff(
+            y_pred = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
 
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
-            return self._predict_in_sample(fh.to_in_sample(self.cutoff), **kwargs)
+            y_pred = self._predict_in_sample(fh.to_in_sample(self.cutoff), **kwargs)
 
         # both in-sample and out-of-sample values
         else:
@@ -42,7 +41,17 @@ class _BaseWindowForecaster(BaseForecaster):
             y_oos = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
-            return pd.concat([y_ins, y_oos])
+
+            if isinstance(y_ins, pd.DataFrame) and isinstance(y_oos, pd.Series):
+                y_oos = y_oos.to_frame(y_ins.columns[0])
+
+            y_pred = pd.concat([y_ins, y_oos])
+
+        # ensure pd.Series name attribute is preserved
+        if isinstance(y_pred, pd.Series) and isinstance(self._y, pd.Series):
+            y_pred.name = self._y.name
+
+        return y_pred
 
     def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -68,7 +77,7 @@ class _BaseWindowForecaster(BaseForecaster):
         if isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             return y_pred
         else:
-            index = fh.to_absolute(self.cutoff)
+            index = fh.to_absolute_index(self.cutoff)
             return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(

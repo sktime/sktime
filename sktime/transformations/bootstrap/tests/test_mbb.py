@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests for Bootrstapping transformers."""
 
@@ -17,11 +16,16 @@ from sktime.transformations.bootstrap._mbb import (
     _get_series_name,
     _moving_block_bootstrap,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 y = load_airline()
 y_index = y.index
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_bootstrapping_transformer_no_seasonal_period():
     """Tests that an exception is raised if sp<2."""
     with pytest.raises(NotImplementedError) as ex:
@@ -31,6 +35,10 @@ def test_bootstrapping_transformer_no_seasonal_period():
         assert "STLBootstrapTransformer does not support non-seasonal data" == ex.value
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_bootstrapping_transformer_series_shorter_than_sp():
     """Tests that an exception is raised if sp>len(y)."""
     with pytest.raises(ValueError) as ex:
@@ -42,6 +50,10 @@ def test_bootstrapping_transformer_series_shorter_than_sp():
         assert msg == ex.value
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 @pytest.mark.parametrize(
     "transformer_class", [STLBootstrapTransformer, MovingBlockBootstrapTransformer]
 )
@@ -66,6 +78,10 @@ index_return_actual_false = pd.MultiIndex.from_product(
 )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 @pytest.mark.parametrize(
     "transformer_class, return_actual, expected_index",
     [

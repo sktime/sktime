@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements hierarchical reconciliation transformers.
 
@@ -54,7 +53,7 @@ class Reconciler(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.transformations.hierarchical.reconcile import Reconciler
     >>> from sktime.transformations.hierarchical.aggregate import Aggregator
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
@@ -65,9 +64,9 @@ class Reconciler(BaseTransformer):
     ...     random_seed=123,
     ... )
     >>> y = agg.fit_transform(y)
-    >>> forecaster = ExponentialSmoothing()
+    >>> forecaster = PolynomialTrendForecaster()
     >>> forecaster.fit(y)
-    ExponentialSmoothing(...)
+    PolynomialTrendForecaster(...)
     >>> prds = forecaster.predict(fh=[1])
     >>> # reconcile forecasts
     >>> reconciler = Reconciler(method="ols")
@@ -98,10 +97,9 @@ class Reconciler(BaseTransformer):
     METHOD_LIST = ["bu", "ols", "wls_str", "td_fcst"]
 
     def __init__(self, method="bu"):
-
         self.method = method
 
-        super(Reconciler, self).__init__()
+        super().__init__()
 
     def _add_totals(self, X):
         """Add total levels to X, using Aggregate."""
@@ -201,7 +199,6 @@ class Reconciler(BaseTransformer):
         recon_preds = []
         gmat = self.g_matrix
         for _name, group in X:
-
             if self.method == "td_fcst":
                 gmat = _update_td_fcst(
                     g_matrix=gmat, x_sf=group.droplevel(-1), conn_df=self.parent_child
@@ -297,7 +294,7 @@ def _get_s_matrix(X):
             s_matrix.loc["__total", i] = 1.0
 
     # drop new levels not present in orginal matrix
-    s_matrix.dropna(inplace=True)
+    s_matrix = s_matrix.loc[s_matrix.index.isin(al_inds)]
 
     return s_matrix
 

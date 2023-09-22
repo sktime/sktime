@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for Deseasonalizer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -37,6 +36,10 @@ def test_deseasonalised_values(sp):
     np.testing.assert_array_equal(actual, expected)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("model", MODELS)
 def test_transform_time_index(sp, model):
@@ -46,6 +49,10 @@ def test_transform_time_index(sp, model):
     np.testing.assert_array_equal(yt.index, y_test.index)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("model", MODELS)
 def test_inverse_transform_time_index(sp, model):
@@ -55,6 +62,10 @@ def test_inverse_transform_time_index(sp, model):
     np.testing.assert_array_equal(yit.index, y_test.index)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("model", MODELS)
 def test_transform_inverse_transform_equivalence(sp, model):
@@ -65,6 +76,10 @@ def test_transform_inverse_transform_equivalence(sp, model):
     np.testing.assert_array_almost_equal(y_train, yit)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_deseasonalizer_in_pipeline():
     """Test deseasonalizer in pipeline, see issue #3267."""
     from sktime.datasets import load_airline
@@ -82,4 +97,4 @@ def test_deseasonalizer_in_pipeline():
     )
     train_df = all_df["1949":"1950"]
     model.fit(train_df)
-    model.update(y=all_df["1951"])
+    model.update(y=all_df["1951":"1951"])

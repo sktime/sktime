@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Abstract base class for deep learning networks."""
 
 __author__ = ["Withington", "TonyBagnall"]

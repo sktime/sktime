@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Discrete wavelet transform."""
 import math
 
@@ -8,7 +7,7 @@ import pandas as pd
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
-__author__ = "Vincent Nicholson"
+__author__ = ["Vincent Nicholson"]
 
 
 class DWTTransformer(BaseTransformer):
@@ -35,7 +34,7 @@ class DWTTransformer(BaseTransformer):
 
     def __init__(self, num_levels=3):
         self.num_levels = num_levels
-        super(DWTTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -89,9 +88,8 @@ class DWTTransformer(BaseTransformer):
     def _extract_wavelet_coefficients(self, data):
         """Extract wavelet coefficients of a 2d array of time series.
 
-        The coefficients correspond to the wavelet coefficients
-        from levels 1 to num_levels followed by the approximation
-        coefficients of the highest level.
+        The coefficients correspond to the wavelet coefficients from levels 1 to
+        num_levels followed by the approximation coefficients of the highest level.
         """
         num_levels = self.num_levels
         res = []

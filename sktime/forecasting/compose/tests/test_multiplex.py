@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for MultiplexForecaster and associated dunders."""
 
@@ -37,6 +36,10 @@ def _score_forecasters(forecasters, cv, y):
     return best_name
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(ThetaForecaster, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_multiplex_forecaster_alone():
     """Test results of MultiplexForecaster.
 
@@ -81,12 +84,12 @@ def test_multiplex_with_grid_search():
     """
     y = load_shampoo_sales()
     forecasters = [
-        ("ets", AutoETS()),
-        ("naive", NaiveForecaster()),
+        ("naive1", NaiveForecaster()),
+        ("naive2", NaiveForecaster(strategy="mean")),
     ]
     multiplex_forecaster = MultiplexForecaster(forecasters=forecasters)
     forecaster_names = [name for name, _ in forecasters]
-    cv = ExpandingWindowSplitter(start_with_window=True, step_length=12)
+    cv = ExpandingWindowSplitter(step_length=12)
     gscv = ForecastingGridSearchCV(
         cv=cv,
         param_grid={"selected_forecaster": forecaster_names},
@@ -105,9 +108,9 @@ def test_multiplex_with_grid_search():
 def test_multiplex_or_dunder():
     """Test that the MultiplexForecaster magic "|" dunder methodbahves as expected.
 
-    A MultiplexForecaster can be created by using the "|" dunder method on
-    either forecaster or MultiplexForecaster objects. Here we test that it performs
-    as expected on all the use cases, and raises the expected error in some others.
+    A MultiplexForecaster can be created by using the "|" dunder method on either
+    forecaster or MultiplexForecaster objects. Here we test that it performs as expected
+    on all the use cases, and raises the expected error in some others.
     """
     # test a simple | example with two forecasters:
     multiplex_two_forecaster = AutoETS() | NaiveForecaster()

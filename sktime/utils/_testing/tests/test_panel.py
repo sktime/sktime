@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for data and scenario generators in _testing.panel module."""
 
 __author__ = ["mloning", "fkiraly"]

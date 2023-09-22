@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Utility class for ploting functionality."""
 
@@ -13,7 +12,7 @@ __all__ = [
     "plot_time_series_with_profiles",
 ]
 
-__author__ = "patrickzib"
+__author__ = ["patrickzib"]
 
 
 def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
@@ -37,7 +36,6 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
 
     axes : np.ndarray
         Array of the figure's Axe objects
-
     """
     # Checks availability of plotting libraries
     _check_soft_dependencies("matplotlib")
@@ -76,7 +74,7 @@ def plot_time_series_with_profiles(
     score_name="ClaSP Score",
     font_size=16,
 ):
-    """Plot the TS with the known and found change points and profiles from segmentation.
+    """Plot TS with known and found change points and profiles from segmentation.
 
     Parameters
     ----------
@@ -141,10 +139,10 @@ def plot_time_series_with_profiles(
 
     for a in ax:
         for tick in a.xaxis.get_major_ticks():
-            tick.label.set_fontsize(font_size)
+            tick.label1.set_fontsize(font_size)
 
         for tick in a.yaxis.get_major_ticks():
-            tick.label.set_fontsize(font_size)
+            tick.label1.set_fontsize(font_size)
 
     if true_cps is not None:
         for idx, true_cp in enumerate(true_cps):

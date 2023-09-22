@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unit tests for classifier base class functionality."""
 
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst", "achieveordie"]
@@ -13,13 +12,14 @@ from sklearn.model_selection import KFold
 from sktime.classification.base import BaseClassifier
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.classification.feature_based import Catch22Classifier
+from sktime.classification.dummy import DummyClassifier
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import (
     _make_classification_y,
     _make_panel,
     make_classification_problem,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class _DummyClassifier(BaseClassifier):
@@ -49,7 +49,7 @@ class _DummyDeepClassifierEmpty(BaseDeepClassifier):
     """Dummy Deep Classifier for testing empty base deep class save utilities."""
 
     def __init__(self):
-        super(_DummyDeepClassifierEmpty, self).__init__()
+        super().__init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         return None
@@ -65,7 +65,7 @@ class _DummyDeepClassifierFull(BaseDeepClassifier):
         self,
         optimizer,
     ):
-        super(_DummyDeepClassifierFull, self).__init__()
+        super().__init__()
         self.optimizer = optimizer
 
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -338,7 +338,7 @@ def test_input_conversion_fit_predict(mtype):
     y = _make_classification_y()
     X = _make_panel(return_mtype=mtype)
 
-    clf = Catch22Classifier()
+    clf = DummyClassifier()
     clf.fit(X, y)
     clf.predict(X)
 
@@ -461,6 +461,10 @@ def test_fit_predict_single_class(method, cv):
         assert all(list(y_pred == 1))
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_deep_estimator_empty():
     """Check if serialization works for empty dummy."""
     empty_dummy = _DummyDeepClassifierEmpty()
@@ -469,13 +473,16 @@ def test_deep_estimator_empty():
     assert empty_dummy.__dict__ == deserialized_empty.__dict__
 
 
-@pytest.mark.parametrize("optimizer", [None, "adam", "keras-adamax"])
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("optimizer", [None, "adam", "object-adamax"])
 def test_deep_estimator_full(optimizer):
     """Check if serialization works for full dummy."""
-    from keras.optimizers import Adamax
-    from tensorflow.keras.optimizers import Optimizer, serialize
+    from tensorflow.keras.optimizers import Adamax, Optimizer, serialize
 
-    if optimizer == "keras-adamax":
+    if optimizer == "object-adamax":
         optimizer = Adamax()
 
     full_dummy = _DummyDeepClassifierFull(optimizer)
@@ -491,8 +498,7 @@ def test_deep_estimator_full(optimizer):
 
         # assert weights of optimizers are same
         assert (
-            full_dummy.optimizer.get_weights()
-            == deserialized_full.optimizer.get_weights()
+            full_dummy.optimizer.variables() == deserialized_full.optimizer.variables()
         )
 
         # remove optimizers from both to do full dict check,

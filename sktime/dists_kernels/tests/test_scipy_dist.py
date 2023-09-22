@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
+"""Tests for scipy interface."""
 import numpy as np
 
-from sktime.utils._testing.panel import make_transformer_problem
 from sktime.dists_kernels.scipy_dist import ScipyDist
+from sktime.utils._testing.panel import make_transformer_problem
 
 X1 = make_transformer_problem(
     n_instances=5,
@@ -39,6 +39,27 @@ X2_df = make_transformer_problem(
 )
 
 
+def _get_kul_name():
+    """Get name of kul... distance.
+
+    Utility to bridge deprecation of kulsinski distance in scipy.
+    Name pre-1.11.0 is kulsinski, and from 1.11.0 it is kulczynski1.
+
+    Returns
+    -------
+    name : str
+        one of "kulsinski" (if scipy < 1.11.0) and "kulczynski1" (if scipy >= 1.11.0)
+    """
+    try:
+        from scipy.spatial.distance import kulczynski1  # noqa: F401
+
+        name = "kulczynski1"
+    except Exception:
+        name = "kulsinski"
+
+    return name
+
+
 # potential parameters
 METRIC_VALUES = [
     "braycurtis",
@@ -52,7 +73,7 @@ METRIC_VALUES = [
     "hamming",
     "jaccard",
     "jensenshannon",
-    "kulsinski",
+    _get_kul_name(),
     "mahalanobis",
     "matching",
     "minkowski",
@@ -69,6 +90,7 @@ COLALIGN_VALUES = ["intersect", "force-align", "none"]
 
 
 def test_scipydist():
+    """Test runner for numpy and dataframe tests."""
     # test numpy
     _run_scipy_dist_test(X1, X2)
 

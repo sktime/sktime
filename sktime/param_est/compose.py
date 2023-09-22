@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Composition involving parameter estimators."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.base import _HeterogenousMetaEstimator
@@ -14,7 +13,7 @@ __all__ = ["ParamFitterPipeline"]
 SUPPORTED_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
+class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     """Pipeline of transformers and a parameter estimator.
 
     The `ParamFitterPipeline` compositor chains transformers and a single estimator.
@@ -75,14 +74,15 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
     >>> from sktime.datasets import load_airline
     >>>
     >>> X = load_airline()
-    >>> pipeline = ParamFitterPipeline(SeasonalityACF(), [Differencer()])
-    >>> pipeline.fit(X)
+    >>> pipe = ParamFitterPipeline(SeasonalityACF(), [Differencer()])  # doctest: +SKIP
+    >>> pipe.fit(X)  # doctest: +SKIP
     ParamFitterPipeline(...)
-    >>> pipeline.get_fitted_params()["sp"]
+    >>> pipe.get_fitted_params()["sp"]  # doctest: +SKIP
     12
 
     Alternative construction via dunder method:
-    >>> pipeline = Differencer() * SeasonalityACF()
+
+    >>> pipe = Differencer() * SeasonalityACF()  # doctest: +SKIP
     """
 
     _tags = {
@@ -97,13 +97,12 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
     # no default tag values - these are set dynamically below
 
     def __init__(self, param_est, transformers):
-
         self.param_est = param_est
         self.param_est_ = param_est.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ParamFitterPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both estimator and all transformers can
         multivariate = param_est.get_tag("capability:multivariate", False)
@@ -296,7 +295,6 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
 
         # test case 2 depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
-
             p = SeasonalityACF()
 
             # construct without names

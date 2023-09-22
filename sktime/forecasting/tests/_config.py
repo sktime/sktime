@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 
 __author__ = ["mloning"]
 __all__ = [
@@ -89,7 +88,7 @@ TEST_INS_FHS_TIMEDELTA = [
 TEST_FHS_TIMEDELTA = [*TEST_OOS_FHS_TIMEDELTA, *TEST_INS_FHS_TIMEDELTA]
 
 TEST_SPS = [3, 12]
-TEST_ALPHAS = [0.05, 0.1]
+TEST_ALPHAS = [0.05, 0.1, [0.25, 0.75]]
 TEST_YS = [_make_series(all_positive=True)]
 TEST_RANDOM_SEEDS = [1, 42]
 TEST_N_ITERS = [1, 4]

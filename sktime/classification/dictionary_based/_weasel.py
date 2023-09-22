@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WEASEL classifier.
 
 Dictionary based classifier based on SFA transform, BOSS and linear regression.
@@ -8,11 +7,9 @@ __author__ = ["patrickzib", "Arik Ermshaus"]
 __all__ = ["WEASEL"]
 
 import math
-import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import set_num_threads
 from scipy.sparse import hstack
 from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
@@ -69,14 +66,8 @@ class WEASEL(BaseClassifier):
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
-    alphabet_size : default = 4
+    alphabet_size : default = 2
         Number of possible letters (values) for each word.
-
-        .. deprecated:: 0.13.3
-            the default = 4 was deprecated in version 0.13.3 and will be changed to
-            default = 2 in 0.15. Please use alphabet_size=2 due to its lower memory
-            footprint, better runtime at equal accuracy.
-
     feature_selection: {"chi2", "none", "random"}, default: chi2
         Sets the feature selections strategy to be used. *Chi2* reduces the number
         of words significantly and is thus much faster (preferred). If set to chi2,
@@ -89,7 +80,6 @@ class WEASEL(BaseClassifier):
         If set to True, a LogisticRegression will be trained, which does support
         predict_proba(), yet is slower and typically less accuracy. predict_proba() is
         needed for example in Early-Classification like TEASER.
-
     random_state: int or None, default=None
         Seed for random, integer
 
@@ -122,16 +112,18 @@ class WEASEL(BaseClassifier):
     >>> from sktime.classification.dictionary_based import WEASEL
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = WEASEL(window_inc=4)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = WEASEL(window_inc=4) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     WEASEL(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "dictionary",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -141,13 +133,12 @@ class WEASEL(BaseClassifier):
         binning_strategy="information-gain",
         window_inc=2,
         p_threshold=0.05,
-        alphabet_size=4,  # TODO set default alphabet_size=2 in v0.15
+        alphabet_size=2,
         n_jobs=1,
         feature_selection="chi2",
         support_probabilities=False,
         random_state=None,
     ):
-
         self.alphabet_size = alphabet_size
 
         # feature selection is applied based on the chi-squared test.
@@ -178,9 +169,11 @@ class WEASEL(BaseClassifier):
         self.n_jobs = n_jobs
         self.support_probabilities = support_probabilities
 
-        set_num_threads(n_jobs)
+        super().__init__()
 
-        super(WEASEL, self).__init__()
+        from numba import set_num_threads
+
+        set_num_threads(n_jobs)
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -199,14 +192,6 @@ class WEASEL(BaseClassifier):
         """
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
-
-        if self.alphabet_size == 4:
-            warnings.warn(
-                "``alphabet_size=4`` was deprecated in version 0.13.3 and "
-                "will be changed to ``alphabet_size=2`` in 0.15."
-                "Please use alphabet_size=2 due to its lower memory "
-                "footprint, better runtime at equal accuracy."
-            )
 
         win_inc = self._compute_window_inc()
         self.max_window = int(min(self.series_length, self.max_window))
@@ -247,11 +232,11 @@ class WEASEL(BaseClassifier):
         if type(all_words[0]) is np.ndarray:
             all_words = np.concatenate(all_words, axis=1)
         else:
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         # Ridge Classifier does not give probabilities
         if not self.support_probabilities:
-            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10))
         else:
             self.clf = LogisticRegression(
                 max_iter=5000,
@@ -314,7 +299,7 @@ class WEASEL(BaseClassifier):
         if type(all_words[0]) is np.ndarray:
             all_words = np.concatenate(all_words, axis=1)
         else:
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         return all_words
 

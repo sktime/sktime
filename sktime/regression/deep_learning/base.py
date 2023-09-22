@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Abstract base class for the Keras neural network regressors.
+"""Abstract base class for the Keras neural network regressors.
 
 The reason for this class between BaseClassifier and deep_learning classifiers is
 because we can generalise tags and _predict
@@ -13,7 +11,6 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from sktime.exceptions import NotFittedError
 from sktime.regression.base import BaseRegressor
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -30,10 +27,9 @@ class BaseDeepRegressor(BaseRegressor, ABC):
     batch_size : int, default = 40
         training batch size for the model
 
-    Arguments
-    ---------
-    self.model = None
-
+    Attributes
+    ----------
+    self.model_ - the fitted DL model
     """
 
     _tags = {
@@ -43,15 +39,14 @@ class BaseDeepRegressor(BaseRegressor, ABC):
     }
 
     def __init__(self, batch_size=40):
-        super(BaseDeepRegressor, self).__init__()
+        super().__init__()
 
         self.batch_size = batch_size
         self.model_ = None
 
     @abstractmethod
     def build_model(self, input_shape, **kwargs):
-        """
-        Construct a compiled, un-trained, keras model that is ready for training.
+        """Construct a compiled, un-trained, keras model that is ready for training.
 
         Parameters
         ----------
@@ -65,8 +60,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         ...
 
     def _predict(self, X, **kwargs):
-        """
-        Find regression estimate for all cases in X.
+        """Find regression estimate for all cases in X.
 
         Parameters
         ----------
@@ -202,12 +196,14 @@ class BaseDeepRegressor(BaseRegressor, ABC):
             _check_soft_dependencies("h5py")
             import h5py
 
-            with h5py.File(
-                "disk_less", "w", driver="core", backing_store=False
-            ) as h5file:
-                self.model_.save(h5file)
-                h5file.flush()
-                in_memory_model = h5file.id.get_file_image()
+            in_memory_model = None
+            if self.model_ is not None:
+                with h5py.File(
+                    "disk_less", "w", driver="core", backing_store=False
+                ) as h5file:
+                    self.model_.save(h5file)
+                    h5file.flush()
+                    in_memory_model = h5file.id.get_file_image()
 
             in_memory_history = pickle.dumps(self.history.history)
 
@@ -226,13 +222,12 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                 f"but found of type:{type(path)}."
             )
 
-        if self.model_ is None:
-            raise NotFittedError("Model not built yet, call it via `.fit()`")
-
         path = Path(path) if isinstance(path, str) else path
         path.mkdir()
 
-        self.model_.save(path / "keras/")
+        if self.model_ is not None:
+            self.model_.save(path / "keras/")
+
         with open(path / "history", "wb") as history_writer:
             pickle.dump(self.history.history, history_writer)
 
@@ -280,13 +275,16 @@ class BaseDeepRegressor(BaseRegressor, ABC):
             )
 
         serial, in_memory_model, in_memory_history = serial
-        with TemporaryFile() as store_:
-            store_.write(in_memory_model)
-            h5file = h5py.File(store_, "r")
-            cls.model_ = load_model(h5file)
-            cls.history = pickle.loads(in_memory_history)
-            h5file.close()
+        if in_memory_model is None:
+            cls.model_ = None
+        else:
+            with TemporaryFile() as store_:
+                store_.write(in_memory_model)
+                h5file = h5py.File(store_, "r")
+                cls.model_ = load_model(h5file)
+                h5file.close()
 
+        cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)
 
     @classmethod
@@ -316,9 +314,13 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                     continue
                 zip_file.extract(file, temp_unzip_loc)
 
-        cls.model_ = keras.models.load_model(temp_unzip_loc / "keras/")
-        rmtree(temp_unzip_loc)
+        keras_location = temp_unzip_loc / "keras"
+        if keras_location.exists():
+            cls.model_ = keras.models.load_model(keras_location)
+        else:
+            cls.model_ = None
 
+        rmtree(temp_unzip_loc)
         cls.history = keras.callbacks.History()
         with ZipFile(serial, mode="r") as file:
             cls.history.set_params(pickle.loads(file.open("history").read()))

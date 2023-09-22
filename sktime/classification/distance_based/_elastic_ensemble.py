@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The Elastic Ensemble (EE).
 
 An ensemble of elastic nearest neighbour classifiers.
@@ -75,22 +74,23 @@ class ElasticEnsemble(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.distance_based import ElasticEnsemble
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
     >>> clf = ElasticEnsemble(
     ...     proportion_of_param_options=0.1,
     ...     proportion_train_for_test=0.1,
     ...     distance_measures = ["dtw","ddtw"],
     ...     majority_vote=True,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     ElasticEnsemble(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "distance",
     }
 
@@ -129,7 +129,7 @@ class ElasticEnsemble(BaseClassifier):
         self.train = None
         self.constituent_build_times = None
 
-        super(ElasticEnsemble, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Build an ensemble of 1-NN classifiers from the training set (X, y).
@@ -189,7 +189,7 @@ class ElasticEnsemble(BaseClassifier):
         # StratifiedShuffleSplit:
         if self.proportion_train_in_param_finding < 1:
             if self.verbose > 0:
-                print(  # noqa: T001
+                print(  # noqa: T201
                     "Restricting training cases for parameter optimisation: ", end=""
                 )
             sss = StratifiedShuffleSplit(
@@ -203,7 +203,7 @@ class ElasticEnsemble(BaseClassifier):
                 if der_X is not None:
                     der_param_train_x = der_X[train_index, :]
                 if self.verbose > 0:
-                    print(  # noqa: T001
+                    print(  # noqa: T201
                         "using "
                         + str(len(param_train_x))
                         + " training cases instead of "
@@ -213,7 +213,7 @@ class ElasticEnsemble(BaseClassifier):
         # else, use the full training data for optimising parameters
         else:
             if self.verbose > 0:
-                print(  # noqa: T001
+                print(  # noqa: T201
                     "Using all training cases for parameter optimisation"
                 )
             param_train_x = X
@@ -224,7 +224,7 @@ class ElasticEnsemble(BaseClassifier):
         self.constituent_build_times = []
 
         if self.verbose > 0:
-            print(  # noqa: T001
+            print(  # noqa: T201
                 "Using " + str(100 * self.proportion_of_param_options) + " parameter "
                 "options per "
                 "measure"
@@ -250,7 +250,7 @@ class ElasticEnsemble(BaseClassifier):
                     self.distance_measures[dm] == "ddtw"
                     or self.distance_measures[dm] == "wddtw"
                 ):
-                    print(  # noqa: T001
+                    print(  # noqa: T201
                         "Currently evaluating "
                         + str(self.distance_measures[dm].__name__)
                         + " (implemented as "
@@ -258,7 +258,7 @@ class ElasticEnsemble(BaseClassifier):
                         + " with pre-transformed derivative data)"
                     )
                 else:
-                    print(  # noqa: T001
+                    print(  # noqa: T201
                         "Currently evaluating "
                         + str(self.distance_measures[dm].__name__)
                     )
@@ -266,7 +266,6 @@ class ElasticEnsemble(BaseClassifier):
             # If 100 parameter options are being considered per measure,
             # use a GridSearchCV
             if self.proportion_of_param_options == 1:
-
                 grid = GridSearchCV(
                     estimator=KNeighborsTimeSeriesClassifier(
                         distance=this_measure, n_neighbors=1
@@ -291,7 +290,7 @@ class ElasticEnsemble(BaseClassifier):
                     param_distributions=ElasticEnsemble._get_100_param_options(
                         self.distance_measures[dm], X
                     ),
-                    n_iter=100 * self.proportion_of_param_options,
+                    n_iter=int(100 * self.proportion_of_param_options),
                     cv=LeaveOneOut(),
                     scoring="accuracy",
                     n_jobs=self._threads_to_use,
@@ -321,7 +320,7 @@ class ElasticEnsemble(BaseClassifier):
                 acc = accuracy_score(y, preds)
 
             if self.verbose > 0:
-                print(  # noqa: T001
+                print(  # noqa: T201
                     "Training accuracy for "
                     + str(self.distance_measures[dm].__name__)
                     + ": "

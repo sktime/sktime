@@ -1,19 +1,17 @@
-# -*- coding: utf-8 -*-
 """KNN time series regression.
 
-This class is a KNN regressor which supports time series distance measures.
-The class has hardcoded string references to numba based distances in sktime.distances.
-It can also be used with callables, or sktime (pairwise transformer) estimators.
+This class is a KNN regressor which supports time series distance measures. The class
+has hardcoded string references to numba based distances in sktime.distances. It can
+also be used with callables, or sktime (pairwise transformer) estimators.
 
-This is a direct wrap or sklearn KNeighbors, with added functionality that allows
-time series distances to be passed, and the sktime time series regressor interface.
+This is a direct wrap or sklearn KNeighbors, with added functionality that allows time
+series distances to be passed, and the sktime time series regressor interface.
 """
 
 __author__ = ["fkiraly"]
 __all__ = ["KNeighborsTimeSeriesRegressor"]
 
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.neighbors._base import _check_weights
 
 from sktime.distances import pairwise_distance
 from sktime.regression.base import BaseRegressor
@@ -50,7 +48,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         one of: 'uniform', 'distance', or a callable function
     algorithm : str, optional. default = 'brute'
         search method for neighbours
-        one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
+        one of {'auto', 'ball_tree', 'kd_tree', 'brute'}
     distance : str or callable, optional. default ='dtw'
         distance measure between time series
         if str, must be one of the following strings:
@@ -96,6 +94,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -132,9 +131,9 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
             leaf_size=leaf_size,
             n_jobs=n_jobs,
         )
-        self.weights = _check_weights(weights)
+        self.weights = weights
 
-        super(KNeighborsTimeSeriesRegressor, self).__init__()
+        super().__init__()
 
         # the distances in sktime.distances want numpy3D
         #   otherwise all Panel formats are ok
@@ -210,6 +209,11 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         ind : array
             Indices of the nearest points in the population matrix.
         """
+        self.check_is_fitted()
+
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
+
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
 

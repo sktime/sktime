@@ -1,10 +1,8 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Test reduce."""
 
-__author__ = ["Lovkush Agarwal", "mloning", "Luis Zugasti", "AyushmaanSeth"]
+__author__ = ["Lovkush-A", "mloning", "LuisZugasti", "AyushmaanSeth"]
 
 import numpy as np
 import pandas as pd
@@ -144,8 +142,8 @@ def test_sliding_window_transform_panel(n_timepoints, window_length, n_variables
 def test_sliding_window_transform_explicit():
     """Test sliding window transform explicit.
 
-    testing with explicitly written down expected outputs
-    intended to help future contributors understand the transformation
+    testing with explicitly written down expected outputs intended to help future
+    contributors understand the transformation
     """
     y = pd.Series(np.arange(9))
     X = pd.concat([y + 100, y + 200], axis=1)
@@ -240,9 +238,9 @@ def test_dummy_regressor_mean_prediction_endogenous_only(
 ):
     """Test dummy regressor mean prediction endogenous_only.
 
-    The DummyRegressor ignores the input feature data X, hence we can use it for
-    testing reduction from forecasting to both tabular and time series regression.
-    The DummyRegressor also supports the 'multioutput' strategy.
+    The DummyRegressor ignores the input feature data X, hence we can use it for testing
+    reduction from forecasting to both tabular and time series regression. The
+    DummyRegressor also supports the 'multioutput' strategy.
     """
     y = make_forecasting_problem()
     fh = check_fh(fh)
@@ -304,10 +302,16 @@ class _TestTimeSeriesRegressor(_Recorder, BaseRegressor):
     pass
 
     def _fit(self, X, y):
-        """Empty method to satisfy abstract parent. Needs refactoring."""
+        """Empty method to satisfy abstract parent.
+
+        Needs refactoring.
+        """
 
     def _predict(self, X):
-        """Empty method to satisfy abstract parent. Needs refactoring."""
+        """Empty method to satisfy abstract parent.
+
+        Needs refactoring.
+        """
 
 
 @pytest.mark.parametrize(
@@ -320,8 +324,8 @@ def test_consistent_data_passing_to_component_estimators_in_fit_and_predict(
 ):
     """Test consistent data passing to component estimators in fit and predict.
 
-    We generate data that represents time points in its values, i.e. an array of
-    values that increase in unit steps for each time point.
+    We generate data that represents time points in its values, i.e. an array of values
+    that increase in unit steps for each time point.
     """
     n_variables = 3
     n_timepoints = 10
@@ -387,15 +391,15 @@ def test_make_reduction_infer_scitype(estimator, scitype):
     assert forecaster._estimator_scitype == scitype
 
 
-def test_make_reduction_infer_scitype_raises_error():
+def test_make_reduction_infer_scitype_for_sklearn_pipeline():
     """Test make_reduction.
 
-    The scitype of pipeline cannot be inferred here, as it may be used together
-    with a tabular or time series regressor.
+    The scitype of pipeline cannot be inferred here, as it may be used together with a
+    tabular or time series regressor.
     """
     estimator = make_pipeline(Tabularizer(), LinearRegression())
-    with pytest.raises(ValueError):
-        make_reduction(estimator, scitype="infer")
+    forecaster = make_reduction(estimator, scitype="infer")
+    assert forecaster._estimator_scitype == "tabular-regressor"
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
@@ -522,10 +526,9 @@ EXPECTED_AIRLINE_LINEAR_DIRECT = [
 def test_reductions_airline_data(forecaster, expected):
     """Test reduction forecasters.
 
-    Test reduction forecasters by making prediction
-    on airline dataset using linear estimators.
-    Predictions compared with values calculated by Lovkush
-    Agarwal on their local machine in Mar 2021
+    Test reduction forecasters by making prediction on airline dataset using linear
+    estimators. Predictions compared with values calculated by Lovkush Agarwal on their
+    local machine in Mar 2021
     """
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y, test_size=24)
@@ -557,3 +560,34 @@ def test_dirrec_against_recursive_accumulated_error():
     assert mean_absolute_percentage_error(
         y_test, preds_dirrec
     ) < mean_absolute_percentage_error(y_test, preds_recursive)
+
+
+def test_direct_vs_recursive():
+    """Test reduction forecasters.
+
+    Test reduction forecasters by making prediction on airline dataset using linear
+    estimators. Wenn windows_identical = False, all observations should be considered
+    (see documenation in make_reduction function), so results for direct and recursive
+    forecasting should match for the first forecasting horizon. With the
+    windows_identical
+    """
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y, test_size=24)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+    forecaster_dir_max = DirectTabularRegressionForecaster(
+        LinearRegression(), windows_identical=False
+    )
+    forecaster_dir_spec = DirectTabularRegressionForecaster(
+        LinearRegression(), windows_identical=True
+    )
+    forecaster_rec_max = RecursiveTabularRegressionForecaster(LinearRegression())
+    forecaster_rec_spec = RecursiveTabularRegressionForecaster(LinearRegression())
+
+    pred_dir_max = forecaster_dir_max.fit(y_train, fh=fh).predict(fh)
+    pred_dir_spec = forecaster_dir_spec.fit(y_train, fh=fh).predict(fh)
+    pred_rec_max = forecaster_rec_max.fit(y_train, fh=fh).predict(fh)
+    pred_rec_spec = forecaster_rec_spec.fit(y_train, fh=fh).predict(fh)
+
+    assert pred_dir_max.head(1).equals(pred_rec_max.head(1))
+    assert pred_dir_max.head(1).equals(pred_rec_spec.head(1))
+    assert not pred_dir_max.head(1).equals(pred_dir_spec.head(1))

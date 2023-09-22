@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Clustering usage tests and examples."""
 import numpy as np
 

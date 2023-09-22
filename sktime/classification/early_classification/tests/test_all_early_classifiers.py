@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unit tests for early classifier input output."""
 
 __author__ = ["mloning", "TonyBagnall", "fkiraly", "MatthewMiddlehurst"]
