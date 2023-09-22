@@ -102,7 +102,7 @@ class FunctionForecaster(BaseForecaster):
         return pd.Series(
             self.function(np.array(t), *self.params_[0]),
             index=list(fh.to_absolute(self.cutoff)),
-            name=self._y.name
+            name=self._y.name,
         )
 
     @classmethod
