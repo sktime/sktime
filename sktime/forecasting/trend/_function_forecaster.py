@@ -6,6 +6,7 @@ __author__ = ["benheid"]
 __all__ = ["FunctionForecaster"]
 
 import numpy as np
+import pandas as pd
 from scipy.optimize import curve_fit
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
@@ -98,7 +99,11 @@ class FunctionForecaster(BaseForecaster):
             Point predictions
         """
         t = fh.to_relative(self.cutoff)
-        return self.function(np.array(t), *self.params_[0])
+        return pd.Series(
+            self.function(np.array(t), *self.params_[0]),
+            index=list(fh.to_absolute(self.cutoff)),
+            name=self._y.name
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
