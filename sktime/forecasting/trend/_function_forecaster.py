@@ -30,7 +30,8 @@ class FunctionForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> def linear_function(x, a, b):
     ...     return a * x + b
-    >>> forecaster = FunctionForecaster(function=linear_function, initial_params={"a": 1, "b": 1})
+    >>> forecaster = FunctionForecaster(function=linear_function,
+    ...                                 initial_params={"a": 1, "b": 1})
     >>> forecaster.fit(y)
     FunctionForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
