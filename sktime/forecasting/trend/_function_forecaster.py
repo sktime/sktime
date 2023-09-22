@@ -21,6 +21,19 @@ class FunctionForecaster(BaseForecaster):
         The function that should be fitted and used to make forecasts.
     initial_params : dict
         The initial parameters of the functions that should be used for fitting
+
+
+    Examples
+    --------
+    >>> from sktime.forecasting.trend import FunctionForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> def linear_function(x, a, b):
+    ...     return a * x + b
+    >>> forecaster = FunctionForecaster(function=linear_function, initial_params={"a": 1, "b": 1})
+    >>> forecaster.fit(y)
+    FunctionForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
     _tags = {
