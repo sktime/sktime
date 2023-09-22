@@ -99,10 +99,7 @@ class FunctionForecaster(BaseForecaster):
             Point predictions
         """
         t = fh.to_relative(self.cutoff)
-        return pd.Series(
-            self.function(np.array(t), *self.params_[0]),
-            index=list(fh.to_absolute(self.cutoff)),
-        )
+        return self.function(np.array(t), *self.params_[0])
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
