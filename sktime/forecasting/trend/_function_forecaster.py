@@ -19,7 +19,7 @@ class FunctionForecaster(BaseForecaster):
     ----------
     function: Callable
         The function that should be fitted and used to make forecasts.
-    initial_params : dict
+    initial_params : list
         The initial parameters of the functions that should be used for fitting
 
 
