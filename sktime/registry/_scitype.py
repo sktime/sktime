@@ -36,7 +36,7 @@ def scitype(obj, force_single_scitype=True, coerce_to_list=False):
     # if object has tag, return tag
     if hasattr(obj, "get_tag"):
         if isclass(obj):
-            tag_type = obj.get_class_tag("object_type", None, raise_error=False)
+            tag_type = obj.get_class_tag("object_type", None)
         else:
             tag_type = obj.get_tag("object_type", None, raise_error=False)
         if tag_type is not None:
