@@ -122,11 +122,11 @@ class FunctionForecaster(BaseForecaster):
         """
         params = {
             "function": _test_function,
-            "initial_params": [0, 0],
+            "initial_params": [1, 1],
         }
 
         return params
 
 
-def _test_function(x, shift, offset):
-    return np.sin(x + shift) + offset
+def _test_function(x, a, b):
+    return a * x + b
