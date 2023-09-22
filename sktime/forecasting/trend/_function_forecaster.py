@@ -120,13 +120,13 @@ class FunctionForecaster(BaseForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
-
-        def test_function(x, shift, offset):
-            return np.sin(x + shift) + offset
-
         params = {
-            "function": test_function,
+            "function": _test_function,
             "initial_params": [0, 0],
         }
 
         return params
+
+
+def _test_function(x, shift, offset):
+    return np.sin(x + shift) + offset
