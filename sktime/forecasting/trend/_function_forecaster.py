@@ -6,7 +6,6 @@ __author__ = ["benheid"]
 __all__ = ["FunctionForecaster"]
 
 import numpy as np
-import pandas as pd
 from scipy.optimize import curve_fit
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
