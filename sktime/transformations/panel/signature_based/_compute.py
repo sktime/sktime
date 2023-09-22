@@ -61,6 +61,7 @@ class _WindowSignatureTransform(BaseTransformer):
 
     def _transform(self, X, y=None):
         import esig
+        esig.set_backend("iisignature")
 
         depth = self.sig_depth
         data = np.swapaxes(X, 1, 2)
