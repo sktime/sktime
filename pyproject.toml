@@ -140,7 +140,6 @@ all_extras = [
 ]
 
 all_extras_pandas2 = [
-    "attrs",
     "cloudpickle",
     "dash!=2.9.0",
     "dask<2023.7.1",
