@@ -580,7 +580,7 @@ class STLTransformer(BaseTransformer):
 
     def _make_return_object(self, X, stl):
         # deseasonalize only
-        transformed = pd.Series(X.values - stl.seasonal, index=X.index)
+        transformed = pd.Series(X.values.flatten() - stl.seasonal, index=X.index)
         # transformed = pd.Series(X.values - stl.seasonal - stl.trend, index=X.index)
 
         if self.return_components:
