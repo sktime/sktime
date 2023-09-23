@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.22.0"
+version = "0.23.0"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
@@ -177,7 +177,9 @@ all_extras_pandas2 = [
 ]
 
 cython_extras = [
+    "mrseql",
     "mrsqm; python_version < '3.11'",
+    "numba",
 ]
 
 dev = [

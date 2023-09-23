@@ -219,8 +219,7 @@ class DynamicFactor(_StatsModelsAdapter):
             )
         return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

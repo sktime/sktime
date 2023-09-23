@@ -121,7 +121,11 @@ class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
        Time-Series," ICML 2017.
     """
 
-    _tags = {"symmetric": True, "pwtrafo_type": "distance"}
+    _tags = {
+        "symmetric": True,
+        "pwtrafo_type": "distance",
+        "python_dependencies": "tslearn>=0.6.2",
+    }
 
     _inner_params = ["gamma"]
 
@@ -130,13 +134,6 @@ class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         self.gamma = gamma
 
         super().__init__()
-
-        # TODO: remove this when tslearn is fixed
-        # patch for tslearn bug #475
-        # https://github.com/tslearn-team/tslearn/issues/475
-        # check at 0.23.0 whether can be removed
-        if normalized:
-            self._bug_patch_cdist = True
 
     def _get_tslearn_pwtrafo(self):
         """Adapter method to get tslearn pwtrafo."""
