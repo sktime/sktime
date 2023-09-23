@@ -456,12 +456,15 @@ class STLTransformer(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for y?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
         "univariate-only": True,
         "fit_is_empty": False,
         "python_dependencies": "statsmodels",
+        "capability:inverse_transform": True,
+        "capability:inverse_transform:exact": False,
+        "skip-inverse-transform": False,
     }
 
     def __init__(
@@ -521,7 +524,7 @@ class STLTransformer(BaseTransformer):
         sp = self.sp
 
         self.stl_ = _STL(
-            X.values,
+            X.values.flatten(),
             period=sp,
             seasonal=self.seasonal,
             trend=self.trend,
@@ -548,7 +551,7 @@ class STLTransformer(BaseTransformer):
         if not X.index.equals(self._X.index):
             X_full = X.combine_first(self._X)
             new_stl = _STL(
-                X_full.values,
+                X_full.values.flatten(),
                 period=self.sp,
                 seasonal=self.seasonal,
                 trend=self.trend,
@@ -569,15 +572,11 @@ class STLTransformer(BaseTransformer):
         return ret_obj
 
     def _inverse_transform(self, X, y=None):
-        if not self._X.index.equals(X.index):
-            raise NotImplementedError(
-                """
-                STLTransformer is only a descriptive trasnformer and
-                can only inverse_transform data that was given in fit().
-                Please use Deseasonalizer or Detrender."""
-            )
-        return y + self.seasonal_
-        # return y + self.seasonal_ + self.trend_
+        # for inverse transform, we sum up the columns
+        # this will be close if return_components=True
+        row_sums = X.sum(axis=1)
+        row_sums.columns = self.fit_column_names
+        return row_sums
 
     def _make_return_object(self, X, stl):
         # deseasonalize only
