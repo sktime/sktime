@@ -1745,7 +1745,7 @@ class BaseForecaster(BaseEstimator):
                     method="clone",
                     rowname_default="forecasters",
                     colname_default="forecasters",
-                    backend = self.get_config()["backend:parallel"],
+                    backend=self.get_config()["backend:parallel"],
                 )
             else:
                 forecasters_ = self.forecasters_
@@ -1753,7 +1753,7 @@ class BaseForecaster(BaseEstimator):
             self.forecasters_ = y.vectorize_est(
                 forecasters_,
                 method=methodname,
-                backend = self.get_config()["backend:parallel"],
+                backend=self.get_config()["backend:parallel"],
                 **kwargs,
             )
             return self
@@ -1768,7 +1768,7 @@ class BaseForecaster(BaseEstimator):
                 self.forecasters_,
                 method=methodname,
                 return_type="list",
-                backend = self.get_config()["backend:parallel"],
+                backend=self.get_config()["backend:parallel"],
                 **kwargs,
             )
 
