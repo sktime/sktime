@@ -597,7 +597,7 @@ class STLTransformer(BaseTransformer):
                 }
             )
         else:
-            ret = transformed
+            ret = pd.DataFrame(transformed, columns=self._X.columns)
 
         return ret
 
