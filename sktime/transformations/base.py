@@ -144,12 +144,17 @@ class BaseTransformer(BaseEstimator):
         # "on" - input check and conversion is carried out
         # "off" - input check and conversion is not done before passing to inner methods
         # valid mtype string - input is assumed to specified mtype
-        "output_conversion": "on"
+        "output_conversion": "on",
         # controls output conversion for _transform, _inverse_transform
         # valid values:
         # "on" - if input_conversion is "on", output conversion is carried out
         # "off" - output of _transform, _inverse_transform is directly returned
         # valid mtype string - output is converted to specified mtype
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "dask": uses `dask`, requires `dask` package in environment
     }
 
     # allowed mtypes for transformers - Series and Panel
@@ -1236,12 +1241,16 @@ class BaseTransformer(BaseEstimator):
                     method="clone",
                     rowname_default="transformers",
                     colname_default="transformers",
+                    # no backend parallelization necessary for clone
                 )
             else:
                 transformers_ = self.transformers_
 
             self.transformers_ = X.vectorize_est(
-                transformers_, method=methodname, **kwargs
+                transformers_,
+                method=methodname,
+                backend=self.get_config()["backend:parallel"],
+                **kwargs,
             )
             return self
 
@@ -1268,12 +1277,22 @@ class BaseTransformer(BaseEstimator):
                     method="clone",
                     rowname_default="transformers",
                     colname_default="transformers",
+                    # no backend parallelization necessary for clone
                 )
-                transformers_ = X.vectorize_est(transformers_, method="fit", **kwargs)
+                transformers_ = X.vectorize_est(
+                    transformers_,
+                    method="fit",
+                    backend=self.get_config()["backend:parallel"],
+                    **kwargs,
+                )
 
             # transform the i-th series/panel with the i-th stored transformer
             Xts = X.vectorize_est(
-                transformers_, method=methodname, return_type="list", **kwargs
+                transformers_,
+                method=methodname,
+                return_type="list",
+                backend=self.get_config()["backend:parallel"],
+                **kwargs,
             )
             Xt = X.reconstruct(Xts, overwrite_index=False)
 
