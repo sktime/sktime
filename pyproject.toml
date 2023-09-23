@@ -105,7 +105,6 @@ transformations = [
     "tsfresh>=0.17,<0.21",
 ]
 all_extras = [
-    "attrs",
     "cloudpickle",
     "dash!=2.9.0",
     "dask",
