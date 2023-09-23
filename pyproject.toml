@@ -58,7 +58,6 @@ alignment = [
     "numba>=0.53,<0.59",
 ]
 annotation = [
-    "attrs>=23,<23.2",
     "hmmlearn>=0.2.7,<0.4",
     "numba>=0.53,<0.59",
     "pyod>=0.8.0,<1.2",
