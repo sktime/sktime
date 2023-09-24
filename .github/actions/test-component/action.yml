@@ -12,7 +12,7 @@ runs:
   steps:
     - name: repository checkout step
       uses: actions/checkout@v4
-    - id: python environment step
+    - name: python environment step
       uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version-identifier }}
