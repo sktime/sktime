@@ -206,6 +206,8 @@ def _evaluate_window(x, meta):
         return result
 
 
+# todo 0.25.0: remove compute argument and docstring
+# todo 0.25.0: remove kwargs and docstring
 def evaluate(
     forecaster,
     cv,
@@ -216,8 +218,9 @@ def evaluate(
     return_data: bool = False,
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
-    compute: bool = True,
+    compute: bool = None,
     cv_X=None,
+    backend_params: Optional[dict] = None,
     **kwargs,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
@@ -295,23 +298,37 @@ def evaluate(
         FitFailedWarning is raised.
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
         Runs parallel evaluate if specified and `strategy` is set as "refit".
-        - "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
-        - "dask": uses `dask`, requires `dask` package in environment
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
-        backend (`cloudpickle`) for "dask" and "loky" is generally more robust than the
-        standard `pickle` library used in "multiprocessing".
-    compute : bool, default=True
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    compute : bool, default=True, deprecated and will be removed in 0.25.0.
         If backend="dask", whether returned DataFrame is computed.
         If set to True, returns `pd.DataFrame`, otherwise `dask.dataframe.DataFrame`.
     cv_X : sktime BaseSplitter descendant, optional
         determines split of ``X`` into test and train folds
         default is ``X`` being split to identical ``loc`` indices as ``y``
         if passed, must have same number of splits as ``cv``
-    **kwargs : Keyword arguments
-        Only relevant if backend is specified. Additional kwargs are passed into
-        `dask.distributed.get_client` or `dask.distributed.Client` if backend is
-        set to "dask", otherwise kwargs are passed into `joblib.Parallel`.
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading":
+            any valid keys for ``joblib.Parallel`` can be passed here,
+            e.g., ``n_jobs``, with the exception of ``backend``
+            which is directly controlled by ``backend``
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+            e.g., ``scheduler``
 
     Returns
     -------
@@ -388,13 +405,27 @@ def evaluate(
                 "running evaluate with backend='dask' requires the dask package "
                 "installed, but dask is not present in the python environment"
             )
-    if backend == "dask" and not compute:
+
+    # todo 0.25.0: remove kwargs and this warning
+    if kwargs != {}:
+        warnings.warn(
+            "in evaluate, kwargs will no longer be supported from sktime 0.25.0. "
+            "to pass configuration arguments to the parallelization backend, "
+            "use backend_params instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    # todo 0.25.0: remove compute argument and logic, and remove this warning
+    if compute is not None:
         warnings.warn(
             "the compute argument of evaluate is deprecated and will be removed "
             "in sktime 0.25.0. For the same behaviour in the future, "
             'use backend="dask_lazy"',
+            DeprecationWarning,
             stacklevel=2,
         )
+    if backend == "dask" and not compute:
         backend = "dask_lazy"
 
     _check_strategy(strategy)
@@ -499,7 +530,11 @@ def evaluate(
         else:
             backend_in = backend
         results = parallelize(
-            _evaluate_window, enumerate(yx_splits), _evaluate_window_kwargs, backend_in
+            fun=_evaluate_window,
+            iter=enumerate(yx_splits),
+            meta=_evaluate_window_kwargs,
+            backend=backend_in,
+            backend_params=backend_params,
         )
 
     # final formatting of dask dataframes
