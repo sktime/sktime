@@ -73,12 +73,12 @@ class CurveFitForecaster(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.trend import FunctionForecaster
+    >>> from sktime.forecasting.trend import CurveFitForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> def linear_function(x, a, b):
     ...     return a * x + b
-    >>> forecaster = FunctionForecaster(function=linear_function,
+    >>> forecaster = CurveFitForecaster(function=linear_function,
     ...                                 initial_params=[1, 1])
     >>> forecaster.fit(y)
     FunctionForecaster(...)
