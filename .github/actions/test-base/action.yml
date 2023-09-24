@@ -8,7 +8,7 @@ runs:
   using: composite
   steps:
     - name: repository checkout step
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - id: python environment step
       uses: actions/setup-python@v4
       with:
