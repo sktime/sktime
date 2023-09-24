@@ -926,7 +926,7 @@ class BaseForecaster(BaseEstimator):
             if collection of absolute horizon points is not unique:
                 type is a pandas DataFrame, with row and col index being time stamps
                 row index corresponds to cutoffs that are predicted from
-                column index corresponds to absolut horizons that are predicted
+                column index corresponds to absolute horizons that are predicted
                 entry is the point prediction of col index predicted from row index
                 entry is nan if no prediction is made at that (cutoff, horizon) pair
         """

@@ -279,7 +279,7 @@ class _Reducer(_BaseWindowForecaster):
 
         In recursive forecasting, the time based features need to be recalculated for
         every time step that is forecast. This is done in an iterative fashion over
-        every forecasting horizon step. Shift specifies the timestemp over which the
+        every forecasting horizon step. Shift specifies the timestamp over which the
         iteration is done, i.e. a shift of 0 will get a window between window_length
         steps in the past and t=0, shift = 1 will be window_length - 1 steps in the past
         and t= 1 etc- up to the forecasting horizon.
@@ -1207,7 +1207,7 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
     For the hybrid dir-rec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the recusrive
+    for training the next forecaster, following the recursive
     strategy.
 
     Parameters
@@ -1286,7 +1286,7 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     For the hybrid dir-rec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the recusrive
+    for training the next forecaster, following the recursive
     strategy.
 
     Parameters
@@ -1685,7 +1685,7 @@ class _ReducerMixin:
 
         Parameters
         ----------
-        fh : ForecastingHorizon, fh of self; or, iterable coercable to pd.Index
+        fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
 
         Returns
         -------
