@@ -425,6 +425,8 @@ def evaluate(
             DeprecationWarning,
             stacklevel=2,
         )
+    if compute is None:
+        compute = True
     if backend == "dask" and not compute:
         backend = "dask_lazy"
 
