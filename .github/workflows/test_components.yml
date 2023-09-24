@@ -1,11 +1,11 @@
-name: test component workflow
+name: test individual components workflow
 on:
   pull_request:
     branches:
       - main
 jobs:
   detect:
-    name: check for changes in components
+    name: check for changes in individual components
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
