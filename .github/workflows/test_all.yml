@@ -1,0 +1,57 @@
+name: test all workflow
+on:
+  schedule:
+    - cron: 0 0 * * 0
+  workflow_dispatch:
+jobs:
+  test_base:
+    name: test base framework
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+        operating-system:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.operating-system }}
+    steps:
+      - name: run tests on python ${{ matrix.python-version }}
+        uses: ./.github/actions/test-base
+        with:
+          python-version-identifier: ${{ matrix.python-version }}
+  test_components:
+    name: test individual components
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+        operating-system:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        sktime-component:
+          - alignment
+          - annotation
+          - classification
+          - clustering
+          - forecasting
+          - networks
+          - param_est
+          - regression
+          - transformations
+    runs-on: ${{ matrix.operating-system }}
+    steps:
+      - name: run tests for component ${{ matrix.sktime-component }} on python ${{ matrix.python-version }}
+        uses: ./.github/actions/test-component
+        with:
+          sktime-component-identifier: ${{ matrix.sktime-component }}
+          python-version-identifier: ${{ matrix.python-version }}
