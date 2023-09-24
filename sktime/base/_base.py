@@ -68,7 +68,9 @@ from sktime.utils.random_state import set_random_state
 
 
 def dynamic_doc_set_config(func):
-    func.__doc__ = "TEST - dynamic docstring for set_config"
+    func.__doc__ = """
+    TEST - dynamic docstring for set_config.
+    """
     return func
 
 
