@@ -3,11 +3,25 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - sktime/base
 jobs:
+  detect:
+    name: check for changes in base framework
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      base: ${{ steps.filter.outputs.base }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            base:
+              - sktime/base/**
   test:
+    needs: detect
     name: test base framework
+    if: ${{ needs.detect.outputs.base == 'true' }}
     strategy:
       fail-fast: false
       matrix:
