@@ -349,7 +349,7 @@ def evaluate(
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()[:24]
     >>> forecaster = NaiveForecaster(strategy="mean", sp=3)
@@ -458,10 +458,7 @@ def evaluate(
                 yield y_train, y_test, None, None
         else:
             if cv_X is None:
-                from sktime.forecasting.model_selection import (
-                    SameLocSplitter,
-                    TestPlusTrainSplitter,
-                )
+                from sktime.split import SameLocSplitter, TestPlusTrainSplitter
 
                 cv_X = SameLocSplitter(TestPlusTrainSplitter(cv), y)
 
