@@ -17,7 +17,7 @@ runs:
       with:
         python-version: ${{ inputs.python-version-identifier }}
     - name: dependencies installation step
-      run: python3 -m pip install .[${{ inputs.sktime-component-identifier }}]
+      run: python3 -m pip install .[${{ inputs.sktime-component-identifier }},tests]
       shell: bash
     - name: unit test step
       run: python3 -m pytest sktime/${{ inputs.sktime-component-identifier }}
