@@ -56,6 +56,7 @@ State:
 __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
+import inspect
 import warnings
 from copy import deepcopy
 
@@ -65,6 +66,11 @@ from sklearn.base import BaseEstimator as _BaseEstimator
 
 from sktime.exceptions import NotFittedError
 from sktime.utils.random_state import set_random_state
+
+
+def dynamic_doc_set_config(func):
+    func.__doc__ = "TEST - dynamic docstring for set_config"
+    return func
 
 
 class BaseObject(_BaseObject):
@@ -90,6 +96,26 @@ class BaseObject(_BaseObject):
         other_params = other.get_params(deep=False)
 
         return deep_equals(self_params, other_params)
+
+    @dynamic_doc_set_config
+    def set_config(self, **config_dict):
+        """Set config flags to given values.
+
+        Parameters
+        ----------
+        config_dict : dict
+            Dictionary of config name : config value pairs.
+
+        Returns
+        -------
+        self : reference to self.
+
+        Notes
+        -----
+        Changes object state, copies configs in config_dict to self._config_dynamic.
+        """
+        # dispatch to scikit-base unchanged
+        return super().set_config(**config_dict)
 
     def save(self, path=None):
         """Save serialized self to bytes-like object or to (.zip) file.
