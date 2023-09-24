@@ -44,8 +44,8 @@ class PeakTimeFeature(BaseTransformer):
         first end day, the second one determines the second end day and so on.
         [peak_day_end1, peak_day_end2, peak_day_end3, ...]
     peak_week_start : list, default= None
-        start interval of peak week(s) in a list where the first argument determines the
-        first start week, the second one determines the second start week and so on.
+        start interval of peak week(s) in a list where the first argument determines
+        the first start week, the second one determines the second start week and so on.
         [peak_week_start1, peak_week_start2, peak_week_start3, ...]
     peak_week_end : list, default= None
         end interval of peak week(s) in a list where the first argument determines the
@@ -91,26 +91,41 @@ class PeakTimeFeature(BaseTransformer):
         peak/working columns, e.g., peak_hour_1, peak_hour_2, peak_week_1,
         peak_week_2, ...
 
-    Returns
-    -------
-    Xt : pd.Series or pd.DataFrame,
-            transformed version of input Series or DataFrame.
-
     Notes
     -----
-    Example for one peak interval: peak_hour_start=[6], peak_hour_end=[9] means we
+    * Descriptions and offsets for calendar features are as follows:
+    hour:
+        The hour of the day with 00:00:00 = 0, 23:00:00 = 23.
+    day_of_week:
+        The day of the week with Monday=0, Sunday=6.
+    week_of_year:
+        The week of the year (ISO calendar), start = 1, end = 52 or 53
+    month_of_year:
+        The month as January=1, December=12.
+    quarter:
+        The quarter of the year as:
+        January, February, March = 1
+        April, May, June, = 2
+        July, August, September = 3
+        October, November, December = 4
+    year:
+        The year of the datetime.
+
+    * Descriptions for different intervals:
+
+    1- Example for one peak interval: peak_hour_start=[6], peak_hour_end=[9] means we
     have just one peak hour interval where peak starts at 6am and peak ends at 9am.
 
-    Example for two peak intervals: peak_hour_start=[6, 16], peak_hour_end=[9, 20]
+    2- Example for two peak intervals: peak_hour_start=[6, 16], peak_hour_end=[9, 20]
     means we have two peak hour intervals where the first peak starts at 6 am
     and ends at 9 am. The second peak starts at 16 am and ends at 20. we can
     have more than two intervals.
 
-    Example for one working interval: working_hour_start=[8], working_hour_end=[16]
+    3- Example for one working interval: working_hour_start=[8], working_hour_end=[16]
     means we have just one working hour interval where work starts at 8 am and
     work ends at 16.
 
-    Example for two working intervals: working_hour_start=[8, 15],
+    4- Example for two working intervals: working_hour_start=[8, 15],
     working_hour_end=[12, 19] means we have two working hour intervals where the
     first starts at 8 am and ends at 15. The second  starts at 15 am and ends at 19.
     we can have more than two intervals.
@@ -123,8 +138,10 @@ class PeakTimeFeature(BaseTransformer):
     >>> y = y.tz_localize(None)
     >>> y = y.asfreq("H")
 
-    Example one interval for peak hour and working hour
-    Returns columns is_peak_hour, is_working_hour (based on one start/end interval)
+    Example 1: one interval for peak hour and working hour.
+    (based on one start/end interval)
+
+    Returns columns is_peak_hour, is_working_hour
 
     >>> transformer = PeakTimeFeature(ts_freq="H",
     ... peak_hour_start=[6], peak_hour_end=[9],
@@ -132,8 +149,10 @@ class PeakTimeFeature(BaseTransformer):
     ... )
     >>> y_hat_peak = transformer.fit_transform(y)
 
-    Example two intervals for peak hour and  working hour
-    Returns columns is_peak_hour, is_working_hour (based on two start/end intervals)
+    Example 2: two intervals for peak hour and  working hour.
+    (based on two start/end intervals)
+
+    Returns columns is_peak_hour, is_working_hour
 
     >>> transformer = PeakTimeFeature(ts_freq="H",
     ... peak_hour_start=[6, 16], peak_hour_end=[9, 20],
@@ -141,10 +160,11 @@ class PeakTimeFeature(BaseTransformer):
     ... )
     >>> y_hat_peak = transformer.fit_transform(y)
 
-    Example two intervals, We may have peak for different seasonality
-    Here an example for peak hour, peak day, peak week, peak month
+    Example 3: We may have peak for different seasonality
+    Here is an example for peak hour, peak day, peak week, peak month for
+    two intervals (based on two start/end intervals)
+
     Returns columns is_peak_hour, is_peak_day, is_peak_week, is_peak_month
-    (based on two start/end intervals)
 
     >>> transformer = PeakTimeFeature(ts_freq="H",
     ... peak_hour_start=[6, 16], peak_hour_end=[9, 20],
