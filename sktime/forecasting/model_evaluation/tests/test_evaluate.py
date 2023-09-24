@@ -248,16 +248,18 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
     fh = [1, 2, 3]
     cv = ExpandingWindowSplitter(step_length=48, initial_window=12, fh=fh)
     if error_score in [np.nan, 1000]:
-        with pytest.warns(FitFailedWarning):
-            results = evaluate(
-                forecaster=forecaster,
-                y=y,
-                cv=cv,
-                return_data=return_data,
-                error_score=error_score,
-                strategy=strategy,
-                backend=backend,
-            )
+        # known bug - loky backend does not pass on warnings, #5307
+        if backend != "loky":
+            with pytest.warns(FitFailedWarning):
+                results = evaluate(
+                    forecaster=forecaster,
+                    y=y,
+                    cv=cv,
+                    return_data=return_data,
+                    error_score=error_score,
+                    strategy=strategy,
+                    backend=backend,
+                )
         if isinstance(error_score, type(np.nan)):
             assert results["test_MeanAbsolutePercentageError"].isna().sum() > 0
         if error_score == 1000:
