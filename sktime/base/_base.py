@@ -56,7 +56,6 @@ State:
 __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
-import inspect
 import warnings
 from copy import deepcopy
 
