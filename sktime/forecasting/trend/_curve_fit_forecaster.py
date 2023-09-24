@@ -204,7 +204,7 @@ class CurveFitForecaster(BaseForecaster):
             "absolute_sigma": True,
             "check_finite": True,
             "bounds": [(-100, 100), (-100, 100)],
-            "method": "lm",
+            "method": "dogbox",
         }
 
         params2 = {
