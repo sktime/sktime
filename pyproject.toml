@@ -104,6 +104,13 @@ transformations = [
     "stumpy>=1.5.1,<1.13",
     "tsfresh>=0.17,<0.21",
 ]
+tests = [
+    "pytest>=7.4,<7.5",
+    "pytest-cov>=4.1,<4.2",
+    "pytest-randomly>=3.15,<3.16",
+    "pytest-timeout>=2.1,<2.2",
+    "pytest-xdist>=3.3,<3.4",
+]
 all_extras = [
     "cloudpickle",
     "dash!=2.9.0",
