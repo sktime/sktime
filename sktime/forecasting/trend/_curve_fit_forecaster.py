@@ -203,7 +203,7 @@ class CurveFitForecaster(BaseForecaster):
             "sigma": None,
             "absolute_sigma": True,
             "check_finite": True,
-            "bounds": [(-100, 100), (-100, 100)],
+            "bounds": [(-100, -100), (100, 100)],
             "method": "dogbox",
         }
 
