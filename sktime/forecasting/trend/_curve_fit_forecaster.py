@@ -81,7 +81,7 @@ class CurveFitForecaster(BaseForecaster):
     >>> forecaster = CurveFitForecaster(function=linear_function,
     ...                                 initial_params=[1, 1])
     >>> forecaster.fit(y)
-    FunctionForecaster(...)
+    CurveFitForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
