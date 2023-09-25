@@ -39,35 +39,8 @@ class CurveFitForecaster(BaseForecaster):
         It takes the independet variables as first argument and the parametrs
         to fit as separate remaining arguments.
         See scipy.optimize.curve_fit for more information.
-    initial_params : list, opitional (default=None)
-        The initial values of the parameters of the functions that should be fitted.
-        If None, the initial parameters are set to 1.
-        See scipy.optimize.curve_fit for more information.
-    sigma : list, optional
-        Determines the uncertainty of the input data, either
-        as standard deviation of the errors or  as
-        covariance matrix of the errors.
-        See scipy.optimize.curve_fit for more information.
-    absolute_sigma : bool, optional (default=False)
-        If True, sigma is used in as absolute values. If
-        False only the relative magnitudes of the sigma values matter.
-        See scipy.optimize.curve_fit for more information.
-    check_finite : bool, optional (default=True)
-        Whether to check that the input arrays contain only finite numbers.
-        See scipy.optimize.curve_fit for more information.
-    bounds : 2-tuple of array_like, optional (default=(-np.inf, np.inf))
-        Lower and upper bounds on parameters.
-        See scipy.optimize.curve_fit for more information.
-    method : str, optional (default=None)
-        Determines which solver is used for fitting. Default is 'lm' for
-        unconstrained problems and 'trf' if `bounds` is set.
-        See scipy.optimize.curve_fit for more information.
-    jac : callable, str, optional (default=None)
-        Function which computes the Jacobian matrix of the model function.
-        The signature is jac(x, ...) and should return array_like.
-        See scipy.optimize.curve_fit for more information.
-    nan_policy : string, optional (default=None)
-        Defines how to handle when input contains nan.
+    curve_fit_params: dict, default=None
+        Additional parameters that should be passed to the curve_fit method.
         See scipy.optimize.curve_fit for more information.
 
 
@@ -96,24 +69,13 @@ class CurveFitForecaster(BaseForecaster):
     def __init__(
         self,
         function,
-        initial_params=None,
-        sigma=None,
-        absolute_sigma=False,
-        check_finite=None,
-        bounds=(-np.inf, np.inf),
-        method=None,
-        jac=None,
-        nan_policy=None,
+        curve_fit_params=None,
     ):
         self.function = function
-        self.initial_params = initial_params
-        self.sigma = sigma
-        self.absolute_sigma = absolute_sigma
-        self.check_finite = check_finite
-        self.bounds = bounds
-        self.method = method
-        self.jac = jac
-        self.nan_policy = nan_policy
+        self.curve_fit_params = curve_fit_params
+        self._curve_fit_params = (
+            curve_fit_params if curve_fit_params is not None else {}
+        )
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -138,17 +100,7 @@ class CurveFitForecaster(BaseForecaster):
         """
         t = ForecastingHorizon(y.index, is_relative=False).to_relative(self.cutoff)
         self.params_ = curve_fit(
-            self.function,
-            np.array(t),
-            y.values,
-            self.initial_params,
-            sigma=self.sigma,
-            absolute_sigma=self.absolute_sigma,
-            check_finite=self.check_finite,
-            bounds=self.bounds,
-            method=self.method,
-            jac=self.jac,
-            nan_policy=self.nan_policy,
+            self.function, np.array(t), y.values, **self._curve_fit_params
         )
         return self
 
@@ -199,17 +151,21 @@ class CurveFitForecaster(BaseForecaster):
         """
         params1 = {
             "function": _test_function,
-            "initial_params": [1, 1],
-            "sigma": None,
-            "absolute_sigma": True,
-            "check_finite": True,
-            "bounds": [(-100, -100), (100, 100)],
-            "method": "dogbox",
+            "curve_fit_params": {
+                "initial_params": [1, 1],
+                "sigma": None,
+                "absolute_sigma": True,
+                "check_finite": True,
+                "bounds": [(-100, -100), (100, 100)],
+                "method": "dogbox",
+            },
         }
 
         params2 = {
             "function": _test_function_2,
-            "method": "trf",
+            "curve_fit_params": {
+                "method": "trf",
+            },
         }
 
         return [params1, params2]
