@@ -22,9 +22,7 @@ class CurveFitForecaster(BaseForecaster):
     In `fit`
     1. The index of the input time series is transformed to a list of Integers.
     2. The scipy curve_fit is called using the list of integers as x values,
-       and the time series values as y values. Furthermore, also the list
-       of initial parameters is passed.
-
+       and the time series values as y values.
     In `predict`
     1. The ForecastingHorizon is transformed to a list of integers.
     2. The list of integers is passed together with the fitted parameters to the
@@ -52,7 +50,7 @@ class CurveFitForecaster(BaseForecaster):
     >>> def linear_function(x, a, b):
     ...     return a * x + b
     >>> forecaster = CurveFitForecaster(function=linear_function,
-    ...                                 initial_params=[1, 1])
+    ...                                 curve_fit_params={"p0":[-1, 1]})
     >>> forecaster.fit(y)
     CurveFitForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
@@ -152,7 +150,7 @@ class CurveFitForecaster(BaseForecaster):
         params1 = {
             "function": _test_function,
             "curve_fit_params": {
-                "initial_params": [1, 1],
+                "p0": [1, 1],
                 "sigma": None,
                 "absolute_sigma": True,
                 "check_finite": True,
