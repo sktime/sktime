@@ -35,6 +35,7 @@ def configuration(parent_package="", top_path=None):
         "PBS_dataset",
         "segmentation",
         "Covid3Month",
+        "Tecator",
     )
     for dataset in included_datasets:
         config.add_data_dir(f"data/{dataset}")
