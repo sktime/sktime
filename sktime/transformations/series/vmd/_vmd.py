@@ -87,6 +87,13 @@ class VmdTransformer(BaseTransformer):
     >>> y = load_solar()  # doctest: +SKIP
     >>> transformer = VmdTransformer()  # doctest: +SKIP
     >>> modes = transformer.fit_transform(y)  # doctest: +SKIP
+
+    VmdTransformer can be used in a forecasting pipeline,
+    to decompose, forecast individual components, then recompose:
+    >>> from sktime.forecasting.trend import TrendForecaster  # doctest: +SKIP
+    >>> pipe = VmdTransformer() * TrendForecaster()  # doctest: +SKIP
+    >>> pipe.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = pipe.predict()  # doctest: +SKIP
     """
 
     _tags = {

@@ -19,14 +19,11 @@ from sktime.forecasting.compose import (
     TransformedTargetForecaster,
     make_reduction,
 )
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-    temporal_train_test_split,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.transformations.compose import OptionalPassthrough
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
@@ -445,8 +442,8 @@ def test_forecastx_logic():
     """Test that ForecastX logic is as expected, compared to manual execution."""
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.compose import ForecastX
-    from sktime.forecasting.model_selection import temporal_train_test_split
     from sktime.forecasting.var import VAR
+    from sktime.split import temporal_train_test_split
 
     # test case: using pipeline execution
     y, X = load_longley()

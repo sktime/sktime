@@ -930,7 +930,7 @@ class BaseForecaster(BaseEstimator):
                 entry is the point prediction of col index predicted from row index
                 entry is nan if no prediction is made at that (cutoff, horizon) pair
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.split import ExpandingWindowSplitter
 
         if cv is None:
             cv = ExpandingWindowSplitter(initial_window=1)
