@@ -10,6 +10,7 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
@@ -161,7 +162,9 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.23.0 - get rid of the "Coverage" case treatment
+                        # todo 0.24.0 - check why this cannot be easily removed
+                        # in theory, we should get rid of the "Coverage" case treatment
+                        # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
                         #   i.d., special 1st level name of prediction objet
                         #   in the case where there is only one variable
@@ -250,7 +253,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         """
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.compose._reduce import YfromX
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.detrend import Detrender
@@ -266,13 +269,11 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", DirectReductionForecaster.create_test_instance()),
+            ("forecaster", YfromX.create_test_instance()),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {
-            "steps": [Detrender(), DirectReductionForecaster.create_test_instance()]
-        }
+        params3 = {"steps": [Detrender(), YfromX.create_test_instance()]}
 
         return [params1, params2, params3]
 
@@ -347,7 +348,7 @@ class ForecastingPipeline(_Pipeline):
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> y, X = load_longley()
     >>> y_train, _, X_train, X_test = temporal_train_test_split(y, X)
@@ -507,11 +508,10 @@ class ForecastingPipeline(_Pipeline):
         y_pred : pd.Series
             Point predictions
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict(fh, X)
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -543,13 +543,10 @@ class ForecastingPipeline(_Pipeline):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        X = self._transform(X=X)
-        return self.forecaster_.predict_quantiles(
-            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
-        )
+        X = self._transform(X=X, y=fh)
+        return self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -585,10 +582,8 @@ class ForecastingPipeline(_Pipeline):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        X = self._transform(X=X)
-        return self.forecaster_.predict_interval(
-            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
-        )
+        X = self._transform(X=X, y=fh)
+        return self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.
@@ -620,7 +615,7 @@ class ForecastingPipeline(_Pipeline):
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_var(fh=fh, X=X, cov=cov)
 
     # todo: does not work properly for multivariate or hierarchical
@@ -647,7 +642,7 @@ class ForecastingPipeline(_Pipeline):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
 
     def _update(self, y, X=None, update_params=True):
@@ -678,6 +673,14 @@ class ForecastingPipeline(_Pipeline):
         # If X is not given or ignored, just passthrough the data without transformation
         if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
             for _, _, transformer in self._iter_transformers():
+                # if y is required but not passed,
+                # we create a zero-column y from the forecasting horizon
+                requires_y = transformer.get_tag("requires_y", False)
+                if isinstance(y, ForecastingHorizon) and requires_y:
+                    y = y.to_absolute_index(self.cutoff)
+                    y = pd.DataFrame(index=y)
+                else:
+                    y = None
                 X = transformer.transform(X=X, y=y)
         return X
 
@@ -1079,8 +1082,7 @@ class TransformedTargetForecaster(_Pipeline):
         Z = check_series(Z)
         return self._get_inverse_transform(self.transformers_pre_, Z, X)
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1112,16 +1114,13 @@ class TransformedTargetForecaster(_Pipeline):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        pred_int = self.forecaster_.predict_quantiles(
-            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
-        )
+        pred_int = self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         pred_int_transformed = self._get_inverse_transform(
             self.transformers_pre_, pred_int, mode="proba"
         )
         return pred_int_transformed
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -1157,9 +1156,7 @@ class TransformedTargetForecaster(_Pipeline):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = self.forecaster_.predict_interval(
-            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
-        )
+        pred_int = self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
         pred_int_transformed = self._get_inverse_transform(
             self.transformers_pre_, pred_int, mode="proba"
         )
@@ -1409,8 +1406,7 @@ class ForecastX(BaseForecaster):
 
         return self
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -1442,13 +1438,10 @@ class ForecastX(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_interval(
-            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
-        )
+        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X, coverage=coverage)
         return y_pred
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X=None, alpha=None, legacy_interface=False):
+    def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1475,9 +1468,7 @@ class ForecastX(BaseForecaster):
                 at quantile probability in second col index, for the row index.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_quantiles(
-            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
-        )
+        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -1646,10 +1637,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     The permuter is useful in combination with grid search (toy example):
 
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
-    ... )
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> fh = [1,2,3]
     >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()

@@ -22,7 +22,6 @@ from sktime.forecasting.base._fh import (
 )
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
     INDEX_TYPE_LOOKUP,
@@ -30,6 +29,7 @@ from sktime.forecasting.tests._config import (
     TEST_FHS_TIMEDELTA,
     VALID_INDEX_FH_COMBINATIONS,
 )
+from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import _make_fh, make_forecasting_problem
 from sktime.utils._testing.series import _make_index, _make_series

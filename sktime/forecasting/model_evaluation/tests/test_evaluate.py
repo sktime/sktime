@@ -24,10 +24,6 @@ from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    SlidingWindowSplitter,
-)
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import TEST_FHS, TEST_STEP_LENGTHS_INT
 from sktime.performance_metrics.forecasting import (
@@ -41,6 +37,7 @@ from sktime.performance_metrics.forecasting.probabilistic import (
     LogLoss,
     PinballLoss,
 )
+from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem

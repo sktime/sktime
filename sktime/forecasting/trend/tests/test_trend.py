@@ -9,11 +9,8 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.forecasting.trend import (
-    PolynomialTrendForecaster,
-    TrendForecaster,
-    _get_X_numpy_int_from_pandas,
-)
+from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
+from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 

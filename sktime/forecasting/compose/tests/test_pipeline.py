@@ -19,14 +19,11 @@ from sktime.forecasting.compose import (
     TransformedTargetForecaster,
     make_reduction,
 )
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-    temporal_train_test_split,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.transformations.compose import OptionalPassthrough
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
@@ -445,8 +442,8 @@ def test_forecastx_logic():
     """Test that ForecastX logic is as expected, compared to manual execution."""
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.compose import ForecastX
-    from sktime.forecasting.model_selection import temporal_train_test_split
     from sktime.forecasting.var import VAR
+    from sktime.split import temporal_train_test_split
 
     # test case: using pipeline execution
     y, X = load_longley()
@@ -521,3 +518,25 @@ def test_forecastx_attrib_broadcast():
     assert hasattr(model_2, "forecaster_y_")
     assert isinstance(model_2.forecaster_y_, NaiveForecaster)
     assert model_2.forecaster_y_.is_fitted
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_featurizer_forecastingpipeline_logic():
+    """Test that ForecastingPipeline works with featurizer transformers without exog."""
+    from sktime.forecasting.sarimax import SARIMAX
+    from sktime.transformations.compose import YtoX
+    from sktime.transformations.series.impute import Imputer
+    from sktime.transformations.series.lag import Lag
+
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+
+    lagged_y_trafo = YtoX() * Lag(1, index_out="original") * Imputer()
+    # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
+    forecaster = lagged_y_trafo ** SARIMAX()  # this uses lagged_y_trafo to generate X
+
+    forecaster.fit(y_train, X=X_train, fh=[1])  # try to forecast next year
+    forecaster.predict(X=X_test)  # dummy X to predict next year
