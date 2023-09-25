@@ -55,7 +55,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         sktime_default_params = self.get_param_defaults().keys()
         statsforecast_params = self._get_init_statsforecast_params()
 
-        for sktime_param in sktime_params.keys():
+        for sktime_param in list(sktime_params):
             if sktime_param not in statsforecast_params:
                 sktime_params.pop(sktime_param)
                 if sktime_param not in sktime_default_params:
