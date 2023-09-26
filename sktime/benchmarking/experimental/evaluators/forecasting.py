@@ -35,3 +35,15 @@ class ForecastingEvaluator(BaseEvaluator):
         All the prepring is done in here.
         """
         pass
+
+    def _prepare_data(self, *args: Any, **kwargs: Any):
+        """Prepare data for forecasting evaluation."""
+        pass
+
+    def _prepare_estimator(self, *args: Any, **kwargs: Any):
+        """Prepare estimator for forecasting evaluation."""
+        pass
+
+    def _prepare_metrics(self, *args: Any, **kwargs: Any):
+        """Prepare metrics for forecasting evaluation."""
+        pass
