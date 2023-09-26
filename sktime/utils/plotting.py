@@ -394,6 +394,10 @@ def plot_windows(cv, y, title=""):
         Temporal cross-validation iterator
     title : str
         Plot title
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
@@ -450,3 +454,4 @@ def plot_windows(cv, y, title=""):
     # remove duplicate labels/handles
     handles, labels = ((leg[:2]) for leg in ax.get_legend_handles_labels())
     ax.legend(handles, labels)
+    return fig
