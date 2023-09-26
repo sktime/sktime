@@ -539,6 +539,8 @@ def load_from_tsfile(
             f"but found {return_data_type}"
         )
 
+    full_file_path_and_name = ensure_file_has_extension(full_file_path_and_name, ".ts")
+
     # Initialize flags and variables used when parsing the file
     X, y = load_from_tsfile_to_dataframe(
         full_file_path_and_name=full_file_path_and_name,
@@ -601,6 +603,9 @@ def load_from_tsfile_to_dataframe(
     instance_list = []
     class_val_list = []
     line_num = 0
+
+    full_file_path_and_name = ensure_file_has_extension(full_file_path_and_name, ".ts")
+
     # Parse the file
     with open(full_file_path_and_name, encoding="utf-8") as file:
         for line in file:
@@ -1174,6 +1179,7 @@ def load_from_arff_to_dataframe(
     data_started = False
     is_multi_variate = False
     is_first_case = True
+    full_file_path_and_name = ensure_file_has_extension(full_file_path_and_name, ".ts")
     # Parse the file
     # print(full_file_path_and_name)
     with open(full_file_path_and_name, encoding="utf-8") as f:
@@ -1271,6 +1277,7 @@ def load_from_ucr_tsv_to_dataframe(
         all time-series and (if relevant) a column "class_vals" the
         associated class values.
     """
+    full_file_path_and_name = ensure_file_has_extension(full_file_path_and_name, ".tsv")
     df = pd.read_csv(full_file_path_and_name, sep="\t", header=None)
     y = df.pop(0).values
     df.columns -= 1
@@ -1297,6 +1304,7 @@ def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
     DataFrame
         A dataframe with sktime-formatted data
     """
+    full_file_path_and_name = ensure_file_has_extension(full_file_path_and_name, ".csv")
     data = pd.read_csv(full_file_path_and_name, sep=separator, header=0)
     # ensure there are 4 columns in the long_format table
     if len(data.columns) != 4:
@@ -1906,6 +1914,7 @@ def load_tsf_to_dataframe(
     found_data_tag = False
     found_data_section = False
     started_reading_data_section = False
+    full_file_path_and_name = ensure_file_has_extension(full_file_path_and_name, ".tsf")
 
     with open(full_file_path_and_name, encoding="cp1252") as file:
         for line in file:
@@ -2072,6 +2081,27 @@ def load_tsf_to_dataframe(
                 )
 
         return loaded_data, metadata
+
+
+def ensure_file_has_extension(path, suffix):
+    """
+    Check if the filename contains an file extension.
+
+    Parameters
+    ----------
+    path: str
+        path of the file.
+    suffix: str
+        the expected file extension.
+
+    Returns
+    -------
+    Filename with extension
+    """
+    if not path.endswith(suffix):
+        path += suffix
+
+    return path
 
 
 def _convert_tsf_to_hierarchical(
