@@ -439,11 +439,13 @@ def plot_windows(cv, y, title=""):
         )
     ax.invert_yaxis()
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    xtickslocs = [tick for tick in ax.get_xticks() if tick in np.arange(n_timepoints)]
     ax.set(
         title=title,
         ylabel="Window number",
         xlabel="Time",
-        xticklabels=y.index,
+        xticks=xtickslocs,
+        xticklabels=y.iloc[xtickslocs].index,
     )
     # remove duplicate labels/handles
     handles, labels = ((leg[:2]) for leg in ax.get_legend_handles_labels())
