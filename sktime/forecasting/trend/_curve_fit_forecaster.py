@@ -5,15 +5,15 @@
 __author__ = ["benheid"]
 __all__ = ["CurveFitForecaster"]
 
-import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
 
 
 class CurveFitForecaster(BaseForecaster):
-    """The CurveFitForecaster takes a function and tits it by using scipy curve_fit.
+    """The CurveFitForecaster takes a function and fits it by using scipy curve_fit.
 
     The CurveFitForecaster applies the scipy curve_fit method to find the best
     parameter of a function. This function maps a list of integers to real values.
@@ -31,7 +31,7 @@ class CurveFitForecaster(BaseForecaster):
 
     Parameters
     ----------
-    function: Callable
+    function: Callable[[Iterable[int], ...], Iterable[float]]
         The function that should be fitted and used to make forecasts.
         The signature of the functions is `function(x, ...)`.
         It takes the independet variables as first argument and the parametrs
@@ -96,10 +96,17 @@ class CurveFitForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        t = ForecastingHorizon(y.index, is_relative=False).to_relative(self.cutoff)
-        self.params_ = curve_fit(
-            self.function, np.array(t), y.values, **self._curve_fit_params
-        )
+        x = _get_X_numpy_int_from_pandas(y.index)[:, 0]
+        start = _get_X_numpy_int_from_pandas(self._y.index[:1])[:, 0]
+
+        x = x - start
+        if len(x) > 1:
+            self.delta_ = x[1] - x[0]
+            x = x // self.delta_
+        else:
+            self.delta_ = None
+
+        self.params_ = curve_fit(self.function, x, y.values, **self._curve_fit_params)
         return self
 
     def _predict(self, fh, X=None):
@@ -124,10 +131,17 @@ class CurveFitForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        t = fh.to_relative(self.cutoff)
+        fh = self.fh.to_absolute_index(self.cutoff)
+        x = _get_X_numpy_int_from_pandas(fh)[:, 0]
+        start = _get_X_numpy_int_from_pandas(self._y.index[:1])[:, 0]
+
+        x = x - start
+        if self.delta_ is not None:
+            x = x // self.delta_
+
         return pd.Series(
-            self.function(np.array(t), *self.params_[0]),
-            index=list(fh.to_absolute(self.cutoff)),
+            self.function(x, *self.params_[0]),
+            index=fh,
             name=self._y.name,
         )
 
