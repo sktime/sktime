@@ -175,7 +175,9 @@ def _evaluate_window(
                 f"""
                 In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
                 you can set error_score='raise' in evaluate to see
-                the exception message. Fit failed for len(y_train)={len(y_train)}.
+                the exception message.
+                Fit failed for the {i}-th data split, on training data y_train with
+                cutoff {cutoff}, and len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
                 Failed forecaster with parameters: {forecaster}.
                 """,
@@ -347,7 +349,7 @@ def evaluate(
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()[:24]
     >>> forecaster = NaiveForecaster(strategy="mean", sp=3)
@@ -456,10 +458,7 @@ def evaluate(
                 yield y_train, y_test, None, None
         else:
             if cv_X is None:
-                from sktime.forecasting.model_selection import (
-                    SameLocSplitter,
-                    TestPlusTrainSplitter,
-                )
+                from sktime.split import SameLocSplitter, TestPlusTrainSplitter
 
                 cv_X = SameLocSplitter(TestPlusTrainSplitter(cv), y)
 

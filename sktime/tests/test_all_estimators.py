@@ -26,7 +26,6 @@ from sktime.dists_kernels.base import (
 )
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
-from sktime.pipeline.pipeline import Pipeline
 from sktime.registry import all_estimators
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
@@ -895,8 +894,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 f"estimator: {estimator_class} has fit method, but"
                 f"is not a sub-class of BaseEstimator."
             )
-        if isinstance(Pipeline(), estimator_class):
-            return
 
         # Usually estimators inherit only from one BaseEstimator type, but in some cases
         # they may be predictor and transformer at the same time (e.g. pipelines)
