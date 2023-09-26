@@ -131,7 +131,7 @@ def test_load_basic_motions(return_X_y, return_type):
 )
 @pytest.mark.parametrize("split", ["TRAIN", "TEST", None])
 def test_load_tecator(return_X_y, return_type, split):
-    """Test load_basic_motions function to check for proper loading.
+    """Test load_tecator function to check for proper loading.
 
     Check all possibilities of split, return_X_y and return_type.
     """
