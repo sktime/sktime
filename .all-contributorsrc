@@ -2365,6 +2365,15 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "geronimos",
+      "name": "Geronimo Bergk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29955288?s=96&v=4",
+      "profile": "https://github.com/geronimos",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }
