@@ -6,6 +6,7 @@ __author__ = [
     "TonyBagnall",
     "jasonlines",
     "achieveordie",
+    "jonathanbechtel",
 ]
 
 __all__ = [
@@ -488,7 +489,6 @@ def load_from_tsfile_to_dataframe(
     # Initialize flags and variables used when parsing the file
     metadata_started = False
     data_started = False
-
     has_problem_name_tag = False
     has_timestamps_tag = False
     has_univariate_tag = False
@@ -499,6 +499,7 @@ def load_from_tsfile_to_dataframe(
     prev_timestamp_was_timestamp = None
     num_dimensions = None
     is_first_case = True
+    is_regression_problem = False
     instance_list = []
     class_val_list = []
     line_num = 0
@@ -613,6 +614,32 @@ def load_from_tsfile_to_dataframe(
                             f"{tokens}"
                         )
                     has_class_labels_tag = True
+                    metadata_started = True
+                elif line.startswith("@problemtype"):
+                    if data_started:
+                        raise IOError("metadata must come before data")
+
+                    # Check that the associated value is valid
+                    tokens = line.split(" ")
+                    token_len = len(tokens)
+
+                    if token_len != 2:
+                        raise IOError(
+                            """problemType tag requires an associated value:
+                            'regression' or 'classification'"""
+                        )
+                    elif tokens[1] == "regression":
+                        # problemType = regression
+                        is_regression_problem = True
+                        pass
+                    elif tokens[1] == "classification":
+                        # problemType = classification
+                        pass
+                    else:
+                        raise IOError(
+                            """invalid problemType value,
+                                      please use 'regression' or 'classification'"""
+                        )
                     metadata_started = True
                 # Check if this line contains the start of data
                 elif line.startswith("@data"):
@@ -1025,8 +1052,15 @@ def load_from_tsfile_to_dataframe(
         # Check if we should return any associated class labels separately
         if class_labels:
             if return_separate_X_and_y:
-                return data, np.asarray(class_val_list)
+                new_var = class_val_list
+                if is_regression_problem:
+                    # change output column to float if regression problem
+                    new_var = np.asarray(new_var, dtype=np.float32)
+                return data, np.asarray(new_var)
             else:
+                if is_regression_problem:
+                    # change output column to float if regression problem
+                    class_val_list = np.asarray(class_val_list, dtype=np.float32)
                 data["class_vals"] = pd.Series(class_val_list)
                 return data
         else:
@@ -1076,7 +1110,6 @@ def load_from_arff_to_dataframe(
     is_multi_variate = False
     is_first_case = True
     # Parse the file
-    # print(full_file_path_and_name)
     with open(full_file_path_and_name, "r", encoding="utf-8") as f:
         for line in f:
             if line.strip():
