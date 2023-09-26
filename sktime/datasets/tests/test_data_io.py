@@ -20,6 +20,7 @@ from sktime.datasets import (
     load_from_long_to_dataframe,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
+    load_tecator,
     load_tsf_to_dataframe,
     load_UCR_UEA_dataset,
     load_uschange,
@@ -122,6 +123,45 @@ def test_load_basic_motions(return_X_y, return_type):
         f"Error message returned by check_is_mtype: {check_msg}"
     )
     assert valid, msg
+
+
+@pytest.mark.parametrize("return_X_y", [True, False])
+@pytest.mark.parametrize(
+    "return_type", [mtype for mtype in MTYPE_LIST_PANEL if mtype not in _TO_DISABLE]
+)
+@pytest.mark.parametrize("split", ["TRAIN", "TEST", None])
+def test_load_tecator(return_X_y, return_type, split):
+    """Test load_basic_motions function to check for proper loading.
+
+    Check all possibilities of split, return_X_y and return_type.
+    """
+    if return_X_y:
+        X, y = load_tecator(return_X_y, return_type)
+    else:
+        X = load_tecator(return_X_y, return_type)
+
+    # Check whether object is same mtype or not, via bool
+    valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
+    msg = (
+        "load_tecator return has unexpected type on "
+        f"return_X_y = {return_X_y}, return_type = {return_type}. "
+        f"Error message returned by check_is_mtype: {check_msg}"
+    )
+    assert valid, msg
+
+    # check to make sure train / test options work
+    if split == "TRAIN":
+        X_train, y_train = load_tecator(return_X_y, return_type, split=split)
+        assert len(X_train) == len(y_train)
+        assert len(X_train) == 172
+    elif split == "TEST":
+        X_test, y_test = load_tecator(return_X_y, return_type, split=split)
+        assert len(X_test) == len(y_test)
+        assert len(X_test) == 43
+    else:
+        X, y = load_tecator(return_X_y, return_type, split=split)
+        assert len(X) == len(y)
+        assert len(X) == 215
 
 
 def test_load_from_tsfile():
