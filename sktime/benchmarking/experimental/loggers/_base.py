@@ -1,4 +1,4 @@
-"""Base Benchmark Class."""
+"""Base class for loggers."""
 
 from abc import ABC, abstractmethod
 from typing import Any
@@ -36,16 +36,4 @@ class BaseLogger(ABC):
         dataset chuncks. Managing datasets is delegated to dataset class so that
         we have more control?
         """
-        pass
-
-
-class BaseEvaluator(ABC):
-    """Astract Class."""
-
-    def __init__(self, logger: BaseLogger):
-        self.log = logger
-
-    @abstractmethod
-    def evaluate(self, *args: Any, **kwargs: Any):
-        """Abstract method for evaluation workflow of any task."""
         pass
