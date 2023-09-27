@@ -26,8 +26,9 @@ class MLFlowLogger(BaseLogger):
         experiment_name: str = "benchmark_logs",
         tags: Optional[Dict[str, Any]] = None,
         save_dir: Optional[str] = "./benchmarkruns",
+        artifact_location: Optional[str] = "artifacts",
         tracking_uri: Optional[str] = DEFAULT_ENV,
-        artifact_location: Optional[str] = None,
+        registry_uri: Optional[str] = None,
     ):
         _check_soft_dependencies("mlflow", severity="error")
         if tracking_uri is None:
@@ -38,8 +39,8 @@ class MLFlowLogger(BaseLogger):
         self._save_dir = save_dir
         self._artifact_location = artifact_location
 
-        self._has_experiment = False
-        self._client = MlflowClient(tracking_uri)
+        self._has_initialised = False
+        self._client = MlflowClient(self._tracking_uri, registry_uri)
 
     @property
     def save_dir(self) -> str:
@@ -55,7 +56,7 @@ class MLFlowLogger(BaseLogger):
         return None
 
     def _start_experiment(self) -> None:
-        self._has_experiment = True
+        self._has_initialised = True
         mlflow.set_tracking_uri(self._tracking_uri)
         self._client.create_experiment(
             name=self._experiment_name,
