@@ -10,16 +10,13 @@ from sklearn.metrics import mean_squared_error
 
 from sktime.datasets import load_airline
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import (
-    SlidingWindowSplitter,
-    temporal_train_test_split,
-)
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning._online_ensemble import OnlineEnsembleForecaster
 from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
     NNLSEnsemble,
     NormalHedgeEnsemble,
 )
+from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
