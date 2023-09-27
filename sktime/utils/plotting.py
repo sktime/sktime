@@ -46,11 +46,19 @@ def plot_series(
     pred_interval: pd.DataFrame, default = None
         Output of `forecaster.predict_interval()`. Contains columns for lower
         and upper boundaries of confidence interval.
-
+    ax : matplotlib axes, optional
+        Axes to plot on, if None, a new figure is created and returned
+        
     Returns
     -------
     fig : plt.Figure
+        plt.Figure is the output canvas for creating and configuring visualizations.
+        It manages the final visual appearance and layout.
+        Create a new figure, or activate an existing figure.
     ax : plt.Axis
+        Axes containing the plot
+        If ax was None, a new figure is created and returned
+        If ax was not None, the same ax is returned with plot added
 
     Examples
     --------
