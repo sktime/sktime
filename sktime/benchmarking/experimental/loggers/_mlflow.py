@@ -1,12 +1,10 @@
 """Uniform interface of different experiment tracking packages."""
 
 import os
-
-# from abc import property
 from typing import Any, Dict, Optional
 
 from sktime.base import BaseEstimator
-from sktime.benchmarking.experimental._base import BaseLogger
+from sktime.benchmarking.experimental.loggers._base import BaseLogger
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # mlflavour has no seperation of dependencies.
@@ -73,7 +71,7 @@ class MLFlowLogger(BaseLogger):
             self._start_experiment()
 
         if mlflow.active_run() is not None:
-            mlflow.end_run()
+            self.end_run()
 
         mlflow.start_run(run_name=run_name, run_id=run_id)
 
@@ -106,11 +104,15 @@ class MLFlowLogger(BaseLogger):
         """
         mlflow.log_figure(graph, self._artifact_location, save_kwargs=save_kwargs)
 
+    def log_cvsplit(self, cvsplit_info: Dict[str, Any]) -> None:
+        """Log cvsplit metadata as an artifact."""
+        mlflow.log_dict(cvsplit_info, self._artifact_location)
+
     def get_estimator(self, estimator_id) -> None:
         """Fetch estimator from artifact."""
         path = f"{self._artifact_location}/{estimator_id}"
         mlflow_sktime.load_model(path)
 
-    def log_cvsplit(self, cvsplit_info: Dict[str, Any]) -> None:
-        """Log cvsplit metadata as an artifact."""
-        mlflow.log_dict(cvsplit_info, self._artifact_location)
+    def end_run(self) -> None:
+        """End an active run."""
+        mlflow.end_run()

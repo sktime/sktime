@@ -37,3 +37,13 @@ class BaseLogger(ABC):
         we have more control?
         """
         pass
+
+    @abstractmethod
+    def start_run(self, *args: Any, **kwargs: Any) -> None:
+        """Start a new active run."""
+        pass
+
+    @abstractmethod
+    def end_run(self, *args: Any, **kwargs: Any) -> None:
+        """End an active run."""
+        pass
