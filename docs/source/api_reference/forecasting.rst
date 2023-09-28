@@ -282,6 +282,13 @@ ARCH models
     StatsForecastARCH
     StatsForecastGARCH
 
+.. currentmodule:: sktime.forecasting.arch
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARCH
 
 Structural time series models
 -----------------------------
