@@ -71,7 +71,6 @@ class ExpandingGreedySplitter(BaseSplitter):
             self.set_tags(**{"split_hierarchical", False})
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
-
         test_size = self.test_size
 
         if isinstance(test_size, float):
