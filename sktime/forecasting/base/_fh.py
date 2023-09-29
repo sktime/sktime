@@ -215,7 +215,7 @@ class ForecastingHorizon:
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> import numpy as np
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y, test_size=6)

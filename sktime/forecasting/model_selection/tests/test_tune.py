@@ -17,8 +17,6 @@ from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
-    SingleWindowSplitter,
-    SlidingWindowSplitter,
 )
 from sktime.forecasting.model_selection._tune import BaseGridSearch
 from sktime.forecasting.naive import NaiveForecaster
@@ -34,6 +32,7 @@ from sktime.performance_metrics.forecasting import (
     MeanSquaredError,
 )
 from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
+from sktime.split import SingleWindowSplitter, SlidingWindowSplitter
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
