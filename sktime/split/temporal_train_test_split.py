@@ -161,7 +161,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
             splitter = ExpandingGreedySplitter(train_size, folds=1, reverse=True)
             y_train_ix, y_test_ix = list(splitter.split(y))[0]
 
-        return y_train_ix, y_test_ix
+        yield y_train_ix, y_test_ix
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
