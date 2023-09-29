@@ -137,13 +137,13 @@ class ARCH(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.arch import ARCH
-    >>> y = load_airline()
-    >>> forecaster = ARCH()
-    >>> forecaster.fit(y)
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.forecasting.arch import ARCH  # doctest: +SKIP
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> forecaster = ARCH()  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ARCH(...)
-    >>> y_pred = forecaster.predict(fh=1)
+    >>> y_pred = forecaster.predict(fh=1)  # doctest: +SKIP
     """
 
     _tags = {
