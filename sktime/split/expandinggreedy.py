@@ -40,6 +40,9 @@ class ExpandingGreedySplitter(BaseSplitter):
         The number of folds.
     step_length : int, optional
         The number of steps advanced for each fold. Defaults to `test_size`.
+    reverse : bool, default = False
+        Whether to reverse order of indices. If True, the test sets will be taken
+        from the start of the data, rather than the end.
 
     Examples
     --------
@@ -57,15 +60,23 @@ class ExpandingGreedySplitter(BaseSplitter):
 
     _tags = {"split_hierarchical": True}
 
-    def __init__(self, test_size: int, folds: int = 5, step_length: int = None):
+    def __init__(
+            self,
+            test_size: int,
+            folds: int = 5,
+            step_length: int = None,
+            reverse: bool = False,
+    ):
         super().__init__()
         self.test_size = test_size
         self.folds = folds
         self.step_length = step_length
+        self.reverse = reverse
         self.fh = np.arange(test_size) + 1
 
         # no algorithm implemented that is faster for float than naive iteration
-        if isinstance(test_size, float):
+        # if we reverse, we also use a naive algorithm
+        if isinstance(test_size, float) or reverse:
             self.set_tags(**{"split_hierarchical", False})
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
@@ -89,7 +100,11 @@ class ExpandingGreedySplitter(BaseSplitter):
             tst_indices = np.flatnonzero(
                 (reverse_idx < trn_end) & (reverse_idx >= tst_end)
             )
-            yield trn_indices, tst_indices
+            if not reversed:
+                yield trn_indices, tst_indices
+            else:
+                rev_ix = np.arange(len(y))[::-1]
+                yield rev_ix[trn_indices], rev_ix[tst_indices]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -112,4 +127,5 @@ class ExpandingGreedySplitter(BaseSplitter):
         params1 = {"test_size": 1}
         params2 = {"test_size": 3, "folds": 2, "step_length": 2}
         params3 = {"test_size": 0.2, "folds": 2}
-        return [params1, params2, params3]
+        params4 = {"test_size": 0.2, "folds": 2, "reverse": True"}
+        return [params1, params2, params3, params4]
