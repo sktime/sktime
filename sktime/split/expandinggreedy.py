@@ -104,7 +104,7 @@ class ExpandingGreedySplitter(BaseSplitter):
                 yield trn_indices, tst_indices
             else:
                 rev_ix = np.arange(len(y))[::-1]
-                yield rev_ix[trn_indices], rev_ix[tst_indices]
+                yield np.sort(rev_ix[trn_indices]), np.sort(rev_ix[tst_indices])
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
