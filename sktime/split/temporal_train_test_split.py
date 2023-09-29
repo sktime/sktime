@@ -148,6 +148,9 @@ class TemporalTrainTestSplitter(BaseSplitter):
         test_size = self.test_size
         train_size = self.train_size
 
+        if test_size is None and train_size is None:
+            test_size = 0.25
+
         if test_size is not None:
             splitter = ExpandingGreedySplitter(test_size, folds=1)
             y_train_ix, y_test_ix = list(splitter.split(y))[0]
