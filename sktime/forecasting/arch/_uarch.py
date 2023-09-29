@@ -8,7 +8,6 @@ __all__ = ["ARCH"]
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class ARCH(BaseForecaster):
@@ -130,20 +129,16 @@ class ARCH(BaseForecaster):
 
     References
     ----------
-    .. [1] Jason Brownlee. How to Model Volatility with ARCH and GARCH for Time Series
-       Forecasting.
-       https://machinelearningmastery.com/develop-arch-and-garch-models-for-time-series-
-       forecasting-in-python/
-    .. [2] GitHub repository of arch package (soft dependency).
+    .. [1] GitHub repository of arch package (soft dependency).
        https://github.com/bashtage/arch
-    .. [3] Documentation of arch package (soft dependency). Forecasting Volatility with
+    .. [2] Documentation of arch package (soft dependency). Forecasting Volatility with
        ARCH and it's variants.
        https://arch.readthedocs.io/en/latest/univariate/introduction.html
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.garch import ARCH
+    >>> from sktime.forecasting.arch import ARCH
     >>> y = load_airline()
     >>> forecaster = ARCH()
     >>> forecaster.fit(y)
@@ -192,8 +187,6 @@ class ARCH(BaseForecaster):
         random_state=None,
         reindex=False,
     ):
-        _check_soft_dependencies("arch", severity="error")
-
         self.mean = mean
         self.lags = lags
         self.vol = vol
@@ -342,7 +335,7 @@ class ARCH(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        params = {
+        params1 = {
             "mean": "Constant",
             "lags": 0,
             "vol": "GARCH",
@@ -354,7 +347,14 @@ class ARCH(BaseForecaster):
             "hold_back": None,
             "rescale": False,
         }
-        return params
+        params2 = {
+            "mean": "ARX",
+            "vol": "ARCH",
+            "p": 1,
+            "dist": "normal",
+            "rescale": False,
+        }
+        return [params1, params2]
 
     def summary(self):
         """Summary of the fitted model."""
