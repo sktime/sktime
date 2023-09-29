@@ -127,5 +127,5 @@ class ExpandingGreedySplitter(BaseSplitter):
         params1 = {"test_size": 1}
         params2 = {"test_size": 3, "folds": 2, "step_length": 2}
         params3 = {"test_size": 0.2, "folds": 2}
-        params4 = {"test_size": 0.2, "folds": 2, "reverse": True"}
+        params4 = {"test_size": 0.2, "folds": 2, "reverse": True}
         return [params1, params2, params3, params4]
