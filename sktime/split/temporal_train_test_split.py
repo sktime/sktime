@@ -138,8 +138,8 @@ class TemporalTrainTestSplitter(BaseSplitter):
         super().__init__()
 
         # in this case, the inner ExpandingGreedySplitter is not hierarchical
-        train_size_none_flt = train_size is None or isinstance(train_size, float)
-        if not isinstance(test_size, int) and not train_size_none_flt:
+        train_size_none_flt = train_size is None or isinstance(train_size, int)
+        if not isinstance(test_size, int) or not train_size_none_flt:
             self.set_tags(**{"split_hierarchical", False})
 
     def _split(self, y: pd.Index):
