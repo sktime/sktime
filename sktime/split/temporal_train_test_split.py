@@ -126,6 +126,8 @@ class TemporalTrainTestSplitter(BaseSplitter):
     [(array([3, 4, 5]), array([7, 9]))]
     """
 
+    _tags = {"split_hierarchical": True}
+
     def __init__(
         self,
         train_size: Optional[float] = None,
@@ -135,8 +137,12 @@ class TemporalTrainTestSplitter(BaseSplitter):
         self.test_size = test_size
         super().__init__()
 
-    def _split(self, y: pd.Index):
+        # in this case, the inner ExpandingGreedySplitter is not hierarchical
+        train_size_none_flt = train_size is None or isinstance(train_size, float)
+        if not isinstance(test_size, int) and not train_size_none_flt:
+            self.set_tags(**{"split_hierarchical", False})
 
+    def _split(self, y: pd.Index):
         from sktime.forecasting.model_selection import ExpandingGreedySplitter
 
         test_size = self.test_size
