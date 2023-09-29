@@ -61,11 +61,11 @@ class ExpandingGreedySplitter(BaseSplitter):
     _tags = {"split_hierarchical": True}
 
     def __init__(
-            self,
-            test_size: int,
-            folds: int = 5,
-            step_length: int = None,
-            reverse: bool = False,
+        self,
+        test_size: int,
+        folds: int = 5,
+        step_length: int = None,
+        reverse: bool = False,
     ):
         super().__init__()
         self.test_size = test_size
