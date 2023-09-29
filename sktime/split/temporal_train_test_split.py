@@ -8,6 +8,7 @@ from typing import Optional
 
 import pandas as pd
 
+from sktime.split.base import BaseSplitter
 from sktime.split.base._config import (
     ACCEPTED_Y_TYPES,
     FORECASTING_HORIZON_TYPES,
@@ -84,17 +85,11 @@ def temporal_train_test_split(
             )
         return _split_by_fh(y, fh, X=X)
 
-    from sktime.forecasting.model_selection import ExpandingGreedySplitter
+    temporal_splitter = TemporalTrainTestSplitter(
+        test_size=test_size, train_size=train_size
+    )
 
-    if test_size is not None:
-        splitter = ExpandingGreedySplitter(test_size, folds=1)
-        y_train, y_test = list(splitter.split_series(y))[0]
-        if train_size is not None:
-            splitter = ExpandingGreedySplitter(train_size, folds=1)
-            _, y_train = list(splitter.split_series(y))[0]
-    else:
-        splitter = ExpandingGreedySplitter(train_size, folds=1, reverse=True)
-        y_train, y_test = list(splitter.split_series(y))[0]
+    y_train, y_test = list(temporal_splitter.split(y))[0]
 
     if X is not None:
         X_train = X.loc[y_train.index]
@@ -102,3 +97,101 @@ def temporal_train_test_split(
         return y_train, y_test, X_train, X_test
     else:
         return y_train, y_test
+
+
+class TemporalTrainTestSplitter(BaseSplitter):
+    r"""Single window splitter.
+
+    Parameters
+    ----------
+    test_size : float, int or None, optional (default=None)
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        relative number of test samples. If None, the value is set to the
+        complement of the train size. If ``train_size`` is also None, it will
+        be set to 0.25.
+    train_size : float, int, or None, (default=None)
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the train split. If
+        int, represents the relative number of train samples. If None,
+        the value is automatically set to the complement of the test size.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.split import SingleWindowSplitter
+    >>> ts = np.arange(10)
+    >>> splitter = SingleWindowSplitter(fh=[2, 4], window_length=3)
+    >>> list(splitter.split(ts)) # doctest: +SKIP
+    [(array([3, 4, 5]), array([7, 9]))]
+    """
+
+    def __init__(
+        self,
+        train_size: Optional[float] = None,
+        test_size: Optional[float] = None,
+    ) -> None:
+        self.train_size = train_size
+        self.test_size = test_size
+        super().__init__()
+
+    def _split(self, y: pd.Index):
+
+        from sktime.forecasting.model_selection import ExpandingGreedySplitter
+
+        test_size = self.test_size
+        train_size = self.train_size
+
+        if test_size is not None:
+            splitter = ExpandingGreedySplitter(test_size, folds=1)
+            y_train_ix, y_test_ix = list(splitter.split(y))[0]
+            if train_size is not None:
+                splitter = ExpandingGreedySplitter(train_size, folds=1)
+                _, y_train_ix = list(splitter.split(y_train_ix))[0]
+        else:
+            splitter = ExpandingGreedySplitter(train_size, folds=1, reverse=True)
+            y_train_ix, y_test_ix = list(splitter.split(y))[0]
+
+        return y_train_ix, y_test_ix
+
+    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+        """Return the number of splits.
+
+        Since this splitter returns a single train/test split,
+        this number is trivially 1.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
+
+        Returns
+        -------
+        n_splits : int
+            The number of splits.
+        """
+        return 1
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {"test_size": 0.2, "train_size": 0.3}
+        params2 = {"test_size": 2}
+        params3 = {"train_size": 3}
+        params4 = {}
+        return [params1, params2, params3, params4]
