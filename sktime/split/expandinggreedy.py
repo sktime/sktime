@@ -73,6 +73,8 @@ class ExpandingGreedySplitter(BaseSplitter):
 
         if isinstance(test_size, float):
             _test_size = round(len(y) * test_size)
+        else:
+            _test_size = test_size
 
         if isinstance(y, pd.MultiIndex):
             groups = pd.Series(index=y).groupby(y.names[:-1])
