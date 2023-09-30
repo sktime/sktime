@@ -357,7 +357,7 @@ def test_dynamic_tags_reset_properly():
 def test_predict_residuals():
     """Test that predict_residuals has no side-effect."""
     from sktime.forecasting.base import ForecastingHorizon
-    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.split import temporal_train_test_split
 
     y = _make_series(n_columns=1)
     y_train, y_test = temporal_train_test_split(y)
