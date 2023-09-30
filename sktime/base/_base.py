@@ -88,6 +88,10 @@ class BaseObject(_BaseObject):
         """,
     }
 
+    def __init__(self):
+        super.__init__()
+        self.set_config.__doc__ = self._get_set_config_doc()
+
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
@@ -138,7 +142,7 @@ class BaseObject(_BaseObject):
         """
 
         doc = doc_start
-        for _, cfg_doc in cfgs_dict:
+        for _, cfg_doc in cfgs_dict.items():
             doc += cfg_doc
         doc += doc_end
         return doc
