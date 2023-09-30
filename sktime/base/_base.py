@@ -76,7 +76,7 @@ class BaseObject(_BaseObject):
     _config_doc = {
         "display": """
         display : str, "diagram" (default), or "text"
-            how jupyer kernels display instances of self
+            how jupyter kernels display instances of self
             "diagram" = html box diagram representation
             "text" = string printout
         """,
