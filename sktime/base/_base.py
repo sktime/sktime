@@ -74,8 +74,6 @@ def dynamic_doc_set_config(func):
     def set_docstring(instance):
         wrapper.__doc__ = instance._get_set_config_doc()
 
-        wrapper.set_docstring = set_docstring
-
     return wrapper
 
 
