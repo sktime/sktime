@@ -89,7 +89,7 @@ class BaseObject(_BaseObject):
     }
 
     def __init__(self):
-        super.__init__()
+        super().__init__()
         self.set_config.__doc__ = self._get_set_config_doc()
 
     def __eq__(self, other):
