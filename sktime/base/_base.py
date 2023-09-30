@@ -91,7 +91,7 @@ class BaseObject(_BaseObject):
             "diagram" = html box diagram representation
             "text" = string printout
         """,
-        "print_changed_only" : """
+        "print_changed_only": """
         print_changed_only : bool, default=True
             whether printing of self lists only self-parameters that differ
             from defaults (False), or all parameter names and values (False)
