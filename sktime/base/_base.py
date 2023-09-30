@@ -90,7 +90,7 @@ class BaseObject(_BaseObject):
 
     def __init__(self):
         super().__init__()
-        self.set_config.__doc__ = self._get_set_config_doc()
+        self.__class__.set_config.__doc__ = self._get_set_config_doc()
 
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
@@ -146,26 +146,6 @@ class BaseObject(_BaseObject):
             doc += cfg_doc
         doc += doc_end
         return doc
-
-    def set_config(self, **config_dict):
-        """Set config flags to given values.
-
-        Parameters
-        ----------
-        config_dict : dict
-            Dictionary of config name : config value pairs.
-
-        Returns
-        -------
-        self : reference to self.
-
-        Notes
-        -----
-        Changes object state, copies configs in config_dict to self._config_dynamic.
-        """
-        self.set_config.__doc__ = self._get_set_config_doc()
-        # dispatch to scikit-base unchanged
-        return super().set_config(**config_dict)
 
     def save(self, path=None):
         """Save serialized self to bytes-like object or to (.zip) file.
