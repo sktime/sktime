@@ -67,15 +67,16 @@ from sktime.exceptions import NotFittedError
 from sktime.utils.random_state import set_random_state
 
 
-def dynamic_doc_set_config(cls):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
+def dynamic_doc_set_config(func):
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
 
-        wrapper.__doc__ = cls._get_set_config_doc()
-        return wrapper
+    def set_docstring(instance):
+        wrapper.__doc__ = instance._get_set_config_doc()
 
-    return decorator
+        wrapper.set_docstring = set_docstring
+
+    return wrapper
 
 
 class BaseObject(_BaseObject):
