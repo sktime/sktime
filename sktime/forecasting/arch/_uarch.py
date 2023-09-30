@@ -5,6 +5,7 @@
 __author__ = ["Vasudeva-bit"]
 __all__ = ["ARCH"]
 
+import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
@@ -216,6 +217,9 @@ class ARCH(BaseForecaster):
         self.random_state = random_state
         self.reindex = reindex
 
+        if self.mean in ["ARX", "HARX"]:
+            ARCH._tags["ignores-exogeneous-X"] = False
+
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -293,7 +297,15 @@ class ARCH(BaseForecaster):
         start, end = abs_idx[[0, -1]]
         start = min(start, len(self._y))
 
+        if X is not None:
+            x = {}
+            for col in X.columns:
+                x[str(col)] = np.array(X[col])
+        else:
+            x = None
+
         ArchResultObject = self._fitted_forecaster.forecast(
+            x=x,
             horizon=end - start + 1,
             params=self.params,
             start=self.start,
