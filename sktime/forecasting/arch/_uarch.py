@@ -154,7 +154,6 @@ class ARCH(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "python_dependencies": "arch",
-        "ignores-exogeneous-X": True,
     }
 
     def __init__(
@@ -219,6 +218,8 @@ class ARCH(BaseForecaster):
 
         if self.mean in ["ARX", "HARX"]:
             ARCH._tags["ignores-exogeneous-X"] = False
+        else:
+            ARCH._tags["ignores-exogeneous-X"] = True
 
         super().__init__()
 
