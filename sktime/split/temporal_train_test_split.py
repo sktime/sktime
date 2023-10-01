@@ -89,7 +89,7 @@ def temporal_train_test_split(
         test_size=test_size, train_size=train_size
     )
 
-    y_train, y_test = list(temporal_splitter.split(y))[0]
+    y_train, y_test = list(temporal_splitter.split_series(y))[0]
 
     if X is not None:
         X_train = X.loc[y_train.index]
@@ -159,7 +159,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
                 _, y_train_ix = list(splitter.split(y_train_ix))[0]
         else:
             splitter = ExpandingGreedySplitter(train_size, folds=1, reverse=True)
-            y_train_ix, y_test_ix = list(splitter.split(y))[0]
+            y_test_ix, y_train_ix = list(splitter.split(y))[0]
 
         yield y_train_ix, y_test_ix
 
