@@ -178,7 +178,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
             train_size = min(len_y - test_size, train_size)
         else:
             train_size = min(len_y, train_size)
-            test_size = min(len_y - train_size, test_size)           
+            test_size = min(len_y - train_size, test_size)
 
         all_ix = np.arange(len_y)
 
