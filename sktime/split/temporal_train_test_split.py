@@ -4,8 +4,10 @@
 
 __all__ = ["temporal_train_test_split"]
 
+import math
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
@@ -139,7 +141,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
     >>> list(splitter.split(ts)) # doctest: +SKIP
     """
 
-    _tags = {"split_hierarchical": True}
+    _tags = {"split_hierarchical": False}
 
     def __init__(self, train_size, test_size, anchor="start"):
         self.train_size = train_size
@@ -147,17 +149,12 @@ class TemporalTrainTestSplitter(BaseSplitter):
         self.anchor = anchor
         super().__init__()
 
-        # in this case, the inner ExpandingGreedySplitter is not hierarchical
-        train_size_none_flt = train_size is None or isinstance(train_size, int)
-        if not isinstance(test_size, int) or not train_size_none_flt:
-            self.set_tags(**{"split_hierarchical": False})
-
     def _split(self, y: pd.Index):
-        from sktime.forecasting.model_selection import ExpandingGreedySplitter
-
         test_size = self.test_size
         train_size = self.train_size
         anchor = self.anchor
+
+        len_y = len(y)
 
         if test_size is None and train_size is None:
             test_size = 0.25
@@ -167,18 +164,32 @@ class TemporalTrainTestSplitter(BaseSplitter):
         if test_size is None:
             anchor = "start"
 
+        if isinstance(test_size, float):
+            test_size = math.ceil(test_size * len(y))
+        if isinstance(train_size, float):
+            train_size = math.floor(train_size * len(y))
+        if test_size is None:
+            test_size = len_y - train_size
+        if train_size is None:
+            train_size = len_y - test_size
+
         if anchor == "end":
-            splitter = ExpandingGreedySplitter(test_size, folds=1)
-            y_train_ix, y_test_ix = list(splitter.split(y))[0]
-            if train_size is not None:
-                splitter = ExpandingGreedySplitter(train_size, folds=1)
-                _, y_train_ix = list(splitter.split(y_train_ix))[0]
+            test_size = min(len_y, test_size)
+            train_size = min(len_y - test_size, train_size)
+        else:
+            train_size = min(len_y, train_size)
+            test_size = min(len_y - train_size, test_size)           
+
+        all_ix = np.arange(len_y)
+
+        if anchor == "end":
+            y_train_ix = all_ix[:-test_size]
+            y_test_ix = all_ix[-test_size:]
+            y_train_ix = y_train_ix[-train_size:]
         else:  # if anchor == "start"
-            splitter = ExpandingGreedySplitter(train_size, folds=1, reverse=True)
-            y_test_ix, y_train_ix = list(splitter.split(y))[0]
-            if test_size is not None:
-                splitter = ExpandingGreedySplitter(test_size, folds=1, reverse=True)
-                y_test_ix, _ = list(splitter.split(y_test_ix))[0]
+            y_train_ix = all_ix[:train_size]
+            y_test_ix = all_ix[train_size:]
+            y_test_ix = y_test_ix[:test_size]
 
         yield y_train_ix, y_test_ix
 
