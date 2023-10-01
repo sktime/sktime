@@ -477,6 +477,7 @@ def test_forecastx_logic():
     # compare that test and comparison case results are equal
     assert np.allclose(y_pred, y_pred_manual)
 
+
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency is not available",
@@ -519,6 +520,7 @@ def test_forecastx_fit_behavior():
     y_pred = arima.predict(fh=y_test.index, X=naive.predict(fh=y_test.index))
 
     pd.testing.assert_series_equal(y_pred_forecast_X_use_forecast, y_pred)
+
 
 def test_forecastx_attrib_broadcast():
     """Test ForecastX broadcasting and forecaster attributes."""
