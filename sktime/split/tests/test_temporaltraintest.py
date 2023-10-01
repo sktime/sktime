@@ -49,7 +49,7 @@ def test_split_by_fh(index_type, fh_type, is_relative, values):
     _check_train_test_split_y(fh, split)
 
 
-def test_temporal_train_test_split_float_only_y:
+def test_temporal_train_test_split_float_only_y():
     """Test temporal_train_test_split expected output on float size inputs."""
     y = load_airline()
 
@@ -73,6 +73,38 @@ def test_temporal_train_test_split_float_only_y:
 
     # both train and test size
     y_train, y_test = temporal_train_test_split(y, train_size=0.3, test_size=0.2)
+    assert isinstance(y_train, pd.Series)
+    assert isinstance(y_test, pd.Series)
+    assert len(y_train) == 43
+    assert len(y_test) == 29
+    assert (y[:43] == y_train).all()
+    assert (y[43:(43 + 29)] == y_test).all()
+
+
+def test_temporal_train_test_split_int_only_y():
+    """Test temporal_train_test_split expected output on float size inputs."""
+    y = load_airline()
+
+    # only test_size
+    y_train, y_test = temporal_train_test_split(y, test_size=29)
+    assert isinstance(y_train, pd.Series)
+    assert isinstance(y_test, pd.Series)
+    assert len(y_train) == 115
+    assert len(y_test) == 29
+    assert (y[:115] == y_train).all()
+    assert (y[-29:] == y_test).all()
+
+    # only train_size
+    y_train, y_test = temporal_train_test_split(y, train_size=115)
+    assert isinstance(y_train, pd.Series)
+    assert isinstance(y_test, pd.Series)
+    assert len(y_train) == 115
+    assert len(y_test) == 29
+    assert (y[:115] == y_train).all()
+    assert (y[-29:] == y_test).all()
+
+    # both train and test size
+    y_train, y_test = temporal_train_test_split(y, train_size=43, test_size=29)
     assert isinstance(y_train, pd.Series)
     assert isinstance(y_test, pd.Series)
     assert len(y_train) == 43
