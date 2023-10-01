@@ -1199,6 +1199,11 @@ class ForecastX(BaseForecaster):
     columns : None, or pandas compatible index iterator (e.g., list of str), optional
         default = None = all columns in X are used for forecast
         columns to which `forecaster_X` is applied
+    fit_behaviour : str, one of "ues_gt", "ues_forecast", optional,
+        default = "ues_gt"
+        if "use_gt", then `forecaster_y` is fit to `X` in `fit`
+        if "use_forecast", then `forecaster_y` is fit to `X` predicted by
+            forecaster_X
 
     Attributes
     ----------
@@ -1253,8 +1258,15 @@ class ForecastX(BaseForecaster):
     }
 
     def __init__(
-        self, forecaster_y, forecaster_X, fh_X=None, behaviour="update", columns=None
+        self,
+        forecaster_y,
+        forecaster_X,
+        fh_X=None,
+        behaviour="update",
+        columns=None,
+        fit_behaviour="use_gt",
     ):
+        self.fit_behaviour = fit_behaviour
         if behaviour not in ["update", "refit"]:
             raise ValueError('behaviour must be one of "update", "refit"')
 
@@ -1315,7 +1327,11 @@ class ForecastX(BaseForecaster):
             self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X)
 
         self.forecaster_y_ = self.forecaster_y.clone()
-        self.forecaster_y_.fit(y=y, X=X, fh=fh)
+        if self.fit_behaviour == "use_gt":
+            self.forecaster_y_.fit(y=y, X=X, fh=fh)
+        elif self.fit_behaviour == "use_forecast":
+            x_insample = self.forecaster_X_.predict(fh=X.index, X=X)
+            self.forecaster_y_.fit(y=y, X=x_insample, fh=fh)
 
         return self
 
@@ -1356,7 +1372,7 @@ class ForecastX(BaseForecaster):
             forecaster = self.forecaster_X_c.clone()
             forecaster.fit(y=self._get_Xcols(self._X), fh=fh)
 
-        X_pred = getattr(forecaster, method)()
+        X_pred = getattr(forecaster, method)(fh=fh)
         if X is not None:
             X_pred = X_pred.combine_first(X)
 
