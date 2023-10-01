@@ -17,5 +17,8 @@ from sktime.split.expandingwindow import ExpandingWindowSplitter
 from sktime.split.sameloc import SameLocSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 from sktime.split.slidingwindow import SlidingWindowSplitter
-from sktime.split.temporal_train_test_split import temporal_train_test_split
+from sktime.split.temporal_train_test_split import (
+    TemporalTrainTestSplitter,
+    temporal_train_test_split,
+)
 from sktime.split.testplustrain import TestPlusTrainSplitter
