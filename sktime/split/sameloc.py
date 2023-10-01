@@ -11,7 +11,7 @@ from typing import Optional
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._config import ACCEPTED_Y_TYPES, SPLIT_GENERATOR_TYPE
+from sktime.split.base._common import ACCEPTED_Y_TYPES, SPLIT_GENERATOR_TYPE
 
 
 class SameLocSplitter(BaseSplitter):

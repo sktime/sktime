@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._config import (
+from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
     DEFAULT_FH,
     DEFAULT_WINDOW_LENGTH,

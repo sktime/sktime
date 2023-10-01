@@ -9,7 +9,7 @@ __all__ = [
 from typing import Optional
 
 from sktime.split.base import BaseWindowSplitter
-from sktime.split.base._config import (
+from sktime.split.base._common import (
     DEFAULT_FH,
     DEFAULT_STEP_LENGTH,
     DEFAULT_WINDOW_LENGTH,

@@ -10,7 +10,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.datatypes._utilities import get_time_index
-from sktime.split.base._config import (
+from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
     FORECASTING_HORIZON_TYPES,
     SPLIT_TYPE,

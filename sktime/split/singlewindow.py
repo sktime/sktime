@@ -13,7 +13,7 @@ import pandas as pd
 
 from sktime.datatypes._utilities import get_index_for_series
 from sktime.split.base import BaseSplitter
-from sktime.split.base._config import (
+from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
     FORECASTING_HORIZON_TYPES,
     SPLIT_GENERATOR_TYPE,

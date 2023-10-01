@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._config import SPLIT_GENERATOR_TYPE
+from sktime.split.base._common import SPLIT_GENERATOR_TYPE
 
 
 class ExpandingGreedySplitter(BaseSplitter):
