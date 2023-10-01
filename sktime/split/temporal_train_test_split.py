@@ -26,7 +26,7 @@ def temporal_train_test_split(
     train_size: Optional[float] = None,
     fh: Optional[FORECASTING_HORIZON_TYPES] = None,
 ) -> SPLIT_TYPE:
-    """Splits time series data containers into a sintle train/test split.
+    """Split time series data containers into a single train/test split.
 
     Splits time series ``y`` into a single temporally ordered train and test split.
     The split is based on ``test_size`` and ``train_size`` parameters,
