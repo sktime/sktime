@@ -2,7 +2,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implement cutoff dataset splitting for model evaluation and selection."""
 
-__all__ = ["temporal_train_test_split"]
+__all__ = [
+    "temporal_train_test_split",
+    "TemporalTrainTestSplitter",
+]
 
 from typing import Optional
 
