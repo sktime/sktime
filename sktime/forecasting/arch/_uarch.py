@@ -5,8 +5,12 @@
 __author__ = ["Vasudeva-bit"]
 __all__ = ["ARCH"]
 
+import itertools
+from collections import OrderedDict
+
 import numpy as np
 import pandas as pd
+import scipy.stats as stats
 
 from sktime.forecasting.base import BaseForecaster
 
@@ -154,6 +158,7 @@ class ARCH(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "python_dependencies": "arch",
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -317,7 +322,6 @@ class ARCH(BaseForecaster):
             random_state=self.random_state,
             reindex=self.reindex,
         )
-
         full_range = pd.RangeIndex(start=start, stop=end + 1)
         y_pred = pd.Series(
             ArchResultObject.mean.values[-1],
@@ -328,6 +332,180 @@ class ARCH(BaseForecaster):
         y_pred.index = self._horizon.to_absolute_index(self.cutoff)
 
         return y_pred
+
+    def _predict_interval(self, fh, X, coverage):
+        """Compute/return prediction intervals for a forecast.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            Exogeneous time series for the forecast
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        if fh:
+            self._horizon = fh
+
+        abs_idx = self._horizon.to_absolute_int(self._y.index[0], self.cutoff)
+        start, end = abs_idx[[0, -1]]
+        start = min(start, len(self._y))
+
+        if X is not None:
+            x = {}
+            for col in X.columns:
+                x[str(col)] = np.array(X[col])
+        else:
+            x = None
+
+        ArchResultObject = self._fitted_forecaster.forecast(
+            x=x,
+            horizon=end - start + 1,
+            params=self.params,
+            start=self.start,
+            align=self.align,
+            method=self.method,
+            simulations=self.simulations,
+            rng=self.rng,
+            random_state=self.random_state,
+            reindex=self.reindex,
+        )
+
+        full_range = pd.RangeIndex(start=start, stop=end + 1)
+        std_err = np.sqrt(np.array(ArchResultObject.variance.values[-1]))
+        mean_forecast = np.array(ArchResultObject.mean.values[-1])
+
+        y_col_name = self._y.name
+        df_list = []
+        for confidence in coverage:
+            alpha = 1 - confidence
+            z_critical = stats.norm.ppf(1 - (alpha) / 2)
+            lower_int = mean_forecast - (z_critical * std_err)
+            upper_int = mean_forecast + (z_critical * std_err)
+            lower_df = pd.DataFrame(
+                lower_int,
+                columns=[y_col_name + " " + str(alpha) + " " + "lower"],
+            )
+            upper_df = pd.DataFrame(
+                upper_int,
+                columns=[y_col_name + " " + str(alpha) + " " + "upper"],
+            )
+            df_list.append(pd.concat((lower_df, upper_df), axis=1))
+
+        concat_df = pd.concat(df_list, axis=1)
+
+        concat_df_columns = list(
+            OrderedDict.fromkeys(
+                [
+                    col_df
+                    for col in y_col_name
+                    for col_df in concat_df.columns
+                    if col in col_df
+                ]
+            )
+        )
+
+        df = concat_df[concat_df_columns]
+
+        df = pd.DataFrame(
+            df.values,
+            columns=pd.MultiIndex.from_tuples([col.split(" ") for col in df]),
+            index=full_range,
+        )
+
+        final_columns = list(
+            itertools.product(
+                *[
+                    [y_col_name],
+                    coverage,
+                    df.columns.get_level_values(2).unique(),
+                ]
+            )
+        )
+
+        df = pd.DataFrame(
+            df.loc[abs_idx.to_pandas()].values,
+            columns=pd.MultiIndex.from_tuples(final_columns),
+        )
+        df.index = self._horizon.to_absolute_index(self.cutoff)
+
+        return df
+
+    def _predict_var(self, fh=None, X=None, cov=False):
+        """Compute/return variance forecasts.
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the positive steps ahead to predict.
+        X : optional (default=None)
+            (default=None) Exogenous time series.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame
+            Variance forecasts
+        """
+        if fh:
+            self._horizon = fh
+
+        abs_idx = self._horizon.to_absolute_int(self._y.index[0], self.cutoff)
+        start, end = abs_idx[[0, -1]]
+        start = min(start, len(self._y))
+
+        if X is not None:
+            x = {}
+            for col in X.columns:
+                x[str(col)] = np.array(X[col])
+        else:
+            x = None
+
+        ArchResultObject = self._fitted_forecaster.forecast(
+            x=x,
+            horizon=end - start + 1,
+            params=self.params,
+            start=self.start,
+            align=self.align,
+            method=self.method,
+            simulations=self.simulations,
+            rng=self.rng,
+            random_state=self.random_state,
+            reindex=self.reindex,
+        )
+        y_col_name = self._y.name
+        full_range = pd.RangeIndex(start=start, stop=end + 1)
+        pred_var = pd.Series(
+            ArchResultObject.variance.values[-1],
+            index=full_range,
+            name=y_col_name,
+        )
+        pred_var = pred_var.loc[abs_idx.to_pandas()]
+        pred_var.index = self._horizon.to_absolute_index(self.cutoff)
+
+        return pred_var
 
     def _get_fitted_params(self):
         """Get fitted parameters.
