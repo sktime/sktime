@@ -1,6 +1,8 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement cutoff dataset splitting for model evaluation and selection."""
+"""Splitter with a single train/test cutoff split."""
+
+__author__ = ["khrapovs"]
 
 __all__ = [
     "CutoffSplitter",

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement cutoff dataset splitting for model evaluation and selection."""
+"""Single temporal train test split utility function."""
 
 __all__ = ["temporal_train_test_split"]
 

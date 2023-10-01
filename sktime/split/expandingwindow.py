@@ -1,6 +1,8 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement expanding window dataset splitting for model evaluation and selection."""
+"""Splitter that successively expands the training window."""
+
+__author__ = ["kkoralturk", "khrapovs"]
 
 __all__ = [
     "ExpandingWindowSplitter",

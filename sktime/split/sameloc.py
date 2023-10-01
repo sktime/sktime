@@ -1,6 +1,8 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement SameLoc dataset splitting for model evaluation and selection."""
+"""Splitter that replicates loc indices from another splitter."""
+
+__author__ = ["fkiraly"]
 
 __all__ = [
     "SameLocSplitter",

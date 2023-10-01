@@ -1,6 +1,8 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement sliding window splitting for model evaluation and selection."""
+"""Splitter that slides a fixed size window to generate train and test folds."""
+
+__author__ = ["khrapovs", "mloning"]
 
 __all__ = [
     "SlidingWindowSplitter",

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement train plus test dataset splitting for model evaluation and selection."""
+"""Splitter that modifies a splitter by adding train folds to the test folds."""
+
+__author__ = ["fkiraly"]
 
 __all__ = ["TestPlusTrainSplitter"]
 

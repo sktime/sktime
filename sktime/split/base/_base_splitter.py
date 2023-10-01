@@ -1,5 +1,8 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Base class for time series splitters."""
+
+__author__ = ["fkiraly", "khrapovs", "mateuja", "mloning"]
 
 from typing import Iterator, Optional, Tuple
 

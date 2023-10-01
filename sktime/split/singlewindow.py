@@ -1,6 +1,8 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement single window dataset splitting for model evaluation and selection."""
+"""Splitter that produces a single train/test split based on a window."""
+
+__author__ = ["khrapovs"]
 
 __all__ = [
     "SingleWindowSplitter",
