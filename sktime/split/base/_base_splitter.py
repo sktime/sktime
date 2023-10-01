@@ -83,9 +83,16 @@ class BaseSplitter(BaseObject):
         Single step ahead or array of steps ahead to forecast.
     """
 
-    _tags = {"split_hierarchical": False}
-    # split_hierarchical: whether _split supports hierarchical types natively
-    # if not, splitter broadcasts over instances
+    _tags = {
+        "object_type": "splitter",
+        "split_hierarchical": False,
+        # split_hierarchical: whether _split supports hierarchical types natively
+        # if not, splitter broadcasts over instances
+        "split_series_uses": "iloc",
+        # split_series_uses: "iloc" or "loc", whether split_series under the hood
+        # calls split ("iloc") or split_loc ("loc"). Setting this can give
+        # performance advantages, e.g., if "loc" is faster to obtain.
+    }
 
     def __init__(
         self,
