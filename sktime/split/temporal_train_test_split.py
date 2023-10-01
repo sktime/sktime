@@ -140,7 +140,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
 
     _tags = {"split_hierarchical": False}
 
-    def __init__(self, train_size, test_size, anchor="start"):
+    def __init__(self, train_size=None, test_size=None, anchor="start"):
         self.train_size = train_size
         self.test_size = test_size
         self.anchor = anchor
