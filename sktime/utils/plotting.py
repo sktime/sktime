@@ -48,11 +48,10 @@ def plot_series(
         and upper boundaries of confidence interval.
     ax : matplotlib axes, optional
         Axes to plot on, if None, a new figure is created and returned
-        
+
     Returns
     -------
     fig : plt.Figure
-        plt.Figure is the output canvas for creating and configuring visualizations.
         It manages the final visual appearance and layout.
         Create a new figure, or activate an existing figure.
     ax : plt.Axis
@@ -66,6 +65,22 @@ def plot_series(
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> fig, ax = plot_series(y)  # doctest: +SKIP
+
+    Description
+    -----------
+    This function allows you to plot one or more time series on a single figure.
+    The figure can include multiple time series, markers, labels, legends,
+    and even prediction intervals.
+    It is a versatile tool for visualizing time series data and
+    making comparisons between different series.
+
+    The resulting figure includes the time series data,
+    customizable labels, markers for data points,
+    and legends for explaining the meaning of each series.
+    You can also specify custom colors for each series
+    and add a title to the figure. If prediction intervals
+    are available, they can be overlaid
+    on the plot to visualize uncertainty.
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
