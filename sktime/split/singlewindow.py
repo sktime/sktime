@@ -11,7 +11,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._utilities import get_index_for_series, get_window
+from sktime.datatypes._utilities import get_index_for_series
 from sktime.split.base import BaseSplitter
 from sktime.split.base._config import (
     ACCEPTED_Y_TYPES,
@@ -20,12 +20,12 @@ from sktime.split.base._config import (
     _check_fh,
     _check_inputs_for_compatibility,
     _get_end,
+    _get_train_window_via_endpoint,
 )
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     array_is_int,
     check_window_length,
-    is_int,
 )
 
 
@@ -70,16 +70,9 @@ class SingleWindowSplitter(BaseSplitter):
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
-        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
-            window_length = y.freq * window_length
         fh = _check_fh(self.fh)
         train_end = _get_end(y_index=y, fh=fh)
-
-        training_window = get_window(
-            pd.Series(index=y[y <= y[train_end]], dtype=y.dtype),
-            window_length=window_length,
-        ).index
-        training_window = y.get_indexer(training_window)
+        training_window = _get_train_window_via_endpoint(y, train_end, window_length)
         if array_is_int(fh):
             test_window = train_end + fh.to_numpy()
         else:
@@ -149,5 +142,4 @@ class SingleWindowSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"fh": 3}
-        return params
+        return [{"fh": 3}, {"fh": [2, 4], "window_length": 3}]
