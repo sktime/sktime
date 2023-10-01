@@ -73,29 +73,53 @@ class DateTimeFeatures(BaseTransformer):
     manual_selection: str, optional (default=None)
         Manual selection of dummys. Notation is child of parent for precise notation.
         Will ignore specified feature_scope, but will still check with warning against
-        a specified ts_freq. All columns returned are integer based.
+        a specified ts_freq. All columns returned are integer based. Dates are presented
+        in DD-MM-YYYY format below.
         Supported values:
         * None
         * quarter_of_year
             1-based index
+            1-(Jan to Mar), 2-(Apr to Jun), 3-(Jul to Sep), 4-(Oct to Dec)
         * month_of_year
             1-based offset to January
+            1-January,2-February,...,12-December
         * week_of_year
             1-based offset to the first week of an ISO year
         * day_of_year
             1-based offset to first of January
+            1 is 01-01-YYYY, 2 is 02-01-YYYY and so on.
         * month_of_quarter
-            1-based index
+            1-based index to first month of each quarter(Jan,Apr,Jul,Oct)
+            For the first quarter: 1-January, 2-February, 3-March
         * week_of_quarter
-            1-based index
+            1-based offset to first week of the quarter.
+            The first/last week of the quarter may or may not include 7 days. All other
+            weeks have 7 days.
+            A week is taken to start on Monday.
+            If the month begins on a Monday, then the first seven days upto the next
+            Monday is week 1.
+            Otherwise, week 1 is from the 1st of that month upto the first Monday.
+            Example:
+                If 01-01-YYYY is a Monday,
+                Week 1 : Mon,Tue,Wed,Thu,Fri,Sat,Sun(07-01-YYYY)
+                Week 2 : Mon(08-01-YYYY),Tue,...,Sun
+                If 01-01-YYYY is a Thursday,
+                Week 1 : Thu,Fri,Sat,Sun(04-01-YYYY)
+                Week 2 : Mon(05-01-YYYY),Tue,...,Sun
         * day_of_quarter
             1-based index
         * week_of_month
             1-based index
+            1 indicates the first week of the month.
+            First week includes the first 7 days of the month(01-MM-YYYY to 07-MM-YYYY)
+            2 indicates the second week of the month.
+            Second week includes the next 7 days(08-MM-YYYY to 14-MM-YYYY) and so on.
         * day_of_month
             1-based offset to first day of each month
+            1 is 01-MM-YYYY, 2 is 02-MM-YYYY and so on.
         * day_of_week
             0-based offset to Monday
+            0-Monday,1-Tuesday,...,6-Sunday
         * hour_of_week
             0-based offset to Monday(00:00:00+00:00)
         * hour_of_day
