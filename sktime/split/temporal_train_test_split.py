@@ -102,9 +102,10 @@ def temporal_train_test_split(
 class TemporalTrainTestSplitter(BaseSplitter):
     r"""Temporal train-test splitter, based on sample sizes of train or test set.
 
-    Cuts test and train sets from the end of available data, based on ``test_size``
-    and ``train_size`` parameters, which can signify fractions of total number of
-    indices, or an absolute number of integers to cut.
+    Cuts test and train sets from the start or end of available data,
+    based on ``test_size`` and ``train_size`` parameters,
+    which can signify fractions of total number of indices,
+    or an absolute number of integers to cut.
 
     If the data contains multiple time series (Panel or Hierarchical),
     fractions and train-test sets will be computed per individual time series.
@@ -124,6 +125,10 @@ class TemporalTrainTestSplitter(BaseSplitter):
         next integer count of samples.
         If int, is interpreted as total number of train samples.
         If None, the value is set to the complement of the test size.
+    anchor : str, "start" (default) or "end"
+        determines behaviour if train and test sizes do not sum up to all data
+        if "start", cuts train and test set from start of available series
+        if "end", cuts train and test set from end of available series
 
     Examples
     --------
@@ -136,13 +141,10 @@ class TemporalTrainTestSplitter(BaseSplitter):
 
     _tags = {"split_hierarchical": True}
 
-    def __init__(
-        self,
-        train_size: Optional[float] = None,
-        test_size: Optional[float] = None,
-    ) -> None:
+    def __init__(self, train_size, test_size, anchor):
         self.train_size = train_size
         self.test_size = test_size
+        self.anchor = anchor
         super().__init__()
 
         # in this case, the inner ExpandingGreedySplitter is not hierarchical
@@ -155,19 +157,28 @@ class TemporalTrainTestSplitter(BaseSplitter):
 
         test_size = self.test_size
         train_size = self.train_size
+        anchor = self.anchor
 
         if test_size is None and train_size is None:
             test_size = 0.25
 
-        if test_size is not None:
+        if train_size is None:
+            anchor = "end"
+        if test_size is None:
+            anchor = "start"
+
+        if anchor == "end":
             splitter = ExpandingGreedySplitter(test_size, folds=1)
             y_train_ix, y_test_ix = list(splitter.split(y))[0]
             if train_size is not None:
                 splitter = ExpandingGreedySplitter(train_size, folds=1)
                 _, y_train_ix = list(splitter.split(y_train_ix))[0]
-        else:
+        else:  # if anchor == "start"
             splitter = ExpandingGreedySplitter(train_size, folds=1, reverse=True)
             y_test_ix, y_train_ix = list(splitter.split(y))[0]
+            if train_size is not None:
+                splitter = ExpandingGreedySplitter(train_size, folds=1, reverse=True)
+                y_test_ix, _ = list(splitter.split(y_test_ix))[0]
 
         yield y_train_ix, y_test_ix
 
