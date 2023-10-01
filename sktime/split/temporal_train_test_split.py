@@ -218,8 +218,8 @@ class TemporalTrainTestSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {"test_size": 0.2, "train_size": 0.3, anchor: "start"}
-        params2 = {"test_size": 0.2, "train_size": 0.3, anchor: "end"}
+        params1 = {"test_size": 0.2, "train_size": 0.3, "anchor": "start"}
+        params2 = {"test_size": 0.2, "train_size": 0.3, "anchor": "end"}
         params3 = {"test_size": 2}
         params4 = {"train_size": 3}
         params5 = {}
