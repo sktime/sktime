@@ -297,12 +297,38 @@ class BaseWindowSplitter(BaseSplitter):
         n_splits : int
             The number of splits.
         """
+        from sktime.datatypes import check_is_scitype, convert
+
         if y is None:
             raise ValueError(
                 f"{self.__class__.__name__} requires `y` to compute the "
                 f"number of splits."
             )
-        return len(self.get_cutoffs(y))
+
+        multi_scitypes = ["Hierarchical", "Panel"]
+        is_non_single, _, metadata = check_is_scitype(y, multi_scitypes, [])
+
+        # n_splits based on the first instance of the lowest level series cutoffs
+        if is_non_single:
+            from_mtype = metadata.get("mtype")
+            scitype = metadata.get("scitype")
+            if scitype == "Panel":
+                to_mtype = "pd-multiindex"
+            else:
+                to_mtype = "pd_multiindex_hier"
+
+            y = convert(y, from_type=from_mtype, to_type=to_mtype, as_scitype=scitype)
+
+            index = self._coerce_to_index(y)
+            for _, values in y.groupby(index.droplevel(-1)):
+                # convert to a single ts
+                instance_series = values.reset_index().iloc[:, -2:]
+                instance_series.set_index(instance_series.columns[0], inplace=True)
+                n_splits = len(self.get_cutoffs(instance_series))
+                break
+        else:
+            n_splits = len(self.get_cutoffs(y))
+        return n_splits
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
