@@ -100,30 +100,38 @@ def temporal_train_test_split(
 
 
 class TemporalTrainTestSplitter(BaseSplitter):
-    r"""Single window splitter.
+    r"""Temporal train-test splitter, based on sample sizes of train or test set.
+
+    Cuts test and train sets from the end of available data, based on ``test_size``
+    and ``train_size`` parameters, which can signify fractions of total number of
+    indices, or an absolute number of integers to cut.
+
+    If the data contains multiple time series (Panel or Hierarchical),
+    fractions and train-test sets will be computed per individual time series.
 
     Parameters
     ----------
     test_size : float, int or None, optional (default=None)
-        If float, should be between 0.0 and 1.0 and represent the proportion
-        of the dataset to include in the test split. If int, represents the
-        relative number of test samples. If None, the value is set to the
-        complement of the train size. If ``train_size`` is also None, it will
-        be set to 0.25.
+        If float, must be between 0.0 and 1.0, and is interpreted as the proportion
+        of the dataset to include in the test split. Proportions are rounded to the
+        next integer count of samples.
+        If int, is interpreted as total number of test samples.
+        If None, the value is set to the complement of the train size.
+        If ``train_size`` is also None, it will be set to 0.25.
     train_size : float, int, or None, (default=None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the train split. If
-        int, represents the relative number of train samples. If None,
-        the value is automatically set to the complement of the test size.
+        If float, must be between 0.0 and 1.0, and is interpreted as the proportion
+        of the dataset to include in the train split. Proportions are rounded to the
+        next integer count of samples.
+        If int, is interpreted as total number of train samples.
+        If None, the value is set to the complement of the test size.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.split import SingleWindowSplitter
+    >>> from sktime.split import TemporalTrainTestSplitter
     >>> ts = np.arange(10)
-    >>> splitter = SingleWindowSplitter(fh=[2, 4], window_length=3)
+    >>> splitter = TemporalTrainTestSplitter(test_size=0.3)
     >>> list(splitter.split(ts)) # doctest: +SKIP
-    [(array([3, 4, 5]), array([7, 9]))]
     """
 
     _tags = {"split_hierarchical": True}
