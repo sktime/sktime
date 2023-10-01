@@ -78,7 +78,7 @@ def test_temporal_train_test_split_float_only_y():
     assert len(y_train) == 43
     assert len(y_test) == 29
     assert (y[:43] == y_train).all()
-    assert (y[43:(43 + 29)] == y_test).all()
+    assert (y[43 : (43 + 29)] == y_test).all()
 
 
 def test_temporal_train_test_split_int_only_y():
@@ -110,4 +110,4 @@ def test_temporal_train_test_split_int_only_y():
     assert len(y_train) == 43
     assert len(y_test) == 29
     assert (y[:43] == y_train).all()
-    assert (y[43:(43 + 29)] == y_test).all()
+    assert (y[43 : (43 + 29)] == y_test).all()
