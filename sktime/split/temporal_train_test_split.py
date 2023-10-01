@@ -94,8 +94,11 @@ def temporal_train_test_split(
     y_train, y_test = list(temporal_splitter.split_series(y))[0]
 
     if X is not None:
-        X_train = X.loc[y_train.index]
-        X_test = X.loc[y_test.index]
+        from sktime.split import SameLocSplitter
+
+        X_splitter = SameLocSplitter(temporal_splitter, y)
+        X_train, X_test = list(X_splitter.split_series(X))[0]
+
         return y_train, y_test, X_train, X_test
     else:
         return y_train, y_test
