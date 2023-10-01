@@ -22,7 +22,7 @@ class TestPlusTrainSplitter(BaseSplitter):
 
     Parameters
     ----------
-    cv : BaseSplitter or BaseWindowSplitter
+    cv : BaseSplitter
         splitter to modify as above
 
     Examples
@@ -40,6 +40,10 @@ class TestPlusTrainSplitter(BaseSplitter):
     def __init__(self, cv):
         self.cv = cv
         super().__init__()
+
+        # dispatch split_series to the same split/split_loc as the wrapped cv
+        # for performance reasons
+        self.clone_tags(cv, "split_series_uses")
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`.
@@ -63,6 +67,30 @@ class TestPlusTrainSplitter(BaseSplitter):
         for y_train_inner, y_test_inner in cv.split(y):
             y_train_self = y_train_inner
             y_test_self = np.union1d(y_train_inner, y_test_inner)
+            yield y_train_self, y_test_self
+
+    def _split_loc(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Get loc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split_loc
+
+        Parameters
+        ----------
+        y : pd.Index
+            index of time series to split
+
+        Yields
+        ------
+        train : pd.Index
+            Training window indices, loc references to training indices in y
+        test : pd.Index
+            Test window indices, loc references to test indices in y
+        """
+        cv = self.cv
+
+        for y_train_inner, y_test_inner in cv.split_loc(y):
+            y_train_self = y_train_inner
+            y_test_self = y_train_inner.union(y_test_inner)
             yield y_train_self, y_test_self
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
@@ -101,10 +129,11 @@ class TestPlusTrainSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.split import ExpandingWindowSplitter
+        from sktime.forecasting.model_selection import (
+            ExpandingWindowSplitter,
+            SingleWindowSplitter,
+        )
 
-        cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
-
-        params = {"cv": cv_tpl}
-
-        return params
+        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=24)
+        return [{"cv": cv_1}, {"cv": cv_2}]

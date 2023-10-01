@@ -44,12 +44,17 @@ class SameLocSplitter(BaseSplitter):
     >>> splitter = SameLocSplitter(cv_tpl, y_template)
 
     these two are the same:
+
     >>> list(cv_tpl.split(y_template)) # doctest: +SKIP
     >>> list(splitter.split(y)) # doctest: +SKIP
     """
 
-    _tags = {"split_hierarchical": True}
-    # SameLocSplitter supports hierarchical pandas index
+    _tags = {
+        "split_hierarchical": True,
+        # SameLocSplitter supports hierarchical pandas index
+        "split_series_uses": "loc",
+        # loc is quicker to get since that is directly passed
+    }
 
     def __init__(self, cv, y_template=None):
         self.cv = cv
@@ -67,6 +72,31 @@ class SameLocSplitter(BaseSplitter):
             y_train_iloc = y.get_indexer(y_train_loc)
             y_test_iloc = y.get_indexer(y_test_loc)
             yield y_train_iloc, y_test_iloc
+
+    def _split_loc(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Get loc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split_loc
+
+        Parameters
+        ----------
+        y : pd.Index
+            index of time series to split
+
+        Yields
+        ------
+        train : pd.Index
+            Training window indices, loc references to training indices in y
+        test : pd.Index
+            Test window indices, loc references to test indices in y
+        """
+        cv = self.cv
+        if self.y_template is None:
+            y_template = y
+        else:
+            y_template = self.y_template
+
+        yield from cv.split_loc(y_template)
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
@@ -109,12 +139,13 @@ class SameLocSplitter(BaseSplitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.datasets import load_airline
-        from sktime.split import ExpandingWindowSplitter
+        from sktime.forecasting.model_selection import (
+            ExpandingWindowSplitter,
+            SingleWindowSplitter,
+        )
 
         y = load_airline()
-        y_template = y[:60]
-        cv_tpl = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
-
-        params = {"cv": cv_tpl, "y_template": y_template}
-
-        return params
+        y_temp = y[:60]
+        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=24)
+        return [{"cv": cv_1, "y_template": y_temp}, {"cv": cv_2, "y_template": y_temp}]
