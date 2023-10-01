@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseObject
-from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes import check_is_scitype, convert
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.split.base._config import (
     ACCEPTED_Y_TYPES,

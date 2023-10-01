@@ -11,7 +11,6 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._utilities import get_window
 from sktime.split.base import BaseSplitter
 from sktime.split.base._config import (
     ACCEPTED_Y_TYPES,
@@ -21,6 +20,7 @@ from sktime.split.base._config import (
     SPLIT_GENERATOR_TYPE,
     _check_fh,
     _check_inputs_for_compatibility,
+    _get_train_window_via_endpoint,
 )
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
@@ -130,7 +130,7 @@ class CutoffSplitter(BaseSplitter):
     is then trivially equal to :math:`n`.
 
     The sorted array of cutoffs returned by `.get_cutoffs` is then equal to
-    :math:(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
+    :math:`(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
 
     Parameters
     ----------
@@ -144,7 +144,7 @@ class CutoffSplitter(BaseSplitter):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.split import CutoffSplitter
+    >>> from sktime.forecasting.model_selection import CutoffSplitter
     >>> ts = np.arange(10)
     >>> splitter = CutoffSplitter(fh=[2, 4], cutoffs=np.array([3, 5]), window_length=3)
     >>> list(splitter.split(ts)) # doctest: +SKIP
@@ -168,20 +168,11 @@ class CutoffSplitter(BaseSplitter):
         window_length = check_window_length(
             window_length=self.window_length, n_timepoints=n_timepoints
         )
-        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
-            window_length = y.freq * window_length
         _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
 
         for cutoff in cutoffs:
-            null = 0 if is_int(cutoff) else pd.Timestamp(0)
-            if cutoff >= null:
-                train_end = y[cutoff] if is_int(cutoff) else cutoff
-                y_train = pd.Series(index=y[y <= train_end], dtype=y.dtype)
-                training_window = get_window(y_train, window_length=window_length).index
-            else:
-                training_window = []
-            training_window = y.get_indexer(training_window)
+            training_window = _get_train_window_via_endpoint(y, cutoff, window_length)
             test_window = cutoff + fh.to_numpy()
             if is_datetime(x=cutoff):
                 test_window = y.get_indexer(test_window[test_window >= y.min()])
@@ -246,4 +237,4 @@ class CutoffSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {"cutoffs": np.array([3, 7, 10])}
+        return [{"cutoffs": np.array([3, 7, 10])}, {"cutoffs": [21, 22]}]
