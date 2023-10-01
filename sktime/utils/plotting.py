@@ -30,6 +30,22 @@ def plot_series(
 ):
     """Plot one or more time series.
 
+    Description
+    -----------
+    This function allows you to plot one or more
+    time series on a single figure via `series`.
+    Used for making comparisons between different series.
+
+    The resulting figure includes the time series data plotted on a graph with
+    x-axis as time by default and can be changed via `x_label` and
+    y-axis as value of time series can be renamed via `y_label` and
+    labels explaining the meaning of each series via `labels`,
+    markers for data points via `markers`.
+    You can also specify custom colors via `colors` for each series and
+    add a title to the figure via `title`.
+    If prediction intervals are available add them using `pred_interval`,
+    they can be overlaid on the plot to visualize uncertainty.
+
     Parameters
     ----------
     series : pd.Series or iterable of pd.Series
@@ -66,21 +82,6 @@ def plot_series(
     >>> y = load_airline()
     >>> fig, ax = plot_series(y)  # doctest: +SKIP
 
-    Description
-    -----------
-    This function allows you to plot one or more time series on a single figure.
-    The figure can include multiple time series, markers, labels, legends,
-    and even prediction intervals.
-    It is a versatile tool for visualizing time series data and
-    making comparisons between different series.
-
-    The resulting figure includes the time series data,
-    customizable labels, markers for data points,
-    and legends for explaining the meaning of each series.
-    You can also specify custom colors for each series
-    and add a title to the figure. If prediction intervals
-    are available, they can be overlaid
-    on the plot to visualize uncertainty.
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
