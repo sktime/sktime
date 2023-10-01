@@ -7,6 +7,7 @@ __all__ = [
     "SameLocSplitter",
     "SingleWindowSplitter",
     "SlidingWindowSplitter",
+    "TemporalTrainTestSplitter",
     "TestPlusTrainSplitter",
     "temporal_train_test_split",
 ]
