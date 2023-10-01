@@ -26,46 +26,37 @@ def temporal_train_test_split(
     train_size: Optional[float] = None,
     fh: Optional[FORECASTING_HORIZON_TYPES] = None,
 ) -> SPLIT_TYPE:
-    """Split arrays or matrices into sequential train and test subsets.
+    """Splits time series data containers into a sintle train/test split.
 
-    Creates train/test splits over endogenous arrays an optional exogenous
-    arrays.
+    Splits time series ``y`` into a single temporally ordered train and test split.
+    The split is based on ``test_size`` and ``train_size`` parameters,
+    which can signify fractions of total number of indices,
+    or an absolute number of integers to cut.
 
-    This is a wrapper of scikit-learn's ``train_test_split`` that
-    does not shuffle the data.
+    If the data contains multiple time series (Panel or Hierarchical),
+    fractions and train-test sets will be computed per individual time series.
+
+    If ``X`` is provided, will also produce a single train/test split of ``X``,
+    at the same ``loc`` indices as ``y``. If non-``pandas`` based containers are used,
+    will use ``iloc`` index instead.
 
     Parameters
     ----------
     y : time series in sktime compatible data container format
     X : time series in sktime compatible data container format, optional, default=None
-        y and X can be in one of the following formats:
-        Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            for vanilla forecasting, one time series
-        Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-            3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            for global or panel forecasting
-        Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-            for hierarchical forecasting
-        Number of columns admissible depend on the "scitype:y" tag:
-            if self.get_tag("scitype:y")=="univariate":
-                y must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                y must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions on columns apply
-        For further details:
-            on usage, see forecasting tutorial examples/01_forecasting.ipynb
-            on specification of formats, examples/AA_datatypes_and_datasets.ipynb
     test_size : float, int or None, optional (default=None)
-        If float, should be between 0.0 and 1.0 and represent the proportion
-        of the dataset to include in the test split. If int, represents the
-        relative number of test samples. If None, the value is set to the
-        complement of the train size. If ``train_size`` is also None, it will
-        be set to 0.25.
+        If float, must be between 0.0 and 1.0, and is interpreted as the proportion
+        of the dataset to include in the test split. Proportions are rounded to the
+        next integer count of samples.
+        If int, is interpreted as total number of test samples.
+        If None, the value is set to the complement of the train size.
+        If ``train_size`` is also None, it will be set to 0.25.
     train_size : float, int, or None, (default=None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the train split. If
-        int, represents the relative number of train samples. If None,
-        the value is automatically set to the complement of the test size.
+        If float, must be between 0.0 and 1.0, and is interpreted as the proportion
+        of the dataset to include in the train split. Proportions are rounded to the
+        next integer count of samples.
+        If int, is interpreted as total number of train samples.
+        If None, the value is set to the complement of the test size.
     fh : ForecastingHorizon
 
     Returns
