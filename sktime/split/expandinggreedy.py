@@ -81,6 +81,7 @@ class ExpandingGreedySplitter(BaseSplitter):
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         test_size = self.test_size
+        reverse = self.reverse
 
         if isinstance(test_size, float):
             _test_size = round(len(y) * test_size)
@@ -102,7 +103,7 @@ class ExpandingGreedySplitter(BaseSplitter):
             tst_indices = np.flatnonzero(
                 (reverse_idx < trn_end) & (reverse_idx >= tst_end)
             )
-            if not reversed:
+            if not reverse:
                 yield trn_indices, tst_indices
             else:
                 rev_ix = np.arange(len(y))[::-1]

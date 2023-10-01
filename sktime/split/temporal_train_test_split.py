@@ -176,8 +176,8 @@ class TemporalTrainTestSplitter(BaseSplitter):
         else:  # if anchor == "start"
             splitter = ExpandingGreedySplitter(train_size, folds=1, reverse=True)
             y_test_ix, y_train_ix = list(splitter.split(y))[0]
-            if train_size is not None:
-                splitter = ExpandingGreedySplitter(train_size, folds=1, reverse=True)
+            if test_size is not None:
+                splitter = ExpandingGreedySplitter(test_size, folds=1, reverse=True)
                 y_test_ix, _ = list(splitter.split(y_test_ix))[0]
 
         yield y_train_ix, y_test_ix
