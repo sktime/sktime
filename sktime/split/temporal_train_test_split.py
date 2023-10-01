@@ -141,7 +141,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
 
     _tags = {"split_hierarchical": True}
 
-    def __init__(self, train_size, test_size, anchor):
+    def __init__(self, train_size, test_size, anchor="start"):
         self.train_size = train_size
         self.test_size = test_size
         self.anchor = anchor
@@ -218,8 +218,9 @@ class TemporalTrainTestSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {"test_size": 0.2, "train_size": 0.3}
-        params2 = {"test_size": 2}
-        params3 = {"train_size": 3}
-        params4 = {}
-        return [params1, params2, params3, params4]
+        params1 = {"test_size": 0.2, "train_size": 0.3, anchor: "start"}
+        params2 = {"test_size": 0.2, "train_size": 0.3, anchor: "end"}
+        params3 = {"test_size": 2}
+        params4 = {"train_size": 3}
+        params5 = {}
+        return [params1, params2, params3, params4, params5]
