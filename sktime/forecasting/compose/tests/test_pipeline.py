@@ -14,6 +14,7 @@ from sklearn.svm import SVR
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
 from sktime.datatypes._utilities import get_window
+from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import (
     ForecastingPipeline,
     TransformedTargetForecaster,
@@ -479,11 +480,10 @@ def test_forecastx_logic():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency is not available",
 )
 def test_forecastx_fit_behavior():
-    from sktime.forecasting.arima import ARIMA
     from sktime.forecasting.compose import ForecastX
     from sktime.forecasting.model_selection import temporal_train_test_split
 

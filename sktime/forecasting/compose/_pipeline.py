@@ -1199,11 +1199,12 @@ class ForecastX(BaseForecaster):
     columns : None, or pandas compatible index iterator (e.g., list of str), optional
         default = None = all columns in X are used for forecast
         columns to which `forecaster_X` is applied
-    fit_behaviour : str, one of "ues_gt", "ues_forecast", optional,
-        default = "ues_gt"
-        if "use_gt", then `forecaster_y` is fit to `X` in `fit`
-        if "use_forecast", then `forecaster_y` is fit to `X` predicted by
-            forecaster_X
+    fit_behaviour : str, one of "use_actual", "use_forecast", optional,
+        default = "use_actual"
+        if "use_actual", then `forecaster_y` uses the actual `X` as
+            exogenous features in `fit`
+        if "use_forecast", then `forecaster_y` uses the `X` predicted by
+            forecaster_X as exogenous features in `fit`
 
     Attributes
     ----------
@@ -1264,8 +1265,12 @@ class ForecastX(BaseForecaster):
         fh_X=None,
         behaviour="update",
         columns=None,
-        fit_behaviour="use_gt",
+        fit_behaviour="use_actual",
     ):
+        if fit_behaviour not in ["use_actual", "use_forecast"]:
+            raise ValueError(
+                'fit_behaviour must be one of "use_actual", "use_forecast"'
+            )
         self.fit_behaviour = fit_behaviour
         if behaviour not in ["update", "refit"]:
             raise ValueError('behaviour must be one of "update", "refit"')
@@ -1327,9 +1332,14 @@ class ForecastX(BaseForecaster):
             self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X)
 
         self.forecaster_y_ = self.forecaster_y.clone()
-        if self.fit_behaviour == "use_gt":
+        if self.fit_behaviour == "use_actual":
             self.forecaster_y_.fit(y=y, X=X, fh=fh)
         elif self.fit_behaviour == "use_forecast":
+            if "capability:insample" not in self.forecaster_X_.get_tags():
+                raise ValueError(
+                    "forecaster_X does not have `capability:insample`. "
+                    "Thus, it is not valid with `fit_behaviour=use_forecast`."
+                )
             x_insample = self.forecaster_X_.predict(fh=X.index, X=X)
             self.forecaster_y_.fit(y=y, X=x_insample, fh=fh)
 
