@@ -2,6 +2,8 @@
 
 __author__ = ["fkiraly"]
 
+from time import time
+
 import numpy as np
 
 from sktime.datatypes._check import (
@@ -317,19 +319,22 @@ def test_check_negative(scitype, mtype):
 
             # check fixtures that exist against checks that exist
             if fixture_wrong_type is not None and check_is_defined:
-                assert not check_is_mtype(fixture_wrong_type, mtype, scitype), (
+                start_time = time()
+                result = check_is_mtype(
+                    fixture_wrong_type, mtype, scitype, return_metadata=[]
+                )[0]
+                end_time = time()
+                duration = end_time - start_time
+
+                assert not result, (
                     f"check_is_mtype {mtype} returns True "
                     f"on {wrong_mtype} fixture {i}"
                 )
 
-            # check fixtures that exist against checks that exist
-            if fixture_wrong_type is not None and check_is_defined:
-                result = check_is_mtype(
-                    fixture_wrong_type, mtype, scitype, return_metadata=[]
-                )[0]
-                assert not result, (
-                    f"check_is_mtype {mtype} returns True "
-                    f"on {wrong_mtype} fixture {i}"
+                assert duration < 1e-5, (
+                    f"negative check by check_is_mtype {mtype} on "
+                    f"{wrong_mtype} fixture {i} took too long - negative check "
+                    f"duration should be < 1e-5 secs, but took {duration} secs"
                 )
 
 
