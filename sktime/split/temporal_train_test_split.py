@@ -28,6 +28,7 @@ def temporal_train_test_split(
     test_size: Optional[float] = None,
     train_size: Optional[float] = None,
     fh: Optional[FORECASTING_HORIZON_TYPES] = None,
+    anchor: str = "start",
 ) -> SPLIT_TYPE:
     """Split time series data containers into a single train/test split.
 
@@ -66,6 +67,11 @@ def temporal_train_test_split(
         be None. If ``fh`` is passed, the test set will be:
         if ``fh.is_relative``: the last possible indices to match ``fh`` within ``y``
         if ``not fh.is_relative``: the indices at the absolute index of ``fh``
+    anchor : str, "start" (default) or "end"
+        determines behaviour if train and test sizes do not sum up to all data
+        used only if ``fh=None`` and both ``test_size`` and ``train_size`` are not None
+        if "start", cuts train and test set from start of available series
+        if "end", cuts train and test set from end of available series
 
     Returns
     -------
@@ -106,7 +112,7 @@ def temporal_train_test_split(
     # branch 2: fh is None, use test_size and train_size to split
     # from the above, we know that fh is None
     temporal_splitter = TemporalTrainTestSplitter(
-        test_size=test_size, train_size=train_size
+        test_size=test_size, train_size=train_size, anchor=anchor
     )
 
     y_train, y_test = list(temporal_splitter.split_series(y))[0]
