@@ -36,8 +36,11 @@ class ExpandingGreedySplitter(BaseSplitter):
         If int: the number of steps included in the test set of each fold.
             Formally, steps are consecutive ``iloc`` indices.
         If float: the proportion of steps included in the test set of each fold,
-            as a proportion of the total number of index values.
-            Cave: not the ``loc`` proportion between start and end.
+            as a proportion of the total number of consecutive ``iloc`` indices.
+            Must be between 0.0 and 1.0. Proportions are rounded to the
+            next higher integer count of samples (ceil).
+            Cave: not the ``loc`` proportion between start and end locations,
+            but a proportion of total number of consecutive ``iloc`` indices.
     folds : int, default = 5
         The number of folds.
     step_length : int, optional
@@ -46,7 +49,7 @@ class ExpandingGreedySplitter(BaseSplitter):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.forecasting.model_selection import ExpandingGreedySplitter
+    >>> from sktime.split import ExpandingGreedySplitter
 
     >>> ts = np.arange(10)
     >>> splitter = ExpandingGreedySplitter(test_size=3, folds=2)
@@ -74,7 +77,7 @@ class ExpandingGreedySplitter(BaseSplitter):
         test_size = self.test_size
 
         if isinstance(test_size, float):
-            _test_size = round(len(y) * test_size)
+            _test_size = np.ceil(len(y) * test_size)
         else:
             _test_size = test_size
 
