@@ -15,7 +15,14 @@ from sktime.split.expandingwindow import ExpandingWindowSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 from sktime.split.slidingwindow import SlidingWindowSplitter
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
+
+N_TIMEPOINTS = 30
+TEST_Y_PANEL_HIERARCHICAL = [
+    _make_hierarchical((2, 2), N_TIMEPOINTS, N_TIMEPOINTS),
+    _make_panel(n_instances=2, n_timepoints=N_TIMEPOINTS),
+]
 
 
 def test_split_series():
@@ -54,6 +61,7 @@ def test_hierachical_singlewindowsplitter():
     splits = list(splitter.split(y))
     assert len(splits) == 1, "Should only be one split"
 
+
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
@@ -63,7 +71,7 @@ def test_windowbase_splitter_get_n_split_hierarchical(
 ):
     """Test that WindowBaseSplitter.get_n_splits works for hierarchical data."""
     # see bugs 4971
-    y = TEST_Y_PANEL_HIERARCHICAL[0]  # hierachical data
+    y = TEST_Y_PANEL_HIERARCHICAL[0]  # hierarchical data
     if _inputs_are_supported([fh, window_length, step_length]):
         cv = CV(fh, window_length, step_length)
         assert cv.get_n_splits(y) == len(
