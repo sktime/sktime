@@ -78,6 +78,10 @@ def temporal_train_test_split(
     ----------
     .. [1]  adapted from https://github.com/alkaline-ml/pmdarima/
     """
+    # the code has two disjoint branches, one for fh and one for test_size/train_size
+
+    # branch 1: fh is not None, use fh to split
+    # this assumes (or enforces) that test_size and train_size are None
     if fh is not None:
         if test_size is not None or train_size is not None:
             raise ValueError(
@@ -86,21 +90,26 @@ def temporal_train_test_split(
             )
         return _split_by_fh(y, fh, X=X)
 
+    # branch 2: fh is None, use test_size and train_size to split
+    # from the above, we know that fh is None
     temporal_splitter = TemporalTrainTestSplitter(
         test_size=test_size, train_size=train_size
     )
 
     y_train, y_test = list(temporal_splitter.split_series(y))[0]
 
-    if X is not None:
-        from sktime.split import SameLocSplitter
-
-        X_splitter = SameLocSplitter(temporal_splitter, y)
-        X_train, X_test = list(X_splitter.split_series(X))[0]
-
-        return y_train, y_test, X_train, X_test
-    else:
+    # if X is None, return y_train, y_test
+    if X is None:
         return y_train, y_test
+
+    # if X is not None, split X as well
+    # the split of X uses the same indices as the split of y
+    from sktime.split import SameLocSplitter
+
+    X_splitter = SameLocSplitter(temporal_splitter, y)
+    X_train, X_test = list(X_splitter.split_series(X))[0]
+
+    return y_train, y_test, X_train, X_test
 
 
 class TemporalTrainTestSplitter(BaseSplitter):
