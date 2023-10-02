@@ -159,6 +159,7 @@ class ARCH(BaseForecaster):
         "handles-missing-data": False,
         "python_dependencies": "arch",
         "capability:pred_int": True,
+        "ignores-exogeneous-X": True,
     }
 
     def __init__(
@@ -222,9 +223,7 @@ class ARCH(BaseForecaster):
         self.reindex = reindex
 
         if self.mean in ["ARX", "HARX"]:
-            ARCH._tags["ignores-exogeneous-X"] = False
-        else:
-            ARCH._tags["ignores-exogeneous-X"] = True
+            self.set_tags(**{"ignores-exogeneous-X": False})
 
         super().__init__()
 
@@ -280,21 +279,20 @@ class ARCH(BaseForecaster):
         )
         return self
 
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
+    def _get_arch_result_object(self, fh=None, X=None):
+        """Return ARCH result object.
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+        fh : guaranteed to be ForecastingHorizon
             The forecasting horizon with the positive steps ahead to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : pd.DataFrame (default=None)
-            Exogenous time series.
+        X : optional (default=None)
+            (default=None) Exogenous time series.
 
         Returns
         -------
-        y_pred : pd.Series
-            Point predictions
+        ArchResultObject : ARCH result object, full_range, abs_idx in a tuple
+            mean, variance forecasts, full_range, abs_idx
         """
         if fh:
             self._horizon = fh
@@ -323,6 +321,26 @@ class ARCH(BaseForecaster):
             reindex=self.reindex,
         )
         full_range = pd.RangeIndex(start=start, stop=end + 1)
+
+        return (ArchResultObject, full_range, abs_idx)
+
+    def _predict(self, fh, X=None):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the positive steps ahead to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame (default=None)
+            Exogenous time series.
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        """
+        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
         y_pred = pd.Series(
             ArchResultObject.mean.values[-1],
             index=full_range,
@@ -367,34 +385,7 @@ class ARCH(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        if fh:
-            self._horizon = fh
-
-        abs_idx = self._horizon.to_absolute_int(self._y.index[0], self.cutoff)
-        start, end = abs_idx[[0, -1]]
-        start = min(start, len(self._y))
-
-        if X is not None:
-            x = {}
-            for col in X.columns:
-                x[str(col)] = np.array(X[col])
-        else:
-            x = None
-
-        ArchResultObject = self._fitted_forecaster.forecast(
-            x=x,
-            horizon=end - start + 1,
-            params=self.params,
-            start=self.start,
-            align=self.align,
-            method=self.method,
-            simulations=self.simulations,
-            rng=self.rng,
-            random_state=self.random_state,
-            reindex=self.reindex,
-        )
-
-        full_range = pd.RangeIndex(start=start, stop=end + 1)
+        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
         std_err = np.sqrt(np.array(ArchResultObject.variance.values[-1]))
         mean_forecast = np.array(ArchResultObject.mean.values[-1])
 
@@ -414,9 +405,7 @@ class ARCH(BaseForecaster):
                 columns=[y_col_name + " " + str(alpha) + " " + "upper"],
             )
             df_list.append(pd.concat((lower_df, upper_df), axis=1))
-
         concat_df = pd.concat(df_list, axis=1)
-
         concat_df_columns = list(
             OrderedDict.fromkeys(
                 [
@@ -427,15 +416,12 @@ class ARCH(BaseForecaster):
                 ]
             )
         )
-
         df = concat_df[concat_df_columns]
-
         df = pd.DataFrame(
             df.values,
             columns=pd.MultiIndex.from_tuples([col.split(" ") for col in df]),
             index=full_range,
         )
-
         final_columns = list(
             itertools.product(
                 *[
@@ -445,13 +431,11 @@ class ARCH(BaseForecaster):
                 ]
             )
         )
-
         df = pd.DataFrame(
             df.loc[abs_idx.to_pandas()].values,
             columns=pd.MultiIndex.from_tuples(final_columns),
         )
         df.index = self._horizon.to_absolute_index(self.cutoff)
-
         return df
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -469,38 +453,11 @@ class ARCH(BaseForecaster):
         pred_var : pd.DataFrame
             Variance forecasts
         """
-        if fh:
-            self._horizon = fh
-
-        abs_idx = self._horizon.to_absolute_int(self._y.index[0], self.cutoff)
-        start, end = abs_idx[[0, -1]]
-        start = min(start, len(self._y))
-
-        if X is not None:
-            x = {}
-            for col in X.columns:
-                x[str(col)] = np.array(X[col])
-        else:
-            x = None
-
-        ArchResultObject = self._fitted_forecaster.forecast(
-            x=x,
-            horizon=end - start + 1,
-            params=self.params,
-            start=self.start,
-            align=self.align,
-            method=self.method,
-            simulations=self.simulations,
-            rng=self.rng,
-            random_state=self.random_state,
-            reindex=self.reindex,
-        )
-        y_col_name = self._y.name
-        full_range = pd.RangeIndex(start=start, stop=end + 1)
+        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
         pred_var = pd.Series(
             ArchResultObject.variance.values[-1],
             index=full_range,
-            name=y_col_name,
+            name=self._y.name,
         )
         pred_var = pred_var.loc[abs_idx.to_pandas()]
         pred_var.index = self._horizon.to_absolute_index(self.cutoff)
