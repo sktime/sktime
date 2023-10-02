@@ -65,7 +65,7 @@ class AlignerLucky(BaseAligner):
             d_best = np.inf
 
             if i + 1 < len_ts1 and j + 1 < len_ts2:
-                d_best = vec_dist(ts1[i+1] - ts2[j+1])
+                d_best = vec_dist(ts1[i + 1] - ts2[j + 1])
                 new_i = i + 1
                 new_j = j + 1
 
@@ -77,7 +77,7 @@ class AlignerLucky(BaseAligner):
                     new_j = j
 
             if j + 1 < len_ts2:
-                d2 = vec_dist(ts1[i] - ts2[j+1])
+                d2 = vec_dist(ts1[i] - ts2[j + 1])
                 if d2 < d_best:
                     d_best = d2
                     new_i = i
