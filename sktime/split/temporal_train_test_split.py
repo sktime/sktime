@@ -76,7 +76,20 @@ def temporal_train_test_split(
 
     References
     ----------
-    .. [1]  adapted from https://github.com/alkaline-ml/pmdarima/
+    .. [1] originally adapted from https://github.com/alkaline-ml/pmdarima/
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=0.2)
+
+    The function can also be applied to panel or hierarchical data,
+    in this case the split will be applied per individual time series:
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> y = _make_hierarchical()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=0.2)
     """
     # the code has two disjoint branches, one for fh and one for test_size/train_size
 
