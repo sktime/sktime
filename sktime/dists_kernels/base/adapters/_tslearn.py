@@ -48,14 +48,6 @@ class _TslearnPwTrafoAdapter:
     # False: the adapted function takes two time series and needs to be vectorized
     _is_cdist = True
 
-    # patch for tslearn bug #475
-    # https://github.com/tslearn-team/tslearn/issues/475
-    # check at 0.23.0 whether can be removed
-    # if True, passes pairs of time series individually to cdist,
-    # but as one-series-panel, to avoid bug if panels are unequal size
-    # _bug_patch_cdist = False
-    # not an attr so objects can set it dynamically based on init attrs
-
     def _get_tslearn_pwtrafo(self):
         """Abstract method to get tslearn pwtrafo.
 
@@ -118,13 +110,7 @@ class _TslearnPwTrafoAdapter:
         res = np.zeros((m, n))
         for i in range(m):
             for j in range(n):
-                # todo: remove this once fixed - see above init for details
-                # todo 0.23.0 check
-                bug_patch = hasattr(self, "_bug_patch_cdist") and self._bug_patch_cdist
-                if not bug_patch:
-                    res[i, j] = self._eval_tslearn_pwtrafo(X[i], X2[j])
-                else:
-                    res[i, j] = self._eval_tslearn_pwtrafo([X[i]], [X2[j]])
+                res[i, j] = self._eval_tslearn_pwtrafo(X[i], X2[j])
         return res
 
     def _transform(self, X, X2=None):
@@ -154,11 +140,4 @@ class _TslearnPwTrafoAdapter:
         if isinstance(X2, list):
             X2 = self._coerce_df_list_to_list_of_arr(X2)
 
-        # todo: remove this once fixed - see above init for details
-        # todo 0.23.0 check
-        bug_patch = hasattr(self, "_bug_patch_cdist") and self._bug_patch_cdist
-
-        if self._is_cdist and not bug_patch:
-            return self._eval_tslearn_pwtrafo(X, X2)
-        else:
-            return self._eval_tslearn_pwtrafo_vectorized(X, X2)
+        return self._eval_tslearn_pwtrafo(X, X2)
