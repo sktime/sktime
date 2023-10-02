@@ -100,12 +100,6 @@ def temporal_train_test_split(
     >>> # last 5 timepoints for each instance
     >>> y_test.shape
     (10, 1)
-    >>> # time series w/ exogenous variables
-    >>> X, y = load_osuleaf(return_X_y=True)
-    >>> X_train, X_test, y_train, y_test = temporal_train_test_split(
-    ...     X, y, test_size=100)
-    >>> X_test.shape, y_test.shape
-    ((100, 1), (100,))
 
     The function can also be applied to panel or hierarchical data,
     in this case the split will be applied per individual time series:
