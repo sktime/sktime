@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement cutoff dataset splitting for model evaluation and selection."""
+"""Single temporal train test split utility function."""
 
 __all__ = [
     "temporal_train_test_split",
@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._config import (
+from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
     FORECASTING_HORIZON_TYPES,
     SPLIT_TYPE,
@@ -86,10 +86,26 @@ def temporal_train_test_split(
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.datasets import load_airline, load_osuleaf
+    >>> from sktime.utils._testing.panel import _make_panel
+    >>> # univariate time series
     >>> y = load_airline()
-    >>> y_train, y_test = temporal_train_test_split(y, test_size=0.2)
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=36)
+    >>> y_test.shape
+    (36,)
+    >>> # panel time series
+    >>> y = _make_panel(n_instances = 2, n_timepoints = 20)
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=5)
+    >>> # last 5 timepoints for each instance
+    >>> y_test.shape
+    (10, 1)
+    >>> # time series w/ exogenous variables
+    >>> X, y = load_osuleaf(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = temporal_train_test_split(
+    ...     X, y, test_size=100)
+    >>> X_test.shape, y_test.shape
+    ((100, 1), (100,))
 
     The function can also be applied to panel or hierarchical data,
     in this case the split will be applied per individual time series:

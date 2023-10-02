@@ -1,13 +1,15 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement expanding window dataset splitting for model evaluation and selection."""
+"""Splitter that successively expands the training window."""
+
+__author__ = ["kkoralturk", "khrapovs"]
 
 __all__ = [
     "ExpandingWindowSplitter",
 ]
 
 from sktime.split.base import BaseWindowSplitter
-from sktime.split.base._config import (
+from sktime.split.base._common import (
     DEFAULT_FH,
     DEFAULT_STEP_LENGTH,
     DEFAULT_WINDOW_LENGTH,
@@ -95,3 +97,23 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
         return self._split_windows_generic(expanding=True, **kwargs)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [{}, {"fh": [2, 4], "initial_window": 5, "step_length": 2}]
