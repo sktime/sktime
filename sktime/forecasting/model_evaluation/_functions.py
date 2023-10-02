@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
-__author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo"]
+__author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo", "hazrulakmal"]
 __all__ = ["evaluate"]
 
 import time
@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 
+from sktime.benchmarking.experimental.loggers._base import BaseLogger
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
@@ -58,12 +59,12 @@ def _check_scores(metrics) -> Dict:
     metrics_type = {}
     for metric in metrics:
         metric = check_scoring(metric)
-        # collect predict type
+        # predict type segregation
         if hasattr(metric, "get_tag"):
             scitype = metric.get_tag(
                 "scitype:y_pred", raise_error=False, tag_value_default="pred"
             )
-        else:  # If no scitype exists then metric is a point forecast type
+        else:  # BaseMetric downward compatibility, assume point forecast
             scitype = "pred"
         if scitype not in metrics_type.keys():
             metrics_type[scitype] = [metric]
@@ -98,7 +99,7 @@ def _get_column_order_and_datatype(
     return metrics_metadata.copy()
 
 
-# should we remove _split since this is no longer being used?
+# TODO: should we remove _split since this is no longer being used?
 def _split(
     y,
     X,
@@ -173,6 +174,7 @@ def _evaluate_window(
     return_data,
     error_score,
     cutoff_dtype,
+    logger,
 ):
     # set default result values in case estimator fitting fails
     score = error_score
@@ -196,6 +198,7 @@ def _evaluate_window(
             forecaster.update(y_train, X_train, update_params=update_params)
         fit_time = time.perf_counter() - start_fit
 
+        logger.start_run()
         # predict based on metrics
         pred_type = {
             "pred_quantiles": "predict_quantiles",
@@ -203,16 +206,19 @@ def _evaluate_window(
             "pred_proba": "predict_proba",
             "pred": "predict",
         }
-        # cache prediction from the first scitype and reuse it to compute other metrics
+        # cache prediction of every first scitype and
+        # reuse it to compute other metrics of the same scitype
         for scitype in scoring:
             method = getattr(forecaster, pred_type[scitype])
             start_pred = time.perf_counter()
             y_pred = method(fh, X_test)
             pred_time = time.perf_counter() - start_pred
             temp_result[f"{scitype}_time"] = [pred_time]
+            logger.log_metric(f"{scitype}_time", pred_time)
             for metric in scoring.get(scitype):
                 score = metric(y_test, y_pred, y_train=y_train)
                 temp_result[f"test_{metric.name}"] = [score]
+                logger.log_metric(f"test_{metric.name}", score)
             if return_data:
                 temp_result[f"y_{scitype}"] = [y_pred]
         # get cutoff
@@ -251,6 +257,12 @@ def _evaluate_window(
     temp_result["fit_time"] = [fit_time]
     temp_result["len_train_window"] = [len(y_train)]
     temp_result["cutoff"] = [cutoff_ind]
+    logger.log_metrics(
+        {
+            "fit_time": fit_time,
+            "len_train_window": len(y_train),  # "cutoff": cutoff_ind
+        }
+    )
     if return_data:
         temp_result["y_train"] = [y_train]
         temp_result["y_test"] = [y_test]
@@ -278,6 +290,7 @@ def evaluate(
     backend: Optional[str] = None,
     compute: bool = True,
     cv_X=None,
+    logger: BaseLogger = None,
     **kwargs,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
@@ -460,6 +473,7 @@ def evaluate(
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
+    # TODO: refactor this input vallidation due to duplication
     y_valid, _, _ = check_is_scitype(y, scitype=ALLOWED_SCITYPES, return_metadata=True)
     if not y_valid:
         raise TypeError(
@@ -487,6 +501,7 @@ def evaluate(
         "return_data": return_data,
         "error_score": error_score,
         "cutoff_dtype": cutoff_dtype,
+        "logger": BaseLogger() if logger is None else logger,
     }
 
     def gen_y_X_train_test(y, X, cv, cv_X):
