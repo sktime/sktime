@@ -11,7 +11,7 @@ from math import ceil
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.split import SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 
 

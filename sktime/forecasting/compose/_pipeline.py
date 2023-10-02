@@ -348,7 +348,7 @@ class ForecastingPipeline(_Pipeline):
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> y, X = load_longley()
     >>> y_train, _, X_train, X_test = temporal_train_test_split(y, X)
@@ -1637,10 +1637,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     The permuter is useful in combination with grid search (toy example):
 
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
-    ... )
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> fh = [1,2,3]
     >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
