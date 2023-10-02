@@ -7,7 +7,7 @@ import pandas as pd
 from sktime.alignment.base import BaseAligner
 
 
-class AlignerLucky(BaseAligner):
+class AlignerLuckyDtw(BaseAligner):
     """Alignment path based on lucky dynamic time warping distance.
 
     This aligner returns the alignment path produced by the lucky time warping

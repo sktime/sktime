@@ -30,7 +30,7 @@ class LuckyDtwDist(_DelegatedPairwiseTransformerPanel):
     def __init__(self):
         super().__init__()
 
-        from sktime.alignment.lucky import AlignerLucky
+        from sktime.alignment.lucky import AlignerLuckyDtw
         from sktime.dists_kernels.compose_from_align import DistFromAligner
 
-        self.estimator_ = DistFromAligner(AlignerLucky())
+        self.estimator_ = DistFromAligner(AlignerLuckyDtw())
