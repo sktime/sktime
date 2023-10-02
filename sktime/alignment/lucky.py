@@ -157,5 +157,6 @@ class AlignerLuckyDtw(BaseAligner):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params0 = {}
+        params1 = {"window": 3}
 
-        return [params0]
+        return [params0, params1]
