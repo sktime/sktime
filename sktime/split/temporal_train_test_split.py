@@ -76,7 +76,7 @@ def temporal_train_test_split(
     Returns
     -------
     splitting : tuple, length = 2 * len(arrays)
-        List containing train-test split of `y` and `X` if given.
+        Tuple containing train-test split of `y`, and `X` if given.
         if ``X is None``, returns ``(y_train, y_test)``.
         Else, returns ``(y_train, y_test, X_train, X_test)``.
 
