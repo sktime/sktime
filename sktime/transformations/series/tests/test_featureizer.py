@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """Test YtoX."""
 __author__ = ["aiwalter", "fkiraly"]
 
 from numpy.testing import assert_array_equal
 
 from sktime.datasets import load_longley
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformations.series.compose import YtoX
+from sktime.split import temporal_train_test_split
+from sktime.transformations.compose import YtoX
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag
 
@@ -17,8 +16,8 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 def test_featurized_values():
     """Test against plain transformation.
 
-    Test to check that the featurized values are same as if transformation
-    is done without YtoX.
+    Test to check that the featurized values are same as if transformation is done
+    without YtoX.
     """
     lags = len(y_test)
     featurizer = YtoX() * ExponentTransformer() * Lag(lags)

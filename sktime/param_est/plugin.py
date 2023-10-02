@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for seasonality."""
 
 __author__ = ["fkiraly"]
 __all__ = ["PluginParamsForecaster"]
+
+from inspect import signature
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
@@ -11,16 +12,28 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 class PluginParamsForecaster(_DelegatedForecaster):
     """Plugs parameters from a parameter estimator into a forecaster.
 
-    In `fit`, first fits `param_est` to data.
+    In `fit`, first fits `param_est` to data passed:
+
+    * `y` of `fit` is passed as the first arg to `param_est.fit`
+    * `X` of `fit` is passed as the second arg, if `param_est.fit` has a second arg
+    * `fh` of `fit` is passed as `fh`, if any remaining arg of `param_est.fit` is `fh`
+
     Then, does `forecaster.set_params` with desired/selected parameters.
-    After that, behaves as `forecaster` with those parameters set.
+    Parameters of the fitted `param_est` are passed on to `forecaster`,
+    from/to pairs are as specified by the `params` parameter of `self`, see below.
+
+    Then, fits `forecaster` to the data passed in `fit`.
+
+    After that, behaves identically to `forecaster` with those parameters set.
+    `update` behaviour is controlled by the `update_params` parameter.
 
     Example: `param_est` seasonality test to determine `sp` parameter;
         `forecaster` being any forecaster with an `sp` parameter.
 
     Parameters
     ----------
-    param_est : parameter estimator, i.e., estimator inheriting from BaseParamFitter
+    param_est : sktime estimator object with a fit method, inheriting from BaseEstimator
+        e.g., estimator inheriting from BaseParamFitter or forecaster
         this is a "blueprint" estimator, state does not change when `fit` is called
     forecaster : sktime forecaster, i.e., estimator inheriting from BaseForecaster
         this is a "blueprint" estimator, state does not change when `fit` is called
@@ -31,8 +44,8 @@ class PluginParamsForecaster(_DelegatedForecaster):
         list of str: parameters in the list are plugged into parameters of the same name
             only parameters present in both `forecaster` and `param_est` are plugged in
         str: considered as a one-element list of str with the string as single element
-        dict: parameters of values are plugged into parameters of respective keys
-            only keys present in `forecaster` and values in `param_est` are plugged in
+        dict: parameter with name of value is plugged into parameter with name of key
+            only keys present in `param_est` and values in `forecaster` are plugged in
     update_params : bool, optional, default=False
         whether fitted parameters by param_est_ are to be updated in self.update
 
@@ -42,6 +55,9 @@ class PluginParamsForecaster(_DelegatedForecaster):
         this clone is fitted in the pipeline when `fit` is called
     forecaster_ : sktime forecaster, clone of forecaster in `forecaster`
         this clone is fitted in the pipeline when `fit` is called
+    param_map_ : dict
+        mapping of parameters from `param_est_` to `forecaster_` used in `fit`,
+        after filtering for parameters present in both
 
     Examples
     --------
@@ -51,15 +67,22 @@ class PluginParamsForecaster(_DelegatedForecaster):
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
     >>>
-    >>> y = load_airline()
-    >>> sp_est = Differencer() * SeasonalityACF()
-    >>> fcst = NaiveForecaster()
-    >>> sp_auto = PluginParamsForecaster(sp_est, fcst)
-    >>> sp_auto.fit(y, fh=[1, 2, 3])
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> sp_est = Differencer() * SeasonalityACF()  # doctest: +SKIP
+    >>> fcst = NaiveForecaster()  # doctest: +SKIP
+    >>> sp_auto = PluginParamsForecaster(sp_est, fcst)  # doctest: +SKIP
+    >>> sp_auto.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
     PluginParamsForecaster(...)
-    >>> y_pred = sp_auto.predict()
-    >>> sp_auto.forecaster_.get_params()["sp"]
+    >>> y_pred = sp_auto.predict()  # doctest: +SKIP
+    >>> sp_auto.forecaster_.get_params()["sp"]  # doctest: +SKIP
     12
+
+    using dictionary to plug "foo" parameter into "sp"
+
+    >>> from sktime.param_est.fixed import FixedParams
+    >>> sp_plugin = PluginParamsForecaster(
+    ...     FixedParams({"foo": 12}), NaiveForecaster(), params={"foo": "sp"}
+    ... )  # doctest: +SKIP
     """
 
     _tags = {
@@ -83,14 +106,14 @@ class PluginParamsForecaster(_DelegatedForecaster):
         self.params = params
         self.update_params = update_params
 
-        super(PluginParamsForecaster, self).__init__()
+        super().__init__()
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
         # todo: only works for single series now
         #   think about how to deal with vectorization later
         self.set_tags(**{"y_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"]})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -124,7 +147,19 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
         # fit the parameter estimator to y
         param_est = self.param_est_
-        param_est.fit(y)
+
+        # map args y, X, fh onto inner signature
+        # y is passed always
+        # X is passed if param_est fit has at least two arguments
+        # fh is passed if any remaining argument is fh
+        inner_params = list(signature(param_est.fit).parameters.keys())
+        fit_kwargs = {}
+        if len(inner_params) > 1:
+            fit_kwargs[inner_params[1]] = X
+            if "fh" in inner_params[2:]:
+                fit_kwargs["fh"] = fh
+
+        param_est.fit(y, **fit_kwargs)
         fitted_params = param_est.get_fitted_params()
 
         # obtain the mapping restricted to param names that are available
@@ -150,7 +185,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         self.param_map_ = param_map
 
         # obtain the values of fitted params, and set forecaster to those
-        new_params = {x: fitted_params[x] for x in param_map}
+        new_params = {k: fitted_params[v] for k, v in param_map.items()}
         forecaster.set_params(**new_params)
 
         # fit the forecaster, with the fitted parameter values
@@ -235,19 +270,34 @@ class PluginParamsForecaster(_DelegatedForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
+        from sktime.utils.validation._dependencies import _check_estimator_deps
 
+        # use of dictionary to plug "foo" parameter into "sp", uses mock param_est
         params1 = {
             "forecaster": NaiveForecaster(),
-            "param_est": SeasonalityACF(),
-            "params": "sp",
+            "param_est": FixedParams({"foo": 12}),
+            "params": {"foo": "sp"},
         }
+        params = [params1]
 
-        # no params given, this should recognize that the intersection is only "sp"
-        params2 = {
-            "forecaster": NaiveForecaster(),
-            "param_est": SeasonalityACF(),
-            "update_params": True,
-        }
+        # uses a "real" param est that depends on statsmodels, requires statsmodels
+        if _check_estimator_deps(SeasonalityACF, severity="none"):
+            # explicit reference to a parameter "sp", present in both estimators
+            params2 = {
+                "forecaster": NaiveForecaster(),
+                "param_est": SeasonalityACF(),
+                "params": "sp",
+            }
+            params = params + [params2]
 
-        return [params1, params2]
+            # no params given, this should recognize that the intersection is only "sp"
+            params3 = {
+                "forecaster": NaiveForecaster(),
+                "param_est": SeasonalityACF(),
+                "update_params": True,
+            }
+            params = params + [params3]
+
+        return params

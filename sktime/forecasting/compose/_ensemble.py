@@ -1,10 +1,9 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements ensemble forecasters.
 
-Creates univariate (optionally weighted)
-combination of the predictions from underlying forecasts.
+Creates univariate (optionally weighted) combination of the predictions from underlying
+forecasts.
 """
 
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
@@ -17,7 +16,7 @@ from sklearn.pipeline import Pipeline
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
 from sktime.utils.stats import (
     _weighted_geometric_mean,
     _weighted_max,
@@ -58,7 +57,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             use the inverse variance of the forecasting error
             (based on the internal train-test-split) to compute optimal
             weights, a given ``regressor`` will be omitted.
-
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -121,7 +119,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         random_state=None,
         n_jobs=None,
     ):
-        super(AutoEnsembleForecaster, self).__init__(
+        super().__init__(
             forecasters=forecasters,
             n_jobs=n_jobs,
         )
@@ -130,7 +128,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.test_size = test_size
         self.random_state = random_state
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -162,11 +160,11 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
         if self.method == "feature-importance":
-
             self.regressor_ = check_regressor(
                 regressor=self.regressor, random_state=self.random_state
             )
             X_meta = pd.concat(self._predict_forecasters(fh_test, X_test), axis=1)
+            X_meta.columns = pd.RangeIndex(len(X_meta.columns))
 
             # fit meta-model (regressor) on predictions of ensemble models
             # with y_test as endog/target
@@ -200,7 +198,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Return the predicted reduction.
 
         Parameters
@@ -216,6 +214,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
+        y_pred.name = self._y.name
         return y_pred
 
     @classmethod
@@ -233,11 +232,21 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sklearn.linear_model import LinearRegression
+
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
-        return params
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        params2 = {
+            "forecasters": [("f1", FORECASTER), ("f2", FORECASTER)],
+            "method": "inverse-variance",
+            "regressor": LinearRegression(),
+            "test_size": 0.2,
+        }
+
+        return [params1, params2]
 
 
 def _get_weights(regressor):
@@ -304,26 +313,31 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "both",
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
 
-    def _fit(self, y, X=None, fh=None):
+        # the ensemble requires fh in fit
+        # iff any of the component forecasters require fh in fit
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
+
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.DataFrame - Series, Panel, or Hierarchical mtype format.
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional, default=None
+        fh : ForecastingHorizon, optional, default=None
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional, default=None
-            Exogenous variables are ignored.
+        X : pd.DataFrame, optional, default=None, must be of same mtype as y
+            Exogenous data to which to fit the forecaster.
 
         Returns
         -------
@@ -333,18 +347,20 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Return the predicted reduction.
 
         Parameters
         ----------
-        fh : int, list or np.array, optional, default=None
-        X : pd.DataFrame
+        fh : ForecastingHorizon, optional, default=None
+        X : pd.DataFrame, optional, default=None, must be of same mtype as y
+            Exogenous data to which to fit the forecaster.
 
         Returns
         -------
-        y_pred : pd.Series
-            Aggregated predictions.
+        y_pred : pd.DataFrame - Series, Panel, or Hierarchical mtype format,
+            will be of same mtype as y in _fit
+            Ensembled predictions
         """
         names, _ = self._check_forecasters()
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
@@ -368,10 +384,17 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
         from sktime.forecasting.naive import NaiveForecaster
 
+        # univariate case
         FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
+        # test multivariate case, i.e., ensembling multiple variables at same time
+        FORECASTER = DirectReductionForecaster.create_test_instance()
+        params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
         return params
 
 

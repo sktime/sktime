@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utility to determine scitype of estimator, based on base class type."""
 
 __author__ = ["fkiraly"]

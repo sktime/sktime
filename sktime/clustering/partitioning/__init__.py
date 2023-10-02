@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module for general partitioning algorithms."""
 from sktime.clustering.partitioning._lloyds import TimeSeriesLloyds
 

@@ -70,6 +70,9 @@ responsibilities, and appointment process in more detail below.
    * - :ref:`cc-members`
      - Conflict resolution, technical leadership, project management
      - Nomination by core developers, vote by core developers, 2/3 majority and simple CC majority
+   * - :ref:`cc-observers`
+     - Full view of CC communication, direct input on CC decisions
+     - Nomination by core developers, vote by CC members, simple CC majority
 
 .. _contributors:
 
@@ -99,6 +102,15 @@ interface requirements and are called estimators. To faciliate
 maintainership questions, we try to write algorithms in separate files
 when possible.
 
+To clarify, "algorithm" in the above sense means "implemented estimator class".
+That is, algorithm maintainers gain rights and responsibilities with respect to
+that python code.
+They do not gain any rights on abstract methodology, e.g., in a case where
+the class implements methodology invented by third parties.
+
+In particular, algorithm maintainers do not gain rights or responsibilities on other,
+potential implementations of the same methodology in their estimator class.
+
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -114,18 +126,60 @@ Rights and responsibilities
   * - Support
     - They are the first point of contact for users and other contributors for all questions, issues and proposals regarding their algorithm.
 
+Recall, "algorithm" refers to estimator classes.
+
+Therefore, the above rights and responsibilities exclude any power on further, potential implementations of the same or similar methodology.
+
+For instance, an algorithm maintainer of algorithm A implemented in class X cannot prohibit implementation of algorithm A in class Y.
+They can only make decisions about changes on class X. Class Y can be owned by a different algorithm maintainer.
+
+In particular, there can be multiple classes implementing algorithm A, and the algorithm maintainer of class X cannot prohibit implementation of, or make decisions on class Y.
+
+Expectations
+^^^^^^^^^^^^
+
+Without restriction to eligibility, it is generally expected that algorithm maintainers
+have a very good technical and methodological understanding of the algorithm they maintain.
+
+This understanding is typically present in inventors or proponents of said algorithm,
+but it is not necessary to be the inventor of an algorithm to be its maintainer.
+
+Eligibility
+^^^^^^^^^^^
+
+Anyone is eligible to be an algorithm maintainer.
+
+Anyone is eligible to be an algorithm maintainer of a specific algorithm that does not already have an algorithm maintainer.
+
+The presence of a specific implementation of a given abstract algorithm does not prevent anyone from becoming
+the algorithm maintainer of a different implementation of the same (or similar) abstract algorithm.
+
 Appointment
 ^^^^^^^^^^^
 
 The contributor who contributes an algorithm is automatically appointed
-as its first maintainer. If they can no longer fulfil their maintenance
+as its first maintainer.
+
+Algorithm maintainers are listed in the `CODEOWNERS <https://github
+.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
+
+When an algorithm maintainer resigns, they can appoint another contributor as the
+new algorithm maintainer. No vote is required. This change should be reflected in the ``CODEOWNERS`` file.
+
+Algorithm maintainers can be appointed by CC simple majority for any algorithm without maintainers.
+
+End of tenure
+^^^^^^^^^^^^^
+
+If algorithm maintainers can no longer fulfil their maintenance
 responsibilities, maintainers are expected to resign.
 
-When the maintainer resigns, they can appoint another contributor as the
-new maintainer. No vote is required.
+Algorithm maintainers that have been unresponsive for a 3 month period automatically
+give up their rights and responsibilities as algorithm maintainers.
 
-Maintainers are listed in the `CODEOWNERS <https://github
-.com/sktime/sktime/blob/main/CODEOWNERS>`__ file.
+Unresponsiveness is defined as:
+* not engaging with decision making procedures within the reasonably time frames defined there
+* not reacting to issues or bug reports related to the algorithm, within ten working days
 
 .. _core-developers:
 
@@ -137,7 +191,7 @@ to the continued development of the project through ongoing engagement
 with the community.
 
 Current core developers are listed in the `core-developers
-team <https://www.sktime.org/en/stable/about/team.html>`__
+team <https://www.sktime.net/en/stable/about/team.html>`__
 within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-1:
@@ -151,7 +205,7 @@ Rights and responsibilities
    * - Right/responsibility
      - Description
    * - Direct access
-     - Being a core developer allows contributors to more easily carry on with their project related activities by giving them direct access to the project’s repository.
+     - Being a core developer allows contributors to more easily carry on with their project related activities by giving them direct access to the project's repository.
    * - Issue/PR management
      - Core developers are responsible for reviewing and managing issues and pull requests. This includes commenting on issues, reviewing code contributions, merging approved pull requests, and closing issues once resolved.
    * - Decision making
@@ -174,7 +228,7 @@ they have been nominated, there will be a vote by the current core
 developers.
 
 Voting on appointments is one of the few activities that takes
-place on the project’s private communication channels. The vote will be
+place on the project's private communication channels. The vote will be
 anonymous.
 
 While it is expected that most votes will be unanimous, a 2/3 majority of
@@ -209,7 +263,7 @@ CoC committee members
 
 CoC members are contributors with special rights and responsibilities.
 The current members of the CoC committee are listed in the
-`CoC <https://www.sktime.org/en/stable/about/team.html>`__.
+`CoC <https://www.sktime.net/en/stable/about/team.html>`__.
 
 .. _rights-and-responsibilities-2:
 
@@ -232,7 +286,7 @@ Anyone is eligible to be a CoC committee member.
 Appointment
 ^^^^^^^^^^^
 
-Membership of the CC is by nomination by a core developer and a vote by
+Membership of the CoC is by nomination by a core developer and a vote by
 all core developers. A nomination will result in discussion which will stay
 open for 5 days excluding weekends and then a vote by the core
 developers which will stay open for 5 days excluding weekends. CoC committee
@@ -257,7 +311,7 @@ responsibilities to avoid deadlocks and ensure a smooth progress of the
 project.
 
 Current CC members are listed in the `community-council
-team <https://www.sktime.org/en/stable/about/team.html>`__
+team <https://www.sktime.net/en/stable/about/team.html>`__
 within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-3:
@@ -328,7 +382,92 @@ The CC has regular public meetings that the full community is welcome to attend.
 
 For more details about our meetings, please go to our `community-council repository <https://github.com/sktime/community-council/>`__.
 
-To contact the CC directly, please send an email to info@sktime.org.
+To contact the CC directly, please send an email to sktime.toolbox@gmail.com.
+
+.. _cc-observers:
+
+CC observers
+~~~~~~~~~~~~
+
+CC (community council) observers are core developers with additional rights and
+responsibilities. Current CC observers are listed in the `community-council
+observers <https://www.sktime.net/en/stable/about/team.html>`__ .
+
+.. _rights-and-responsibilities-4:
+
+Rights and responsibilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+CC observers have a full view of reserved CC proceedings, the private CC
+channels and the sktime email account. CC observers can participate in
+discussions on private CC channels to ensure that more members of the community
+have direct input on CC decisions.
+
+CC observers' responsibilities include to critically scrutinize CC decision
+making and give their input on what is of community's interest or benefit.
+
+CC observers do not possess the voting or decision making rights of full
+CC members.
+
+Eligibility
+^^^^^^^^^^^
+
+Only core developers are eligible for appointment as CC observers.
+Non-core-developers can be nominated, but this must be accompanied
+by a nomination for core developer, and a core developer appointment vote
+(see below).
+
+.. _appointment-4:
+
+Appointment
+^^^^^^^^^^^
+
+Membership of the CC observers is by nomination by a core developer and a vote
+by CC members. A nomination will result in a vote by the CC members which will
+stay open for 5 days excluding weekends. CC observer membership votes are
+subject to a simple majority approval of all the current CC committee members.
+
+In case of ties, the CC member with shortest tenure breaks the tie.
+
+.. _treasurer:
+
+Special operational role: treasurer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The treasurer is an appointed role on the ``sktime`` project.
+This is primarily a supportive and transparency enhancing role.
+
+If the treasurer role remains unfilled for longer than a month,
+the CC must exercise the responsibilities of the treasurer role, as a committee.
+
+Rights and responsibilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The treasurer will work closely with the CC to set financial goals, allocate resources, and ensure ethical fiscal management.
+
+Responsibilities include budgeting, fiscal management, financial reporting, internal policy compliance, and cash management.
+
+The treasurer's primary responsibility is to produce the financial statements and budgets for the project in a timely manner.
+
+Eligibility and appointment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The treasurer role is open to core developers of the sktime project.
+
+Non-core developers must be confirmed as core developers before being considered for the treasurer role.
+
+The CC appoints the treasurer through majority vote, among suitable candidates for the role.
+
+The CC should solicit nominations from the community in transparent communication channels, when the role  needs to be filled.
+
+Tenure and removal
+^^^^^^^^^^^^^^^^^^
+
+The treasurer serves a one-year term with the possibility of re-appointment.
+
+Inactivity may result in removal if the treasurer fails to compile budgets or financial statements as required.
+
+Removal for code of conduct violations related to fiscal transparency requires a CoC investigation.
 
 .. _decision-making:
 
@@ -342,11 +481,11 @@ used by the sktime project. We clarify:
 * how decisions are made, and
 * who participates in the decision making.
 
-sktime’s decision-making process is designed to take into account
+sktime's decision-making process is designed to take into account
 feedback from all community members and strives to find consensus, while
 avoiding deadlocks when no consensus can be found.
 
-All discussion and votes takes place on the project’s `issue
+All discussion and votes takes place on the project's `issue
 tracker <https://github.com/sktime/sktime/issues>`__,
 `pull requests <https://github.com/sktime/sktime/pulls>`__ or an :ref:`steps`. Some
 sensitive discussions and appointment votes occur on private chats.
@@ -379,7 +518,7 @@ corresponding decision making process is described in more detail below.
 Stage 1: lazy consensus with veto right
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-sktime uses a “consensus seeking” process for making decisions. The
+sktime uses a "consensus seeking" process for making decisions. The
 community tries to find a resolution that has no open objections among
 core developers.
 
@@ -477,7 +616,7 @@ comparison with alternative solutions, as outlined in our
 A complete STEP must always include at least a high-level design for the proposed change,
 not just a wishlist of features.
 
-Usually, we collect and discuss proposals in sktime’s `repository for
+Usually, we collect and discuss proposals in sktime's `repository for
 enhancement-proposals <https://github.com/sktime/enhancement-proposals>`__.
 
 For smaller changes, such as punctual changes to the API or governance documents,
@@ -536,7 +675,7 @@ If algorithms require major dependencies, we encourage to create a
 separate companion repository. For smaller
 dependencies which are limited to a few files, we encourage to use soft
 dependencies, which are only required for particular modules, but not
-for most of sktime’s functionality and not for installing sktime.
+for most of sktime's functionality and not for installing sktime.
 
 .. _acknowledging-contributions:
 
@@ -548,11 +687,11 @@ developers, users, educators, and other stakeholders. We value all kinds
 of contributions and are committed to recognising each of them fairly.
 
 We follow the `all-contributors <https://allcontributors.org>`__
-specification to recognise all contributors, including those that don’t
+specification to recognise all contributors, including those that don't
 contribute code. Please see `our list of all
 contributors <https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md>`__.
 
-If you think, we’ve missed anything, please let us know or open a PR
+If you think, we've missed anything, please let us know or open a PR
 with the appropriate changes to
 `sktime/.all-contributorsrc <https://github.com/sktime/sktime/blob/main/.all-contributorsrc>`__.
 
@@ -563,7 +702,7 @@ All contributors acknowledge that they have all the rights to the code
 they contribute to make it available under this license.
 
 The project belongs to the sktime community, and all parts of it are
-always considered “work in progress” so that they can evolve over time
+always considered "work in progress" so that they can evolve over time
 with newer contributions.
 
 .. _outlook:
@@ -572,7 +711,7 @@ Outlook
 -------
 
 We are open to improvement suggestions for our governance model. Once
-the community grows more and sktime’s code base becomes more
+the community grows more and sktime's code base becomes more
 consolidated, we will consider the following changes:
 
 -  Allow for more time to discuss changes, and more time to cast vote
@@ -585,7 +724,7 @@ In addition, we plan to add more roles for managing/coordinating
 specific project:
 
 * Community manager (mentorship, outreach, social media, etc),
-* Sub-councils for project-specific technical leadership (e.g.  for documentation, learning tasks, continuous integration)
+* Sub-councils for project-specific technical leadership (e.g.  for documentation, learning tasks, continuous integration)
 
 .. _references:
 
@@ -593,9 +732,9 @@ References
 ----------
 
 Our governance model is inspired by various existing governance
-structures. In particular, we’d like to acknowledge:
+structures. In particular, we'd like to acknowledge:
 
-* scikit-learn’s `governance model <https://www.sktime.org/en/latest/governance.html>`__
+* scikit-learn's `governance model <https://www.sktime.net/en/latest/governance.html>`__
 * `The Turing Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
 * `The Art of Community <https://www.jonobacon.com/books/artofcommunity/>`__ by Jono Bacon
 * The `astropy <https://www.astropy.org>`__ project

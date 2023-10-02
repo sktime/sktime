@@ -1,8 +1,7 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
-__author__ = ["danbartl"]
+__author__ = ["danbartl", "KishManani", "VyomkeshVyas"]
 __all__ = ["DateTimeFeatures"]
 
 import warnings
@@ -26,14 +25,16 @@ _RAW_DUMMIES = [
     ["day", "month", "day", "efficient"],
     ["day", "week", "weekday", "minimal"],
     ["hour", "day", "hour", "minimal"],
+    ["hour", "week", "hour_of_week", "comprehensive"],
     ["minute", "hour", "minute", "minimal"],
     ["second", "minute", "second", "minimal"],
     ["millisecond", "second", "millisecond", "minimal"],
+    ["day", "week", "is_weekend", "comprehensive"],
 ]
 
 
 class DateTimeFeatures(BaseTransformer):
-    """DateTime Feature  Extraction for use in e.g. tree based models.
+    """DateTime feature extraction for use in e.g. tree based models.
 
     DateTimeFeatures uses a date index column and generates date features
     identifying e.g. year, week of the year, day of the week.
@@ -73,19 +74,45 @@ class DateTimeFeatures(BaseTransformer):
         Manual selection of dummys. Notation is child of parent for precise notation.
         Will ignore specified feature_scope, but will still check with warning against
         a specified ts_freq.
-        Examples for Possible values:
+        Examples for possible values:
         * None
         * day_of_year
         * day_of_month
         * day_of_quarter
+        * is_weekend
         * year (special case with no lower frequency).
+    keep_original_columns :  boolean, optional, default=False
+        Keep original columns in X passed to `.transform()`.
 
     Examples
     --------
     >>> from sktime.transformations.series.date import DateTimeFeatures
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
+
+    Returns columns `y`, `year`, `month_of_year`
+
     >>> transformer = DateTimeFeatures(ts_freq="M")
+    >>> y_hat = transformer.fit_transform(y)
+
+    Returns columns `y`, `month_of_year`
+
+    >>> transformer = DateTimeFeatures(ts_freq="M", manual_selection=["month_of_year"])
+    >>> y_hat = transformer.fit_transform(y)
+
+    Returns columns 'y', 'year', 'quarter_of_year', 'month_of_year', 'month_of_quarter'
+
+    >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="comprehensive")
+    >>> y_hat = transformer.fit_transform(y)
+
+    Returns columns 'y', 'year', 'quarter_of_year', 'month_of_year'
+
+    >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="efficient")
+    >>> y_hat = transformer.fit_transform(y)
+
+    Returns columns 'y',  'year', 'month_of_year'
+
+    >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="minimal")
     >>> y_hat = transformer.fit_transform(y)
     """
 
@@ -95,7 +122,12 @@ class DateTimeFeatures(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "X_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
@@ -103,15 +135,23 @@ class DateTimeFeatures(BaseTransformer):
         "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "skip-inverse-transform": True,
+        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
     }
 
-    def __init__(self, ts_freq=None, feature_scope="minimal", manual_selection=None):
-
+    def __init__(
+        self,
+        ts_freq=None,
+        feature_scope="minimal",
+        manual_selection=None,
+        keep_original_columns=False,
+    ):
         self.ts_freq = ts_freq
         self.feature_scope = feature_scope
         self.manual_selection = manual_selection
         self.dummies = _prep_dummies(_RAW_DUMMIES)
-        super(DateTimeFeatures, self).__init__()
+        self.keep_original_columns = keep_original_columns
+
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -134,14 +174,17 @@ class DateTimeFeatures(BaseTransformer):
         _check_feature_scope(self.feature_scope)
         _check_manual_selection(self.manual_selection, self.dummies)
 
-        Z = X.copy()
+        if isinstance(X.index, pd.MultiIndex):
+            time_index = X.index.get_level_values(-1)
+        else:
+            time_index = X.index
 
-        x_df = pd.DataFrame(index=Z.index)
-        if isinstance(x_df.index, pd.PeriodIndex):
-            x_df["date_sequence"] = Z.index.to_timestamp().astype("datetime64[ns]")
-        elif isinstance(x_df.index, pd.DatetimeIndex):
-            x_df["date_sequence"] = Z.index
-        elif not isinstance(x_df.index, pd.DatetimeIndex):
+        x_df = pd.DataFrame(index=X.index)
+        if isinstance(time_index, pd.PeriodIndex):
+            x_df["date_sequence"] = time_index.to_timestamp()
+        elif isinstance(time_index, pd.DatetimeIndex):
+            x_df["date_sequence"] = time_index
+        else:
             raise ValueError("Index type not supported")
 
         if self.manual_selection is None:
@@ -162,7 +205,8 @@ class DateTimeFeatures(BaseTransformer):
                 ):
                     warnings.warn(
                         "Level of selected dummy variable "
-                        + " lower level than base ts_frequency."
+                        + " lower level than base ts_frequency.",
+                        stacklevel=2,
                     )
                 calendar_dummies = self.dummies.loc[
                     self.dummies["dummy"].isin(self.manual_selection),
@@ -179,12 +223,31 @@ class DateTimeFeatures(BaseTransformer):
         ]
         df = pd.concat(df, axis=1)
         df.columns = calendar_dummies["dummy"]
-        if self.manual_selection is not None:
-            df = df[self.manual_selection]
 
-        Xt = pd.concat([Z, df], axis=1)
+        if self.keep_original_columns:
+            Xt = pd.concat([X, df], axis=1, copy=True)
+        else:
+            # Remove the name `"dummy"` from column index.
+            Xt = df.rename_axis(None, axis="columns")
 
         return Xt
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {"feature_scope": "minimal"}
+        params2 = {"feature_scope": "efficient", "keep_original_columns": True}
+        params3 = {"manual_selection": ["day_of_year", "day_of_month"]}
+        return [params1, params2, params3]
 
 
 def _check_manual_selection(manual_selection, DUMMIES):
@@ -225,7 +288,7 @@ def _calendar_dummies(x, funcs):
     elif funcs == "week_of_month":
         cd = (date_sequence.day - 1) // 7 + 1
     elif funcs == "month_of_quarter":
-        cd = (np.floor(date_sequence.month / 4) + 1).astype(np.int64)
+        cd = (date_sequence.month.astype(np.int64) + 2) % 3 + 1
     elif funcs == "week_of_quarter":
         col_names = x.columns
         x_columns = col_names.intersection(["year", "quarter", "week"]).to_list()
@@ -258,6 +321,10 @@ def _calendar_dummies(x, funcs):
             (x["date_sequence"] - quarter_start) / pd.to_timedelta("1D") + 1
         ).astype(int)
         cd = values
+    elif funcs == "hour_of_week":
+        cd = date_sequence.day_of_week * 24 + date_sequence.hour
+    elif funcs == "is_weekend":
+        cd = date_sequence.day_of_week > 4
     else:
         cd = getattr(date_sequence, funcs)
     cd = pd.DataFrame(cd)
@@ -277,9 +344,8 @@ def _get_supported_calendar(ts_freq, DUMMIES):
 def _prep_dummies(DUMMIES):
     """Use to prepare dummy data.
 
-    Includes defining function call names and ranking
-    of date information based on frequency (e.g. year
-    has a lower frequency than week).
+    Includes defining function call names and ranking of date information based on
+    frequency (e.g. year has a lower frequency than week).
     """
     DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
 
@@ -298,6 +364,9 @@ def _prep_dummies(DUMMIES):
     DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
     DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
     DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
+    DUMMIES.loc[
+        DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]
+    ] = "is_weekend"
 
     DUMMIES["child"] = (
         DUMMIES["child"].astype("category").cat.reorder_categories(date_order)

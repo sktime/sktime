@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Conversion utilities for mtypes."""
 
 __author__ = ["fkiraly"]
@@ -64,7 +63,7 @@ def _extend_conversions(mtype, anchor_mtype, convert_dict, mtype_universe=None):
     scitype = list(keys)[0][2]
 
     if mtype_universe is None:
-        mtype_universe = set([x[1] for x in list(keys)])
+        mtype_universe = {x[1] for x in list(keys)}
         mtype_universe = mtype_universe.union([x[0] for x in list(keys)])
 
     for tp in set(mtype_universe).difference([mtype, anchor_mtype]):

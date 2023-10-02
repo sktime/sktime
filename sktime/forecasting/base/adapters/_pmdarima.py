@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for pmdarima forecasters to be used in sktime framework."""
@@ -8,6 +7,7 @@ __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
 
+from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
@@ -18,6 +18,7 @@ class _PmdArimaAdapter(BaseForecaster):
     _tags = {
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "python_dependencies": "pmdarima",
@@ -25,12 +26,12 @@ class _PmdArimaAdapter(BaseForecaster):
 
     def __init__(self):
         self._forecaster = None
-        super(_PmdArimaAdapter, self).__init__()
+        super().__init__()
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -72,7 +73,7 @@ class _PmdArimaAdapter(BaseForecaster):
             self._forecaster.update(y, X=X)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -87,23 +88,38 @@ class _PmdArimaAdapter(BaseForecaster):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
+        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        fh_abs_int = fh.to_absolute_int(fh_abs[0], self.cutoff).to_pandas()
+        end_int = fh_abs_int[-1] + 2
+        # +2 becuase + 1 for "end" (python index), +1 for starting to count at 1 in fh
+
+        if X is not None:
+            X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
+            X = X.iloc[:end_int]
+
         # distinguish between in-sample and out-of-sample prediction
         fh_oos = fh.to_out_of_sample(self.cutoff)
         fh_ins = fh.to_in_sample(self.cutoff)
 
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
-            return self._predict_fixed_cutoff(fh_oos, X=X)
+            y_pred = self._predict_fixed_cutoff(fh_oos, X=X)
 
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
-            return self._predict_in_sample(fh_ins, X=X)
+            y_pred = self._predict_in_sample(fh_ins, X=X)
 
         # both in-sample and out-of-sample values
         else:
             y_ins = self._predict_in_sample(fh_ins, X=X)
             y_oos = self._predict_fixed_cutoff(fh_oos, X=X)
-            return pd.concat([y_ins, y_oos])
+            y_pred = pd.concat([y_ins, y_oos])
+
+        # ensure that name is not added nor removed
+        # otherwise this may upset conversion to pd.DataFrame
+        y_pred.name = self._y.name
+        y_pred.index = fh_abs
+        return y_pred
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -217,16 +233,18 @@ class _PmdArimaAdapter(BaseForecaster):
                 )
                 pred_int = result[1]
                 pred_int = pd.DataFrame(
-                    pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+                    pred_int[fh_idx, :],
+                    index=fh_abs.to_pandas(),
+                    columns=["lower", "upper"],
                 )
                 pred_ints.append(pred_int)
             return result[0], pred_ints
         else:
             result = pd.Series(result).iloc[fh_idx]
-            result.index = fh_abs
+            result.index = fh_abs.to_pandas()
             return result
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -269,7 +287,9 @@ class _PmdArimaAdapter(BaseForecaster):
         fh_is_oosample = fh.is_all_out_of_sample(cutoff)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = ["Coverage"]
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
@@ -287,8 +307,8 @@ class _PmdArimaAdapter(BaseForecaster):
         if fh_is_in_sample or fh_is_oosample:
             # needs to be replaced, also seems duplicative, identical to part A
             for intervals, a in zip(y_pred_int, coverage):
-                pred_int[("Coverage", a, "lower")] = intervals["lower"]
-                pred_int[("Coverage", a, "upper")] = intervals["upper"]
+                pred_int[(var_name, a, "lower")] = intervals["lower"]
+                pred_int[(var_name, a, "upper")] = intervals["upper"]
             return pred_int
 
         # both in-sample and out-of-sample values (we reach this line only then)
@@ -296,22 +316,21 @@ class _PmdArimaAdapter(BaseForecaster):
         _, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
         _, y_oos_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
         for ins_int, oos_int, a in zip(y_ins_pred_int, y_oos_pred_int, coverage):
-            pred_int[("Coverage", a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
-            pred_int[("Coverage", a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
+            pred_int[(var_name, a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
+            pred_int[(var_name, a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
 
         return pred_int
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
         -------
         fitted_params : dict
         """
-        self.check_is_fitted()
         names = self._get_fitted_param_names()
-        params = self._get_fitted_params()
-        fitted_params = {name: param for name, param in zip(names, params)}
+        params = self._get_fitted_params_arima_res()
+        fitted_params = {str(name): param for name, param in zip(names, params)}
 
         if hasattr(self._forecaster, "model_"):  # AutoARIMA
             fitted_params["order"] = self._forecaster.model_.order
@@ -327,8 +346,8 @@ class _PmdArimaAdapter(BaseForecaster):
 
         return fitted_params
 
-    def _get_fitted_params(self):
-        # Return parameter values under `arima_res_`
+    def _get_fitted_params_arima_res(self):
+        """Return parameter values under `arima_res_`."""
         if hasattr(self._forecaster, "model_"):  # AutoARIMA
             return self._forecaster.model_.arima_res_._results.params
         elif hasattr(self._forecaster, "arima_res_"):  # ARIMA
@@ -337,7 +356,7 @@ class _PmdArimaAdapter(BaseForecaster):
             raise NotImplementedError()
 
     def _get_fitted_param_names(self):
-        # Return parameter names under `arima_res_`
+        """Return parameter names under `arima_res_`."""
         if hasattr(self._forecaster, "model_"):  # AutoARIMA
             return self._forecaster.model_.arima_res_._results.param_names
         elif hasattr(self._forecaster, "arima_res_"):  # ARIMA

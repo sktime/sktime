@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for OptionalPassthrough transformer."""
 
 import pytest
 from pandas.testing import assert_series_equal
 
+from sktime.transformations.compose import OptionalPassthrough
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.utils._testing.series import _make_series
 
 

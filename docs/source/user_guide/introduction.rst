@@ -42,7 +42,6 @@ can simply write:
     	regressor,
     	strategy="recursive",
     	window_length=12,
-    	scitype="infer",
     )
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)

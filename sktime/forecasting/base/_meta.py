@@ -1,7 +1,5 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Implements meta forecaster for forecasters composed of other estimators."""
 
 __author__ = ["mloning"]
@@ -13,14 +11,20 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 
 
-class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
+class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     """Base class for heterogeneous ensemble forecasters."""
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "forecasters"
 
     def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
         self.forecasters_ = None
         self.n_jobs = n_jobs
-        super(_HeterogenousEnsembleForecaster, self).__init__()
+        super().__init__()
 
     def _check_forecasters(self):
         if (
@@ -84,32 +88,4 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         """
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
-        return self
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("forecasters", deep=deep)
-
-    def set_params(self, **params):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params("forecasters", **params)
         return self

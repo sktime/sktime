@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for parameter estimator scitype.
+"""Base class template for parameter estimator scitype.
 
     class name: BaseParamFitter
 
@@ -29,11 +27,10 @@ from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
     check_is_scitype,
-    convert_to,
+    convert,
     scitype_to_mtype,
     update_data,
 )
-from sktime.exceptions import NotFittedError
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
@@ -49,8 +46,8 @@ def _coerce_to_list(obj):
 class BaseParamFitter(BaseEstimator):
     """Base parameter fitting estimator class.
 
-    The base parameter fitter specifies the methods and method
-    signatures that all parameter fitter have to implement.
+    The base parameter fitter specifies the methods and method signatures that all
+    parameter fitter have to implement.
 
     Specific implementations of these methods is deferred to concrete instances.
     """
@@ -70,7 +67,7 @@ class BaseParamFitter(BaseEstimator):
 
         self._X = None
 
-        super(BaseParamFitter, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):
@@ -213,23 +210,6 @@ class BaseParamFitter(BaseEstimator):
 
         return self
 
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        if not self.is_fitted:
-            raise NotFittedError(
-                f"parameter estimator of type {type(self).__name__} has not been "
-                "fitted yet, please call fit on data before get_fitted_params"
-            )
-        return self._get_fitted_params()
-
     def _check_X(self, X=None):
         """Check and coerce X for fit/update functions.
 
@@ -275,7 +255,7 @@ class BaseParamFitter(BaseEstimator):
 
         # checking X
         X_valid, _, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+            X, scitype=ALLOWED_SCITYPES, return_metadata=[], var_name="X"
         )
         msg = (
             "X must be in an sktime compatible format, "
@@ -291,11 +271,13 @@ class BaseParamFitter(BaseEstimator):
         if not X_valid:
             raise TypeError(msg + mtypes_msg)
         X_scitype = X_metadata["scitype"]
+        X_mtype = X_metadata["mtype"]
         # end checking X
 
         # converts X, converts None to None if X is None
-        X_inner = convert_to(
+        X_inner = convert(
             X,
+            from_type=X_mtype,
             to_type=X_inner_mtype,
             as_scitype=X_scitype,
         )

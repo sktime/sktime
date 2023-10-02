@@ -1,13 +1,12 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Transformer to impute missing values in series."""
 
 __author__ = ["aiwalter"]
 __all__ = ["Imputer"]
 
-
 import numpy as np
+import pandas as pd
 from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import ForecastingHorizon
@@ -24,7 +23,7 @@ class Imputer(BaseTransformer):
     Parameters
     ----------
     method : str, default="drift"
-        Method to fill the missing values values.
+        Method to fill the missing values.
 
         * "drift" : drift/trend values by sktime.PolynomialTrendForecaster(degree=1)
             first, X in transform() is filled with ffill then bfill
@@ -69,7 +68,7 @@ class Imputer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> transformer = Imputer(method="drift")
@@ -106,17 +105,40 @@ class Imputer(BaseTransformer):
         forecaster=None,
         missing_values=None,
     ):
-
         self.method = method
         self.missing_values = missing_values
         self.value = value
         self.forecaster = forecaster
         self.random_state = random_state
-        super(Imputer, self).__init__()
+        super().__init__()
 
         # these methods require self._X remembered in _fit and _update
         if method in ["drift", "forecaster", "random"]:
             self.set_tags(**{"remember_data": True})
+
+        # these methods can be applied to multi-index frames without vectorization or
+        # by using an efficient pandas native method
+        if method in [
+            "constant",
+            "mean",
+            "median",
+            "backfill",
+            "bfill",
+            "pad",
+            "ffill",
+        ]:
+            self.set_tags(
+                **{
+                    "X_inner_mtype": [
+                        "pd.DataFrame",
+                        "pd-multiindex",
+                        "pd_multiindex_hier",
+                    ]
+                }
+            )
+
+        if method in "forecaster":
+            self.set_tags(**{"y_inner_mtype": ["pd.DataFrame"]})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -137,20 +159,27 @@ class Imputer(BaseTransformer):
         """
         self._check_method()
         # all methods of Imputer that are actually doing a fit are
-        # implemented here. Some methods dont need fit, so they are just
-        # impleented in _transform
-        if self.method in ["drift", "forecaster"]:
-            self._y = y.copy() if y is not None else None
-            if self.method == "drift":
-                self._forecaster = PolynomialTrendForecaster(degree=1)
-            elif self.method == "forecaster":
-                self._forecaster = self.forecaster.clone()
-        elif self.method == "mean":
-            self._mean = X.mean()
-        elif self.method == "median":
-            self._median = X.median()
-        elif self.method == "random":
-            pass
+        # implemented here. Some methods don't need to fit, so they are just
+        # implemented in _transform
+
+        index = X.index
+        if isinstance(index, pd.MultiIndex):
+            X_grouped = X.groupby(level=list(range(index.nlevels - 1)))
+            if self.method == "mean":
+                self._mean = X_grouped.mean()
+            elif self.method == "median":
+                self._median = X_grouped.median()
+        else:
+            if self.method in ["drift", "forecaster"]:
+                self._y = y.copy() if y is not None else None
+                if self.method == "drift":
+                    self._forecaster = PolynomialTrendForecaster(degree=1)
+                elif self.method == "forecaster":
+                    self._forecaster = self.forecaster.clone()
+            elif self.method == "mean":
+                self._mean = X.mean()
+            elif self.method == "median":
+                self._median = X.median()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -178,31 +207,53 @@ class Imputer(BaseTransformer):
         if not _has_missing_values(X):
             return X
 
+        index = X.index
+
         if self.method == "random":
             for col in X.columns:
-                X[col] = X[col].apply(
-                    lambda i: self._get_random(col) if np.isnan(i) else i  # noqa: B023
-                )
+                isna = X[col].isna()
+                X.loc[isna, col] = self._create_random_distribution(X[col])(isna.sum())
+            return X
         elif self.method == "constant":
-            X = X.fillna(value=self.value)
-        elif self.method in ["backfill", "bfill", "pad", "ffill"]:
-            X = X.fillna(method=self.method)
-        elif self.method == "drift":
-            X = self._impute_with_forecaster(X, y)
-        elif self.method == "forecaster":
-            X = self._impute_with_forecaster(X, y)
-        elif self.method == "mean":
-            X = X.fillna(value=self._mean)
-        elif self.method == "median":
-            X = X.fillna(value=self._median)
-        elif self.method in ["nearest", "linear"]:
-            X = X.interpolate(method=self.method)
+            return X.fillna(value=self.value)
+        elif isinstance(index, pd.MultiIndex):
+            X_grouped = X.groupby(level=list(range(index.nlevels - 1)))
+
+            if self.method in ["backfill", "bfill"]:
+                X = X_grouped.fillna(method="bfill")
+                # fill trailing NAs of panel instances with reverse method
+                return X.fillna(method="ffill")
+            elif self.method in ["pad", "ffill"]:
+                X = X_grouped.fillna(method="ffill")
+                # fill leading NAs of panel instances with reverse method
+                return X.fillna(method="bfill")
+            elif self.method == "mean":
+                return X_grouped.fillna(value=self._mean)
+            elif self.method == "median":
+                return X_grouped.fillna(value=self._median)
+            else:
+                raise AssertionError("Code should not be reached")
         else:
-            raise ValueError(f"`method`: {self.method} not available.")
-        # fill first/last elements of series,
-        # as some methods (e.g. "linear") cant impute those
-        X = X.fillna(method="ffill").fillna(method="backfill")
-        return X
+            if self.method in ["backfill", "bfill", "pad", "ffill"]:
+                X = X.fillna(method=self.method)
+            elif self.method == "drift":
+                X = self._impute_with_forecaster(X, y)
+            elif self.method == "forecaster":
+                X = self._impute_with_forecaster(X, y)
+            elif self.method == "mean":
+                return X.fillna(value=self._mean)
+            elif self.method == "median":
+                return X.fillna(value=self._median)
+            elif self.method in ["nearest", "linear"]:
+                X = X.interpolate(method=self.method)
+            else:
+                raise ValueError(f"`method`: {self.method} not available.")
+
+            # fill first/last elements of series,
+            # as some methods (e.g. "linear") can't impute those
+            X = X.fillna(method="ffill").fillna(method="backfill")
+
+            return X
 
     def _check_method(self):
         method = self.method
@@ -244,25 +295,30 @@ class Imputer(BaseTransformer):
         else:
             pass
 
-    def _get_random(self, col):
-        """Create a random int or float value.
+    def _create_random_distribution(self, z: pd.Series):
+        """Create uniform distribution function within boundaries of given series.
+
+        The distribution is discrete, if the series contains only int-like values.
 
         Parameters
         ----------
-        col : str
-            Column name
+        z : pd.Series
+            A series to create a random distribution from
 
         Returns
         -------
-        int/float
-            Random int or float between min and max of X
+        Callable[[Optional[int]], float]
+            Random (discrete) uniform distribution between min and max of series
         """
         rng = check_random_state(self.random_state)
-        # check if series contains only int or int-like values (e.g. 3.0)
-        if (self._X[col].dropna() % 1 == 0).all():
-            return rng.randint(self._X[col].min(), self._X[col].max())
+        if (z.dropna() % 1 == 0).all():
+            return lambda size, low=z.min(), high=z.max(): rng.randint(
+                low=low, high=high, size=size
+            )
         else:
-            return rng.uniform(self._X[col].min(), self._X[col].max())
+            return lambda size, low=z.min(), high=z.max(): rng.uniform(
+                low=low, high=high, size=size
+            )
 
     def _impute_with_forecaster(self, X, y):
         """Use a given forecaster for imputation by in-sample predictions.
@@ -292,6 +348,7 @@ class Imputer(BaseTransformer):
                     X=self._y[col].fillna(method="ffill").fillna(method="backfill")
                     if self._y is not None
                     else None,
+                    fh=fh,
                 )
 
                 # replace missing values with predicted values
@@ -317,7 +374,12 @@ class Imputer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.forecasting.compose import make_reduction
+        from sktime.forecasting.trend import TrendForecaster
+
+        linear_forecaster = make_reduction(LinearRegression(), strategy="multioutput")
 
         return [
             {"method": "drift"},
@@ -329,7 +391,8 @@ class Imputer(BaseTransformer):
             {"method": "bfill"},
             {"method": "pad"},
             {"method": "random"},
-            {"method": "forecaster", "forecaster": ExponentialSmoothing()},
+            {"method": "forecaster", "forecaster": TrendForecaster()},
+            {"method": "forecaster", "forecaster": linear_forecaster},
         ]
 
 

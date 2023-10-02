@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
-
 """Factory module that adds 3D vectorization to all exported distances.
 
-Applies pairwise_distance to all distances exported by module, so
-    exported distances function with 1D, 2D and 3D input.
+Applies pairwise_distance to all distances exported by module, so     exported distances
+function with 1D, 2D and 3D input.
 """
 
 import numpy as np

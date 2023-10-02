@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for pairwise transformers.
 
 Contains TestScenario concrete children to run in tests for pairwise transformers.
@@ -53,13 +52,13 @@ X1_np = _make_series(
     n_columns=4,
     n_timepoints=4,
     random_state=1,
-    return_numpy=True,
+    return_mtype="np.ndarray",
 )
 X2_np = _make_series(
     n_columns=4,
     n_timepoints=5,
     random_state=2,
-    return_numpy=True,
+    return_mtype="np.ndarray",
 )
 
 
@@ -71,6 +70,7 @@ class TransformerPairwiseTransformSymm(TransformerPairwiseTestScenario):
     args = {
         "fit": {"X": None, "X2": None},
         "transform": {"X": d},
+        "transform_diag": {"X": d},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -83,6 +83,7 @@ class TransformerPairwiseTransformAsymm(TransformerPairwiseTestScenario):
     args = {
         "fit": {"X": None, "X2": None},
         "transform": {"X": d, "X2": d2},
+        "transform_diag": {"X": d},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -95,6 +96,7 @@ class TransformerPairwiseTransformNumpy(TransformerPairwiseTestScenario):
     args = {
         "fit": {"X": None, "X2": None},
         "transform": {"X": X1_np, "X2": X2_np},
+        "transform_diag": {"X": X1_np},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -127,6 +129,7 @@ class TransformerPairwisePanelTransformSymm(TransformerPairwisePanelTestScenario
     args = {
         "fit": {"X": None, "X2": None},
         "transform": {"X": X},
+        "transform_diag": {"X": X},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -139,6 +142,7 @@ class TransformerPairwisePanelTransformAsymm(TransformerPairwisePanelTestScenari
     args = {
         "fit": {"X": None, "X2": None},
         "transform": {"X": X, "X2": X2},
+        "transform_diag": {"X": X},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -151,6 +155,7 @@ class TransformerPairwisePanelTransformListdf(TransformerPairwisePanelTestScenar
     args = {
         "fit": {"X": None, "X2": None},
         "transform": {"X": X1_list_df, "X2": X2_list_df},
+        "transform_diag": {"X": X1_list_df},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -163,6 +168,7 @@ class TransformerPairwisePanelTransformNumpy(TransformerPairwisePanelTestScenari
     args = {
         "fit": {"X": None, "X2": None},
         "transform": {"X": X1_num_pan, "X2": X2_num_pan},
+        "transform_diag": {"X": X1_num_pan},
     }
     default_method_sequence = ["fit", "transform"]
 

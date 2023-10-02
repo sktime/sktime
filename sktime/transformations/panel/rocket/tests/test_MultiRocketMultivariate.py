@@ -1,22 +1,27 @@
-# -*- coding: utf-8 -*-
 """MultiRocketMultivariate test code."""
 import numpy as np
+import pytest
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.rocket import MultiRocketMultivariate
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(MultiRocketMultivariate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_multirocket_multivariate_on_basic_motions():
     """Test of MultiRocketMultivariate on basic motions."""
     # load training data
     X_training, Y_training = load_basic_motions(split="train", return_X_y=True)
 
     # 'fit' MultiRocket -> infer data dimensions, generate random kernels
-    multirocket = MultiRocketMultivariate()
+    multirocket = MultiRocketMultivariate(random_state=0)
     multirocket.fit(X_training)
 
     # transform training data

@@ -4,21 +4,12 @@
 Welcome to sktime
 =================
 
-  A unified framework for machine learning with time series.
+A unified framework for machine learning with time series.
 
+.. topic:: Register as a user, or voter for sktime committees!
 
-sktime Fall dev days
-====================
-
-Please join the sktime community Nov 9 - 10 2022 for our virtual Fall dev days.  There will be an additional in-person social
-option in regions with enough participants. Our core hours will be 10-12 UTC, with additional meeting before/after these core hours!
-This is a great opportunity for new community members to learn more about how to contribute to sktime as well as a good opportunity
-for existing members to share what we have been up to! Please register
-`here <https://docs.google.com/forms/d/e/1FAIpQLScQkrSZfNiZiQKPuBcFMtHAlL10RBZ3QSBo-I3klUHeL7Vg0A/viewform>`_!
-
-.. raw:: html
-
-    <iframe src="https://drive.google.com/file/d/1DgxrUsstn3oDv-bzthwJR4t4JbhxSeHo/preview" width="640" height="480" allow="autoplay"></iframe>
+    Prioritized bugfixes, shape the tech roadmap and governance policy.
+    `Register here <https://forms.gle/eVuzrCjKDRupxawL7>`_
 
 
 Mission
@@ -26,24 +17,21 @@ Mission
 
 .. include:: about/_mission.rst
 
-Scope
-=====
+Features
+========
 
-sktime features a unified interface for multiple time series learning tasks.
-Currently, we support :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`time series regression <regression_ref>` and :ref:`time series clustering <clustering_ref>`.
-We have experimental support for time series annotation.
+* **unified API** for ML/AI with time series, for model building, fitting, application, and validation
+* **support for a variety of learning tasks** including :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`regression <regression_ref>`, :ref:`clustering <clustering_ref>`.
+* **composite model building**, including pipelines with transformations, ensembles, tuning, reduction
+* interactive user experience with **scikit-learn like interface conventions**
 
-Features:
-
-* API for machine learning with time series, for the purpose of specifying, fitting, applying and validating machine learning models
-* Interactive user experience with scikit-learn like syntax conventions
-
-Technical specification:
+Technical specification
+=======================
 
 * In-memory computation of a single machine, no distributed computing
-* Medium-sized data in pandas and NumPy
+* Medium-sized data in pandas and NumPy based containers
 * Modular, principled and object-oriented API
-* Making use of interactive Python interpreter, no command-line interface or graphical user interface
+* Using interactive Python interpreter, no command-line interface or graphical user interface
 
 Contents
 ========
@@ -59,6 +47,7 @@ Contents
    get_involved
    developers
    about
+   examples
 
 .. grid:: 1 2 2 2
     :gutter: 3

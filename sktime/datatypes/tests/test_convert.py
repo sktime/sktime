@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """Testing machine type converters for scitypes."""
 
 __author__ = ["fkiraly"]
 
-from sktime.datatypes import SCITYPE_REGISTER
+from sktime.datatypes import SCITYPE_REGISTER, scitype_to_mtype
 from sktime.datatypes._convert import _conversions_defined, convert
 from sktime.datatypes._examples import get_examples
 from sktime.utils._testing.deep_equals import deep_equals
@@ -21,13 +20,13 @@ def _generate_fixture_tuples():
     fixture_tuples = []
 
     for scitype in SCITYPES:
-
         # if we know there are no conversions defined, skip this scitype
         if scitype in SCITYPES_NO_CONVERSIONS:
             continue
 
         conv_mat = _conversions_defined(scitype)
-        mtypes = conv_mat.index.values
+
+        mtypes = scitype_to_mtype(scitype, softdeps="exclude")
 
         if len(mtypes) == 0:
             # if there are no mtypes, this must have been reached by mistake/bug
@@ -111,7 +110,6 @@ def test_convert(scitype, from_mtype, to_mtype, fixture_index):
 
     # test that converted from-fixture equals to-fixture
     if cond1 and cond2 and cond3:
-
         converted_fixture_i = convert(
             obj=from_fixture[0],
             from_type=from_mtype,

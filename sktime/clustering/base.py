@@ -1,17 +1,16 @@
-# -*- coding: utf-8 -*-
 """Base class for clustering."""
-__author__ = ["chrisholder", "TonyBagnall"]
+__author__ = ["chrisholder", "TonyBagnall", "achieveordie"]
 __all__ = ["BaseClusterer"]
 
 import time
-from abc import ABC, abstractmethod
 from typing import Any, Union
 
 import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes import check_is_scitype, convert_to, scitype_to_mtype
+from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
@@ -19,7 +18,7 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
 TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
 
 
-class BaseClusterer(BaseEstimator, ABC):
+class BaseClusterer(BaseEstimator):
     """Abstract base class for time series clusterer.
 
     Parameters
@@ -43,8 +42,46 @@ class BaseClusterer(BaseEstimator, ABC):
         self._class_dictionary = {}
         self._threads_to_use = 1
         self.n_clusters = n_clusters
-        super(BaseClusterer, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
+
+    def __rmul__(self, other):
+        """Magic * method, return concatenated ClustererPipeline, transformers on left.
+
+        Overloaded multiplication operation for clusterers. Implemented for `other`
+        being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        ClustererPipeline object, concatenation of `other` (first) with `self` (last).
+        """
+        from sktime.clustering.compose import ClustererPipeline
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+
+        # behaviour is implemented only if other inherits from BaseTransformer
+        #  in that case, distinctions arise from whether self or other is a pipeline
+        #  todo: this can probably be simplified further with "zero length" pipelines
+        if isinstance(other, BaseTransformer):
+            # ClustererPipeline already has the dunder method defined
+            if isinstance(self, ClustererPipeline):
+                return other * self
+            # if other is a TransformerPipeline but self is not, first unwrap it
+            elif isinstance(other, TransformerPipeline):
+                return ClustererPipeline(clusterer=self, transformers=other.steps)
+            # if neither self nor other are a pipeline, construct a ClustererPipeline
+            else:
+                return ClustererPipeline(clusterer=self, transformers=[other])
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
 
     def fit(self, X: TimeSeriesInstances, y=None) -> BaseEstimator:
         """Fit time series clusterer to training data.
@@ -203,19 +240,19 @@ class BaseClusterer(BaseEstimator, ABC):
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
         preds = self._predict(X)
-        n_clusters = self.n_clusters
-        if n_clusters is None:
+        n_instances = len(preds)
+        if hasattr(self, "n_clusters") and self.n_clusters is not None:
+            n_clusters = self.n_clusters
+        else:
             n_clusters = max(preds) + 1
         dists = np.zeros((X.shape[0], n_clusters))
-        for i in range(X.shape[0]):
+        for i in range(n_instances):
             dists[i, preds[i]] = 1
         return dists
 
-    @abstractmethod
     def _score(self, X, y=None):
-        ...
+        raise NotImplementedError
 
-    @abstractmethod
     def _predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
 
@@ -233,9 +270,8 @@ class BaseClusterer(BaseEstimator, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
-        ...
+        raise NotImplementedError
 
-    @abstractmethod
     def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
 
@@ -251,7 +287,7 @@ class BaseClusterer(BaseEstimator, ABC):
         self:
             Fitted estimator.
         """
-        ...
+        raise NotImplementedError
 
     def _check_capabilities(self, missing: bool, multivariate: bool, unequal: bool):
         """Check the capabilities of the clusterer matches input data requirements.
@@ -335,16 +371,40 @@ class BaseClusterer(BaseEstimator, ABC):
         """
         X = self._initial_conversion(X)
 
+        ALLOWED_SCITYPES = [
+            "Panel",
+        ]
+        FORBIDDEN_MTYPES = []
+
+        mtypes_messages = []
+        for scitype in ALLOWED_SCITYPES:
+            mtypes = set(scitype_to_mtype(scitype))
+            mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
+            mtypes_messages.append(f"For {scitype} scitype: {mtypes}")
+
+        X_metadata_required = [
+            "n_instances",
+            "has_nans",
+            "is_univariate",
+            "is_equal_length",
+        ]
         X_valid, _, X_metadata = check_is_scitype(
-            X, scitype="Panel", return_metadata=True
+            X, scitype=ALLOWED_SCITYPES, return_metadata=X_metadata_required
         )
         if not X_valid:
             raise TypeError(
-                f"X is not of a supported input data type."
-                f"X must be of type np.ndarray or pd.DataFrame, found {type(X)}"
-                f"Use datatypes.check_is_mtype to check conformance with "
-                f"specifications."
+                "X must be in a sktime compatible format, of scitype: "
+                f"{', '.join(ALLOWED_SCITYPES)}. "
+                "For instance a pandas.DataFrame must have a 2-level MultiIndex. "
+                "In case of numpy array, it must be "
+                "a 3D array as (num_instance, num_vars, series). "
+                "If you think X is already is an sktime supported input format, "
+                "run `sktime.datatypes.check_raise(X, MTYPE)` to diagnose the error, "
+                "where MTYPE is the string of the type specification you want for X. "
+                "Possible mtype specification strings are as follows: "
+                f"{', '.join(mtypes_messages)}"
             )
+
         n_cases = X_metadata["n_instances"]
         if n_cases < enforce_min_instances:
             raise ValueError(

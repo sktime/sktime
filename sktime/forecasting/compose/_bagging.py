@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements Bagging Forecaster."""
 
@@ -11,7 +10,6 @@ import numpy as np
 import pandas as pd
 from sklearn import clone
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import set_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
@@ -22,6 +20,7 @@ from sktime.transformations.bootstrap import (
     STLBootstrapTransformer,
 )
 from sktime.utils.estimators import MockForecaster
+from sktime.utils.random_state import set_random_state
 
 
 class BaggingForecaster(BaseForecaster):
@@ -49,7 +48,7 @@ class BaggingForecaster(BaseForecaster):
         A valid sktime Forecaster. If not specified sktime.forecating.ets.AutoETS is
         used.
     sp: int (default=2)
-        Seasonal period for default Forecaster and Transformer. Must be greater than 2.
+        Seasonal period for default Forecaster and Transformer. Must be 2 or greater.
         Ignored for the bootstrap_transformer and forecaster if they are specified.
     random_state: int or np.random.RandomState (default=None)
         The random state of the estimator, used to control the random number generator
@@ -82,10 +81,10 @@ class BaggingForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = BaggingForecaster(
     ...     STLBootstrapTransformer(sp=12), NaiveForecaster(sp=12)
-    ... )
-    >>> forecaster.fit(y)
+    ... )  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     BaggingForecaster(...)
-    >>> y_hat = forecaster.predict([1,2,3])
+    >>> y_hat = forecaster.predict([1,2,3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -97,7 +96,9 @@ class BaggingForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "requires-fh-in-fit": False,  # like AutoETS overwritten if forecaster not None
         "enforce_index_type": None,  # like AutoETS overwritten if forecaster not None
-        "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        "capability:insample": True,  # can the estimator make in-sample predictions?
+        "capability:pred_int": True,  # can the estimator produce prediction intervals?
+        "capability:pred_int:insample": True,  # ... for in-sample horizons?
     }
 
     def __init__(
@@ -112,7 +113,14 @@ class BaggingForecaster(BaseForecaster):
         self.sp = sp
         self.random_state = random_state
 
-        super(BaggingForecaster, self).__init__()
+        if bootstrap_transformer is None:
+            # if the transformer is None, this uses the statsmodels dependent
+            # sktime.transformations.bootstrap.STLBootstrapTransformer
+            #
+            # done before the super call to trigger exceptions
+            self.set_tags(**{"python_dependencies": "statsmodels"})
+
+        super().__init__()
 
         # set the tags based on forecaster
         tags_to_clone = [
@@ -122,7 +130,7 @@ class BaggingForecaster(BaseForecaster):
         if forecaster is not None:
             self.clone_tags(self.forecaster, tags_to_clone)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -192,7 +200,7 @@ class BaggingForecaster(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -218,9 +226,11 @@ class BaggingForecaster(BaseForecaster):
             Point predictions
         """
         y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=None)
-        return y_bootstraps_pred.groupby(level=-1).mean()
+        y_pred = y_bootstraps_pred.groupby(level=-1).mean().iloc[:, 0]
+        y_pred.name = self._y.name
+        return y_pred
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -253,8 +263,7 @@ class BaggingForecaster(BaseForecaster):
         """
         # X is ignored
         y_pred = self.forecaster_.predict(fh=fh, X=None)
-
-        return _calculate_data_quantiles(y_pred, alpha)
+        return self._calculate_data_quantiles(y_pred, alpha)
 
     def _update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -273,7 +282,7 @@ class BaggingForecaster(BaseForecaster):
         self : reference to self
         """
         # Need to construct a completely new y out of ol self._y and y and then
-        # fit_treansform the transformer and re-fit the foreaster.
+        # fit_treansform the transformer and re-fit the forecaster.
         _y = update_data(self._y, y)
 
         self.bootstrap_transformer_.fit(X=_y)
@@ -294,37 +303,44 @@ class BaggingForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         params = [
-            {},
             {
                 "bootstrap_transformer": MovingBlockBootstrapTransformer(),
                 "forecaster": MockForecaster(),
             },
         ]
 
+        # the default param set causes a statsmodels based estimator
+        # to be created as bootstrap_transformer
+        if _check_soft_dependencies("statsmodels", severity="none"):
+            params += [{}]
+
         return params
 
+    def _calculate_data_quantiles(self, df: pd.DataFrame, alpha: List[float]):
+        """Generate quantiles for each time point.
 
-def _calculate_data_quantiles(df: pd.DataFrame, alpha: List[float]) -> pd.DataFrame:
-    """Generate quantiles for each time point.
+        Parameters
+        ----------
+        df : pd.DataFrame
+            A dataframe of mtype pd-multiindex or hierarchical
+        alpha : List[float]
+            list of the desired quantiles
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        A dataframe of mtype pd-multiindex or hierarchical
-    alpha : List[float]
-        list of the desired quantiles
+        Returns
+        -------
+        pd.DataFrame
+            The specified quantiles
+        """
+        var_names = self._get_varnames()
+        var_name = var_names[0]
 
-    Returns
-    -------
-    pd.DataFrame
-        The specified quantiles
-    """
-    index = pd.MultiIndex.from_product([["Quantiles"], alpha])
-    pred_quantiles = pd.DataFrame(columns=index)
-    for a in alpha:
-        pred_quantiles[("Quantiles", a)] = (
-            df.groupby(level=-1, as_index=True).quantile(a).squeeze()
-        )
+        index = pd.MultiIndex.from_product([var_names, alpha])
+        pred_quantiles = pd.DataFrame(columns=index)
+        for a in alpha:
+            quant_a = df.groupby(level=-1, as_index=True).quantile(a)
+            pred_quantiles[[(var_name, a)]] = quant_a
 
-    return pred_quantiles
+        return pred_quantiles

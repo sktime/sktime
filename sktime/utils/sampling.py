@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Functions to sample sktime datasets.
 
 Used in experiments to get deterministic resamples.

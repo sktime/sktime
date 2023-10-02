@@ -1,15 +1,18 @@
-# -*- coding: utf-8 -*-
 """Tests for the FourierFeatures transformer."""
+
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_index_equal
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.fourier import FourierFeatures
 
 Y = load_airline()
+Y_datetime = deepcopy(Y)
+Y_datetime.index = Y_datetime.index.to_timestamp(freq="M")
 
 
 def test_fourier_list_length_missmatch():
@@ -49,9 +52,9 @@ def test_fourier_redundant_terms_dropped():
 def test_fit_transform_outputs():
     """Tests that we get the expected outputs."""
     y = Y.iloc[:3]
-    y_transformed = FourierFeatures(sp_list=[12], fourier_terms_list=[2]).fit_transform(
-        y
-    )
+    y_transformed = FourierFeatures(
+        sp_list=[12], fourier_terms_list=[2], keep_original_columns=True
+    ).fit_transform(y)
     expected = (
         y.to_frame()
         .assign(sin_12_1=[np.sin(2 * np.pi * i / 12) for i in range(3)])
@@ -62,9 +65,44 @@ def test_fit_transform_outputs():
     assert_frame_equal(y_transformed, expected)
 
 
+def test_fit_transform_keep_original_columns_false():
+    """Tests that we get the expected outputs when `keep_original_columns` is False."""
+    y = Y.iloc[:3]
+    y_transformed = FourierFeatures(
+        sp_list=[12], fourier_terms_list=[2], keep_original_columns=False
+    ).fit_transform(y)
+    expected = (
+        pd.DataFrame(index=y.index)
+        .assign(sin_12_1=[np.sin(2 * np.pi * i / 12) for i in range(3)])
+        .assign(cos_12_1=[np.cos(2 * np.pi * i / 12) for i in range(3)])
+        .assign(sin_12_2=[np.sin(4 * np.pi * i / 12) for i in range(3)])
+        .assign(cos_12_2=[np.cos(4 * np.pi * i / 12) for i in range(3)])
+    )
+    assert_frame_equal(y_transformed, expected)
+
+
+def test_fit_transform_datetime_outputs():
+    """Tests that we get expected outputs when the input has a pd.DatetimeIndex."""
+    y = Y_datetime.iloc[:3]
+    y_transformed = FourierFeatures(
+        sp_list=[12], fourier_terms_list=[2], keep_original_columns=True
+    ).fit_transform(y)
+    expected = (
+        y.to_frame()
+        .assign(sin_12_1=[np.sin(2 * np.pi * i / 12) for i in range(3)])
+        .assign(cos_12_1=[np.cos(2 * np.pi * i / 12) for i in range(3)])
+        .assign(sin_12_2=[np.sin(4 * np.pi * i / 12) for i in range(3)])
+        .assign(cos_12_2=[np.cos(4 * np.pi * i / 12) for i in range(3)])
+    )
+    assert_frame_equal(y_transformed, expected)
+    assert_index_equal(y_transformed.index, y.index)
+
+
 def test_fit_transform_behaviour():
     """Tests that the transform method evaluates time steps passed based on X in fit."""
-    transformer = FourierFeatures(sp_list=[12], fourier_terms_list=[2])
+    transformer = FourierFeatures(
+        sp_list=[12], fourier_terms_list=[2], keep_original_columns=True
+    )
     # fit_transform on one part of the dataset
     y_tr_1 = transformer.fit_transform(Y.iloc[:100])
     # transform the rest

@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """Slope and trend utilities."""
 __all__ = [
     "_slope",
     "_fit_trend",
 ]
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 
 import numpy as np
 from sklearn.utils import check_array
@@ -81,5 +80,5 @@ def _slope(y, axis=0):
 
     # Compute slope along given axis
     return (np.mean(y * x, axis=axis) - x_mean * np.mean(y, axis=axis)) / (
-        (x * x).mean() - x_mean ** 2
+        (x * x).mean() - x_mean**2
     )

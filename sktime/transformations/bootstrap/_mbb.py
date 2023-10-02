@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Bootstrapping methods for time series."""
 
@@ -124,7 +123,7 @@ class STLBootstrapTransformer(BaseTransformer):
     See Also
     --------
     sktime.transformations.bootstrap.MovingBlockBootstrapTransformer :
-        Transofrmer that applies the Moving Block Bootstrapping method to create
+        Transformer that applies the Moving Block Bootstrapping method to create
         a panel of synthetic time series.
 
     References
@@ -144,18 +143,18 @@ class STLBootstrapTransformer(BaseTransformer):
     >>> from sktime.transformations.bootstrap import STLBootstrapTransformer
     >>> from sktime.datasets import load_airline
     >>> from sktime.utils.plotting import plot_series  # doctest: +SKIP
-    >>> y = load_airline()
-    >>> transformer = STLBootstrapTransformer(10)
-    >>> y_hat = transformer.fit_transform(y)
-    >>> series_list = []
-    >>> names = []
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> transformer = STLBootstrapTransformer(10)  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
+    >>> series_list = []  # doctest: +SKIP
+    >>> names = []  # doctest: +SKIP
     >>> for group, series in y_hat.groupby(level=[0], as_index=False):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
-    ...     names.append(group)
+    ...     names.append(group)  # doctest: +SKIP
     >>> plot_series(*series_list, labels=names)  # doctest: +SKIP
     (...)
-    >>> print(y_hat.head()) # doctest: +NORMALIZE_WHITESPACE
+    >>> print(y_hat.head())  # doctest: +SKIP
                           Number of airline passengers
     series_id time_index
     actual    1949-01                            112.0
@@ -231,7 +230,7 @@ class STLBootstrapTransformer(BaseTransformer):
         self.outer_iter = outer_iter
         self.random_state = random_state
 
-        super(STLBootstrapTransformer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -514,7 +513,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         self.return_actual = return_actual
         self.random_state = random_state
 
-        super(MovingBlockBootstrapTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

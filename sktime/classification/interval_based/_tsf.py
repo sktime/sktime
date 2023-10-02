@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Series Forest (TSF) Classifier.
 
 Interval based TSF classifier, extracts basic summary features from random intervals.
@@ -79,11 +78,13 @@ class TimeSeriesForestClassifier(
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = TimeSeriesForestClassifier(n_estimators=5)
     >>> clf.fit(X_train, y_train)
-    TimeSeriesForestClassifier(...)
+    TimeSeriesForestClassifier(n_estimators=5)
     >>> y_pred = clf.predict(X_test)
     """
 
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
+
+    _tags = {"capability:predict_proba": True}
 
     def __init__(
         self,
@@ -92,7 +93,7 @@ class TimeSeriesForestClassifier(
         n_jobs=1,
         random_state=None,
     ):
-        super(TimeSeriesForestClassifier, self).__init__(
+        super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,
             n_jobs=n_jobs,
@@ -103,10 +104,10 @@ class TimeSeriesForestClassifier(
     def fit(self, X, y, **kwargs):
         """Wrap fit to call BaseClassifier.fit.
 
-        This is a fix to get around the problem with multiple inheritance. The
-        problem is that if we just override _fit, this class inherits the fit from
-        the sklearn class BaseTimeSeriesForest. This is the simplest solution,
-        albeit a little hacky.
+        This is a fix to get around the problem with multiple inheritance. The problem
+        is that if we just override _fit, this class inherits the fit from the sklearn
+        class BaseTimeSeriesForest. This is the simplest solution, albeit a little
+        hacky.
         """
         return BaseClassifier.fit(self, X=X, y=y, **kwargs)
 
@@ -169,6 +170,11 @@ class TimeSeriesForestClassifier(
             np.ones(self.n_classes) * self.n_estimators
         )
         return output
+
+    def _get_fitted_params(self):
+        params = super()._get_fitted_params()
+        params.update({"n_classes": self.n_classes_, "fit_time": self.fit_time_})
+        return params
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

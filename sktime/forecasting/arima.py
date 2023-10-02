@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements autoregressive integrated moving average (ARIMA) models."""
 
@@ -7,9 +6,6 @@ __author__ = ["mloning", "hyang1996", "fkiraly", "ilkersigirci"]
 __all__ = ["AutoARIMA", "ARIMA"]
 
 from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("pmdarima", severity="warning")
 
 
 class AutoARIMA(_PmdArimaAdapter):
@@ -35,10 +31,10 @@ class AutoARIMA(_PmdArimaAdapter):
     Canova-Hansen to determine the optimal order of seasonal differencing, D.
 
     In order to find the best model, auto-ARIMA optimizes for a given
-    information_criterion, one of (‘aic’, ‘aicc’, ‘bic’, ‘hqic’, ‘oob’)
+    information_criterion, one of ('aic', 'aicc', 'bic', 'hqic', 'oob')
     (Akaike Information Criterion, Corrected Akaike Information Criterion,
     Bayesian Information Criterion, Hannan-Quinn Information Criterion, or
-    “out of bag”–for validation scoring–respectively) and returns the ARIMA
+    "out of bag"–for validation scoring–respectively) and returns the ARIMA
     which minimizes the value.
 
     Note that due to stationarity issues, auto-ARIMA might not find a suitable
@@ -52,7 +48,7 @@ class AutoARIMA(_PmdArimaAdapter):
     ----------
     start_p : int, optional (default=2)
         The starting value of p, the order (or number of time lags)
-        of the auto-regressive (“AR”) model. Must be a positive integer.
+        of the auto-regressive ("AR") model. Must be a positive integer.
     d : int, optional (default=None)
         The order of first-differencing. If None (by default), the value will
         automatically be selected based on the results of the test (i.e.,
@@ -61,7 +57,7 @@ class AutoARIMA(_PmdArimaAdapter):
         value). Must be a positive integer or None. Note that if d is None,
         the runtime could be significantly longer.
     start_q : int, optional (default=2)
-        The starting value of q, the order of the moving-average (“MA”) model.
+        The starting value of q, the order of the moving-average ("MA") model.
         Must be a positive integer.
     max_p : int, optional (default=5)
         The maximum value of p, inclusive. Must be a positive integer greater
@@ -110,8 +106,8 @@ class AutoARIMA(_PmdArimaAdapter):
         Whether the time-series is stationary and d should be set to zero.
     information_criterion : str, optional (default='aic')
         The information criterion used to select the best ARIMA model. One of
-        pmdarima.arima.auto_arima.VALID_CRITERIA, (‘aic’, ‘bic’, ‘hqic’,
-        ‘oob’).
+        pmdarima.arima.auto_arima.VALID_CRITERIA, ('aic', 'bic', 'hqic',
+        'oob').
     alpha : float, optional (default=0.05)
         Level of the test for testing significance.
     test : str, optional (default='kpss')
@@ -128,8 +124,8 @@ class AutoARIMA(_PmdArimaAdapter):
         over-fit the model.
     n_jobs : int, optional (default=1)
         The number of models to fit in parallel in the case of a grid search
-        (stepwise=False). Default is 1, but -1 can be used to designate “as
-        many as possible”.
+        (stepwise=False). Default is 1, but -1 can be used to designate "as
+        many as possible".
     start_params : array-like, optional (default=None)
         Starting parameters for ARMA(p,q). If None, the default is given by
         ARMA._fit_start_params.
@@ -168,7 +164,7 @@ class AutoARIMA(_PmdArimaAdapter):
         be squelched.
     error_action : str, optional (default='warn')
         If unable to fit an ARIMA due to stationarity issues, whether to warn
-        (‘warn’), raise the ValueError (‘raise’) or ignore (‘ignore’). Note
+        ('warn'), raise the ValueError ('raise') or ignore ('ignore'). Note
         that the default behavior is to warn, and fits that fail will be
         returned as None. This is the recommended behavior, as statsmodels
         ARIMA and SARIMAX models hit bugs periodically that can cause an
@@ -181,14 +177,14 @@ class AutoARIMA(_PmdArimaAdapter):
         fit.
     random : bool, optional (default='False')
         Similar to grid searches, auto_arima provides the capability to
-        perform a “random search” over a hyper-parameter space. If random is
+        perform a "random search" over a hyper-parameter space. If random is
         True, rather than perform an exhaustive search or stepwise search,
         only n_fits ARIMA models will be fit (stepwise must be False for this
         option to do anything).
     random_state : int, long or numpy RandomState, optional (default=None)
         The PRNG for when random=True. Ensures replicable testing and results.
     n_fits : int, optional (default=10)
-        If random is True and a “random search” is going to be performed,
+        If random is True and a "random search" is going to be performed,
         n_iter is the number of ARIMA models to be fit.
     out_of_sample_size : int, optional (default=0)
         The number of examples from the tail of the time series to hold out
@@ -203,7 +199,7 @@ class AutoARIMA(_PmdArimaAdapter):
             > Append [5, 6] to end of self.arima_res_.data.endog values
     scoring : str, optional (default='mse')
         If performing validation (i.e., if out_of_sample_size > 0), the metric
-        to use for scoring the out-of-sample data. One of (‘mse’, ‘mae’)
+        to use for scoring the out-of-sample data. One of ('mse', 'mae')
     scoring_args : dict, optional (default=None)
         A dictionary of key-word arguments to be passed to the scoring metric.
     with_intercept : bool, optional (default=True)
@@ -331,7 +327,6 @@ class AutoARIMA(_PmdArimaAdapter):
         hamilton_representation=False,
         concentrate_scale=False,
     ):
-
         self.start_p = start_p
         self.d = d
         self.start_q = start_q
@@ -374,7 +369,7 @@ class AutoARIMA(_PmdArimaAdapter):
         for key in self.SARIMAX_KWARGS_KEYS:
             setattr(self, key, eval(key))
 
-        super(AutoARIMA, self).__init__()
+        super().__init__()
 
         self._sp = sp if sp else 1
 
@@ -443,7 +438,7 @@ class AutoARIMA(_PmdArimaAdapter):
         update_pdq = self.update_pdq
         if update_params:
             if update_pdq:
-                self._fit(y=self._y, X=self._X)
+                self._fit(y=self._y, X=self._X, fh=self._fh)
             else:
                 if X is not None:
                     X = X.loc[y.index]
@@ -701,7 +696,6 @@ class ARIMA(_PmdArimaAdapter):
         hamilton_representation=False,
         concentrate_scale=False,
     ):
-
         self.order = order
         self.seasonal_order = seasonal_order
         self.start_params = start_params
@@ -716,7 +710,7 @@ class ARIMA(_PmdArimaAdapter):
         for key in self.SARIMAX_KWARGS_KEYS:
             setattr(self, key, eval(key))
 
-        super(ARIMA, self).__init__()
+        super().__init__()
 
     def _instantiate_model(self):
         # import inside method to avoid hard dependency
@@ -738,3 +732,25 @@ class ARIMA(_PmdArimaAdapter):
             with_intercept=self.with_intercept,
             **sarimax_kwargs,
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params1 = {"maxiter": 3}
+        params2 = {
+            "order": (1, 1, 0),
+            "seasonal_order": (1, 0, 0, 2),
+            "maxiter": 3,
+        }
+        return [params1, params2]

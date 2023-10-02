@@ -1,10 +1,11 @@
-# -*- coding: utf-8 -*-
 """Tests for time series k-medoids."""
 import numpy as np
+import pytest
 from sklearn import metrics
 
 from sktime.clustering.k_medoids import TimeSeriesKMedoids
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 
 expected_results = {
     "medoids": [
@@ -105,6 +106,10 @@ expected_labels = {
 }
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSeriesKMedoids),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_kmedoids():
     """Test implementation of Kmedoids."""
     X_train, y_train = load_basic_motions(split="train")

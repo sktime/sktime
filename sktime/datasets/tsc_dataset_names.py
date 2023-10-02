@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
-"""
-List of datasets available from the timeseriesclassification.com archive.
+"""List of datasets available from the timeseriesclassification.com archive.
 
 There are four main distinctions: univariate/multivariate equal/unequal length.
 Array univariate lists the 128 UCR problems, as described in [1].
@@ -27,9 +24,8 @@ Learning on Temporal Data
     Data Mining and Knowledge Discovery, 2020.
 """
 
-__author__ = ["Tony Bagnall"]
-
-""" 128 UCR univariatetime series classification problems [1]"""
+__author__ = ["TonyBagnall"]
+"""128 UCR univariatetime series classification problems [1]"""
 univariate = [
     "ACSF1",
     "Adiac",
@@ -139,7 +135,7 @@ univariate = [
     "SmoothSubspace",
     "SonyAIBORobotSurface1",
     "SonyAIBORobotSurface2",
-    "StarlightCurves",
+    "StarLightCurves",
     "Strawberry",
     "SwedishLeaf",
     "Symbols",
@@ -159,10 +155,8 @@ univariate = [
     "WordSynonyms",
     "Worms",
     "WormsTwoClass",
-    "IOError",
 ]
-
-""" 33 UEA multivariate time series classification problems [2]"""
+"""33 UEA multivariate time series classification problems [2]"""
 multivariate = [
     "ArticularyWordRecognition",
     "AsphaltObstaclesCoordinates",
@@ -198,7 +192,6 @@ multivariate = [
     "StandWalkJump",
     "UWaveGestureLibrary",
 ]
-
 """113 equal length/no missing univariate time series classification problems [3]"""
 univariate_equal_length = [
     "ACSF1",
@@ -315,7 +308,6 @@ univariate_equal_length = [
     "WormsTwoClass",
     "Yoga",
 ]
-
 """11 variable length univariate time series classification problems [3]"""
 univariate_variable_length = [
     "AllGestureWiimoteX",
@@ -330,15 +322,13 @@ univariate_variable_length = [
     "PLAID",
     "ShakeGestureWiimoteZ",
 ]
-
-"""4 fixed length univariate time series classification problems with missing values"""
+"""4 fixed length univariate time series classification problems with missing values."""
 univariate_missing_values = [
     "DodgerLoopDay",
     "DodgerLoopGame",
     "DodgerLoopWeekend",
     "MelbournePedestrian",
 ]
-
 """26 equal length multivariate time series classification problems [4]"""
 multivariate_equal_length = [
     "ArticularyWordRecognition",
@@ -368,7 +358,6 @@ multivariate_equal_length = [
     "StandWalkJump",
     "UWaveGestureLibrary",
 ]
-
 """7 variable length multivariate time series classification problems [4]"""
 multivariate_unequal_length = [
     "AsphaltObstaclesCoordinates",

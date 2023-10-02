@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Information Gain-based Temporal Segmentation.
+"""Information Gain-based Temporal Segmentation.
 
 Information Gain Temporal Segmentation (IGTS) is a method for segmenting
 multivariate time series based off reducing the entropy in each segment [1]_.
@@ -15,18 +13,17 @@ References
     "Information gain-based metric for recognizing transitions in human activities.",
     Pervasive and Mobile Computing, 38, 92-109, (2017).
     https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
-
 """
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Dict, List
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import asdict, define, field
 
 from sktime.base import BaseEstimator
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
@@ -104,16 +101,16 @@ def generate_segments_pandas(X: npt.ArrayLike, change_points: List) -> npt.Array
         yield X[interval.left : interval.right, :]
 
 
-@define
+@dataclass
 class IGTS:
-    """
-    Information Gain based Temporal Segmentation (IGTS).
+    """Information Gain based Temporal Segmentation (IGTS).
 
     IGTS is a n unsupervised method for segmenting multivariate time series
     into non-overlapping segments by locating change points that for which
     the information gain is maximized.
 
-    Information gain (IG) is defined as the amount of entropy lost by the segmentation.
+    Information gain (IG) is defined as the amount of entropy lost by the
+    segmentation.
     The aim is to find the segmentation that have the maximum information
     gain for a specified number of segments.
 
@@ -123,10 +120,10 @@ class IGTS:
 
     .. note::
 
-       IGTS does not work very well for univariate series but it can still be
-       used if the original univariate series are augmented by an extra feature
-       dimensions. A technique proposed in the paper [1]_ us to subtract the
-       series from it's largest element and append to the series.
+    IGTS does not work very well for univariate series but it can still be
+    used if the original univariate series are augmented by an extra feature
+    dimensions. A technique proposed in the paper [1]_ us to subtract the
+    series from it's largest element and append to the series.
 
     Parameters
     ----------
@@ -134,8 +131,8 @@ class IGTS:
         Maximum number of change points to find. The number of segments is thus k+1.
     step: : int, default=5
         Step size, or stride for selecting candidate locations of change points.
-        Fox example a `step=5` would produce candidates [0, 5, 10, ...]. Has the same
-        meaning as `step` in `range` function.
+        Fox example a `step=5` would produce candidates [0, 5, 10, ...].
+        Has the same meaning as `step` in `range` function.
 
     Attributes
     ----------
@@ -152,9 +149,9 @@ class IGTS:
     References
     ----------
     .. [1] Sadri, Amin, Yongli Ren, and Flora D. Salim.
-       "Information gain-based metric for recognizing transitions in human activities.",
-       Pervasive and Mobile Computing, 38, 92-109, (2017).
-       https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
+    "Information gain-based metric for recognizing transitions in human
+    activities.", Pervasive and Mobile Computing, 38, 92-109, (2017).
+    https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
 
     Example
     -------
@@ -167,7 +164,6 @@ class IGTS:
     >>> from sktime.annotation.igts import InformationGainSegmentation
     >>> igts = InformationGainSegmentation(k_max=3, step=2)
     >>> y = igts.fit_predict(X_scaled)
-
     """
 
     # init attributes
@@ -175,7 +171,7 @@ class IGTS:
     step: int = 5
 
     # computed attributes
-    intermediate_results_: List = field(init=False, default=[])
+    intermediate_results_: List = field(init=False, default_factory=list)
 
     def identity(self, X: npt.ArrayLike) -> List[int]:
         """Return identity segmentation, i.e. terminal indexes of the data."""
@@ -214,7 +210,8 @@ class IGTS:
             and value series in columns.
 
         change_points: list of ints
-            Locations of change points as integer indexes. By convention change points
+            Locations of change points as integer indexes.
+            By convention, change points
             include the identity segmentation, i.e. first and last index + 1 values.
 
         Returns
@@ -223,8 +220,9 @@ class IGTS:
             Information gain score for the segmentation corresponding to the change
             points.
         """
+        cp = change_points
         segment_entropies = [
-            seg.shape[0] * entropy(seg) for seg in generate_segments(X, change_points)
+            seg.shape[0] * entropy(seg) for seg in generate_segments(X, cp)
         ]
         return entropy(X) - sum(segment_entropies) / X.shape[0]
 
@@ -244,7 +242,8 @@ class IGTS:
         Returns
         -------
         change_points: list of ints
-            Locations of change points as integer indexes. By convention change points
+            Locations of change points as integer indexes.
+            By convention, change points
             include the identity segmentation, i.e. first and last index + 1 values.
         """
         n_samples, n_series = X.shape
@@ -377,11 +376,10 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     ... means=[[0.0, 1.0], [11.0, 10.0], [5.0, 3.0], [2.0, 2.0]],
     ... variances=0.5,
     ... )
-    >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
-    >>> from sktime.annotation.igts import InformationGainSegmentation
-    >>> igts = InformationGainSegmentation(k_max=3, step=2)
-    >>> y = igts.fit_predict(X_scaled)
-
+    >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X) # doctest: +SKIP
+    >>> from sktime.annotation.igts import InformationGainSegmentation # doctest: +SKIP
+    >>> igts = InformationGainSegmentation(k_max=3, step=2) # doctest: +SKIP
+    >>> y = igts.fit_predict(X_scaled) # doctest: +SKIP
     """
 
     def __init__(
@@ -391,8 +389,11 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     ):
         self.k_max = k_max
         self.step = step
-        self._adaptee_class = IGTS
-        self._adaptee = self._adaptee_class(
+
+        _check_estimator_deps(self)
+        super().__init__()
+
+        self._adaptee = IGTS(
             k_max=k_max,
             step=step,
         )
@@ -474,7 +475,13 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
             Dictionary with the estimator's initialization parameters, with
             keys being argument names and values being argument values.
         """
-        return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
+        params = asdict(self._adaptee)
+        params = {
+            key: value
+            for key, value in params.items()
+            if key != "intermediate_results_"
+        }
+        return params
 
     def set_params(self, **parameters):
         """Set the parameters of this object.

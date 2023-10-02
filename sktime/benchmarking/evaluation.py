@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 """Evaluator class for analyzing results of a machine learning experiment."""
-__author__ = ["Viktor Kazakov", "Markus Löning", "Aaron Bostrom"]
+__author__ = ["viktorkaz", "mloning", "Aaron Bostrom"]
 __all__ = ["Evaluator"]
 
 import itertools
@@ -21,7 +20,6 @@ class Evaluator:
     """Analyze results of machine learning experiments."""
 
     def __init__(self, results):
-
         if not isinstance(results, BaseResults):
             raise ValueError("`results` must inherit from BaseResults")
         self.results = results
@@ -63,9 +61,8 @@ class Evaluator:
     def evaluate(self, metric, train_or_test="test", cv_fold="all"):
         """Evaluate estimator performance.
 
-        Calculates the average prediction error per estimator as well as the
-        prediction error achieved by each
-        estimator on individual datasets.
+        Calculates the average prediction error per estimator as well as the prediction
+        error achieved by each estimator on individual datasets.
         """
         # check input
         if isinstance(cv_fold, int) and cv_fold >= 0:
@@ -121,7 +118,10 @@ class Evaluator:
             metrics_by_strategy_dataset, how="outer"
         )
         # aggregate over cv folds and datasets
-        metrics_by_strategy = metrics_by_strategy_dataset.groupby(
+        metrics_by_strategy_dataset_wo_ds = metrics_by_strategy_dataset.drop(
+            columns=["dataset"],
+        )
+        metrics_by_strategy = metrics_by_strategy_dataset_wo_ds.groupby(
             ["strategy"], as_index=False
         ).agg(np.mean)
         self._metrics_by_strategy = self._metrics_by_strategy.merge(
@@ -160,8 +160,8 @@ class Evaluator:
     def rank(self, metric_name=None, ascending=False):
         """Determine estimator ranking.
 
-        Calculates the average ranks based on the performance of each
-        estimator on each dataset
+        Calculates the average ranks based on the performance of each estimator on each
+        dataset
         """
         self._check_is_evaluated()
         if not isinstance(ascending, bool):
@@ -246,7 +246,14 @@ class Evaluator:
             y = np.array(metrics_per_estimator_dataset[perm[1]])
             signs = np.sum([i[0] > i[1] for i in zip(x, y)])
             n = len(x)
-            p_val = stats.binom_test(signs, n)
+
+            # this if/else is for compatibility with scipy < 0.15.0
+            if hasattr(stats, "binomtest"):
+                binom = stats.binomtest
+            else:
+                binom = stats.binom_test
+
+            p_val = binom(signs, n).pvalue
             sign_test = {"estimator_1": perm[0], "estimator_2": perm[1], "p_val": p_val}
 
             sign_df = pd.concat(
@@ -396,11 +403,10 @@ class Evaluator:
     def nemenyi(self, metric_name=None):
         """Nemenyi test.
 
-        Post-hoc test run if the `friedman_test` reveals statistical
-        significance.
-        For more information see `Nemenyi test
-        <https://en.wikipedia.org/wiki/Nemenyi_test>`_.
-        Implementation used `scikit-posthocs
+        Post-hoc test run if the `friedman_test` reveals statistical significance. For
+        more information see
+        `Nemenyi test <https://en.wikipedia.org/wiki/Nemenyi_test>`_.
+         Implementation used `scikit-posthocs
         <https://github.com/maximtrp/scikit-posthocs>`_.
         """
         _check_soft_dependencies("scikit_posthocs")
