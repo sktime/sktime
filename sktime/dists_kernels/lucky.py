@@ -12,6 +12,12 @@ class LuckyDtwDist(_DelegatedPairwiseTransformerPanel):
 
     Based on code by Krisztian A Buza's research group.
 
+    Parameters
+    ----------
+    window: int, optional (default=None)
+        Maximum distance between indices of aligned series, aka warping window.
+        If None, defaults to max(len(ts1), len(ts2)), i.e., no warping window.
+
     References
     ----------
     ..[1] Stephan Spiegel, Brijnesh-Johannes Jain, and Sahin Albayrak.
@@ -27,10 +33,10 @@ class LuckyDtwDist(_DelegatedPairwiseTransformerPanel):
         "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
     }
 
-    def __init__(self):
+    def __init__(self, window=None):
         super().__init__()
 
         from sktime.alignment.lucky import AlignerLuckyDtw
         from sktime.dists_kernels.compose_from_align import DistFromAligner
 
-        self.estimator_ = DistFromAligner(AlignerLuckyDtw())
+        self.estimator_ = DistFromAligner(AlignerLuckyDtw(window=window))

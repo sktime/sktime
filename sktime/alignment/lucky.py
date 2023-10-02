@@ -16,6 +16,12 @@ class AlignerLuckyDtw(BaseAligner):
 
     Based on code by Krisztian A Buza's research group.
 
+    Parameters
+    ----------
+    window: int, optional (default=None)
+        Maximum distance between indices of aligned series, aka warping window.
+        If None, defaults to max(len(ts1), len(ts2)), i.e., no warping window.
+
     References
     ----------
     ..[1] Stephan Spiegel, Brijnesh-Johannes Jain, and Sahin Albayrak.
@@ -30,8 +36,8 @@ class AlignerLuckyDtw(BaseAligner):
         "alignment_type": "full",  # does the aligner produce full or partial alignment
     }
 
-    def __init__(self, strategy="start-end"):
-        self.strategy = strategy
+    def __init__(self, window=None):
+        self.window = window
 
         super().__init__()
 
@@ -45,14 +51,20 @@ class AlignerLuckyDtw(BaseAligner):
         X: list of pd.DataFrame (sequence) of length n - panel of series to align
         Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
         """
+        window = self.window
+
         ts1, ts2 = X
         ts1 = ts1.values
         ts2 = ts2.values
 
-        vec_dist = np.linalg.norm
-
         len_ts1 = len(ts1)
         len_ts2 = len(ts2)
+
+        if window is None:
+            window = max(len_ts1, len_ts2)
+
+        def vec_dist(x):
+            return np.linalg.norm(x) ** 2
 
         d = vec_dist(ts1[0] - ts2[0])
 
@@ -69,14 +81,14 @@ class AlignerLuckyDtw(BaseAligner):
                 new_i = i + 1
                 new_j = j + 1
 
-            if i + 1 < len_ts1:
+            if i + 1 < len_ts1 and abs(i + 1 - j) <= window:
                 d1 = vec_dist(ts1[i + 1] - ts2[j])
                 if d1 < d_best:
                     d_best = d1
                     new_i = i + 1
                     new_j = j
 
-            if j + 1 < len_ts2:
+            if j + 1 < len_ts2 and abs(j + 1 - i) <= window:
                 d2 = vec_dist(ts1[i] - ts2[j + 1])
                 if d2 < d_best:
                     d_best = d2
