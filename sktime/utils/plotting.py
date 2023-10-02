@@ -30,8 +30,6 @@ def plot_series(
 ):
     """Plot one or more time series.
 
-    Description
-    -----------
     This function allows you to plot one or more
     time series on a single figure via `series`.
     Used for making comparisons between different series.
