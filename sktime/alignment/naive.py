@@ -24,17 +24,10 @@ class AlignerNaive(BaseAligner):
         start-end: aligns starts and ends, stretches linearly and rounds
     """
 
-    _tags = {
-        "capability:multiple-alignment": True,  # can align more than two sequences?
-    }
-
     def __init__(self, strategy="start-end"):
         self.strategy = strategy
 
         super().__init__()
-
-        if strategy in ["start", "end"]:
-            self.set_tags(**{"alignment_type": "partial"})
 
     def _fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.
@@ -46,6 +39,8 @@ class AlignerNaive(BaseAligner):
         X: list of pd.DataFrame (sequence) of length n - panel of series to align
         Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
         """
+        self.X = X
+
         strategy = self.strategy
 
         alignlen = np.max([len(Xi) for Xi in X])
@@ -87,15 +82,15 @@ class AlignerNaive(BaseAligner):
         return self
 
     def _get_alignment(self):
-        """Return alignment for sequences/series passed in fit (iloc indices).
-
-        Behaviour: returns an alignment for sequences in X passed to fit
-            model should be in fitted state, fitted model parameters read from self
+        """Return alignment for sequences in X passed to fit.
 
         Returns
         -------
-        pd.DataFrame in alignment format, with columns 'ind'+str(i) for integer i
-            cols contain iloc index of X[i] mapped to alignment coordinate for alignment
+        pd.DataFrame in alignment format, as follows
+        columns:
+            ind_align: float, integer, or index, alignment coordinate
+            multiple columns indexed by string 'ind'+str(i) for integer i:
+                iloc index of X[i] mapped to alignment coordinate for alignment
         """
         return self.align
 
