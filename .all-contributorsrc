@@ -2421,6 +2421,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/19709277?v=4",
       "profile": "https://github.com/adamkells",
       "contributions": [
+      "test"
+      ]
+    },
+    {
+      "login": "YHallouard",
+      "name": "Yann Hallouard",
+      "avatar_url": "https://https://avatars.githubusercontent.com/YHallouard",
+      "profile": "https://www.linkedin.com/in/yann-hallouard/",
+      "contributions": [
+        "code",
         "test"
       ]
     },

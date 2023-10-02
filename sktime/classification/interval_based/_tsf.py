@@ -6,7 +6,10 @@ Interval based TSF classifier, extracts basic summary features from random inter
 __author__ = ["kkoziara", "luiszugasti", "kanand77"]
 __all__ = ["TimeSeriesForestClassifier"]
 
+from typing import Optional
+
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -82,6 +85,7 @@ class TimeSeriesForestClassifier(
     >>> y_pred = clf.predict(X_test)
     """
 
+    _feature_types = ["mean", "std", "slope"]
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
     _tags = {"capability:predict_proba": True}
@@ -90,6 +94,7 @@ class TimeSeriesForestClassifier(
         self,
         min_interval=3,
         n_estimators=200,
+        inner_series_length: Optional[int] = None,
         n_jobs=1,
         random_state=None,
     ):
@@ -98,6 +103,7 @@ class TimeSeriesForestClassifier(
             n_estimators=n_estimators,
             n_jobs=n_jobs,
             random_state=random_state,
+            inner_series_length=inner_series_length,
         )
         BaseClassifier.__init__(self)
 
@@ -202,6 +208,83 @@ class TimeSeriesForestClassifier(
             return {"n_estimators": 10}
         else:
             return {"n_estimators": 2}
+
+    def _extract_feature_importance_by_feature_type_per_tree(
+        self, tree_feature_importance: np.array, feature_type: str
+    ) -> np.array:
+        """Return feature importance.
+
+        Extracting the feature importance corresponding from a feature type
+        (eg. "mean", "std", "slope") from tree feature importance
+
+        Parameters
+        ----------
+        tree_feature_importance : array-like of shape (n_features_in,)
+            The feature importance per feature in an estimator, n_intervals x number
+            of feature types
+        feature_type : str
+            feature type belonging to self.feature_types
+
+        Returns
+        -------
+        self : array-like of shape (n_intervals,)
+            Feature importance corresponding from a feature type.
+        """
+        feature_index = np.argwhere(
+            [
+                feature_type == feature_type_recorded
+                for feature_type_recorded in self._feature_types
+            ]
+        )[0, 0]
+
+        feature_type_feature_importance = tree_feature_importance[
+            [
+                interval_index + feature_index
+                for interval_index in range(
+                    0, len(tree_feature_importance), len(self._feature_types)
+                )
+            ]
+        ]
+
+        return feature_type_feature_importance
+
+    @property
+    def feature_importances_(self, **kwargs) -> pd.DataFrame:
+        """Return the temporal feature importances.
+
+        Returns
+        -------
+        feature_importances_ : pandas Dataframe of shape (series_length, 3)
+            The feature importances for each feature type (mean, std, slope).
+        """
+        all_importances_per_feature = {
+            "mean": np.zeros(self.series_length),
+            "std": np.zeros(self.series_length),
+            "slope": np.zeros(self.series_length),
+        }
+
+        for tree_index in range(self.n_estimators):
+            tree = self.estimators_[tree_index]
+            tree_importances = tree.feature_importances_
+            tree_intervals = self.intervals_[tree_index]
+            for feature_type in self._feature_types:
+                feature_type_importances = (
+                    self._extract_feature_importance_by_feature_type_per_tree(
+                        tree_importances, feature_type
+                    )
+                )
+                for interval_index in range(self.n_intervals):
+                    interval = tree_intervals[interval_index]
+                    all_importances_per_feature[feature_type][
+                        interval[0] : interval[1]
+                    ] += feature_type_importances[interval_index]
+
+        temporal_feature_importance = (
+            pd.DataFrame(all_importances_per_feature)
+            / self.n_estimators
+            / self.n_intervals
+        )
+        return temporal_feature_importance
 
 
 def _predict_single_classifier_proba(X, estimator, intervals):
