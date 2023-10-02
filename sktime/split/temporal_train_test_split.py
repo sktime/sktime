@@ -147,14 +147,14 @@ class TemporalTrainTestSplitter(BaseSplitter):
     test_size : float, int or None, optional (default=None)
         If float, must be between 0.0 and 1.0, and is interpreted as the proportion
         of the dataset to include in the test split. Proportions are rounded to the
-        next integer count of samples.
+        next higher integer count of samples (ceil).
         If int, is interpreted as total number of test samples.
         If None, the value is set to the complement of the train size.
         If ``train_size`` is also None, it will be set to 0.25.
     train_size : float, int, or None, (default=None)
         If float, must be between 0.0 and 1.0, and is interpreted as the proportion
         of the dataset to include in the train split. Proportions are rounded to the
-        next integer count of samples.
+        next lower integer count of samples (floor).
         If int, is interpreted as total number of train samples.
         If None, the value is set to the complement of the test size.
     anchor : str, "start" (default) or "end"
