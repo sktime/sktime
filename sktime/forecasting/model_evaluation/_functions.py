@@ -237,9 +237,9 @@ def _evaluate_window(
                     y_pred = method(fh, X_test)
                     pred_time = time.perf_counter() - start_pred
                     temp_result[time_key] = [pred_time]
-                    y_preds_cache[y_pred_key] = y_pred
+                    y_preds_cache[y_pred_key] = [y_pred]
                 else:
-                    y_pred = y_preds_cache[y_pred_key]
+                    y_pred = y_preds_cache[y_pred_key][0]
 
                 score = metric(y_test, y_pred, y_train=y_train)
                 temp_result[result_key] = [score]
