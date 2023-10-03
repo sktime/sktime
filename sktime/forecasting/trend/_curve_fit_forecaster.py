@@ -1,6 +1,6 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements FunctionForecaster."""
+"""Implements CurveFitForecaster."""
 
 __author__ = ["benheid"]
 __all__ = ["CurveFitForecaster"]
@@ -15,31 +15,50 @@ from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
 class CurveFitForecaster(BaseForecaster):
     """The CurveFitForecaster takes a function and fits it by using scipy curve_fit.
 
-    The CurveFitForecaster applies the scipy curve_fit method to find the best
-    parameter of a function. This function maps a list of integers to real values.
-    The integers are derrived from the index of the input time series.
+    The CurveFitForecaster uses the scipy curve_fit method to determine the optimal
+    parameters for a given function.
+
+    If the index is an integer index, it directly uses the index values.
+    If the index is a `pd.DatetimeIndex` or a `pd.PeriodIndex`, the index values
+    are transformed into floats using two distinct approaches:
+
+    1. For a `pd.DatetimeIndex`, it calculates the number of days since 1970-01-01.
+       For a `pd.PeriodIndex`, it computes the number of (full) periods since
+        1970-01-01.
+
+    2. For a `pd.DatetimeIndex`, it calculates the number of days since the first
+       index value.
+       For a  `pd.PeriodIndex`, it calculates or the number of (dull) periods since
+       the first index value.
+    Furthermore, the difference between the index values can be normalised by
+    setting the difference between the first and the second index value to one.
 
     In `fit`
-    1. The index of the input time series is transformed to a list of Integers.
-    2. The scipy curve_fit is called using the list of integers as x values,
+    1. The index of the input time series is transformed to a list of floats.
+    2. The scipy curve_fit is called using the list of floats as x values,
        and the time series values as y values.
     In `predict`
-    1. The ForecastingHorizon is transformed to a list of integers.
-    2. The list of integers is passed together with the fitted parameters to the
+    1. The ForecastingHorizon is transformed to a list of floats.
+    2. The list of floats is passed together with the fitted parameters to the
        function to provide the forecast.
 
 
     Parameters
     ----------
-    function: Callable[[Iterable[int], ...], Iterable[float]]
+    function: Callable[[Iterable[float], ...], Iterable[float]]
         The function that should be fitted and used to make forecasts.
         The signature of the functions is `function(x, ...)`.
-        It takes the independet variables as first argument and the parametrs
+        It takes the independent variables as first argument and the parametrs
         to fit as separate remaining arguments.
         See scipy.optimize.curve_fit for more information.
     curve_fit_params: dict, default=None
         Additional parameters that should be passed to the curve_fit method.
         See scipy.optimize.curve_fit for more information.
+    origin: {"unix_zero", "first_index"}, default="unix_zero"
+        The origin of the time series index.
+    normalise_index: bool, default=False
+        If True, the differences between the index values are normalised by
+        setting the difference between the first and second index value to one.
 
 
     Examples
@@ -68,12 +87,20 @@ class CurveFitForecaster(BaseForecaster):
         self,
         function,
         curve_fit_params=None,
+        origin="unix_zero",
+        normalise_index=False,
     ):
         self.function = function
         self.curve_fit_params = curve_fit_params
         self._curve_fit_params = (
             curve_fit_params if curve_fit_params is not None else {}
         )
+        if origin not in ["unix_zero", "first_index"]:
+            raise ValueError(
+                f"origin must be 'unix_zero' or 'first_index', but found {origin}"
+            )
+        self.origin = origin
+        self.normalise_index = normalise_index
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -99,12 +126,13 @@ class CurveFitForecaster(BaseForecaster):
         x = _get_X_numpy_int_from_pandas(y.index)[:, 0]
         start = _get_X_numpy_int_from_pandas(self._y.index[:1])[:, 0]
 
-        x = x - start
-        if len(x) > 1:
-            self.delta_ = x[1] - x[0]
-            x = x // self.delta_
-        else:
-            self.delta_ = None
+        if self.origin == "first_index":
+            x = x - start
+        self.delta_ = None
+        if self.normalise_index:
+            if len(x) > 1:
+                self.delta_ = x[1] - x[0]
+                x = x // self.delta_
 
         self.params_ = curve_fit(self.function, x, y.values, **self._curve_fit_params)
         return self
@@ -135,7 +163,8 @@ class CurveFitForecaster(BaseForecaster):
         x = _get_X_numpy_int_from_pandas(fh)[:, 0]
         start = _get_X_numpy_int_from_pandas(self._y.index[:1])[:, 0]
 
-        x = x - start
+        if self.origin == "first_index":
+            x = x - start
         if self.delta_ is not None:
             x = x // self.delta_
 
@@ -178,6 +207,8 @@ class CurveFitForecaster(BaseForecaster):
             "curve_fit_params": {
                 "method": "trf",
             },
+            "origin": "first_index",
+            "normalise_index": True,
         }
 
         return [params1, params2]
