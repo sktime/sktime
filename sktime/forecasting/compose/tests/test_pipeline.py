@@ -478,10 +478,14 @@ def test_forecastx_logic():
     assert np.allclose(y_pred, y_pred_manual)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_forecastx_attrib_broadcast():
     """Test ForecastX broadcasting and forecaster attributes."""
+    from sktime.forecasting.arima import ARIMA
     from sktime.forecasting.compose import ForecastX
-    from sktime.forecasting.naive import NaiveForecaster
 
     df = pd.DataFrame(
         {
@@ -494,17 +498,17 @@ def test_forecastx_attrib_broadcast():
     )
     df = df.set_index(["a", "b"])
 
-    model = ForecastX(NaiveForecaster(), NaiveForecaster())
+    model = ForecastX(ARIMA(), ARIMA())
 
     model_1 = model.clone()
     model_1.fit(df[["c"]], X=df[["d", "e"]], fh=[1, 2, 3])
 
     assert hasattr(model_1, "forecaster_X_")
-    assert isinstance(model_1.forecaster_X_, NaiveForecaster)
+    assert isinstance(model_1.forecaster_X_, ARIMA)
     assert model_1.forecaster_X_.is_fitted
 
     assert hasattr(model_1, "forecaster_y_")
-    assert isinstance(model_1.forecaster_y_, NaiveForecaster)
+    assert isinstance(model_1.forecaster_y_, ARIMA)
     assert model_1.forecaster_y_.is_fitted
 
     model_2 = model.clone()
@@ -512,11 +516,11 @@ def test_forecastx_attrib_broadcast():
     assert hasattr(model_2, "forecaster_X_")
 
     assert hasattr(model_2, "forecaster_X_")
-    assert isinstance(model_2.forecaster_X_, NaiveForecaster)
+    assert isinstance(model_2.forecaster_X_, ARIMA)
     assert model_2.forecaster_X_.is_fitted
 
     assert hasattr(model_2, "forecaster_y_")
-    assert isinstance(model_2.forecaster_y_, NaiveForecaster)
+    assert isinstance(model_2.forecaster_y_, ARIMA)
     assert model_2.forecaster_y_.is_fitted
 
 
