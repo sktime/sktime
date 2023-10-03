@@ -1276,6 +1276,7 @@ class ForecastX(BaseForecaster):
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:insample",
+            "ignores-exogeneous-X",
         ]
 
         self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)
