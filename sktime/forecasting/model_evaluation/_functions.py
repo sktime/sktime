@@ -160,6 +160,18 @@ def _select_fh_from_y(y):
     return fh
 
 
+def _get_pred_args_from_metric(scitype, metric):
+    pred_args = {
+        "pred_quantiles": "alpha",
+        "pred_interval": "coverage",
+    }
+    if scitype in pred_args.keys():
+        val = getattr(metric, pred_args[scitype], None)
+        if val is not None:
+            return {pred_args[scitype]: val}
+    return {}
+
+
 def _evaluate_window(
     y_train,
     y_test,
@@ -181,6 +193,7 @@ def _evaluate_window(
     cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
     y_pred = pd.NA
     temp_result = dict()
+    y_preds_cache = dict()
 
     if fh is None:
         fh = _select_fh_from_y(y_test)
@@ -206,15 +219,31 @@ def _evaluate_window(
         # cache prediction from the first scitype and reuse it to compute other metrics
         for scitype in scoring:
             method = getattr(forecaster, pred_type[scitype])
-            start_pred = time.perf_counter()
-            y_pred = method(fh, X_test)
-            pred_time = time.perf_counter() - start_pred
-            temp_result[f"{scitype}_time"] = [pred_time]
             for metric in scoring.get(scitype):
+                pred_args = _get_pred_args_from_metric(scitype, metric)
+                if pred_args == {}:
+                    time_key = f"{scitype}_time"
+                    result_key = f"test_{metric.name}"
+                    y_pred_key = f"y_{scitype}"
+                else:
+                    argval = list(pred_args.values())[0]
+                    time_key = f"{scitype}_{argval}_time"
+                    result_key = f"test_{metric.name}_{argval}"
+                    y_pred_key = f"y_{scitype}_{argval}"
+
+                # make prediction
+                if y_pred_key not in y_preds_cache.keys():
+                    start_pred = time.perf_counter()
+                    y_pred = method(fh, X_test)
+                    pred_time = time.perf_counter() - start_pred
+                    temp_result[time_key] = [pred_time]
+                    y_preds_cache[y_pred_key] = y_pred
+                else:
+                    y_pred = y_preds_cache[y_pred_key]
+
                 score = metric(y_test, y_pred, y_train=y_train)
-                temp_result[f"test_{metric.name}"] = [score]
-            if return_data:
-                temp_result[f"y_{scitype}"] = [y_pred]
+                temp_result[result_key] = [score]
+
         # get cutoff
         cutoff = forecaster.cutoff
 
@@ -254,6 +283,7 @@ def _evaluate_window(
     if return_data:
         temp_result["y_train"] = [y_train]
         temp_result["y_test"] = [y_test]
+        temp_result.update(y_preds_cache)
     result = pd.DataFrame(temp_result)
     result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
     column_order = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
