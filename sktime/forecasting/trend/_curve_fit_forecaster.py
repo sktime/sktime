@@ -42,7 +42,6 @@ class CurveFitForecaster(BaseForecaster):
     2. The list of floats is passed together with the fitted parameters to the
        function to provide the forecast.
 
-
     Parameters
     ----------
     function: Callable[[Iterable[float], ...], Iterable[float]]
@@ -59,7 +58,6 @@ class CurveFitForecaster(BaseForecaster):
     normalise_index: bool, default=False
         If True, the differences between the index values are normalised by
         setting the difference between the first and second index value to one.
-
 
     Examples
     --------
