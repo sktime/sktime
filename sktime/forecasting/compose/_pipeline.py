@@ -1205,6 +1205,7 @@ class ForecastX(BaseForecaster):
     forecaster_X_ : BaseForecaster
         clone of forecaster_X, state updates with `fit` and `update`
         created only if behaviour="update" and `X` passed is not None
+        and ``forecaster_y`` has ``ignores-exogeneous-X`` tag as ``False``
     forecaster_y_ : BaseForecaster
         clone of forecaster_y, state updates with `fit` and `update`
 
