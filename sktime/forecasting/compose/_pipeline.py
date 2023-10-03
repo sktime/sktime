@@ -1184,7 +1184,7 @@ class ForecastX(BaseForecaster):
     ----------
     forecaster_y : BaseForecaster
         sktime forecaster to use for endogeneous data `y`
-    forecaster_X : BaseForecaster, optional, default = forecaster_y
+    forecaster_X : BaseForecaster
         sktime forecaster to use for exogeneous data `X`
     fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
         optional, default = None = same as used for `y` in any instance.
