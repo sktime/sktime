@@ -521,6 +521,30 @@ def test_forecastx_attrib_broadcast():
 
 
 @pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_forecastx_skip_forecaster_X_fitting_logic():
+    """Test that ForecastX does not fit forecaster_X, if forecaster_y ignores X"""
+    from sktime.forecasting.arima import ARIMA
+    from sktime.forecasting.compose import ForecastX
+    from sktime.forecasting.naive import NaiveForecaster
+
+    y, X = load_longley()
+
+    model_1 = ForecastX(ARIMA(), ARIMA())
+    model_1.fit(y, X=X, fh=[1, 2, 3])
+
+    model_2 = ForecastX(NaiveForecaster(), NaiveForecaster())
+    model_2.fit(y, X=X, fh=[1, 2, 3])
+
+    assert model_1.forecaster_X_.is_fitted
+    model_1.forecaster_X_.check_is_fitted()
+
+    assert not hasattr(model_2, "forecaster_X_")
+
+
+@pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency is not available",
 )
