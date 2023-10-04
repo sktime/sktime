@@ -43,30 +43,62 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     def _get_statsforecast_class(self):
         raise NotImplementedError("abstract method")
 
-    def _get_statsforecast_params(self):
+    def _get_statsforecast_params(self) -> dict:
         return self.get_params()
 
     def _get_init_statsforecast_params(self):
         statsforecast_class = self._get_statsforecast_class()
         return list(signature(statsforecast_class.__init__).parameters.keys())
 
-    def _get_validated_statsforecast_params(self):
-        sktime_params = self._get_statsforecast_params()
-        sktime_default_params = self.get_param_defaults().keys()
-        statsforecast_params = self._get_init_statsforecast_params()
+    def _get_statsforecast_default_params(self) -> dict:
+        """Get default parameters for the statsforecast forecaster.
 
-        for sktime_param in list(sktime_params):
-            if sktime_param not in statsforecast_params:
-                sktime_params.pop(sktime_param)
-                if sktime_param not in sktime_default_params:
-                    warn(
-                        f"Keyword argument '{sktime_param}' will be omitted as it is"
-                        f" not found in the __init__ method "
-                        f"from {self._get_statsforecast_class()}. "
-                        f"Check your statsforecast version"
-                        f"to find out the right API parameters."
-                    )
-        return sktime_params
+        This will in general be different from self.get_param_defaults(),
+        as the set or names of inner parameters can differ.
+
+        For parameters without defaults, will use the parameter
+        of self instead.
+        """
+        self_params = self.get_params()
+        self_default_params = self.get_param_defaults()
+        self_params.update(self_default_params)
+        cls_with_defaults = type(self)(**self_params)
+        return cls_with_defaults._get_statsforecast_params()
+
+    def _get_validated_statsforecast_params(self):
+        params_sktime_to_statsforecast: dict = self._get_statsforecast_params()
+        params_sktime_to_statsforecast_default: dict = (
+            self._get_statsforecast_default_params()
+        )
+        statsforecast_init_params = set(self._get_init_statsforecast_params())
+
+        # Filter sktime_params to only include keys in statsforecast_params
+        filtered_sktime_params = {
+            key: value
+            for key, value in params_sktime_to_statsforecast.items()
+            if key in statsforecast_init_params
+        }
+
+        non_default_params = [
+            p
+            for p in params_sktime_to_statsforecast
+            if params_sktime_to_statsforecast[p]
+            != params_sktime_to_statsforecast_default[p]
+        ]
+        # Find parameters not in statsforecast_params or sktime_default_params
+        param_diff = set(non_default_params) - statsforecast_init_params
+
+        if param_diff:
+            params_str = ", ".join([f'"{param}"' for param in param_diff])
+            warning_message = (
+                f"Keyword arguments {params_str} "
+                f"will be omitted as they are not found in the __init__ method from "
+                f"{self._get_statsforecast_class()}. Check your statsforecast version "
+                f"to find out the right API parameters."
+            )
+            warn(warning_message)
+
+        return filtered_sktime_params
 
     def _instantiate_model(self):
         cls = self._get_statsforecast_class()
