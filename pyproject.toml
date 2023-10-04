@@ -68,7 +68,7 @@ classification = [
     "mrsqm>=0.0.3,<0.1",
     "numba>=0.53,<0.58; python_version < '3.12'",
     "tensorflow>=2,<=2.14",
-    "tsfresh>=0.17,<0.21",
+    "tsfresh>=0.17,<0.21; python_version < '3.12'",
 ]
 clustering = [
     "numba>=0.53,<0.58; python_version < '3.12'",
@@ -102,8 +102,8 @@ transformations = [
     "pycatch22>=0.4,<0.5",
     "pykalman>=0.9.5,<0.10",
     "statsmodels>=0.12.1,<0.15",
-    "stumpy>=1.5.1,<1.13",
-    "tsfresh>=0.17,<0.21",
+    "stumpy>=1.5.1,<1.13; python_version < '3.12'",
+    "tsfresh>=0.17,<0.21; python_version < '3.12'",
 ]
 all_extras = [
     "cloudpickle",
@@ -135,7 +135,7 @@ all_extras = [
     "stumpy>=1.5.1; python_version < '3.11'",
     "tbats>=1.1.0",
     "tensorflow; python_version < '3.11'",
-    "tsfresh>=0.17.0",
+    "tsfresh>=0.17.0; python_version < '3.12'",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
 ]
@@ -169,7 +169,7 @@ all_extras_pandas2 = [
     "stumpy>=1.5.1; python_version < '3.11'",
     "tbats>=1.1.0",
     "tensorflow; python_version < '3.11'",
-    "tsfresh>=0.17.0",
+    "tsfresh>=0.17.0; python_version < '3.12'",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
 ]
