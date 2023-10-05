@@ -44,9 +44,10 @@ class LTSFLinearNetwork:
             in_channels,
             individual,
         ):
+            super().__init__()
+
             import torch.nn as nn
 
-            super().__init__()
             self.seq_len = seq_len
             self.pred_len = pred_len
             self.in_channels = in_channels
