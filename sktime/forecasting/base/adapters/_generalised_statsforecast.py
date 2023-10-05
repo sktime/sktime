@@ -47,6 +47,11 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         return self.get_params()
 
     def _get_init_statsforecast_params(self):
+        """Return parameters in __init__ statsforecast forecaster.
+
+        Return a list of parameters in the __init__ method from
+        the statsforecast forecaster class used in the sktime adapter.
+        """
         statsforecast_class = self._get_statsforecast_class()
         return list(signature(statsforecast_class.__init__).parameters.keys())
 
@@ -65,7 +70,17 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         cls_with_defaults = type(self)(**self_params)
         return cls_with_defaults._get_statsforecast_params()
 
-    def _get_validated_statsforecast_params(self):
+    def _get_validated_statsforecast_params(self) -> dict:
+        """Return parameter dict with only parameters accepted by statsforecast API.
+
+        Checks if the parameters passed to the statsforecast forecaster
+        are valid in the __init__ method of the aforementioned forecaster.
+        If the parameter is not there it will just not be passed. Furthermore
+        if the parameter is modified by the sktime user,
+        he will be notified that the parameter does not exist
+        anymore in the version installed of statsforecast by the user.
+
+        """
         params_sktime_to_statsforecast: dict = self._get_statsforecast_params()
         params_sktime_to_statsforecast_default: dict = (
             self._get_statsforecast_default_params()
