@@ -230,8 +230,7 @@ class BaggingForecaster(BaseForecaster):
         y_pred.name = self._y.name
         return y_pred
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -264,9 +263,7 @@ class BaggingForecaster(BaseForecaster):
         """
         # X is ignored
         y_pred = self.forecaster_.predict(fh=fh, X=None)
-        return self._calculate_data_quantiles(
-            y_pred, alpha, legacy_interface=legacy_interface
-        )
+        return self._calculate_data_quantiles(y_pred, alpha)
 
     def _update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -322,10 +319,7 @@ class BaggingForecaster(BaseForecaster):
 
         return params
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _calculate_data_quantiles(
-        self, df: pd.DataFrame, alpha: List[float], legacy_interface=False
-    ) -> pd.DataFrame:
+    def _calculate_data_quantiles(self, df: pd.DataFrame, alpha: List[float]):
         """Generate quantiles for each time point.
 
         Parameters
@@ -340,9 +334,7 @@ class BaggingForecaster(BaseForecaster):
         pd.DataFrame
             The specified quantiles
         """
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         index = pd.MultiIndex.from_product([var_names, alpha])

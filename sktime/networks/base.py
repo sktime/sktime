@@ -13,6 +13,8 @@ from sktime.forecasting.base import BaseForecaster
 class BaseDeepNetwork(BaseObject, ABC):
     """Abstract base class for deep learning networks."""
 
+    _tags = {"object_type": "network"}
+
     @abstractmethod
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.

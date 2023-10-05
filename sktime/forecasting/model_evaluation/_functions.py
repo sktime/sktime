@@ -7,7 +7,7 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -40,6 +40,65 @@ def _check_strategy(strategy):
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
 
 
+def _check_scores(metrics) -> Dict:
+    """Validate and coerce to BaseMetric and segregate them based on predict type.
+
+    Parameters
+    ----------
+    metrics : sktime accepted metrics object or a list of them or None
+
+    Return
+    ------
+    metrics_type : Dict
+        The key is metric types and its value is a list of its corresponding metrics.
+    """
+    if not isinstance(metrics, List):
+        metrics = [metrics]
+
+    metrics_type = {}
+    for metric in metrics:
+        metric = check_scoring(metric)
+        # collect predict type
+        if hasattr(metric, "get_tag"):
+            scitype = metric.get_tag(
+                "scitype:y_pred", raise_error=False, tag_value_default="pred"
+            )
+        else:  # If no scitype exists then metric is a point forecast type
+            scitype = "pred"
+        if scitype not in metrics_type.keys():
+            metrics_type[scitype] = [metric]
+        else:
+            metrics_type[scitype].append(metric)
+    return metrics_type
+
+
+def _get_column_order_and_datatype(
+    metric_types: Dict, return_data: bool = True, cutoff_dtype=None
+) -> Dict:
+    """Get the ordered column name and input datatype of results."""
+    others_metadata = {
+        "len_train_window": "int",
+        "cutoff": cutoff_dtype,
+    }
+    y_metadata = {
+        "y_train": "object",
+        "y_test": "object",
+    }
+    fit_metadata, metrics_metadata = {"fit_time": "float"}, {}
+    for scitype in metric_types:
+        fit_metadata[f"{scitype}_time"] = "float"
+        if return_data:
+            y_metadata[f"y_{scitype}"] = "object"
+        for metric in metric_types.get(scitype):
+            metrics_metadata[f"test_{metric.name}"] = "float"
+    fit_metadata.update(others_metadata)
+    if return_data:
+        fit_metadata.update(y_metadata)
+    metrics_metadata.update(fit_metadata)
+    return metrics_metadata.copy()
+
+
+# should we remove _split since this is no longer being used?
 def _split(
     y,
     X,
@@ -112,7 +171,6 @@ def _evaluate_window(
     strategy,
     scoring,
     return_data,
-    score_name,
     error_score,
     cutoff_dtype,
 ):
@@ -122,6 +180,7 @@ def _evaluate_window(
     pred_time = np.nan
     cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
     y_pred = pd.NA
+    temp_result = dict()
 
     if fh is None:
         fh = _select_fh_from_y(y_test)
@@ -137,45 +196,45 @@ def _evaluate_window(
             forecaster.update(y_train, X_train, update_params=update_params)
         fit_time = time.perf_counter() - start_fit
 
+        # predict based on metrics
         pred_type = {
             "pred_quantiles": "predict_quantiles",
             "pred_interval": "predict_interval",
             "pred_proba": "predict_proba",
-            None: "predict",
+            "pred": "predict",
         }
-        # predict
-        start_pred = time.perf_counter()
-
-        if hasattr(scoring, "metric_args"):
-            metric_args = scoring.metric_args
-        else:
-            metric_args = {}
-
-        if hasattr(scoring, "get_tag"):
-            scitype = scoring.get_tag("scitype:y_pred", raise_error=False)
-        else:
-            # If no scitype exists then metric is not proba and no args needed
-            scitype = None
-
-        methodname = pred_type[scitype]
-        method = getattr(forecaster, methodname)
-
-        y_pred = method(fh=fh, X=X_test, **metric_args)
-        pred_time = time.perf_counter() - start_pred
-        # score
-        score = scoring(y_test, y_pred, y_train=y_train)
+        # cache prediction from the first scitype and reuse it to compute other metrics
+        for scitype in scoring:
+            method = getattr(forecaster, pred_type[scitype])
+            start_pred = time.perf_counter()
+            y_pred = method(fh, X_test)
+            pred_time = time.perf_counter() - start_pred
+            temp_result[f"{scitype}_time"] = [pred_time]
+            for metric in scoring.get(scitype):
+                score = metric(y_test, y_pred, y_train=y_train)
+                temp_result[f"test_{metric.name}"] = [score]
+            if return_data:
+                temp_result[f"y_{scitype}"] = [y_pred]
         # get cutoff
         cutoff = forecaster.cutoff
 
     except Exception as e:
         if error_score == "raise":
             raise e
-        else:
+        else:  # assign default value when fitting failed
+            for scitype in scoring:
+                temp_result[f"{scitype}_time"] = [pred_time]
+                if return_data:
+                    temp_result[f"y_{scitype}"] = [y_pred]
+                for metric in scoring.get(scitype):
+                    temp_result[f"test_{metric.name}"] = [score]
             warnings.warn(
                 f"""
                 In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
                 you can set error_score='raise' in evaluate to see
-                the exception message. Fit failed for len(y_train)={len(y_train)}.
+                the exception message.
+                Fit failed for the {i}-th data split, on training data y_train with
+                cutoff {cutoff}, and len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
                 Failed forecaster with parameters: {forecaster}.
                 """,
@@ -188,18 +247,17 @@ def _evaluate_window(
     else:
         cutoff_ind = cutoff[0]
 
-    result = pd.DataFrame(
-        {
-            score_name: [score],
-            "fit_time": [fit_time],
-            "pred_time": [pred_time],
-            "len_train_window": [len(y_train)],
-            "cutoff": [cutoff_ind],
-            "y_train": [y_train if return_data else pd.NA],
-            "y_test": [y_test if return_data else pd.NA],
-            "y_pred": [y_pred if return_data else pd.NA],
-        }
-    ).astype({"cutoff": cutoff_dtype})
+    # Storing the remaining evaluate detail
+    temp_result["fit_time"] = [fit_time]
+    temp_result["len_train_window"] = [len(y_train)]
+    temp_result["cutoff"] = [cutoff_ind]
+    if return_data:
+        temp_result["y_train"] = [y_train]
+        temp_result["y_test"] = [y_test]
+    result = pd.DataFrame(temp_result)
+    result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
+    column_order = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+    result = result.reindex(columns=column_order.keys())
 
     # Return forecaster if "update"
     if strategy == "update" or (strategy == "no-update_params" and i == 0):
@@ -347,7 +405,7 @@ def evaluate(
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()[:24]
     >>> forecaster = NaiveForecaster(strategy="mean", sp=3)
@@ -392,10 +450,13 @@ def evaluate(
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
-    if isinstance(scoring, List):
-        scoring = [check_scoring(s) for s in scoring]
+    # TODO: remove lines(four lines below) and 599-612 in v0.25.0
+    if isinstance(scoring, list):
+        raise_warn, num = True, len(scoring)
     else:
-        scoring = check_scoring(scoring)
+        raise_warn, num = False, 1
+    # removal until here
+    scoring = _check_scores(scoring)
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
@@ -417,20 +478,14 @@ def evaluate(
             )
         X = convert_to(X, to_type=PANDAS_MTYPES)
 
-    score_name = (
-        f"test_{scoring.name}"
-        if not isinstance(scoring, List)
-        else f"test_{scoring[0].name}"
-    )
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
         "fh": cv.fh,
         "forecaster": forecaster,
-        "scoring": scoring if not isinstance(scoring, List) else scoring[0],
+        "scoring": scoring,
         "strategy": strategy,
-        "return_data": True,
+        "return_data": return_data,
         "error_score": error_score,
-        "score_name": score_name,
         "cutoff_dtype": cutoff_dtype,
     }
 
@@ -456,10 +511,7 @@ def evaluate(
                 yield y_train, y_test, None, None
         else:
             if cv_X is None:
-                from sktime.forecasting.model_selection import (
-                    SameLocSplitter,
-                    TestPlusTrainSplitter,
-                )
+                from sktime.split import SameLocSplitter, TestPlusTrainSplitter
 
                 cv_X = SameLocSplitter(TestPlusTrainSplitter(cv), y)
 
@@ -505,6 +557,7 @@ def evaluate(
         from dask import delayed as dask_delayed
 
         results = []
+        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
         for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             results.append(
                 dask_delayed(_evaluate_window)(
@@ -518,16 +571,7 @@ def evaluate(
             )
         results = dd.from_delayed(
             results,
-            meta={
-                score_name: "float",
-                "fit_time": "float",
-                "pred_time": "float",
-                "len_train_window": "int",
-                "cutoff": cutoff_dtype,
-                "y_train": "object",
-                "y_test": "object",
-                "y_pred": "object",
-            },
+            meta=metadata,
         )
         if compute:
             results = results.compute()
@@ -551,19 +595,22 @@ def evaluate(
 
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
-    if isinstance(scoring, List):
-        for s in scoring[1:]:
-            results[f"test_{s.name}"] = np.nan
-            for row in results.index:
-                results.loc[row, f"test_{s.name}"] = s(
-                    results["y_test"].loc[row],
-                    results["y_pred"].loc[row],
-                    y_train=results["y_train"].loc[row],
-                )
 
-    # drop pointer to data if not requested
-    if not return_data:
-        results = results.drop(columns=["y_train", "y_test", "y_pred"])
-    results = results.astype({"len_train_window": int})
-
+    # TODO: remove 16 lines below and 451-455 in v0.25.0
+    if raise_warn:
+        warnings.warn(
+            "Starting v0.25.0 model_evaluation.evaluate module will rearrange "
+            "all metric columns to the left of its output result DataFrame. "
+            "Please use loc references when addressing the columns. You can "
+            "safely ignore this warning if you don't use evaluate function directly.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        columns = results.columns.to_list()
+        non_first_metrics = []
+        for _ in range(1, num):
+            metric = columns.pop(1)
+            non_first_metrics.append(metric)
+        results = results.reindex(columns=columns + non_first_metrics)
+    #  removal until here
     return results

@@ -15,7 +15,7 @@ from sktime.forecasting.compose import (
     AutoEnsembleForecaster,
     RecursiveTabularRegressionForecaster,
 )
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
 
 
 @pytest.mark.parametrize(
