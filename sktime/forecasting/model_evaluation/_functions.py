@@ -73,7 +73,7 @@ def _check_scores(metrics) -> Dict:
 
 
 def _get_column_order_and_datatype(
-    metric_types: Dict, return_data: bool = True, cutoff_dtype=None
+    metric_types: Dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
 ) -> Dict:
     """Get the ordered column name and input datatype of results."""
     others_metadata = {
@@ -86,11 +86,21 @@ def _get_column_order_and_datatype(
     }
     fit_metadata, metrics_metadata = {"fit_time": "float"}, {}
     for scitype in metric_types:
-        fit_metadata[f"{scitype}_time"] = "float"
-        if return_data:
-            y_metadata[f"y_{scitype}"] = "object"
         for metric in metric_types.get(scitype):
-            metrics_metadata[f"test_{metric.name}"] = "float"
+            pred_args = _get_pred_args_from_metric(scitype, metric)
+            if pred_args == {} or old_naming:
+                time_key = f"{scitype}_time"
+                result_key = f"test_{metric.name}"
+                y_pred_key = f"y_{scitype}"
+            else:
+                argval = list(pred_args.values())[0]
+                time_key = f"{scitype}_{argval}_time"
+                result_key = f"test_{metric.name}_{argval}"
+                y_pred_key = f"y_{scitype}_{argval}"
+            fit_metadata[time_key] = "float"
+            metrics_metadata[result_key] = "float"
+            if return_data:
+                y_metadata[y_pred_key] = "object"
     fit_metadata.update(others_metadata)
     if return_data:
         fit_metadata.update(y_metadata)
@@ -194,7 +204,8 @@ def _evaluate_window(
     y_pred = pd.NA
     temp_result = dict()
     y_preds_cache = dict()
-
+    old_naming = True
+    old_name_mapping = {}
     if fh is None:
         fh = _select_fh_from_y(y_test)
 
@@ -219,6 +230,10 @@ def _evaluate_window(
         # cache prediction from the first scitype and reuse it to compute other metrics
         for scitype in scoring:
             method = getattr(forecaster, pred_type[scitype])
+            if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
+                scoring.get(scitype)
+            ):
+                old_naming = False
             for metric in scoring.get(scitype):
                 pred_args = _get_pred_args_from_metric(scitype, metric)
                 if pred_args == {}:
@@ -230,6 +245,11 @@ def _evaluate_window(
                     time_key = f"{scitype}_{argval}_time"
                     result_key = f"test_{metric.name}_{argval}"
                     y_pred_key = f"y_{scitype}_{argval}"
+                    old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
+                    old_name_mapping[
+                        f"test_{metric.name}_{argval}"
+                    ] = f"test_{metric.name}"
+                    old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
                 # make prediction
                 if y_pred_key not in y_preds_cache.keys():
@@ -286,7 +306,11 @@ def _evaluate_window(
         temp_result.update(y_preds_cache)
     result = pd.DataFrame(temp_result)
     result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
-    column_order = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+    if old_naming:
+        result = result.rename(columns=old_name_mapping)
+    column_order = _get_column_order_and_datatype(
+        scoring, return_data, cutoff_dtype, old_naming=old_naming
+    )
     result = result.reindex(columns=column_order.keys())
 
     # Return forecaster if "update"
