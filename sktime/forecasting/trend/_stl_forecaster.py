@@ -135,7 +135,6 @@ class STLForecaster(BaseForecaster):
 
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
@@ -179,6 +178,21 @@ class STLForecaster(BaseForecaster):
         self.forecaster_seasonal = forecaster_seasonal
         self.forecaster_resid = forecaster_resid
         super().__init__()
+
+        for forecaster in (
+            self.forecaster_trend,
+            self.forecaster_seasonal,
+            self.forecaster_resid,
+        ):
+            if forecaster is not None and not forecaster.get_tag(
+                "ignores-exogeneous-X"
+            ):
+                ignore_exogenous = False
+                break
+        else:  # none of the forecasters (if provided) use exogenous feature variables
+            ignore_exogenous = True  # corresponding to NaiveForecaster in missing case
+
+        self.set_tags(**{"ignores-exogeneous-X": ignore_exogenous})
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
