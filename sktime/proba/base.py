@@ -19,6 +19,7 @@ class BaseDistribution(BaseObject):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        "object_type": "distribution",  # type of object, e.g., 'distribution'
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
         "reserved_params": ["index", "columns"],
