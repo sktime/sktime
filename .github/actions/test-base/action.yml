@@ -1,5 +1,5 @@
 name: test base sktime
-description: run nox session
+description: run unit tests on base interface of sktime framework
 inputs:
   python-version-identifier:
     description: python version to run tests

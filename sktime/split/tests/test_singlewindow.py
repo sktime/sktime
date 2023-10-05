@@ -11,7 +11,7 @@ from sktime.forecasting.tests._config import (
     TEST_YS,
 )
 from sktime.split import SingleWindowSplitter
-from sktime.split.base._config import _inputs_are_supported
+from sktime.split.base._common import _inputs_are_supported
 from sktime.split.tests.test_split import _check_cv
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import array_is_int

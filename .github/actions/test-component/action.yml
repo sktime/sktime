@@ -1,5 +1,5 @@
 name: test specific sktime component
-description: run nox session
+description: run unit tests on individual component of sktime framework
 inputs:
   sktime-component-identifier:
     description: name of sktime component

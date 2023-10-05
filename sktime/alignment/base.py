@@ -35,6 +35,7 @@ class BaseAligner(BaseEstimator):
     """Base class for all unsupervised sequence aligners."""
 
     _tags = {
+        "object_type": "aligner",  # type of object
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": False,  # does compute/return overall distance?
         "capability:distance-matrix": False,  # does compute/return distance matrix?
