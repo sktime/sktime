@@ -82,7 +82,7 @@ class _TslearnPwTrafoAdapter:
         if self._inner_params is not None:
             params = _subset_dict(params, self._inner_params)
 
-        return pwtrafo(X, X2, **params)
+        return pwtrafo(np.stack(X)[:, :, 0], np.stack(X2)[:, :, 0], **params)
 
     def _coerce_df_list_to_list_of_arr(self, X):
         return [df.values for df in X]
