@@ -226,7 +226,7 @@ dl = [
     "tensorflow",
 ]
 
-pytorch [
+pytorch = [
     "torch";
 ]
 
