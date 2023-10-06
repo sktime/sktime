@@ -68,7 +68,7 @@ class Imputer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> transformer = Imputer(method="drift")
@@ -136,6 +136,9 @@ class Imputer(BaseTransformer):
                     ]
                 }
             )
+
+        if method in "forecaster":
+            self.set_tags(**{"y_inner_mtype": ["pd.DataFrame"]})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

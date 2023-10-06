@@ -44,6 +44,12 @@ import pandas as pd
 
 ESTIMATOR_TAG_REGISTER = [
     (
+        "object_type",
+        "object",
+        "str",
+        "type of object: estimator, transformer, regressor, etc",
+    ),
+    (
         "ignores-exogeneous-X",
         "forecaster",
         "bool",

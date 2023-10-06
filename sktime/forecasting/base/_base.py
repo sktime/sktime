@@ -82,6 +82,7 @@ class BaseForecaster(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     # for more extensive documentation, see extension_templates/forecasting.py
     _tags = {
+        "object_type": "forecaster",  # type of object
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "capability:insample": True,  # can the estimator make in-sample predictions?
@@ -930,7 +931,7 @@ class BaseForecaster(BaseEstimator):
                 entry is the point prediction of col index predicted from row index
                 entry is nan if no prediction is made at that (cutoff, horizon) pair
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.split import ExpandingWindowSplitter
 
         if cv is None:
             cv = ExpandingWindowSplitter(initial_window=1)

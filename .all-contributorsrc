@@ -19,6 +19,7 @@
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
       "profile": "https://github.com/fkiraly",
       "contributions": [
+        "blog",
         "bug",
         "business",
         "code",
@@ -2361,6 +2362,16 @@
       "name": "Hamza Benslimane",
       "avatar_url": "https://avatars.githubusercontent.com/u/96446862?v=4",
       "profile": "https://github.com/BensHamza",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "julnow",
+      "name": "Julian Nowak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21206185?v=4",
+      "profile": "https://github.com/julnow",
       "contributions": [
         "bug",
         "code"
