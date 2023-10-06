@@ -29,7 +29,6 @@ import tempfile
 import textwrap
 import zipfile
 from datetime import datetime
-from distutils.util import strtobool
 from typing import Dict
 from urllib.request import urlretrieve
 
@@ -45,6 +44,7 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X, check_X_y
 
 DIRNAME = "data"
@@ -1895,6 +1895,10 @@ def load_tsf_to_dataframe(
         "frequency", "forecast_horizon", "contain_missing_values",
         "contain_equal_length"
     """
+    _check_soft_dependencies("distutils")
+
+    from distutils.util import strtobool
+
     col_names = []
     col_types = []
     all_data = {}
