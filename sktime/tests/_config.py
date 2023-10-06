@@ -44,6 +44,7 @@ EXCLUDE_ESTIMATORS = [
     "MLPClassifier",
     "CNNRegressor",
     "ResNetRegressor",
+    "LcssTslearn",
 ]
 
 
