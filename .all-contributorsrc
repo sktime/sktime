@@ -19,6 +19,7 @@
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
       "profile": "https://github.com/fkiraly",
       "contributions": [
+        "blog",
         "bug",
         "business",
         "code",
@@ -467,6 +468,15 @@
       "profile": "https://github.com/Quaterion",
       "contributions": [
         "bug"
+      ]
+    },
+    {
+      "login": "Arnau",
+      "name": "Arnau",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38285979?s=400&u=8bdd0021cb5bae47ba5bd69c355c694dc3090f5e&v=4",
+      "profile": "https://www.linkedin.com/in/arnau-jim%C3%A9nez-castany-b2ba2597/",
+      "contributions": [
+        "code"
       ]
     },
     {
@@ -1741,7 +1751,15 @@
       "profile": "https://github.com/benheid",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "design",
+        "doc",
+        "example",
+        "ideas",
+        "mentoring",
+        "question",
+        "review",
+        "tutorial"
       ]
     },
     {
@@ -2337,6 +2355,26 @@
       "contributions": [
         "doc",
         "maintenance"
+      ]
+    },
+    {
+      "login": "BensHamza",
+      "name": "Hamza Benslimane",
+      "avatar_url": "https://avatars.githubusercontent.com/u/96446862?v=4",
+      "profile": "https://github.com/BensHamza",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "julnow",
+      "name": "Julian Nowak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21206185?v=4",
+      "profile": "https://github.com/julnow",
+      "contributions": [
+        "bug",
+        "code"
       ]
     }
   ]

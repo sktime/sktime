@@ -10,8 +10,8 @@ import pandas as pd
 
 from sktime.datatypes._convert import convert_to
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingWindowSplitter
 
 
 class SquaringResiduals(BaseForecaster):
@@ -269,8 +269,7 @@ class SquaringResiduals(BaseForecaster):
             forecaster.update(X=X, y=y, update_params=update_params)
         return self
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -314,9 +313,7 @@ class SquaringResiduals(BaseForecaster):
 
         errors = [pred_var * z for z in z_scores]
 
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         index = pd.MultiIndex.from_product([var_names, alpha])

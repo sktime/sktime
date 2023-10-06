@@ -22,8 +22,8 @@ from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
+from sktime.split.base import BaseSplitter
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -285,7 +285,7 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Refit model with best parameters.
         if self.refit:
-            self.best_forecaster_.fit(y, X, fh)
+            self.best_forecaster_.fit(y=y, X=X, fh=fh)
 
         # Sort values according to rank
         results = results.sort_values(
@@ -302,7 +302,7 @@ class BaseGridSearch(_DelegatedForecaster):
             forecaster = self.forecaster.clone().set_params(**params)
             # Refit model with best parameters.
             if self.refit:
-                forecaster.fit(y, X, fh)
+                forecaster.fit(y=y, X=X, fh=fh)
             self.n_best_forecasters_.append((rank, forecaster))
             # Save score
             score = results[f"mean_{scoring_name}"].iloc[i]
@@ -509,9 +509,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     Examples
     --------
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sktime.forecasting.model_selection import (
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import (
     ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
@@ -533,7 +533,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
@@ -648,13 +648,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import (
             MeanAbsolutePercentageError,
             mean_absolute_percentage_error,
         )
+        from sktime.split import SingleWindowSplitter
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
@@ -872,10 +872,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.split import SingleWindowSplitter
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
@@ -1043,9 +1043,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     Examples
     --------
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingSkoptSearchCV)
+    >>> from sktime.forecasting.model_selection import ForecastingSkoptSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> from sktime.forecasting.compose import make_reduction
     >>> y = load_shampoo_sales()
@@ -1455,10 +1454,10 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.split import SingleWindowSplitter
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),

@@ -10,6 +10,7 @@ __all__ = [
     "is_timedelta_or_date_offset",
     "check_n_jobs",
     "check_window_length",
+    "array_is_int",
 ]
 __author__ = ["mloning", "thayeylolu", "khrapovs"]
 

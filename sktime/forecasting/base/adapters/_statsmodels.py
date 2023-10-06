@@ -147,8 +147,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
         raise NotImplementedError("abstract method")
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -202,9 +201,7 @@ class _StatsModelsAdapter(BaseForecaster):
             **get_prediction_arguments
         )
 
-        var_names = self._get_varnames(
-            default="Coverage", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
         columns = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=valid_indices, columns=columns)
