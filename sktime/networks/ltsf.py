@@ -4,6 +4,14 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 if _check_soft_dependencies("torch", severity="none"):
     import torch.nn as nn
 
+    nn_module = nn.Module
+else:
+
+    class nn_module:
+        """Dummy class if torch is unavailable."""
+
+        pass
+
 
 class LTSFLinearNetwork:
     """LSTF-Linear Network.
@@ -35,7 +43,7 @@ class LTSFLinearNetwork:
         [Source]: https://github.com/cure-lab/LTSF-Linear/blob/main/models/Linear.py
     """
 
-    class _LTSFLinearNetwork(nn.Module):
+    class _LTSFLinearNetwork(nn_module):
         def __init__(
             self,
             seq_len,
