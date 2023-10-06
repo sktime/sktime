@@ -10,7 +10,7 @@ from sktime.base import BaseObject
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch"):
+if _check_soft_dependencies("torch", severity="none"):
     import torch
 
 

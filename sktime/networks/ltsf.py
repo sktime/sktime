@@ -1,7 +1,7 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch"):
+if _check_soft_dependencies("torch", severity="none"):
     import torch.nn as nn
 
 
@@ -44,8 +44,6 @@ class LTSFLinearNetwork:
             individual,
         ):
             super().__init__()
-
-            import torch.nn as nn
 
             self.seq_len = seq_len
             self.pred_len = pred_len

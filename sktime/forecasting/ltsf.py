@@ -80,28 +80,28 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         self.scale = scale
         self.shuffle = shuffle
 
+        super().__init__()
+
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("torch"):
             import torch
 
-        self.criterions = {
-            "L1": torch.nn.L1Loss,
-            "MSE": torch.nn.MSELoss,
-            "CrossEntropy": torch.nn.CrossEntropyLoss,
-            "SmoothL1": torch.nn.SmoothL1Loss,
-            "Huber": torch.nn.HuberLoss,
-        }
+            self.criterions = {
+                "L1": torch.nn.L1Loss,
+                "MSE": torch.nn.MSELoss,
+                "CrossEntropy": torch.nn.CrossEntropyLoss,
+                "SmoothL1": torch.nn.SmoothL1Loss,
+                "Huber": torch.nn.HuberLoss,
+            }
 
-        self.optimizers = {
-            "Adadelta": torch.optim.Adadelta,
-            "Adagrad": torch.optim.Adagrad,
-            "Adam": torch.optim.Adam,
-            "AdamW": torch.optim.AdamW,
-            "SGD": torch.optim.SGD,
-        }
-
-        super().__init__()
+            self.optimizers = {
+                "Adadelta": torch.optim.Adadelta,
+                "Adagrad": torch.optim.Adagrad,
+                "Adam": torch.optim.Adam,
+                "AdamW": torch.optim.AdamW,
+                "SGD": torch.optim.SGD,
+            }
 
     def _build_network(self, fh):
         from sktime.networks.ltsf import LTSFLinearNetwork
