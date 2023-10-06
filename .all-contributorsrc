@@ -2366,6 +2366,16 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "julnow",
+      "name": "Julian Nowak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21206185?v=4",
+      "profile": "https://github.com/julnow",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }
