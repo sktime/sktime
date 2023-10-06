@@ -44,7 +44,6 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X, check_X_y
 
 DIRNAME = "data"
@@ -1852,6 +1851,22 @@ def write_ndarray_to_tsfile(
     file.close()
 
 
+def strtobool(val):
+    """Convert a string representation of truth to true (1) or false (0).
+
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+    """
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return 1
+    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return 0
+    else:
+        raise ValueError("invalid truth value %r" % (val,))
+
+
 def load_tsf_to_dataframe(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
@@ -1895,10 +1910,6 @@ def load_tsf_to_dataframe(
         "frequency", "forecast_horizon", "contain_missing_values",
         "contain_equal_length"
     """
-    _check_soft_dependencies("distutils")
-
-    from distutils.util import strtobool
-
     col_names = []
     col_types = []
     all_data = {}
