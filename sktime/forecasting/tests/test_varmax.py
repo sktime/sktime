@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests the VARMAX model."""
 __author__ = ["KatieBuc"]
 
@@ -8,8 +7,8 @@ import pytest
 from numpy.testing import assert_allclose
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.varmax import VARMAX
+from sktime.split import temporal_train_test_split
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 np.random.seed(13455)

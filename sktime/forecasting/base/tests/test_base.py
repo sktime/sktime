@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing advanced functionality of the base class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -7,6 +6,7 @@ __author__ = ["fkiraly"]
 from functools import reduce
 from operator import mul
 
+import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
@@ -14,6 +14,7 @@ from pandas.testing import assert_series_equal
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.var import VAR
 from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -276,6 +277,61 @@ def test_vectorization_multivariate(mtype, exogeneous):
     assert y_pred_equal_length, msg
 
 
+def test_col_vectorization_correct_col_order():
+    """Test that forecaster vectorization preserves column index ordering.
+
+    Failure case is as in issue #4683 where the column index is correct,
+    but the values are in fact coming from forecasters in jumbled order.
+    """
+    cols = ["realgdp", "realcons", "realinv", "realgovt", "realdpi", "cpi", "m1"]
+    vals = np.random.rand(5, 7)
+    y = pd.DataFrame(vals, columns=cols)
+
+    f = NaiveForecaster()
+    # force univariate tag to trigger vectorization over columns for sure
+    f.set_tags(**{"scitype:y": "univariate"})
+
+    f.fit(y=y, fh=[1])
+    y_pred = f.predict()
+
+    # last value, so entries of last y column and y_pred should all be exactly equal
+    # if they were jumbled, as in #4683 by lexicographic column name order,
+    # this assertion would fail since the values are all different
+    assert (y_pred == y.iloc[4]).all().all()
+
+
+def test_row_vectorization_correct_row_order():
+    """Test that forecaster vectorization preserves row index ordering.
+
+    Failure case is as in issue #5108 where the row index is correct,
+    but the values are in fact coming from forecasters in jumbled order.
+    """
+    n_instances = 3
+    n_points = 5
+
+    t_ix = pd.date_range(start="2022-07-01", periods=n_points * n_instances, freq="D")
+    y = pd.DataFrame(
+        {
+            "y": [i for i in range(n_points * n_instances)],
+            "id": ["T1"] * n_points + ["T2"] * n_points + ["T11"] * n_points,
+            "timestamp": t_ix,
+        }
+    ).set_index(["id", "timestamp"])
+
+    fh = [1]
+
+    forecaster = NaiveForecaster(strategy="last")
+
+    forecaster.fit(y)
+    y_pred = forecaster.predict(fh)
+
+    last_ix = range(n_points - 1, n_points * n_instances, n_points)
+    y_last = y.iloc[last_ix]
+
+    assert all(y_last.index.get_level_values(0) == y_pred.index.get_level_values(0))
+    assert all(y_last.values == y_pred.values)
+
+
 @pytest.mark.skipif(
     not _check_estimator_deps([ThetaForecaster, VAR], severity="none"),
     reason="skip test if required soft dependency not available",
@@ -301,7 +357,7 @@ def test_dynamic_tags_reset_properly():
 def test_predict_residuals():
     """Test that predict_residuals has no side-effect."""
     from sktime.forecasting.base import ForecastingHorizon
-    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.split import temporal_train_test_split
 
     y = _make_series(n_columns=1)
     y_train, y_test = temporal_train_test_split(y)
@@ -341,3 +397,43 @@ def test_nullable_dtypes(nullable_type):
     assert isinstance(y_pred, pd.Series)
     assert len(y_pred) == 40
     assert y_pred.dtype == "float64"
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(VAR, severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_range_fh_in_fit():
+    """Test using ``range`` in ``fit``."""
+    test_dataset = _make_panel(n_instances=10, n_columns=5)
+
+    var_model = VAR().fit(test_dataset, fh=range(1, 2 + 1))
+    var_predictions = var_model.predict()
+
+    assert isinstance(var_predictions, pd.DataFrame)
+    assert var_predictions.shape == (10 * 2, 5)
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(VAR, severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_range_fh_in_predict():
+    """Test using ``range`` in ``predict``."""
+    test_dataset = _make_panel(n_instances=10, n_columns=5)
+
+    var_model = VAR().fit(test_dataset)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "The forecasting horizon `fh` must be passed either to `fit` or `predict`,"
+            " but was found in neither."
+        ),
+    ):
+        _ = var_model.predict()
+
+    var_predictions = var_model.predict(fh=range(1, 2 + 1))
+
+    assert isinstance(var_predictions, pd.DataFrame)
+    assert var_predictions.shape == (10 * 2, 5)

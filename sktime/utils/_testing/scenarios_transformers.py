@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for transformers.
 
 Contains TestScenario concrete children to run in tests for transformers.

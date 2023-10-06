@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base classes for probability distribution objects."""
 
@@ -20,39 +19,37 @@ class BaseDistribution(BaseObject):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        "object_type": "distribution",  # type of object, e.g., 'distribution'
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
         "reserved_params": ["index", "columns"],
         "capabilities:approx": ["energy", "mean", "var", "pdfnorm"],
+        "approx_mean_spl": 1000,  # sample size used in MC estimates of mean
+        "approx_var_spl": 1000,  # sample size used in MC estimates of var
+        "approx_energy_spl": 1000,  # sample size used in MC estimates of energy
+        "approx_spl": 1000,  # sample size used in other MC estimates
     }
 
-    # move this to configs when the config interface is ready
-    APPROX_MEAN_SPL = 1000  # sample size used in MC estimates of mean
-    APPROX_VAR_SPL = 1000  # sample size used in MC estimates of var
-    APPROX_ENERGY_SPL = 1000  # sample size used in MC estimates of energy
-    APPROX_SPL = 1000  # sample size used in other MC estimates
-
     def __init__(self, index=None, columns=None):
-
         self.index = index
         self.columns = columns
 
-        super(BaseDistribution, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     @property
     def loc(self):
         """Location indexer.
 
-        Use `my_distribution.loc[index]` for `pandas`-like row/column subsetting
-        of `BaseDistribution` descendants.
+        Use `my_distribution.loc[index]` for `pandas`-like row/column subsetting of
+        `BaseDistribution` descendants.
 
         `index` can be any `pandas` `loc` compatible index subsetter.
 
         `my_distribution.loc[index]` or `my_distribution.loc[row_index, col_index]`
-        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`,
-        to exactly the same/cols rows as `pandas` `loc` would subset
-        rows in `my_distribution.index` and columns in `my_distribution.columns`.
+        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`, to
+        exactly the same/cols rows as `pandas` `loc` would subset rows in
+        `my_distribution.index` and columns in `my_distribution.columns`.
         """
         return _Indexer(ref=self, method="_loc")
 
@@ -60,15 +57,15 @@ class BaseDistribution(BaseObject):
     def iloc(self):
         """Integer location indexer.
 
-        Use `my_distribution.iloc[index]` for `pandas`-like row/column subsetting
-        of `BaseDistribution` descendants.
+        Use `my_distribution.iloc[index]` for `pandas`-like row/column subsetting of
+        `BaseDistribution` descendants.
 
         `index` can be any `pandas` `iloc` compatible index subsetter.
 
         `my_distribution.iloc[index]` or `my_distribution.iloc[row_index, col_index]`
-        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`,
-        to exactly the same/cols rows as `pandas` `iloc` would subset
-        rows in `my_distribution.index` and columns in `my_distribution.columns`.
+        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`, to
+        exactly the same/cols rows as `pandas` `iloc` would subset rows in
+        `my_distribution.index` and columns in `my_distribution.columns`.
         """
         return _Indexer(ref=self, method="_iloc")
 
@@ -89,7 +86,6 @@ class BaseDistribution(BaseObject):
         return self._iloc(rowidx=row_iloc, colidx=col_iloc)
 
     def _subset_params(self, rowidx, colidx):
-
         params = self._get_dist_params()
 
         subset_param_dict = {}
@@ -128,7 +124,6 @@ class BaseDistribution(BaseObject):
         )
 
     def _get_dist_params(self):
-
         params = self.get_params(deep=False)
         paramnames = params.keys()
         reserved_names = ["index", "columns"]
@@ -164,6 +159,43 @@ class BaseDistribution(BaseObject):
         else:
             return msg
 
+    def _get_bc_params(self, *args, dtype=None):
+        """Fully broadcast tuple of parameters given param shapes and index, columns.
+
+        Parameters
+        ----------
+        args : float, int, array of floats, or array of ints (1D or 2D)
+            Distribution parameters that are to be made broadcastable. If no positional
+            arguments are provided, all parameters of `self` are used except for `index`
+            and `columns`.
+        dtype : str, optional
+            broadcasted arrays are cast to all have datatype `dtype`. If None, then no
+            datatype casting is done.
+
+        Returns
+        -------
+        Tuple of float or integer arrays
+            Each element of the tuple represents a different broadcastable distribution
+            parameter.
+        """
+        number_of_params = len(args)
+        if number_of_params == 0:
+            # Handle case where no positional arguments are provided
+            params = self.get_params()
+            params.pop("index")
+            params.pop("columns")
+            args = tuple(params.values())
+            number_of_params = len(args)
+
+        if hasattr(self, "index") and self.index is not None:
+            args += (self.index.to_numpy().reshape(-1, 1),)
+        if hasattr(self, "columns") and self.columns is not None:
+            args += (self.columns.to_numpy(),)
+        bc = np.broadcast_arrays(*args)
+        if dtype is not None:
+            bc = [array.astype(dtype) for array in bc]
+        return bc[:number_of_params]
+
     def pdf(self, x):
         r"""Probability density function.
 
@@ -187,17 +219,15 @@ class BaseDistribution(BaseObject):
         `DataFrame` with same columns and index as `self`
             containing :math:`p_{X_{ij}}(x_{ij})`, as above
         """
-        try:
-            self.pdf(x=x).applymap(np.log)
-
+        if self._has_implementation_of("log_pdf"):
             approx_method = (
                 "by exponentiating the output returned by the log_pdf method, "
                 "this may be numerically unstable"
             )
             warn(self._method_error_msg("pdf", fill_in=approx_method))
+            return self.log_pdf(x=x).applymap(np.exp)
 
-        except NotImplementedError:
-            raise NotImplementedError(self._method_err_msg("pdf", "error"))
+        raise NotImplementedError(self._method_error_msg("pdf", "error"))
 
     def log_pdf(self, x):
         r"""Logarithmic probability density function.
@@ -228,17 +258,35 @@ class BaseDistribution(BaseObject):
         `DataFrame` with same columns and index as `self`
             containing :math:`\log p_{X_{ij}}(x_{ij})`, as above
         """
-        try:
-            self.pdf(x=x).applymap(np.log)
-
+        if self._has_implementation_of("pdf"):
             approx_method = (
                 "by taking the logarithm of the output returned by the pdf method, "
                 "this may be numerically unstable"
             )
             warn(self._method_error_msg("log_pdf", fill_in=approx_method))
 
-        except NotImplementedError:
-            raise NotImplementedError(self._method_err_msg("log_pdf", "error"))
+            return self.pdf(x=x).applymap(np.log)
+
+        raise NotImplementedError(self._method_error_msg("log_pdf", "error"))
+
+    def cdf(self, x):
+        """Cumulative distribution function."""
+        N = self.get_tag("approx_spl")
+        approx_method = (
+            "by approximating the expected value by the indicator function on "
+            f"{N} samples"
+        )
+        warn(self._method_error_msg("mean", fill_in=approx_method))
+
+        splx = pd.concat([x] * N, keys=range(N))
+        spl = self.sample(N)
+        ind = splx <= spl
+
+        return ind.groupby(level=1).mean()
+
+    def ppf(self, p):
+        """Quantile function = percent point function = inverse cdf."""
+        raise NotImplementedError(self._method_error_msg("ppf", "error"))
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -264,14 +312,15 @@ class BaseDistribution(BaseObject):
         # if x = None, X,Y are i.i.d. copies of self
         # if x is not None, X=x (constant), Y=self
 
+        approx_spl_size = self.get_tag("approx_energy_spl")
         approx_method = (
             "by approximating the energy expectation by the arithmetic mean of "
-            f"{self.APPROX_ENERGY_SPL} samples"
+            f"{approx_spl_size} samples"
         )
         warn(self._method_error_msg("energy", fill_in=approx_method))
 
-        # splx, sply = i.i.d. samples of X - Y of size N = self.APPROX_ENERGY_SPL
-        N = self.APPROX_ENERGY_SPL
+        # splx, sply = i.i.d. samples of X - Y of size N = approx_spl_size
+        N = approx_spl_size
         if x is None:
             splx = self.sample(N)
             sply = self.sample(N)
@@ -296,14 +345,15 @@ class BaseDistribution(BaseObject):
         pd.DataFrame with same rows, columns as `self`
         expected value of distribution (entry-wise)
         """
+        approx_spl_size = self.get_tag("approx_mean_spl")
         approx_method = (
             "by approximating the expected value by the arithmetic mean of "
-            f"{self.APPROX_MEAN_SPL} samples"
+            f"{approx_spl_size} samples"
         )
         warn(self._method_error_msg("mean", fill_in=approx_method))
 
-        spl = self.sample(self.APPROX_MEAN_SPL)
-        return spl.groupby(level=0).mean()
+        spl = self.sample(approx_spl_size)
+        return spl.groupby(level=1).mean()
 
     def var(self):
         r"""Return element/entry-wise variance of the distribution.
@@ -316,19 +366,20 @@ class BaseDistribution(BaseObject):
         pd.DataFrame with same rows, columns as `self`
         variance of distribution (entry-wise)
         """
+        approx_spl_size = self.get_tag("approx_var_spl")
         approx_method = (
             "by approximating the variance by the arithmetic mean of "
-            f"{self.APPROX_VAR_SPL} samples of squared differences"
+            f"{approx_spl_size} samples of squared differences"
         )
         warn(self._method_error_msg("var", fill_in=approx_method))
 
-        spl1 = self.sample(self.APPROX_VAR_SPL)
-        spl2 = self.sample(self.APPROX_VAR_SPL)
+        spl1 = self.sample(approx_spl_size)
+        spl2 = self.sample(approx_spl_size)
         spl = (spl1 - spl2) ** 2
-        return spl.groupby(level=0).mean()
+        return spl.groupby(level=1).mean()
 
     def pdfnorm(self, a=2):
-        r"""a-norm of pdf, defaults to 2-norm.
+        r"""A-norm of pdf, defaults to 2-norm.
 
         computes a-norm of the entry marginal pdf, i.e.,
         :math:`\mathbb{E}[p_X(X)^{a-1}] = \int p(x)^a dx`,
@@ -348,15 +399,16 @@ class BaseDistribution(BaseObject):
         if a == 1:
             return pd.DataFrame(1.0, index=self.index, columns=self.columns)
 
+        approx_spl_size = self.get_tag("approx_spl")
         approx_method = (
             f"by approximating the {a}-norm of the pdf by the arithmetic mean of "
-            f"{self.APPROX_SPL} samples"
+            f"{approx_spl_size} samples"
         )
         warn(self._method_error_msg("pdfnorm", fill_in=approx_method))
 
         # uses formula int p(x)^a dx = E[p(X)^{a-1}], and MC approximates the RHS
-        spl = [self.pdf(self.sample()) ** (a - 1) for _ in range(self.APPROX_SPL)]
-        return pd.concat(spl, axis=0).groupby(level=0).mean()
+        spl = [self.pdf(self.sample()) ** (a - 1) for _ in range(approx_spl_size)]
+        return pd.concat(spl, axis=0).groupby(level=1).mean()
 
     def _coerce_to_self_index_df(self, x):
         x = np.array(x)
@@ -405,7 +457,9 @@ class BaseDistribution(BaseObject):
 
         qres = pd.concat(qdfs, axis=1, keys=alpha)
         qres = qres.reorder_levels([1, 0], axis=1)
-        quantiles = qres.sort_index(axis=1)
+
+        cols = pd.MultiIndex.from_product([self.columns, alpha])
+        quantiles = qres.loc[:, cols]
         return quantiles
 
     def sample(self, n_samples=None):
@@ -425,7 +479,21 @@ class BaseDistribution(BaseObject):
         in `pd-multiindex` mtype format convention, with same `columns` as `self`,
         and `MultiIndex` that is product of `RangeIndex(n_samples)` and `self.index`
         """
-        raise NotImplementedError(self._method_err_msg("sample", "error"))
+
+        def gen_unif():
+            np_unif = np.random.uniform(size=self.shape)
+            return pd.DataFrame(np_unif, index=self.index, columns=self.columns)
+
+        # if ppf is implemented, we use inverse transform sampling
+        if self._has_implementation_of("ppf"):
+            if n_samples is None:
+                return self.ppf(gen_unif())
+            else:
+                pd_smpl = [self.ppf(gen_unif()) for _ in range(n_samples)]
+                df_spl = pd.concat(pd_smpl, keys=range(n_samples))
+                return df_spl
+
+        raise NotImplementedError(self._method_error_msg("sample", "error"))
 
 
 class _Indexer:
@@ -476,13 +544,11 @@ class _BaseTFDistribution(BaseDistribution):
     }
 
     def __init__(self, index=None, columns=None, distr=None):
-
         self.distr = distr
 
-        super(_BaseTFDistribution, self).__init__(index=index, columns=columns)
+        super().__init__(index=index, columns=columns)
 
     def __str__(self):
-
         return self.to_str()
 
     def pdf(self, x):

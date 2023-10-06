@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
 """Weighted ensemble of classifiers."""
 
 __author__ = ["fkiraly"]
 __all__ = ["WeightedEnsembleClassifier"]
-
-from warnings import warn
 
 import numpy as np
 from sklearn.metrics import accuracy_score
@@ -151,15 +148,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         else:
             self._metric = metric
 
-        super(WeightedEnsembleClassifier, self).__init__()
-
-        # todo: remove in 0.20.0
-        warn(
-            "WeightedEnsembleClassifier has moved to classification.ensemble, "
-            "and will no longer be importable from classification.compose "
-            "from 0.20.0 on. To safely deprecate the old location, "
-            "replace the import with an import from classification.ensemble."
-        )
+        super().__init__()
 
         # set property tags based on tags of components
         ests = self.classifiers_

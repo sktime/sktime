@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Validations for use with forecasting module."""
 
 __all__ = [
@@ -157,8 +155,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
 
 
 def check_cv(cv, enforce_start_with_window=False):
-    """
-    Check CV generators.
+    """Check CV generators.
 
     Parameters
     ----------
@@ -169,7 +166,7 @@ def check_cv(cv, enforce_start_with_window=False):
     ValueError
         if cv does not have the required attributes.
     """
-    from sktime.forecasting.model_selection._split import BaseSplitter
+    from sktime.split.base import BaseSplitter
 
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
@@ -372,7 +369,6 @@ def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
     ValueError
         If cutoffs is not a instance of np.array or pd.Index
         If cutoffs array is empty.
-
     """
     if not isinstance(cutoffs, ACCEPTED_CUTOFF_TYPES):
         raise ValueError(
@@ -397,6 +393,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
         * a callable with signature
           `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
           assuming `np.ndarray`-s being of the same length, and lower being better.
+        * a string, resolvable by registry.resolve_alias to one of the above
         * None
 
     allow_y_pred_benchmark : boolean, optional, default=False
@@ -436,12 +433,23 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
         obj_str = ""
 
     msg = (
-        f"scoring parameter{obj_str} must be an sktime metric, descendant of"
-        "BaseMetric, or a callable with signature "
+        f"scoring parameter{obj_str} must be one of the following: "
+        "(1) an sktime metric, descendant of BaseMetric; (2) a callable with signature "
         "(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float, "
-        "assuming np.ndarrays being of the same length, and lower being better. "
+        "assuming np.ndarrays being of the same length, and lower being better; "
+        "(3) a string, resolvable by registry.resolve_alias to an object of either "
+        "type (1) or (2)"
     )
 
+    # deal with case (3) first - if string, try to resolve and return
+    if isinstance(scoring, str):
+        # lazy import of sktime.registry to avoid circular imports
+        # and to ensure maximal decoupling from registry
+        from sktime.registry import resolve_alias
+
+        return resolve_alias(scoring)
+
+    # check case (1) and case (2)
     # note: BaseMetric descendants are callable, so this is the same as
     # if not callable(scoring) and not isinstance(scoring, BaseMetric)
     if not callable(scoring):
@@ -464,7 +472,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
 
 
 def check_regressor(regressor=None, random_state=None):
-    """Check if a regressor is given and if it is valid, otherwise set default regressor.
+    """Check if a valid regressor is given, otherwise set default regressor.
 
     Parameters
     ----------
@@ -494,8 +502,7 @@ def check_regressor(regressor=None, random_state=None):
 
 
 def check_interval_df(interval_df, index_to_match):
-    """
-    Verify that a predicted interval DataFrame is formatted correctly.
+    """Verify that a predicted interval DataFrame is formatted correctly.
 
     Parameters
     ----------
@@ -513,5 +520,3 @@ def check_interval_df(interval_df, index_to_match):
     levels = interval_df.columns.levels
     if len(levels[0]) != 1:
         raise ValueError("`interval_df` must only contain one variable with interval")
-    if not (levels[0] == "Coverage")[0]:
-        raise ValueError("`interval_df` must have 'Coverage' column label")

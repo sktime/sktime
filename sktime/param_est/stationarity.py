@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for stationarity."""
 
@@ -86,7 +85,7 @@ class StationarityADF(BaseParamFitter):
         self.maxlag = maxlag
         self.regression = regression
         self.autolag = autolag
-        super(StationarityADF, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -223,7 +222,7 @@ class StationarityKPSS(BaseParamFitter):
         self.p_threshold = p_threshold
         self.regression = regression
         self.nlags = nlags
-        super(StationarityKPSS, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.

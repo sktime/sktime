@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unit tests for sklearn classifiers."""
 
 __author__ = ["MatthewMiddlehurst"]

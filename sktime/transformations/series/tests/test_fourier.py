@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for the FourierFeatures transformer."""
 
 from copy import deepcopy

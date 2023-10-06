@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Vector Autoregressive Moving Average with eXogenous regressors model (VARMAX)."""
 __all__ = ["VARMAX"]
 __author__ = ["KatieBuc"]
@@ -198,7 +197,7 @@ class VARMAX(_StatsModelsAdapter):
     --------
     >>> from sktime.forecasting.varmax import VARMAX
     >>> from sktime.datasets import load_macroeconomic
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_macroeconomic()  # doctest: +SKIP
     >>> forecaster = VARMAX(suppress_warnings=True)  # doctest: +SKIP
     >>> forecaster.fit(y[['realgdp', 'unemp']])  # doctest: +SKIP
@@ -278,7 +277,7 @@ class VARMAX(_StatsModelsAdapter):
         self.signal_only = signal_only
         self.suppress_warnings = suppress_warnings
 
-        super(VARMAX, self).__init__()
+        super().__init__()
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
@@ -337,9 +336,8 @@ class VARMAX(_StatsModelsAdapter):
     # for two reasons:
     # 1. to pass in `dynamic`, `information_set` and `signal_only`
     # 2. to deal with statsmodel integer indexing issue
-    def _predict(self, fh, X=None):
-        """
-        Wrap Statmodel's VARMAX forecast method.
+    def _predict(self, fh, X):
+        """Wrap Statmodel's VARMAX forecast method.
 
         Parameters
         ----------

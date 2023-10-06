@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Functions to load and write datasets."""
 
 __all__ = [
@@ -34,6 +33,7 @@ __all__ = [
     "load_unit_test_tsf",
     "load_solar",
     "load_covid_3month",
+    "load_forecastingdata",
     "write_panel_to_tsfile",
     "write_dataframe_to_tsfile",
     "write_ndarray_to_tsfile",
@@ -63,6 +63,7 @@ from sktime.datasets._single_problem_loaders import (
     load_basic_motions,
     load_covid_3month,
     load_electric_devices_segmentation,
+    load_forecastingdata,
     load_gun_point_segmentation,
     load_gunpoint,
     load_italy_power_demand,

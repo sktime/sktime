@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Column concatenator test code."""
 
 import numpy as np

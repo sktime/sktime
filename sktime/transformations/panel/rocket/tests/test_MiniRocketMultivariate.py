@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """MiniRocketMultivariate test code."""
 import numpy as np
 import pytest
@@ -8,13 +7,13 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.rocket import MiniRocketMultivariate
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(MiniRocketMultivariate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_minirocket_multivariate_on_basic_motions():
     """Test of MiniRocketMultivariate on basic motions."""

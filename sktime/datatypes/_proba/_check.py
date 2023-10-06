@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type checkers for Series scitype.
 
 Exports checkers for Series scitype:
@@ -48,7 +47,6 @@ check_dict = dict()
 
 
 def check_pred_quantiles_proba(obj, return_metadata=False, var_name="obj"):
-
     metadata = dict()
 
     # check if the input is a dataframe
@@ -111,7 +109,6 @@ check_dict[("pred_quantiles", "Proba")] = check_pred_quantiles_proba
 
 
 def check_pred_interval_proba(obj, return_metadata=False, var_name="obj"):
-
     metadata = dict()
 
     # check if the input is a dataframe

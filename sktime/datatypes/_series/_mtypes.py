@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type inference for Series scitype.
 
 Exports mtype dictionaries for Series scitype:
@@ -37,7 +36,6 @@ infer_mtype_dict = dict()
 
 
 def infer_mtype_Series(obj):
-
     obj_type = type(obj)
 
     infer_dict = {

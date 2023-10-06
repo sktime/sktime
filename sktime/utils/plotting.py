@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common timeseries plotting functionality."""
 
@@ -118,7 +117,6 @@ def plot_series(
 
     # plot series
     for x, y, color, label, marker in zip(xs, series, colors, labels, markers):
-
         # scatter if little data is available or index is not complete
         if len(x) <= 3 or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
             plot_func = sns.scatterplot
@@ -165,10 +163,11 @@ def plot_series(
 
 def plot_interval(ax, interval_df):
     cov = interval_df.columns.levels[1][0]
+    var_name = interval_df.columns.levels[0][0]
     ax.fill_between(
         ax.get_lines()[-1].get_xdata(),
-        interval_df["Coverage"][cov]["lower"].astype("float64"),
-        interval_df["Coverage"][cov]["upper"].astype("float64"),
+        interval_df[var_name][cov]["lower"].astype("float64"),
+        interval_df[var_name][cov]["upper"].astype("float64"),
         alpha=0.2,
         color=ax.get_lines()[-1].get_c(),
         label=f"{int(cov * 100)}% prediction interval",
@@ -447,5 +446,5 @@ def plot_windows(cv, y, title=""):
         xticklabels=y.index,
     )
     # remove duplicate labels/handles
-    handles, labels = [(leg[:2]) for leg in ax.get_legend_handles_labels()]
+    handles, labels = ((leg[:2]) for leg in ax.get_legend_handles_labels())
     ax.legend(handles, labels)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """RandOm Convolutional KErnel Transform (Rocket).
 
 Pipeline classifier using the ROCKET transformer and RidgeClassifierCV estimator.
@@ -135,7 +134,7 @@ class RocketClassifier(_DelegatedClassifier):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        super(RocketClassifier, self).__init__()
+        super().__init__()
 
         if use_multivariate not in self.VALID_MULTIVAR_VALUES:
             raise ValueError(

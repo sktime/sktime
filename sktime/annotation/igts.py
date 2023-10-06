@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Information Gain-based Temporal Segmentation.
+"""Information Gain-based Temporal Segmentation.
 
 Information Gain Temporal Segmentation (IGTS) is a method for segmenting
 multivariate time series based off reducing the entropy in each segment [1]_.
@@ -15,10 +13,9 @@ References
     "Information gain-based metric for recognizing transitions in human activities.",
     Pervasive and Mobile Computing, 38, 92-109, (2017).
     https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
-
 """
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Dict, List
 
 import numpy as np
@@ -104,191 +101,183 @@ def generate_segments_pandas(X: npt.ArrayLike, change_points: List) -> npt.Array
         yield X[interval.left : interval.right, :]
 
 
-def get_IGTS():
-    """Return IGTS class, wrapper to isolate attrs."""
-    from attrs import define, field
+@dataclass
+class IGTS:
+    """Information Gain based Temporal Segmentation (IGTS).
 
-    @define
-    class IGTS:
-        """
-        Information Gain based Temporal Segmentation (IGTS).
+    IGTS is a n unsupervised method for segmenting multivariate time series
+    into non-overlapping segments by locating change points that for which
+    the information gain is maximized.
 
-        IGTS is a n unsupervised method for segmenting multivariate time series
-        into non-overlapping segments by locating change points that for which
-        the information gain is maximized.
+    Information gain (IG) is defined as the amount of entropy lost by the
+    segmentation.
+    The aim is to find the segmentation that have the maximum information
+    gain for a specified number of segments.
 
-        Information gain (IG) is defined as the amount of entropy lost by the
-        segmentation.
-        The aim is to find the segmentation that have the maximum information
-        gain for a specified number of segments.
+    IGTS uses top-down search method to greedily find the next change point
+    location that creates the maximum information gain. Once this is found, it
+    repeats the process until it finds `k_max` splits of the time series.
 
-        IGTS uses top-down search method to greedily find the next change point
-        location that creates the maximum information gain. Once this is found, it
-        repeats the process until it finds `k_max` splits of the time series.
+    .. note::
 
-        .. note::
+    IGTS does not work very well for univariate series but it can still be
+    used if the original univariate series are augmented by an extra feature
+    dimensions. A technique proposed in the paper [1]_ us to subtract the
+    series from it's largest element and append to the series.
 
-        IGTS does not work very well for univariate series but it can still be
-        used if the original univariate series are augmented by an extra feature
-        dimensions. A technique proposed in the paper [1]_ us to subtract the
-        series from it's largest element and append to the series.
+    Parameters
+    ----------
+    k_max: int, default=10
+        Maximum number of change points to find. The number of segments is thus k+1.
+    step: : int, default=5
+        Step size, or stride for selecting candidate locations of change points.
+        Fox example a `step=5` would produce candidates [0, 5, 10, ...].
+        Has the same meaning as `step` in `range` function.
+
+    Attributes
+    ----------
+    intermediate_results_: list of `ChangePointResult`
+        Intermediate segmentation results for each k value, where k=1, 2, ..., k_max
+
+    Notes
+    -----
+    Based on the work from [1]_.
+    - alt. py implementation: https://github.com/cruiseresearchgroup/IGTS-python
+    - MATLAB version: https://github.com/cruiseresearchgroup/IGTS-matlab
+    - paper available at:
+
+    References
+    ----------
+    .. [1] Sadri, Amin, Yongli Ren, and Flora D. Salim.
+    "Information gain-based metric for recognizing transitions in human
+    activities.", Pervasive and Mobile Computing, 38, 92-109, (2017).
+    https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
+
+    Example
+    -------
+    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> X = piecewise_normal_multivariate(lengths=[10, 10, 10, 10],
+    ... means=[[0.0, 1.0], [11.0, 10.0], [5.0, 3.0], [2.0, 2.0]],
+    ... variances=0.5)
+    >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
+    >>> from sktime.annotation.igts import InformationGainSegmentation
+    >>> igts = InformationGainSegmentation(k_max=3, step=2)
+    >>> y = igts.fit_predict(X_scaled)
+    """
+
+    # init attributes
+    k_max: int = 10
+    step: int = 5
+
+    # computed attributes
+    intermediate_results_: List = field(init=False, default_factory=list)
+
+    def identity(self, X: npt.ArrayLike) -> List[int]:
+        """Return identity segmentation, i.e. terminal indexes of the data."""
+        return sorted([0, X.shape[0]])
+
+    def get_candidates(self, n_samples: int, change_points: List[int]) -> List[int]:
+        """Generate candidate change points.
+
+        Also exclude existing change points.
 
         Parameters
         ----------
-        k_max: int, default=10
-            Maximum number of change points to find. The number of segments is thus k+1.
-        step: : int, default=5
-            Step size, or stride for selecting candidate locations of change points.
-            Fox example a `step=5` would produce candidates [0, 5, 10, ...].
-            Has the same meaning as `step` in `range` function.
+        n_samples: int
+            Length of the time series.
+        change_points: list of ints
+            Current set of change points, that will be used to exclude values
+            from candidates.
 
-        Attributes
-        ----------
-        intermediate_results_: list of `ChangePointResult`
-            Intermediate segmentation results for each k value, where k=1, 2, ..., k_max
-
-        Notes
-        -----
-        Based on the work from [1]_.
-        - alt. py implementation: https://github.com/cruiseresearchgroup/IGTS-python
-        - MATLAB version: https://github.com/cruiseresearchgroup/IGTS-matlab
-        - paper available at:
-
-        References
-        ----------
-        .. [1] Sadri, Amin, Yongli Ren, and Flora D. Salim.
-        "Information gain-based metric for recognizing transitions in human
-        activities.", Pervasive and Mobile Computing, 38, 92-109, (2017).
-        https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
-
-        Example
-        -------
-        >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-        >>> from sklearn.preprocessing import MinMaxScaler
-        >>> X = piecewise_normal_multivariate(lengths=[10, 10, 10, 10],
-        ... means=[[0.0, 1.0], [11.0, 10.0], [5.0, 3.0], [2.0, 2.0]],
-        ... variances=0.5)
-        >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
-        >>> from sktime.annotation.igts import InformationGainSegmentation
-        >>> igts = InformationGainSegmentation(k_max=3, step=2)
-        >>> y = igts.fit_predict(X_scaled)
-
+        TODO: exclude points within a neighborhood of existing
+        change points with neighborhood radius
         """
+        return sorted(
+            set(range(0, n_samples, self.step)).difference(set(change_points))
+        )
 
-        # init attributes
-        k_max: int = 10
-        step: int = 5
+    @staticmethod
+    def information_gain_score(X: npt.ArrayLike, change_points: List[int]) -> float:
+        """Calculate the information gain score.
 
-        # computed attributes
-        intermediate_results_: List = field(init=False, default=[])
+        The formula is based on equation (2) from [1]_.
 
-        def identity(self, X: npt.ArrayLike) -> List[int]:
-            """Return identity segmentation, i.e. terminal indexes of the data."""
-            return sorted([0, X.shape[0]])
+        Parameters
+        ----------
+        X: array_like
+            Time series data as a 2D numpy array with sequence index along rows
+            and value series in columns.
 
-        def get_candidates(self, n_samples: int, change_points: List[int]) -> List[int]:
-            """Generate candidate change points.
+        change_points: list of ints
+            Locations of change points as integer indexes.
+            By convention, change points
+            include the identity segmentation, i.e. first and last index + 1 values.
 
-            Also exclude existing change points.
+        Returns
+        -------
+        information_gain: float
+            Information gain score for the segmentation corresponding to the change
+            points.
+        """
+        cp = change_points
+        segment_entropies = [
+            seg.shape[0] * entropy(seg) for seg in generate_segments(X, cp)
+        ]
+        return entropy(X) - sum(segment_entropies) / X.shape[0]
 
-            Parameters
-            ----------
-            n_samples: int
-                Length of the time series.
-            change_points: list of ints
-                Current set of change points, that will be used to exclude values
-                from candidates.
+    def find_change_points(self, X: npt.ArrayLike) -> List[int]:
+        """Find change points.
 
-            TODO: exclude points within a neighborhood of existing
-            change points with neighborhood radius
-            """
-            return sorted(
-                set(range(0, n_samples, self.step)).difference(set(change_points))
+        Using a top-down search method, iteratively identify at most
+        `k_max` change points that increase the information gain score
+        the most.
+
+        Parameters
+        ----------
+        X: array_like
+            Time series data as a 2D numpy array with sequence index along rows
+            and value series in columns.
+
+        Returns
+        -------
+        change_points: list of ints
+            Locations of change points as integer indexes.
+            By convention, change points
+            include the identity segmentation, i.e. first and last index + 1 values.
+        """
+        n_samples, n_series = X.shape
+        if n_series == 1:
+            raise ValueError(
+                "Detected univariate series, IGTS will not work properly"
+                " in this case. Consider augmenting your series to multivariate."
+            )
+        self.intermediate_results_ = []
+
+        # by convention initialize with the identity segmentation
+        current_change_points = self.identity(X)
+
+        for k in range(self.k_max):
+            ig_max = 0
+            # find a point which maximizes score
+            for candidate in self.get_candidates(n_samples, current_change_points):
+                try_change_points = {candidate}
+                try_change_points.update(current_change_points)
+                try_change_points = sorted(try_change_points)
+                ig = self.information_gain_score(X, try_change_points)
+                if ig > ig_max:
+                    ig_max = ig
+                    best_candidate = candidate
+
+            current_change_points.append(best_candidate)
+            current_change_points.sort()
+            self.intermediate_results_.append(
+                ChangePointResult(
+                    k=k, score=ig_max, change_points=current_change_points.copy()
+                )
             )
 
-        @staticmethod
-        def information_gain_score(X: npt.ArrayLike, change_points: List[int]) -> float:
-            """Calculate the information gain score.
-
-            The formula is based on equation (2) from [1]_.
-
-            Parameters
-            ----------
-            X: array_like
-                Time series data as a 2D numpy array with sequence index along rows
-                and value series in columns.
-
-            change_points: list of ints
-                Locations of change points as integer indexes.
-                By convention, change points
-                include the identity segmentation, i.e. first and last index + 1 values.
-
-            Returns
-            -------
-            information_gain: float
-                Information gain score for the segmentation corresponding to the change
-                points.
-            """
-            cp = change_points
-            segment_entropies = [
-                seg.shape[0] * entropy(seg) for seg in generate_segments(X, cp)
-            ]
-            return entropy(X) - sum(segment_entropies) / X.shape[0]
-
-        def find_change_points(self, X: npt.ArrayLike) -> List[int]:
-            """Find change points.
-
-            Using a top-down search method, iteratively identify at most
-            `k_max` change points that increase the information gain score
-            the most.
-
-            Parameters
-            ----------
-            X: array_like
-                Time series data as a 2D numpy array with sequence index along rows
-                and value series in columns.
-
-            Returns
-            -------
-            change_points: list of ints
-                Locations of change points as integer indexes.
-                By convention, change points
-                include the identity segmentation, i.e. first and last index + 1 values.
-            """
-            n_samples, n_series = X.shape
-            if n_series == 1:
-                raise ValueError(
-                    "Detected univariate series, IGTS will not work properly"
-                    " in this case. Consider augmenting your series to multivariate."
-                )
-            self.intermediate_results_ = []
-
-            # by convention initialize with the identity segmentation
-            current_change_points = self.identity(X)
-
-            for k in range(self.k_max):
-                ig_max = 0
-                # find a point which maximizes score
-                for candidate in self.get_candidates(n_samples, current_change_points):
-                    try_change_points = {candidate}
-                    try_change_points.update(current_change_points)
-                    try_change_points = sorted(try_change_points)
-                    ig = self.information_gain_score(X, try_change_points)
-                    if ig > ig_max:
-                        ig_max = ig
-                        best_candidate = candidate
-
-                current_change_points.append(best_candidate)
-                current_change_points.sort()
-                self.intermediate_results_.append(
-                    ChangePointResult(
-                        k=k, score=ig_max, change_points=current_change_points.copy()
-                    )
-                )
-
-            return current_change_points
-
-    return IGTS
+        return current_change_points
 
 
 class SegmentationMixin:
@@ -393,8 +382,6 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     >>> y = igts.fit_predict(X_scaled) # doctest: +SKIP
     """
 
-    _tags = {"python_dependencies": "attrs"}
-
     def __init__(
         self,
         k_max: int = 10,
@@ -404,10 +391,9 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         self.step = step
 
         _check_estimator_deps(self)
-        super(InformationGainSegmentation, self).__init__()
+        super().__init__()
 
-        self._adaptee_class = get_IGTS()
-        self._adaptee = self._adaptee_class(
+        self._adaptee = IGTS(
             k_max=k_max,
             step=step,
         )
@@ -489,9 +475,13 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
             Dictionary with the estimator's initialization parameters, with
             keys being argument names and values being argument values.
         """
-        from attrs import asdict
-
-        return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
+        params = asdict(self._adaptee)
+        params = {
+            key: value
+            for key, value in params.items()
+            if key != "intermediate_results_"
+        }
+        return params
 
     def set_params(self, **parameters):
         """Set the parameters of this object.

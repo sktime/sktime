@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Extension template for pairwise distance or kernel on tabular data.
+"""Extension template for pairwise distance or kernel on tabular data.
 
 How to use this:
 - this is meant as a "fill in" template for easy extension
@@ -76,8 +74,8 @@ class MyTrafoPw(BasePairwiseTransformer):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTrafoPw" to the name of the class
-        super(MyTrafoPw, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

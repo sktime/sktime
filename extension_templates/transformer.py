@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for transformers.
+"""Extension template for transformers.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -196,6 +194,20 @@ class MyTransformer(BaseTransformer):
         # if False, exception is raised if inverse_transform is called,
         #   unless the skip-inverse-transform tag is set to True
         #
+        # capability:inverse_transform:range = domain of invertibility of transform
+        "capability:inverse_transform:range": None,
+        # valid values: None (no range), list of two floats [min, max]
+        # if None, inverse_transform is assumed to be defined for all values
+        # if list of floats, invertibility is assumed
+        # only in the closed interval [min, max] of transform
+        # note: the range applies to the *input* of transform, not the output
+        #
+        # capability:inverse_transform:exact = is inverse transform exact?
+        "capability:inverse_transform:exact": True,
+        # valid values: boolean True (yes), False (no)
+        # if True, inverse_transform is assumed to be exact inverse of transform
+        # if False, inverse_transform is assumed to be an approximation
+        #
         # skip-inverse-transform = is inverse-transform skipped when called?
         "skip-inverse-transform": False,
         # if False, capability:inverse_transform tag behaviour is as per devault
@@ -256,8 +268,8 @@ class MyTransformer(BaseTransformer):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTransformer" to the name of the class
-        super(MyTransformer, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

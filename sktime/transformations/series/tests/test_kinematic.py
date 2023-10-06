@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for the kinematic transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 

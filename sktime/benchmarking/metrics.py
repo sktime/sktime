@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implements metrics for pairwise and aggregate comparison."""
 __all__ = ["PairwiseMetric", "AggregateMetric"]
 __author__ = ["viktorkaz", "mloning"]
@@ -23,7 +22,7 @@ class PairwiseMetric(BaseMetric):
     def __init__(self, func, name=None, **kwargs):
         name = func.__name__ if name is None else name
         self.func = func
-        super(PairwiseMetric, self).__init__(name=name, **kwargs)
+        super().__init__(name=name, **kwargs)
 
     def compute(self, y_true, y_pred):
         """Compute metric and standard error."""
@@ -66,7 +65,7 @@ class AggregateMetric(BaseMetric):
         name = func.__name__ if name is None else name
         self.func = func
 
-        super(AggregateMetric, self).__init__(name=name, **kwargs)
+        super().__init__(name=name, **kwargs)
 
     def compute(self, y_true, y_pred):
         """Compute metric and standard error.

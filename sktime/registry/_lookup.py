@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Registry lookup methods.
 
@@ -136,7 +135,17 @@ def all_estimators(
     ----------
     Modified version from scikit-learn's `all_estimators()`.
     """
-    MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking", "utils", "all")
+    MODULES_TO_IGNORE = (
+        "tests",
+        "setup",
+        "contrib",
+        "benchmarking",
+        "utils",
+        "all",
+        "plotting",
+        "_split",
+        "test_split",
+    )
 
     result = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
@@ -243,7 +252,7 @@ def _check_tag_cond(estimator, filter_tags=None, as_dataframe=True):
 
     cond_sat = True
 
-    for (key, value) in filter_tags.items():
+    for key, value in filter_tags.items():
         if not isinstance(value, list):
             value = [value]
         cond_sat = cond_sat and estimator.get_class_tag(key) in set(value)

@@ -27,7 +27,8 @@ Our current deprecation policy is as follows:
 * deprecation warnings must be included for at least one full MINOR version cycle before change or removal.
   Therefore, typically, the change or removal happens at the *second* next MINOR release.
 
-Example process:
+Example timeline:
+
 1. developer A resolves, at current state v0.9.3, to remove functionality X at some point in the near future.
 2. therefore, by the above, we should introduce a deprecation message, visible from next release (e.g., v0.9.4),
   which says that functionality will be removed at v0.11.0
@@ -39,69 +40,48 @@ Example process:
 6. a release manager merges the PR in part 5 as part of the release v0.12.0, effecting the removal.
   Release notes of v0.12.0 includes a removal note.
 
-Deprecation process
-===================
+Deprecation and change process
+==============================
 
-The deprecation process is as follows:
+The general deprecation/change process consists of two parts:
 
-* **Raise a warning.** For all deprecated functionality, we raise a :code:`FutureWarning`. The warning message should give the version number when the functionality will be changed and describe the new usage.
-* **Add a TODO comment in the code.** Add the following TODO comment to all pieces of code that can be removed: :code:`TODO: remove in <version-number>`. For example, :code:`TODO: remove in v0.11.0`. The TODO comment should describe which steps need to be taken for deprecation (e.g. removal of arguments, removal of functions or blocks of code). If changes need to be applied across multiple places, place multiple TODO comments.
-* **Remove deprecated functionality.** As part of the release process, all deprecated functionality that is due to be removed will be removed by searching for the TODO comments.
+* scheduling of a deprecation/change by a developer
+* deprecation/change actions carried out by a release manager
 
+The developer sided process takes place in PR made by the developer proposing the deprecation, and is as follows:
 
-To raise the warning, we use the `deprecated <https://deprecated.readthedocs.io/en/latest/index.html>`_ package.
-The package provides depreciation helper functions such as the :code:`deprecated` decorator.
-When importing it from :code:`deprecated.sphinx`, it automatically adds a deprecation message to the docstring.
-You can decorate functions, methods or classes.
+* **Raise a warning.** For all deprecated functionality, we raise a :code:`DeprecationWarning` if the change is scheduled within the next two MINOR version cycles.
+  Otherwise a :code:`FutureWarning` is also acceptable.
+* **The warning should be instructive to the user.**
+  The warning message should give the version number when the functionality will be changed, describe the new usage
+  and any transitional actions in downstream code, with clearly stated timelines (specified versions) of expected changes.
+* **Docstrings should be updated to reflect the deprecation.** Docstrings should be updated to reflect the deprecation/change.
+  This typically includes deprecation timelines, pre/post deprecation functionality.
+* **Add a TODO comment in the code for the release manager.**
+  Add a TODO comment to all pieces of code that should be removed or changed, e.g.,: :code:`TODO: remove in v0.11.0`.
+  The TODO comment should describe all actions in explicit detail (e.g. removal of arguments, removal of functions or blocks of code).
+  If changes need to be applied across multiple places, place multiple TODO comments.
+  Ensure the result of the TODO actions is tested and does not lead to test breakage when actioned by the release manager.
+  This is best accompanied by a prepared PR that the release manager only needs to merge.
+* as all tech decisions, deprecations/changes are first proposed in a PR and need to be reviewed by other developers.
 
-Examples
---------
+The release manager process happens at every release and is as follows:
 
-In the examples below, the :code:`deprecated` decorator will raise a :code:`FutureWarning` saying that the functionality has been deprecated since version 0.9.0 and will be removed in version 0.11.0.
-
-Functions
-~~~~~~~~~
-
-.. code-block::
-
-    from deprecated.sphinx import deprecated
-
-    # TODO: remove in v0.11.0
-    @deprecated(version="0.9.0", reason="my_old_function will be removed in v0.11.0", category=FutureWarning)
-    def my_old_function(x, y):
-        return x + y
-
-Methods
-~~~~~~~
-
-.. code-block::
-
-    from deprecated.sphinx import deprecated
-
-    class MyClass:
-
-        # TODO: remove in v0.11.0
-        @deprecated(version="0.9.0", reason="my_old_method will be removed in v0.11.0", category=FutureWarning)
-        def my_old_method(self, x, y):
-            return x + y
-
-Classes
-~~~~~~~
-
-.. code-block::
-
-    from deprecated.sphinx import deprecated
-
-    # TODO: remove in v0.11.0
-    @deprecated(version="0.9.0", reason="MyOldClass will be removed in v0.11.0", category=FutureWarning)
-    class MyOldClass:
-        pass
-
+* **Summarize any scheduled deprecations and changes in the changelog.**: As soon as a deprecation/change is scheduled,
+  it should be announced in the "deprecations and changes" section of the changelog, with exact version timelines,
+  and any actions to be carried out by users or maintainers of third party extensions (usage and extension contracts).
+* **Carry out deprecation and change actions.** As part of every release process at a MINOR or MAJOR version,
+  the release manager searches all deprecated functionality that is due to be removed will be removed by searching for the TODO comments.
+  These will be carried out as described.
+  If the action results in CI failure, the release manager should open an issue and contact the developer for swift resolution,
+  and possibly move the action to the next release cycle if this would unduly delay the release process.
+* **Summarize any actioned deprecations and changes in the changelog.**: All deprecations and changes that have been
+  carried out should be summarized in the "deprecations and changes" section of the changelog.
 
 Special deprecations
 ====================
 
-This section outlines the deprecation process for cases which use of ``deprecated`` does not cover.
+This section outlines the deprecation process for some advaned cases.
 
 Deprecating tags
 ----------------

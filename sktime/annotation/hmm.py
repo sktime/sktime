@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-HMM Annotation Estimator.
+"""HMM Annotation Estimator.
 
-Implements a basic Hidden Markov Model (HMM) as an annotation estimator.
-To read more about the algorithm, check out the `HMM wikipedia page
+Implements a basic Hidden Markov Model (HMM) as an annotation estimator. To read more
+about the algorithm, check out the `HMM wikipedia page
 <https://en.wikipedia.org/wiki/Hidden_Markov_model>`_.
 """
 import warnings
@@ -141,7 +139,7 @@ class HMM(BaseSeriesAnnotator):
         self.initial_probs = initial_probs
         self.emission_funcs = emission_funcs
         self.transition_prob_mat = transition_prob_mat
-        super(HMM, self).__init__(fmt="dense", labels="int_label")
+        super().__init__(fmt="dense", labels="int_label")
         self._validate_init()
 
     def _validate_init(self):

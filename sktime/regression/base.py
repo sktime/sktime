@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Abstract base class for time series regressors.
+"""Abstract base class for time series regressors.
 
     class name: BaseRegressor
 
@@ -52,6 +50,7 @@ class BaseRegressor(BaseEstimator, ABC):
     """
 
     _tags = {
+        "object_type": "regressor",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multivariate": False,
@@ -81,7 +80,7 @@ class BaseRegressor(BaseEstimator, ABC):
         # i.e. CalibratedRegressorCV
         self._estimator_type = "regressor"
 
-        super(BaseRegressor, self).__init__()
+        super().__init__()
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.

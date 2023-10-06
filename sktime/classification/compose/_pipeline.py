@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipeline with a classifier."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
@@ -88,6 +87,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = PCATransformer() * TimeSeriesForestClassifier(n_estimators=5)
     """
 
@@ -105,13 +105,12 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     # no default tag values - these are set dynamically below
 
     def __init__(self, classifier, transformers):
-
         self.classifier = classifier
         self.classifier_ = classifier.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ClassifierPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = classifier.get_tag("capability:multivariate", False)
@@ -402,6 +401,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = t1 * t2 * KNeighborsClassifier()
     """
 
@@ -419,7 +419,6 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     # no default tag values - these are set dynamically below
 
     def __init__(self, classifier, transformers):
-
         from sklearn.base import clone
 
         self.classifier = classifier
@@ -427,7 +426,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(SklearnClassifierPipeline, self).__init__()
+        super().__init__()
 
         # all sktime and sklearn transformers always support multivariate
         multivariate = True

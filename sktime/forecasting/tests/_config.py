@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 
 __author__ = ["mloning"]
 __all__ = [
@@ -19,6 +18,8 @@ __all__ = [
     "INDEX_TYPE_LOOKUP",
     "TEST_RANDOM_SEEDS",
     "TEST_N_ITERS",
+    "TEST_FHS_TIMEDELTA",
+    "TEST_CUTOFFS",
 ]
 
 import numpy as np

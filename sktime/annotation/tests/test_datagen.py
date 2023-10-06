@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for datagen functions."""
 __author__ = ["klam-data", "mgorlin", "pyyim"]
 

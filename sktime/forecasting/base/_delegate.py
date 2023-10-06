@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """Delegator mixin that delegates all methods to wrapped forecaster.
 
-Useful for building estimators where all but one or a few methods are delegated.
-For that purpose, inherit from this estimator and then override only the methods
-    that are not delegated.
+Useful for building estimators where all but one or a few methods are delegated. For
+that purpose, inherit from this estimator and then override only the methods that
+are not delegated.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -14,7 +13,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class _DelegatedForecaster(BaseForecaster):
-    """Delegator mixin that delegateas all methods to wrapped forecaster.
+    """Delegator mixin that delegates all methods to wrapped forecaster.
 
     Delegates inner forecaster methods to a wrapped estimator.
         Wrapped estimator is value of attribute with name self._delegate_name.
@@ -39,7 +38,7 @@ class _DelegatedForecaster(BaseForecaster):
     def _get_delegate(self):
         return getattr(self, self._delegate_name)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -72,7 +71,7 @@ class _DelegatedForecaster(BaseForecaster):
         estimator.fit(y=y, fh=fh, X=X)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -141,16 +140,16 @@ class _DelegatedForecaster(BaseForecaster):
     def _update_predict_single(self, y, fh, X=None, update_params=True):
         """Update forecaster and then make forecasts.
 
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
+        Implements default behaviour of calling update and predict sequentially, but can
+        be overwritten by subclasses to implement more efficient updating algorithms
+        when available.
         """
         estimator = self._get_delegate()
         return estimator.update_predict_single(
             y=y, fh=fh, X=X, update_params=update_params
         )
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -185,7 +184,7 @@ class _DelegatedForecaster(BaseForecaster):
         estimator = self._get_delegate()
         return estimator.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -257,8 +256,7 @@ class _DelegatedForecaster(BaseForecaster):
         estimator = self._get_delegate()
         return estimator.predict_var(fh=fh, X=X, cov=cov)
 
-    # todo 0.19.0: remove legacy_interface arg and logic
-    def _predict_proba(self, fh, X, marginal=True, legacy_interface=False):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -272,39 +270,16 @@ class _DelegatedForecaster(BaseForecaster):
             Exogeneous time series to predict from.
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
-        legacy_interface : bool or None, optional, default=False
-            whether legacy interface is used, deprecation parameter
-            parameter will be removed in 0.19.0
-            True: always returns tfp Distribution object
-            False: always returns sktime BaseDistribution object
-            None: returns tfp Distribution if tensorflow_probability is in the env
-                otherwise returns sktime BaseDistribution
 
         Returns
         -------
-        If legacy_interface=False, or None and tensorflow_probability is not in the env
         pred_dist : sktime BaseDistribution
             predictive distribution
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
-
-        If legacy_interface=True, or None and tensorflow_probability is in the env
-        pred_dist : tfp Distribution object
-            if marginal=True:
-                batch shape is 1D and same length as fh
-                event shape is 1D, with length equal number of variables being forecast
-                i-th (batch) distribution is forecast for i-th entry of fh
-                j-th (event) index is j-th variable, order as y in `fit`/`update`
-            if marginal=False:
-                there is a single batch
-                event shape is 2D, of shape (len(fh), no. variables)
-                i-th (event dim 1) distribution is forecast for i-th entry of fh
-                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         estimator = self._get_delegate()
-        return estimator.predict_proba(
-            fh=fh, X=X, marginal=marginal, legacy_interface=legacy_interface
-        )
+        return estimator.predict_proba(fh=fh, X=X, marginal=marginal)
 
     def _get_fitted_params(self):
         """Get fitted parameters.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Probability Threshold Early Classifier.
 
 An early classifier using a prediction probability threshold with a time series
@@ -11,7 +10,6 @@ __all__ = ["ProbabilityThresholdEarlyClassifier"]
 import copy
 
 import numpy as np
-from deprecated.sphinx import deprecated
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import check_random_state
@@ -22,12 +20,8 @@ from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-# TODO: remove message in v0.16.0 and change base class
-@deprecated(
-    version="0.13.0",
-    reason="The base class of ProbabilityThresholdEarlyClassifier will be changed to BaseEarlyClassifier in v0.16.0. This will change how classification safety decisions are made and returned, see BaseEarlyClassifier or TEASER for the new interface.",  # noqa: E501
-    category=FutureWarning,
-)
+# TODO: fix this in 0.24.0
+# base class should have been changed to BaseEarlyClassifier
 class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     """Probability Threshold Early Classifier.
 
@@ -112,7 +106,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         self._estimators = []
         self._classification_points = []
 
-        super(ProbabilityThresholdEarlyClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)
@@ -269,7 +263,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
     def _fit_estimator(self, X, y, i):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (i + 1)
+        rs = None if self.random_state is None else rs * 37 * (i + 1) % 2**31
         rng = check_random_state(rs)
 
         estimator = _clone_estimator(
@@ -310,5 +304,6 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         else:
             est = DummyClassifier()
 
-        params = {"classification_points": [3], "estimator": est}
-        return params
+        params1 = {"classification_points": [3], "estimator": est}
+        params2 = {"probability_threshold": 0.9, "estimator": est}
+        return [params1, params2]

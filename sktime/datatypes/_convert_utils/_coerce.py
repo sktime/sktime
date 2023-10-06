@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Conercion utilities for mtypes."""
 
 __author__ = ["fkiraly"]
@@ -7,7 +6,6 @@ import pandas as pd
 
 
 def _is_nullable_numeric(dtype):
-
     return dtype in ["Int64", "Float64", "boolean"]
 
 

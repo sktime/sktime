@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """ContractableBOSS classifier.
 
-Dictionary based cBOSS classifier based on SFA transform. Improves the
-ensemble structure of the original BOSS algorithm.
+Dictionary based cBOSS classifier based on SFA transform. Improves the ensemble
+structure of the original BOSS algorithm.
 """
 
 __author__ = ["MatthewMiddlehurst", "BINAYKUMAR943"]
@@ -175,7 +174,7 @@ class ContractableBOSS(BaseClassifier):
         self._norm_options = [True, False]
         self._alphabet_size = 4
 
-        super(ContractableBOSS, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a cBOSS ensemble on cases (X,y), where y is the target variable.

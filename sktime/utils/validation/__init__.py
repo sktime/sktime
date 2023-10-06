@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Validation functions."""
 
@@ -11,6 +10,7 @@ __all__ = [
     "is_timedelta_or_date_offset",
     "check_n_jobs",
     "check_window_length",
+    "array_is_int",
 ]
 __author__ = ["mloning", "thayeylolu", "khrapovs"]
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Symbolic Fourier Approximation (SFA) Transformer.
 
 Configurable SFA transform for discretising time series into words.
@@ -186,7 +185,7 @@ class SFA(BaseTransformer):
         self.level_bits = 0
         self.level_max = 0
 
-        super(SFA, self).__init__()
+        super().__init__()
 
         if not return_pandas_data_series:
             self.set_config(**{"output_conversion": "off"})
@@ -863,7 +862,7 @@ class SFA(BaseTransformer):
         """Convert a bag of SFA words into a string."""
         s = "{"
         for word, value in bag.items():
-            s += "{0}: {1}, ".format(
+            s += "{}: {}, ".format(
                 self.word_list_typed(word) if self.typed_dict else self.word_list(word),
                 value,
             )

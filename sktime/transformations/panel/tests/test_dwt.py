@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DWT (Discrete Wavelet Transform) test code."""
 
 import math

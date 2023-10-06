@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Optional passthrough transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -44,9 +43,8 @@ class OptionalPassthrough(_DelegatedTransformer):
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.forecasting.model_selection import (
-    ...     ForecastingGridSearchCV,
-    ...     SlidingWindowSplitter)
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import SlidingWindowSplitter
     >>> from sklearn.preprocessing import StandardScaler
     >>> # create pipeline
     >>> pipe = TransformedTargetForecaster(steps=[
@@ -90,7 +88,7 @@ class OptionalPassthrough(_DelegatedTransformer):
         self.transformer = transformer
         self.passthrough = passthrough
 
-        super(OptionalPassthrough, self).__init__()
+        super().__init__()
 
         # should be all tags, but not fit_is_empty
         #   (_fit should not be skipped)

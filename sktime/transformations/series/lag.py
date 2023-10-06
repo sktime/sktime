@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Lagging transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -75,6 +74,10 @@ class Lag(BaseTransformer):
         has an effect only if `lags` contains only a single element
         if True, ensures that column names of `transform` output are same as in input,
         i.e., not `lag_x__varname` but `varname`. Overrides `flatten_transform_index`.
+    remember_data : bool, optional (default=True)
+        if True, memorizes data seen in ``fit``, ``update``, uses it in ``transform``
+        if False, only uses data seen in ``transform`` to produce lags
+        setting to False ensures faster runtime if only used via ``fit_transform``
 
     Examples
     --------
@@ -87,12 +90,14 @@ class Lag(BaseTransformer):
     >>> Xt = t.fit_transform(X)
 
         Multiple lags can be provided, this will result in multiple columns:
+
     >>> t = Lag([2, 4, -1])
     >>> Xt = t.fit_transform(X)
 
         The default setting of index_out will extend indices either side.
         To ensure that the index remains the same after transform,
         use index_out="original"
+
     >>> t = Lag([2, 4, -1], index_out="original")
     >>> Xt = t.fit_transform(X)
 
@@ -101,6 +106,7 @@ class Lag(BaseTransformer):
         trivial cases). This may need to be handled, e.g., if a subsequent
         pipeline step does not accept NA. To deal with the NAs,
         pipeline with the Imputer:
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.transformations.series.lag import Lag
@@ -139,13 +145,14 @@ class Lag(BaseTransformer):
         index_out="extend",
         flatten_transform_index=True,
         keep_column_names=False,
+        remember_data=True,
     ):
-
         self.lags = lags
         self.freq = freq
         self.index_out = index_out
         self.flatten_transform_index = flatten_transform_index
         self.keep_column_names = keep_column_names
+        self.remember_data = remember_data
 
         if index_out not in ["shift", "extend", "original"]:
             raise ValueError(
@@ -168,10 +175,13 @@ class Lag(BaseTransformer):
         msg = "freq must be a list of equal length to lags, or a scalar."
         assert len(self._lags) == len(self._freq), msg
 
-        super(Lag, self).__init__()
+        super().__init__()
 
         if index_out == "original":
             self.set_tags(**{"transform-returns-same-time-index": True})
+
+        if not remember_data:
+            self.set_tags(**{"remember_data": False, "fit_is_empty": True})
 
     def _yield_shift_params(self):
         """Yield (periods, freq) pairs to pass to pandas.DataFrame.shift."""
@@ -213,10 +223,12 @@ class Lag(BaseTransformer):
         pd.DataFrame, transformed version of X
         """
         index_out = self.index_out
+        remember_data = self.remember_data
 
         X_orig_idx = X.index
         X_orig_cols = X.columns
-        X = X.combine_first(self._X).copy()
+        if remember_data:
+            X = X.combine_first(self._X).copy()
 
         shift_params = list(self._yield_shift_params())
 
@@ -236,21 +248,17 @@ class Lag(BaseTransformer):
                 if isinstance(lag, int) and freq is None:
                     freq = "infer"
                 Xt = X.copy().shift(periods=lag, freq=freq)
-            # extend index to include original, if "extend" or "original"
-            if index_out in ["extend", "original"]:
-                X_idx = pd.DataFrame(index=X_orig_idx)
-                Xt = Xt.combine_first(X_idx)
             # sub-set to original plus shifted, if "extend"
             # this is necessary, because we added indices from _X above
             if index_out == "extend":
                 X_orig_idx_extended = X_orig_idx_shifted.union(X_orig_idx)
-                Xt = Xt.loc[X_orig_idx_extended]
+                Xt = Xt.reindex(X_orig_idx_extended)
             # sub-set to original, if "original"
             if index_out == "original":
-                Xt = Xt.loc[X_orig_idx]
+                Xt = Xt.reindex(X_orig_idx)
             # sub-set to shifted index, if "shifted"
-            # this is necessary, because we added indices from _X above
-            if index_out == "shifted":
+            # this is necessary if we added indices from _X above
+            if index_out == "shift" and remember_data:
                 Xt = Xt.loc[X_orig_idx_shifted]
 
             Xt_list.append(Xt)
@@ -386,15 +394,18 @@ class ReducerTransform(BaseTransformer):
     >>> X = load_airline()
 
     Single lag will yield a time series with the same variables:
+
     >>> t = Lag(2)
     >>> Xt = t.fit_transform(X)
 
     Multiple lags can be provided, this will result in multiple columns:
+
     >>> t = Lag([2, 4, -1])
     >>> Xt = t.fit_transform(X)
 
     The default setting of index_out will extend indices either side.
     To ensure that the index remains the same after transform, use index_out="original"
+
     >>> t = Lag([2, 4, -1], index_out="original")
     >>> Xt = t.fit_transform(X)
 
@@ -402,6 +413,7 @@ class ReducerTransform(BaseTransformer):
     (except when index_out="shift" and there is only a single lag, or in trivial cases)
     This may need to be handled, e.g., if a subsequent pipeline step does not accept NA.
     To deal with the NAs, pipeline with the Imputer:
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.transformations.series.lag import Lag
@@ -442,7 +454,6 @@ class ReducerTransform(BaseTransformer):
         transformers=None,
         impute_method="bfill",
     ):
-
         self.lags = lags
         self.freq = freq
         self.shifted_vars = shifted_vars
@@ -457,7 +468,7 @@ class ReducerTransform(BaseTransformer):
         else:
             self._lags = lags
 
-        super(ReducerTransform, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

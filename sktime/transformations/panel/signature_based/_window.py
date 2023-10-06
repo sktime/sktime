@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 window.py.
 
@@ -21,7 +20,7 @@ _Pair = co.namedtuple("Pair", ("start", "end"))
 def _window_getter(
     window_name, window_depth=None, window_length=None, window_step=None
 ):
-    """Get the window method correspondent to the given string and initialises with specified parameters.
+    """Get window method correspondent to given string and initialises with parameters.
 
     Parameters
     ----------
@@ -63,12 +62,12 @@ def _window_getter(
 class _Window:
     """Abstract base class for windows.
 
-    Each subclass must implement a __call__ method that returns a list of lists
-    of 2-tuples. Each 2-tuple specifies the start and end of each window.
+    Each subclass must implement a __call__ method that returns a list of lists of
+    2-tuples. Each 2-tuple specifies the start and end of each window.
 
-    These windows are grouped into a list that will (usually) cover the full
-    time series. These lists are grouped into another list for situations
-    where we consider windows of multiple scales.
+    These windows are grouped into a list that will (usually) cover the full time
+    series. These lists are grouped into another list for situations where we consider
+    windows of multiple scales.
     """
 
     def num_windows(self, length):
@@ -102,7 +101,7 @@ class _ExpandingSliding(_Window):
         start_step: int, Initial step size.
         end_step: int, Final step size.
         """
-        super(_ExpandingSliding, self).__init__()
+        super().__init__()
         self.initial_length = initial_length
         self.start_step = start_step
         self.end_step = end_step
@@ -118,26 +117,23 @@ class _ExpandingSliding(_Window):
 
         windows = list(_call())
         if len(windows) == 0:
-            raise ValueError(
-                "Length {} too short for given window parameters.".format(length)
-            )
+            raise ValueError(f"Length {length} too short for given window parameters.")
         return [windows]
 
 
 class _Sliding(_ExpandingSliding):
-    """A window starting at zero and going to some point that increases between windows."""  # noqa: E501
+    """Build a Sliding object.
+
+    A window starting at zero and going to some point that increases between windows.
+
+    Parameters
+    ----------
+    length: int, The length of the window.
+    step: int, The sliding step size.
+    """
 
     def __init__(self, length, step):
-        """Build a Sliding object.
-
-        Parameters
-        ----------
-        length: int, The length of the window.
-        step: int, The sliding step size.
-        """
-        super(_Sliding, self).__init__(
-            initial_length=length, start_step=step, end_step=step
-        )
+        super().__init__(initial_length=length, start_step=step, end_step=step)
 
 
 class _Expanding(_ExpandingSliding):
@@ -151,9 +147,7 @@ class _Expanding(_ExpandingSliding):
         length: int, The length of each window.
         step: int, The step size.
         """
-        super(_Expanding, self).__init__(
-            initial_length=length, start_step=0, end_step=step
-        )
+        super().__init__(initial_length=length, start_step=0, end_step=step)
 
 
 class _Dyadic(_Window):
@@ -180,7 +174,7 @@ class _Dyadic(_Window):
     """
 
     def __init__(self, depth):
-        super(_Dyadic, self).__init__()
+        super().__init__()
         self.depth = depth
 
     def __call__(self, length):

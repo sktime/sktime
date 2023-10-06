@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for PAA utilities."""
 
 import numpy as np

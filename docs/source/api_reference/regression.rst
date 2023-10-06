@@ -30,6 +30,9 @@ Deep learning
     :template: class.rst
 
     CNNRegressor
+    MCDCNNRegressor
+    SimpleRNNRegressor
+    ResNetRegressor
     TapNetRegressor
 
 Distance-based

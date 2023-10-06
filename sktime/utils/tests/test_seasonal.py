@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing seasonal utilities."""
 
 from math import ceil

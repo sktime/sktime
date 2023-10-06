@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """TSFresh Classifier.
 
 Pipeline classifier using the TSFresh transformer and an estimator.
@@ -99,7 +98,7 @@ class TSFreshClassifier(BaseClassifier):
         self._return_majority_class = False
         self._majority_class = 0
 
-        super(TSFreshClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.

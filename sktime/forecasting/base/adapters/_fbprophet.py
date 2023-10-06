@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for Facebook prophet to be used in sktime framework."""
@@ -52,7 +51,7 @@ class _ProphetAdapter(BaseForecaster):
         self.y_index_was_period_ = type(y.index) is pd.PeriodIndex
         self.y_index_was_int_ = pd.api.types.is_integer_dtype(y.index)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -89,9 +88,9 @@ class _ProphetAdapter(BaseForecaster):
 
         # Add seasonality/seasonalities
         if self.add_seasonality:
-            if type(self.add_seasonality) == dict:
+            if isinstance(self.add_seasonality, dict):
                 self._forecaster.add_seasonality(**self.add_seasonality)
-            elif type(self.add_seasonality) == list:
+            elif isinstance(self.add_seasonality, list):
                 for seasonality in self.add_seasonality:
                     self._forecaster.add_seasonality(**seasonality)
 
@@ -108,7 +107,6 @@ class _ProphetAdapter(BaseForecaster):
 
         # Add floor and bottom when growth is logistic
         if self.growth == "logistic":
-
             if self.growth_cap is None:
                 raise ValueError(
                     "Since `growth` param is set to 'logistic', expecting `growth_cap`"
@@ -207,7 +205,7 @@ class _ProphetAdapter(BaseForecaster):
 
         return y_pred
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -247,7 +245,9 @@ class _ProphetAdapter(BaseForecaster):
         X = self._convert_X_for_exog(X, fh)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = ["Coverage"]
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
@@ -271,10 +271,10 @@ class _ProphetAdapter(BaseForecaster):
             # retrieve lower/upper and write in pred_int return frame
             # instead of writing lower to lower, upper to upper
             #  we take the min/max for lower and upper
-            #  because prophet (erroneously?) uses MC indenendent for upper/lower
+            #  because prophet (erroneously?) uses MC independent for upper/lower
             #  so if coverage is small, it can happen that upper < lower in prophet
-            pred_int[("Coverage", c, "lower")] = out_prophet.min(axis=1)
-            pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
+            pred_int[(var_name, c, "lower")] = out_prophet.min(axis=1)
+            pred_int[(var_name, c, "upper")] = out_prophet.max(axis=1)
 
         if self.y_index_was_int_ or self.y_index_was_period_:
             pred_int.index = self.fh.to_absolute_index(cutoff=self.cutoff)
@@ -348,7 +348,7 @@ def _merge_X(df, X):
     return df, X
 
 
-class _suppress_stdout_stderr(object):
+class _suppress_stdout_stderr:
     """Context manager for doing  a "deep suppression" of stdout and stderr.
 
     A context manager for doing a "deep suppression" of stdout and stderr in
