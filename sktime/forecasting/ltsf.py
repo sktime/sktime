@@ -80,7 +80,10 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         self.scale = scale
         self.shuffle = shuffle
 
-        import torch
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("torch"):
+            import torch
 
         self.criterions = {
             "L1": torch.nn.L1Loss,

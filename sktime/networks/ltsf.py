@@ -1,4 +1,8 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch"):
+    import torch.nn as nn
 
 
 class LTSFLinearNetwork:
@@ -30,11 +34,6 @@ class LTSFLinearNetwork:
     }
         [Source]: https://github.com/cure-lab/LTSF-Linear/blob/main/models/Linear.py
     """
-
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-    if _check_soft_dependencies("torch"):
-        import torch.nn as nn
 
     class _LTSFLinearNetwork(nn.Module):
         def __init__(

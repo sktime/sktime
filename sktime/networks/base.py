@@ -8,6 +8,10 @@ import numpy as np
 
 from sktime.base import BaseObject
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch"):
+    import torch
 
 
 class BaseDeepNetwork(BaseObject, ABC):
@@ -53,8 +57,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         X : iterable-style or map-style dataset
             see (https://pytorch.org/docs/stable/data.html) for more information
         """
-        import torch
-
         from sktime.forecasting.base import ForecastingHorizon
 
         # save fh and y for prediction later
