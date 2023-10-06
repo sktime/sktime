@@ -92,3 +92,37 @@ class LcssTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         params2 = {"global_constraint": "sakoe_chiba", "sakoe_chiba_radius": 2}
 
         return [params0, params1, params2]
+
+    # override due to bug in tslearn transformer lcss
+    # see bug report #5367
+    def _eval_tslearn_pwtrafo(self, X, X2=None):
+        """Evaluate tslearn pwtrafo on two time series.
+
+        The default returns of _get_tslearn_pwtrafo
+        evaluated at X1, X2 and self.get_params
+
+        Parameters
+        ----------
+        X, X2: 2D np.ndarrays of format (n_variables, n_timepoints)
+            two time series to compute the pairwise transform on
+
+        Returns
+        -------
+        float
+            _get_tslearn_pwtrafo result evaluated at X1, X2, and self.get_params()
+        """
+        import numpy as np
+
+        from sktime.dists_kernels.base.adapters import _subset_dict
+
+        if X2 is None:
+            X2 = X
+
+        pwtrafo = self._get_tslearn_pwtrafo()
+        params = self.get_params()
+        if self._inner_params is not None:
+            params = _subset_dict(params, self._inner_params)
+
+        X = np.stack(X)
+        X2 = np.stack(X2)
+        return pwtrafo(X.reshape(X.shape[:-1]), X2.reshape(X2.shape[:-1]), **params)
