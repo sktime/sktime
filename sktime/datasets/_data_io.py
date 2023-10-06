@@ -51,6 +51,7 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
+# TODO: if user gives numpyflat or numpy3D this code will break
 # Return appropriate return_type in case an alias was used
 def _alias_mtype_check(return_type):
     if return_type is None:
@@ -62,6 +63,7 @@ def _alias_mtype_check(return_type):
     return return_type
 
 
+# TODO: Can depreciate this function in favor of dataset object
 def _download_and_extract(url, extract_path=None):
     """Download and unzip datasets (helper function).
 
@@ -108,6 +110,7 @@ def _download_and_extract(url, extract_path=None):
         )
 
 
+# TODO: Can depreciate this function in favor of dataset object
 def _list_available_datasets(extract_path, origin_repo=None):
     """Return a list of all the currently downloaded datasets.
 
@@ -150,6 +153,7 @@ def _list_available_datasets(extract_path, origin_repo=None):
     return datasets
 
 
+# TODO: Can depreciate this function in favor of dataset object
 def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
     """Download and unzip datasets from multiple mirrors or fallback sources.
 
@@ -213,6 +217,7 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
     )
 
 
+# TODO: Can depreciate this function in favor of dataset object
 def _mkdir_if_not_exist(*path):
     """Shortcut for making a directory if it does not exist.
 
@@ -239,6 +244,7 @@ CLASSIF_URLS = [
 ]
 
 
+# TODO: Can depreciate this function in favor of dataset object
 def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     """Load time series classification datasets (helper function).
 
@@ -312,6 +318,7 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     return _get_data_from(extract_path)
 
 
+# TODO: Can depreciate this function in favor of dataset object
 def _load_provided_dataset(
     name,
     split=None,
