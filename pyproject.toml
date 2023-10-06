@@ -227,7 +227,7 @@ dl = [
 ]
 
 pytorch = [
-    "torch";
+    "torch",
 ]
 
 pandas1 = [
