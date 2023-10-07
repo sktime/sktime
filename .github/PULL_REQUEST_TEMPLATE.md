@@ -1,6 +1,7 @@
 <!--
-Thanks for contributing a pull request! Please ensure you have taken a look
-at our contribution guide: https://github.com/sktime/sktime/blob/main/CONTRIBUTING.md
+Welcome to sktime, and thanks for contributing!
+Please have a look at our contribution guide:
+https://www.sktime.net/en/latest/get_involved/contributing.html
 -->
 
 #### Reference Issues/PRs
@@ -9,7 +10,8 @@ Example: Fixes #1234. See also #3456.
 
 Please use keywords (e.g., Fixes) to create link to the issues or pull requests
 you resolved, so that they will automatically be closed when your pull request
-is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
+is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests.
+If no issue exists, you can open one here: https://github.com/sktime/sktime/issues
 -->
 
 
@@ -21,7 +23,10 @@ A clear and concise description of what you have implemented.
 #### Does your contribution introduce a new dependency? If yes, which one?
 
 <!--
-If your contribution does add a new hard dependency, we may suggest to initially develop your contribution in a separate companion package in https://github.com/sktime/ to keep external dependencies of the core sktime package to a minimum.
+Only relevant if you changed pyproject.toml.
+We try to minimize dependencies in the core dependency set. There
+are also further specific instructions to follow for soft dependencies.
+See here for handling dependencies in sktime: https://www.sktime.net/en/latest/developer_guide/dependencies.html
 -->
 
 #### What should a reviewer concentrate their feedback on?
@@ -35,7 +40,7 @@ If your contribution does add a new hard dependency, we may suggest to initially
 
 #### Any other comments?
 <!--
-Please be aware that we are a loose team of volunteers; assistance handling other issues is very welcome. We value all user contributions, no matter how minor they are. If we are slow to review your PR (>3 working days), feel free to let us know on the sktime discord. Thank you for your understanding during the review process.
+We value all user contributions, no matter how minor they are. Please be aware that we are a loose team of volunteers; assistance handling other issues is very welcome. If we are slow to review your PR (>3 working days), feel free to let us know on the sktime discord. Thank you for your understanding during the review process.
 -->
 
 #### PR checklist
@@ -56,7 +61,6 @@ Please go through the checklist below. Please feel free to remove points if they
 - [ ] I've added one or more illustrative usage examples to the docstring, in a pydocstyle compliant `Examples` section.
 - [ ] If the estimator relies on a soft dependency, I've set the `python_dependencies` tag and ensured
   dependency isolation, see the [estimator dependencies guide](https://www.sktime.net/en/latest/developer_guide/dependencies.html#adding-a-soft-dependency).
-
 
 <!--
 Thanks for contributing!
