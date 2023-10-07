@@ -348,7 +348,7 @@ class ForecastingPipeline(_Pipeline):
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> y, X = load_longley()
     >>> y_train, _, X_train, X_test = temporal_train_test_split(y, X)
@@ -1184,7 +1184,7 @@ class ForecastX(BaseForecaster):
     ----------
     forecaster_y : BaseForecaster
         sktime forecaster to use for endogeneous data `y`
-    forecaster_X : BaseForecaster, optional, default = forecaster_y
+    forecaster_X : BaseForecaster
         sktime forecaster to use for exogeneous data `X`
     fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
         optional, default = None = same as used for `y` in any instance.
@@ -1197,14 +1197,16 @@ class ForecastX(BaseForecaster):
         if "refit", then forecaster_X is fit to `X` in `predict` only,
             Forecast added to `X` in `predict` is obtained from this state.
     columns : None, or pandas compatible index iterator (e.g., list of str), optional
-        default = None = all columns in X are used for forecast
-        columns to which `forecaster_X` is applied
+        default = None = all columns in X are used for forecast columns to which
+        `forecaster_X` is applied. if not ``None``, this must be a non-empty list of
+        valid column names (``[]`` and ``None`` do not imply the same)
 
     Attributes
     ----------
     forecaster_X_ : BaseForecaster
         clone of forecaster_X, state updates with `fit` and `update`
         created only if behaviour="update" and `X` passed is not None
+        and ``forecaster_y`` has ``ignores-exogeneous-X`` tag as ``False``
     forecaster_y_ : BaseForecaster
         clone of forecaster_y, state updates with `fit` and `update`
 
@@ -1276,6 +1278,7 @@ class ForecastX(BaseForecaster):
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:insample",
+            "ignores-exogeneous-X",
         ]
 
         self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)
@@ -1637,10 +1640,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     The permuter is useful in combination with grid search (toy example):
 
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
-    ... )
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> fh = [1,2,3]
     >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()

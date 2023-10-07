@@ -2441,7 +2441,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     Example
     -------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.compose import YfromX
     >>> from sklearn.linear_model import LinearRegression
     >>>

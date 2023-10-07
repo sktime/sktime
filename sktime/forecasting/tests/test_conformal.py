@@ -32,11 +32,9 @@ def test_conformal_standard():
 )
 def test_conformal_with_gscv():
     """With ForecastingGridSearchCV and parameter plugin."""
-    from sktime.forecasting.model_selection import (
-        ExpandingWindowSplitter,
-        ForecastingGridSearchCV,
-    )
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.param_est.plugin import PluginParamsForecaster
+    from sktime.split import ExpandingWindowSplitter
 
     y = load_airline()
 
@@ -77,7 +75,7 @@ def test_conformal_with_hierarchical():
     from sklearn.linear_model import LinearRegression
 
     from sktime.forecasting.compose import ForecastX, make_reduction
-    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.split import temporal_train_test_split
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
     df = _make_hierarchical(
