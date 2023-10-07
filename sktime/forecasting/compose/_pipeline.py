@@ -1166,53 +1166,57 @@ class TransformedTargetForecaster(_Pipeline):
 class ForecastX(BaseForecaster):
     """Forecaster that forecasts exogeneous data for use in an endogeneous forecast.
 
-    In `predict`, this forecaster carries out a `predict` step on exogeneous `X`.
-    Then, a forecast is made for `y`, using exogeneous data plus its forecasts as `X`.
-    If `columns` argument is provided, will carry `predict` out only for the columns
-    in `columns`, and will use other columns in `X` unchanged.
+    In ``predict``, this forecaster carries out a ``predict`` step on exogeneous ``X``.
+    Then, a forecast is made for ``y``,
+    using exogeneous data plus its forecasts as ``X``.
+    If ``columns`` argument is provided, will carry ``predict`` out only for the columns
+    in ``columns``, and will use other columns in ``X`` unchanged.
 
-    The two forecasters and forecasting horizons (for forecasting `y` resp `X`)
+    The two forecasters and forecasting horizons (for forecasting ``y`` resp ``X``)
     can be selected independently, but default to the same.
 
     The typical use case is extending exogeneous data available only up until the cutoff
     into the future, for use by an exogeneous forecaster that requires such future data.
 
-    If no X is passed in `fit`, behaves like `forecaster_y`.
+    If no X is passed in ``fit``, behaves like ``forecaster_y``.
     In such a case (no exogeneous data), there is no benefit in using this compositor.
 
     Parameters
     ----------
     forecaster_y : BaseForecaster
-        sktime forecaster to use for endogeneous data `y`
-    forecaster_X : BaseForecaster, optional, default = forecaster_y
-        sktime forecaster to use for exogeneous data `X`
+        sktime forecaster to use for endogeneous data ``y``
+    forecaster_X : BaseForecaster
+        sktime forecaster to use for exogeneous data ``X``
     fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
-        optional, default = None = same as used for `y` in any instance.
-        valid inputs to construct ForecastingHorizon are:
+        optional, default = None = same as used for ``y`` in any instance.
+        valid inputs to construct ``ForecastingHorizon`` are:
         int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
     behaviour : str, one of "update" or "refit", optional, default = "update"
-        if "update", forecaster_X is fit to the data batch seen in `fit`,
-            and updated with any `X` seen in calls of `update`.
-            Forecast added to `X` in `predict` is obtained from this state.
-        if "refit", then forecaster_X is fit to `X` in `predict` only,
-            Forecast added to `X` in `predict` is obtained from this state.
+        if "update", ``forecaster_X`` is fit to the data batch seen in ``fit``,
+            and updated with any ``X`` seen in calls of ``update``.
+            Forecast added to ``X`` in ``predict`` is obtained from this state.
+        if "refit", then ``forecaster_X`` is fit to ``X`` in ``predict`` only,
+            Forecast added to ``X`` in ``predict`` is obtained from this state.
     columns : None, or pandas compatible index iterator (e.g., list of str), optional
-        default = None = all columns in X are used for forecast
-        columns to which `forecaster_X` is applied
+        default = None = all columns in ``X`` are used for forecast columns to which
+        ``forecaster_X`` is applied.
+        If not ``None``, must be a non-empty list of valid column names.
+        Note that ``[]`` and ``None`` do not imply the same.
     fit_behaviour : str, one of "use_actual", "use_forecast", optional,
         default = "use_actual"
-        if "use_actual", then `forecaster_y` uses the actual `X` as
+        if "use_actual", then ``forecaster_y`` uses the actual ``X`` as
             exogenous features in `fit`
-        if "use_forecast", then `forecaster_y` uses the `X` predicted by
-            forecaster_X as exogenous features in `fit`
+        if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
+            ``forecaster_X`` as exogenous features in ``fit``
 
     Attributes
     ----------
     forecaster_X_ : BaseForecaster
-        clone of forecaster_X, state updates with `fit` and `update`
-        created only if behaviour="update" and `X` passed is not None
+        clone of ``forecaster_X``, state updates with ``fit`` and ``update``
+        created only if ``behaviour="update"`` and ``X`` passed is not None
+        and ``forecaster_y`` has ``ignores-exogeneous-X`` tag as ``False``
     forecaster_y_ : BaseForecaster
-        clone of forecaster_y, state updates with `fit` and `update`
+        clone of ``forecaster_y``, state updates with ``fit`` and ``update``
 
     Examples
     --------
@@ -1293,6 +1297,7 @@ class ForecastX(BaseForecaster):
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:insample",
+            "ignores-exogeneous-X",
         ]
 
         self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)

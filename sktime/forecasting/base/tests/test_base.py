@@ -30,8 +30,9 @@ HIER_MTYPES = ["pd_multiindex_hier"]
     not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
+@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
-def test_vectorization_series_to_panel(mtype):
+def test_vectorization_series_to_panel(mtype, backend):
     """Test that forecaster vectorization works for Panel data.
 
     This test passes Panel data to the ARIMA forecaster which internally has an
@@ -42,6 +43,7 @@ def test_vectorization_series_to_panel(mtype):
     y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
     f = ARIMA()
+    f.set_config(**{"backend:parallel": backend})
     y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
 
@@ -79,8 +81,9 @@ def test_vectorization_series_to_panel(mtype):
     not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
+@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
-def test_vectorization_series_to_hier(mtype):
+def test_vectorization_series_to_hier(mtype, backend):
     """Test that forecaster vectorization works for Hierarchical data.
 
     This test passes Hierarchical data to the ARIMA forecaster which internally has an
@@ -93,6 +96,7 @@ def test_vectorization_series_to_hier(mtype):
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     f = ARIMA()
+    f.set_config(**{"backend:parallel": backend})
     y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
 
