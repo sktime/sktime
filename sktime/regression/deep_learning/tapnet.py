@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for classification."""
 
 __author__ = [
@@ -7,6 +6,8 @@ __author__ = [
 __all__ = [
     "TapNetRegressor",
 ]
+
+from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
@@ -103,7 +104,7 @@ class TapNetRegressor(BaseDeepRegressor):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super(TapNetRegressor, self).__init__()
+        super().__init__()
 
         self.batch_size = batch_size
         self.random_state = random_state
@@ -132,7 +133,20 @@ class TapNetRegressor(BaseDeepRegressor):
         self.use_rp = use_rp
         self.rp_params = rp_params
 
-        self._network = TapNetNetwork()
+        self._network = TapNetNetwork(
+            dropout=self.dropout,
+            filter_sizes=self.filter_sizes,
+            kernel_size=self.kernel_size,
+            dilation=self.dilation,
+            layers=self.layers,
+            use_rp=self.use_rp,
+            rp_params=self.rp_params,
+            use_att=self.use_att,
+            use_lstm=self.use_lstm,
+            use_cnn=self.use_cnn,
+            random_state=self.random_state,
+            padding=self.padding,
+        )
 
     def build_model(self, input_shape, **kwargs):
         """Construct a complied, un-trained, keras model that is ready for training.
@@ -180,8 +194,7 @@ class TapNetRegressor(BaseDeepRegressor):
         return model
 
     def _fit(self, X, y):
-        """
-        Fit the regressor on the training set (X, y).
+        """Fit the regressor on the training set (X, y).
 
         Parameters
         ----------
@@ -194,9 +207,6 @@ class TapNetRegressor(BaseDeepRegressor):
         -------
         self: object
         """
-        if self.callbacks is None:
-            self._callbacks = []
-
         # Transpose to conform to expectation format from keras
         X = X.transpose(0, 2, 1)
 
@@ -212,7 +222,7 @@ class TapNetRegressor(BaseDeepRegressor):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
 
         return self
@@ -239,6 +249,8 @@ class TapNetRegressor(BaseDeepRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         param1 = {
             "n_epochs": 10,
             "batch_size": 4,
@@ -252,5 +264,16 @@ class TapNetRegressor(BaseDeepRegressor):
             "use_cnn": False,
             "layers": (25, 25),
         }
+        test_params = [param1, param2]
 
-        return [param1, param2]
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import LambdaCallback
+
+            test_params.append(
+                {
+                    "n_epochs": 2,
+                    "callbacks": [LambdaCallback()],
+                }
+            )
+
+        return test_params

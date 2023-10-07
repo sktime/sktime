@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """KNN time series regression.
 
-This class is a KNN regressor which supports time series distance measures.
-The class has hardcoded string references to numba based distances in sktime.distances.
-It can also be used with callables, or sktime (pairwise transformer) estimators.
+This class is a KNN regressor which supports time series distance measures. The class
+has hardcoded string references to numba based distances in sktime.distances. It can
+also be used with callables, or sktime (pairwise transformer) estimators.
 
-This is a direct wrap or sklearn KNeighbors, with added functionality that allows
-time series distances to be passed, and the sktime time series regressor interface.
+This is a direct wrap or sklearn KNeighbors, with added functionality that allows time
+series distances to be passed, and the sktime time series regressor interface.
 """
 
 __author__ = ["fkiraly"]
@@ -49,7 +48,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         one of: 'uniform', 'distance', or a callable function
     algorithm : str, optional. default = 'brute'
         search method for neighbours
-        one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
+        one of {'auto', 'ball_tree', 'kd_tree', 'brute'}
     distance : str or callable, optional. default ='dtw'
         distance measure between time series
         if str, must be one of the following strings:
@@ -95,6 +94,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -133,7 +133,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         )
         self.weights = weights
 
-        super(KNeighborsTimeSeriesRegressor, self).__init__()
+        super().__init__()
 
         # the distances in sktime.distances want numpy3D
         #   otherwise all Panel formats are ok

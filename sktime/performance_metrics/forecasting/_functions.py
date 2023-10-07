@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Metrics functions to assess performance on forecasting task.
 
@@ -18,9 +17,8 @@ from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
 from sktime.utils.stats import _weighted_geometric_mean
-from sktime.utils.validation.series import check_series
 
-__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
+__author__ = ["mloning", "tch", "RNKuhns"]
 __all__ = [
     "relative_loss",
     "mean_linex_error",
@@ -419,7 +417,7 @@ def mean_absolute_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     # _check_reg_targets converts 1-dim y_true,y_pred to 2-dim so need to match
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
@@ -548,7 +546,7 @@ def median_absolute_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
 
@@ -682,7 +680,7 @@ def mean_squared_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
 
@@ -810,7 +808,7 @@ def median_squared_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
 
@@ -1303,9 +1301,7 @@ def geometric_mean_absolute_error(
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
-            np.abs(errors),
-            sample_weight=horizon_weight,
-            axis=0,
+            np.abs(errors), weights=horizon_weight, axis=0
         )
 
     if isinstance(multioutput, str):
@@ -1428,9 +1424,7 @@ def geometric_mean_squared_error(
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
-            np.square(errors),
-            sample_weight=horizon_weight,
-            axis=0,
+            np.square(errors), weights=horizon_weight, axis=0
         )
 
     if square_root:

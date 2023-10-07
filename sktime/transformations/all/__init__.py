@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """All transformers in sktime."""
 
 __author__ = ["fkiraly"]

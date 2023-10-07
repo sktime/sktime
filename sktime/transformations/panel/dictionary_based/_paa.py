@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """Piecewise Aggregate Approximation Transformer (PAA)."""
 import pandas as pd
 
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.base import BaseTransformer
 
-__author__ = "MatthewMiddlehurst"
+__author__ = ["MatthewMiddlehurst"]
 
 
 class PAA(BaseTransformer):
@@ -41,7 +40,7 @@ class PAA(BaseTransformer):
 
     def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
-        super(PAA, self).__init__()
+        super().__init__()
 
     def set_num_intervals(self, n):
         """Set self.num_intervals to n."""

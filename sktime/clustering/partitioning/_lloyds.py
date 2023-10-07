@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
 from abc import ABC, abstractmethod
@@ -163,9 +162,10 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
         centroids to generate.
-    init_algorithm: str, defaults = 'forgy'
-        Method for initializing cluster centers. Any of the following are valid:
-        ['kmeans++', 'random', 'forgy']
+    init_algorithm: str, np.ndarray (3d array of shape (n_clusters, n_dimensions,
+        series_length)), defaults = 'forgy'
+        Method for initializing cluster centers or an array of initial cluster centers.
+        Any of the following strings are valid: ['kmeans++', 'random', 'forgy']
     metric: str or Callable, defaults = 'dtw'
         Distance metric to compute similarity between time series. Any of the following
         are valid: ['dtw', 'euclidean', 'erp', 'edr', 'lcss', 'squared', 'ddtw', 'wdtw',
@@ -241,12 +241,13 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
 
         self._random_state = None
         self._init_algorithm = None
+        self._initial_cluster_centers = None
 
         self._distance_params = distance_params
         if distance_params is None:
             self._distance_params = {}
 
-        super(TimeSeriesLloyds, self).__init__(n_clusters=n_clusters)
+        super().__init__(n_clusters=n_clusters)
 
     def _check_params(self, X: np.ndarray) -> None:
         """Check parameters are valid and initialized.
@@ -265,14 +266,33 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         self._random_state = check_random_state(self.random_state)
 
         if isinstance(self.init_algorithm, str):
-            self._init_algorithm = self._init_algorithms.get(self.init_algorithm)
-        else:
+            if self.init_algorithm not in self._init_algorithms.keys():
+                raise KeyError(
+                    f"The string provided for init_algorithm: {self.init_algorithm} is "
+                    f"invalid. The following are a list of valid init algorithms "
+                    f"strings: {list(self._init_algorithms.keys())}"
+                )
+            self._init_algorithm = self._init_algorithms[self.init_algorithm]
+        elif isinstance(self.init_algorithm, np.ndarray):
+            if self.init_algorithm.ndim != 3:
+                raise ValueError(
+                    "The array provided to init_algorithm is invalid. It must be 3D."
+                )
+            if self.init_algorithm.shape[0] != self.n_clusters:
+                raise ValueError(
+                    f"The number of centers in init_algorithm and n_clusters must be "
+                    f"the same. The number of centres in init_algorithm is "
+                    f"{self.init_algorithm.shape[0]} but n_clusters is "
+                    f"{self.n_clusters}"
+                )
             self._init_algorithm = self.init_algorithm
-
-        if not isinstance(self._init_algorithm, Callable):
+        elif isinstance(self._init_algorithm, Callable):
+            self._init_algorithm = self.init_algorithm
+        else:
             raise ValueError(
-                f"The value provided for init_algorim: {self.init_algorithm} is "
-                f"invalid. The following are a list of valid init algorithms strings: "
+                f"The value provided for init_algorithm: {self.init_algorithm} is "
+                f"invalid. It must be either a string, callable or 3D numpy array."
+                f" The following are a list of valid init algorithms strings: "
                 f"{list(self._init_algorithms.keys())}"
             )
 
@@ -378,12 +398,15 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             Sum of squared distances of samples to their closest cluster center,
             weighted by the sample weights if provided.
         """
-        cluster_centres = self._init_algorithm(
-            X,
-            self.n_clusters,
-            self._random_state,
-            distance_metric=self._distance_metric,
-        )
+        if isinstance(self._init_algorithm, np.ndarray):
+            cluster_centres = self._init_algorithm
+        else:
+            cluster_centres = self._init_algorithm(
+                X,
+                self.n_clusters,
+                self._random_state,
+                distance_metric=self._distance_metric,
+            )
         old_inertia = np.inf
         old_labels = None
         for i in range(self.max_iter):
@@ -398,7 +421,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
 
             if np.array_equal(labels, old_labels):
                 if self.verbose:
-                    print(  # noqa: T001
+                    print(  # noqa: T201
                         f"Converged at iteration {i}: strict convergence."
                     )
                 break
@@ -407,7 +430,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             cluster_centres = self._compute_new_cluster_centers(X, labels)
 
             if self.verbose is True:
-                print(f"Iteration {i}, inertia {inertia}.")  # noqa: T001
+                print(f"Iteration {i}, inertia {inertia}.")  # noqa: T201
 
         labels, inertia = self._assign_clusters(X, cluster_centres)
         centres = cluster_centres

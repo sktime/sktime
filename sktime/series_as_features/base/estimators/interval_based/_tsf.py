@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """Time Series Forest (TSF) Classifier."""
 
 __author__ = [
-    "Tony Bagnall",
+    "TonyBagnall",
     "kkoziara",
     "luiszugasti",
     "kanand77",
@@ -38,7 +37,7 @@ class BaseTimeSeriesForest:
         n_jobs=1,
         random_state=None,
     ):
-        super(BaseTimeSeriesForest, self).__init__(
+        super().__init__(
             self._base_estimator,
             n_estimators=n_estimators,
         )
@@ -121,7 +120,6 @@ class BaseTimeSeriesForest:
         return self
 
     def _get_fitted_params(self):
-
         return {
             "classes": self.classes_,
             "intervals": self.intervals_,

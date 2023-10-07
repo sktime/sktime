@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Validations for use with forecasting module."""
 
 __all__ = [
@@ -15,7 +13,7 @@ __all__ = [
     "check_sp",
     "check_regressor",
 ]
-__author__ = ["mloning", "@big-o", "khrapovs"]
+__author__ = ["mloning", "big-o", "khrapovs"]
 
 from datetime import timedelta
 from typing import Optional, Union
@@ -157,8 +155,7 @@ def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
 
 
 def check_cv(cv, enforce_start_with_window=False):
-    """
-    Check CV generators.
+    """Check CV generators.
 
     Parameters
     ----------
@@ -169,7 +166,7 @@ def check_cv(cv, enforce_start_with_window=False):
     ValueError
         if cv does not have the required attributes.
     """
-    from sktime.forecasting.model_selection._split import BaseSplitter
+    from sktime.split.base import BaseSplitter
 
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
@@ -372,7 +369,6 @@ def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
     ValueError
         If cutoffs is not a instance of np.array or pd.Index
         If cutoffs array is empty.
-
     """
     if not isinstance(cutoffs, ACCEPTED_CUTOFF_TYPES):
         raise ValueError(
@@ -386,49 +382,97 @@ def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
     return np.sort(cutoffs)
 
 
-def check_scoring(scoring, allow_y_pred_benchmark=False):
-    """
-    Validate the performance scoring.
+def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
+    """Validate a scorer parameter and coerce to sktime BaseMetric.
 
     Parameters
     ----------
-    scoring : object that inherits from BaseMetric from sktime.performance_metrics.
+    scoring : object to validate. For successful validation, must be one of
+
+        * sktime metric object, instance of descendant of `BaseMetric`
+        * a callable with signature
+          `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+          assuming `np.ndarray`-s being of the same length, and lower being better.
+        * a string, resolvable by registry.resolve_alias to one of the above
+        * None
+
+    allow_y_pred_benchmark : boolean, optional, default=False
+        whether to allow scorer classes with `requires-y-pred-benchmark` tag = `True`
+
+    obj : object or class, or None, optional, default=None
+        if not None, will be used as a reference in the error message
 
     Returns
     -------
-    scoring :
-        MeanAbsolutePercentageError if the object is None.
+    scoring : input `scoring` coerced to instance of sktime `BaseMetric` descendant
+
+        * if `scoring` was sktime metric, returns `scoring`
+        * if `scoring` was `None`, returns `MeanAbsolutePercentageError()`
+        * if `scoring` was a callable, returns dynamic scoring metric class,
+          as created by `performance_metrics.forecasting.make_forecasting_scorer`
 
     Raises
     ------
-    TypeError
-        if object is not callable from current scope.
+    TypeError, if `scoring` is not a callable
     NotImplementedError
-        if metric requires y_pred_benchmark to be passed
+        if allow_y_pred_benchmark=False and metric requires y_pred_benchmark argument
     """
     # Note symmetric=True is default arg for MeanAbsolutePercentageError
-    from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+    from sktime.performance_metrics.base import BaseMetric
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsolutePercentageError,
+        make_forecasting_scorer,
+    )
 
     if scoring is None:
         return MeanAbsolutePercentageError()
 
-    scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
+    if obj is not None:
+        obj_str = f" of {str(obj)}"
+    else:
+        obj_str = ""
 
-    if scoring_req_bench and not allow_y_pred_benchmark:
-        msg = """Scoring requiring benchmark forecasts (y_pred_benchmark) are not
-                 fully supported yet. Please use a performance metric that does not
-                 require y_pred_benchmark as a keyword argument in its call signature.
-              """
-        raise NotImplementedError(msg)
+    msg = (
+        f"scoring parameter{obj_str} must be one of the following: "
+        "(1) an sktime metric, descendant of BaseMetric; (2) a callable with signature "
+        "(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float, "
+        "assuming np.ndarrays being of the same length, and lower being better; "
+        "(3) a string, resolvable by registry.resolve_alias to an object of either "
+        "type (1) or (2)"
+    )
 
+    # deal with case (3) first - if string, try to resolve and return
+    if isinstance(scoring, str):
+        # lazy import of sktime.registry to avoid circular imports
+        # and to ensure maximal decoupling from registry
+        from sktime.registry import resolve_alias
+
+        return resolve_alias(scoring)
+
+    # check case (1) and case (2)
+    # note: BaseMetric descendants are callable, so this is the same as
+    # if not callable(scoring) and not isinstance(scoring, BaseMetric)
     if not callable(scoring):
-        raise TypeError("`scoring` must be a callable object")
+        raise TypeError(msg)
+
+    if not isinstance(scoring, BaseMetric):
+        scoring = make_forecasting_scorer(func=scoring, greater_is_better=False)
+
+    if hasattr(scoring, "get_class_tag"):
+        scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
+        if scoring_req_bench and not allow_y_pred_benchmark:
+            msg = (
+                "Scoring requiring benchmark forecasts (y_pred_benchmark) are not "
+                "fully supported yet. Please use a performance metric that does not "
+                "require y_pred_benchmark as a keyword argument in its call signature."
+            )
+            raise NotImplementedError(msg)
 
     return scoring
 
 
 def check_regressor(regressor=None, random_state=None):
-    """Check if a regressor is given and if it is valid, otherwise set default regressor.
+    """Check if a valid regressor is given, otherwise set default regressor.
 
     Parameters
     ----------
@@ -458,8 +502,7 @@ def check_regressor(regressor=None, random_state=None):
 
 
 def check_interval_df(interval_df, index_to_match):
-    """
-    Verify that a predicted interval DataFrame is formatted correctly.
+    """Verify that a predicted interval DataFrame is formatted correctly.
 
     Parameters
     ----------
@@ -477,5 +520,3 @@ def check_interval_df(interval_df, index_to_match):
     levels = interval_df.columns.levels
     if len(levels[0]) != 1:
         raise ValueError("`interval_df` must only contain one variable with interval")
-    if not (levels[0] == "Coverage")[0]:
-        raise ValueError("`interval_df` must have 'Coverage' column label")

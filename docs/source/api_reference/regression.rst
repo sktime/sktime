@@ -5,8 +5,9 @@ Time series regression
 
 The :mod:`sktime.regression` module contains algorithms and composition tools for time series regression.
 
-All current sktime Regressors can be listed using the ``sktime.registry import
-all_estimators`` function.
+All regressors in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="regressor"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
 
 Composition
 -----------
@@ -29,6 +30,9 @@ Deep learning
     :template: class.rst
 
     CNNRegressor
+    MCDCNNRegressor
+    SimpleRNNRegressor
+    ResNetRegressor
     TapNetRegressor
 
 Distance-based

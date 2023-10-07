@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test extraction of features across (shifted) windows."""
 __author__ = ["danbartl"]
 
@@ -8,15 +7,16 @@ import pytest
 
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.summarize import WindowSummarizer
 
 
 def check_eval(test_input, expected):
     """Test which columns are returned for different arguments.
 
-    For a detailed description what these arguments do,
-    and how theyinteract see docstring of DateTimeFeatures.
+    For a detailed description what these arguments do, and how theyinteract see
+    docstring of DateTimeFeatures.
     """
     if test_input is not None:
         assert len(test_input) == len(expected)
@@ -87,6 +87,10 @@ Xtmvar = Xtmvar + ["GNPDEFL", "UNEMP", "ARMED"]
 Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "kwargs, column_names, y, target_cols, truncate",
     [

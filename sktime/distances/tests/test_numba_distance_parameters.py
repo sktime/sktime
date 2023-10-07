@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """Test suite for numba distances with parameters."""
 from typing import Callable, Dict, List
 
 import numpy as np
 import pytest
-from numba import njit
 
 from sktime.distances import distance, distance_factory
 from sktime.distances._distance import _METRIC_INFOS
@@ -12,8 +10,15 @@ from sktime.distances._numba_utils import to_numba_timeseries
 from sktime.distances.base import MetricInfo
 from sktime.distances.tests._expected_results import _expected_distance_results_params
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.numba.njit import njit
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def _test_distance_params(
     param_list: List[Dict], distance_func: Callable, distance_str: str
 ):
@@ -74,9 +79,17 @@ DIST_PARAMS = {
 }
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
 def test_distance_params(dist: MetricInfo):
     """Test parametisation of distance callables."""
+    # skip test if distance function/class have not changed
+    if not run_test_for_class([dist.dist_func, dist.dist_instance.__class__]):
+        return None
+
     if dist.canonical_name in DIST_PARAMS:
         _test_distance_params(
             DIST_PARAMS[dist.canonical_name],

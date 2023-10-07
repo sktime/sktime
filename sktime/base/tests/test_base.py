@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Tests for BaseObject universal base class.
+"""Tests for BaseObject universal base class.
 
 tests in this module:
 
@@ -46,13 +44,11 @@ from sktime.base import BaseEstimator, BaseObject
 
 # Fixture class for testing tag system
 class FixtureClassParent(BaseObject):
-
     _tags = {"A": "1", "B": 2, "C": 1234, 3: "D"}
 
 
 # Fixture class for testing tag system, child overrides tags
 class FixtureClassChild(FixtureClassParent):
-
     _tags = {"A": 42, 3: "E"}
 
 
@@ -205,7 +201,6 @@ def test_is_composite():
 
 
 class ResetTester(BaseObject):
-
     clsvar = 210
 
     def __init__(self, a, b=42):
@@ -282,7 +277,7 @@ def test_components():
     assert set(non_comp_comps.keys()) == set()
 
     assert isinstance(comp_comps, dict)
-    assert set(comp_comps.keys()) == set(["foo_"])
+    assert set(comp_comps.keys()) == {"foo_"}
     assert comp_comps["foo_"] is composite.foo_
     assert comp_comps["foo_"] is not composite.foo
 
@@ -413,14 +408,64 @@ def test_get_fitted_params():
 
     non_comp_f_params = non_composite.get_fitted_params()
     comp_f_params = composite.get_fitted_params()
+    comp_f_params_shallow = composite.get_fitted_params(deep=False)
 
     assert isinstance(non_comp_f_params, dict)
-    assert set(non_comp_f_params.keys()) == set(["foo"])
+    assert set(non_comp_f_params.keys()) == {"foo"}
 
     assert isinstance(comp_f_params, dict)
-    assert set(comp_f_params) == set(["foo", "foo__foo"])
+    assert set(comp_f_params) == {"foo", "foo__foo"}
+    assert set(comp_f_params_shallow) == {"foo"}
     assert comp_f_params["foo"] is composite.foo_
     assert comp_f_params["foo"] is not composite.foo
+    assert comp_f_params_shallow["foo"] is composite.foo_
+    assert comp_f_params_shallow["foo"] is not composite.foo
+
+
+class ConfigTester(BaseObject):
+    _config = {"foo_config": 42, "bar": "a"}
+
+    clsvar = 210
+
+    def __init__(self, a, b=42):
+        self.a = a
+        self.b = b
+        self.c = 84
+
+
+def test_set_get_config():
+    """Test logic behind get_config, set_config.
+
+    Raises
+    ------
+    AssertionError if logic behind get_config, set_config is incorrect, logic tested:
+        calling get_fitted_params on a non-composite fittable returns the fitted param
+        calling get_fitted_params on a composite returns all nested params
+    """
+    # get default config dict
+    base_config = BaseObject().get_config()
+    base_keys = set(base_config.keys())
+
+    obj = ConfigTester(4242)
+
+    config_start = obj.get_config()
+    assert isinstance(config_start, dict)
+    expected_config_start_keys = {"foo_config", "bar"}.union(base_keys)
+    assert set(config_start.keys()) == expected_config_start_keys
+    assert config_start["foo_config"] == 42
+    assert config_start["bar"] == "a"
+
+    setconfig_return = obj.set_config(foobar=126)
+    assert obj is setconfig_return
+
+    obj.set_config(**{"bar": "b"})
+    config_end = obj.get_config()
+    assert isinstance(config_end, dict)
+    expected_config_end_keys = {"foo_config", "bar", "foobar"}.union(base_keys)
+    assert set(config_end.keys()) == expected_config_end_keys
+    assert config_end["foo_config"] == 42
+    assert config_end["bar"] == "b"
+    assert config_end["foobar"] == 126
 
 
 def test_eq_dunder():

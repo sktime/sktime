@@ -1,18 +1,16 @@
-# -*- coding: utf-8 -*-
-"""Tests for probabilistic quantiles."""
+"""Tests for probabilistic performance metrics."""
 import warnings
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 from sktime.performance_metrics.forecasting.probabilistic import (
     ConstraintViolation,
     EmpiricalCoverage,
     PinballLoss,
 )
+from sktime.split import temporal_train_test_split
 from sktime.utils._testing.series import _make_series
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -26,84 +24,78 @@ interval_metrics = [
     ConstraintViolation,
 ]
 
-all_metrics = quantile_metrics + interval_metrics
+all_metrics = interval_metrics + quantile_metrics
+
+alpha_s = [0.5]
+alpha_m = [0.05, 0.5, 0.95]
+coverage_s = 0.9
+coverage_m = [0.7, 0.8, 0.9, 0.99]
 
 
-y_uni = _make_series(n_columns=1)
-y_train_uni, y_test_uni = temporal_train_test_split(y_uni)
-fh_uni = np.arange(len(y_test_uni)) + 1
-f_uni = NaiveVariance(NaiveForecaster())
-f_uni.fit(y_train_uni)
+@pytest.fixture
+def sample_data(request):
+    n_columns, coverage_or_alpha, pred_type = request.param
 
-y_multi = _make_series(n_columns=3)
-y_train_multi, y_test_multi = temporal_train_test_split(y_multi)
-fh_multi = np.arange(len(y_test_multi)) + 1
-f_multi = NaiveVariance(NaiveForecaster())
-f_multi.fit(y_train_multi)
-"""
-Cases we need to test
-score average = TRUE/FALSE
-multivariable = TRUE/FALSE
-multiscores = TRUE/FALSE
+    y = _make_series(n_columns=n_columns)
+    y_train, y_test = temporal_train_test_split(y)
 
-Data types
-Univariate and single score
-Univariate and multi score
-Multivariate and single score
-Multivariate and multiscor
+    if pred_type == "interval":
+        interval_pred = {}
+        for col in range(n_columns):
+            if n_columns == 1:
+                y_vals = y_test
+            else:
+                y_vals = y_test.iloc[:, col]
+            for coverage in np.array([coverage_or_alpha]).flatten():
+                interval_pred[(col, coverage, "lower")] = (
+                    y_vals * np.random.uniform(0.9, 1.1, len(y_vals)) * (1 - coverage)
+                )
+                interval_pred[(col, coverage, "upper")] = (
+                    y_vals * np.random.uniform(0.9, 1.1, len(y_vals)) * (1 + coverage)
+                )
+        interval_pred = pd.DataFrame.from_dict(interval_pred)
+        return y_test, interval_pred
 
-For each of the data types we need to test with score average = T/F \
-    and multioutput with "raw_values" and "uniform_average"
-"""
-quantile_pred_uni_s = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.5])
-interval_pred_uni_s = f_uni.predict_interval(fh=fh_uni, coverage=0.9)
-quantile_pred_uni_m = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.05, 0.5, 0.95])
-interval_pred_uni_m = f_uni.predict_interval(fh=fh_uni, coverage=[0.7, 0.8, 0.9, 0.99])
+    elif pred_type == "quantile":
+        quantile_pred = {}
+        for col in range(n_columns):
+            if n_columns == 1:
+                y_vals = y_test
+            else:
+                y_vals = y_test.iloc[:, col]
+            for alpha in coverage_or_alpha:
+                quantile_pred[(col, alpha)] = (
+                    y_vals * np.random.uniform(0.9, 1.1, len(y_vals)) * (0.5 + alpha)
+                )
+        quantile_pred = pd.DataFrame.from_dict(quantile_pred)
+        return y_test, quantile_pred
 
-quantile_pred_multi_s = f_multi.predict_quantiles(fh=fh_multi, alpha=[0.5])
-interval_pred_multi_s = f_multi.predict_interval(fh=fh_multi, coverage=0.9)
-quantile_pred_multi_m = f_multi.predict_quantiles(fh=fh_multi, alpha=[0.05, 0.5, 0.95])
-interval_pred_multi_m = f_multi.predict_interval(
-    fh=fh_multi, coverage=[0.7, 0.8, 0.9, 0.99]
-)
-
-uni_data = [
-    quantile_pred_uni_s,
-    interval_pred_uni_s,
-    quantile_pred_uni_m,
-    interval_pred_uni_m,
-]
-
-multi_data = [
-    quantile_pred_multi_s,
-    interval_pred_multi_s,
-    quantile_pred_multi_m,
-    interval_pred_multi_m,
-]
-
-quantile_data = [
-    quantile_pred_uni_s,
-    quantile_pred_uni_m,
-    quantile_pred_multi_s,
-    quantile_pred_multi_m,
-]
-
-interval_data = [
-    interval_pred_uni_s,
-    interval_pred_uni_m,
-    interval_pred_multi_s,
-    interval_pred_multi_m,
-]
+    return
 
 
+# Test the parametrized fixture
 @pytest.mark.parametrize(
-    "y_true, y_pred",
-    list(zip([y_test_uni] * 4, uni_data)) + list(zip([y_test_multi] * 4, multi_data)),
+    "sample_data",
+    [
+        (1, alpha_s, "quantile"),
+        (3, alpha_s, "quantile"),
+        (1, alpha_m, "quantile"),
+        (3, alpha_m, "quantile"),
+        (1, coverage_s, "interval"),
+        (3, coverage_s, "interval"),
+        (1, coverage_m, "interval"),
+        (3, coverage_m, "interval"),
+    ],
+    indirect=True,
 )
-@pytest.mark.parametrize("metric", all_metrics)
-@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
-@pytest.mark.parametrize("score_average", [True, False])
-def test_output(metric, score_average, multioutput, y_true, y_pred):
+def test_sample_data(sample_data):
+    y_true, y_pred = sample_data
+    assert isinstance(y_true, (pd.Series, pd.DataFrame))
+    assert isinstance(y_pred, pd.DataFrame)
+
+
+def helper_check_output(metric, score_average, multioutput, sample_data):
+    y_true, y_pred = sample_data
     """Test output is correct class and shape for given data."""
     loss = metric.create_test_instance()
     loss.set_params(score_average=score_average, multioutput=multioutput)
@@ -165,32 +157,134 @@ def test_output(metric, score_average, multioutput, y_true, y_pred):
         assert len(eval_loss) == no_vars
 
 
-@pytest.mark.parametrize("Metric", quantile_metrics)
 @pytest.mark.parametrize(
-    "y_pred, y_true", list(zip(quantile_data, [y_test_uni] * 2 + [y_test_multi] * 2))
+    "sample_data",
+    [
+        (1, alpha_s, "quantile"),
+        (3, alpha_s, "quantile"),
+        (1, alpha_m, "quantile"),
+        (3, alpha_m, "quantile"),
+    ],
+    indirect=True,
 )
-def test_evaluate_alpha_positive(Metric, y_pred, y_true):
+@pytest.mark.parametrize("metric", all_metrics)
+@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+@pytest.mark.parametrize("score_average", [True, False])
+def test_output_quantiles(metric, score_average, multioutput, sample_data):
+    helper_check_output(metric, score_average, multioutput, sample_data)
+
+
+@pytest.mark.parametrize(
+    "sample_data",
+    [
+        (1, coverage_s, "interval"),
+        (3, coverage_s, "interval"),
+        (1, coverage_m, "interval"),
+        (3, coverage_m, "interval"),
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize("metric", all_metrics)
+@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+@pytest.mark.parametrize("score_average", [True, False])
+def test_output_intervals(metric, score_average, multioutput, sample_data):
+    helper_check_output(metric, score_average, multioutput, sample_data)
+
+
+@pytest.mark.parametrize("metric", quantile_metrics)
+@pytest.mark.parametrize(
+    "sample_data",
+    [
+        (1, alpha_s, "quantile"),
+        (3, alpha_s, "quantile"),
+        (1, alpha_m, "quantile"),
+        (3, alpha_m, "quantile"),
+    ],
+    indirect=True,
+)
+def test_evaluate_alpha_positive(metric, sample_data):
     """Tests output when required quantile is present."""
     # 0.5 in test quantile data don't raise error.
-    Loss = Metric.create_test_instance().set_params(alpha=0.5, score_average=False)
+
+    y_true, y_pred = sample_data
+
+    Loss = metric.create_test_instance().set_params(alpha=0.5, score_average=False)
     res = Loss(y_true=y_true, y_pred=y_pred)
     assert len(res) == 1
 
     if all(x in y_pred.columns.get_level_values(1) for x in [0.5, 0.95]):
-        Loss = Metric.create_test_instance().set_params(
+        Loss = metric.create_test_instance().set_params(
             alpha=[0.5, 0.95], score_average=False
         )
         res = Loss(y_true=y_true, y_pred=y_pred)
         assert len(res) == 2
 
 
-@pytest.mark.parametrize("Metric", quantile_metrics)
+# This test tests quantile data
 @pytest.mark.parametrize(
-    "y_pred, y_true", list(zip(quantile_data, [y_test_uni] * 2 + [y_test_multi] * 2))
+    "sample_data",
+    [
+        (1, alpha_s, "quantile"),
+        (3, alpha_s, "quantile"),
+        (1, alpha_m, "quantile"),
+        (3, alpha_m, "quantile"),
+    ],
+    indirect=True,
 )
-def test_evaluate_alpha_negative(Metric, y_pred, y_true):
+@pytest.mark.parametrize("metric", quantile_metrics)
+def test_evaluate_alpha_negative(metric, sample_data):
     """Tests whether correct error raised when required quantile not present."""
+    y_true, y_pred = sample_data
     with pytest.raises(ValueError):
         # 0.3 not in test quantile data so raise error.
-        Loss = Metric.create_test_instance().set_params(alpha=0.3)
+        Loss = metric.create_test_instance().set_params(alpha=0.3)
         res = Loss(y_true=y_true, y_pred=y_pred)  # noqa
+
+
+@pytest.mark.parametrize("metric", all_metrics)
+@pytest.mark.parametrize("score_average", [True, False])
+def test_multioutput_weighted(metric, score_average):
+    """Test output contracts for multioutput weights."""
+    y_true = pd.DataFrame({"var1": [3, -0.5, 2, 7, 2], "var2": [4, 0.5, 3, 8, 3]})
+    y_pred = pd.DataFrame(
+        {
+            ("var1", 0.05): [1.5, -1, 1, 4, 0.65],
+            ("var1", 0.5): [2.5, 0, 2, 8, 1.25],
+            ("var1", 0.95): [3.5, 4, 3, 12, 1.85],
+            ("var2", 0.05): [2.5, 0, 2, 8, 1.25],
+            ("var2", 0.5): [5.0, 1, 4, 16, 2.5],
+            ("var2", 0.95): [7.5, 2, 6, 24, 3.75],
+        }
+    )
+
+    weights = np.array([0.3, 0.7])
+
+    loss = metric.create_test_instance()
+    loss.set_params(score_average=score_average, multioutput=weights)
+
+    eval_loss = loss(y_true, y_pred)
+
+    if loss.get_tag("scitype:y_pred") == "pred_interval":
+        # 1 full interval, lower = 0.05, upper = 0.95
+        expected_score_ix = [0.9]
+    else:
+        # 3 quantile scores, 0.05, 0.5, 0.95
+        expected_score_ix = [0.05, 0.5, 0.95]
+    no_expected_scores = len(expected_score_ix)
+    expected_timepoints = len(y_pred)
+
+    if score_average:
+        assert isinstance(eval_loss, float)
+    else:
+        assert isinstance(eval_loss, pd.Series)
+        assert len(eval_loss) == no_expected_scores
+
+    eval_loss_by_index = loss.evaluate_by_index(y_true, y_pred)
+    assert len(eval_loss_by_index) == expected_timepoints
+
+    if score_average:
+        assert isinstance(eval_loss_by_index, pd.Series)
+    else:
+        assert isinstance(eval_loss_by_index, pd.DataFrame)
+        assert eval_loss_by_index.shape == (expected_timepoints, no_expected_scores)
+        assert eval_loss_by_index.columns.to_list() == expected_score_ix

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for TSInterpolator."""
 import pandas as pd
 
@@ -8,10 +7,12 @@ from sktime.transformations.panel.interpolate import TSInterpolator
 
 def cut_X_ts(X):
     """Cut X values to different lengths across variables."""
+    arr = X.values
     for row_i in range(X.shape[0]):
         for dim_i in range(X.shape[1]):
             ts = X.iloc[row_i, dim_i]
-            X.values[row_i][dim_i] = pd.Series(ts.tolist()[: len(ts) - dim_i - 1])
+            arr[row_i, dim_i] = pd.Series(ts.tolist()[: len(ts) - dim_i - 1])
+    return pd.DataFrame(arr, index=X.index, columns=X.columns)
 
 
 def test_resizing():
@@ -32,7 +33,7 @@ def test_resizing():
     assert all([length == ts_lens_before[0] for length in ts_lens_before])
 
     # 2) cutting each time series in each cell of X to make lengths different
-    cut_X_ts(X)  # operation is inplace
+    X = cut_X_ts(X)
     # get lengths to ensure that they are really different
     ts_lens_after_cut = [len(X.iloc[0][i]) for i in range(len(X.iloc[0]))]
     assert not all(

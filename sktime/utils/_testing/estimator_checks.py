@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utility function for estimator testing.
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -195,7 +194,11 @@ def _has_capability(est, method: str) -> bool:
                 tag_name=tag_name, tag_value_default=tag_value_default
             )
         else:
-            return est.get_tag(tag_name=tag_name, tag_value_default=tag_value_default)
+            return est.get_tag(
+                tag_name=tag_name,
+                tag_value_default=tag_value_default,
+                raise_error=False,
+            )
 
     if not hasattr(est, method):
         return False

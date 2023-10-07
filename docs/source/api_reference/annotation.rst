@@ -66,6 +66,14 @@ Time Series Segmentation
 
     InformationGainSegmentation
 
+.. currentmodule:: sktime.annotation.hmm_learn.poisson
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PoissonHMM
+
 .. currentmodule:: sktime.annotation.stray
 
 .. autosummary::

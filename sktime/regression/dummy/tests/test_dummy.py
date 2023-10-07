@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test function of DummyRegressor."""
 
 from sktime.datasets import load_unit_test

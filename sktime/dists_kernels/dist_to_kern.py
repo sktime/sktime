@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """Wrappers to convert distance to kernel or kernel to distance."""
 
 __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
@@ -49,14 +48,14 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        "pwtrafo_type": "kernel",
     }
 
     def __init__(self, dist, dist_diag=None):
-
         self.dist = dist
         self.dist_diag = dist_diag
 
-        super(KernelFromDist, self).__init__()
+        super().__init__()
 
         # set property tags based on tags of components
         missing = True
@@ -180,13 +179,13 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        "pwtrafo_type": "distance",
     }
 
     def __init__(self, kernel):
-
         self.kernel = kernel
 
-        super(DistFromKernel, self).__init__()
+        super().__init__()
 
         # set property tags based on tags of components
         tags_to_clone = [
@@ -238,7 +237,7 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         mat2 = mat2.transpose()
 
         distmat = mat1 + mat2 - 2 * kernelmat
-        distmat = np.sqrt(distmat)
+        distmat = np.sqrt(np.abs(distmat))
 
         return distmat
 

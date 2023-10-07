@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """E-Agglo: agglomerative clustering algorithm that preserves observation order."""
 
 import warnings
@@ -15,8 +14,7 @@ __all__ = ["EAgglo"]
 
 
 class EAgglo(BaseTransformer):
-    """
-    Hierarchical agglomerative estimation of multiple change points.
+    """Hierarchical agglomerative estimation of multiple change points.
 
     E-Agglo is a non-parametric clustering approach for multivariate timeseries[1]_,
     where neighboring segments are sequentially merged_ to maximize a goodness-of-fit
@@ -95,7 +93,7 @@ class EAgglo(BaseTransformer):
         self.member = member
         self.alpha = alpha
         self.penalty = penalty
-        super(EAgglo, self).__init__()
+        super().__init__()
 
     def _fit(self, X: pd.DataFrame, y=None):
         """Find optimally clustered segments.
@@ -134,9 +132,7 @@ class EAgglo(BaseTransformer):
             return list(
                 filter(
                     lambda v: v == v,
-                    self.progression[
-                        i,
-                    ],
+                    self.progression[i,],
                 )
             )
 
@@ -198,7 +194,8 @@ class EAgglo(BaseTransformer):
                 "Warning: Input data X differs from that given to fit(). "
                 "Refitting with both the data in fit and new input data, not storing "
                 "updated public class attributes. For this, explicitly use fit(X) or "
-                "fit_transform(X)."
+                "fit_transform(X).",
+                stacklevel=2,
             )
             return new_eagglo.cluster_
 
@@ -432,7 +429,7 @@ def len_penalty(x: pd.DataFrame) -> int:
 def mean_diff_penalty(x: pd.DataFrame) -> float:
     """Penalize goodness-of-fit statistic.
 
-    Favors segmentations with larger sizes, while taking into consideration
-    the size of the new segments.
+    Favors segmentations with larger sizes, while taking into consideration the size of
+    the new segments.
     """
     return np.mean(np.diff(np.sort(x)))

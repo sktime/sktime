@@ -1,21 +1,17 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements TBATS algorithm.
 
-TBATS refers to Exponential smoothing state space model with Trigonometric
-Seasonality, Box-Cox transformation, ARMA errors, Trend and Seasonal components.
+TBATS refers to Exponential smoothing state space model with Trigonometric Seasonality,
+Box-Cox transformation, ARMA errors, Trend and Seasonal components.
 
 Wrapping implementation in [1]_ of method proposed in [2]_.
 """
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["TBATS"]
 
 from sktime.forecasting.base.adapters import _TbatsAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tbats", severity="warning")
 
 
 class TBATS(_TbatsAdapter):

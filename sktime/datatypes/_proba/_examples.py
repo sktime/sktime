@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Example generation for testing.
 
 Exports dict of examples, useful for testing as fixtures.
@@ -40,7 +39,7 @@ example_dict_metadata = dict()
 # example 0: univariate
 
 pred_q = pd.DataFrame({0.2: [1, 2, 3], 0.6: [2, 3, 4]})
-pred_q.columns = pd.MultiIndex.from_product([["Quantiles"], [0.2, 0.6]])
+pred_q.columns = pd.MultiIndex.from_product([["foobar"], [0.2, 0.6]])
 
 # we need to use this due to numerical inaccuracies from the binary based representation
 pseudo_0_2 = 2 * np.abs(0.6 - 0.5)
@@ -50,7 +49,7 @@ example_dict_lossy[("pred_quantiles", "Proba", 0)] = False
 
 pred_int = pd.DataFrame({0.2: [1, 2, 3], 0.6: [2, 3, 4]})
 pred_int.columns = pd.MultiIndex.from_tuples(
-    [("Coverage", 0.6, "lower"), ("Coverage", pseudo_0_2, "upper")]
+    [("foobar", 0.6, "lower"), ("foobar", pseudo_0_2, "upper")]
 )
 
 example_dict[("pred_interval", "Proba", 0)] = pred_int

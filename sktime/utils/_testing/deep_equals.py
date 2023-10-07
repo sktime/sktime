@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing utility to compare equality in value for nested objects.
 
 Objects compared can have one of the following valid types:
@@ -58,15 +57,18 @@ def deep_equals(x, y, return_msg=False):
             != - call to generic != returns False
     """
 
-    def ret(is_equal, msg):
+    def ret(is_equal, msg="", string_arguments: list = None):
+        string_arguments = [] if string_arguments is None else string_arguments
         if return_msg:
             if is_equal:
                 msg = ""
+            elif len(string_arguments) > 0:
+                msg = msg.format(*string_arguments)
             return is_equal, msg
         else:
             return is_equal
 
-    if type(x) != type(y):
+    if type(x) is not type(y):
         return ret(False, f".type, x.type = {type(x)} != y.type = {type(y)}")
 
     # compute delayed objects (dask)
@@ -94,7 +96,7 @@ def deep_equals(x, y, return_msg=False):
                 msg = ""
             return ret(index_equal and values_equal, msg)
         else:
-            return ret(x.equals(y), f".series_equals, x = {x} != y = {y}")
+            return ret(x.equals(y), ".series_equals, x = {} != y = {}", [x, y])
     elif isinstance(x, pd.DataFrame):
         if not x.columns.equals(y.columns):
             return ret(
@@ -106,11 +108,11 @@ def deep_equals(x, y, return_msg=False):
                 is_equal, msg = deep_equals(x[c], y[c], return_msg=True)
                 if not is_equal:
                     return ret(False, f'["{c}"]' + msg)
-            return ret(True, "")
+            return ret(True)
         else:
-            return ret(x.equals(y), f".df_equals, x = {x} != y = {y}")
+            return ret(x.equals(y), ".df_equals, x = {} != y = {}", [x, y])
     elif isinstance(x, pd.Index):
-        return ret(x.equals(y), f".index_equals, x = {x} != y = {y}")
+        return ret(x.equals(y), ".index_equals, x = {} != y = {}", [x, y])
     elif isinstance(x, np.ndarray):
         if x.dtype != y.dtype:
             return ret(False, f".dtype, x.dtype = {x.dtype} != y.dtype = {y.dtype}")
@@ -120,10 +122,8 @@ def deep_equals(x, y, return_msg=False):
         return ret(*_tuple_equals(x, y, return_msg=True))
     elif isinstance(x, dict):
         return ret(*_dict_equals(x, y, return_msg=True))
-    elif isinstance(x, type(np.nan)):
-        return ret(
-            isinstance(y, type(np.nan)), f"type(x)={type(x)} != type(y)={type(y)}"
-        )
+    elif _is_np_nan(x):
+        return ret(_is_np_nan(y), f"type(x)={type(x)} != type(y)={type(y)}")
     elif isclass(x):
         return ret(x == y, f".class, x={x.__name__} != y={y.__name__}")
     elif type(x).__name__ == "ForecastingHorizon":
@@ -137,6 +137,10 @@ def deep_equals(x, y, return_msg=False):
     elif np.any(x != y):
         return ret(False, f" !=, {x} != {y}")
     return ret(True, "")
+
+
+def _is_np_nan(x):
+    return isinstance(x, float) and np.isnan(x)
 
 
 def _tuple_equals(x, y, return_msg=False):

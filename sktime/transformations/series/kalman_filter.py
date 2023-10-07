@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Kalman Filter Transformers.
 
-Series based transformers, based on Kalman Filter algorithm. Contains Base class
-and two transformers which are each Adapters for external packages
-pykalman and FilterPy.
+Series based transformers, based on Kalman Filter algorithm. Contains Base class and two
+transformers which are each Adapters for external packages pykalman and FilterPy.
 """
 
 __author__ = ["NoaBenAmi", "lielleravid"]
@@ -20,9 +18,6 @@ import numpy as np
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("pykalman", severity="warning")
-_check_soft_dependencies("filterpy", severity="warning")
 
 
 def _get_t_matrix(time_t, matrices, shape, time_steps):
@@ -58,8 +53,8 @@ def _validate_param_shape(param_name, matrix_shape, actual_shape, time_steps=Non
     """Validate shape of matrix parameter.
 
     Assert `actual_shape` equals to:
-        -   'shape' of a single matrix or
-        -   'shape' of time_steps matrices.
+        -  'shape' of a single matrix or
+        -  'shape' of time_steps matrices.
     If neither, raise an informative `ValueError` that includes the parameter's name.
 
     Parameters
@@ -95,7 +90,7 @@ def _validate_param_shape(param_name, matrix_shape, actual_shape, time_steps=Non
 
 
 def _init_matrix(matrices, transform_func, default_val):
-    """Initialize default value if matrix is None, or transform input matrix to np.ndarray.
+    """Initialize default value if matrix is None, or transform to np.ndarray.
 
     Parameters
     ----------
@@ -213,17 +208,17 @@ class BaseKalmanFilter:
 
     Two prediction equations:
 
-    -   State Extrapolation Equation - prediction or estimation of the future state,
+    -  State Extrapolation Equation - prediction or estimation of the future state,
         based on the known present estimation.
-    -	Covariance Extrapolation Equation - the measure of uncertainty in our prediction.
+    -  Covariance Extrapolation Equation - the measure of uncertainty in our prediction.
 
     Two update equations:
 
-    -   State Update Equation - estimation of the current state,
+    -  State Update Equation - estimation of the current state,
         based on the known past estimation and present measurement.
-    -	Covariance Update Equation - the measure of uncertainty in our estimation.
+    -  Covariance Update Equation - the measure of uncertainty in our estimation.
 
-    Kalman Gain Equation – this is a required argument for the update equations.
+    Kalman Gain Equation - this is a required argument for the update equations.
     It acts as a weighting parameter for the past estimations and the given measurement.
     It defines the weight of the past estimation and
     the weight of the measurement in estimating the current state.
@@ -291,7 +286,7 @@ class BaseKalmanFilter:
         # P0
         self.initial_state_covariance = initial_state_covariance
 
-        super(BaseKalmanFilter, self).__init__()
+        super().__init__()
 
     def _get_shapes(self, state_dim, measurement_dim):
         """Return dictionary with default shape of each matrix parameter.
@@ -477,6 +472,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     Examples
     --------
         Basic example:
+
     >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 2, 3
@@ -486,6 +482,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     >>> X_transformed = transformer.fit_transform(X=X)  # doctest: +SKIP
 
         Example of - denoising, matrix estimation and missing values:
+
     >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 2, 2
@@ -506,6 +503,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     >>> X_transformed = transformer.fit_transform(X=X)  # doctest: +SKIP
 
         Example of - dynamic inputs (matrix per time-step) and missing values:
+
     >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 4, 4
@@ -552,7 +550,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         estimate_matrices=None,
         denoising=False,
     ):
-        super(KalmanFilterTransformerPK, self).__init__(
+        super().__init__(
             state_dim=state_dim,
             state_transition=state_transition,
             process_noise=process_noise,
@@ -801,7 +799,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         return F, H, Q, R, transition_offsets, measurement_offsets, X0, P0
 
     def _get_estimate_matrices(self):
-        """Map parameters names to `pykalman` parameters names for use of `pykalman` `em`.
+        """Map parameter names to `pykalman` names for use of `pykalman` `em`.
 
         Returns
         -------
@@ -846,7 +844,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
 
 
 class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
-    """Kalman Filter is used for denoising data or inferring the hidden state of data given.
+    """Kalman Filter is used for denoising or inferring the hidden state of given data.
 
     The Kalman Filter is an unsupervised algorithm, consisting of
     several mathematical equations which are used to create
@@ -931,6 +929,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     Examples
     --------
         Basic example:
+
     >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 2, 3
@@ -963,6 +962,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>> Xt = transformer.fit_transform(X=X, y=control_variable)  # doctest: +SKIP
 
         Example of - dynamic inputs (matrix per time-step), missing values:
+
     >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 4, 4
@@ -1014,7 +1014,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         estimate_matrices=None,
         denoising=False,
     ):
-        super(KalmanFilterTransformerFP, self).__init__(
+        super().__init__(
             state_dim=state_dim,
             state_transition=state_transition,
             process_noise=process_noise,

@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 def convert_from_multiindex_to_listdataset(trainDF, class_val_list=None):
-    """
-    Output a dataset in ListDataset format compatible with gluonts.
+    """Output a dataset in ListDataset format compatible with gluonts.
 
     Parameters
     ----------
@@ -20,7 +18,6 @@ def convert_from_multiindex_to_listdataset(trainDF, class_val_list=None):
     Returns
     -------
     A ListDataset mtype type to be used as input for gluonts models/estimators
-
     """
     import numpy as np
     import pandas as pd
