@@ -29,7 +29,6 @@ import tempfile
 import textwrap
 import zipfile
 from datetime import datetime
-from distutils.util import strtobool
 from typing import Dict
 from urllib.request import urlretrieve
 
@@ -45,6 +44,7 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.strtobool import strtobool
 from sktime.utils.validation.panel import check_X, check_X_y
 
 DIRNAME = "data"
