@@ -5,12 +5,12 @@ __author__ = ["rakshitha123"]
 __all__ = ["load_tsf_to_dataframe"]
 
 from datetime import datetime
-from distutils.util import strtobool
 from typing import Dict
 
 import pandas as pd
 
 from sktime.datatypes import MTYPE_LIST_HIERARCHICAL, convert
+from sktime.utils.strtobool import strtobool
 
 
 def _convert_tsf_to_hierarchical(

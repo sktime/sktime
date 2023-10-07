@@ -2377,6 +2377,26 @@
       ]
     },
     {
+      "login": "Vasudeva-bit",
+      "name": "Vasudeva Kilaru",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70791259?v=4",
+      "profile": "https://github.com/Vasudeva-bit",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "geronimos",
+      "name": "Geronimo Bergk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29955288?s=96&v=4",
+      "profile": "https://github.com/geronimos",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
       "login": "julnow",
       "name": "Julian Nowak",
       "avatar_url": "https://avatars.githubusercontent.com/u/21206185?v=4",
