@@ -3,6 +3,8 @@
 
 __author__ = ["fkiraly"]
 
+import inspect
+
 
 def run_test_for_class(cls):
     """Check if test should run for a class or function.
@@ -41,10 +43,19 @@ def run_test_for_class(cls):
     from sktime.utils.validation._dependencies import _check_estimator_deps
 
     def _required_deps_present(obj):
+        """Check if all required soft dependencies are present, return bool."""
         if hasattr(obj, "get_class_tag"):
             return _check_estimator_deps(obj, severity="none")
         else:
             return True
+
+    def _is_class_changed_or_sktime_parents(cls):
+        """Check if class or any of its sktime parents have changed, return bool."""
+        cls_and_parents = inspect.getmro(cls)
+        cls_and_sktime_parents = [
+            x for x in cls_and_parents if x.__module__.startswith("sktime")
+        ]
+        return any(is_class_changed(x) for x in cls_and_sktime_parents)
 
     # if any of the required soft dependencies are not present, do not run the test
     if not all(_required_deps_present(x) for x in cls):
@@ -53,7 +64,7 @@ def run_test_for_class(cls):
     # if ONLY_CHANGED_MODULES is on, run the test if and only if
     # any of the modules containing any of the classes in the list have changed
     if ONLY_CHANGED_MODULES:
-        return any(is_class_changed(x) for x in cls)
+        return any(_is_class_changed_or_sktime_parents(x) for x in cls)
 
     # otherwise
     # i.e., dependencies are present, and differential testing is disabled
