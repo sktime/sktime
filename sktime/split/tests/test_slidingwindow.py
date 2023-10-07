@@ -2,7 +2,6 @@
 """Tests for sliding window splitter."""
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from sktime.forecasting.tests._config import (
@@ -14,7 +13,7 @@ from sktime.forecasting.tests._config import (
     TEST_YS,
 )
 from sktime.split import SlidingWindowSplitter
-from sktime.split.base._config import _inputs_are_supported
+from sktime.split.base._common import _inputs_are_supported
 from sktime.split.tests.test_split import _check_cv, _get_n_incomplete_windows
 from sktime.utils._testing.series import _make_series
 from sktime.utils.datetime import _coerce_duration_to_int
@@ -155,29 +154,3 @@ def test_sliding_window_splitter_initial_window_smaller_than_window_raise_error(
     message = "`initial_window` must greater than `window_length`"
     with pytest.raises(ValueError, match=message):
         next(cv.split(y))
-
-
-def test_split_series():
-    """Tests that split_series produces series in the split."""
-    y = _make_series()
-    cv = SlidingWindowSplitter()
-
-    for train, test in cv.split_series(y):
-        assert isinstance(train, pd.Series)
-        assert len(train) == 10
-        assert isinstance(test, pd.Series)
-        assert len(test) == 1
-
-
-def test_split_loc():
-    """Tests that split_loc produces loc indices for train and test."""
-    y = _make_series()
-    cv = SlidingWindowSplitter()
-
-    for train, test in cv.split_loc(y):
-        assert isinstance(train, pd.DatetimeIndex)
-        assert len(train) == 10
-        y.loc[train]
-        assert isinstance(test, pd.DatetimeIndex)
-        assert len(test) == 1
-        y.loc[test]
