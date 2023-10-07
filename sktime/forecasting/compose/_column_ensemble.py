@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements forecaster for applying different univariates by column."""
 
@@ -41,40 +40,51 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
     Examples
     --------
-    >>> import pandas as pd
-    >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_longley
+    .. Doctest::
+
+        >>> import pandas as pd
+        >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
+        >>> from sktime.forecasting.naive import NaiveForecaster
+        >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+        >>> from sktime.datasets import load_longley
 
     Using integers (column iloc references) for indexing:
-    >>> y = load_longley()[1][["GNP", "UNEMP"]]
-    >>> forecasters = [
-    ...     ("trend", PolynomialTrendForecaster(), 0),
-    ...     ("naive", NaiveForecaster(), 1),
-    ... ]
-    >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y, fh=[1, 2, 3])
-    ColumnEnsembleForecaster(...)
-    >>> y_pred = forecaster.predict()
+
+    .. Doctest::
+
+        >>> y = load_longley()[1][["GNP", "UNEMP"]]
+        >>> forecasters = [
+        ...     ("trend", PolynomialTrendForecaster(), 0),
+        ...     ("naive", NaiveForecaster(), 1),
+        ... ]
+        >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
+        >>> forecaster.fit(y, fh=[1, 2, 3])
+        ColumnEnsembleForecaster(...)
+        >>> y_pred = forecaster.predict()
 
     Using strings for indexing:
-    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-    >>> fc = ColumnEnsembleForecaster(
-    ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
-    ... )
-    >>> fc.fit(df, fh=[1, 42])
-    ColumnEnsembleForecaster(...)
-    >>> y_pred = fc.predict()
+
+    .. Doctest::
+
+        >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+        >>> fc = ColumnEnsembleForecaster(
+        ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
+        ... )
+        >>> fc.fit(df, fh=[1, 42])
+        ColumnEnsembleForecaster(...)
+        >>> y_pred = fc.predict()
 
     Applying one forecaster to multiple columns, multivariate:
-    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
-    >>> fc = ColumnEnsembleForecaster(
-    ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
-    ... )
-    >>> fc.fit(df, fh=[1, 42])
-    ColumnEnsembleForecaster(...)
-    >>> y_pred = fc.predict()
+
+    .. Doctest::
+
+        >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+        >>> fc = ColumnEnsembleForecaster(
+        ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
+        ... )
+        >>> fc.fit(df, fh=[1, 42])
+        ColumnEnsembleForecaster(...)
+        >>> y_pred = fc.predict()
     """
 
     _tags = {
@@ -101,7 +111,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
     def __init__(self, forecasters):
         self.forecasters = forecasters
-        super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
+        super().__init__(forecasters=forecasters)
 
         # set requires-fh-in-fit depending on forecasters
         if isinstance(forecasters, BaseForecaster):
@@ -123,10 +133,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     def _forecasters(self):
         """Make internal list of forecasters.
 
-        The list only contains the name and forecasters, dropping
-        the columns. This is for the implementation of get_params
-        via _HeterogenousMetaEstimator._get_params which expects
-        lists of tuples of len 2.
+        The list only contains the name and forecasters, dropping the columns. This is
+        for the implementation of get_params via _HeterogenousMetaEstimator._get_params
+        which expects lists of tuples of len 2.
         """
         forecasters = self.forecasters
         if isinstance(forecasters, BaseForecaster):
@@ -148,7 +157,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
                 )
             ]
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -169,10 +178,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         self.forecasters_ = []
         self.y_columns = list(y.columns)
 
-        for (name, forecaster, index) in forecasters:
+        for name, forecaster, index in forecasters:
             forecaster_ = forecaster.clone()
 
-            pd_index = self._coerce_to_pd_index(index)
+            pd_index = self._coerce_to_pd_index(index, self._y.columns)
 
             forecaster_.fit(y.loc[:, pd_index], X, fh)
             self.forecasters_.append((name, forecaster_, index))
@@ -193,7 +202,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         self : an instance of self.
         """
         for _, forecaster, index in self.forecasters_:
-            pd_index = self._coerce_to_pd_index(index)
+            pd_index = self._coerce_to_pd_index(index, self._y.columns)
             forecaster.update(y.loc[:, pd_index], X, update_params=update_params)
         return self
 
@@ -257,7 +266,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
                 at quantile probability in second-level col index, for each row index.
         """
         out = self._by_column(
-            "predict_quantiles", fh=fh, X=X, alpha=alpha, col_multiindex=True
+            "predict_quantiles",
+            fh=fh,
+            X=X,
+            alpha=alpha,
+            col_multiindex=True,
         )
         if len(out.columns.get_level_values(0).unique()) == 1:
             out.columns = out.columns.droplevel(level=0)
@@ -302,7 +315,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         out = self._by_column(
-            "predict_interval", fh=fh, X=X, coverage=coverage, col_multiindex=True
+            "predict_interval",
+            fh=fh,
+            X=X,
+            coverage=coverage,
+            col_multiindex=True,
         )
         if len(out.columns.get_level_values(0).unique()) == 1:
             out.columns = out.columns.droplevel(level=0)

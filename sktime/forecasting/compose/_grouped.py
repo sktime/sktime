@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing forecasting by group."""
 
@@ -68,13 +67,12 @@ class ForecastByLevel(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     def __init__(self, forecaster, groupby="local"):
-
         self.forecaster = forecaster
         self.groupby = groupby
 
         self.forecaster_ = forecaster.clone()
 
-        super(ForecastByLevel, self).__init__()
+        super().__init__()
 
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type checkers for Series scitype.
 
 Exports checkers for Series scitype:

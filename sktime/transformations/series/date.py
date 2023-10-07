@@ -1,8 +1,7 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
-__author__ = ["danbartl", "KishManani"]
+__author__ = ["danbartl", "KishManani", "VyomkeshVyas"]
 __all__ = ["DateTimeFeatures"]
 
 import warnings
@@ -26,6 +25,7 @@ _RAW_DUMMIES = [
     ["day", "month", "day", "efficient"],
     ["day", "week", "weekday", "minimal"],
     ["hour", "day", "hour", "minimal"],
+    ["hour", "week", "hour_of_week", "comprehensive"],
     ["minute", "hour", "minute", "minimal"],
     ["second", "minute", "second", "minimal"],
     ["millisecond", "second", "millisecond", "minimal"],
@@ -91,22 +91,27 @@ class DateTimeFeatures(BaseTransformer):
     >>> y = load_airline()
 
     Returns columns `y`, `year`, `month_of_year`
+
     >>> transformer = DateTimeFeatures(ts_freq="M")
     >>> y_hat = transformer.fit_transform(y)
 
     Returns columns `y`, `month_of_year`
+
     >>> transformer = DateTimeFeatures(ts_freq="M", manual_selection=["month_of_year"])
     >>> y_hat = transformer.fit_transform(y)
 
     Returns columns 'y', 'year', 'quarter_of_year', 'month_of_year', 'month_of_quarter'
+
     >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="comprehensive")
     >>> y_hat = transformer.fit_transform(y)
 
     Returns columns 'y', 'year', 'quarter_of_year', 'month_of_year'
+
     >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="efficient")
     >>> y_hat = transformer.fit_transform(y)
 
     Returns columns 'y',  'year', 'month_of_year'
+
     >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="minimal")
     >>> y_hat = transformer.fit_transform(y)
     """
@@ -140,14 +145,13 @@ class DateTimeFeatures(BaseTransformer):
         manual_selection=None,
         keep_original_columns=False,
     ):
-
         self.ts_freq = ts_freq
         self.feature_scope = feature_scope
         self.manual_selection = manual_selection
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         self.keep_original_columns = keep_original_columns
 
-        super(DateTimeFeatures, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -228,6 +232,23 @@ class DateTimeFeatures(BaseTransformer):
 
         return Xt
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {"feature_scope": "minimal"}
+        params2 = {"feature_scope": "efficient", "keep_original_columns": True}
+        params3 = {"manual_selection": ["day_of_year", "day_of_month"]}
+        return [params1, params2, params3]
+
 
 def _check_manual_selection(manual_selection, DUMMIES):
     if (manual_selection is not None) and (
@@ -300,6 +321,8 @@ def _calendar_dummies(x, funcs):
             (x["date_sequence"] - quarter_start) / pd.to_timedelta("1D") + 1
         ).astype(int)
         cd = values
+    elif funcs == "hour_of_week":
+        cd = date_sequence.day_of_week * 24 + date_sequence.hour
     elif funcs == "is_weekend":
         cd = date_sequence.day_of_week > 4
     else:
@@ -321,9 +344,8 @@ def _get_supported_calendar(ts_freq, DUMMIES):
 def _prep_dummies(DUMMIES):
     """Use to prepare dummy data.
 
-    Includes defining function call names and ranking
-    of date information based on frequency (e.g. year
-    has a lower frequency than week).
+    Includes defining function call names and ranking of date information based on
+    frequency (e.g. year has a lower frequency than week).
     """
     DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
 

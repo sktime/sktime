@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """Wrappers to convert distance to kernel or kernel to distance."""
 
 __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ"]
 
@@ -67,11 +66,10 @@ class IndepDist(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, dist, aggfun=None):
-
         self.dist = dist
         self.aggfun = aggfun
 
-        super(IndepDist, self).__init__()
+        super().__init__()
 
         # set property tags based on tags of components
         missing = True
@@ -79,10 +77,12 @@ class IndepDist(BasePairwiseTransformerPanel):
         if isinstance(dist, BasePairwiseTransformerPanel):
             missing = missing and dist.get_tag("capability:missing_values")
             unequal = unequal and dist.get_tag("capability:unequal_length")
+            pw_type = unequal = unequal and dist.get_tag("pwtrafo_type")
 
         tag_dict = {
             "capability:missing_values": missing,
             "capability:unequal_length": unequal,
+            "pwtrafo_type": pw_type,
         }
 
         self.set_tags(**tag_dict)

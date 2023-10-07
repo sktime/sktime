@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Wrapper for easy vectorization/iteration of time series data.
 
@@ -63,7 +62,6 @@ class VectorizedDF:
     def __init__(
         self, X, y=None, iterate_as="Series", is_scitype="Panel", iterate_cols=False
     ):
-
         self.X = X
 
         if is_scitype is None:
@@ -263,7 +261,7 @@ class VectorizedDF:
         if is_self_iter:
             yield from _iter_cols(self.X_multiindex)
         else:
-            for name, group in self.X_multiindex.groupby(level=iter_levels):
+            for name, group in self.X_multiindex.groupby(level=iter_levels, sort=False):
                 yield from _iter_cols(group.droplevel(iter_levels), group_name=name)
 
     def _iter_levels(self, iterate_as):
@@ -446,6 +444,7 @@ class VectorizedDF:
         rowname_default="estimators",
         colname_default="estimators",
         varname_of_self=None,
+        backend=None,
         **kwargs,
     ):
         """Vectorize application of estimator method, return results DataFrame or list.
@@ -505,6 +504,11 @@ class VectorizedDF:
             used as index name of single column if no column vectorization is performed
         varname_of_self : str, optional, default=None
             if not None, self will be passed as kwarg under name "varname_of_self"
+        backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+            Runs parallel evaluate if specified and `strategy` is set as "refit".
+            - "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+            - "dask": uses `dask`, requires `dask` package in environment
+            - "dask_lazy": same as "dask", but returns delayed object instead
         kwargs : will be passed to invoked methods of estimator(s) in `estimator`
 
         Returns
@@ -515,6 +519,9 @@ class VectorizedDF:
           Entries are identity references to entries of `estimator`,
           after `method` executed with arguments as above.
         """
+        iterate_as = self.iterate_as
+        iterate_cols = self.iterate_cols
+
         if args is None:
             args = kwargs
         else:
@@ -569,31 +576,46 @@ class VectorizedDF:
         else:
             estimators = itertools.cycle([estimator])
 
-        ret = []
-
-        for ((group_name, col_name, group), args_i, args_i_rowvec, est_i) in zip(
+        vec_zip = zip(
             self.items(),
-            explode(args, iterate_as=self.iterate_as, iterate_cols=self.iterate_cols),
-            explode(args_rowvec, iterate_as=self.iterate_as, iterate_cols=False),
+            explode(args, iterate_as=iterate_as, iterate_cols=iterate_cols),
+            explode(args_rowvec, iterate_as=iterate_as, iterate_cols=False),
             estimators,
-        ):
-            args_i.update(args_i_rowvec)
+        )
 
-            if varname_of_self is not None:
-                args_i[varname_of_self] = group
+        meta = {
+            "method": method,
+            "varname_of_self": varname_of_self,
+            "rowname_default": rowname_default,
+            "colname_default": colname_default,
+        }
 
-            est_i_method = getattr(est_i, method)
-            est_i_result = est_i_method(**args_i)
+        if backend is None:
+            ret = self._vectorize_est_none(vec_zip, meta=meta)
+        elif backend in ["loky", "multiprocessing", "threading"]:
+            ret = self._vectorize_est_joblib(vec_zip, meta=meta, backend=backend)
+        elif backend in ["dask", "dask_lazy"]:
+            ret = self._vectorize_est_dask(vec_zip, meta=meta, backend=backend)
 
-            if group_name is None:
-                group_name = rowname_default
-            if col_name is None:
-                col_name = colname_default
-
-            ret.append((group_name, col_name, est_i_result))
+        if backend == "dask_lazy":
+            return ret
 
         if return_type == "pd.DataFrame":
-            df = pd.DataFrame(ret).pivot(index=0, columns=1, values=2)
+            df_long = pd.DataFrame(ret)
+            cols_right_order = df_long.loc[:, 1].unique()
+            rows_right_order = df_long.loc[:, 0].unique()
+
+            df = df_long.pivot(index=0, columns=1, values=2)
+            # DataFrame.pivot sorts the rows & columns
+            # (is this a bug? see #4683 and #5108)
+            # either way, we need to fix this:
+            df = df.reindex(cols_right_order, axis=1)
+            df = df.reindex(rows_right_order, axis=0)
+
+            # remove "0" and "1" from index/columns name
+            df.index.names = [None] * len(df.index.names)
+            df.columns.name = None
+
             # TODO: add test case for tuple index
             try:
                 df.index = pd.MultiIndex.from_tuples(df.index)
@@ -604,6 +626,56 @@ class VectorizedDF:
             return df
         else:  # if return_type == "list"
             return [result for _, _, result in ret]
+
+    def _vectorize_est_single(self, vec_tuple, meta):
+        """Single loop iteration of _vectorize_est_[backend]."""
+        method = meta["method"]
+        varname_of_self = meta["varname_of_self"]
+        rowname_default = meta["rowname_default"]
+        colname_default = meta["colname_default"]
+
+        (group_name, col_name, group), args_i, args_i_rowvec, est_i = vec_tuple
+        args_i.update(args_i_rowvec)
+
+        if varname_of_self is not None:
+            args_i[varname_of_self] = group
+
+        est_i_method = getattr(est_i, method)
+        est_i_result = est_i_method(**args_i)
+
+        if group_name is None:
+            group_name = rowname_default
+        if col_name is None:
+            col_name = colname_default
+
+        return (group_name, col_name, est_i_result)
+
+    def _vectorize_est_none(self, vec_zip, meta):
+        """Vectorize application of estimator method via simple loop."""
+        ret = [self._vectorize_est_single(vec_tuple, meta) for vec_tuple in vec_zip]
+        return ret
+
+    def _vectorize_est_joblib(self, vec_zip, meta, backend):
+        """Vectorize application of estimator method via joblib Parallel."""
+        from joblib import Parallel, delayed
+
+        ret = Parallel(n_jobs=-1, backend=backend)(
+            delayed(self._vectorize_est_single)(vec_tpl, meta) for vec_tpl in vec_zip
+        )
+        return ret
+
+    def _vectorize_est_dask(self, vec_zip, meta, backend):
+        """Vectorize application of estimator method via dask."""
+        from dask import compute, delayed
+
+        lazy = [
+            delayed(self._vectorize_est_single)(vec_tuple, meta=meta)
+            for vec_tuple in vec_zip
+        ]
+        if backend == "dask":
+            return compute(*lazy)
+        else:
+            return lazy
 
 
 def _enforce_index_freq(item: pd.Series) -> pd.Series:

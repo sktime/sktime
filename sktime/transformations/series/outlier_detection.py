@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformers for detecting outliers in a time series."""
 
@@ -12,7 +11,7 @@ from math import ceil
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.split import SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 
 
@@ -69,12 +68,11 @@ class HampelFilter(BaseTransformer):
     }
 
     def __init__(self, window_length=10, n_sigma=3, k=1.4826, return_bool=False):
-
         self.window_length = window_length
         self.n_sigma = n_sigma
         self.k = k
         self.return_bool = return_bool
-        super(HampelFilter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

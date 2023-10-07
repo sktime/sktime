@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing utilities in the datatype module."""
 
 __author__ = ["fkiraly"]

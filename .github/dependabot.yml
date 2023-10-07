@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: "[MNT] [Dependabot]"
+      include: "scope"
+    labels:
+      - "maintenance"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: "[MNT] [Dependabot]"
+      include: "scope"
+    labels:
+      - "maintenance"

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for benchmarking tasks."""
 
 __author__ = ["mloning"]

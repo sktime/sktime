@@ -6,10 +6,10 @@ Welcome to sktime
 
 A unified framework for machine learning with time series.
 
-.. topic:: Applications for sktime internships 2023 open!
+.. topic:: Register as a user, or voter for sktime committees!
 
-    Application deadline is May 19.
-    `Apply here <https://github.com/sktime/mentoring/blob/main/internships/sktime2023.md>`_
+    Prioritized bugfixes, shape the tech roadmap and governance policy.
+    `Register here <https://forms.gle/eVuzrCjKDRupxawL7>`_
 
 
 Mission
@@ -20,10 +20,10 @@ Mission
 Features
 ========
 
-* unified API for machine learning with time series, for model specification, fitting, application, and validation
-* supported tasks include :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`time series regression <regression_ref>`, :ref:`time series clustering <clustering_ref>`.
-* tools for composite model buildin including pipelining with transformations, ensembling, tuning and reduction
-* interactive user experience with scikit-learn like syntax conventions
+* **unified API** for ML/AI with time series, for model building, fitting, application, and validation
+* **support for a variety of learning tasks** including :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`regression <regression_ref>`, :ref:`clustering <clustering_ref>`.
+* **composite model building**, including pipelines with transformations, ensembles, tuning, reduction
+* interactive user experience with **scikit-learn like interface conventions**
 
 Technical specification
 =======================

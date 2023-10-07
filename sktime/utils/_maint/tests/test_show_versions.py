@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for the show_versions utility."""
 
 from sktime.utils._maint._show_versions import (
@@ -19,7 +18,7 @@ def test_deps_info():
     """Test that _get_deps_info returns package/version dict as per contract."""
     deps_info = _get_deps_info()
     assert isinstance(deps_info, dict)
-    assert set(deps_info.keys()) == set(["sktime"])
+    assert set(deps_info.keys()) == {"sktime"}
 
     deps_info_default = _get_deps_info(DEFAULT_DEPS_TO_SHOW)
     assert isinstance(deps_info_default, dict)

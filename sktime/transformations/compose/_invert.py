@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Invert transform wrapper."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -52,7 +51,7 @@ class InvertTransform(_DelegatedTransformer):
     def __init__(self, transformer):
         self.transformer = transformer
 
-        super(InvertTransform, self).__init__()
+        super().__init__()
 
         self.transformer_ = transformer.clone()
 

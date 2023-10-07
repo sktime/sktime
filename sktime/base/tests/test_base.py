@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Tests for BaseObject universal base class.
+"""Tests for BaseObject universal base class.
 
 tests in this module:
 
@@ -44,13 +42,11 @@ from sktime.base import BaseEstimator, BaseObject
 
 # Fixture class for testing tag system
 class FixtureClassParent(BaseObject):
-
     _tags = {"A": "1", "B": 2, "C": 1234, 3: "D"}
 
 
 # Fixture class for testing tag system, child overrides tags
 class FixtureClassChild(FixtureClassParent):
-
     _tags = {"A": 42, 3: "E"}
 
 
@@ -203,7 +199,6 @@ def test_is_composite():
 
 
 class ResetTester(BaseObject):
-
     clsvar = 210
 
     def __init__(self, a, b=42):
@@ -280,7 +275,7 @@ def test_components():
     assert set(non_comp_comps.keys()) == set()
 
     assert isinstance(comp_comps, dict)
-    assert set(comp_comps.keys()) == set(["foo_"])
+    assert set(comp_comps.keys()) == {"foo_"}
     assert comp_comps["foo_"] is composite.foo_
     assert comp_comps["foo_"] is not composite.foo
 
@@ -319,11 +314,11 @@ def test_get_fitted_params():
     comp_f_params_shallow = composite.get_fitted_params(deep=False)
 
     assert isinstance(non_comp_f_params, dict)
-    assert set(non_comp_f_params.keys()) == set(["foo"])
+    assert set(non_comp_f_params.keys()) == {"foo"}
 
     assert isinstance(comp_f_params, dict)
-    assert set(comp_f_params) == set(["foo", "foo__foo"])
-    assert set(comp_f_params_shallow) == set(["foo"])
+    assert set(comp_f_params) == {"foo", "foo__foo"}
+    assert set(comp_f_params_shallow) == {"foo"}
     assert comp_f_params["foo"] is composite.foo_
     assert comp_f_params["foo"] is not composite.foo
     assert comp_f_params_shallow["foo"] is composite.foo_
@@ -331,7 +326,6 @@ def test_get_fitted_params():
 
 
 class ConfigTester(BaseObject):
-
     _config = {"foo_config": 42, "bar": "a"}
 
     clsvar = 210
@@ -359,7 +353,7 @@ def test_set_get_config():
 
     config_start = obj.get_config()
     assert isinstance(config_start, dict)
-    expected_config_start_keys = set(["foo_config", "bar"]).union(base_keys)
+    expected_config_start_keys = {"foo_config", "bar"}.union(base_keys)
     assert set(config_start.keys()) == expected_config_start_keys
     assert config_start["foo_config"] == 42
     assert config_start["bar"] == "a"
@@ -370,7 +364,7 @@ def test_set_get_config():
     obj.set_config(**{"bar": "b"})
     config_end = obj.get_config()
     assert isinstance(config_end, dict)
-    expected_config_end_keys = set(["foo_config", "bar", "foobar"]).union(base_keys)
+    expected_config_end_keys = {"foo_config", "bar", "foobar"}.union(base_keys)
     assert set(config_end.keys()) == expected_config_end_keys
     assert config_end["foo_config"] == 42
     assert config_end["bar"] == "b"

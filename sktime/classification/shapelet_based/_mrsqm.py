@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Interface for MrSQM classifier."""
 
 __authors__ = ["lnthach", "heerme"]  # fkiraly for the wrapper
@@ -75,7 +74,7 @@ class MrSQM(_DelegatedClassifier):
         self.custom_config = custom_config
         self.random_state = random_state
         self.sfa_norm = sfa_norm
-        super(MrSQM, self).__init__()
+        super().__init__()
 
         # construct the delegate - direct delegation to MrSQMClassifier
         from mrsqm import MrSQMClassifier

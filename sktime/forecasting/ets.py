@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements automatic and manually exponential time series smoothing models."""
@@ -159,6 +158,10 @@ class AutoETS(_StatsModelsAdapter):
     .. [3] R Version of ETS:
         https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets
 
+    See Also
+    --------
+    StatsForecastAutoETS
+
     Examples
     --------
     >>> from sktime.datasets import load_airline
@@ -239,7 +242,7 @@ class AutoETS(_StatsModelsAdapter):
         self.ignore_inf_ic = ignore_inf_ic
         self.n_jobs = n_jobs
 
-        super(AutoETS, self).__init__(random_state=random_state)
+        super().__init__(random_state=random_state)
 
         if self.auto:
             # If auto=True, check if trend, damped_trend, seasonal, or error are not set
@@ -406,7 +409,7 @@ class AutoETS(_StatsModelsAdapter):
                 return_params=self.return_params,
             )
 
-    def _predict(self, fh, X=None, **simulate_kwargs):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -417,7 +420,6 @@ class AutoETS(_StatsModelsAdapter):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        **simulate_kwargs : see statsmodels ETSResults.get_prediction
 
         Returns
         -------

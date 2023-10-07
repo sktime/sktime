@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """FreshPRINCE Classifier.
 
 Pipeline classifier using the full set of TSFresh features and a RotationForest
@@ -97,7 +96,7 @@ class FreshPRINCE(BaseClassifier):
         self._rotf = None
         self._tsfresh = None
 
-        super(FreshPRINCE, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.

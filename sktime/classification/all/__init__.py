@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """All time series classifiers and some classification data sets."""
 
 __author__ = ["mloning", "fkiraly"]

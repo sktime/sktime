@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Dispatch njit decorator used to isolate numba."""
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies

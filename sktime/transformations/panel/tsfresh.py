@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""tsfresh interface class."""
+"""Tsfresh interface class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
@@ -50,7 +49,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         self.profiling_filename = profiling_filename
         self.distributor = distributor
 
-        super(_TSFreshFeatureExtractor, self).__init__()
+        super().__init__()
 
         # _get_extraction_params should be after the init because this imports tsfresh
         # and the init checks for python version and tsfresh being present
@@ -239,7 +238,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         profiling_sorting=None,
         distributor=None,
     ):
-        super(TSFreshFeatureExtractor, self).__init__(
+        super().__init__(
             default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=kind_to_fc_parameters,
             chunksize=chunksize,
@@ -474,7 +473,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         hypotheses_independent=None,
         ml_task="auto",
     ):
-        super(TSFreshRelevantFeatureExtractor, self).__init__(
+        super().__init__(
             default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=kind_to_fc_parameters,
             chunksize=chunksize,

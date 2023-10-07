@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Interface to Hodrick-Prescott filter from `statsmodels`.
+"""Interface to Hodrick-Prescott filter from `statsmodels`.
 
 Please see the original library
 (https://github.com/statsmodels/statsmodels/blob/main/statsmodels/tsa/filters/hp_filter.py)
@@ -83,7 +81,7 @@ class HPFilter(BaseTransformer):
         lamb=1600,
     ):
         self.lamb = lamb
-        super(HPFilter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for validating panel data."""
 
 __author__ = ["mloning"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multi Layer Perceptron Network (MLP) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus"]
@@ -75,7 +74,7 @@ class MLPClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(MLPClassifier, self).__init__()
+        super().__init__()
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size

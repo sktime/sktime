@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Fit-in-transform wrapper."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -40,7 +39,7 @@ class FitInTransform(BaseTransformer):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.transformations.compose import FitInTransform
     >>> from sktime.transformations.series.impute import Imputer
     >>> y, X = load_longley()
@@ -62,7 +61,7 @@ class FitInTransform(BaseTransformer):
     def __init__(self, transformer, skip_inverse_transform=True):
         self.transformer = transformer
         self.skip_inverse_transform = skip_inverse_transform
-        super(FitInTransform, self).__init__()
+        super().__init__()
         self.clone_tags(transformer, None)
         self.set_tags(
             **{

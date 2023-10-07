@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """RestructuredText changelog generator."""
 
 import os
@@ -140,7 +139,6 @@ def render_changelog(prs, assigned):  # noqa
 
 
 if __name__ == "__main__":
-
     categories = [
         {"title": "Enhancements", "labels": ["feature", "enhancement"]},
         {"title": "Fixes", "labels": ["bug", "fix", "bugfix"]},

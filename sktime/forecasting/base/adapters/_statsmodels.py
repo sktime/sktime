@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for statsmodels forecasters to be used in sktime framework."""
@@ -30,9 +29,9 @@ class _StatsModelsAdapter(BaseForecaster):
         self._forecaster = None
         self.random_state = random_state
         self._fitted_forecaster = None
-        super(_StatsModelsAdapter, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -80,7 +79,7 @@ class _StatsModelsAdapter(BaseForecaster):
                     y = y.loc[index_diff]
                 self._fitted_forecaster = self._fitted_forecaster.append(y)
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -149,7 +148,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
         raise NotImplementedError("abstract method")
 
-    def _predict_interval(self, fh, X=None, coverage=0.95):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -203,18 +202,18 @@ class _StatsModelsAdapter(BaseForecaster):
             **get_prediction_arguments
         )
 
-        columns = pd.MultiIndex.from_product(
-            [["Coverage"], coverage, ["lower", "upper"]]
-        )
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+        columns = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=valid_indices, columns=columns)
 
         for c in coverage:
             pred_statsmodels = self._extract_conf_int(prediction_results, (1 - c))
 
-            pred_int[("Coverage", c, "lower")] = pred_statsmodels.loc[
+            pred_int[(var_name, c, "lower")] = pred_statsmodels.loc[
                 valid_indices, "lower"
             ]
-            pred_int[("Coverage", c, "upper")] = pred_statsmodels.loc[
+            pred_int[(var_name, c, "upper")] = pred_statsmodels.loc[
                 valid_indices, "upper"
             ]
 

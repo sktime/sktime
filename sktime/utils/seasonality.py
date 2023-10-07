@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for seasonality."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 # noqa: D100
@@ -62,7 +61,7 @@ def autocorrelation_seasonality_test(y, sp):
             / np.sqrt(n_timepoints)
             * np.sqrt(np.cumsum(np.append(1, 2 * coefs[1:] ** 2)))
         )
-        limit = limits[sp - 1]  #  zero-based indexing
+        limit = limits[sp - 1]  # zero-based indexing
         return np.abs(coef) > limit
 
 

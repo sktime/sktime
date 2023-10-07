@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.4.0
     hooks:
       - id: check-added-large-files
         args: ["--maxkb=1000"]
@@ -12,8 +12,17 @@ repos:
       - id: end-of-file-fixer
         exclude: "^docs/source/examples/"
       - id: fix-encoding-pragma
+        args:
+          - --remove
       - id: requirements-txt-fixer
       - id: trailing-whitespace
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.10.1
+    hooks:
+      - id: pyupgrade
+        args:
+          - --py38-plus
 
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
@@ -22,27 +31,27 @@ repos:
         name: isort
 
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 23.7.0
     hooks:
       - id: black
         language_version: python3
         # args: [--line-length 79]
 
   - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
+    rev: 6.1.0
     hooks:
       - id: flake8
         exclude: docs/conf.py
         additional_dependencies: [flake8-bugbear, flake8-print]
 
   - repo: https://github.com/mgedmin/check-manifest
-    rev: "0.47"
+    rev: "0.49"
     hooks:
       - id: check-manifest
         stages: [manual]
 
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.2.2
+    rev: 1.7.0
     hooks:
       - id: nbqa-black
         args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
@@ -55,7 +64,7 @@ repos:
         additional_dependencies: [flake8==3.8.3]
 
   - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.1.1
+    rev: 6.3.0
     hooks:
       - id: pydocstyle
         args: ["--config=setup.cfg"]
@@ -63,7 +72,7 @@ repos:
   # We use the Python version instead of the original version which seems to require Docker
   # https://github.com/koalaman/shellcheck-precommit
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.8.0.4
+    rev: v0.9.0.5
     hooks:
       - id: shellcheck
         name: shellcheck

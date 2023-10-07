@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Martrix Profile classifier.
 
 Pipeline classifier using the Matrix Profile transformer and an estimator.
@@ -58,17 +57,20 @@ class MatrixProfileClassifier(BaseClassifier):
     >>> from sktime.classification.feature_based import MatrixProfileClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = MatrixProfileClassifier()
-    >>> clf.fit(X_train, y_train)
-    MatrixProfileClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)  # doctest: +SKIP
+    >>> clf = MatrixProfileClassifier()  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    MatrixProfileClassifier(...)  # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "distance",
+        # sklearn 1.3.0 has a bug which causes predict_proba to fail
+        # see scikit-learn#26768 and sktime#4778
+        "python_dependencies": "scikit-learn!=1.3.0",
     }
 
     def __init__(
@@ -87,7 +89,7 @@ class MatrixProfileClassifier(BaseClassifier):
         self._transformer = None
         self._estimator = None
 
-        super(MatrixProfileClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.

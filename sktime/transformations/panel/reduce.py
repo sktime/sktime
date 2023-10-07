@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tabularizer transform, for pipelining."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -15,15 +14,13 @@ from sktime.transformations.base import BaseTransformer
 
 
 class Tabularizer(BaseTransformer):
-    """
-    A transformer that turns time series/panel data into tabular data.
+    """A transformer that turns time series/panel data into tabular data.
 
-    This estimator converts nested pandas dataframe containing
-    time-series/panel data with numpy arrays or pandas Series in
-    dataframe cells into a tabular pandas dataframe with only primitives in
-    cells. This is useful for transforming
-    time-series/panel data into a format that is accepted by standard
-    validation learning algorithms (as in sklearn).
+    This estimator converts nested pandas dataframe containing time-series/panel data
+    with numpy arrays or pandas Series in dataframe cells into a tabular pandas
+    dataframe with only primitives in cells. This is useful for transforming time-
+    series/panel data into a format that is accepted by standard validation learning
+    algorithms (as in sklearn).
     """
 
     _tags = {
@@ -111,7 +108,6 @@ class TimeBinner(BaseTransformer):
     }
 
     def __init__(self, idx, aggfunc=None):
-
         assert isinstance(
             idx, pd.IntervalIndex
         ), "idx should be of type pd.IntervalIndex"
@@ -134,7 +130,7 @@ class TimeBinner(BaseTransformer):
             self._aggfunc = self.aggfunc
         self.idx = idx
 
-        super(TimeBinner, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

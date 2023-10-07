@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """Data storage for benchmarking."""
 import pytest
 
 from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
-from sktime.classification.compose import ComposableTimeSeriesForestClassifier
+from sktime.classification.ensemble import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 classifier = ComposableTimeSeriesForestClassifier(n_estimators=2)

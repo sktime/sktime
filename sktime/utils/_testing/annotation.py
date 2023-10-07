@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __author__ = ["fkiraly", "klam-data"]
 __all__ = []
 

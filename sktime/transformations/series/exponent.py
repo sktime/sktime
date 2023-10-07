@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformers raise time series to user provided exponent."""
 
@@ -100,7 +99,7 @@ class ExponentTransformer(BaseTransformer):
                 f"Expected `offset` to be int or float, but found {type(self.offset)}."
             )
 
-        super(ExponentTransformer, self).__init__()
+        super().__init__()
 
         if abs(power) < 1e-6:
             warn(

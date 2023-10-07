@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements outlier detection from pyOD."""
 
@@ -37,7 +36,7 @@ class PyODAnnotator(BaseSeriesAnnotator):
 
     def __init__(self, estimator, fmt="dense", labels="indicator"):
         self.estimator = estimator  # pyod estimator
-        super(PyODAnnotator, self).__init__(fmt=fmt, labels=labels)
+        super().__init__(fmt=fmt, labels=labels)
 
     def _fit(self, X, Y=None):
         """Fit to training data.
@@ -122,9 +121,10 @@ class PyODAnnotator(BaseSeriesAnnotator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        _check_soft_dependencies("pyod", severity="error")
+        if _check_soft_dependencies("pyod", severity="none"):
+            from pyod.models.knn import KNN
 
-        from pyod.models.knn import KNN
-
-        params = {"estimator": KNN()}
+            params = {"estimator": KNN()}
+        else:
+            params = {"estimator": "foo"}
         return params

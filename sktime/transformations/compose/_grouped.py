@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing transformations by group."""
 
@@ -71,14 +70,13 @@ class TransformByLevel(_DelegatedTransformer):
     _delegate_name = "transformer_"
 
     def __init__(self, transformer, groupby="local", raise_warnings=True):
-
         self.transformer = transformer
         self.groupby = groupby
         self.raise_warnings = raise_warnings
 
         self.transformer_ = transformer.clone()
 
-        super(TransformByLevel, self).__init__()
+        super().__init__()
 
         if raise_warnings and self.transformer_.get_tag("scitype:instancewise"):
             warn(

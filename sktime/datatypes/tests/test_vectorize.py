@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing vectorization via VectorizedDF."""
 
 __author__ = ["fkiraly"]
@@ -12,6 +11,7 @@ from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_is_mtype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
 from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 SCITYPES = ["Panel", "Hierarchical"]
 
@@ -73,7 +73,6 @@ def _generate_scitype_mtype_combinations():
     sci_mtype_tuples = []
 
     for scitype in SCITYPES:
-
         mtypes = _get_all_mtypes_for_scitype(scitype)
 
         for mtype in mtypes:
@@ -124,7 +123,7 @@ def pytest_generate_tests(metafunc):
 
     fixturenames = set(metafunc.fixturenames)
 
-    if set(["scitype", "mtype", "fixture_index"]).issubset(fixturenames):
+    if {"scitype", "mtype", "fixture_index"}.issubset(fixturenames):
         keys = _generate_scitype_mtype_fixtureindex_combinations()
 
         ids = []
@@ -134,7 +133,7 @@ def pytest_generate_tests(metafunc):
         # parameterize test with from-mtpes
         metafunc.parametrize("scitype,mtype,fixture_index", keys, ids=ids)
 
-    elif set(["scitype", "mtype"]).issubset(fixturenames):
+    elif {"scitype", "mtype"}.issubset(fixturenames):
         keys = _generate_scitype_mtype_combinations()
 
         ids = []
@@ -416,9 +415,10 @@ def test_enforce_index_freq(item, freq):
     assert item.index.freq == freq
 
 
+@pytest.mark.parametrize("backend", [None, "loky", "threading", "dask"])
 @pytest.mark.parametrize("varname_used", [True, False])
 def test_vectorize_est(
-    scitype, mtype, fixture_index, iterate_as, iterate_cols, varname_used
+    scitype, mtype, fixture_index, iterate_as, iterate_cols, varname_used, backend
 ):
     """Tests vectorize_est method of VectorizeDF, for method = clone, fit.
 
@@ -442,6 +442,10 @@ def test_vectorize_est(
     if not _is_valid_iterate_as(scitype, iterate_as):
         return None
 
+    # escape test for dask backend if dask is not installed
+    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
     X_vect = VectorizedDF(
@@ -456,7 +460,7 @@ def test_vectorize_est(
         kwargs["y"] = X_vect
 
     est_clones = X_vect.vectorize_est(NaiveForecaster(), method="clone")
-    result = X_vect.vectorize_est(est_clones, method="fit", **kwargs)
+    result = X_vect.vectorize_est(est_clones, method="fit", backend=backend, **kwargs)
 
     def _len(x):
         if x is None:

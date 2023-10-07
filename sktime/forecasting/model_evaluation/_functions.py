@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
@@ -8,7 +7,7 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -41,6 +40,75 @@ def _check_strategy(strategy):
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
 
 
+def _check_scores(metrics) -> Dict:
+    """Validate and coerce to BaseMetric and segregate them based on predict type.
+
+    Parameters
+    ----------
+    metrics : sktime accepted metrics object or a list of them or None
+
+    Return
+    ------
+    metrics_type : Dict
+        The key is metric types and its value is a list of its corresponding metrics.
+    """
+    if not isinstance(metrics, List):
+        metrics = [metrics]
+
+    metrics_type = {}
+    for metric in metrics:
+        metric = check_scoring(metric)
+        # collect predict type
+        if hasattr(metric, "get_tag"):
+            scitype = metric.get_tag(
+                "scitype:y_pred", raise_error=False, tag_value_default="pred"
+            )
+        else:  # If no scitype exists then metric is a point forecast type
+            scitype = "pred"
+        if scitype not in metrics_type.keys():
+            metrics_type[scitype] = [metric]
+        else:
+            metrics_type[scitype].append(metric)
+    return metrics_type
+
+
+def _get_column_order_and_datatype(
+    metric_types: Dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
+) -> Dict:
+    """Get the ordered column name and input datatype of results."""
+    others_metadata = {
+        "len_train_window": "int",
+        "cutoff": cutoff_dtype,
+    }
+    y_metadata = {
+        "y_train": "object",
+        "y_test": "object",
+    }
+    fit_metadata, metrics_metadata = {"fit_time": "float"}, {}
+    for scitype in metric_types:
+        for metric in metric_types.get(scitype):
+            pred_args = _get_pred_args_from_metric(scitype, metric)
+            if pred_args == {} or old_naming:
+                time_key = f"{scitype}_time"
+                result_key = f"test_{metric.name}"
+                y_pred_key = f"y_{scitype}"
+            else:
+                argval = list(pred_args.values())[0]
+                time_key = f"{scitype}_{argval}_time"
+                result_key = f"test_{metric.name}_{argval}"
+                y_pred_key = f"y_{scitype}_{argval}"
+            fit_metadata[time_key] = "float"
+            metrics_metadata[result_key] = "float"
+            if return_data:
+                y_metadata[y_pred_key] = "object"
+    fit_metadata.update(others_metadata)
+    if return_data:
+        fit_metadata.update(y_metadata)
+    metrics_metadata.update(fit_metadata)
+    return metrics_metadata.copy()
+
+
+# should we remove _split since this is no longer being used?
 def _split(
     y,
     X,
@@ -102,34 +170,42 @@ def _select_fh_from_y(y):
     return fh
 
 
+def _get_pred_args_from_metric(scitype, metric):
+    pred_args = {
+        "pred_quantiles": "alpha",
+        "pred_interval": "coverage",
+    }
+    if scitype in pred_args.keys():
+        val = getattr(metric, pred_args[scitype], None)
+        if val is not None:
+            return {pred_args[scitype]: val}
+    return {}
+
+
 def _evaluate_window(
-    y,
-    X,
-    train,
-    test,
+    y_train,
+    y_test,
+    X_train,
+    X_test,
     i,
     fh,
-    freq,
     forecaster,
     strategy,
     scoring,
     return_data,
-    score_name,
     error_score,
     cutoff_dtype,
 ):
-
     # set default result values in case estimator fitting fails
     score = error_score
     fit_time = np.nan
     pred_time = np.nan
     cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
     y_pred = pd.NA
-
-    # split data
-    y_train, y_test, X_train, X_test = _split(
-        y=y, X=X, train=train, test=test, freq=freq
-    )
+    temp_result = dict()
+    y_preds_cache = dict()
+    old_naming = True
+    old_name_mapping = {}
     if fh is None:
         fh = _select_fh_from_y(y_test)
 
@@ -138,55 +214,76 @@ def _evaluate_window(
         start_fit = time.perf_counter()
         if i == 0 or strategy == "refit":
             forecaster = forecaster.clone()
-            forecaster.fit(y_train, X_train, fh=fh)
+            forecaster.fit(y=y_train, X=X_train, fh=fh)
         else:  # if strategy in ["update", "no-update_params"]:
             update_params = strategy == "update"
             forecaster.update(y_train, X_train, update_params=update_params)
         fit_time = time.perf_counter() - start_fit
 
+        # predict based on metrics
         pred_type = {
             "pred_quantiles": "predict_quantiles",
             "pred_interval": "predict_interval",
             "pred_proba": "predict_proba",
-            None: "predict",
+            "pred": "predict",
         }
-        # predict
-        start_pred = time.perf_counter()
+        # cache prediction from the first scitype and reuse it to compute other metrics
+        for scitype in scoring:
+            method = getattr(forecaster, pred_type[scitype])
+            if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
+                scoring.get(scitype)
+            ):
+                old_naming = False
+            for metric in scoring.get(scitype):
+                pred_args = _get_pred_args_from_metric(scitype, metric)
+                if pred_args == {}:
+                    time_key = f"{scitype}_time"
+                    result_key = f"test_{metric.name}"
+                    y_pred_key = f"y_{scitype}"
+                else:
+                    argval = list(pred_args.values())[0]
+                    time_key = f"{scitype}_{argval}_time"
+                    result_key = f"test_{metric.name}_{argval}"
+                    y_pred_key = f"y_{scitype}_{argval}"
+                    old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
+                    old_name_mapping[
+                        f"test_{metric.name}_{argval}"
+                    ] = f"test_{metric.name}"
+                    old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
-        if hasattr(scoring, "metric_args"):
-            metric_args = scoring.metric_args
-        else:
-            metric_args = {}
+                # make prediction
+                if y_pred_key not in y_preds_cache.keys():
+                    start_pred = time.perf_counter()
+                    y_pred = method(fh, X_test, **pred_args)
+                    pred_time = time.perf_counter() - start_pred
+                    temp_result[time_key] = [pred_time]
+                    y_preds_cache[y_pred_key] = [y_pred]
+                else:
+                    y_pred = y_preds_cache[y_pred_key][0]
 
-        if hasattr(scoring, "get_tag"):
-            scitype = scoring.get_tag("scitype:y_pred", raise_error=False)
-        else:
-            # If no scitype exists then metric is not proba and no args needed
-            scitype = None
+                score = metric(y_test, y_pred, y_train=y_train)
+                temp_result[result_key] = [score]
 
-        methodname = pred_type[scitype]
-        method = getattr(forecaster, methodname)
-
-        # todo 0.19.0: remove this patch
-        if methodname == "predict_proba":
-            metric_args["legacy_interface"] = False
-
-        y_pred = method(fh, X_test, **metric_args)
-        pred_time = time.perf_counter() - start_pred
-        # score
-        score = scoring(y_test, y_pred, y_train=y_train)
         # get cutoff
         cutoff = forecaster.cutoff
 
     except Exception as e:
         if error_score == "raise":
             raise e
-        else:
+        else:  # assign default value when fitting failed
+            for scitype in scoring:
+                temp_result[f"{scitype}_time"] = [pred_time]
+                if return_data:
+                    temp_result[f"y_{scitype}"] = [y_pred]
+                for metric in scoring.get(scitype):
+                    temp_result[f"test_{metric.name}"] = [score]
             warnings.warn(
                 f"""
                 In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
                 you can set error_score='raise' in evaluate to see
-                the exception message. Fit failed for len(y_train)={len(y_train)}.
+                the exception message.
+                Fit failed for the {i}-th data split, on training data y_train with
+                cutoff {cutoff}, and len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
                 Failed forecaster with parameters: {forecaster}.
                 """,
@@ -199,21 +296,25 @@ def _evaluate_window(
     else:
         cutoff_ind = cutoff[0]
 
-    result = pd.DataFrame(
-        {
-            score_name: [score],
-            "fit_time": [fit_time],
-            "pred_time": [pred_time],
-            "len_train_window": [len(y_train)],
-            "cutoff": [cutoff_ind],
-            "y_train": [y_train if return_data else pd.NA],
-            "y_test": [y_test if return_data else pd.NA],
-            "y_pred": [y_pred if return_data else pd.NA],
-        }
-    ).astype({"cutoff": cutoff_dtype})
+    # Storing the remaining evaluate detail
+    temp_result["fit_time"] = [fit_time]
+    temp_result["len_train_window"] = [len(y_train)]
+    temp_result["cutoff"] = [cutoff_ind]
+    if return_data:
+        temp_result["y_train"] = [y_train]
+        temp_result["y_test"] = [y_test]
+        temp_result.update(y_preds_cache)
+    result = pd.DataFrame(temp_result)
+    result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
+    if old_naming:
+        result = result.rename(columns=old_name_mapping)
+    column_order = _get_column_order_and_datatype(
+        scoring, return_data, cutoff_dtype, old_naming=old_naming
+    )
+    result = result.reindex(columns=column_order.keys())
 
     # Return forecaster if "update"
-    if strategy == "update":
+    if strategy == "update" or (strategy == "no-update_params" and i == 0):
         return result, forecaster
     else:
         return result
@@ -230,16 +331,61 @@ def evaluate(
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
     compute: bool = True,
+    cv_X=None,
     **kwargs,
 ):
-    """Evaluate forecaster using timeseries cross-validation.
+    r"""Evaluate forecaster using timeseries cross-validation.
+
+    All-in-one statistical performance benchmarking utility for forecasters
+    which runs a simple backtest experiment and returns a summary pd.DataFrame.
+
+    The experiment run is the following:
+
+    Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
+    the train/test folds produced by the generator ``cv.split_series(y)``.
+    Denote by :math:`X_{train, 1}, X_{test, 1}, \dots, X_{train, K}, X_{test, K}`
+    the train/test folds produced by the generator ``cv_X.split_series(X)``
+    (if ``X`` is ``None``, consider these to be ``None`` as well).
+
+    1. Set ``i = 1``
+    2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
+       with a ``fh`` to forecast :math:`y_{test, 1}`
+    3. The ``forecaster`` predict with exogeneous data :math:`X_{test, i}`
+       ``y_pred = forecaster.predict`` (or ``predict_proba`` or ``predict_quantiles``,
+       depending on ``scoring``)
+    4. Compute ``scoring`` on ``y_pred`` versus :math:`y_{test, 1}`
+    5. If ``i == K``, terminate, otherwise
+    6. Set ``i = i + 1``
+    7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
+       how depends on ``strategy``:
+
+        - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
+          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+        - if ``strategy == "update"``, update ``forecaster`` via ``update``,
+          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+        - if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
+          with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
+
+    8. Go to 3
+
+    Results returned in this function's return are:
+
+    * results of ``scoring`` calculations, from 4,  in the `i`-th loop
+    * runtimes for fitting and/or predicting, from 2, 3, 7, in the `i`-th loop
+    * cutoff state of ``forecaster``, at 3, in the `i`-th loop
+    * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
+
+    A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
 
     Parameters
     ----------
-    forecaster : sktime BaseForecaster descendant
-        sktime forecaster (concrete BaseForecaster descendant)
+    forecaster : sktime BaseForecaster descendant (concrete forecaster)
+        sktime forecaster to benchmark
     cv : sktime BaseSplitter descendant
-        Splitter of how to split the data into test data and train data
+        determines split of ``y`` and possibly ``X`` into test and train folds
+        y is always split according to ``cv``, see above
+        if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
+        if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
     y : sktime time series container
         Target (endogeneous) time series used in the evaluation experiment
     X : sktime time series container, of same mtype as y
@@ -272,6 +418,10 @@ def evaluate(
     compute : bool, default=True
         If backend="dask", whether returned DataFrame is computed.
         If set to True, returns `pd.DataFrame`, otherwise `dask.dataframe.DataFrame`.
+    cv_X : sktime BaseSplitter descendant, optional
+        determines split of ``X`` into test and train folds
+        default is ``X`` being split to identical ``loc`` indices as ``y``
+        if passed, must have same number of splits as ``cv``
     **kwargs : Keyword arguments
         Only relevant if backend is specified. Additional kwargs are passed into
         `dask.distributed.get_client` or `dask.distributed.Client` if backend is
@@ -285,43 +435,49 @@ def evaluate(
         Row index is splitter index of train/test fold in `cv`.
         Entries in the i-th row are for the i-th train/test split in `cv`.
         Columns are as follows:
+
         - test_{scoring.name}: (float) Model performance score. If `scoring` is a list,
-            then there is a column withname `test_{scoring.name}` for each scorer.
+        then there is a column withname `test_{scoring.name}` for each scorer.
+
         - fit_time: (float) Time in sec for `fit` or `update` on train fold.
         - pred_time: (float) Time in sec to `predict` from fitted estimator.
         - len_train_window: (int) Length of train window.
         - cutoff: (int, pd.Timestamp, pd.Period) cutoff = last time index in train fold.
         - y_train: (pd.Series) only present if see `return_data=True`
-          train fold of the i-th split in `cv`, used to fit/update the forecaster.
+        train fold of the i-th split in `cv`, used to fit/update the forecaster.
+
         - y_pred: (pd.Series) present if see `return_data=True`
-          forecasts from fitted forecaster for the i-th test fold indices of `cv`.
+        forecasts from fitted forecaster for the i-th test fold indices of `cv`.
+
         - y_test: (pd.Series) present if see `return_data=True`
-          testing fold of the i-th split in `cv`, used to compute the metric.
+        testing fold of the i-th split in `cv`, used to compute the metric.
 
     Examples
     --------
-        The type of evaluation that is done by `evaluate` depends on metrics in
-        param `scoring`. Default is `MeanAbsolutePercentageError`.
+    The type of evaluation that is done by `evaluate` depends on metrics in
+    param `scoring`. Default is `MeanAbsolutePercentageError`.
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> y = load_airline()
-    >>> forecaster = NaiveForecaster(strategy="mean", sp=12)
-    >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=3,
-    ... fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    >>> y = load_airline()[:24]
+    >>> forecaster = NaiveForecaster(strategy="mean", sp=3)
+    >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=6, fh=[1, 2, 3])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
-        Optionally, users may select other metrics that can be supplied
-        by `scoring` argument. These can be forecast metrics of any kind,
-        i.e., point forecast metrics, interval metrics, quantile foreast metrics.
-        https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics
-        To evaluate estimators using a specific metric, provide them to the scoring arg.
+    Optionally, users may select other metrics that can be supplied
+    by `scoring` argument. These can be forecast metrics of any kind as stated `here
+    <https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics>`_
+    i.e., point forecast metrics, interval metrics, quantile forecast metrics.
+    To evaluate estimators using a specific metric, provide them to the scoring arg.
+
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
-        Optionally, users can provide a list of metrics to `scoring` argument.
+    Optionally, users can provide a list of metrics to `scoring` argument.
+
     >>> from sktime.performance_metrics.forecasting import MeanSquaredError
     >>> results = evaluate(
     ...     forecaster=forecaster,
@@ -330,8 +486,9 @@ def evaluate(
     ...     scoring=[MeanSquaredError(square_root=True), MeanAbsoluteError()],
     ... )
 
-        An example of an interval metric is the `PinballLoss`.
-        It can be used with all probabilistic forecasters.
+    An example of an interval metric is the `PinballLoss`.
+    It can be used with all probabilistic forecasters.
+
     >>> from sktime.forecasting.naive import NaiveVariance
     >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
     >>> loss = PinballLoss()
@@ -347,10 +504,13 @@ def evaluate(
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
-    if isinstance(scoring, List):
-        scoring = [check_scoring(s) for s in scoring]
+    # TODO: remove lines(four lines below) and 599-612 in v0.25.0
+    if isinstance(scoring, list):
+        raise_warn, num = True, len(scoring)
     else:
-        scoring = check_scoring(scoring)
+        raise_warn, num = False, 1
+    # removal until here
+    scoring = _check_scores(scoring)
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
@@ -362,15 +522,6 @@ def evaluate(
 
     y = convert_to(y, to_type=PANDAS_MTYPES)
 
-    freq = None
-    try:
-        if y.index.nlevels == 1:
-            freq = y.index.freq
-        else:
-            freq = y.index.levels[0].freq
-    except AttributeError:
-        pass
-
     if X is not None:
         X_valid, _, _ = check_is_scitype(
             X, scitype=ALLOWED_SCITYPES, return_metadata=True
@@ -381,44 +532,72 @@ def evaluate(
             )
         X = convert_to(X, to_type=PANDAS_MTYPES)
 
-    score_name = (
-        f"test_{scoring.name}"
-        if not isinstance(scoring, List)
-        else f"test_{scoring[0].name}"
-    )
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
         "fh": cv.fh,
-        "freq": freq,
         "forecaster": forecaster,
-        "scoring": scoring if not isinstance(scoring, List) else scoring[0],
+        "scoring": scoring,
         "strategy": strategy,
-        "return_data": True,
+        "return_data": return_data,
         "error_score": error_score,
-        "score_name": score_name,
         "cutoff_dtype": cutoff_dtype,
     }
 
+    def gen_y_X_train_test(y, X, cv, cv_X):
+        """Generate joint splits of y, X as per cv, cv_X.
+
+        If X is None, train/test splits of X are also None.
+
+        If cv_X is None, will default to
+        SameLocSplitter(TestPlusTrainSplitter(cv), y)
+        i.e., X splits have same loc index as y splits.
+
+        Yields
+        ------
+        y_train : i-th train split of y as per cv
+        y_test : i-th test split of y as per cv
+        X_train : i-th train split of y as per cv_X. None if X was None.
+        X_test : i-th test split of y as per cv_X. None if X was None.
+        """
+        geny = cv.split_series(y)
+        if X is None:
+            for y_train, y_test in geny:
+                yield y_train, y_test, None, None
+        else:
+            if cv_X is None:
+                from sktime.split import SameLocSplitter, TestPlusTrainSplitter
+
+                cv_X = SameLocSplitter(TestPlusTrainSplitter(cv), y)
+
+            genx = cv_X.split_series(X)
+
+            for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
+                yield y_train, y_test, X_train, X_test
+
+    # generator for y and X splits to iterate over below
+    yx_splits = gen_y_X_train_test(y, X, cv, cv_X)
+
+    # dispatch by backend and strategy
     if backend is None or strategy in ["update", "no-update_params"]:
         # Run temporal cross-validation sequentially
         results = []
-        for i, (train, test) in enumerate(cv.split(y)):
-            if strategy == "update":
+        for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
+            if strategy == "update" or (strategy == "no-update_params" and i == 0):
                 result, forecaster = _evaluate_window(
-                    y,
-                    X,
-                    train,
-                    test,
+                    y_train,
+                    y_test,
+                    X_train,
+                    X_test,
                     i,
                     **_evaluate_window_kwargs,
                 )
                 _evaluate_window_kwargs["forecaster"] = forecaster
             else:
                 result = _evaluate_window(
-                    y,
-                    X,
-                    train,
-                    test,
+                    y_train,
+                    y_test,
+                    X_train,
+                    X_test,
                     i,
                     **_evaluate_window_kwargs,
                 )
@@ -432,29 +611,21 @@ def evaluate(
         from dask import delayed as dask_delayed
 
         results = []
-        for i, (train, test) in enumerate(cv.split(y)):
+        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+        for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
             results.append(
                 dask_delayed(_evaluate_window)(
-                    y,
-                    X,
-                    train,
-                    test,
+                    y_train,
+                    y_test,
+                    X_train,
+                    X_test,
                     i,
                     **_evaluate_window_kwargs,
                 )
             )
         results = dd.from_delayed(
             results,
-            meta={
-                score_name: "float",
-                "fit_time": "float",
-                "pred_time": "float",
-                "len_train_window": "int",
-                "cutoff": cutoff_dtype,
-                "y_train": "object",
-                "y_test": "object",
-                "y_pred": "object",
-            },
+            meta=metadata,
         )
         if compute:
             results = results.compute()
@@ -465,30 +636,35 @@ def evaluate(
 
         results = Parallel(backend=backend, **kwargs)(
             delayed(_evaluate_window)(
-                y,
-                X,
-                train,
-                test,
+                y_train,
+                y_test,
+                X_train,
+                X_test,
                 i,
                 **_evaluate_window_kwargs,
             )
-            for i, (train, test) in enumerate(cv.split(y))
+            for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits)
         )
         results = pd.concat(results)
 
+    # final formatting of results DataFrame
     results = results.reset_index(drop=True)
-    if isinstance(scoring, List):
-        for s in scoring[1:]:
-            results[f"test_{s.name}"] = np.nan
-            for row in results.index:
-                results.loc[row, f"test_{s.name}"] = s(
-                    results["y_test"].loc[row],
-                    results["y_pred"].loc[row],
-                    y_train=results["y_train"].loc[row],
-                )
 
-    if not return_data:
-        results = results.drop(columns=["y_train", "y_test", "y_pred"])
-    results = results.astype({"len_train_window": int})
-
+    # TODO: remove 16 lines below and 451-455 in v0.25.0
+    if raise_warn:
+        warnings.warn(
+            "Starting v0.25.0 model_evaluation.evaluate module will rearrange "
+            "all metric columns to the left of its output result DataFrame. "
+            "Please use loc references when addressing the columns. You can "
+            "safely ignore this warning if you don't use evaluate function directly.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        columns = results.columns.to_list()
+        non_first_metrics = []
+        for _ in range(1, num):
+            metric = columns.pop(1)
+            non_first_metrics.append(metric)
+        results = results.reindex(columns=columns + non_first_metrics)
+    #  removal until here
     return results

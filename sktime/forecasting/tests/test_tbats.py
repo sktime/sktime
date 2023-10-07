@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for TBATS."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -9,12 +8,12 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.tbats import TBATS
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(TBATS, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(TBATS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_tbats_long_fh():
     """Test TBATS with long fh, checks for failure condition in bug #4491."""

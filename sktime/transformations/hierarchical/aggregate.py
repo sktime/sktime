@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements a transfromer to generate hierarcical data from bottom level."""
 
@@ -72,10 +71,9 @@ class Aggregator(BaseTransformer):
     }
 
     def __init__(self, flatten_single_levels=True):
-
         self.flatten_single_levels = flatten_single_levels
 
-        super(Aggregator, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Base classes for adapting other forecasters to sktime framework."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 

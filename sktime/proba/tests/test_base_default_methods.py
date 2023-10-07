@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Test class for default methods.
 
-This is not for direct use, but for testing whether the defaulting in various
-methods works.
+This is not for direct use, but for testing whether the defaulting in various methods
+works.
 
-Testing works via TestAllDistributions which discovers the classes in
-here, executes the public methods in interface conformance tests,
-which in turn triggers the fallback defaults.
+Testing works via TestAllDistributions which discovers the classes in here, executes the
+public methods in interface conformance tests, which in turn triggers the fallback
+defaults.
 """
 
 __author__ = ["fkiraly"]
@@ -30,13 +29,12 @@ class _DistrDefaultMethodTester(BaseDistribution):
     }
 
     def __init__(self, mu, sigma, index=None, columns=None):
-
         self.mu = mu
         self.sigma = sigma
         self.index = index
         self.columns = columns
 
-        self._mu, self._sigma = self._get_bc_params()
+        self._mu, self._sigma = self._get_bc_params(self.mu, self.sigma)
         shape = self._mu.shape
 
         if index is None:
@@ -45,7 +43,7 @@ class _DistrDefaultMethodTester(BaseDistribution):
         if columns is None:
             columns = pd.RangeIndex(shape[1])
 
-        super(_DistrDefaultMethodTester, self).__init__(index=index, columns=columns)
+        super().__init__(index=index, columns=columns)
 
     def ppf(self, p):
         """Quantile function = percent point function = inverse cdf."""

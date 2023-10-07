@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BaseEstimator interface to sktime edit distances in distances module."""
 
 __author__ = ["fkiraly"]
@@ -8,7 +7,7 @@ from typing import Union
 import numpy as np
 
 from sktime.distances import pairwise_distance
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class EditDist(BasePairwiseTransformerPanel):
@@ -111,6 +110,7 @@ class EditDist(BasePairwiseTransformerPanel):
     >>> distmat = d.transform(X)  # doctest: +SKIP
 
     distances are also callable, this does the same:
+
     >>> distmat = d(X)  # doctest: +SKIP
     """
 
@@ -144,7 +144,7 @@ class EditDist(BasePairwiseTransformerPanel):
         self.nu = nu
         self.p = p
 
-        super(EditDist, self).__init__()
+        super().__init__()
 
         kwargs = {
             "window": window,

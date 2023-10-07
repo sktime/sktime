@@ -1,7 +1,5 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Implements meta forecaster for forecasters composed of other estimators."""
 
 __author__ = ["mloning"]
@@ -26,7 +24,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         self.forecasters = forecasters
         self.forecasters_ = None
         self.n_jobs = n_jobs
-        super(_HeterogenousEnsembleForecaster, self).__init__()
+        super().__init__()
 
     def _check_forecasters(self):
         if (

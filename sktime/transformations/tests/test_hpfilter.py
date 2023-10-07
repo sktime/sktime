@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for HPfilter wrapper annotation estimator."""
 
 __author__ = ["ken-maeda"]

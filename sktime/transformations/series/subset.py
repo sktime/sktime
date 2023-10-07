@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Transformers for index and column subsetting."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
@@ -53,7 +52,7 @@ class IndexSubset(BaseTransformer):
 
     def __init__(self, index_treatment="keep"):
         self.index_treatment = index_treatment
-        super(IndexSubset, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -161,13 +160,14 @@ class ColumnSelect(BaseTransformer):
         "fit_is_empty": True,
         "univariate-only": False,
         "capability:inverse_transform": False,
+        "skip-inverse-transform": True,
     }
 
     def __init__(self, columns=None, integer_treatment="col", index_treatment="remove"):
         self.columns = columns
         self.integer_treatment = integer_treatment
         self.index_treatment = index_treatment
-        super(ColumnSelect, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

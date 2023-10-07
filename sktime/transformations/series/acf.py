@@ -1,10 +1,9 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Auto-correlation transformations.
 
-Module :mod:`sktime.transformations.series` implements auto-correlation
+Module
+:mod: `sktime.transformations.series` implements auto-correlation
 transformers.
 """
 
@@ -40,10 +39,10 @@ class AutoCorrelationTransformer(BaseTransformer):
         calculations.
 
         - "none" performs no checks or handling of missing values
-        - “raise” raises an exception if NaN values are found.
-        - “drop” removes the missing observations and then estimates the
+        - "raise" raises an exception if NaN values are found.
+        - "drop" removes the missing observations and then estimates the
           autocovariances treating the non-missing as contiguous.
-        - “conservative” computes the autocovariance using nan-ops so that nans
+        - "conservative" computes the autocovariance using nan-ops so that nans
           are removed when computing the mean and cross-products that are used to
           estimate the autocovariance. "n" in calculation is set to the number of
           non-missing observations.
@@ -91,7 +90,7 @@ class AutoCorrelationTransformer(BaseTransformer):
         self.n_lags = n_lags
         self.fft = fft
         self.missing = missing
-        super(AutoCorrelationTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -219,7 +218,7 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
     ):
         self.n_lags = n_lags
         self.method = method
-        super(PartialAutoCorrelationTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

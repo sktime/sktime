@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for datetime functions."""
 
 __author__ = ["xiaobenbenecho", "khrapovs"]
@@ -18,6 +17,7 @@ from sktime.utils.datetime import (
     infer_freq,
     set_hier_freq,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def test_get_freq():
@@ -127,20 +127,27 @@ def test_set_freq() -> None:
 
 def test_set_freq_hier():
     """Test that setting frequency on a DatetimeIndex MultiIndex works."""
+    # from pandas 2.1.0 on, freq is preserved correctly,
+    # so in that case we artificially destroy the freq attribute
+    pandas_210 = _check_soft_dependencies("pandas>=2.1.0", severity="none")
+
     y = load_airline()
 
     assert get_time_index(y).freq is not None
 
     # Convert to DatetimeIndex
-    y.index = y.index.to_timestamp()
+    y_index = y.index.to_timestamp()
 
     assert get_time_index(y).freq is not None
 
+    if pandas_210:
+        y_index.freq = None
+
     # Create MultiIndex
-    mi = pd.MultiIndex.from_product([[0], y.index], names=["instances", "timepoints"])
+    mi = pd.MultiIndex.from_product([[0], y_index], names=["instances", "timepoints"])
     y_group1 = pd.DataFrame(y.values, index=mi, columns=["y"])
 
-    mi = pd.MultiIndex.from_product([[1], y.index], names=["instances", "timepoints"])
+    mi = pd.MultiIndex.from_product([[1], y_index], names=["instances", "timepoints"])
     y_group2 = pd.DataFrame(y.values, index=mi, columns=["y"])
 
     y_train_grp = pd.concat([y_group1, y_group2])

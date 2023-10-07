@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Mutli-scale Attention Convolutional Neural Classifier."""
 
 __author__ = ["jnrusson1"]
@@ -101,7 +100,7 @@ class MACNNClassifier(BaseDeepClassifier):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super(MACNNClassifier, self).__init__()
+        super().__init__()
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -133,8 +132,7 @@ class MACNNClassifier(BaseDeepClassifier):
         )
 
     def build_model(self, input_shape, n_classes, **kwargs):
-        """
-        Construct a compiled, un-trained, keras model that is ready for training.
+        """Construct a compiled, un-trained, keras model that is ready for training.
 
         In sktime, time series are stored in numpy arrays of shape (d,m), where d
         is the number of dimensions, m is the series length. Keras/tensorflow assume
@@ -181,8 +179,7 @@ class MACNNClassifier(BaseDeepClassifier):
         return model
 
     def _fit(self, X, y):
-        """
-        Fit the classifier on the training set (X, y).
+        """Fit the classifier on the training set (X, y).
 
         Parameters
         ----------

@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Abstract base class for the Keras neural network classifiers.
+"""Abstract base class for the Keras neural network classifiers.
 
 The reason for this class between BaseClassifier and deep_learning classifiers is
 because we can generalise tags, _predict and _predict_proba
@@ -42,7 +40,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
     }
 
     def __init__(self, batch_size=40, random_state=None):
-        super(BaseDeepClassifier, self).__init__()
+        super().__init__()
 
         self.batch_size = batch_size
         self.random_state = random_state
@@ -67,14 +65,12 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         ...
 
     def summary(self):
-        """
-        Summary function to return the losses/metrics for model fit.
+        """Summary function to return the losses/metrics for model fit.
 
         Returns
         -------
         history: dict or None,
             Dictionary containing model's train/validation losses and metrics
-
         """
         return self.history.history if self.history is not None else None
 

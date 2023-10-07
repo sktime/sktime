@@ -1,10 +1,9 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements ensemble forecasters.
 
-Creates univariate (optionally weighted)
-combination of the predictions from underlying forecasts.
+Creates univariate (optionally weighted) combination of the predictions from underlying
+forecasts.
 """
 
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
@@ -17,7 +16,7 @@ from sklearn.pipeline import Pipeline
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
 from sktime.utils.stats import (
     _weighted_geometric_mean,
     _weighted_max,
@@ -120,7 +119,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         random_state=None,
         n_jobs=None,
     ):
-        super(AutoEnsembleForecaster, self).__init__(
+        super().__init__(
             forecasters=forecasters,
             n_jobs=n_jobs,
         )
@@ -129,7 +128,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.test_size = test_size
         self.random_state = random_state
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -161,7 +160,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
         if self.method == "feature-importance":
-
             self.regressor_ = check_regressor(
                 regressor=self.regressor, random_state=self.random_state
             )
@@ -200,7 +198,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Return the predicted reduction.
 
         Parameters
@@ -321,7 +319,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
 
@@ -329,7 +327,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         # iff any of the component forecasters require fh in fit
         self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -349,7 +347,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Return the predicted reduction.
 
         Parameters

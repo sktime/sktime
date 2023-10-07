@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""sktime window forecaster base class."""
+"""Sktime window forecaster base class."""
 
 __author__ = ["mloning", "big-o", "fkiraly"]
 __all__ = ["_BaseWindowForecaster"]
@@ -10,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
-from sktime.forecasting.model_selection import CutoffSplitter
+from sktime.split import CutoffSplitter
 from sktime.utils.datetime import _shift
 
 
@@ -18,11 +17,11 @@ class _BaseWindowForecaster(BaseForecaster):
     """Base class for forecasters that use sliding windows."""
 
     def __init__(self, window_length=None):
-        super(_BaseWindowForecaster, self).__init__()
+        super().__init__()
         self.window_length = window_length
         self.window_length_ = None
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Predict core logic."""
         kwargs = {"X": X}
 
@@ -42,6 +41,10 @@ class _BaseWindowForecaster(BaseForecaster):
             y_oos = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
+
+            if isinstance(y_ins, pd.DataFrame) and isinstance(y_oos, pd.Series):
+                y_oos = y_oos.to_frame(y_ins.columns[0])
+
             y_pred = pd.concat([y_ins, y_oos])
 
         # ensure pd.Series name attribute is preserved

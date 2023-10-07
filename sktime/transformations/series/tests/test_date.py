@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Unit tests of DateTimeFeatures functionality."""
 
@@ -9,13 +8,12 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from sktime.datasets import load_airline, load_longley, load_PBS_dataset
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.date import DateTimeFeatures
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
-if _check_estimator_deps(DateTimeFeatures, severity="none"):
-
+if run_test_for_class(DateTimeFeatures):
     # Load multivariate dataset longley and apply calendar extraction
 
     y, X = load_longley()
@@ -92,6 +90,17 @@ if _check_estimator_deps(DateTimeFeatures, severity="none"):
     test_full = y_train_t.columns.to_list()
     test_types = y_train_t.select_dtypes(include=["int64"]).columns.to_list()
 
+else:
+    test_full_featurescope = []
+    test_reduced_featurescope = []
+    test_changing_frequency = []
+    test_manspec_with_tsfreq = []
+    test_manspec_wo_tsfreq = []
+    test_univariate_data = []
+    test_diffdateformat = []
+    test_full = []
+    test_types = []
+
 
 # Test `is_weekend` works in manual selection
 @pytest.fixture
@@ -123,6 +132,7 @@ all_args = [
     "day_of_month",
     "day_of_week",
     "hour_of_day",
+    "hour_of_week",
     "minute_of_hour",
     "second_of_minute",
     "millisecond_of_second",
@@ -131,8 +141,8 @@ all_args = [
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "test_input,expected",
@@ -201,16 +211,16 @@ all_args = [
 def test_eval(test_input, expected):
     """Tests which columns are returned for different arguments.
 
-    For a detailed description what these arguments do,
-    and how they interact see docstring of DateTimeFeatures.
+    For a detailed description what these arguments do, and how they interact see
+    docstring of DateTimeFeatures.
     """
     assert len(test_input) == len(expected)
     assert all([a == b for a, b in zip(test_input, expected)])
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_manual_selection_is_weekend(df_datetime_daily_idx):
     """Tests that "is_weekend" returns correct result in `manual_selection`."""
@@ -227,8 +237,8 @@ def test_manual_selection_is_weekend(df_datetime_daily_idx):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_transform_panel(df_panel):
     """Test `.transform()` on panel data."""
@@ -251,8 +261,8 @@ def test_transform_panel(df_panel):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_keep_original_columns(df_panel):
     """Test `.transform()` on panel data."""
@@ -274,8 +284,8 @@ def test_keep_original_columns(df_panel):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not (DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_month_of_quarter(df_panel):
     """Test month_of_quarter for correctness, failure case of bug #4541."""
@@ -287,3 +297,25 @@ def test_month_of_quarter(df_panel):
     yt = t.fit_transform(y)[:13]
     expected = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1])
     assert (expected == yt.values).all()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_manual_selection_hour_of_week(df_panel):
+    """Tests that "hour_of_week" returns correct result in `manual_selection`."""
+    y = pd.DataFrame(
+        data={"y": range(6)},
+        index=pd.date_range(start="2023-01-01", freq="H", periods=6),
+    )
+    transformer = DateTimeFeatures(
+        manual_selection=["hour_of_week"], keep_original_columns=True
+    )
+
+    yt = transformer.fit_transform(y)
+    expected = pd.DataFrame(
+        data={"y": range(6), "hour_of_week": [144, 145, 146, 147, 148, 149]},
+        index=y.index,
+    )
+    assert_frame_equal(yt, expected)
