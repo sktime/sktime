@@ -19,6 +19,7 @@
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
       "profile": "https://github.com/fkiraly",
       "contributions": [
+        "blog",
         "bug",
         "business",
         "code",
@@ -2357,6 +2358,15 @@
       ]
     },
     {
+      "login": "ali-parizad",
+      "name": "Ali Parizad",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13907016?v=4",
+      "profile": "https://github.com/ali-parizad",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "BensHamza",
       "name": "Hamza Benslimane",
       "avatar_url": "https://avatars.githubusercontent.com/u/96446862?v=4",
@@ -2373,7 +2383,17 @@
       "profile": "https://github.com/Vasudeva-bit",
       "contributions": [
         "code",
-        "typo"
+        "doc"
+      ]
+    },
+    {
+      "login": "julnow",
+      "name": "Julian Nowak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21206185?v=4",
+      "profile": "https://github.com/julnow",
+      "contributions": [
+        "bug",
+        "code"
       ]
     }
   ]
