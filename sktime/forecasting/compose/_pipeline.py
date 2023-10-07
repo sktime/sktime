@@ -1352,6 +1352,9 @@ class ForecastX(BaseForecaster):
         X : sktime time series container
             a forecast obtained using a clone of forecaster_X, state as above
         """
+        if self.get_tag("ignores-exogeneous-X"):
+            return X
+
         if self.X_was_None_:
             return None
         if self.behaviour == "update":
@@ -1387,9 +1390,7 @@ class ForecastX(BaseForecaster):
         y_pred : time series in sktime compatible format
             Point forecasts
         """
-        if not self.get_tag("ignores-exogeneous-X"):
-            X = self._get_forecaster_X_prediction(fh=fh, X=X)
-
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict(fh=fh, X=X)
         return y_pred
 
@@ -1449,9 +1450,7 @@ class ForecastX(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        if not self.get_tag("ignores-exogeneous-X"):
-            X = self._get_forecaster_X_prediction(fh=fh, X=X)
-
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X, coverage=coverage)
         return y_pred
 
@@ -1481,9 +1480,7 @@ class ForecastX(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        if not self.get_tag("ignores-exogeneous-X"):
-            X = self._get_forecaster_X_prediction(fh=fh, X=X)
-
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         return y_pred
 
@@ -1523,9 +1520,7 @@ class ForecastX(BaseForecaster):
                     covariance between time index in row and col.
                 Note: no covariance forecasts are returned between different variables.
         """
-        if not self.get_tag("ignores-exogeneous-X"):
-            X = self._get_forecaster_X_prediction(fh=fh, X=X)
-
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict_var(fh=fh, X=X, cov=cov)
         return y_pred
 
@@ -1553,9 +1548,7 @@ class ForecastX(BaseForecaster):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        if not self.get_tag("ignores-exogeneous-X"):
-            X = self._get_forecaster_X_prediction(fh=fh, X=X)
-
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X, marginal=marginal)
         return y_pred
 
