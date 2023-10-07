@@ -120,7 +120,6 @@ def test_check_link_downloadable(name):
     url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
 
     # Send a GET request to check if the link exists without downloading the file
-    # response = requests.get(url, stream=True)
     req = Request(url, method="HEAD")
     response = urlopen(req)
 
