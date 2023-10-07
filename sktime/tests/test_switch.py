@@ -3,7 +3,7 @@
 
 __author__ = ["fkiraly"]
 
-import inspect
+from inspect import getmro, isclass
 
 
 def run_test_for_class(cls):
@@ -51,7 +51,12 @@ def run_test_for_class(cls):
 
     def _is_class_changed_or_sktime_parents(cls):
         """Check if class or any of its sktime parents have changed, return bool."""
-        cls_and_parents = inspect.getmro(cls)
+        # if cls is a function, not a class, default to is_class_changed
+        if not isclass(cls):
+            return is_class_changed(cls)
+
+        # now we know cls is a class, so has an mro
+        cls_and_parents = getmro(cls)
         cls_and_sktime_parents = [
             x for x in cls_and_parents if x.__module__.startswith("sktime")
         ]
