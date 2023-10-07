@@ -35,7 +35,7 @@ If your contribution does add a new hard dependency, we may suggest to initially
 
 #### Any other comments?
 <!--
-Please be aware that we are a loose team of volunteers so patience is necessary; assistance handling other issues is very welcome. We value all user contributions, no matter how minor they are. If we are slow to review, either the pull request needs some benchmarking, tinkering, convincing, etc. or more likely the reviewers are simply busy. In either case, we ask for your understanding during the review process.
+Please be aware that we are a loose team of volunteers; assistance handling other issues is very welcome. We value all user contributions, no matter how minor they are. If we are slow to review your PR (>3 working days), feel free to let us know on the sktime discord. Thank you for your understanding during the review process.
 -->
 
 #### PR checklist
