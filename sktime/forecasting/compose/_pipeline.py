@@ -1197,8 +1197,9 @@ class ForecastX(BaseForecaster):
         if "refit", then forecaster_X is fit to `X` in `predict` only,
             Forecast added to `X` in `predict` is obtained from this state.
     columns : None, or pandas compatible index iterator (e.g., list of str), optional
-        default = None = all columns in X are used for forecast
-        columns to which `forecaster_X` is applied
+        default = None = all columns in X are used for forecast columns to which
+        `forecaster_X` is applied. if not ``None``, this must be a non-empty list of
+        valid column names (``[]`` and ``None`` do not imply the same)
 
     Attributes
     ----------
