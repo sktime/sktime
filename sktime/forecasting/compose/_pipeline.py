@@ -1312,11 +1312,7 @@ class ForecastX(BaseForecaster):
         # remember if X seen was None
         self.X_was_None_ = X is None
 
-        if (
-            self.behaviour == "update"
-            and X is not None
-            and not self.get_tag("ignores-exogeneous-X")
-        ):
+        if self.behaviour == "update" and X is not None:
             self.forecaster_X_ = self.forecaster_X_c.clone()
             self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X)
 
@@ -1352,9 +1348,6 @@ class ForecastX(BaseForecaster):
         X : sktime time series container
             a forecast obtained using a clone of forecaster_X, state as above
         """
-        if self.get_tag("ignores-exogeneous-X"):
-            return X
-
         if self.X_was_None_:
             return None
         if self.behaviour == "update":
@@ -1409,11 +1402,7 @@ class ForecastX(BaseForecaster):
         -------
         self : an instance of self
         """
-        if (
-            self.behaviour == "update"
-            and X is not None
-            and not self.get_tag("ignores-exogeneous-X")
-        ):
+        if self.behaviour == "update" and X is not None:
             self.forecaster_X_.update(y=self._get_Xcols(X), update_params=update_params)
         self.forecaster_y_.update(y=y, X=X, update_params=update_params)
 
