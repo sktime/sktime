@@ -14,20 +14,18 @@ keywords = [
   "time-series-classification",
   "time-series-regression",
 ]
-[project.license]
-file = "LICENSE"
-
+license = { file = "LICENSE" }
 maintainers = [
-    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
-    {name = "Franz Király"},
-    {name = "Jonathan Bechtel"},
-    {name = "Kiril Ralinovski"},
-    {name = "Marc Rovira"},
-    {name = "Sagar Mishra"},
-    {name = "Ugochukwu Onyeka"},
+  { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
+  { name = "Franz Király" },
+  { name = "Jonathan Bechtel" },
+  { name = "Kiril Ralinovski" },
+  { name = "Marc Rovira" },
+  { name = "Sagar Mishra" },
+  { name = "Ugochukwu Onyeka" },
 ]
 authors = [
-    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
+    { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
 ]
 requires-python = ">=3.8,<3.12"
 classifiers = [
@@ -244,13 +242,13 @@ zip-safe = true
 
 [tool.setuptools.package-data]
 sktime = [
-    "*.csv",
-    "*.csv.gz",
-    "*.arff",
-    "*.arff.gz",
-    "*.txt",
-    "*.ts",
-    "*.tsv",
+  "*.csv",
+  "*.csv.gz",
+  "*.arff",
+  "*.arff.gz",
+  "*.txt",
+  "*.ts",
+  "*.tsv",
 ]
 
 [tool.setuptools.packages.find]
