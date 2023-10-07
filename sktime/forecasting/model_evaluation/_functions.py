@@ -15,6 +15,7 @@ import pandas as pd
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.parallel import parallelize
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
@@ -182,20 +183,17 @@ def _get_pred_args_from_metric(scitype, metric):
     return {}
 
 
-def _evaluate_window(
-    y_train,
-    y_test,
-    X_train,
-    X_test,
-    i,
-    fh,
-    forecaster,
-    strategy,
-    scoring,
-    return_data,
-    error_score,
-    cutoff_dtype,
-):
+def _evaluate_window(x, meta):
+    # unpack args
+    i, (y_train, y_test, X_train, X_test) = x
+    fh = meta["fh"]
+    forecaster = meta["forecaster"]
+    strategy = meta["strategy"]
+    scoring = meta["scoring"]
+    return_data = meta["return_data"]
+    error_score = meta["error_score"]
+    cutoff_dtype = meta["cutoff_dtype"]
+
     # set default result values in case estimator fitting fails
     score = error_score
     fit_time = np.nan
@@ -496,11 +494,20 @@ def evaluate(
     >>> results = evaluate(forecaster=NaiveVariance(forecaster),
     ... y=y, cv=cv, scoring=loss)
     """
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        raise RuntimeError(
-            "running evaluate with backend='dask' requires the dask package installed,"
-            "but dask is not present in the python environment"
+    if backend in ["dask", "dask_lazy"]:
+        if not _check_soft_dependencies("dask", severity="none"):
+            raise RuntimeError(
+                "running evaluate with backend='dask' requires the dask package "
+                "installed, but dask is not present in the python environment"
+            )
+    if backend == "dask" and not compute:
+        warnings.warn(
+            "the compute argument of evaluate is deprecated and will be removed "
+            "in sktime 0.25.0. For the same behaviour in the future, "
+            'use backend="dask_lazy"',
+            stacklevel=2,
         )
+        backend = "dask_lazy"
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
@@ -577,74 +584,40 @@ def evaluate(
     # generator for y and X splits to iterate over below
     yx_splits = gen_y_X_train_test(y, X, cv, cv_X)
 
+    # sequential strategies cannot be parallelized
+    not_parallel = strategy in ["update", "no-update_params"]
+
     # dispatch by backend and strategy
-    if backend is None or strategy in ["update", "no-update_params"]:
+    if not_parallel:
         # Run temporal cross-validation sequentially
         results = []
-        for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
-            if strategy == "update" or (strategy == "no-update_params" and i == 0):
-                result, forecaster = _evaluate_window(
-                    y_train,
-                    y_test,
-                    X_train,
-                    X_test,
-                    i,
-                    **_evaluate_window_kwargs,
-                )
+        for x in enumerate(yx_splits):
+            is_first = x[0] == 0  # first iteration
+            if strategy == "update" or (strategy == "no-update_params" and is_first):
+                result, forecaster = _evaluate_window(x, _evaluate_window_kwargs)
                 _evaluate_window_kwargs["forecaster"] = forecaster
             else:
-                result = _evaluate_window(
-                    y_train,
-                    y_test,
-                    X_train,
-                    X_test,
-                    i,
-                    **_evaluate_window_kwargs,
-                )
+                result = _evaluate_window(x, _evaluate_window_kwargs)
             results.append(result)
-        results = pd.concat(results)
-
-    elif backend == "dask":
-        # Use Dask delayed instead of joblib,
-        # which uses Futures under the hood
-        import dask.dataframe as dd
-        from dask import delayed as dask_delayed
-
-        results = []
-        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
-        for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
-            results.append(
-                dask_delayed(_evaluate_window)(
-                    y_train,
-                    y_test,
-                    X_train,
-                    X_test,
-                    i,
-                    **_evaluate_window_kwargs,
-                )
-            )
-        results = dd.from_delayed(
-            results,
-            meta=metadata,
-        )
-        if compute:
-            results = results.compute()
-
     else:
-        # Otherwise use joblib
-        from joblib import Parallel, delayed
-
-        results = Parallel(backend=backend, **kwargs)(
-            delayed(_evaluate_window)(
-                y_train,
-                y_test,
-                X_train,
-                X_test,
-                i,
-                **_evaluate_window_kwargs,
-            )
-            for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits)
+        if backend == "dask":
+            backend_in = "dask_lazy"
+        else:
+            backend_in = backend
+        results = parallelize(
+            _evaluate_window, enumerate(yx_splits), _evaluate_window_kwargs, backend_in
         )
+
+    # final formatting of dask dataframes
+    if backend in ["dask", "dask_lazy"] and not not_parallel:
+        import dask.dataframe as dd
+
+        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+
+        results = dd.from_delayed(results, meta=metadata)
+        if backend == "dask":
+            results = results.compute()
+    else:
         results = pd.concat(results)
 
     # final formatting of results DataFrame
