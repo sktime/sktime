@@ -82,6 +82,7 @@ class BaseForecaster(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     # for more extensive documentation, see extension_templates/forecasting.py
     _tags = {
+        "object_type": "forecaster",  # type of object
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "capability:insample": True,  # can the estimator make in-sample predictions?
@@ -96,6 +97,15 @@ class BaseForecaster(BaseEstimator):
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # str or list of str, package soft dependencies
+    }
+
+    # configs and default config values
+    _config = {
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "dask": uses `dask`, requires `dask` package in environment
     }
 
     def __init__(self):
@@ -930,7 +940,7 @@ class BaseForecaster(BaseEstimator):
                 entry is the point prediction of col index predicted from row index
                 entry is nan if no prediction is made at that (cutoff, horizon) pair
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.split import ExpandingWindowSplitter
 
         if cv is None:
             cv = ExpandingWindowSplitter(initial_window=1)
@@ -1736,12 +1746,16 @@ class BaseForecaster(BaseEstimator):
                     method="clone",
                     rowname_default="forecasters",
                     colname_default="forecasters",
+                    backend=self.get_config()["backend:parallel"],
                 )
             else:
                 forecasters_ = self.forecasters_
 
             self.forecasters_ = y.vectorize_est(
-                forecasters_, method=methodname, **kwargs
+                forecasters_,
+                method=methodname,
+                backend=self.get_config()["backend:parallel"],
+                **kwargs,
             )
             return self
 
@@ -1752,7 +1766,11 @@ class BaseForecaster(BaseEstimator):
                 self._yvec = y
 
             y_preds = self._yvec.vectorize_est(
-                self.forecasters_, method=methodname, return_type="list", **kwargs
+                self.forecasters_,
+                method=methodname,
+                return_type="list",
+                backend=self.get_config()["backend:parallel"],
+                **kwargs,
             )
 
             # if we vectorize over columns,

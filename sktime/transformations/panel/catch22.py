@@ -238,16 +238,6 @@ class Catch22(BaseTransformer):
 
         threads_to_use = check_n_jobs(self.n_jobs)
 
-        # todo remove in v0.16 and add to docstring: ``-1`` means using all processors.
-        if self.n_jobs == -1:
-            threads_to_use = 1
-            warnings.warn(
-                "``n_jobs`` default was changed to 1 from -1 in version 0.14.0. "
-                "In version 0.16.0 a value of -1 will use all CPU cores instead of the "
-                "current 1 CPU core.",
-                stacklevel=2,
-            )
-
         c22_list = Parallel(n_jobs=threads_to_use)(
             delayed(self._transform_case)(
                 X.iloc[i],
