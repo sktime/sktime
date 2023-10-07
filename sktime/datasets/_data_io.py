@@ -44,6 +44,7 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.strtobool import strtobool
 from sktime.utils.validation.panel import check_X, check_X_y
 
 DIRNAME = "data"
@@ -1849,38 +1850,6 @@ def write_ndarray_to_tsfile(
             file.write(f"{a}{missing_values}")
         file.write("\n")  # open a new line
     file.close()
-
-
-def strtobool(val):
-    """Convert a string representation of truth to int, true (1) or false (0).
-
-    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
-    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
-    'val' is anything else.
-
-    Parameters
-    ----------
-    val : str
-        A string representation of truth.
-
-    Returns
-    -------
-    int, 0 or 1
-        val coerced to int
-        1 if val is a true value, 0 if val is a false value (see above)
-
-    Raises
-    ------
-    ValueError
-        If val is anything other than the strings above.
-    """
-    val = val.lower()
-    if val in ("y", "yes", "t", "true", "on", "1"):
-        return 1
-    elif val in ("n", "no", "f", "false", "off", "0"):
-        return 0
-    else:
-        raise ValueError(f"invalid truth value {val!r}")
 
 
 def load_tsf_to_dataframe(
