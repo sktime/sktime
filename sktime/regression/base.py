@@ -50,6 +50,7 @@ class BaseRegressor(BaseEstimator, ABC):
     """
 
     _tags = {
+        "object_type": "regressor",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multivariate": False,
@@ -429,9 +430,12 @@ def _check_regressor_input(
     # Check y if passed
     if y is not None:
         # Check y valid input
-        if not isinstance(y, (pd.Series, np.ndarray)):
+        if not isinstance(y, (pd.Series, np.ndarray)) and not (
+            isinstance(y, pd.DataFrame) and y.shape[1] == 1
+        ):
             raise ValueError(
-                f"y must be a np.array or a pd.Series, but found type: {type(y)}"
+                f"y must be a np.array, pd.Series or a 1-D pd.DataFrame,"
+                f"but found type: {type(y)}"
             )
         # Check matching number of labels
         n_labels = y.shape[0]

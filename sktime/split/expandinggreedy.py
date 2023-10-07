@@ -1,6 +1,8 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implement expanding greedy dataset splitting for model evaluation and selection."""
+"""Splitter that successively cuts test folds off the end of the series."""
+
+__author__ = ["davidgilbertson"]
 
 __all__ = [
     "ExpandingGreedySplitter",
@@ -10,11 +12,11 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._config import SPLIT_GENERATOR_TYPE
+from sktime.split.base._common import SPLIT_GENERATOR_TYPE
 
 
 class ExpandingGreedySplitter(BaseSplitter):
-    """Splitter that uses all available data.
+    """Splitter that successively cuts test folds off the end of the series.
 
     Takes an integer `test_size` that defines the number of steps included in the
     test set of each fold. The train set of each fold will contain all data before
