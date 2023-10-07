@@ -40,7 +40,7 @@ See here for handling dependencies in sktime: https://www.sktime.net/en/latest/d
 
 #### Any other comments?
 <!--
-We value all user contributions, no matter how minor they are. If you have any questions, feel free to post
+We value all user contributions, no matter how small or complex they are. If you have any questions, feel free to post
 in the dev-chat channel on the sktime discord https://discord.com/invite/54ACzaFsn7. If we are slow to review (>3 working days), likewise feel free to ping us on discord. Thank you for your understanding during the review process.
 -->
 
