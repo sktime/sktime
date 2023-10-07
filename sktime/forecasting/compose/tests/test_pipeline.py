@@ -585,6 +585,62 @@ def test_forecastx_skip_forecaster_X_fitting_logic():
     assert model_2.forecaster_X_.is_fitted
 
 
+@pytest.mark.parametrize(
+    "forecasting_algorithm", [make_reduction(SVR(), window_length=2), NaiveForecaster()]
+)
+@pytest.mark.parametrize(
+    "future_unknown_columns",
+    [["GNPDEFL", "GNP"], ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP"], None],
+)
+def test_forecastx_flow_known_unknown_columns(
+    forecasting_algorithm, future_unknown_columns
+):
+    """Test that ForecastX does not fit forecaster_X, if forecaster_y ignores X"""
+    from sktime.forecasting.compose import ForecastX
+
+    y, X = load_longley()
+
+    fh = [1, 2]
+
+    y_train_val, y_test, X_train_val, X_test = temporal_train_test_split(
+        y, X, test_size=max(fh)
+    )
+    y_train, y_val, X_train, X_val = temporal_train_test_split(
+        y_train_val, X_train_val, test_size=max(fh)
+    )
+
+    model = ForecastX(
+        forecasting_algorithm.clone(),
+        forecasting_algorithm.clone(),
+        columns=future_unknown_columns,
+    )
+
+    assert hasattr(model, "forecaster_y")
+    assert hasattr(model, "forecaster_X")
+
+    assert not hasattr(model, "forecaster_y_")
+    assert not hasattr(model, "forecaster_X_")
+
+    model.fit(y_train, X=X_train, fh=fh)
+
+    assert hasattr(model, "forecaster_y_")
+    assert model.forecaster_y_.is_fitted
+
+    if model.get_tag("ignores-exogeneous-X"):
+        assert not hasattr(model, "forecaster_X_")
+    else:
+        assert hasattr(model, "forecaster_X_")
+        assert model.forecaster_X_.is_fitted
+
+    y_val_pred = model.predict(X=X_test)
+    np.testing.assert_array_equal(y_val.index, y_val_pred.index)
+
+    model.update(y_val, X=X_val)
+
+    y_test_pred = model.predict(X=X_test)
+    np.testing.assert_array_equal(y_test.index, y_test_pred.index)
+
+
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency is not available",
