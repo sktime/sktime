@@ -57,6 +57,7 @@ __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
 import warnings
+from collections import defaultdict
 from copy import deepcopy
 
 from skbase.base import BaseObject as _BaseObject
@@ -146,7 +147,6 @@ class BaseObject(_BaseObject):
 
         # for unmatched keys, resolve by aliasing via available __ suffixes, recurse
         if len(unmatched_keys) > 0:
-
             valid_params = self.get_params(deep=True)
             unmatched_params = {key: params[key] for key in unmatched_keys}
 
@@ -221,7 +221,6 @@ class BaseObject(_BaseObject):
         alias_dict = {_get_alias(x, valid_params): d[x] for x in d.keys()}
 
         return alias_dict
-
 
     def save(self, path=None):
         """Save serialized self to bytes-like object or to (.zip) file.
