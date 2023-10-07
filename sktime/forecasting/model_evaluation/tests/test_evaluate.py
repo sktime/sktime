@@ -236,6 +236,7 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend, score
         "forecaster": forecaster,
         "y": y,
         "cv": cv,
+        "scoring": scores,
         "return_data": return_data,
         "error_score": error_score,
         "strategy": strategy,
