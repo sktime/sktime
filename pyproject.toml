@@ -75,11 +75,12 @@ clustering = [
     "tslearn>=0.5.2,<0.6.3",
 ]
 forecasting = [
+    "arch>=5.6.0,<6.2.0",
     "pmdarima>=1.8,!=1.8.1,<2.1; python_version < '3.12'",
     "prophet>=1.1,<1.2; python_version < '3.12'",
     "statsforecast>=0.5.2,<1.7",
     "statsmodels>=0.12.1,<0.15",
-    "tbats>=1.1,<1.2; python_version < '3.12'",
+    "tbats>=1.1,<1.2",
 ]
 networks = [
     "keras-self-attention>=0.51,<0.52",
@@ -138,6 +139,7 @@ all_extras = [
     "tsfresh>=0.17.0; python_version < '3.12'",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
+    "arch>=5.6.0,<6.2.0",
 ]
 
 all_extras_pandas2 = [
@@ -172,6 +174,7 @@ all_extras_pandas2 = [
     "tsfresh>=0.17.0; python_version < '3.12'",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
+    "arch>=5.6.0,<6.2.0",
 ]
 
 cython_extras = [

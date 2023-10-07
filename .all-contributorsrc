@@ -2358,10 +2358,39 @@
       ]
     },
     {
+      "login": "ali-parizad",
+      "name": "Ali Parizad",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13907016?v=4",
+      "profile": "https://github.com/ali-parizad",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "BensHamza",
       "name": "Hamza Benslimane",
       "avatar_url": "https://avatars.githubusercontent.com/u/96446862?v=4",
       "profile": "https://github.com/BensHamza",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "Vasudeva-bit",
+      "name": "Vasudeva Kilaru",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70791259?v=4",
+      "profile": "https://github.com/Vasudeva-bit",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "geronimos",
+      "name": "Geronimo Bergk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29955288?s=96&v=4",
+      "profile": "https://github.com/geronimos",
       "contributions": [
         "bug",
         "code"
