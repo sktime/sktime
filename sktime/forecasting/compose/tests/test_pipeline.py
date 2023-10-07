@@ -515,28 +515,74 @@ def test_forecastx_attrib_broadcast():
     assert model_2.forecaster_y_.is_fitted
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("pmdarima", severity="none"),
-    reason="skip test if required soft dependency is not available",
-)
 def test_forecastx_skip_forecaster_X_fitting_logic():
     """Test that ForecastX does not fit forecaster_X, if forecaster_y ignores X"""
-    from sktime.forecasting.arima import ARIMA
-    from sktime.forecasting.compose import ForecastX
-    from sktime.forecasting.naive import NaiveForecaster
+    from sklearn.linear_model import LinearRegression
+
+    from sktime.forecasting.compose import ForecastX, YfromX
 
     y, X = load_longley()
 
-    model_1 = ForecastX(ARIMA(), ARIMA())
-    model_1.fit(y, X=X, fh=[1, 2, 3])
+    fh = [1, 2, 3]
 
-    model_2 = ForecastX(NaiveForecaster(), NaiveForecaster())
-    model_2.fit(y, X=X, fh=[1, 2, 3])
+    model_supporting_exogenous = YfromX(LinearRegression())
+    model_ignoring_exogenous = NaiveForecaster()
+
+    model_1 = ForecastX(
+        model_supporting_exogenous.clone(), model_supporting_exogenous.clone()
+    )
+    model_2 = ForecastX(
+        model_supporting_exogenous.clone(), model_ignoring_exogenous.clone()
+    )
+    model_3 = ForecastX(
+        model_ignoring_exogenous.clone(), model_supporting_exogenous.clone()
+    )
+    model_4 = ForecastX(
+        model_ignoring_exogenous.clone(), model_ignoring_exogenous.clone()
+    )
+
+    assert hasattr(model_1, "forecaster_y")
+    assert hasattr(model_2, "forecaster_y")
+    assert hasattr(model_3, "forecaster_y")
+    assert hasattr(model_4, "forecaster_y")
+
+    assert hasattr(model_1, "forecaster_X")
+    assert hasattr(model_2, "forecaster_X")
+    assert hasattr(model_3, "forecaster_X")
+    assert hasattr(model_4, "forecaster_X")
+
+    assert not hasattr(model_1, "forecaster_y_")
+    assert not hasattr(model_2, "forecaster_y_")
+    assert not hasattr(model_3, "forecaster_y_")
+    assert not hasattr(model_4, "forecaster_y_")
+
+    assert not hasattr(model_1, "forecaster_X_")
+    assert not hasattr(model_2, "forecaster_X_")
+    assert not hasattr(model_3, "forecaster_X_")
+    assert not hasattr(model_4, "forecaster_X_")
+
+    model_1.fit(y, X=X, fh=fh)
+    model_2.fit(y, X=X, fh=fh)
+    model_3.fit(y, X=X, fh=fh)
+    model_4.fit(y, X=X, fh=fh)
+
+    assert hasattr(model_1, "forecaster_y_")
+    assert hasattr(model_2, "forecaster_y_")
+    assert hasattr(model_3, "forecaster_y_")
+    assert hasattr(model_4, "forecaster_y_")
+
+    assert model_1.forecaster_y_.is_fitted
+    assert model_2.forecaster_y_.is_fitted
+    assert model_3.forecaster_y_.is_fitted
+    assert model_4.forecaster_y_.is_fitted
+
+    assert hasattr(model_1, "forecaster_X_")
+    assert hasattr(model_2, "forecaster_X_")
+    assert not hasattr(model_3, "forecaster_X_")
+    assert not hasattr(model_4, "forecaster_X_")
 
     assert model_1.forecaster_X_.is_fitted
-    model_1.forecaster_X_.check_is_fitted()
-
-    assert not hasattr(model_2, "forecaster_X_")
+    assert model_2.forecaster_X_.is_fitted
 
 
 @pytest.mark.skipif(
