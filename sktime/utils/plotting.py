@@ -408,7 +408,8 @@ def _get_windows(cv, y):
 def plot_windows(cv, y, title="", ax=None):
     """Plot training and test windows.
 
-    Plots the training and test windows for each split of a time series.
+    Plots the training and test windows for each split of a time series,
+    subject to an sktime time series splitter.
 
     x-axis: time, ranging from start to end of `y`
     y-axis: window number, starting at 0
