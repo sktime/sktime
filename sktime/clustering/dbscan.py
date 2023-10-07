@@ -7,7 +7,7 @@ from sklearn.cluster import DBSCAN
 
 from sktime.clustering.base import BaseClusterer
 from sktime.datatypes import update_data
-from sktime.dists_kernels.base._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 from sktime.utils.warnings import warn
 
 
