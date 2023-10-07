@@ -8,8 +8,8 @@ from pandas.testing import assert_series_equal
 
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.structural import UnobservedComponents
+from sktime.split import SlidingWindowSplitter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
