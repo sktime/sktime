@@ -113,7 +113,7 @@ class LcssTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         """
         import numpy as np
 
-        from sktime.dists_kernels.base.adapters import _subset_dict
+        from sktime.dists_kernels.base.adapters._tslearn import _subset_dict
 
         if X2 is None:
             X2 = X
