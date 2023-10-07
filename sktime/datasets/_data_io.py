@@ -22,7 +22,6 @@ from sktime.datasets._readers_writers.utils import _alias_mtype_check
 from sktime.datatypes import convert
 from sktime.datatypes._panel._convert import _make_column_names
 
-
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 CLASSIF_URLS = [
