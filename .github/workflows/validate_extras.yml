@@ -43,6 +43,9 @@ jobs:
           - param_est
           - regression
           - transformations
+        exclude:
+          - operating-system: windows-latest
+            sktime-extra: cython_extras
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: repository checkout step
