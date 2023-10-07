@@ -67,6 +67,7 @@ These checks run automatically before you make a new commit.
 To setup, simply navigate to the sktime folder and install our pre-commit configuration:
 
 .. code:: bash
+   
    pre-commit install
 
 pre-commit should now automatically run anything you make a commit! Please let us know if you encounter any issues getting this setup.
