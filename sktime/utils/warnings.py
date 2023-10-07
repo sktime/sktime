@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Warning related utilities."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
