@@ -51,6 +51,7 @@ class ForecastKnownValues(BaseForecaster):
     ForecastKnownValues(...)
 
     The forecast "plays back" the known/prescribed values from y_known
+
     >>> y_pred = fcst.predict()
     """
 
@@ -78,7 +79,7 @@ class ForecastKnownValues(BaseForecaster):
         if isinstance(idx, pd.MultiIndex):
             if idx.nlevels >= 3:
                 mtypes = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
-            elif idx.levels == 2:
+            elif idx.nlevels == 2:
                 mtypes = ["pd.DataFrame", "pd-multiindex"]
             self.set_tags(**{"y_inner_mtype": mtypes})
             self.set_tags(**{"X_inner_mtype": mtypes})

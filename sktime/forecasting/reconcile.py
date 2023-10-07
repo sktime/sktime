@@ -72,6 +72,7 @@ class ReconcilerForecaster(BaseForecaster):
     ...     no_bottom_nodes=3,
     ...     no_levels=1,
     ...     random_seed=123,
+    ...     length=7,
     ... )
     >>> y = agg.fit_transform(y)
     >>> forecaster = NaiveForecaster(strategy="drift")

@@ -6,7 +6,7 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
-All clusterers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
+All forecasters in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="forecaster"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
@@ -149,6 +149,15 @@ Trend forecasters
     TrendForecaster
     PolynomialTrendForecaster
     STLForecaster
+    CurveFitForecaster
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastMSTL
 
 Exponential smoothing based forecasters
 ---------------------------------------
@@ -260,6 +269,20 @@ Auto-ARIMA models
     :template: class.rst
 
     StatsForecastAutoARIMA
+
+
+ARCH models
+-----------
+
+.. currentmodule:: sktime.forecasting.arch
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastARCH
+    StatsForecastGARCH
+
 
 Structural time series models
 -----------------------------
@@ -414,6 +437,7 @@ Time series splitters can be used in both evaluation and tuning.
     SingleWindowSplitter
     SlidingWindowSplitter
     ExpandingWindowSplitter
+    ExpandingGreedySplitter
 
 .. autosummary::
     :toctree: auto_generated/

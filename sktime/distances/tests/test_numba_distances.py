@@ -16,6 +16,7 @@ from sktime.distances.tests._shared_tests import (
     _test_metric_parameters,
 )
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _ran_once = False
@@ -164,6 +165,9 @@ def test_distance(dist: MetricInfo) -> None:
     distance_numba_class = dist.dist_instance
     distance_function = dist.dist_func
     distance_factory = distance_numba_class.distance_factory
+
+    if not run_test_for_class(distance_function):
+        return None
 
     _validate_distance_result(
         x=np.array([10.0]),

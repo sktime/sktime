@@ -916,7 +916,7 @@ class _RecursiveReducer(_Reducer):
                     X_pred = X_pred.reshape(1, -1)
 
                 # Generate predictions.
-                y_pred[i] = self.estimator_.predict(X_pred)
+                y_pred[i] = self.estimator_.predict(X_pred)[0]
 
                 # Update last window with previous prediction.
                 last[:, 0, window_length + i] = y_pred[i]
@@ -1063,7 +1063,7 @@ class _DirRecReducer(_Reducer):
             if self._estimator_scitype == "tabular-regressor":
                 X_pred = X_pred.reshape(1, -1)
 
-            y_pred[i] = self.estimators_[i].predict(X_pred)
+            y_pred[i] = self.estimators_[i].predict(X_pred)[0]
 
             # Update the last window with previously predicted value.
             X_full[:, :, window_length + i] = y_pred[i]
@@ -1310,12 +1310,82 @@ def make_reduction(
     pooling="local",
     windows_identical=True,
 ):
-    """Make forecaster based on reduction to tabular or time-series regression.
+    r"""Make forecaster based on reduction to tabular or time-series regression.
 
     During fitting, a sliding-window approach is used to first transform the
     time series into tabular or panel data, which is then used to fit a tabular or
     time-series regression estimator. During prediction, the last available data is
     used as input to the fitted regression estimator to generate forecasts.
+
+    Please see below a graphical representation of the make_reduction logic using the
+    following symbols:
+
+    - ``y`` = forecast target.
+    - ``x`` = past values of y that are used as features (X) to forecast y
+    - ``*`` = observations, past or future, neither part of window nor forecast.
+
+    Assume we have the following training data (14 observations)::
+
+    |----------------------------|
+    | * * * * * * * * * * * * * *|
+    |----------------------------|
+
+    And want to forecast with `window_length = 9` and `fh = [2, 4]`.
+
+    By construction, a recursive reducer always targets the first data point after
+    the window, irrespective of the forecasting horizons requested.
+    In the example the following 5 windows are created::
+
+    |----------------------------|
+    | x x x x x x x x x y * * * *|
+    | * x x x x x x x x x y * * *|
+    | * * x x x x x x x x x y * *|
+    | * * * x x x x x x x x x y *|
+    | * * * * x x x x x x x x x y|
+    |----------------------------|
+
+    Direct Reducers will create multiple models, one for each forecasting horizon.
+    With the argument `windows_identical = True` (default) the windows used to train
+    the model are defined by the maximum forecasting horizon.
+    Only two complete windows can be defined in this example
+    `fh = 4` (maximum of `fh = [2, 4]`)::
+
+    |----------------------------|
+    | x x x x x x x x x * * * y *|
+    | * x x x x x x x x x * * * y|
+    |----------------------------|
+
+    All other forecasting horizons will also use those two (maximal) windows.
+    `fh = 2`::
+
+    |----------------------------|
+    | x x x x x x x x x * y * * *|
+    | * x x x x x x x x x * y * *|
+    |----------------------------|
+
+    With `windows_identical = False` we drop the requirement to use the same windows
+    for each of the direct models, so more windows can be created for horizons other
+    than the maximum forecasting horizon.
+    `fh = 2`::
+
+    |----------------------------|
+    | x x x x x x x x x * y * * *|
+    | * x x x x x x x x x * y * *|
+    | * * x x x x x x x x x * y *|
+    | * * * x x x x x x x x x * y|
+    |----------------------------|
+
+    `fh = 4`::
+
+    |----------------------------|
+    | x x x x x x x x x * * * y *|
+    | * x x x x x x x x x * * * y|
+    |----------------------------|
+
+    Use `windows_identical = True` if you want to compare the forecasting
+    performance across different horizons, since all models trained will use the
+    same windows. Use `windows_identical = False` if you want to have the highest
+    forecasting accuracy for each forecasting horizon.
 
     Parameters
     ----------
@@ -1351,67 +1421,6 @@ def make_reduction(
         horizon) or a different number of X windows depending on the forecasting horizon
         (False: Number of windows = total observations + 1 - window_length
         - forecasting horizon). See pictionary below for more information.
-
-    Please see below a graphical representation of the make_reduction logic using the
-    following symbols:
-        ``y`` = forecast target.
-        ``x`` = past values of y that are used as features (X) to forecast y
-        ``*`` = observations, past or future, neither part of window nor forecast.
-
-        Assume we have the following training data (14 observations):
-            |----------------------------|
-            | * * * * * * * * * * * * * *|
-            |----------------------------|
-
-        And want to forecast with `window_length = 9` and `fh = [2, 4]`.
-
-        By construction, a recursive reducer always targets the first data point after
-        the window, irrespective of the forecasting horizons requested.
-        In the example the following 5 windows are created:
-            |--------------------------- |
-            | x x x x x x x x x y * * * *|
-            | * x x x x x x x x x y * * *|
-            | * * x x x x x x x x x y * *|
-            | * * * x x x x x x x x x y *|
-            | * * * * x x x x x x x x x y|
-            |----------------------------|
-
-        Direct Reducers will create multiple models, one for each forecasting horizon.
-        With the argument `windows_identical = True` (default) the windows used to train
-        the model are defined by the maximum forecasting horizon.
-        Only two complete windows can be defined in this example:
-        `fh = 4` (maximum of `fh = [2, 4]`)
-            |--------------------------- |
-            | x x x x x x x x x * * * y *|
-            | * x x x x x x x x x * * * y|
-            |----------------------------|
-
-        All other forecasting horizons will also use those two (maximal) windows.
-        `fh = 2`
-            |--------------------------- |
-            | x x x x x x x x x * y * * *|
-            | * x x x x x x x x x * y * *|
-            |----------------------------|
-        With `windows_identical = False` we drop the requirement to use the same windows
-        for each of the direct models, so more windows can be created for horizons other
-        than the maximum forecasting horizon:
-        `fh = 2`
-            |--------------------------- |
-            | x x x x x x x x x * y * * *|
-            | * x x x x x x x x x * y * *|
-            | * * x x x x x x x x x * y *|
-            | * * * x x x x x x x x x * y|
-            |----------------------------|
-        `fh = 4`
-            |--------------------------- |
-            | x x x x x x x x x * * * y *|
-            | * x x x x x x x x x * * * y|
-            |----------------------------|
-
-        Use `windows_identical = True` if you want to compare the forecasting
-        performance across different horizons, since all models trained will use the
-        same windows. Use `windows_identical = False` if you want to have the highest
-        forecasting accuracy for each forecasting horizon.
 
     Returns
     -------
@@ -2432,7 +2441,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     Example
     -------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.compose import YfromX
     >>> from sklearn.linear_model import LinearRegression
     >>>
@@ -2449,6 +2458,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
+        "handles-missing-data": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }

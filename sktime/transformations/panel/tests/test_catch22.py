@@ -5,14 +5,14 @@ import pytest
 from numpy import testing
 
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.transformations.panel.catch22wrapper import Catch22Wrapper
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(Catch22),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_catch22_on_basic_motions():
     """Test of Catch22 on basic motions data."""
@@ -36,8 +36,8 @@ def test_catch22_on_basic_motions():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pycatch22", severity="none"),
-    reason="skip test if required soft dependency pycatch22 not available",
+    not run_test_for_class(Catch22Wrapper),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_catch22_wrapper_on_basic_motions():
     """Test of Catch22Wrapper on basic motions data."""

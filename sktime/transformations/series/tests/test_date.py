@@ -8,12 +8,12 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from sktime.datasets import load_airline, load_longley, load_PBS_dataset
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.date import DateTimeFeatures
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
-if _check_estimator_deps(DateTimeFeatures, severity="none"):
+if run_test_for_class(DateTimeFeatures):
     # Load multivariate dataset longley and apply calendar extraction
 
     y, X = load_longley()
@@ -90,6 +90,17 @@ if _check_estimator_deps(DateTimeFeatures, severity="none"):
     test_full = y_train_t.columns.to_list()
     test_types = y_train_t.select_dtypes(include=["int64"]).columns.to_list()
 
+else:
+    test_full_featurescope = []
+    test_reduced_featurescope = []
+    test_changing_frequency = []
+    test_manspec_with_tsfreq = []
+    test_manspec_wo_tsfreq = []
+    test_univariate_data = []
+    test_diffdateformat = []
+    test_full = []
+    test_types = []
+
 
 # Test `is_weekend` works in manual selection
 @pytest.fixture
@@ -130,8 +141,8 @@ all_args = [
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "test_input,expected",
@@ -208,8 +219,8 @@ def test_eval(test_input, expected):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_manual_selection_is_weekend(df_datetime_daily_idx):
     """Tests that "is_weekend" returns correct result in `manual_selection`."""
@@ -226,8 +237,8 @@ def test_manual_selection_is_weekend(df_datetime_daily_idx):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_transform_panel(df_panel):
     """Test `.transform()` on panel data."""
@@ -250,8 +261,8 @@ def test_transform_panel(df_panel):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_keep_original_columns(df_panel):
     """Test `.transform()` on panel data."""
@@ -273,8 +284,8 @@ def test_keep_original_columns(df_panel):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not (DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_month_of_quarter(df_panel):
     """Test month_of_quarter for correctness, failure case of bug #4541."""
@@ -289,8 +300,8 @@ def test_month_of_quarter(df_panel):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(DateTimeFeatures, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_manual_selection_hour_of_week(df_panel):
     """Tests that "hour_of_week" returns correct result in `manual_selection`."""

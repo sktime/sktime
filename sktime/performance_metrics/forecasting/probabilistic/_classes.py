@@ -117,14 +117,21 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         # pass to inner function
         out = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
-        if self.score_average and multioutput == "uniform_average":
-            out = float(out.mean(axis=1))  # average over all
-        if self.score_average and multioutput == "raw_values":
-            out = out.groupby(axis=1, level=0).mean()  # average over scores
-        if not self.score_average and multioutput == "uniform_average":
-            out = out.groupby(axis=1, level=1).mean()  # average over variables
-        if not self.score_average and multioutput == "raw_values":
-            out = out  # don't average
+        if isinstance(multioutput, str):
+            if self.score_average and multioutput == "uniform_average":
+                out = float(out.mean(axis=1).iloc[0])  # average over all
+            if self.score_average and multioutput == "raw_values":
+                out = out.groupby(axis=1, level=0).mean()  # average over scores
+            if not self.score_average and multioutput == "uniform_average":
+                out = out.groupby(axis=1, level=1).mean()  # average over variables
+            if not self.score_average and multioutput == "raw_values":
+                out = out  # don't average
+        else:  # is np.array with weights
+            if self.score_average:
+                out_raw = out.groupby(axis=1, level=0).mean()
+                out = out_raw.dot(multioutput)[0]
+            else:
+                out = _groupby_dot(out, multioutput)
 
         if isinstance(out, pd.DataFrame):
             out = out.squeeze(axis=0)
@@ -204,14 +211,21 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         # pass to inner function
         out = self._evaluate_by_index(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
-        if self.score_average and multioutput == "uniform_average":
-            out = out.mean(axis=1)  # average over all
-        if self.score_average and multioutput == "raw_values":
-            out = out.groupby(axis=1, level=0).mean()  # average over scores
-        if not self.score_average and multioutput == "uniform_average":
-            out = out.groupby(axis=1, level=1).mean()  # average over variables
-        if not self.score_average and multioutput == "raw_values":
-            out = out  # don't average
+        if isinstance(multioutput, str):
+            if self.score_average and multioutput == "uniform_average":
+                out = out.mean(axis=1)  # average over all
+            if self.score_average and multioutput == "raw_values":
+                out = out.groupby(axis=1, level=0).mean()  # average over scores
+            if not self.score_average and multioutput == "uniform_average":
+                out = out.groupby(axis=1, level=1).mean()  # average over variables
+            if not self.score_average and multioutput == "raw_values":
+                out = out  # don't average
+        else:  # numpy array
+            if self.score_average:
+                out_raw = out.groupby(axis=1, level=0).mean()
+                out = out_raw.dot(multioutput)
+            else:
+                out = _groupby_dot(out, multioutput)
 
         return out
 
@@ -375,6 +389,27 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         return out
 
 
+def _groupby_dot(df, weights):
+    """Groupby dot product.
+
+    Groups df by axis 1, level 1, and applies dot product with weights.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        dataframe to groupby
+    weights : np.array
+        weights to apply to each group
+
+    Returns
+    -------
+    out : pd.DataFrame
+        dataframe with weighted groupby dot product
+    """
+    out = df.groupby(axis=1, level=1).apply(lambda x: x.dot(weights))
+    return out
+
+
 class PinballLoss(_BaseProbaForecastingErrorMetric):
     """Pinball loss aka quantile loss for quantile/interval predictions.
 
@@ -388,6 +423,42 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
     alpha (optional) : float, list or np.ndarray, specifies what quantiles to \
         evaluate metric at.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
+    >>> y_true = pd.Series([3, -0.5, 2, 7, 2])
+    >>> y_pred = pd.DataFrame({
+    ...     ('Quantiles', 0.05): [1.25, 0, 1, 4, 0.625],
+    ...     ('Quantiles', 0.5): [2.5, 0, 2, 8, 1.25],
+    ...     ('Quantiles', 0.95): [3.75, 0, 3, 12, 1.875],
+    ... })
+    >>> pl = PinballLoss()
+    >>> pl(y_true, y_pred)
+    0.1791666666666667
+    >>> pl = PinballLoss(score_average=False)
+    >>> pl(y_true, y_pred).to_numpy()
+    array([0.16625, 0.275  , 0.09625])
+    >>> y_true = pd.DataFrame({
+    ...     "Quantiles1": [3, -0.5, 2, 7, 2],
+    ...     "Quantiles2": [4, 0.5, 3, 8, 3],
+    ... })
+    >>> y_pred = pd.DataFrame({
+    ...     ('Quantiles1', 0.05): [1.5, -1, 1, 4, 0.65],
+    ...     ('Quantiles1', 0.5): [2.5, 0, 2, 8, 1.25],
+    ...     ('Quantiles1', 0.95): [3.5, 4, 3, 12, 1.85],
+    ...     ('Quantiles2', 0.05): [2.5, 0, 2, 8, 1.25],
+    ...     ('Quantiles2', 0.5): [5.0, 1, 4, 16, 2.5],
+    ...     ('Quantiles2', 0.95): [7.5, 2, 6, 24, 3.75],
+    ... })
+    >>> pl = PinballLoss(multioutput='raw_values')
+    >>> pl(y_true, y_pred).to_numpy()
+    array([0.16233333, 0.465     ])
+    >>> pl = PinballLoss(multioutput=np.array([0.3, 0.7]))
+    >>> pl(y_true, y_pred)
+    0.3742000000000001
     """
 
     _tags = {
@@ -720,6 +791,13 @@ class LogLoss(_BaseDistrForecastingMetric):
         else:
             return res
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Retrieve test parameters."""
+        params1 = {}
+        params2 = {"multivariate": True}
+        return [params1, params2]
+
 
 class SquaredDistrLoss(_BaseDistrForecastingMetric):
     r"""Squared loss for distributional predictions.
@@ -768,6 +846,13 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
         else:
             return res
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Retrieve test parameters."""
+        params1 = {}
+        params2 = {"multivariate": True}
+        return [params1, params2]
+
 
 class CRPS(_BaseDistrForecastingMetric):
     r"""Continuous rank probability score for distributional predictions.
@@ -808,3 +893,10 @@ class CRPS(_BaseDistrForecastingMetric):
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         # CRPS(d, y) = E_X,Y as d [abs(Y-y) - 0.5 abs(X-Y)]
         return y_pred.energy(y_true) - y_pred.energy() / 2
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Retrieve test parameters."""
+        params1 = {}
+        params2 = {"multivariate": True}
+        return [params1, params2]

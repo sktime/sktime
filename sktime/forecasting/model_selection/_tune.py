@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements grid search functionality to tune forecasters."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "fkiraly", "aiwalter"]
 __all__ = [
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
@@ -11,6 +11,7 @@ __all__ = [
 
 from collections.abc import Sequence
 from typing import Dict, List, Optional, Union
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -21,8 +22,8 @@ from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
+from sktime.split.base import BaseSplitter
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -36,6 +37,8 @@ class BaseGridSearch(_DelegatedForecaster):
         "capability:pred_int:insample": True,
     }
 
+    # todo 0.24.0: replace all tune_by_variable defaults in this file with False
+    # remove deprecation message in BaseGridSearch.__init__
     def __init__(
         self,
         forecaster,
@@ -50,6 +53,8 @@ class BaseGridSearch(_DelegatedForecaster):
         return_n_best_forecasters=1,
         update_behaviour="full_refit",
         error_score=np.nan,
+        tune_by_instance=False,
+        tune_by_variable=None,
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -63,13 +68,30 @@ class BaseGridSearch(_DelegatedForecaster):
         self.return_n_best_forecasters = return_n_best_forecasters
         self.update_behaviour = update_behaviour
         self.error_score = error_score
+        self.tune_by_instance = tune_by_instance
+        self.tune_by_variable = tune_by_variable
+
         super().__init__()
+
+        # todo 0.24.0: remove this
+        if tune_by_variable is None:
+            warn(
+                f"in {self.__class__.__name__}, the default for tune_by_variable "
+                "will change from True to False in 0.24.0. "
+                "This will tune one parameter setting for all variables, while "
+                "currently it tunes one parameter per variable. "
+                "In order to maintain the current behaviour, ensure to set "
+                "the parameter tune_by_variable to True explicitly before upgrading "
+                "to version 0.24.0.",
+                DeprecationWarning,
+            )
+            tune_by_variable = True
+
         tags_to_clone = [
             "requires-fh-in-fit",
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:insample",
-            "scitype:y",
             "ignores-exogeneous-X",
             "handles-missing-data",
             "y_inner_mtype",
@@ -81,6 +103,11 @@ class BaseGridSearch(_DelegatedForecaster):
         self._extend_to_all_scitypes("y_inner_mtype")
         self._extend_to_all_scitypes("X_inner_mtype")
 
+        # this ensures univariate broadcasting over variables
+        # if tune_by_variable is True
+        if tune_by_variable:
+            self.set_tags(**{"scitype:y": "univariate"})
+
     # attribute for _DelegatedForecaster, which then delegates
     #     all non-overridden methods are same as of getattr(self, _delegate_name)
     #     see further details in _DelegatedForecaster docstring
@@ -91,6 +118,11 @@ class BaseGridSearch(_DelegatedForecaster):
 
         Mutates self tag with name `tagname`.
         If no mtypes are present of a time series scitype, adds a pandas based one.
+        If only univariate pandas scitype is present for Series ("pd.Series"),
+        also adds the multivariate one ("pd.DataFrame").
+
+        If tune_by_instance is True, only Series mtypes are added,
+        and potentially present Panel or Hierarchical mtypes are removed.
 
         Parameters
         ----------
@@ -104,12 +136,22 @@ class BaseGridSearch(_DelegatedForecaster):
         if not isinstance(tagval, list):
             tagval = [tagval]
         scitypes = mtype_to_scitype(tagval, return_unique=True)
+        # if no Series mtypes are present, add pd.DataFrame
         if "Series" not in scitypes:
             tagval = tagval + ["pd.DataFrame"]
+        # ensure we have a Series mtype capable of multivariate
+        elif "pd.Series" in tagval and "pd.DataFrame" not in tagval:
+            tagval = ["pd.DataFrame"] + tagval
+        # if no Panel mtypes are present, add pd.DataFrame based one
         if "Panel" not in scitypes:
             tagval = tagval + ["pd-multiindex"]
+        # if no Hierarchical mtypes are present, add pd.DataFrame based one
         if "Hierarchical" not in scitypes:
             tagval = tagval + ["pd_multiindex_hier"]
+
+        if self.tune_by_instance:
+            tagval = [x for x in tagval if mtype_to_scitype(x) == "Series"]
+
         self.set_tags(**{tagname: tagval})
 
     def _get_fitted_params(self):
@@ -243,7 +285,7 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Refit model with best parameters.
         if self.refit:
-            self.best_forecaster_.fit(y, X, fh)
+            self.best_forecaster_.fit(y=y, X=X, fh=fh)
 
         # Sort values according to rank
         results = results.sort_values(
@@ -260,13 +302,46 @@ class BaseGridSearch(_DelegatedForecaster):
             forecaster = self.forecaster.clone().set_params(**params)
             # Refit model with best parameters.
             if self.refit:
-                forecaster.fit(y, X, fh)
+                forecaster.fit(y=y, X=X, fh=fh)
             self.n_best_forecasters_.append((rank, forecaster))
             # Save score
             score = results[f"mean_{scoring_name}"].iloc[i]
             self.n_best_scores_.append(score)
 
         return self
+
+    def _predict(self, fh, X):
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        """
+        if not self.refit:
+            raise RuntimeError(
+                f"In {self.__class__.__name__}, refit must be True to make predictions,"
+                f" but found refit=False. If refit=False, {self.__class__.__name__} can"
+                " be used only to tune hyper-parameters, as a parameter estimator."
+            )
+        return super()._predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
@@ -341,18 +416,35 @@ class ForecastingGridSearchCV(BaseGridSearch):
         "no_update" = neither tuning parameters nor inner estimator are updated
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
-    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        if callable, must have signature
+
+        * sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        Metrics in sktime.performance_metrics.forecasting are all of this form.
+
+        * If str, uses registry.resolve_alias to resolve to one of the above.
+          Valid strings are valid registry.craft specs, which include
+          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+          and keys of registry.ALIAS_DICT referring to metrics.
+
+        * If None, defaults to MeanAbsolutePercentageError()
+
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
-        False = best forecaster remains fitted on the last fold in cv
+        False = no refitting takes place. The forecaster cannot be used to predict.
+        This is to be used to tune the hyperparameters, and then use the estimator
+        as a parameter estimator, e.g., via get_fitted_params or PluginParamsForecaster.
     verbose: int, optional (default=0)
     return_n_best_forecasters : int, default=1
         In case the n best forecaster should be returned, this value can be set
@@ -368,6 +460,22 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+    tune_by_instance : bool, optional (default=False)
+        Whether to tune parameter by each time series instance separately,
+        in case of Panel or Hierarchical data passed to the tuning estimator.
+        Only applies if time series passed are Panel or Hierarchical.
+        If True, clones of the forecaster will be fit to each instance separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ForecastByLevel wrapper to self.
+        If False, the same best parameter is selected for all instances.
+    tune_by_variable : bool, optional (default=True)
+        Whether to tune parameter by each time series variable separately,
+        in case of multivariate data passed to the tuning estimator.
+        Only applies if time series passed are strictly multivariate.
+        If True, clones of the forecaster will be fit to each variable separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
+        If False, the same best parameter is selected for all variables.
 
     Attributes
     ----------
@@ -391,13 +499,19 @@ class ForecastingGridSearchCV(BaseGridSearch):
     n_best_scores_: list of float
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
+    forecasters_ : pd.DataFramee
+        DataFrame with all fitted forecasters and their parameters.
+        Only present if tune_by_instance=True or tune_by_variable=True,
+        and at least one of the two is applicable.
+        In this case, the other attributes are not present in self,
+        only in the fields of forecasters_.
 
     Examples
     --------
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sktime.forecasting.model_selection import (
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import (
     ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
@@ -415,10 +529,11 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
         Advanced model meta-tuning (model selection) with multiple forecasters
         together with hyper-parametertuning at same time using sklearn notation:
+
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
@@ -469,6 +584,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
+        tune_by_instance=False,
+        tune_by_variable=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -483,6 +600,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
+            tune_by_instance=tune_by_instance,
+            tune_by_variable=tune_by_variable,
         )
         self.param_grid = param_grid
 
@@ -529,13 +648,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import (
             MeanAbsolutePercentageError,
             mean_absolute_percentage_error,
         )
+        from sktime.split import SingleWindowSplitter
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
@@ -550,7 +669,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "scoring": mean_absolute_percentage_error,
             "update_behaviour": "inner_only",
         }
-        return [params, params2]
+        params3 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": [3, 4]},
+            "scoring": "MeanAbsolutePercentageError(symmetric=True)",
+            "update_behaviour": "no_update",
+        }
+        return [params, params2, params3]
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
@@ -596,18 +722,35 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
-    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        if callable, must have signature
+
+        * sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        Metrics in sktime.performance_metrics.forecasting are all of this form.
+
+        * If str, uses registry.resolve_alias to resolve to one of the above.
+          Valid strings are valid registry.craft specs, which include
+          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+          and keys of registry.ALIAS_DICT referring to metrics.
+
+        * If None, defaults to MeanAbsolutePercentageError()
+
     n_jobs : int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
-        False = best forecaster remains fitted on the last fold in cv
+        False = no refitting takes place. The forecaster cannot be used to predict.
+        This is to be used to tune the hyperparameters, and then use the estimator
+        as a parameter estimator, e.g., via get_fitted_params or PluginParamsForecaster.
     verbose : int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
@@ -626,6 +769,22 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+    tune_by_instance : bool, optional (default=False)
+        Whether to tune parameter by each time series instance separately,
+        in case of Panel or Hierarchical data passed to the tuning estimator.
+        Only applies if time series passed are Panel or Hierarchical.
+        If True, clones of the forecaster will be fit to each instance separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ForecastByLevel wrapper to self.
+        If False, the same best parameter is selected for all instances.
+    tune_by_variable : bool, optional (default=True)
+        Whether to tune parameter by each time series variable separately,
+        in case of multivariate data passed to the tuning estimator.
+        Only applies if time series passed are strictly multivariate.
+        If True, clones of the forecaster will be fit to each variable separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
+        If False, the same best parameter is selected for all variables.
 
     Attributes
     ----------
@@ -643,6 +802,12 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     n_best_scores_: list of float
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
+    forecasters_ : pd.DataFramee
+        DataFrame with all fitted forecasters and their parameters.
+        Only present if tune_by_instance=True or tune_by_variable=True,
+        and at least one of the two is applicable.
+        In this case, the other attributes are not present in self,
+        only in the fields of forecasters_.
     """
 
     def __init__(
@@ -662,6 +827,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
+        tune_by_instance=False,
+        tune_by_variable=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -676,6 +843,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
+            tune_by_instance=tune_by_instance,
+            tune_by_variable=tune_by_variable,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -703,10 +872,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.split import SingleWindowSplitter
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
@@ -722,8 +891,15 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
         }
+        params3 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"window_length": [3, 4]},
+            "scoring": "MeanAbsolutePercentageError(symmetric=True)",
+            "update_behaviour": "no_update",
+        }
 
-        return [params, params2]
+        return [params, params2, params3]
 
 
 class ForecastingSkoptSearchCV(BaseGridSearch):
@@ -761,11 +937,26 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     n_points : int, default=1
         Number of parameter settings to sample in parallel.
         If this does not align with n_iter, the last iteration will sample less points
-    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
-        if callable, must have signature
+
+        * sktime metric objects (BaseMetric) descendants can be searched
+        with the ``registry.all_estimators`` search utility,
+        for instance via ``all_estimators("metric", as_dataframe=True)``
+
+        * If callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
+        Metrics in sktime.performance_metrics.forecasting are all of this form.
+
+        * If str, uses registry.resolve_alias to resolve to one of the above.
+          Valid strings are valid registry.craft specs, which include
+          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+          and keys of registry.ALIAS_DICT referring to metrics.
+
+        * If None, defaults to MeanAbsolutePercentageError()
+
     optimizer_kwargs: dict, optional
         Arguments passed to Optimizer to control the bahaviour of the bayesian search.
         For example, {'base_estimator': 'RF'} would use a Random Forest surrogate
@@ -790,7 +981,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "no_update" = neither tuning parameters nor inner estimator are updated
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
-        False = best forecaster remains fitted on the last fold in cv
+        False = no refitting takes place. The forecaster cannot be used to predict.
+        This is to be used to tune the hyperparameters, and then use the estimator
+        as a parameter estimator, e.g., via get_fitted_params or PluginParamsForecaster.
     verbose : int, optional (default=0)
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
@@ -807,6 +1000,22 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     backend : str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
+    tune_by_instance : bool, optional (default=False)
+        Whether to tune parameter by each time series instance separately,
+        in case of Panel or Hierarchical data passed to the tuning estimator.
+        Only applies if time series passed are Panel or Hierarchical.
+        If True, clones of the forecaster will be fit to each instance separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ForecastByLevel wrapper to self.
+        If False, the same best parameter is selected for all instances.
+    tune_by_variable : bool, optional (default=True)
+        Whether to tune parameter by each time series variable separately,
+        in case of multivariate data passed to the tuning estimator.
+        Only applies if time series passed are strictly multivariate.
+        If True, clones of the forecaster will be fit to each variable separately,
+        and are available in fields of the forecasters_ attribute.
+        Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
+        If False, the same best parameter is selected for all variables.
 
     Attributes
     ----------
@@ -824,13 +1033,18 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     n_best_scores_: list of float
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
+    forecasters_ : pd.DataFramee
+        DataFrame with all fitted forecasters and their parameters.
+        Only present if tune_by_instance=True or tune_by_variable=True,
+        and at least one of the two is applicable.
+        In this case, the other attributes are not present in self,
+        only in the fields of forecasters_.
 
     Examples
     --------
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingSkoptSearchCV)
+    >>> from sktime.forecasting.model_selection import ForecastingSkoptSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> from sktime.forecasting.compose import make_reduction
     >>> y = load_shampoo_sales()
@@ -883,6 +1097,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         backend: str = "loky",
         update_behaviour: str = "full_refit",
         error_score=np.nan,
+        tune_by_instance=False,
+        tune_by_variable=None,
     ):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -902,6 +1118,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
+            tune_by_instance=tune_by_instance,
+            tune_by_variable=tune_by_variable,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -1236,10 +1454,10 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.split import SingleWindowSplitter
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),

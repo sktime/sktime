@@ -45,6 +45,19 @@ class TestAllAligners(AlignerFixtureGenerator, QuickTester):
 
         check_raise(align, mtype="alignment", scitype="Alignment")
 
+        # integer indices from the alignment
+        align0 = align["ind0"]
+        align1 = align["ind1"]
+        # there should not be any nan entries, as there are only 2 series
+        assert not align0.isna().any()
+        assert not align1.isna().any()
+
+        if estimator_instance.get_tag("alignment_type") == "full":
+            # all indices are present in an alignment matching
+            assert set(align0) == set(range(len(X[0])))
+            assert set(align1) == set(range(len(X[1])))
+
+        # check multiple aligners
         # todo: replace this by scenarios
         if estimator_instance.get_tag("capability:multiple-alignment"):
             Xm = [_make_series(n_columns=2) for _ in range(3)]
@@ -57,6 +70,18 @@ class TestAllAligners(AlignerFixtureGenerator, QuickTester):
         align = estimator_instance.fit(X).get_alignment_loc()
 
         check_raise(align, mtype="alignment_loc", scitype="Alignment")
+
+        # integer indices from the alignment
+        align0 = align["ind0"]
+        align1 = align["ind1"]
+        # there should not be any nan entries, as there are only 2 series
+        assert not align0.isna().any()
+        assert not align1.isna().any()
+
+        if estimator_instance.get_tag("alignment_type") == "full":
+            # all indices are present in an alignment matching
+            assert set(align0) == set(X[0].index)
+            assert set(align1) == set(X[1].index)
 
     def test_get_aligned(self, estimator_instance):
         """Test that get_aligned returns aligned series."""

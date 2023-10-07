@@ -4,12 +4,12 @@ import pytest
 from sktime.classification.hybrid import HIVECOTEV2
 from sktime.classification.sklearn import RotationForest
 from sktime.datasets import load_unit_test
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HIVECOTEV2),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_contracted_hivecote_v2():
     """Test of contracted HIVECOTEV2 on unit test data."""

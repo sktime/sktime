@@ -48,11 +48,13 @@ class BasePairwiseTransformer(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        "object_type": "transformer-pairwise",  # type of object
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "X_inner_mtype": "numpy2D",  # which mtype is used internally in _transform?
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
+        "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
     }
 
     def __init__(self):
@@ -181,12 +183,14 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        "object_type": "transformer-pairwise-panel",  # type of object
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "X_inner_mtype": "df-list",  # which mtype is used internally in _transform?
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
     }
 
     def __init__(self):

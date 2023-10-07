@@ -8,32 +8,32 @@ sktime/annotation/clasp.py @patrickzib @ermshaua
 sktime/annotation/eagglo.py @KatieBuc
 sktime/annotation/stray.py @KatieBuc
 
-sktime/classification/dictionary_based/_boss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
-sktime/classification/dictionary_based/_cboss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
-sktime/classification/dictionary_based/_muse.py @patrickzib @MatthewMiddlehurst @TonyBagnall
-sktime/classification/dictionary_based/_tde.py @patrickzib @MatthewMiddlehurst @TonyBagnall
-sktime/classification/dictionary_based/_weasel.py @patrickzib @MatthewMiddlehurst @TonyBagnall
-sktime/classification/distance_based/ @goastler @TonyBagnall
+sktime/classification/dictionary_based/_boss.py @patrickzib @MatthewMiddlehurst
+sktime/classification/dictionary_based/_cboss.py @patrickzib @MatthewMiddlehurst
+sktime/classification/dictionary_based/_muse.py @patrickzib @MatthewMiddlehurst
+sktime/classification/dictionary_based/_tde.py @patrickzib @MatthewMiddlehurst
+sktime/classification/dictionary_based/_weasel.py @patrickzib @MatthewMiddlehurst
+sktime/classification/distance_based/ @goastler
 sktime/classification/dummy/ @ZiyaoWei
 sktime/classification/early_classification/_probability_threshold.py @MatthewMiddlehurst
 sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst
-sktime/classification/feature_based/_catch22_classifier.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/feature_based/_fresh_prince.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/feature_based/_matrix_profile_classifier.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/feature_based/_random_interval_classifier.py @MatthewMiddlehurst @TonyBagnall
+sktime/classification/feature_based/_catch22_classifier.py @MatthewMiddlehurst
+sktime/classification/feature_based/_fresh_prince.py @MatthewMiddlehurst
+sktime/classification/feature_based/_matrix_profile_classifier.py @MatthewMiddlehurst
+sktime/classification/feature_based/_random_interval_classifier.py @MatthewMiddlehurst
 sktime/classification/feature_based/_signature_classifier.py @jambo6
-sktime/classification/feature_based/_summary_classifier.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/feature_based/_tsfresh_classifier.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/hybrid/_hivecote_v1.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/hybrid/_hivecote_v2.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/interval_based/_cif.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/interval_based/_drcif.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/interval_based/_rise.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/interval_based/_stsf.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/interval_based/_tsf.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/kernel_based/_arsenal.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/kernel_based/_rocket_classifier.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/shapelet_based/_stc.py @ABostrom @MatthewMiddlehurst @TonyBagnall
+sktime/classification/feature_based/_summary_classifier.py @MatthewMiddlehurst
+sktime/classification/feature_based/_tsfresh_classifier.py @MatthewMiddlehurst
+sktime/classification/hybrid/_hivecote_v1.py @MatthewMiddlehurst
+sktime/classification/hybrid/_hivecote_v2.py @MatthewMiddlehurst
+sktime/classification/interval_based/_cif.py @MatthewMiddlehurst
+sktime/classification/interval_based/_drcif.py @MatthewMiddlehurst
+sktime/classification/interval_based/_rise.py @MatthewMiddlehurst
+sktime/classification/interval_based/_stsf.py @MatthewMiddlehurst
+sktime/classification/interval_based/_tsf.py @MatthewMiddlehurst
+sktime/classification/kernel_based/_arsenal.py @MatthewMiddlehurst
+sktime/classification/kernel_based/_rocket_classifier.py @MatthewMiddlehurst
+sktime/classification/shapelet_based/_stc.py @ABostrom @MatthewMiddlehurst
 sktime/classification/sklearn/_continuous_interval_tree.py @MatthewMiddlehurst
 sktime/classification/sklearn/_rotation_forest.py @MatthewMiddlehurst
 
@@ -68,7 +68,7 @@ sktime/transformations/panel/rocket/ @angus924
 sktime/transformations/panel/rocket/_multirocket.py @ChangWeiTan @fstinner @angus924
 sktime/transformations/panel/rocket/_multirocket_multivariate.py @ChangWeiTan @fstinner @angus924
 sktime/transformations/panel/signature_based/ @jambo6
-sktime/transformations/panel/shapelet_transform.py @ABostrom @MatthewMiddlehurst @TonyBagnall
+sktime/transformations/panel/shapelet_transform.py @ABostrom @MatthewMiddlehurst
 sktime/transformations/panel/supervised_intervals.py @MatthewMiddlehurst
 
 sktime/transformations/series/clear_sky.py @ciaran-g

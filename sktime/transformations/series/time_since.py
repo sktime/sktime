@@ -61,11 +61,13 @@ class TimeSince(BaseTransformer):
 
         Create a single column with time elapsed since start date of time series.
         The output is in units of integer number of months, same as the index `freq`.
+
     >>> transformer = TimeSince()
     >>> Xt = transformer.fit_transform(X)
 
         Create multiple columns with different start times. The output is in units
         of integer number of months, same as the index `freq`.
+
     >>> transformer = TimeSince(["2000-01", "2000-02"])
     >>> Xt = transformer.fit_transform(X)
     """

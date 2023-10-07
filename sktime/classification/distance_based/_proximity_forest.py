@@ -1,10 +1,15 @@
 """Proximity Forest time series classifier.
 
-A decision tree forest which uses distance measures to partition data.
+A decision tree forest which uses distance measures to partition data. B. Lucas and A.
+Shifaz, C. Pelletier, L. O'Neill, N. Zaidi, B. Goethals, F. Petitjean and G. Webb
+Proximity Forest: an effective and scalable distance-based classifier for time series,
+Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
 """
 
-__author__ = ["goastler"]
+__author__ = ["goastler", "moradabaz"]
 __all__ = ["ProximityForest", "ProximityStump", "ProximityTree"]
+
+import math
 
 import numpy as np
 import pandas as pd
@@ -566,35 +571,44 @@ def setup_all_distance_measure_getter(proximity):
     :returns: a list of distance measure getters
     """
     transformer = _CachedTransformer(DerivativeSlopeTransformer())
-    distance_measure_getters = [
-        euclidean_distance_measure_getter,
-        dtw_distance_measure_getter,
-        setup_ddtw_distance_measure_getter(transformer),
-        wdtw_distance_measure_getter,
-        setup_wddtw_distance_measure_getter(transformer),
-        msm_distance_measure_getter,
-        lcss_distance_measure_getter,
-        erp_distance_measure_getter,
+    distance_measure_getters = {
+        "euclidean": euclidean_distance_measure_getter,
+        "dtw": dtw_distance_measure_getter,
+        "ddtw": setup_ddtw_distance_measure_getter(transformer),
+        "wdtw": wdtw_distance_measure_getter,
+        "wddtw": setup_wddtw_distance_measure_getter(transformer),
+        "msm": msm_distance_measure_getter,
+        "lcss": lcss_distance_measure_getter,
+        "erp": erp_distance_measure_getter,
         #        twe_distance_measure_getter,
-    ]
+    }
 
-    def pick_rand_distance_measure(proximity):
+    def pick_distance_measure(proximity):
         """Generate a distance measure from a range of parameters.
 
         :param proximity: proximity object containing distance measures, ranges and
             dataset
         :returns: a distance measure with no parameters
         """
+        self = proximity
+        distance_measure = self.distance_measure
+
         random_state = check_random_state(proximity.random_state)
         X = proximity.X
-        distance_measure_getter = random_state.choice(distance_measure_getters)
+        distance_measure_getter_list = list(distance_measure_getters.values())
+
+        if distance_measure is None:
+            distance_measure_getter = random_state.choice(distance_measure_getter_list)
+        else:  # is string
+            distance_measure_getter = distance_measure_getters[distance_measure]
+
         distance_measure_perm = distance_measure_getter(X)
         param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
         distance_measure = param_perm["distance_measure"]
         del param_perm["distance_measure"]
         return distance_predefined_params(distance_measure, **param_perm)
 
-    return pick_rand_distance_measure
+    return pick_distance_measure
 
 
 def pick_rand_param_perm_from_dict(param_pool, random_state):
@@ -730,6 +744,21 @@ def best_of_n_stumps(n):
     return find_best_stump
 
 
+def _check_distance_measure(obj_self):
+    """Check the distance measure, return default if distance measure is None."""
+    self = obj_self
+    distance_measure = self.distance_measure
+    if distance_measure is None or isinstance(distance_measure, str):
+        if self.get_distance_measure is None:
+            if hasattr(self, "setup_distance_measure"):
+                self.get_distance_measure = self.setup_distance_measure(self)
+            else:
+                self.get_distance_measure = self.setup_distance_measure_getter(self)
+        return self.get_distance_measure(self)
+    else:
+        return self.distance_measure
+
+
 class ProximityStump(BaseClassifier):
     """Proximity Stump class.
 
@@ -784,6 +813,7 @@ class ProximityStump(BaseClassifier):
         self.get_gain = get_gain
         self.verbosity = verbosity
         self.n_jobs = n_jobs
+
         # set in fit
         self.label_encoder = None
         self.y_exemplar = None
@@ -808,7 +838,7 @@ class ProximityStump(BaseClassifier):
         """
         n_exemplars = len(exemplars)
         distances = np.empty(n_exemplars)
-        min_distance = np.math.inf
+        min_distance = math.inf
         for exemplar_index in range(n_exemplars):
             exemplar = exemplars[exemplar_index]
             if exemplar.name == instance.name:
@@ -836,14 +866,14 @@ class ProximityStump(BaseClassifier):
             parallel = Parallel(self._threads_to_use)
             distances = parallel(
                 delayed(self._distance_to_exemplars_inst)(
-                    self.X_exemplar, X.iloc[index, :], self.distance_measure
+                    self.X_exemplar, X.iloc[index, :], self._distance_measure
                 )
                 for index in range(X.shape[0])
             )
         else:
             distances = [
                 self._distance_to_exemplars_inst(
-                    self.X_exemplar, X.iloc[index, :], self.distance_measure
+                    self.X_exemplar, X.iloc[index, :], self._distance_measure
                 )
                 for index in range(X.shape[0])
             ]
@@ -868,12 +898,9 @@ class ProximityStump(BaseClassifier):
         self.X = _positive_dataframe_indices(X)
         self._random_object = check_random_state(self.random_state)
         self.y = y
-        if self.distance_measure is None:
-            if self.get_distance_measure is None:
-                self._get_distance_measure = self.setup_distance_measure(self)
-            else:
-                self._get_distance_measure = self.get_distance_measure
-            self.distance_measure = self._get_distance_measure(self)
+
+        self._distance_measure = _check_distance_measure(self)
+
         self.X_exemplar, self.y_exemplar = self.get_exemplars(self)
 
         return self
@@ -968,7 +995,7 @@ class ProximityStump(BaseClassifier):
         return distributions
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
         Returns
@@ -979,10 +1006,11 @@ class ProximityStump(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {
+        params1 = {
             "random_state": 0,
         }
-        return params
+        params2 = {"random_state": 42, "distance_measure": "dtw"}
+        return [params1, params2]
 
 
 class ProximityTree(BaseClassifier):
@@ -990,39 +1018,35 @@ class ProximityTree(BaseClassifier):
 
     A decision tree which uses distance measures to partition data.
 
-    Attributes
+    Parameters
     ----------
-        random_state            : the random state
-        get_exemplars:
-            function to extract exemplars from a dataframe and class value list
-        distance_measure        : distance measures
-        get_distance_measure    : distance measure getters
-        setup_distance_measure  : function
-            setup the distance measure getters from dataframe and class value list
-        get_gain                : function
-            score the quality of a split
-        verbosity: logging verbosity
-        is_leaf                 : function
-            decide when to mark a node as a leaf node
-        n_jobs: number of jobs to run in parallel *across threads"
-        find_stump: function to find the best split of data
-        max_depth: max tree depth
-        depth: current depth of tree, as each node is a tree itself,
-        therefore can have a depth of >=0
-        stump: the stump used to split data at this node
-        branches: the partitions of data driven by the stump
-        get_exemplars: get the exemplars from a given dataframe and list of class labels
-        distance_measure: distance measure to use
-        get_distance_measure: method to get the distance measure
-        setup_distance_measure: method to setup the distance measures based upon the
-        dataset given
-        get_gain: method to find the gain of a data split
-        max_depth: maximum depth of the tree
-        verbosity: number reflecting the verbosity of logging
-        n_jobs: number of parallel threads to use while building
-        find_stump: method to find the best split of data / stump at a node
-        n_stump_evaluations: number of stump evaluations to do if
-        find_stump method is None
+    random_state: int or np.RandomState, default=0
+        random seed for the random number generator
+    get_exemplars: function, default=get_one_exemplar_per_class_proximity
+        algorithm to get the exemplars from a given dataframe and list of class labels
+    distance_measure: None (default) or str; if str, one of
+        "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
+        distance measure to use
+        if None, selects distances randomly from the list of available distances
+    get_distance_measure: function or None, default=None
+        method to get the distance measure
+    setup_distance_measure: function, default=setup_all_distance_measure_getter
+        method to setup the distance measures based upon the dataset given
+    get_gain: function, default=gini_gain
+        method to find the gain of a data split
+    max_depth: int or math.inf, default=math.inf
+        maximum depth of the tree
+    is_leaf : function, default=pure
+        decide when to mark a node as a leaf node
+    verbosity: 0 or 1
+        number reflecting the verbosity of logging
+        0 = no logging, 1 = verbose logging
+    n_jobs: int or None, default=1
+        number of parallel threads to use while building
+    find_stump: method to find the best split of data / stump at a node
+    n_stump_evaluations: number of stump evaluations to do if find_stump method is None
+    find_stump: function, default=None
+        algorithm to find the best split of data
 
     Examples
     --------
@@ -1051,7 +1075,7 @@ class ProximityTree(BaseClassifier):
         get_distance_measure=None,
         setup_distance_measure=setup_all_distance_measure_getter,
         get_gain=gini_gain,
-        max_depth=np.math.inf,
+        max_depth=math.inf,
         is_leaf=pure,
         verbosity=0,
         n_jobs=1,
@@ -1065,15 +1089,16 @@ class ProximityTree(BaseClassifier):
         self.get_distance_measure = distance_measure
         self.random_state = random_state
         self.is_leaf = is_leaf
+        self.distance_measure = distance_measure
         self.get_distance_measure = get_distance_measure
         self.setup_distance_measure = setup_distance_measure
         self.get_exemplars = get_exemplars
         self.get_gain = get_gain
         self.n_jobs = n_jobs
         self.depth = 0
+
         # below set in fit method
         self.label_encoder = None
-        self.distance_measure = None
         self.stump = None
         self.branches = None
         self.X = None
@@ -1102,10 +1127,9 @@ class ProximityTree(BaseClassifier):
         if self.find_stump is None:
             self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
         self.y = y
-        if self.distance_measure is None:
-            if self.get_distance_measure is None:
-                self.get_distance_measure = self.setup_distance_measure(self)
-            self.distance_measure = self.get_distance_measure(self)
+
+        self._distance_measure = _check_distance_measure(self)
+
         self.stump = self.find_stump(self)
         n_branches = len(self.stump.y_exemplar)
         self.branches = [None] * n_branches
@@ -1116,7 +1140,7 @@ class ProximityTree(BaseClassifier):
                     sub_tree = ProximityTree(
                         random_state=self.random_state,
                         get_exemplars=self.get_exemplars,
-                        distance_measure=self.distance_measure,
+                        distance_measure=self._distance_measure,
                         setup_distance_measure=self.setup_distance_measure,
                         get_distance_measure=self.get_distance_measure,
                         get_gain=self.get_gain,
@@ -1223,39 +1247,51 @@ class ProximityTree(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"max_depth": 1, "n_stump_evaluations": 1}
+        params1 = {"max_depth": 1, "n_stump_evaluations": 1}
+        params2 = {"max_depth": 5, "n_stump_evaluations": 2, "distance_measure": "dtw"}
+        return [params1, params2]
 
 
 class ProximityForest(BaseClassifier):
-    """Proximity Forest class.
+    """Proximity Forest classifier.
 
-    Models a decision tree forest which uses distance measures to partition data [1].
+    Forest of decision tree which uses distance measures to partition data [1].
+    Uses ProximityTree internally.
 
     Parameters
     ----------
-    random_state        : random, default = None
-        seed for reproducibility
-    n_estimators        : int, default=100
+    random_state: int or np.RandomState, default=None
+        random seed for the random number generator
+    n_estimators: int, default=100
         The number of trees in the forest.
-    distance_measure: default = None
-    get_exemplars: default=get_one_exemplar_per_class_proximity
-    get_gain: default=gini_gain
-        function to score the quality of a split
-    verbosity: default=0
-    max_depth: default=np.math.inf
+    distance_measure: None (default) or str; if str, one of
+        "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
+        distance measure to use
+        if None, selects distances randomly from the list of available distances
+    get_exemplars: function, default=get_one_exemplar_per_class_proximity
+        algorithm to get the exemplars from a given dataframe and list of class labels
+    get_gain: function, default=gini_gain
+        method to find the gain of a data split
+    verbosity: 0 or 1
+        number reflecting the verbosity of logging
+        0 = no logging, 1 = verbose logging
+    max_depth: int or math.inf, default=math.inf
         maximum depth of the tree
-    is_leaf: default=pure
+    is_leaf: function, default=pure
         function to decide when to mark a node as a leaf node
-    n_jobs: default=int, 1
+    n_jobs: int, default=1
         number of jobs to run in parallel *across threads"
     n_stump_evaluations: int, default=5
-    find_stump: default=None, function to find the best split of data
-    setup_distance_measure_getter=setup_all_distance_measure_getter
+        number of stump evaluations to do if find_stump method is None
+    find_stump: function, default=None
+        function to find the best split of data
+    setup_distance_measure: function, default=setup_all_distance_measure_getter
+        method to setup the distance measures based upon the dataset given
 
-    Notes
-    -----
+    References
+    ----------
     .. [1] Ben Lucas et al., "Proximity Forest: an effective and scalable distance-based
-      classifier for time series",Data Mining and Knowledge Discovery, 33(3): 607-635,
+      classifier for time series",vData Mining and Knowledge Discovery, 33(3): 607-635,
       2019 https://arxiv.org/abs/1808.10594
     Java wrapper of authors original
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
@@ -1295,7 +1331,7 @@ class ProximityForest(BaseClassifier):
         get_exemplars=get_one_exemplar_per_class_proximity,
         get_gain=gini_gain,
         verbosity=0,
-        max_depth=np.math.inf,
+        max_depth=math.inf,
         is_leaf=pure,
         n_jobs=1,
         n_stump_evaluations=5,
@@ -1315,6 +1351,7 @@ class ProximityForest(BaseClassifier):
         self.setup_distance_measure_getter = setup_distance_measure_getter
         self.distance_measure = distance_measure
         self.find_stump = find_stump
+
         # set in fit method
         self.label_encoder = None
         self.trees = None
@@ -1348,7 +1385,7 @@ class ProximityForest(BaseClassifier):
             verbosity=self.verbosity,
             get_exemplars=self.get_exemplars,
             get_gain=self.get_gain,
-            distance_measure=self.distance_measure,
+            distance_measure=self._distance_measure,
             setup_distance_measure=self.setup_distance_measure_getter,
             get_distance_measure=self.get_distance_measure,
             max_depth=self.max_depth,
@@ -1378,10 +1415,9 @@ class ProximityForest(BaseClassifier):
         self.X = _positive_dataframe_indices(X)
         self._random_object = check_random_state(self.random_state)
         self.y = y
-        if self.distance_measure is None:
-            if self.get_distance_measure is None:
-                self.get_distance_measure = self.setup_distance_measure_getter(self)
-            self.distance_measure = self.get_distance_measure(self)
+
+        self._distance_measure = _check_distance_measure(self)
+
         if self._threads_to_use > 1:
             parallel = Parallel(self._threads_to_use)
             self.trees = parallel(
@@ -1505,7 +1541,14 @@ class ProximityForest(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
-            return {"n_estimators": 2, "max_depth": 1, "n_stump_evaluations": 1}
+            param1 = {"n_estimators": 2, "max_depth": 1, "n_stump_evaluations": 1}
+            param2 = {
+                "n_estimators": 4,
+                "max_depth": 2,
+                "n_stump_evaluations": 3,
+                "distance_measure": "dtw",
+            }
+            return [param1, param2]
 
 
 # start of util functions
@@ -1651,8 +1694,8 @@ def _stdp(X):
                 sum_sq += value**2  # todo missing values NaN messes
                 # this up!
     mean = sum / num_values
-    stdp = np.math.sqrt(sum_sq / num_values - mean**2)
-    return stdp
+    stdp_val = math.sqrt(sum_sq / num_values - mean**2)
+    return stdp_val
 
 
 def _bin_instances_by_class(X, class_labels):

@@ -20,7 +20,7 @@ from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-# TODO: fix this in 0.22.0
+# TODO: fix this in 0.24.0
 # base class should have been changed to BaseEarlyClassifier
 class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     """Probability Threshold Early Classifier.
@@ -304,5 +304,6 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         else:
             est = DummyClassifier()
 
-        params = {"classification_points": [3], "estimator": est}
-        return params
+        params1 = {"classification_points": [3], "estimator": est}
+        params2 = {"probability_threshold": 0.9, "estimator": est}
+        return [params1, params2]

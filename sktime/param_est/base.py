@@ -27,7 +27,7 @@ from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
     check_is_scitype,
-    convert_to,
+    convert,
     scitype_to_mtype,
     update_data,
 )
@@ -54,6 +54,7 @@ class BaseParamFitter(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        "object_type": "param_est",  # type of object
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -271,11 +272,13 @@ class BaseParamFitter(BaseEstimator):
         if not X_valid:
             raise TypeError(msg + mtypes_msg)
         X_scitype = X_metadata["scitype"]
+        X_mtype = X_metadata["mtype"]
         # end checking X
 
         # converts X, converts None to None if X is None
-        X_inner = convert_to(
+        X_inner = convert(
             X,
+            from_type=X_mtype,
             to_type=X_inner_mtype,
             as_scitype=X_scitype,
         )

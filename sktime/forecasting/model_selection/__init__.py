@@ -9,6 +9,7 @@ __all__ = [
     "SingleWindowSplitter",
     "SlidingWindowSplitter",
     "temporal_train_test_split",
+    "ExpandingGreedySplitter",
     "ExpandingWindowSplitter",
     "TestPlusTrainSplitter",
     "ForecastingGridSearchCV",
@@ -18,6 +19,7 @@ __all__ = [
 
 from sktime.forecasting.model_selection._split import (
     CutoffSplitter,
+    ExpandingGreedySplitter,
     ExpandingWindowSplitter,
     SameLocSplitter,
     SingleWindowSplitter,

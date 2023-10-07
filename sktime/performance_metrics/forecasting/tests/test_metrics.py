@@ -62,6 +62,13 @@ def test_gmse_function():
         0.7000014418652152,
     )
 
+    assert np.allclose(
+        gmse(
+            np.array([1, 2, 3]), np.array([6, 5, 4]), horizon_weight=np.array([7, 8, 9])
+        ),
+        6.185891035775025,
+    )
+
 
 def test_linex_class():
     """Doctest from MeanLinexError."""

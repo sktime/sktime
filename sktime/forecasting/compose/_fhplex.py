@@ -8,6 +8,8 @@ __all__ = ["FhPlexForecaster"]
 
 import pandas as pd
 
+from sktime.datatypes._utilities import get_slice
+
 PANDAS_TS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
 
@@ -16,7 +18,7 @@ class FhPlexForecaster(BaseForecaster):
 
     When provided with forecasting horizon [f1, f2, ..., fn],
     will fit forecaster with fh=f1 and parameters fh_params[f1] to forecast f1,
-    forecaster with fh=f2 and parameters fh_params[f1] to forecast f2, etc.
+    forecaster with fh=f2 and parameters fh_params[f2] to forecast f2, etc.
 
     To use different estimators per horizon, combine ``FhPlexForecaster`` with
     one of ``MultiplexForecaster`` and ``MultiplexTransformer``.
@@ -36,6 +38,14 @@ class FhPlexForecaster(BaseForecaster):
         if "relative", fh will be coerced to relative ForecastingHorizon
         if "absolute", fh will be coerced to absolute ForecastingHorizon
         if "as-is", fh will be coerced to ForecastingHorizon (but not relative/absolute)
+    fh_contiguous : bool, default=False
+        whether fh in inner loops are enforced to be contiguous
+        False: forecaster with fh_params[fN] is asked to forecast fN and only fN
+        True: forecaster with fh_params[fN] is asked to forecast 1, 2, ..., fN
+            and the output is then subset to the forecast of fN
+            this is required if the forecaster can only forecast contiguous horizons
+        CAUTION: if using grid search inside, then ``True`` will cause the
+        tuning metric to be evaluated on horizons 1, 2, ..., fN, not just fN
 
     Attributes
     ----------
@@ -66,10 +76,13 @@ class FhPlexForecaster(BaseForecaster):
         "capability:pred_int": True,
     }
 
-    def __init__(self, forecaster, fh_params=None, fh_lookup="relative"):
+    def __init__(
+        self, forecaster, fh_params=None, fh_lookup="relative", fh_contiguous=False
+    ):
         self.forecaster = forecaster
         self.fh_params = fh_params
         self.fh_lookup = fh_lookup
+        self.fh_contiguous = fh_contiguous
 
         super().__init__()
 
@@ -142,33 +155,53 @@ class FhPlexForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        fh = self._get_fh_keys(fh)
-
         fh_params = self.fh_params
+        fh_contiguous = self.fh_contiguous
+
+        if fh_contiguous:
+            fh_rel = fh.to_relative(self.cutoff)
+
+        fh_keys = self._get_fh_keys(fh)
 
         self.forecasters_ = {}
 
-        for i, fh_key in enumerate(fh):
+        for i, fh_key in enumerate(fh_keys):
             if isinstance(fh_params, list):
                 ix = i
             else:
                 ix = fh_key
 
+            if not fh_contiguous or fh_rel[i] <= 0:
+                fh_i = [fh_key]
+            else:
+                fh_rel = fh.to_relative(self.cutoff)
+                fh_i = range(1, fh_rel[i] + 1)
+
             params_ix = self._plexfun(ix)
             f_ix = self.forecaster.clone().set_params(**params_ix)
-            self.forecasters_[fh_key] = f_ix.fit(y=y, X=X, fh=[fh[i]])
+            self.forecasters_[fh_key] = f_ix.fit(y=y, X=X, fh=fh_i)
 
         return self
 
     def _get_preds(self, fh_keys, method="predict", **kwargs):
         """Get prediction DataFrame for method."""
+        fh_contiguous = self.fh_contiguous
+
+        if fh_contiguous:
+            fh_abs = fh_keys.to_absolute(self.cutoff)
+
         fh_keys = self._get_fh_keys(fh_keys)
 
         y_preds = []
 
-        for fh_key in fh_keys:
+        for i, fh_key in enumerate(fh_keys):
             fh_method = getattr(self.forecasters_[fh_key], method)
-            y_preds += [fh_method(**kwargs)]
+            if not fh_contiguous:
+                y_preds += [fh_method(**kwargs)]
+            else:
+                y_pred = fh_method(**kwargs)
+                y_pred_slice = get_slice(y_pred, fh_abs[i])
+                y_preds += [y_pred_slice]
 
         y_pred = pd.concat(y_preds, axis=0)
         return y_pred.sort_index()
@@ -255,9 +288,7 @@ class FhPlexForecaster(BaseForecaster):
         )
         return y_pred
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -289,14 +320,10 @@ class FhPlexForecaster(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        y_pred = self._get_preds(
-            fh, "predict_quantiles", X=X, alpha=alpha, legacy_interface=legacy_interface
-        )
+        y_pred = self._get_preds(fh, "predict_quantiles", X=X, alpha=alpha)
         return y_pred
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -332,13 +359,7 @@ class FhPlexForecaster(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        y_pred = self._get_preds(
-            fh,
-            "predict_interval",
-            X=X,
-            coverage=coverage,
-            legacy_interface=legacy_interface,
-        )
+        y_pred = self._get_preds(fh, "predict_interval", X=X, coverage=coverage)
         return y_pred
 
     def _predict_var(self, fh, X=None, cov=False):
@@ -449,7 +470,12 @@ class FhPlexForecaster(BaseForecaster):
         f = NaiveForecaster()
 
         params1 = {"forecaster": f, "fh_params": naive_list}
-        params2 = {"forecaster": f, "fh_params": naive_dict, "fh_lookup": "relative"}
+        params2 = {
+            "forecaster": f,
+            "fh_params": naive_dict,
+            "fh_lookup": "relative",
+            "fh_contiguous": True,
+        }
         params3 = {"forecaster": f, "fh_params": naive_str, "fh_lookup": "relative"}
 
         return [params1, params2, params3]

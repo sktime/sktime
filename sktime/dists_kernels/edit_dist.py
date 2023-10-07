@@ -7,7 +7,7 @@ from typing import Union
 import numpy as np
 
 from sktime.distances import pairwise_distance
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class EditDist(BasePairwiseTransformerPanel):
@@ -110,6 +110,7 @@ class EditDist(BasePairwiseTransformerPanel):
     >>> distmat = d.transform(X)  # doctest: +SKIP
 
     distances are also callable, this does the same:
+
     >>> distmat = d(X)  # doctest: +SKIP
     """
 
