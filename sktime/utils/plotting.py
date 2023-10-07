@@ -107,7 +107,7 @@ def plot_series(
     # generate integer x-values
     xs = [np.argwhere(index.isin(y.index)).ravel() for y in series]
 
-    # create figure if no Axe provided for plotting
+    # create figure if no ax provided for plotting
     if _ax_kwarg_is_none:
         fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
 
@@ -383,21 +383,28 @@ def _get_windows(cv, y):
     return train_windows, test_windows
 
 
-def plot_windows(cv, y, title=""):
+def plot_windows(cv, y, title="", ax=None):
     """Plot training and test windows.
+
+    Plots the training and test windows for each split of a 
 
     Parameters
     ----------
     y : pd.Series
         Time series to split
-    cv : temporal cross-validation iterator object
-        Temporal cross-validation iterator
+    cv : sktime splitter object, descendant of BaseSplitter
+        Time series splitter, e.g., temporal cross-validation iterator
     title : str
         Plot title
+    ax : matplotlib.axes.Axes, optional (default=None)
+        Axes on which to plot. If None, axes will be created and returned.
 
     Returns
     -------
-    fig : matplotlib.figure.Figure
+    fig : matplotlib.figure.Figure, returned only if ax is None
+        matplotlib figure object
+    ax : matplotlib.axes.Axes
+        matplotlib axes object with the figure
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
@@ -405,6 +412,12 @@ def plot_windows(cv, y, title=""):
     from matplotlib.ticker import MaxNLocator
 
     simplefilter("ignore", category=UserWarning)
+
+    _ax_kwarg_is_none = True if ax is None else False
+
+    # create figure if no ax provided for plotting
+    if _ax_kwarg_is_none:
+        fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
 
     train_windows, test_windows = _get_windows(cv, y)
 
@@ -454,4 +467,8 @@ def plot_windows(cv, y, title=""):
     # remove duplicate labels/handles
     handles, labels = ((leg[:2]) for leg in ax.get_legend_handles_labels())
     ax.legend(handles, labels)
-    return fig
+
+    if _ax_kwarg_is_none:
+        return fig, ax
+    else:
+        return ax
