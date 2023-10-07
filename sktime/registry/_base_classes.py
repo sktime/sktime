@@ -66,12 +66,12 @@ from sktime.dists_kernels.base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.networks.base import BaseDeepNetwork
 from sktime.param_est.base import BaseParamFitter
 from sktime.performance_metrics.base import BaseMetric
 from sktime.proba.base import BaseDistribution
 from sktime.regression.base import BaseRegressor
+from sktime.split.base import BaseSplitter
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,

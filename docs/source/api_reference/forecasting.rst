@@ -149,6 +149,7 @@ Trend forecasters
     TrendForecaster
     PolynomialTrendForecaster
     STLForecaster
+    CurveFitForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
@@ -281,7 +282,7 @@ ARCH models
 
     StatsForecastARCH
     StatsForecastGARCH
-
+    ARCH
 
 Structural time series models
 -----------------------------
