@@ -50,7 +50,7 @@ jobs:
       - name: python environment step
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ inputs.python-version-identifier }}
+          python-version: ${{ matrix.python-version }}
       - name: dependencies installation step
-        run: python3 -m pip install .[${{ inputs.sktime-extra }}]
+        run: python3 -m pip install .[${{ matrix.sktime-extra }}]
         shell: bash
