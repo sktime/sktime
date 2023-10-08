@@ -1,4 +1,4 @@
-name: test installation of all extras on all python versions and operating systems
+name: test sktime extras
 on:
   pull_request:
     branches:
@@ -48,12 +48,10 @@ jobs:
             sktime-extra: cython_extras
     runs-on: ${{ matrix.operating-system }}
     steps:
-      - name: repository checkout step
+      - name: checkout pull request branch
         uses: actions/checkout@v4
-      - name: python environment step
-        uses: actions/setup-python@v4
+      - name: install ${{ matrix.sktime-extra }} extra on python ${{ matrix.python-version }}
+        uses: ./.github/actions/validate-extra
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: dependencies installation step
-        run: python3 -m pip install .[${{ matrix.sktime-extra }}]
-        shell: bash
+          sktime-extra-identifier: ${{ matrix.sktime-extra }}
+          python-version-identifier: ${{ matrix.python-version }}
