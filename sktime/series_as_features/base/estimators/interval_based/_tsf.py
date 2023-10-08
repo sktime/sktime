@@ -144,7 +144,29 @@ def _get_intervals(
     rng: RandomState,
     inner_series_length: Optional[int] = None,
 ) -> np.ndarray:
-    """Generate random intervals for given parameters."""
+    """Generate random intervals for given parameters.
+
+    Parameters
+    ----------
+    n_intervals : int
+        Number of intervals to generate.
+    min_interval : int
+        Minimum length of an interval.
+    series_length : int
+        Length of the series.
+    rng : RandomState
+        Random number generator.
+    inner_series_length : int, optional (default=None)
+        Length of the inner series, define the maximum of an interval
+        and forces intervals to be contained in disjoint segments of
+        length inner_series_length. If None, defaults to series_length.
+
+    Returns
+    -------
+    intervals_starts_and_end_matrix : np.ndarray
+        Matrix of shape (n_intervals, 2) where each row represents an
+        interval and contains its start and end.
+    """
     interval_max_length = (
         series_length if inner_series_length is None else inner_series_length
     )

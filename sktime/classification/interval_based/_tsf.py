@@ -252,15 +252,23 @@ class TimeSeriesForestClassifier(
     def feature_importances_(self, **kwargs) -> pd.DataFrame:
         """Return the temporal feature importances.
 
+        There is an implementation of temporal feature importance in
+        BaseTimeSeriesForest in sktime.series_as_features.base.estimators
+        but TimeseriesForestClassifier is inheriting from
+        sktime.series_as_features.base.estimators.interval_base._tsf.py
+        which does not have feature_importance_.
+
+        Other feature importance methods implementation:
+        >>> from sktime.series_as_features.base.estimators import BaseTimeSeriesForest
+
         Returns
         -------
         feature_importances_ : pandas Dataframe of shape (series_length, 3)
             The feature importances for each feature type (mean, std, slope).
         """
         all_importances_per_feature = {
-            "mean": np.zeros(self.series_length),
-            "std": np.zeros(self.series_length),
-            "slope": np.zeros(self.series_length),
+            _feature_type: np.zeros(self.series_length)
+            for _feature_type in self._feature_types
         }
 
         for tree_index in range(self.n_estimators):
