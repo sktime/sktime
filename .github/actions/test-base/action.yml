@@ -21,3 +21,5 @@ runs:
       shell: bash
     - name: test coverage step
       uses: codecov/codecov-action@v3
+      with:
+        flags: ${{ inputs.python-version-identifier }},base
