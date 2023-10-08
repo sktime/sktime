@@ -140,4 +140,7 @@ class _TslearnPwTrafoAdapter:
         if isinstance(X2, list):
             X2 = self._coerce_df_list_to_list_of_arr(X2)
 
-        return self._eval_tslearn_pwtrafo(X, X2)
+        if self._is_cdist:
+            return self._eval_tslearn_pwtrafo(X, X2)
+        else:
+            return self._eval_tslearn_pwtrafo_vectorized(X, X2)
