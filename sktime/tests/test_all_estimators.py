@@ -380,10 +380,8 @@ class BaseFixtureGenerator:
         # ensure cls is a class
         if "estimator_class" in kwargs.keys():
             obj = kwargs["estimator_class"]
-            cls = obj
         elif "estimator_instance" in kwargs.keys():
             obj = kwargs["estimator_instance"]
-            cls = type(obj)
         else:
             return []
 
