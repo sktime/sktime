@@ -231,32 +231,33 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend, score
     fh = [1, 2, 3]
     cv = SlidingWindowSplitter(step_length=33, initial_window=36, fh=fh)
     scoring_name = [f"test_{score.name}" for score in scores]
+
+    args = {
+        "forecaster": forecaster,
+        "y": y,
+        "cv": cv,
+        "scoring": scores,
+        "return_data": return_data,
+        "error_score": error_score,
+        "strategy": strategy,
+        "backend": backend,
+    }
+
     if error_score in [np.nan, 1000]:
-        with pytest.warns(FitFailedWarning):
-            results = evaluate(
-                forecaster=forecaster,
-                y=y,
-                cv=cv,
-                scoring=scores,
-                return_data=return_data,
-                error_score=error_score,
-                strategy=strategy,
-                backend=backend,
-            )
+        # known bug - loky backend does not pass on warnings, #5307
+        if backend != "loky":
+            with pytest.warns(FitFailedWarning):
+                results = evaluate(**args)
+        else:
+            results = evaluate(**args)
+
         if isinstance(error_score, type(np.nan)):
             assert all(results[scoring_name].isna().sum() > 0)
         if error_score == 1000:
             assert all(results[scoring_name].max() == 1000)
     if error_score == "raise":
         with pytest.raises(Exception):  # noqa: B017
-            evaluate(
-                forecaster=forecaster,
-                y=y,
-                cv=cv,
-                return_data=return_data,
-                error_score=error_score,
-                strategy=strategy,
-            )
+            evaluate(**args)
 
 
 @pytest.mark.skipif(
