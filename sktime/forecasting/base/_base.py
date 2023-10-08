@@ -99,6 +99,15 @@ class BaseForecaster(BaseEstimator):
         "python_dependencies": None,  # str or list of str, package soft dependencies
     }
 
+    # configs and default config values
+    _config = {
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "dask": uses `dask`, requires `dask` package in environment
+    }
+
     def __init__(self):
         self._is_fitted = False
 
@@ -1737,12 +1746,16 @@ class BaseForecaster(BaseEstimator):
                     method="clone",
                     rowname_default="forecasters",
                     colname_default="forecasters",
+                    backend=self.get_config()["backend:parallel"],
                 )
             else:
                 forecasters_ = self.forecasters_
 
             self.forecasters_ = y.vectorize_est(
-                forecasters_, method=methodname, **kwargs
+                forecasters_,
+                method=methodname,
+                backend=self.get_config()["backend:parallel"],
+                **kwargs,
             )
             return self
 
@@ -1753,7 +1766,11 @@ class BaseForecaster(BaseEstimator):
                 self._yvec = y
 
             y_preds = self._yvec.vectorize_est(
-                self.forecasters_, method=methodname, return_type="list", **kwargs
+                self.forecasters_,
+                method=methodname,
+                return_type="list",
+                backend=self.get_config()["backend:parallel"],
+                **kwargs,
             )
 
             # if we vectorize over columns,
