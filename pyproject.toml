@@ -197,6 +197,18 @@ dev = [
     "wheel",
 ]
 
+dev_precommit = [
+    "black",
+    "check-manifest",
+    "flake8",
+    "isort",
+    "nbqa",
+    "nbqa-black",
+    "nbqa-flake8",
+    "nbqa-isort",
+    "pydocstyle",
+]
+
 mlflow = [
     "mlflow",
 ]
