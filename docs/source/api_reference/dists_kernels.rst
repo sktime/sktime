@@ -113,6 +113,7 @@ Dynamic Time Warping Distances
     :template: class.rst
 
     DtwDist
+    DtwPythonDist
     DtwDistTslearn
     SoftDtwDistTslearn
 
