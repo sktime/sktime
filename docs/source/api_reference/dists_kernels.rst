@@ -124,6 +124,14 @@ Dynamic Time Warping Distances
 
     CtwDistTslearn
 
+.. currentmodule:: sktime.dists_kernels.lucky
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LuckyDtwDist
+
 Time warping distances can also be obtained by composing ``DistFromAligner`` with
 a time warping aligner, see docstring of ``DistFromAligner``:
 
