@@ -54,7 +54,6 @@ from sktime.utils.git_diff import is_class_changed
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
 from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies,
     _check_estimator_deps,
     _check_soft_dependencies,
 )
@@ -393,12 +392,6 @@ class BaseFixtureGenerator:
 
         # subset to the methods that x has implemented
         nsc_list = [x for x in nsc_list if _has_capability(obj, x)]
-
-        # remove predict_proba for forecasters, if tensorflow-proba is not installed
-        # this ensures that predict_proba, which requires it, is not called in testing
-        if issubclass(cls, BaseForecaster):
-            if not _check_dl_dependencies(severity="none"):
-                nsc_list = list(set(nsc_list).difference(["predict_proba"]))
 
         return nsc_list
 
