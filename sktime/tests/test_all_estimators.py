@@ -38,6 +38,7 @@ from sktime.tests._config import (
     VALID_ESTIMATOR_TYPES,
     VALID_TRANSFORMER_TYPES,
 )
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
@@ -220,10 +221,11 @@ class BaseFixtureGenerator:
         if MATRIXDESIGN:
             est_list = subsample_by_version_os(est_list)
 
-        # this setting ensures that only estimators are tested that have changed
-        # in the sense that any line in the module is different from main
-        if ONLY_CHANGED_MODULES:
-            est_list = [est for est in est_list if is_class_changed(est)]
+        # run_test_for_class selects the estimators to run
+        # based on whether they have changed, and whether they have all dependencies
+        # internally, uses the ONLY_CHANGED_MODULES flag,
+        # and checks the python env against python_dependencies tag
+        est_list = [est for est in est_list if run_test_for_class(est)]
 
         return est_list
 
@@ -272,13 +274,6 @@ class BaseFixtureGenerator:
             est
             for est in self._all_estimators()
             if not self.is_excluded(test_name, est)
-        ]
-
-        # exclude classes based on python version compatibility
-        estimator_classes_to_test = [
-            est
-            for est in estimator_classes_to_test
-            if _check_estimator_deps(est, severity="none")
         ]
 
         estimator_names = [est.__name__ for est in estimator_classes_to_test]
