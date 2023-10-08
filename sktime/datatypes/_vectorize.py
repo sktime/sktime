@@ -15,6 +15,7 @@ import pandas as pd
 from sktime.datatypes._check import check_is_scitype, mtype
 from sktime.datatypes._convert import convert_to
 from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.parallel import parallelize
 
 
 class VectorizedDF:
@@ -445,6 +446,7 @@ class VectorizedDF:
         colname_default="estimators",
         varname_of_self=None,
         backend=None,
+        backend_params=None,
         **kwargs,
     ):
         """Vectorize application of estimator method, return results DataFrame or list.
@@ -505,19 +507,37 @@ class VectorizedDF:
         varname_of_self : str, optional, default=None
             if not None, self will be passed as kwarg under name "varname_of_self"
         backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-            Runs parallel evaluate if specified and `strategy` is set as "refit".
-            - "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
-            - "dask": uses `dask`, requires `dask` package in environment
+            Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+            - "dask": uses ``dask``, requires ``dask`` package in environment
             - "dask_lazy": same as "dask", but returns delayed object instead
-        kwargs : will be passed to invoked methods of estimator(s) in `estimator`
+
+            Parameter is passed to ``utils.parallel.parallelize``.
+
+        backend_params : dict, optional
+            additional parameters passed to the backend as config.
+            Directly passed to ``utils.parallel.parallelize``.
+            Valid keys depend on the value of ``backend``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading":
+              any valid keys for ``joblib.Parallel`` can be passed here,
+              e.g., ``n_jobs``, with the exception of ``backend``
+              which is directly controlled by ``backend``
+            - "dask": any valid keys for ``dask.compute`` can be passed,
+              e.g., ``scheduler``
+
+        kwargs : will be passed to invoked methods of estimator(s) in ``estimator``
 
         Returns
         -------
-        pd.DataFrame, with rows and columns as the return of `get_iter_indices`.
+        pd.DataFrame, with rows and columns as the return of ``get_iter_indices``.
           If rows or columns are not vectorized over, the single index
-          will be `rowname_default` resp `colname_default`.
-          Entries are identity references to entries of `estimator`,
-          after `method` executed with arguments as above.
+          will be ``rowname_default`` resp ``colname_default``.
+          Entries are identity references to entries of ``estimator``,
+          after ``method`` executed with arguments as above.
         """
         iterate_as = self.iterate_as
         iterate_cols = self.iterate_cols
@@ -590,15 +610,13 @@ class VectorizedDF:
             "colname_default": colname_default,
         }
 
-        if backend is None:
-            ret = self._vectorize_est_none(vec_zip, meta=meta)
-        elif backend in ["loky", "multiprocessing", "threading"]:
-            ret = self._vectorize_est_joblib(vec_zip, meta=meta, backend=backend)
-        elif backend in ["dask", "dask_lazy"]:
-            ret = self._vectorize_est_dask(vec_zip, meta=meta, backend=backend)
-
-        if backend == "dask_lazy":
-            return ret
+        ret = parallelize(
+            fun=self._vectorize_est_single,
+            iter=vec_zip,
+            meta=meta,
+            backend=backend,
+            backend_params=backend_params,
+        )
 
         if return_type == "pd.DataFrame":
             df_long = pd.DataFrame(ret)
@@ -649,33 +667,6 @@ class VectorizedDF:
             col_name = colname_default
 
         return (group_name, col_name, est_i_result)
-
-    def _vectorize_est_none(self, vec_zip, meta):
-        """Vectorize application of estimator method via simple loop."""
-        ret = [self._vectorize_est_single(vec_tuple, meta) for vec_tuple in vec_zip]
-        return ret
-
-    def _vectorize_est_joblib(self, vec_zip, meta, backend):
-        """Vectorize application of estimator method via joblib Parallel."""
-        from joblib import Parallel, delayed
-
-        ret = Parallel(n_jobs=-1, backend=backend)(
-            delayed(self._vectorize_est_single)(vec_tpl, meta) for vec_tpl in vec_zip
-        )
-        return ret
-
-    def _vectorize_est_dask(self, vec_zip, meta, backend):
-        """Vectorize application of estimator method via dask."""
-        from dask import compute, delayed
-
-        lazy = [
-            delayed(self._vectorize_est_single)(vec_tuple, meta=meta)
-            for vec_tuple in vec_zip
-        ]
-        if backend == "dask":
-            return compute(*lazy)
-        else:
-            return lazy
 
 
 def _enforce_index_freq(item: pd.Series) -> pd.Series:
