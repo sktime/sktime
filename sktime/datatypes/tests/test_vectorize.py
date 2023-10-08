@@ -371,10 +371,16 @@ def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as, iterat
     X_list = list(X_vect)
 
     # reconstructed fixture should equal multiindex fixture if not convert_back
-    assert deep_equals(X_vect.reconstruct(X_list), X_vect.X_multiindex)
+    eq, msg = deep_equals(
+        X_vect.reconstruct(X_list), X_vect.X_multiindex, return_msg=True
+    )
+    assert eq, msg
 
     # reconstructed fixture should equal original fixture if convert_back
-    assert deep_equals(X_vect.reconstruct(X_list, convert_back=True), fixture)
+    eq, msg = deep_equals(
+        X_vect.reconstruct(X_list, convert_back=True), fixture, return_msg=True
+    )
+    assert eq, msg
 
 
 @pytest.mark.parametrize(
