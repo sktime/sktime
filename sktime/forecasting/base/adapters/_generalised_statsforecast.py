@@ -162,6 +162,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         self._forecaster.fit(y_fit_input, X=X_fit_input)
 
+        raise ValueError(42)
+
         return self
 
     def _predict_in_or_out_of_sample(self, fh, fh_type, X=None, levels=None):

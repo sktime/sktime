@@ -67,8 +67,6 @@ class _StatsForecastAdapter(BaseForecaster):
         self._forecaster = self._instantiate_model()
         self._forecaster.fit(y.values, X.values if X is not None else X)
 
-        raise ValueError(42)
-
         return self
 
     def _predict(self, fh, X):
