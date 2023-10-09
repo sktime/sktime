@@ -447,9 +447,16 @@ class StatsForecastBackAdapter:
         super().__init__()
 
         self.estimator = estimator
+        self.prediction_intervals = None
 
     def __repr__(self):
         return "StatsForecastBackAdapter"
+
+    def new(self):
+        """Make new instance of back-adapter."""
+        _self = type(self).__new__(type(self))
+        _self.__dict__.update(self.__dict__)
+        return _self
 
     def fit(self, y, X=None):
         """Fit to training data.
@@ -489,6 +496,12 @@ class StatsForecastBackAdapter:
         mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
         if level is None:
             return {"mean": mean}
+        # if a level is passed, and if prediction_intervals has not been instantiated
+        # yet
+        elif self.prediction_intervals is None:
+            from statsforecast.utils import ConformalIntervals
+
+            self.prediction_intervals = ConformalIntervals(h=h)
 
         level = sorted(level)
         coverage = [round(1 - (_l / 100), 2) for _l in level]
