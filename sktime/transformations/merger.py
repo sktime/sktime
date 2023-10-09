@@ -73,6 +73,7 @@ class Merger(BaseTransformer):
         else:
             raise ValueError(f"{self.method} must be 'mean' or 'median'.")
         return result.reshape((*result.shape, 1))
+
     def _align_temporal(self, horizon, x):
         r = []
         for i in range(horizon):
