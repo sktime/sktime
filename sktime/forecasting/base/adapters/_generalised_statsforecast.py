@@ -64,7 +64,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         For parameters without defaults, will use the parameter
         of self instead.
         """
-        self_params = self.get_params()
+        self_params = self.get_params(deep=False)
         self_default_params = self.get_param_defaults()
         self_params.update(self_default_params)
         cls_with_defaults = type(self)(**self_params)
