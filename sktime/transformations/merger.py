@@ -28,14 +28,20 @@ class Merger(BaseTransformer):
     ----------
     method : {`median`, `mean`}, default="median"
         The method to use for aggregation. Can be one of "mean" or "median".
+
+    Examples
+    --------
+    >>> from sktime.transformations.merger import Merger
+    >>> from sktime.utils._testing.panel import _make_panel
+    >>> y = make_panel(n_instances=10, n_columns=3, n_timepoints=5)
+    >>> result = Merger(method="median").transform(y)
+    >>> result.shape
+    (14, 3, 1)
     """
 
     _tags = {
-        "scitype:y": "Panel",
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": False,
+        "scitype:transform-input": "Panel",
+        "X_inner_mtype": "numpy3D",
     }
 
     def __init__(self, method="median"):
@@ -61,18 +67,20 @@ class Merger(BaseTransformer):
         horizon = X.shape[-1]
 
         if self.method == "mean":
-            return np.nanmean(self._align_temporal(horizon, X), axis=0)
+            result = np.nanmean(self._align_temporal(horizon, X), axis=0)
         elif self.method == "median":
-            return np.nanmedian(self._align_temporal(horizon, X), axis=0)
-
+            result = np.nanmedian(self._align_temporal(horizon, X), axis=0)
+        else:
+            raise ValueError(f"{self.method} must be 'mean' or 'median'.")
+        return result.reshape((*result.shape, 1))
     def _align_temporal(self, horizon, x):
         r = []
         for i in range(horizon):
             _res = np.concatenate(
                 [
-                    np.full(fill_value=np.nan, shape=(i,)),
-                    x.values[:, i],
-                    np.full(fill_value=np.nan, shape=(horizon - 1 - i,)),
+                    np.full(fill_value=np.nan, shape=(i, x.shape[1])),
+                    x[:, :, i],
+                    np.full(fill_value=np.nan, shape=(horizon - 1 - i, x.shape[1])),
                 ]
             )
             r.append(_res)
