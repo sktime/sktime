@@ -33,7 +33,7 @@ class Merger(BaseTransformer):
     --------
     >>> from sktime.transformations.merger import Merger
     >>> from sktime.utils._testing.panel import _make_panel
-    >>> y = make_panel(n_instances=10, n_columns=3, n_timepoints=5)
+    >>> y = _make_panel(n_instances=10, n_columns=3, n_timepoints=5)
     >>> result = Merger(method="median").transform(y)
     >>> result.shape
     (14, 3, 1)
