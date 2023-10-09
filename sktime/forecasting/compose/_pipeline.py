@@ -1339,7 +1339,7 @@ class ForecastX(BaseForecaster):
         if self.fit_behaviour == "use_actual":
             self.forecaster_y_.fit(y=y, X=X, fh=fh)
         elif self.fit_behaviour == "use_forecast":
-            if "capability:insample" not in self.forecaster_X_.get_tags():
+            if not self.forecaster_X_.get_tag("capability:insample"):
                 raise ValueError(
                     "forecaster_X does not have `capability:insample`. "
                     "Thus, it is not valid with `fit_behaviour=use_forecast`."
