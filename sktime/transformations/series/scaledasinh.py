@@ -42,6 +42,14 @@ class ScaledAsinhTransformer(BaseTransformer):
         Transform input data by taking its square root. Can help compress
         variance of input series.
 
+    Notes
+    -----
+    | The Hyperbolic Sine transformation is applied if both shift_parameter_asinh and
+    | scale_parameter_asinh are not None:
+    |   :math:`X_transform  = asinh(\frac{X - a}{b})`
+    |   :math:`X_inverse_transform  = b . sinh(X) + a`
+    | where a is the shift parameter and b is the scale parameter [1]_.
+
     References
     ----------
     .. [1] Ziel F, Weron R. Day-ahead electricity price forecasting with
@@ -54,21 +62,15 @@ class ScaledAsinhTransformer(BaseTransformer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.scaledasinh import ScaledAsinhTransformer
-    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.datasets import load_airline
     >>> from scipy import stats
-    >>> y = load_airline()
+    >>> y =  load_airline()
     >>> shift_parameter_asinh = np.median(y)
     >>> scale_parameter_asinh = stats.median_abs_deviation(y) * 1.4826
-    >>> forecaster = TransformedTargetForecaster([
-    ... ("scaled_Asinh", ScaledAsinhTransformer(shift_parameter_asinh,
-    ... scale_parameter_asinh)),
-    ... ("poly", PolynomialTrendForecaster(degree=2))
-    ... ])
-    >>> forecaster.fit(y)
-    >>> y_pred = forecaster.predict(fh = np.arange(32))
+    >>> transformer = ScaledAsinhTransformer(shift_parameter_asinh,
+    ... scale_parameter_asinh)
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {
