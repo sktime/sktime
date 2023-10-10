@@ -15,6 +15,12 @@ runs:
   steps:
     - name: repository checkout step
       uses: actions/checkout@v4
+    - name: update tracking reference step
+      run: git remote set-branches origin main
+      shell: bash
+    - name: shallow clone update step
+      run: git fetch --depth 1
+      shell: bash
     - name: python environment step
       uses: actions/setup-python@v4
       with:
