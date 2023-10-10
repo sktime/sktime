@@ -2405,6 +2405,15 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "pirnerjonas",
+      "name": "Jonas Pirner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/48887249?v=4",
+      "profile": "https://github.com/pirnerjonas",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
