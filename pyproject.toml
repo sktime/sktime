@@ -59,7 +59,7 @@ alignment = [
   "numba<0.58,>=0.53",
 ]
 all_extras = [
-  "arch<6.2,>=5.6",
+  "arch<6.3,>=5.6",
   "cloudpickle",
   "dash!=2.9.0",
   "dask",
@@ -85,7 +85,7 @@ all_extras = [
   "seaborn>=0.11",
   "seasonal",
   "skpro<2.1,>=2",
-  'statsforecast<1.6.0,>=0.5.2; python_version < "3.11"',
+  "statsforecast<1.7.0,>=0.5.2",
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
   "tbats>=1.1",
@@ -95,7 +95,7 @@ all_extras = [
   "xarray",
 ]
 all_extras_pandas2 = [
-  "arch<6.2,>=5.6",
+  "arch<6.3,>=5.6",
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2023.7.1",
@@ -120,7 +120,7 @@ all_extras_pandas2 = [
   "seaborn>=0.11",
   "seasonal",
   "skpro<2.1,>=2",
-  'statsforecast<1.6.0,>=0.5.2; python_version < "3.11"',
+  "statsforecast<1.7.0,>=0.5.2",
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
   "tbats>=1.1",
@@ -182,7 +182,7 @@ docs = [
   "tabulate",
 ]
 forecasting = [
-  "arch<6.2,>=5.6",
+  "arch<6.3,>=5.6",
   "pmdarima!=1.8.1,<2.1,>=1.8",
   "prophet<1.2,>=1.1",
   "skpro<2.1,>=2",
