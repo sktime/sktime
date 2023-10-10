@@ -12,7 +12,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class ScaledAsinhTransformer(BaseTransformer):
-    """Hyperbolic sine transformation and its inverse [1]_.
+    r"""Hyperbolic sine transformation and its inverse [1]_.
 
     Known as variance stabilizing transformation [2]_,
     Combined with an sktime.forecasting.compose.TransformedTargetForecaster,
@@ -41,6 +41,14 @@ class ScaledAsinhTransformer(BaseTransformer):
     sktime.transformations.series.exponent.SqrtTransformer :
         Transform input data by taking its square root. Can help compress
         variance of input series.
+
+    Notes
+    -----
+    | The Hyperbolic Sine transformation is applied if both shift_parameter_asinh and
+    | scale_parameter_asinh are not None:
+    |   :math:`X_transform  = asinh(\frac{X - a}{b})`
+    |   :math:`X_inverse_transform  = b . sinh(X) + a`
+    | where a is the shift parameter and b is the scale parameter [1]_.
 
     References
     ----------
