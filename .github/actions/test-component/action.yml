@@ -7,6 +7,12 @@ inputs:
   python-version-identifier:
     description: python version to run tests
     required: true
+  sub-sample-estimators:
+    description: test only subset of estimators
+    required: true
+  test-affected-estimators:
+    description: test only modified estimators
+    required: true
 runs:
   using: composite
   steps:
@@ -20,7 +26,7 @@ runs:
       run: python3 -m pip install .[${{ inputs.sktime-component-identifier }},tests]
       shell: bash
     - name: unit test step
-      run: python3 -m pytest sktime/${{ inputs.sktime-component-identifier }}
+      run: python3 -m pytest sktime/${{ inputs.sktime-component-identifier }} --matrixdesign ${{ inputs.sub-sample-estimators }} --only_changed_modules ${{ inputs.test-affected-estimators }}
       shell: bash
     - name: test coverage step
       uses: codecov/codecov-action@v3
