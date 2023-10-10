@@ -54,15 +54,21 @@ class ScaledAsinhTransformer(BaseTransformer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.transformations.series.scaledasinh import ScaledAsinhTransformer
     >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.scaledasinh import ScaledAsinhTransformer
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from scipy import stats
-    >>> y =  load_airline()
+    >>> y = load_airline()
     >>> shift_parameter_asinh = np.median(y)
     >>> scale_parameter_asinh = stats.median_abs_deviation(y) * 1.4826
-    >>> transformer = ScaledAsinhTransformer(shift_parameter_asinh,
-    ... scale_parameter_asinh)
-    >>> y_hat = transformer.fit_transform(y)
+    >>> forecaster = TransformedTargetForecaster([
+    ... ("scaled_Asinh", ScaledAsinhTransformer(shift_parameter_asinh,
+    ... scale_parameter_asinh)),
+    ... ("poly", PolynomialTrendForecaster(degree=2))
+    ... ])
+    >>> forecaster.fit(y)
+    >>> y_pred = forecaster.predict(fh = np.arange(32))
     """
 
     _tags = {
