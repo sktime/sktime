@@ -4,9 +4,9 @@
 __author__ = ["Ali Parizad"]
 __all__ = ["ScaledAsinhTransformer"]
 
-from copy import deepcopy
 
 import numpy as np
+from scipy import stats
 
 from sktime.transformations.base import BaseTransformer
 
@@ -18,15 +18,19 @@ class ScaledAsinhTransformer(BaseTransformer):
     Combined with an sktime.forecasting.compose.TransformedTargetForecaster,
     can be usefull in time series that exhibit spikes [1]_, [2]_
 
-    Parameters
+    Attributes
     ----------
-    shift_parameter_asinh : float, optional, default=None
+    shift_parameter_asinh_ : float
         shift parameter, denoted as "a" in [1]_, the median of sample data.
-    scale_parameter_asinh : float, optional, default=None
+        It is fitted, based on the data provided in "fit".
+
+    scale_parameter_asinh : float
         scale parameter, denoted as "b" in [1]_, the median absolute deviation
         (MAD) around the sample median adjusted by a factor for asymptotically
-        normal consistency to the standard deviation (Based on [2]_,
-        b= median_abs_deviation(sample data) * 1.4826)
+        normal consistency to the standard deviation (Based on [1]_, [2]_
+        b= median_abs_deviation(sample data) * 1.4826).
+        It is fitted, based on the data provided in "fit".
+
 
     See Also
     --------
@@ -45,10 +49,10 @@ class ScaledAsinhTransformer(BaseTransformer):
 
     Notes
     -----
-    | The Hyperbolic Sine transformation is applied if both shift_parameter_asinh and
-    | scale_parameter_asinh are not None:
-    |   :math:`transform  = asinh(\frac{x- a}{b})`
-    |   :math:`inverse transform  = b . sinh(x) + a`
+    | The Hyperbolic Sine transformation is applied as:
+    |   :math:`asinh(\frac{x- a}{b})`
+    | The Hyperbolic Sine inverse transformation is applied as:
+    |   :math:`b . sinh(x) + a`
     | where "a" is the shift parameter and "b" is the scale parameter [1]_.
     | a = median(sample data)
     | b = median_abs_deviation(sample data) :math:`. 1.4826`
@@ -65,15 +69,17 @@ class ScaledAsinhTransformer(BaseTransformer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.transformations.series.scaledasinh import ScaledAsinhTransformer
     >>> from sktime.datasets import load_airline
-    >>> from scipy import stats
-    >>> y =  load_airline()
-    >>> shift_parameter_asinh = np.median(y)
-    >>> scale_parameter_asinh = stats.median_abs_deviation(y) * 1.4826
-    >>> transformer = ScaledAsinhTransformer(shift_parameter_asinh,
-    ... scale_parameter_asinh)
-    >>> y_hat = transformer.fit_transform(y)
+    >>> from sktime.transformations.series.scaledasinh import ScaledAsinhTransformer
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> y = load_airline()
+    >>> forecaster = TransformedTargetForecaster([
+    ... ("scaled_Asinh", ScaledAsinhTransformer()),
+    ... ("poly", PolynomialTrendForecaster(degree=2))
+    ... ])
+    >>> forecaster.fit(y)
+    >>> y_pred = forecaster.predict(fh = np.arange(32))
     """
 
     _tags = {
@@ -85,16 +91,36 @@ class ScaledAsinhTransformer(BaseTransformer):
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "univariate-only": False,
         "capability:inverse_transform": True,
         "skip-inverse-transform": False,
     }
 
-    def __init__(self, shift_parameter_asinh=None, scale_parameter_asinh=None):
-        self.shift_parameter_asinh = shift_parameter_asinh
-        self.scale_parameter_asinh = scale_parameter_asinh
+    def __init__(self):
         super().__init__()
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : 2D np.ndarray (n x 1)
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: a fitted instance of the estimator
+        """
+        self.shift_parameter_asinh_ = np.median(X)
+
+        self.scale_parameter_asinh_ = stats.median_abs_deviation(X) * 1.4826
+
+        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -112,13 +138,9 @@ class ScaledAsinhTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-        if self.scale_parameter_asinh and self.shift_parameter_asinh:
-            X_transformed = np.arcsinh(
-                (X - self.shift_parameter_asinh) / self.scale_parameter_asinh
-            )
-
-        else:
-            X_transformed = deepcopy(X)
+        X_transformed = np.arcsinh(
+            (X - self.shift_parameter_asinh_) / self.scale_parameter_asinh_
+        )
 
         return X_transformed
 
@@ -138,13 +160,9 @@ class ScaledAsinhTransformer(BaseTransformer):
         -------
         inverse transformed version of X
         """
-        if self.scale_parameter_asinh and self.shift_parameter_asinh:
-            X_inv_transformed = (
-                self.scale_parameter_asinh * np.sinh(X) + self.shift_parameter_asinh
-            )
-
-        else:
-            X_inv_transformed = deepcopy(X)
+        X_inv_transformed = (
+            self.scale_parameter_asinh_ * np.sinh(X) + self.shift_parameter_asinh_
+        )
 
         return X_inv_transformed
 
@@ -168,7 +186,6 @@ class ScaledAsinhTransformer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         test_params = [
-            {"shift_parameter_asinh": None, "scale_parameter_asinh": None},
-            {"shift_parameter_asinh": 5.4, "scale_parameter_asinh": 3.7},
+            {},
         ]
         return test_params
