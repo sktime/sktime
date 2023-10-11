@@ -167,33 +167,28 @@ def test_multivariate_eval(test_input, expected):
 # ),
 
 
-#
-# # Test `is_weekend` works in manual selection
-#
-# all_args = [
-#     "Number of airline passengers",
-#     "year",
-#     "quarter_of_year",
-#     "month_of_year",
-#     "week_of_year",
-#     "day_of_year",
-#     "month_of_quarter",
-#     "week_of_quarter",
-#     "day_of_quarter",
-#     "week_of_month",
-#     "day_of_month",
-#     "day_of_week",
-#     "hour_of_day",
-#     "hour_of_week",
-#     "minute_of_hour",
-#     "second_of_minute",
-#     "millisecond_of_second",
-#     "is_weekend",
-# ]
-#
-
-
 class UnivariateDataPipelineTests:
+    all_args = [
+        "Number of airline passengers",
+        "year",
+        "quarter_of_year",
+        "month_of_year",
+        "week_of_year",
+        "day_of_year",
+        "month_of_quarter",
+        "week_of_quarter",
+        "day_of_quarter",
+        "week_of_month",
+        "day_of_month",
+        "day_of_week",
+        "hour_of_day",
+        "hour_of_week",
+        "minute_of_hour",
+        "second_of_minute",
+        "millisecond_of_second",
+        "is_weekend",
+    ]
+
     @pytest.fixture
     def test_univariate_data_step(self):
         y = load_airline()
@@ -207,7 +202,7 @@ class UnivariateDataPipelineTests:
 
     @pytest.fixture
     def test_univariate_data_step_output(self):
-        pass
+        return self.all_args
 
     @pytest.fixture
     def test_diffdateformat(self):
@@ -225,17 +220,31 @@ class UnivariateDataPipelineTests:
     def test_diffdateformat_output(self):
         return ["Number of airline passengers", "year", "second_of_minute"]
 
-    # @pytest.fixture
-    # def test_full(self, y_train=test_diffdateformat):
-    #     pipe = DateTimeFeatures(
-    #         ts_freq="L", feature_scope="comprehensive", keep_original_columns=True
-    #     )
-    #     y_train_t = pipe.fit_transform(y_train)
-    #     test_full = y_train_t.columns.to_list()
-    #     return test_full
-    #
-    # def test_types
-    #     test_types = y_train_t.select_dtypes(include=["int64"]).columns.to_list()
+    @pytest.fixture
+    def test_comprehensive_transform(self, y_train=test_diffdateformat):
+        pipe = DateTimeFeatures(
+            ts_freq="L", feature_scope="comprehensive", keep_original_columns=True
+        )
+        y_train_t = pipe.fit_transform(y_train)
+        return y_train_t
+
+    @pytest.fixture
+    def test_full(self, y_train=test_comprehensive_transform):
+        test_full = y_train.columns.to_list()
+        return test_full
+
+    @pytest.fixture
+    def test_full_output(self):
+        return self.all_args
+
+    @pytest.fixture
+    def test_types(self, y_train=test_comprehensive_transform):
+        test_types = y_train.select_dtypes(include=["int64"]).columns.to_list()
+        return test_types
+
+    @pytest.fixture
+    def test_types_output(self):
+        return self.all_args[1:]
 
 
 @pytest.mark.skipif(
@@ -252,6 +261,14 @@ class UnivariateDataPipelineTests:
         (
             UnivariateDataPipelineTests.test_diffdateformat,
             UnivariateDataPipelineTests.test_diffdateformat_output,
+        ),
+        (
+            UnivariateDataPipelineTests.test_full,
+            UnivariateDataPipelineTests.test_full_output,
+        ),
+        (
+            UnivariateDataPipelineTests.test_types,
+            UnivariateDataPipelineTests.test_types_output,
         ),
     ],
 )
