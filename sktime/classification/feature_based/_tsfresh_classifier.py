@@ -150,7 +150,7 @@ class TSFreshClassifier(BaseClassifier):
 
         X_t = self._transformer.fit_transform(X, y)
 
-        if X_t.shape[1] == 0:        
+        if X_t.shape[1] == 0:
             warn(
                 "TSFresh has extracted no features from the data. Returning the "
                 "majority class in predictions. Setting "
