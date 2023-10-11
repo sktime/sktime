@@ -106,6 +106,7 @@ class BaseForecaster(BaseEstimator):
         #  None: no parallelization
         #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend
     }
 
     def __init__(self):
@@ -1747,6 +1748,7 @@ class BaseForecaster(BaseEstimator):
                     rowname_default="forecasters",
                     colname_default="forecasters",
                     backend=self.get_config()["backend:parallel"],
+                    backend_params=self.get_config()["backend:parallel:params"],
                 )
             else:
                 forecasters_ = self.forecasters_
@@ -1755,6 +1757,7 @@ class BaseForecaster(BaseEstimator):
                 forecasters_,
                 method=methodname,
                 backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
                 **kwargs,
             )
             return self
@@ -1770,6 +1773,7 @@ class BaseForecaster(BaseEstimator):
                 method=methodname,
                 return_type="list",
                 backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
                 **kwargs,
             )
 
