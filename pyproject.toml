@@ -80,7 +80,7 @@ forecasting = [
     "statsforecast>=0.5.2,<1.7",
     "statsmodels>=0.12.1,<0.15",
     "tbats>=1.1,<1.2",
-    "arch>=5.6.0,<6.2.0",
+    "arch>=5.6.0,<6.3.0",
 ]
 networks = [
     "keras-self-attention>=0.51,<0.52",
@@ -132,7 +132,7 @@ all_extras = [
     "seaborn>=0.11.0",
     "seasonal",
     "skpro>=2.0.0,<2.1.0",
-    "statsforecast>=0.5.2,<1.6.0; python_version < '3.11'",
+    "statsforecast>=0.5.2,<1.7.0",
     "statsmodels>=0.12.1",
     "stumpy>=1.5.1; python_version < '3.11'",
     "tbats>=1.1.0",
@@ -140,7 +140,7 @@ all_extras = [
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
-    "arch>=5.6.0,<6.2.0",
+    "arch>=5.6.0,<6.3.0",
 ]
 
 all_extras_pandas2 = [
@@ -168,7 +168,7 @@ all_extras_pandas2 = [
     "seaborn>=0.11.0",
     "seasonal",
     "skpro>=2.0.0,<2.1.0",
-    "statsforecast>=0.5.2,<1.6.0; python_version < '3.11'",
+    "statsforecast>=0.5.2,<1.7.0",
     "statsmodels>=0.12.1",
     "stumpy>=1.5.1; python_version < '3.11'",
     "tbats>=1.1.0",
@@ -176,7 +176,7 @@ all_extras_pandas2 = [
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
-    "arch>=5.6.0,<6.2.0",
+    "arch>=5.6.0,<6.3.0",
 ]
 
 cython_extras = [
