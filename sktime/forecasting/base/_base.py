@@ -112,7 +112,7 @@ class BaseForecaster(BaseEstimator):
     _config_doc = {
         "backend:parallel": """
         backend:parallel : str, optional
-            backend to use for parallelization, one of
+            backend to use for parallelization when broadcasting/vectorizing, one of
 
             - "None": executes loop sequentally, simple list comprehension
             - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel``
@@ -120,7 +120,7 @@ class BaseForecaster(BaseEstimator):
         """,
         "backend:parallel:params": """
         backend:parallel:params : dict, optional
-            additional parameters passed to the backend as config.
+            additional parameters passed to the parallelization backend as config.
             Valid keys depend on the value of ``backend``:
 
             - "None": no additional parameters, ``backend_params`` is ignored
