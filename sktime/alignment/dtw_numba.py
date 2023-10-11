@@ -110,8 +110,8 @@ class AlignerDtwNumba(BaseAligner):
     >>> from sktime.utils._testing.series import _make_series
     >>> from sktime.alignment.dtw_numba import AlignerDtwNumba
     >>>
-    >>> X0 = _make_series()  # doctest: +SKIP
-    >>> X1 = _make_series()  # doctest: +SKIP
+    >>> X0 = _make_series(return_mtype="pd.DataFrame")  # doctest: +SKIP
+    >>> X1 = _make_series(return_mtype="pd.DataFrame")  # doctest: +SKIP
     >>> d = AlignerDtwNumba(weighted=True, derivative=True)  # doctest: +SKIP
     >>> align = d.fit([X0, X1]).get_alignment()  # doctest: +SKIP
     """

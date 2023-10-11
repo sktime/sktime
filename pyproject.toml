@@ -58,7 +58,6 @@ alignment = [
     "numba>=0.53,<0.58",
 ]
 annotation = [
-    "attrs>=23,<23.2",
     "hmmlearn>=0.2.7,<0.4",
     "numba>=0.53,<0.58",
     "pyod>=0.8.0,<1.2",
@@ -77,9 +76,11 @@ clustering = [
 forecasting = [
     "pmdarima>=1.8,!=1.8.1,<2.1",
     "prophet>=1.1,<1.2",
+    "skpro>=2.0.0,<2.1.0",
     "statsforecast>=0.5.2,<1.7",
     "statsmodels>=0.12.1,<0.15",
     "tbats>=1.1,<1.2",
+    "arch>=5.6.0,<6.3.0",
 ]
 networks = [
     "keras-self-attention>=0.51,<0.52",
@@ -106,7 +107,6 @@ transformations = [
     "tsfresh>=0.17,<0.21",
 ]
 all_extras = [
-    "attrs",
     "cloudpickle",
     "dash!=2.9.0",
     "dask",
@@ -131,7 +131,8 @@ all_extras = [
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
     "seasonal",
-    "statsforecast>=0.5.2,<1.6.0; python_version < '3.11'",
+    "skpro>=2.0.0,<2.1.0",
+    "statsforecast>=0.5.2,<1.7.0",
     "statsmodels>=0.12.1",
     "stumpy>=1.5.1; python_version < '3.11'",
     "tbats>=1.1.0",
@@ -139,10 +140,10 @@ all_extras = [
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
+    "arch>=5.6.0,<6.3.0",
 ]
 
 all_extras_pandas2 = [
-    "attrs",
     "cloudpickle",
     "dash!=2.9.0",
     "dask<2023.7.1",
@@ -166,7 +167,8 @@ all_extras_pandas2 = [
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
     "seasonal",
-    "statsforecast>=0.5.2,<1.6.0; python_version < '3.11'",
+    "skpro>=2.0.0,<2.1.0",
+    "statsforecast>=0.5.2,<1.7.0",
     "statsmodels>=0.12.1",
     "stumpy>=1.5.1; python_version < '3.11'",
     "tbats>=1.1.0",
@@ -174,6 +176,7 @@ all_extras_pandas2 = [
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
+    "arch>=5.6.0,<6.3.0",
 ]
 
 cython_extras = [

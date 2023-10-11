@@ -33,6 +33,16 @@ def scitype(obj, force_single_scitype=True, coerce_to_list=False):
     ------
     TypeError if no scitype can be determined for obj
     """
+    # if object has tag, return tag
+    if hasattr(obj, "get_tag"):
+        if isclass(obj):
+            tag_type = obj.get_class_tag("object_type", None)
+        else:
+            tag_type = obj.get_tag("object_type", None, raise_error=False)
+        if tag_type is not None:
+            return tag_type
+
+    # if the tag is not present, determine scitype from legacy base class logic
     if isclass(obj):
         scitypes = [sci[0] for sci in BASE_CLASS_REGISTER if issubclass(obj, sci[1])]
     else:
