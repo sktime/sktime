@@ -48,10 +48,10 @@ class ScaledAsinhTransformer(BaseTransformer):
     | The Hyperbolic Sine transformation is applied if both shift_parameter_asinh and
     | scale_parameter_asinh are not None:
     |   :math:`transform  = asinh(\frac{x- a}{b})`
-    |   :math:`inverse_transform  = b . sinh(x) + a`
+    |   :math:`inverse transform  = b . sinh(x) + a`
     | where "a" is the shift parameter and "b" is the scale parameter [1]_.
     | a = median(sample data)
-    | b = median_abs_deviation(sample data) . 1.4826
+    | b = median_abs_deviation(sample data) :math:`. 1.4826`
 
     References
     ----------
