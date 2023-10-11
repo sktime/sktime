@@ -104,14 +104,14 @@ def load_from_tsfile_to_dataframe(
                     metadata_started = True
                 elif line.startswith("@problemtype"):
                     if data_started:
-                        raise IOError("metadata must come before data")
+                        raise OSError("metadata must come before data")
 
                     # Check that the associated value is valid
                     tokens = line.split(" ")
                     token_len = len(tokens)
 
                     if token_len != 2:
-                        raise IOError(
+                        raise OSError(
                             """problemType tag requires an associated value:
                             'regression' or 'classification'"""
                         )
@@ -123,7 +123,7 @@ def load_from_tsfile_to_dataframe(
                         # problemType = classification
                         pass
                     else:
-                        raise IOError(
+                        raise OSError(
                             """invalid problemType value,
                                       please use 'regression' or 'classification'"""
                         )
