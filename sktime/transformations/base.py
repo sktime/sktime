@@ -156,6 +156,7 @@ class BaseTransformer(BaseEstimator):
         #  None: no parallelization
         #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend
     }
 
     # allowed mtypes for transformers - Series and Panel
@@ -1251,6 +1252,7 @@ class BaseTransformer(BaseEstimator):
                 transformers_,
                 method=methodname,
                 backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
                 **kwargs,
             )
             return self
@@ -1284,6 +1286,7 @@ class BaseTransformer(BaseEstimator):
                     transformers_,
                     method="fit",
                     backend=self.get_config()["backend:parallel"],
+                    backend_params=self.get_config()["backend:parallel:params"],
                     **kwargs,
                 )
 
@@ -1293,6 +1296,7 @@ class BaseTransformer(BaseEstimator):
                 method=methodname,
                 return_type="list",
                 backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
                 **kwargs,
             )
             Xt = X.reconstruct(Xts, overwrite_index=False)
