@@ -181,14 +181,16 @@ class BaseTransformer(BaseEstimator):
             - "dask": any valid keys for ``dask.compute``
             can be passed, e.g., ``scheduler``
         """,
-        "input_conversion": """str, one of "on", "off", valid mtype string
+        "input_conversion": """
+        input_conversion : str, one of "on", "off", valid mtype string
             controls input checks and conversions,
             for _fit, _transform, _inverse_transform, _update
             "on" - input check and conversion is carried out
             "off" - input check and conversion not done before passing to inner methods
             valid mtype string - input is assumed to specified mtype
         """,
-        "output_conversion": """str, one of "on", "off", valid mtype string
+        "output_conversion": """
+        output_conversion : str, one of "on", "off", valid mtype string
             controls output conversion for _transform, _inverse_transform
             "on" - if input_conversion is "on", output conversion is carried out
             "off" - output of _transform, _inverse_transform is directly returned

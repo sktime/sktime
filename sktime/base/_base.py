@@ -86,6 +86,12 @@ class BaseObject(_BaseObject):
             from defaults (False), or all parameter names and values (False)
             does not nest, i.e., only affects self and not component estimators
         """,
+        "warnings": """
+        warnings : str, "on" (default), or "off"
+            whether to raise warnings, affects warnings from sktime only
+            "on" = will raise warnings from sktime
+            "off" = will not raise warnings from sktime
+        """,
     }
 
     def __init__(self):
