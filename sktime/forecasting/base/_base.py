@@ -106,6 +106,31 @@ class BaseForecaster(BaseEstimator):
         #  None: no parallelization
         #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend
+    }
+
+    _config_doc = {
+        "backend:parallel": """
+        backend:parallel : str, optional
+            backend to use for parallelization, one of
+
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel``
+            - "dask": uses ``dask``, requires ``dask`` package in environment
+        """,
+        "backend:parallel:params": """
+        backend:parallel:params : dict, optional
+            additional parameters passed to the backend as config.
+            Valid keys depend on the value of ``backend``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading":
+            any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+            with the exception of ``backend`` which is directly
+            controlled by ``backend``
+            - "dask": any valid keys for ``dask.compute``
+            can be passed, e.g., ``scheduler``
+        """,
     }
 
     def __init__(self):
@@ -1747,6 +1772,7 @@ class BaseForecaster(BaseEstimator):
                     rowname_default="forecasters",
                     colname_default="forecasters",
                     backend=self.get_config()["backend:parallel"],
+                    backend_params=self.get_config()["backend:parallel:params"],
                 )
             else:
                 forecasters_ = self.forecasters_
@@ -1755,6 +1781,7 @@ class BaseForecaster(BaseEstimator):
                 forecasters_,
                 method=methodname,
                 backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
                 **kwargs,
             )
             return self
@@ -1770,6 +1797,7 @@ class BaseForecaster(BaseEstimator):
                 method=methodname,
                 return_type="list",
                 backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
                 **kwargs,
             )
 
