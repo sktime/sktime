@@ -121,13 +121,13 @@ class BaseForecaster(BaseEstimator):
         "backend:parallel:params": """
         backend:parallel:params : dict, optional
             additional parameters passed to the parallelization backend as config.
-            Valid keys depend on the value of ``backend``:
+            Valid keys depend on the value of ``backend:parallel``:
 
             - "None": no additional parameters, ``backend_params`` is ignored
             - "loky", "multiprocessing" and "threading":
             any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
             with the exception of ``backend`` which is directly
-            controlled by ``backend``
+            controlled by ``backend:parallel``
             - "dask": any valid keys for ``dask.compute``
             can be passed, e.g., ``scheduler``
         """,
