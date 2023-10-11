@@ -11,7 +11,6 @@ __all__ = [
 
 from collections.abc import Sequence
 from typing import Dict, List, Optional, Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd
