@@ -66,8 +66,9 @@ We recommend that you also set this up locally as it will ensure that you never 
 These checks run automatically before you make a new commit.
 To setup, simply navigate to the sktime folder and install our pre-commit configuration:
 
-::
-   pre-commit install
+   .. code:: bash
+
+      pre-commit install
 
 pre-commit should now automatically run anything you make a commit! Please let us know if you encounter any issues getting this setup.
 
@@ -156,8 +157,6 @@ with the image of name ``PYTHON_VERSION`` based on the following python versions
 +----------------+----------------+
 | Python version | PYTHON_VERSION |
 +================+================+
-|     3.7.16     |      py37      |
-+----------------+----------------+
 |     3.8.16     |      py38      |
 +----------------+----------------+
 |     3.9.16     |      py39      |
@@ -170,8 +169,8 @@ with the image of name ``PYTHON_VERSION`` based on the following python versions
 The dockerized tests can be also executed via `make <https://www.gnu.org/software/make/>`_,
 via the command ``make dockertest PYTHON_VERSION=<python version>``.
 The ``PYTHON_VERSION`` argument specifies the python version and is the same string as in the table above.
-For example, to execute the tests in the Python version ``3.7.16``,
-use ``make dockertest PYTHON_VERSION=py37``.
+For example, to execute the tests in the Python version ``3.8.16``,
+use ``make dockertest PYTHON_VERSION=py38``.
 
 
 Continuous integration

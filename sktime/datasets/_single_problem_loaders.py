@@ -55,8 +55,8 @@ from sktime.datasets._data_io import (
     _list_available_datasets,
     _load_dataset,
     _load_provided_dataset,
-    load_tsf_to_dataframe,
 )
+from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
