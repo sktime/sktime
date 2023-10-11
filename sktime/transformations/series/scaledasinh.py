@@ -51,7 +51,7 @@ class ScaledAsinhTransformer(BaseTransformer):
     |   :math:`inverse_transform  = b . sinh(x) + a`
     | where "a" is the shift parameter and "b" is the scale parameter [1]_.
     | a = median(sample data)
-    | b = median_abs_deviation(sample data) * 1.4826
+    | b = median_abs_deviation(sample data) . 1.4826
 
     References
     ----------
