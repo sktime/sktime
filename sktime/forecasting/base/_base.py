@@ -38,7 +38,6 @@ __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
 from itertools import product
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -58,6 +57,7 @@ from sktime.utils.datetime import _shift
 from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
+from sktime.utils.warnings import warn
 
 DEFAULT_ALPHA = 0.05
 
@@ -107,6 +107,30 @@ class BaseForecaster(BaseEstimator):
         #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         #  "dask": uses `dask`, requires `dask` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
+    }
+
+    _config_doc = {
+        "backend:parallel": """
+        backend:parallel : str, optional, default="None"
+            backend to use for parallelization when broadcasting/vectorizing, one of
+
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel``
+            - "dask": uses ``dask``, requires ``dask`` package in environment
+        """,
+        "backend:parallel:params": """
+        backend:parallel:params : dict, optional, default={} (no parameters passed)
+            additional parameters passed to the parallelization backend as config.
+            Valid keys depend on the value of ``backend:parallel``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading":
+              any valid keys for ``joblib.Parallel`` can be passed here,
+              e.g., ``n_jobs``, with the exception of ``backend`` which is directly
+              controlled by ``backend:parallel``
+            - "dask": any valid keys for ``dask.compute``
+              can be passed, e.g., ``scheduler``
+        """,
     }
 
     def __init__(self):
@@ -839,7 +863,10 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
 
         if y is None or (hasattr(y, "__len__") and len(y) == 0):
-            warn("empty y passed to update, no update was carried out")
+            warn(
+                f"empty y passed to update of {self}, no update was carried out",
+                obj=self,
+            )
             return self
 
         # input checks and minor coercions on X, y
@@ -1030,7 +1057,11 @@ class BaseForecaster(BaseEstimator):
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
         if y is None or (hasattr(y, "__len__") and len(y) == 0):
-            warn("empty y passed to update_predict, no update was carried out")
+            warn(
+                f"empty y passed to update_predict of {self}, "
+                "no update was carried out",
+                obj=self,
+            )
             return self.predict(fh=fh, X=X)
 
         self.check_is_fitted()
@@ -1891,7 +1922,8 @@ class BaseForecaster(BaseEstimator):
                 f"{self.__class__.__name__} will be refit each time "
                 f"`update` is called with update_params=True. "
                 "To refit less often, use the wrappers in the "
-                "forecasting.stream module, e.g., UpdateEvery."
+                "forecasting.stream module, e.g., UpdateEvery.",
+                obj=self,
             )
             # we need to overwrite the mtype last seen and converter store, since the _y
             #    may have been converted
@@ -1912,7 +1944,8 @@ class BaseForecaster(BaseEstimator):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will update all component cutoffs each time"
-                f" `update` is called with update_params=False."
+                f" `update` is called with update_params=False.",
+                obj=self,
             )
             comp_forecasters = self._components(base_class=BaseForecaster)
             for comp in comp_forecasters.values():

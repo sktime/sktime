@@ -5,14 +5,13 @@
 __author__ = ["mloning", "fkiraly", "indinewton"]
 __all__ = ["StackingForecaster"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.split import SingleWindowSplitter
 from sktime.utils.validation.forecasting import check_regressor
+from sktime.utils.warnings import warn
 
 
 class StackingForecaster(_HeterogenousEnsembleForecaster):
@@ -141,7 +140,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         self : an instance of self
         """
         if update_params:
-            warn("Updating `final regressor is not implemented")
+            warn("Updating `final regressor is not implemented", obj=self)
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
         return self
