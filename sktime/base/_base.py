@@ -73,6 +73,8 @@ class BaseObject(_BaseObject):
     Extends skbase BaseObject with additional features.
     """
 
+    _config = {"warnings": "on"}
+
     _config_doc = {
         "display": """
         display : str, "diagram" (default), or "text"

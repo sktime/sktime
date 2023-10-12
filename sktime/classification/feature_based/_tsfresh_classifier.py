@@ -6,8 +6,6 @@ Pipeline classifier using the TSFresh transformer and an estimator.
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["TSFreshClassifier"]
 
-import warnings
-
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
@@ -17,6 +15,7 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
+from sktime.utils.warnings import warn
 
 
 class TSFreshClassifier(BaseClassifier):
@@ -152,7 +151,7 @@ class TSFreshClassifier(BaseClassifier):
         X_t = self._transformer.fit_transform(X, y)
 
         if X_t.shape[1] == 0:
-            warnings.warn(
+            warn(
                 "TSFresh has extracted no features from the data. Returning the "
                 "majority class in predictions. Setting "
                 "relevant_feature_extractor=False will keep all features.",
