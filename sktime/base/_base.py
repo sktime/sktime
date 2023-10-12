@@ -75,6 +75,33 @@ class BaseObject(_BaseObject):
 
     _config = {"warnings": "on"}
 
+    _config_doc = {
+        "display": """
+        display : str, "diagram" (default), or "text"
+            how jupyter kernels display instances of self
+
+            * "diagram" = html box diagram representation
+            * "text" = string printout
+        """,
+        "print_changed_only": """
+        print_changed_only : bool, default=True
+            whether printing of self lists only self-parameters that differ
+            from defaults (False), or all parameter names and values (False)
+            does not nest, i.e., only affects self and not component estimators
+        """,
+        "warnings": """
+        warnings : str, "on" (default), or "off"
+            whether to raise warnings, affects warnings from sktime only
+
+            * "on" = will raise warnings from sktime
+            * "off" = will not raise warnings from sktime
+        """,
+    }
+
+    def __init__(self):
+        super().__init__()
+        self.__class__.set_config.__doc__ = self._get_set_config_doc()
+
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
@@ -92,6 +119,43 @@ class BaseObject(_BaseObject):
         other_params = other.get_params(deep=False)
 
         return deep_equals(self_params, other_params)
+
+    @classmethod
+    def _get_set_config_doc(cls):
+        """Create docstring for set_config from self._config_doc.
+
+        Returns
+        -------
+        collected_config_docs : dict
+            Dictionary of doc name: docstring part.
+            Collected from _config_doc class attribute via nested inheritance.
+        """
+        cfgs_dict = cls._get_class_flags(flag_attr_name="_config_doc")
+
+        doc_start = """Set config flags to given values.
+
+        Parameters
+        ----------
+        config_dict : dict
+            Dictionary of config name : config value pairs.
+            Valid configs, values, and their meaning is listed below:
+        """
+
+        doc_end = """
+        Returns
+        -------
+        self : reference to self.
+
+        Notes
+        -----
+        Changes object state, copies configs in config_dict to self._config_dynamic.
+        """
+
+        doc = doc_start
+        for _, cfg_doc in cfgs_dict.items():
+            doc += cfg_doc
+        doc += doc_end
+        return doc
 
     def save(self, path=None):
         """Save serialized self to bytes-like object or to (.zip) file.
