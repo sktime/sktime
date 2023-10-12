@@ -27,6 +27,7 @@ Highlights
 * forecasting reducer ``YfromX`` now makes probabilistic forecasts when using ``skpro`` probabilistic tabular regressors (:pr:`5271`) :user:`fkiraly`
 * forecasting compositors ``ForecastX`` now allows fitting ``forecaster_y`` on forecasted ``X`` (:pr:`5334`) :user:`benHeid`
 * lucky dynamic time warping distance and aligner, for use in time series classifiers, regressors, clusterers (:pr:`5341`) :user:`fkiraly`
+* splitters have now moved to their own module, ``sktime.split`` (:pr:`5017`) :user:`BensHamza`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -151,9 +152,9 @@ Maintenance
 * [MNT] bound ``numba<0.58`` (:pr:`5303`) :user:`fkiraly`
 * [MNT] Remove ``attrs`` dependency (:pr:`5296`) :user:`Alex-JG3`
 * [MNT] simplified CI - merge windows CI step with test matrix (:pr:`5362`) :user:`fkiraly`
-* [MNT] python 3.12 compatibility - replace ``distutils`` calls with equivalent functionality (:pr:`5376`) :user:`fkiraly`
+* [MNT] towards 3.12 compatibility - replace ``distutils`` calls with equivalent functionality (:pr:`5376`) :user:`fkiraly`
 * [MNT] ``skpro`` as a soft dependency (:pr:`5273`) :user:`fkiraly`
-* [ENH] removed ``py37.dockerfile`` and update doc entry for CI (:pr:`5356`) :user:`kurayami07734`
+* [MNT] removed ``py37.dockerfile`` and update doc entry for CI (:pr:`5356`) :user:`kurayami07734`
 * [MNT] [Dependabot](deps): Bump styfle/cancel-workflow-action from 0.11.0 to 0.12.0 (:pr:`5355`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Bump stefanzweifel/git-auto-commit-action from 4 to 5 (:pr:`5373`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps-dev): Update holidays requirement from <0.33,>=0.29 to >=0.29,<0.34 (:pr:`5276`) :user:`dependabot[bot]`
@@ -163,7 +164,7 @@ Maintenance
 Documentation
 ~~~~~~~~~~~~~
 
-* [DOC] prevent line break in README.md badges table (:pr:`5263`) :user:`fkiraly`
+* [DOC] prevent line break in ``README.md`` badges table (:pr:`5263`) :user:`fkiraly`
 * [DOC] forecasting extension template - add insample capability tags (:pr:`5272`) :user:`fkiraly`
 * [DOC] add ``blog`` badge for ``fkiraly``, for ODSC blog post (:pr:`5291`) :user:`fkiraly`
 * [DOC] speed improvement of ``partition_based_clustering`` notebook (:pr:`5278`) :user:`alexfilothodoros`
@@ -242,7 +243,6 @@ Contributors
 :user:`Vasudeva-bit`,
 :user:`xansh`,
 :user:`yarnabrina`
-
 
 Version 0.23.0 - 2023-09-17
 ---------------------------
