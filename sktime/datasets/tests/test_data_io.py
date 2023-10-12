@@ -85,9 +85,9 @@ def test_load_tecator(return_X_y, return_type, split):
     Check all possibilities of split, return_X_y and return_type.
     """
     if return_X_y:
-        X, y = load_tecator(return_X_y, return_type)
+        X, y = load_tecator(return_X_y=return_X_y, return_type=return_type)
     else:
-        X = load_tecator(return_X_y, return_type)
+        X = load_tecator(return_X_y=return_X_y, return_type=return_type)
 
     # Check whether object is same mtype or not, via bool
     valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
@@ -100,15 +100,15 @@ def test_load_tecator(return_X_y, return_type, split):
 
     # check to make sure train / test options work
     if split == "TRAIN":
-        X_train, y_train = load_tecator(return_X_y, return_type, split=split)
+        X_train, y_train = load_tecator(split, return_X_y, return_type)
         assert len(X_train) == len(y_train)
         assert len(X_train) == 172
     elif split == "TEST":
-        X_test, y_test = load_tecator(return_X_y, return_type, split=split)
+        X_test, y_test = load_tecator(split, return_X_y, return_type)
         assert len(X_test) == len(y_test)
         assert len(X_test) == 43
     else:
-        X, y = load_tecator(return_X_y, return_type, split=split)
+        X, y = load_tecator(split, return_X_y, return_type)
         assert len(X) == len(y)
         assert len(X) == 215
 
