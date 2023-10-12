@@ -375,6 +375,17 @@ Online and stream forecasting
     NormalHedgeEnsemble
     NNLSEnsemble
 
+LTSF Forecasters
+----------------
+
+.. currentmodule:: sktime.forecasting.ltsf
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LTSFLinearForecaster
+
 .. currentmodule:: sktime.forecasting.stream
 
 .. autosummary::
