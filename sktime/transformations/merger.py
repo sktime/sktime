@@ -32,6 +32,10 @@ class Merger(BaseTransformer):
     ----------
     method : {`median`, `mean`}, default="median"
         The method to use for aggregation. Can be one of "mean" or "median".
+    stride : int, default=0
+        The stride to use for the aggregation. The stride determines the number of
+        shifts between consecutive instances. A stride of 0 means no shift. A
+        stride of 1 means that the time series is aggregated as above.
 
     Examples
     --------
@@ -39,6 +43,13 @@ class Merger(BaseTransformer):
     >>> from sktime.utils._testing.panel import _make_panel
     >>> y = _make_panel(n_instances=10, n_columns=3, n_timepoints=5)
     >>> result = Merger(method="median").fit_transform(y)
+    >>> result.shape
+    (3, 5)
+
+    >>> from sktime.transformations.merger import Merger
+    >>> from sktime.utils._testing.panel import _make_panel
+    >>> y = _make_panel(n_instances=10, n_columns=3, n_timepoints=5)
+    >>> result = Merger(method="median", stride=1).fit_transform(y)
     >>> result.shape
     (14, 3, 1)
     """
