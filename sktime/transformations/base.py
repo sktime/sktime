@@ -161,7 +161,7 @@ class BaseTransformer(BaseEstimator):
 
     _config_doc = {
         "backend:parallel": """
-        backend:parallel : str, optional
+        backend:parallel : str, optional, default="None"
             backend to use for parallelization when broadcasting/vectorizing, one of
 
             - "None": executes loop sequentally, simple list comprehension
@@ -169,7 +169,7 @@ class BaseTransformer(BaseEstimator):
             - "dask": uses ``dask``, requires ``dask`` package in environment
         """,
         "backend:parallel:params": """
-        backend:parallel:params : dict, optional
+        backend:parallel:params : dict, optional, default={} (no parameters passed)
             additional parameters passed to the parallelization backend as config.
             Valid keys depend on the value of ``backend:parallel``:
 
