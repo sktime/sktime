@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Tests for sktime annotators."""
 
 __author__ = ["miraep8", "fkiraly", "klam-data", "pyyim", "mgorlin"]
@@ -10,8 +8,8 @@ import pandas as pd
 import pytest
 
 from sktime.registry import all_estimators
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.annotation import make_annotation_problem
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 ALL_ANNOTATORS = all_estimators(estimator_types="series-annotator", return_names=False)
 
@@ -19,7 +17,7 @@ ALL_ANNOTATORS = all_estimators(estimator_types="series-annotator", return_names
 @pytest.mark.parametrize("Estimator", ALL_ANNOTATORS)
 def test_output_type(Estimator):
     """Test annotator output type."""
-    if not _check_estimator_deps(Estimator, severity="none"):
+    if not run_test_for_class(Estimator):
         return None
 
     estimator = Estimator.create_test_instance()

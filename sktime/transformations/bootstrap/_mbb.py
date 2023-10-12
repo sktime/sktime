@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Bootstrapping methods for time series."""
 
@@ -124,7 +123,7 @@ class STLBootstrapTransformer(BaseTransformer):
     See Also
     --------
     sktime.transformations.bootstrap.MovingBlockBootstrapTransformer :
-        Transofrmer that applies the Moving Block Bootstrapping method to create
+        Transformer that applies the Moving Block Bootstrapping method to create
         a panel of synthetic time series.
 
     References
@@ -231,7 +230,7 @@ class STLBootstrapTransformer(BaseTransformer):
         self.outer_iter = outer_iter
         self.random_state = random_state
 
-        super(STLBootstrapTransformer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -514,7 +513,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         self.return_actual = return_actual
         self.random_state = random_state
 
-        super(MovingBlockBootstrapTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

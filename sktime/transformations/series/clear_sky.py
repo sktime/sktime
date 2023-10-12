@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Clear sky transformer for solar time-series."""
 
@@ -7,7 +6,6 @@ __author__ = ["ciaran-g"]
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from scipy.stats import vonmises
 
 from sktime.transformations.base import BaseTransformer
 
@@ -99,7 +97,7 @@ class ClearSky(BaseTransformer):
         "handles-missing-data": False,
         "capability:missing_values:removes": True,
         "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": "statsmodels",
+        "python_dependencies": ["statsmodels", "scipy"],
     }
 
     def __init__(
@@ -111,7 +109,6 @@ class ClearSky(BaseTransformer):
         n_jobs=None,
         backend="loky",
     ):
-
         self.quantile_prob = quantile_prob
         self.bw_diurnal = bw_diurnal
         self.bw_annual = bw_annual
@@ -119,7 +116,7 @@ class ClearSky(BaseTransformer):
         self.n_jobs = n_jobs
         self.backend = backend
 
-        super(ClearSky, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -305,6 +302,7 @@ def _clearskypower(y, q, tod_i, doy_i, tod_vec, doy_vec, bw_tod, bw_doy):
     csp : float
         The clear sky power at tod_i and doy_i
     """
+    from scipy.stats import vonmises
     from statsmodels.stats.weightstats import DescrStatsW
 
     wts_tod = vonmises.pdf(
@@ -340,7 +338,6 @@ def _check_index(X):
     -------
     freq_ind : str or None
         Frequency of data in string format
-
     """
     if not (isinstance(X.index, pd.DatetimeIndex)) | (
         isinstance(X.index, pd.PeriodIndex)

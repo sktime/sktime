@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements hierarchical reconciliation transformers.
 
@@ -7,14 +6,13 @@ These reconcilers only depend on the structure of the hierarchy.
 
 __author__ = ["ciaran-g", "eenticott-shell", "k1m190r"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from numpy.linalg import inv
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+from sktime.utils.warnings import warn
 
 # TODO: failing test which are escaped
 
@@ -98,10 +96,9 @@ class Reconciler(BaseTransformer):
     METHOD_LIST = ["bu", "ols", "wls_str", "td_fcst"]
 
     def __init__(self, method="bu"):
-
         self.method = method
 
-        super(Reconciler, self).__init__()
+        super().__init__()
 
     def _add_totals(self, X):
         """Add total levels to X, using Aggregate."""
@@ -173,7 +170,8 @@ class Reconciler(BaseTransformer):
         if X.index.nlevels < 2:
             warn(
                 "Reconciler is intended for use with X.index.nlevels > 1. "
-                "Returning X unchanged."
+                "Returning X unchanged.",
+                obj=self,
             )
             return X
 
@@ -182,7 +180,8 @@ class Reconciler(BaseTransformer):
             warn(
                 "No elements of the index of X named '__total' found. Adding "
                 "aggregate levels using the default Aggregator transformer "
-                "before reconciliation."
+                "before reconciliation.",
+                obj=self,
             )
             X = self._add_totals(X)
 
@@ -201,7 +200,6 @@ class Reconciler(BaseTransformer):
         recon_preds = []
         gmat = self.g_matrix
         for _name, group in X:
-
             if self.method == "td_fcst":
                 gmat = _update_td_fcst(
                     g_matrix=gmat, x_sf=group.droplevel(-1), conn_df=self.parent_child

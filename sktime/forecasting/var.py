@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implements VAR Model as interface to statsmodels."""
 
 __all__ = ["VAR"]
@@ -14,8 +13,7 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VAR(_StatsModelsAdapter):
-    """
-    A VAR model is a generalisation of the univariate autoregressive.
+    """A VAR model is a generalisation of the univariate autoregressive.
 
     Direct interface for `statsmodels.tsa.vector_ar`
     A model for forecasting a vector of time series[1].
@@ -80,6 +78,7 @@ class VAR(_StatsModelsAdapter):
         "univariate-only": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
@@ -104,7 +103,7 @@ class VAR(_StatsModelsAdapter):
         self.freq = freq
         self.ic = ic
 
-        super(VAR, self).__init__(random_state=random_state)
+        super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
@@ -137,9 +136,8 @@ class VAR(_StatsModelsAdapter):
         )
         return self
 
-    def _predict(self, fh, X=None):
-        """
-        Wrap Statmodel's VAR forecast method.
+    def _predict(self, fh, X):
+        """Wrap Statmodel's VAR forecast method.
 
         Parameters
         ----------
@@ -182,16 +180,16 @@ class VAR(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        index = fh.to_absolute(self.cutoff)
+        index = fh.to_absolute_index(self.cutoff)
         index.name = self._y.index.name
         y_pred = pd.DataFrame(
             y_pred[fh.to_indexer(self.cutoff), :],
-            index=fh.to_absolute(self.cutoff),
+            index=index,
             columns=self._y.columns,
         )
         return y_pred
 
-    def _predict_interval(self, fh, X=None, coverage: [float] = None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -239,7 +237,6 @@ class VAR(_StatsModelsAdapter):
         df_list = []
 
         for cov in coverage:
-
             alpha = 1 - cov
 
             fcast_interval = model.forecast_interval(
@@ -299,8 +296,9 @@ class VAR(_StatsModelsAdapter):
             columns=pd.MultiIndex.from_tuples(final_columns),
         )
 
-        final_df.index = fh.to_absolute(self.cutoff)
-        final_df.index.name = self._y.index.name
+        index = fh.to_absolute_index(self.cutoff)
+        index.name = self._y.index.name
+        final_df.index = index
 
         return final_df
 

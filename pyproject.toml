@@ -1,18 +1,18 @@
 [project]
 name = "sktime"
-version = "0.15.1"
+version = "0.23.0"
 description = "A unified framework for machine learning with time series"
 authors = [
-    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
-    {name = "Markus Löning"},
-    {name = "Martin Walter", email = "mwalter@sktime.org"},
+    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
 ]
 maintainers = [
-    {name = "sktime developers", email = "info@sktime.org"},
-    {name = "Franz Király", email = "fkiraly@sktime.org"},
-    {name = "Guzal Bulatova", email = "gbulatova@sktime.org"},
-    {name = "Martin Walter", email = "mwalter@sktime.org"},
+    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
+    {name = "Franz Király"},
+    {name = "Jonathan Bechtel"},
+    {name = "Kiril Ralinovski"},
+    {name = "Marc Rovira"},
+    {name = "Sagar Mishra"},
+    {name = "Ugochukwu Onyeka"},
 ]
 readme = "README.md"
 keywords = [
@@ -37,49 +37,152 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Operating System :: MacOS",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
-requires-python = ">=3.7,<3.11"
+requires-python = ">=3.8,<3.12"
 dependencies = [
-    "deprecated>=1.2.13",
-    "numba>=0.55",
-    "numpy>=1.21.0,<1.25",
-    "pandas>=1.1.0,<1.6.0",
-    "scikit-learn>=0.24.0,<1.3.0",
-    "statsmodels>=0.12.1",
+    "numpy>=1.21.0,<1.27",
+    "pandas>=1.1.0,<2.2.0",
+    "packaging",
+    "scikit-base<0.6.0",
+    "scikit-learn>=0.24.0,<1.4.0",
     "scipy<2.0.0,>=1.2.0",
 ]
 
 [project.optional-dependencies]
+alignment = [
+    "dtw-python>=1.3,<1.4",
+    "numba>=0.53,<0.58",
+]
+annotation = [
+    "hmmlearn>=0.2.7,<0.4",
+    "numba>=0.53,<0.58",
+    "pyod>=0.8.0,<1.2",
+]
+classification = [
+    "esig>=0.9.7,<0.10",
+    "mrsqm>=0.0.3,<0.1",
+    "numba>=0.53,<0.58",
+    "tensorflow>=2,<=2.14",
+    "tsfresh>=0.17,<0.21",
+]
+clustering = [
+    "numba>=0.53,<0.58",
+    "tslearn>=0.5.2,<0.6.3",
+]
+forecasting = [
+    "pmdarima>=1.8,!=1.8.1,<2.1",
+    "prophet>=1.1,<1.2",
+    "skpro>=2.0.0,<2.1.0",
+    "statsforecast>=0.5.2,<1.7",
+    "statsmodels>=0.12.1,<0.15",
+    "tbats>=1.1,<1.2",
+    "arch>=5.6.0,<6.3.0",
+]
+networks = [
+    "keras-self-attention>=0.51,<0.52",
+    "tensorflow>=2,<=2.14",
+]
+param_est = [
+    "seasonal>=0.3.1,<0.4",
+    "statsmodels>=0.12.1,<0.15",
+]
+regression = [
+    "numba>=0.53,<0.58",
+    "tensorflow>=2,<=2.14",
+]
+transformations = [
+    "esig>=0.9.7,<0.10",
+    "filterpy>=1.4.5,<1.5",
+    "holidays>=0.29,<0.34",
+    "mne>=1.5,<1.6",
+    "numba>=0.53,<0.58",
+    "pycatch22>=0.4,<0.5",
+    "pykalman>=0.9.5,<0.10",
+    "statsmodels>=0.12.1,<0.15",
+    "stumpy>=1.5.1,<1.13",
+    "tsfresh>=0.17,<0.21",
+]
 all_extras = [
     "cloudpickle",
+    "dash!=2.9.0",
     "dask",
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
-    "filterpy>=1.4.5",
-    "h5py",
-    "hmmlearn>=0.2.7",
+    "filterpy>=1.4.5; python_version < '3.11'",
     "gluonts>=0.9.0",
-    "keras-self-attention",
+    "h5py",
+    "hmmlearn>=0.2.7; python_version < '3.11'",
+    "holidays",
+    "keras-self-attention; python_version < '3.11'",
+    "kotsu>=0.3.1",
     "matplotlib>=3.3.2",
     "mne",
+    "numba>=0.53,<0.58",
     "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
     "prophet>=1.1",
-    "pykalman>=0.9.5",
-    "pyod>=0.8.0",
+    "pycatch22",
+    "pykalman>=0.9.5; python_version < '3.11'",
+    "pyod>=0.8.0; python_version < '3.11'",
+    "scikit-optimize",
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
-    "statsforecast>=0.5.2",
-    "stumpy>=1.5.1",
+    "seasonal",
+    "skpro>=2.0.0,<2.1.0",
+    "statsforecast>=0.5.2,<1.7.0",
+    "statsmodels>=0.12.1",
+    "stumpy>=1.5.1; python_version < '3.11'",
     "tbats>=1.1.0",
-    "tensorflow-probability",
-    "tensorflow",
-    "tsfresh>=0.17.0; python_version < '3.10'",
-    "tslearn>=0.5.2",
+    "tensorflow; python_version < '3.11'",
+    "tsfresh>=0.17.0",
+    "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
     "xarray",
+    "arch>=5.6.0,<6.3.0",
+]
+
+all_extras_pandas2 = [
+    "cloudpickle",
+    "dash!=2.9.0",
+    "dask<2023.7.1",
+    "dtw-python",
+    "esig==0.9.7; python_version < '3.10'",
+    "filterpy>=1.4.5; python_version < '3.11'",
+    "gluonts>=0.9.0",
+    "h5py",
+    "hmmlearn>=0.2.7; python_version < '3.11'",
+    "holidays",
+    "keras-self-attention; python_version < '3.11'",
+    "kotsu>=0.3.1",
+    "matplotlib>=3.3.2",
+    "mne",
+    "numba>=0.53,<0.58",
+    "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
+    "prophet>=1.1",
+    "pycatch22",
+    "pykalman>=0.9.5; python_version < '3.11'",
+    "pyod>=0.8.0; python_version < '3.11'",
+    "scikit_posthocs>=0.6.5",
+    "seaborn>=0.11.0",
+    "seasonal",
+    "skpro>=2.0.0,<2.1.0",
+    "statsforecast>=0.5.2,<1.7.0",
+    "statsmodels>=0.12.1",
+    "stumpy>=1.5.1; python_version < '3.11'",
+    "tbats>=1.1.0",
+    "tensorflow; python_version < '3.11'",
+    "tsfresh>=0.17.0",
+    "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
+    "xarray",
+    "arch>=5.6.0,<6.3.0",
+]
+
+cython_extras = [
+    "mrseql",
+    "mrsqm; python_version < '3.11'",
+    "numba<0.58",
 ]
 
 dev = [
@@ -107,6 +210,7 @@ mlflow_tests = [
 
 binder = [
     "jupyter",
+    "pandas<2.0.0",
 ]
 
 docs = [
@@ -115,25 +219,30 @@ docs = [
     "nbsphinx>=0.8.6",
     "numpydoc",
     "pydata-sphinx-theme",
-    "sphinx_issues==1.2.0",
-    "sphinx-gallery==0.6.0",
-    "sphinx-design==0.3.0",
-    "sphinx==4.1.1",
+    "sphinx-copybutton",
+    "sphinx-issues<4.0.0",
+    "sphinx-gallery<0.15.0",
+    "sphinx-design<0.6.0",
+    "sphinx-version-warning",
+    "Sphinx<8.0.0,!=7.2.0",
     "tabulate",
 ]
 
 dl = [
     "tensorflow",
-    "tensorflow-probability",
+]
+
+pandas1 = [
+    "pandas<2.0.0",
 ]
 
 [project.urls]
-Homepage = "https://www.sktime.org"
+Homepage = "https://www.sktime.net"
 Repository = "https://github.com/sktime/sktime"
-Documentation = "https://www.sktime.org"
+Documentation = "https://www.sktime.net"
 Download = "https://pypi.org/project/sktime/#files"
-"API Reference" = "https://www.sktime.org/en/stable/api_reference.html"
-"Release Notes" = "https://www.sktime.org/en/stable/changelog.html"
+"API Reference" = "https://www.sktime.net/en/stable/api_reference.html"
+"Release Notes" = "https://www.sktime.net/en/stable/changelog.html"
 
 [project.license]
 file = "LICENSE"

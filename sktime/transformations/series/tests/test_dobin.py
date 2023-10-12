@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for DOBIN (Distance based Outlier BasIs using Neighbors)."""
 
 __author__ = ["KatieBuc"]

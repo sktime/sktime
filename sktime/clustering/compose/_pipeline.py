@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipeline with a clusterer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
@@ -78,15 +77,18 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     >>> from sktime.clustering.k_means import TimeSeriesKMeans
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import ClustererPipeline
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
-    >>> pipeline = ClustererPipeline(TimeSeriesKMeans(), [PCATransformer()])
-    >>> pipeline.fit(X_train, y_train)
+    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
+    >>> pipeline = ClustererPipeline(
+    ...     TimeSeriesKMeans(), [PCATransformer()]
+    ... ) # doctest: +SKIP
+    >>> pipeline.fit(X_train, y_train) # doctest: +SKIP
     ClustererPipeline(...)
-    >>> y_pred = pipeline.predict(X_test)
+    >>> y_pred = pipeline.predict(X_test) # doctest: +SKIP
 
     Alternative construction via dunder method:
-    >>> pipeline = PCATransformer() * TimeSeriesKMeans()
+
+    >>> pipeline = PCATransformer() * TimeSeriesKMeans() # doctest: +SKIP
     """
 
     _tags = {
@@ -102,13 +104,12 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     # no default tag values - these are set dynamically below
 
     def __init__(self, clusterer, transformers):
-
         self.clusterer = clusterer
         self.clusterer_ = clusterer.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ClustererPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both clusterer and all transformers can
         multivariate = clusterer.get_tag("capability:multivariate", False)
@@ -303,15 +304,30 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # imports
+        from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeans
         from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.utils.validation._dependencies import _check_estimator_deps
 
-        t1 = ExponentTransformer(power=2)
-        t2 = ExponentTransformer(power=0.5)
-        c = TimeSeriesKMeans(random_state=42)
+        params = []
 
         # construct without names
-        return {"transformers": [t1, t2], "clusterer": c}
+        t1 = ExponentTransformer(power=2)
+        c = TimeSeriesDBSCAN.create_test_instance()
+
+        params1 = {"transformers": [t1], "clusterer": c}
+        params = params + [params1]
+
+        if _check_estimator_deps(TimeSeriesKMeans, severity="none"):
+            t1 = ExponentTransformer(power=2)
+            t2 = ExponentTransformer(power=0.5)
+            c = TimeSeriesKMeans(random_state=42)
+
+            params2 = {"transformers": [t1, t2], "clusterer": c}
+
+            params = params + [params2]
+
+        return params
 
 
 class SklearnClustererPipeline(ClustererPipeline):
@@ -394,6 +410,7 @@ class SklearnClustererPipeline(ClustererPipeline):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = t1 * t2 * KMeans()
     """
 
@@ -410,7 +427,6 @@ class SklearnClustererPipeline(ClustererPipeline):
     # no default tag values - these are set dynamically below
 
     def __init__(self, clusterer, transformers):
-
         from sklearn.base import clone
 
         self.clusterer = clusterer
@@ -604,13 +620,13 @@ class SklearnClustererPipeline(ClustererPipeline):
         # example with series-to-series transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
-        c = KMeans(random_state=42)
+        c = KMeans(random_state=42, n_init=10)
         params1 = {"transformers": [t1, t2], "clusterer": c}
 
         # example with series-to-primitive transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)
         t2 = SummaryTransformer()
-        c = KMeans(random_state=42)
+        c = KMeans(random_state=42, n_init=10)
         params2 = {"transformers": [t1, t2], "clusterer": c}
 
         # construct without names

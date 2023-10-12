@@ -192,6 +192,8 @@ Specific model implementations
      - Fully convolutional neural networks for state-of-the-art time series classification
    * - `WTTE-RNN <https://github.com/ragulpr/wtte-rnn/>`_
      - Time to event forecast by RNN based Weibull density estimation
+   * - `TimeSeers <https://github.com/MBrouns/timeseers/>`_
+     - alternative to Prophet for timeseries modelling when multiple time series are expected
 
 
 Time series databases and frameworks

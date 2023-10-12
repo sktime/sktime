@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Alignment path plotting utilities."""
 import numpy as np
 
@@ -9,7 +8,6 @@ _check_soft_dependencies("matplotlib", severity="warning")
 
 
 def _path_mask(cost_matrix, path, ax, theme=None):
-
     _check_soft_dependencies("matplotlib")
 
     import matplotlib.colors as colorplt
@@ -55,7 +53,6 @@ def _plot_path(
     title: str = "",
     plot_over_pw: bool = False,
 ):
-
     _check_soft_dependencies("matplotlib")
 
     import matplotlib as plt
@@ -122,7 +119,6 @@ def _plot_path(
 
 
 def _plot_alignment(x, y, metric, dist_kwargs: dict = None, title: str = ""):
-
     _check_soft_dependencies("matplotlib")
 
     import matplotlib as plt

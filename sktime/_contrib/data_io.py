@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for loading datasets that are unapproved of in the main repo.
 
 Old code, delete.
@@ -44,7 +43,7 @@ def _read_header(file, full_file_path_and_name):
                 if tokens[1] == "true":
                     meta_data["has_timestamps"] = True
                 elif tokens[1] != "false":
-                    raise IOError(
+                    raise OSError(
                         f"invalid timestamps tag value {tokens[1]} value in file "
                         f"{full_file_path_and_name}"
                     )
@@ -54,7 +53,7 @@ def _read_header(file, full_file_path_and_name):
                 if tokens[1] == "false":
                     meta_data["is_univariate"] = False
                 elif tokens[1] != "true":
-                    raise IOError(
+                    raise OSError(
                         f"invalid univariate tag value {tokens[1]} in file "
                         f"{full_file_path_and_name}"
                     )
@@ -63,7 +62,7 @@ def _read_header(file, full_file_path_and_name):
                 if tokens[1] == "false":
                     meta_data["is_equal_length"] = False
                 elif tokens[1] != "true":
-                    raise IOError(
+                    raise OSError(
                         f"invalid unequal tag value {tokens[1]} in file "
                         f"{full_file_path_and_name}"
                     )
@@ -73,17 +72,17 @@ def _read_header(file, full_file_path_and_name):
                 if tokens[1] == "false":
                     meta_data["class_labels"] = False
                 elif tokens[1] != "true":
-                    raise IOError(
+                    raise OSError(
                         "invalid classLabel value in file " f"{full_file_path_and_name}"
                     )
                 if token_len == 2 and meta_data["class_labels"]:
-                    raise IOError(
+                    raise OSError(
                         f"if the classlabel tag is true then class values must be "
                         f"supplied in file{full_file_path_and_name} but read {tokens}"
                     )
             elif line.startswith("@data"):
                 return meta_data
-    raise IOError(
+    raise OSError(
         f"End of file reached for {full_file_path_and_name} but no indicated start of "
         f"data with the tag @data"
     )
@@ -123,7 +122,7 @@ def load_from_tsfile(
     num_dimensions = 0
     num_cases = 0
     # equal_length = True
-    with open(full_file_path_and_name, "r", encoding="utf-8") as file:
+    with open(full_file_path_and_name, encoding="utf-8") as file:
         _meta_data = _read_header(file, full_file_path_and_name)
         for line in file:
             num_cases += 1
@@ -143,7 +142,7 @@ def load_from_tsfile(
             if _meta_data["has_class_labels"]:
                 this_line_num_dim -= 1
             if this_line_num_dim != _meta_data["num_dimensions"]:
-                raise IOError(
+                raise OSError(
                     f"Error input {full_file_path_and_name} all cases must "
                     f"have the {num_dimensions} dimensions. Case "
                     f"{num_cases} has {this_line_num_dim}"
@@ -172,7 +171,7 @@ def load_from_tsfile(
             else:
                 data = from_nested_to_3d_numpy(data)
         if return_y and not _meta_data["has_class_labels"]:
-            raise IOError(
+            raise OSError(
                 f"class labels have been requested, but they "
                 f"are not present in the file "
                 f"{full_file_path_and_name}"
@@ -182,6 +181,6 @@ def load_from_tsfile(
         else:
             return data
     else:
-        raise IOError(
+        raise OSError(
             f"Empty file {full_file_path_and_name} with header info but no " f"cases"
         )

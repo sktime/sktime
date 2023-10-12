@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for regression."""
 
 __author__ = ["AurumnPegasus", "achieveordie"]
@@ -11,8 +10,6 @@ from sklearn.utils import check_random_state
 from sktime.networks.cnn import CNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class CNNRegressor(BaseDeepRegressor):
@@ -75,7 +72,7 @@ class CNNRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(CNNRegressor, self).__init__(
+        super().__init__(
             batch_size=batch_size,
         )
         self.n_conv_layers = n_conv_layers

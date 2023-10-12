@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 from typing import Callable
 
 import numpy as np
 import pytest
-from numba import njit
 
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.utils.numba.njit import njit
 
 
 def _test_metric_parameters(distance_func: Callable):

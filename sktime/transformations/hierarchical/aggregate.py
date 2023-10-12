@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements a transfromer to generate hierarcical data from bottom level."""
 
 __author__ = ["ciaran-g"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.warnings import warn
 
 # todo: add any necessary sktime internal imports here
 
@@ -73,10 +71,9 @@ class Aggregator(BaseTransformer):
     }
 
     def __init__(self, flatten_single_levels=True):
-
         self.flatten_single_levels = flatten_single_levels
 
-        super(Aggregator, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -95,14 +92,16 @@ class Aggregator(BaseTransformer):
         if X.index.nlevels == 1:
             warn(
                 "Aggregator is intended for use with X.index.nlevels > 1. "
-                "Returning X unchanged."
+                "Returning X unchanged.",
+                obj=self,
             )
             return X
         # check the tests are ok
         if not _check_index_no_total(X):
             warn(
                 "Found elemnts in the index of X named '__total'. Removing "
-                "these levels and aggregating."
+                "these levels and aggregating.",
+                obj=self,
             )
             X = self._inverse_transform(X)
 
@@ -168,13 +167,15 @@ class Aggregator(BaseTransformer):
         if X.index.nlevels == 1:
             warn(
                 "Aggregator is intended for use with X.index.nlevels > 1. "
-                "Returning X unchanged."
+                "Returning X unchanged.",
+                obj=self,
             )
             return X
         if _check_index_no_total(X):
             warn(
                 "Inverse is inteded to be used with aggregated data. "
-                "Returning X unchanged."
+                "Returning X unchanged.",
+                obj=self,
             )
         else:
             for i in range(X.index.nlevels - 1):

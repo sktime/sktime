@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for classification."""
 
 __author__ = ["James-Large", "TonyBagnall"]
@@ -11,8 +10,6 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class CNNClassifier(BaseDeepClassifier):
@@ -89,7 +86,7 @@ class CNNClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(CNNClassifier, self).__init__()
+        super().__init__()
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
         self.kernel_size = kernel_size

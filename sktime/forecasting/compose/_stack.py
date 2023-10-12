@@ -1,19 +1,17 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecasters for combining forecasts via stacking."""
 
 __author__ = ["mloning", "fkiraly", "indinewton"]
 __all__ = ["StackingForecaster"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.model_selection import SingleWindowSplitter
+from sktime.split import SingleWindowSplitter
 from sktime.utils.validation.forecasting import check_regressor
+from sktime.utils.warnings import warn
 
 
 class StackingForecaster(_HeterogenousEnsembleForecaster):
@@ -70,7 +68,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
-        super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.regressor = regressor
         self.random_state = random_state
 
@@ -78,7 +76,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         self._anytagis_then_set("handles-missing-data", False, True, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -142,7 +140,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         self : an instance of self
         """
         if update_params:
-            warn("Updating `final regressor is not implemented")
+            warn("Updating `final regressor is not implemented", obj=self)
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
         return self
@@ -165,8 +163,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y_preds = np.column_stack(self._predict_forecasters(fh=fh, X=X))
         y_pred = self.regressor_.predict(y_preds)
         # index = y_preds.index
-        index = self.fh.to_absolute(self.cutoff)
-        return pd.Series(y_pred, index=index)
+        index = self.fh.to_absolute_index(self.cutoff)
+        return pd.Series(y_pred, index=index, name=self._y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Abstract base class for early time series classifiers.
+"""Abstract base class for early time series classifiers.
 
     class name: BaseEarlyClassifier
 
@@ -55,6 +53,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
     """
 
     _tags = {
+        "object_type": "early_classifier",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multivariate": False,
@@ -63,25 +62,34 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         "capability:multithreading": False,
     }
 
+    # convenience constant to control which metadata of input data
+    # are regularly retrieved in input checks
+    METADATA_REQ_IN_CHECKS = [
+        "n_instances",
+        "has_nans",
+        "is_univariate",
+        "is_equal_length",
+    ]
+
     def __init__(self):
         self.classes_ = []
         self.n_classes_ = 0
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+        """An array containing the state info for each decision in X from update and
+        predict methods.
 
-        """
-        An array containing the state info for each decision in X from update and
-        predict methods. Contains classifier dependant information for future decisions
-        on the data and information on when a cases decision has been made. Each row
-        contains information for a case from the latest decision on its safety made in
+        Contains classifier dependant information for future decisions on the data and
+        information on when a cases decision has been made. Each row contains
+        information for a case from the latest decision on its safety made in
         update/predict. Successive updates are likely to remove rows from the
         state_info, as it will only store as many rows as there are input instances to
         update/predict.
         """
         self.state_info = None
 
-        super(BaseEarlyClassifier, self).__init__()
+        super().__init__()
 
     def fit(self, X, y):
         """Fit time series classifier to training data.
@@ -612,7 +620,9 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         _convert_X = BaseClassifier._convert_X
         return _convert_X(self, X)
 
-    def _check_classifier_input(self, X, y=None, enforce_min_instances=1):
+    def _check_classifier_input(
+        self, X, y=None, enforce_min_instances=1, return_metadata=True
+    ):
         """Check whether input X and y are valid formats with minimum data.
 
         Raises a ValueError if the input is not valid.
@@ -623,6 +633,8 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         y : check whether a pd.Series or np.array
         enforce_min_instances : int, optional (default=1)
             check there are a minimum number of instances.
+        return_metadata : bool, str, or list of str
+            metadata fields to return with X_metadata, input to check_is_scitype
 
         Returns
         -------
@@ -634,7 +646,9 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             If y or X is invalid input data type, or there is not enough data
         """
         _check_classifier_input = BaseClassifier._check_classifier_input
-        return _check_classifier_input(self, X, y, enforce_min_instances)
+        return _check_classifier_input(
+            self, X, y, enforce_min_instances, return_metadata
+        )
 
     def _internal_convert(self, X, y=None):
         """Convert X and y if necessary as a user convenience.

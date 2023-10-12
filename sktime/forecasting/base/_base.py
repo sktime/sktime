@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for forecaster scitype.
+"""Base class template for forecaster scitype.
 
     class name: BaseForecaster
 
@@ -40,7 +38,6 @@ __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
 from itertools import product
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -55,14 +52,12 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies,
-    _check_estimator_deps,
-)
+from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
+from sktime.utils.warnings import warn
 
 DEFAULT_ALPHA = 0.05
 
@@ -78,19 +73,21 @@ def _coerce_to_list(obj):
 class BaseForecaster(BaseEstimator):
     """Base forecaster template class.
 
-    The base forecaster specifies the methods and method
-    signatures that all forecasters have to implement.
+    The base forecaster specifies the methods and method signatures that all forecasters
+    have to implement.
 
-    Specific implementations of these methods is deferred to concrete
-    forecasters.
+    Specific implementations of these methods is deferred to concrete forecasters.
     """
 
     # default tag values - these typically make the "safest" assumption
     # for more extensive documentation, see extension_templates/forecasting.py
     _tags = {
+        "object_type": "forecaster",  # type of object
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
+        "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
@@ -100,6 +97,40 @@ class BaseForecaster(BaseEstimator):
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # str or list of str, package soft dependencies
+    }
+
+    # configs and default config values
+    _config = {
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend
+    }
+
+    _config_doc = {
+        "backend:parallel": """
+        backend:parallel : str, optional, default="None"
+            backend to use for parallelization when broadcasting/vectorizing, one of
+
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel``
+            - "dask": uses ``dask``, requires ``dask`` package in environment
+        """,
+        "backend:parallel:params": """
+        backend:parallel:params : dict, optional, default={} (no parameters passed)
+            additional parameters passed to the parallelization backend as config.
+            Valid keys depend on the value of ``backend:parallel``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading":
+              any valid keys for ``joblib.Parallel`` can be passed here,
+              e.g., ``n_jobs``, with the exception of ``backend`` which is directly
+              controlled by ``backend:parallel``
+            - "dask": any valid keys for ``dask.compute``
+              can be passed, e.g., ``scheduler``
+        """,
     }
 
     def __init__(self):
@@ -114,7 +145,7 @@ class BaseForecaster(BaseEstimator):
 
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
-        super(BaseForecaster, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __mul__(self, other):
@@ -237,17 +268,17 @@ class BaseForecaster(BaseEstimator):
         First index does subsetting of exogeneous input data.
         Second index does subsetting of the forecast (but not of endogeneous data).
 
-        Keys must be valid inputs for `columns` in `ColumnSubset`.
+        Keys must be valid inputs for `columns` in `ColumnSelect`.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+        key: valid input for `columns` in `ColumnSelect`, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following composite pipeline object:
-            ColumnSubset(columns1) ** self * ColumnSubset(columns2)
+            ColumnSelect(columns1) ** self * ColumnSelect(columns2)
             where `columns1` is first or only item in `key`, and `columns2` is the last
             if only one item is passed in `key`, only `columns1` is applied to input
         """
@@ -262,7 +293,10 @@ class BaseForecaster(BaseEstimator):
             if not len(key) == 2:
                 raise ValueError(
                     "there should be one or two keys when calling [] or getitem, "
-                    "e.g., mytrafo[key], or mytrafo[key1, key2]"
+                    "of a forecaster, "
+                    "e.g., mytrafo[key], or mytrafo[key1, key2]. "
+                    f"But {self.__class__.__name__} instance got tuple"
+                    f" with {len(key)} keys."
                 )
             columns1 = key[0]
             columns2 = key[1]
@@ -559,17 +593,15 @@ class BaseForecaster(BaseEstimator):
         else:
             # otherwise we call the vectorized version of predict_quantiles
             quantiles = self._vectorize(
-                "predict_quantiles", fh=fh, X=X_inner, alpha=alpha
+                "predict_quantiles",
+                fh=fh,
+                X=X_inner,
+                alpha=alpha,
             )
 
         return quantiles
 
-    def predict_interval(
-        self,
-        fh=None,
-        X=None,
-        coverage=0.90,
-    ):
+    def predict_interval(self, fh=None, X=None, coverage=0.90):
         """Compute/return prediction interval forecasts.
 
         If coverage is iterable, multiple intervals will be calculated.
@@ -636,7 +668,10 @@ class BaseForecaster(BaseEstimator):
         else:
             # otherwise we call the vectorized version of predict_interval
             pred_int = self._vectorize(
-                "predict_interval", fh=fh, X=X_inner, coverage=coverage
+                "predict_interval",
+                fh=fh,
+                X=X_inner,
+                coverage=coverage,
             )
 
         return pred_int
@@ -740,17 +775,10 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        pred_dist : tfp Distribution object
-            if marginal=True:
-                batch shape is 1D and same length as fh
-                event shape is 1D, with length equal number of variables being forecast
-                i-th (batch) distribution is forecast for i-th entry of fh
-                j-th (event) index is j-th variable, order as y in `fit`/`update`
-            if marginal=False:
-                there is a single batch
-                event shape is 2D, of shape (len(fh), no. variables)
-                i-th (event dim 1) distribution is forecast for i-th entry of fh
-                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -764,13 +792,6 @@ class BaseForecaster(BaseEstimator):
             raise NotImplementedError(
                 "automated vectorization for predict_proba is not implemented"
             )
-
-        msg = (
-            "tensorflow-probability must be installed for fully probabilistic forecasts"
-            "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
-        )
-        _check_dl_dependencies(msg)
-
         self.check_is_fitted()
         # input checks
         fh = self._check_fh(fh)
@@ -778,6 +799,7 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
+        # pass to inner _predict_proba
         pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
 
         return pred_dist
@@ -841,7 +863,10 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
 
         if y is None or (hasattr(y, "__len__") and len(y) == 0):
-            warn("empty y passed to update, no update was carried out")
+            warn(
+                f"empty y passed to update of {self}, no update was carried out",
+                obj=self,
+            )
             return self
 
         # input checks and minor coercions on X, y
@@ -943,7 +968,7 @@ class BaseForecaster(BaseEstimator):
                 entry is the point prediction of col index predicted from row index
                 entry is nan if no prediction is made at that (cutoff, horizon) pair
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.split import ExpandingWindowSplitter
 
         if cv is None:
             cv = ExpandingWindowSplitter(initial_window=1)
@@ -1032,7 +1057,11 @@ class BaseForecaster(BaseEstimator):
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
         if y is None or (hasattr(y, "__len__") and len(y) == 0):
-            warn("empty y passed to update_predict, no update was carried out")
+            warn(
+                f"empty y passed to update_predict of {self}, "
+                "no update was carried out",
+                obj=self,
+            )
             return self.predict(fh=fh, X=X)
 
         self.check_is_fitted()
@@ -1142,11 +1171,8 @@ class BaseForecaster(BaseEstimator):
 
         y_pred = self.predict(fh=fh, X=X)
 
-        if not type(y_pred) == type(y):
-            raise TypeError(
-                "y must have same type, dims, index as expected predict return. "
-                f"expected type {type(y_pred)}, but found {type(y)}"
-            )
+        if not type(y_pred) is type(y):
+            y = convert_to(y, self._y_mtype_last_seen)
 
         y_res = y - y_pred
 
@@ -1157,7 +1183,7 @@ class BaseForecaster(BaseEstimator):
         return y_res
 
     def score(self, y, X=None, fh=None):
-        """Scores forecast against ground truth, using MAPE.
+        """Scores forecast against ground truth, using MAPE (non-symmetric).
 
         Parameters
         ----------
@@ -1177,7 +1203,7 @@ class BaseForecaster(BaseEstimator):
         Returns
         -------
         score : float
-            sMAPE loss of self.predict(fh, X) with respect to y_test.
+            MAPE loss of self.predict(fh, X) with respect to y_test.
 
         See Also
         --------
@@ -1185,29 +1211,47 @@ class BaseForecaster(BaseEstimator):
         """
         # no input checks needed here, they will be performed
         # in predict and loss function
-        # symmetric=True is default for mean_absolute_percentage_error
         from sktime.performance_metrics.forecasting import (
             mean_absolute_percentage_error,
         )
 
-        return mean_absolute_percentage_error(y, self.predict(fh, X))
+        # specify non-symmetric explicitly as it changed in the past
+        return mean_absolute_percentage_error(y, self.predict(fh, X), symmetric=False)
 
-    def get_fitted_params(self):
+    def get_fitted_params(self, deep=True):
         """Get fitted parameters.
-
-        Overrides BaseEstimator default in case of vectorization.
 
         State required:
             Requires state to be "fitted".
 
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return fitted parameters of components.
+
+            * If True, will return a dict of parameter name : value for this object,
+              including fitted parameters of fittable components
+              (= BaseEstimator-valued parameters).
+            * If False, will return a dict of parameter name : value for this object,
+              but not include fitted parameters of components.
+
         Returns
         -------
-        fitted_params : dict of fitted parameters, keys are str names of parameters
-            parameters of components are indexed as [componentname]__[paramname]
+        fitted_params : dict with str-valued keys
+            Dictionary of fitted parameters, paramname : paramvalue
+            keys-value pairs include:
+
+            * always: all fitted parameters of this object, as via `get_param_names`
+              values are fitted parameter value for that key, of this object
+            * if `deep=True`, also contains keys/value pairs of component parameters
+              parameters of components are indexed as `[componentname]__[paramname]`
+              all parameters of `componentname` appear as `paramname` with its value
+            * if `deep=True`, also contains arbitrary levels of component recursion,
+              e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super(BaseForecaster, self).get_fitted_params()
+            return super().get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys
@@ -1229,7 +1273,7 @@ class BaseForecaster(BaseEstimator):
             fcst = forecasters.loc[ix, col]
             fcst_key = f"forecasters.loc[{_to_str(ix)},{_to_str(col)}]"
             fitted_params[fcst_key] = fcst
-            fcst_params = fcst.get_fitted_params()
+            fcst_params = fcst.get_fitted_params(deep=deep)
             for key, val in fcst_params.items():
                 fitted_params[f"{fcst_key}__{key}"] = val
 
@@ -1317,19 +1361,30 @@ class BaseForecaster(BaseEstimator):
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
         FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
 
+        mtypes_messages = []
         for scitype in ALLOWED_SCITYPES:
             mtypes = set(scitype_to_mtype(scitype))
             mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
-            mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
+            mtypes_messages.append(f'"For {scitype} scitype: {mtypes}. ')
 
         # checking y
         if y is not None:
+            # request only required metadata from checks
+            y_metadata_required = []
+            if self.get_tag("scitype:y") != "both":
+                y_metadata_required += ["is_univariate"]
+            if not self.get_tag("handles-missing-data"):
+                y_metadata_required += ["has_nans"]
+
             y_valid, _, y_metadata = check_is_scitype(
-                y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
+                y,
+                scitype=ALLOWED_SCITYPES,
+                return_metadata=y_metadata_required,
+                var_name="y",
             )
             msg = (
                 "y must be in an sktime compatible format, "
-                "of scitype Series, Panel or Hierarchical, "
+                f"of scitype {', '.join(ALLOWED_SCITYPES)}, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 " See the forecasting tutorial examples/01_forecasting.ipynb, or"
@@ -1337,10 +1392,10 @@ class BaseForecaster(BaseEstimator):
                 "If you think y is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
                 "where mtype is the string of the type specification you want for y. "
-                "Possible mtype specification strings are as follows. "
+                "Possible mtype specification strings are as follows: "
             )
             if not y_valid:
-                raise TypeError(msg + mtypes_msg)
+                raise TypeError(msg + ", ".join(mtypes_messages))
 
             y_scitype = y_metadata["scitype"]
             self._y_mtype_last_seen = y_metadata["mtype"]
@@ -1370,8 +1425,16 @@ class BaseForecaster(BaseEstimator):
 
         # checking X
         if X is not None:
+            # request only required metadata from checks
+            X_metadata_required = []
+            if not self.get_tag("handles-missing-data"):
+                X_metadata_required += ["has_nans"]
+
             X_valid, _, X_metadata = check_is_scitype(
-                X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+                X,
+                scitype=ALLOWED_SCITYPES,
+                return_metadata=X_metadata_required,
+                var_name="X",
             )
 
             msg = (
@@ -1387,7 +1450,7 @@ class BaseForecaster(BaseEstimator):
                 "Possible mtype specification strings are as follows. "
             )
             if not X_valid:
-                raise TypeError(msg + mtypes_msg)
+                raise TypeError(msg + ", ".join(mtypes_messages))
 
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype
@@ -1409,7 +1472,7 @@ class BaseForecaster(BaseEstimator):
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
                 # currently, check_equal_time_index only works for Series
-                # todo: fix this so the check is general, using get_time_index
+                # TODO: fix this so the check is general, using get_time_index
                 if not self.get_tag("ignores-exogeneous-X") and X_scitype == "Series":
                     check_equal_time_index(X, y, mode="contains")
 
@@ -1417,7 +1480,7 @@ class BaseForecaster(BaseEstimator):
                 raise TypeError("X and y must have the same scitype")
         # end compatibility checking X and y
 
-        # todo: add tests that :
+        # TODO: add tests that :
         #   y_inner_scitype are same as X_inner_scitype
         #   y_inner_scitype always includes "less index" scitypes
 
@@ -1525,32 +1588,6 @@ class BaseForecaster(BaseEstimator):
             else:
                 self._X = update_data(self._X, X)
 
-    def _get_y_pred(self, y_in_sample, y_out_sample):
-        """Combine in- & out-sample prediction, slices given fh.
-
-        Parameters
-        ----------
-        y_in_sample : pd.Series
-            In-sample prediction
-        y_out_sample : pd.Series
-            Out-sample prediction
-
-        Returns
-        -------
-        pd.Series
-            y_pred, sliced by fh
-        """
-        y_pred = pd.concat([y_in_sample, y_out_sample], ignore_index=True).rename(
-            "y_pred"
-        )
-        y_pred = pd.DataFrame(y_pred)
-        # Workaround for slicing with negative index
-        y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
-        y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
-        y_pred.index = self.fh.to_absolute(self.cutoff)
-        y_pred = y_pred["y_pred"].rename(None)
-        return y_pred
-
     @property
     def cutoff(self):
         """Cut-off = "present time" state of forecaster.
@@ -1560,10 +1597,10 @@ class BaseForecaster(BaseEstimator):
         cutoff : pandas compatible index element, or None
             pandas compatible index element, if cutoff has been set; None otherwise
         """
-        if self._cutoff is None:
+        if not hasattr(self, "_cutoff"):
             return None
         else:
-            return self._cutoff[0]
+            return self._cutoff
 
     def _set_cutoff(self, cutoff):
         """Set and update cutoff.
@@ -1603,7 +1640,9 @@ class BaseForecaster(BaseEstimator):
         # raise error if some method tries to accessed it before it has been set
         if self._fh is None:
             raise ValueError(
-                "No `fh` has been set yet, please specify `fh` " "in `fit` or `predict`"
+                f"No `fh` has been set yet, in this instance of "
+                f"{self.__class__.__name__}, "
+                "please specify `fh` in `fit` or `predict`"
             )
 
         return self._fh
@@ -1639,8 +1678,8 @@ class BaseForecaster(BaseEstimator):
         requires_fh = self.get_tag("requires-fh-in-fit")
 
         msg = (
-            f"This is because fitting of the `"
-            f"{self.__class__.__name__}` "
+            f"This is because fitting of the "
+            f"forecaster {self.__class__.__name__} "
             f"depends on `fh`. "
         )
 
@@ -1658,8 +1697,8 @@ class BaseForecaster(BaseEstimator):
                 if not requires_fh and self._fh is None:
                     raise ValueError(
                         "The forecasting horizon `fh` must be passed "
-                        "either to `fit` or `predict`, "
-                        "but was found in neither."
+                        "either to `fit` or `predict`, but was found in neither "
+                        f"call of this {self.__class__.__name__} instance's methods."
                     )
                 # in case C. fh is not optional in fit: this is fine
                 # any error would have already been caught in fit
@@ -1670,7 +1709,7 @@ class BaseForecaster(BaseEstimator):
                 # fh must be passed in fit
                 raise ValueError(
                     "The forecasting horizon `fh` must be passed to "
-                    "`fit`, but none was found. " + msg
+                    f"`fit` of {self.__class__.__name__}, but none was found. " + msg
                 )
                 # in case C. fh is optional in fit:
                 # this is fine, nothing to check/raise
@@ -1697,8 +1736,9 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "A different forecasting horizon `fh` has been "
                     "provided from "
-                    "the one seen in `fit`. If you want to change the "
-                    "forecasting "
+                    "the one seen already in `fit`, in this instance of "
+                    f"{self.__class__.__name__}. "
+                    "If you want to change the forecasting "
                     "horizon, please re-fit the forecaster. " + msg
                 )
             # if existing one and new match, ignore new one
@@ -1720,64 +1760,57 @@ class BaseForecaster(BaseEstimator):
         ]
 
         # retrieve data arguments
-        y = kwargs.pop("y", None)
         X = kwargs.pop("X", None)
+        y = kwargs.get("y", None)
 
+        # add some common arguments to kwargs
+        kwargs["args_rowvec"] = {"X": X}
+        kwargs["rowname_default"] = "forecasters"
+        kwargs["colname_default"] = "forecasters"
+
+        # fit-like methods: write y to self._yvec; then run method; clone first if fit
         if methodname in FIT_METHODS:
-            # create container for clones
             self._yvec = y
 
-            row_idx, col_idx = y.get_iter_indices()
-            ys = y.as_list()
-
-            if X is None:
-                Xs = [None] * len(ys)
-            else:
-                Xs = X.as_list()
-
-            if row_idx is None:
-                row_idx = ["forecasters"]
-            if col_idx is None:
-                col_idx = ["forecasters"]
-
             if methodname == "fit":
-                self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
-            for ix in range(len(ys)):
-                i, j = y.get_iloc_indexer(ix)
-                if methodname == "fit":
-                    self.forecasters_.iloc[i].iloc[j] = self.clone()
-                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
-                method(y=ys[ix], X=Xs[i], **kwargs)
+                forecasters_ = y.vectorize_est(
+                    self,
+                    method="clone",
+                    rowname_default="forecasters",
+                    colname_default="forecasters",
+                    backend=self.get_config()["backend:parallel"],
+                    backend_params=self.get_config()["backend:parallel:params"],
+                )
+            else:
+                forecasters_ = self.forecasters_
+
+            self.forecasters_ = y.vectorize_est(
+                forecasters_,
+                method=methodname,
+                backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
+                **kwargs,
+            )
             return self
 
+        # predict-like methods: return as list, then run through reconstruct
+        # to obtain a pandas based container in one of the pandas mtype formats
         elif methodname in PREDICT_METHODS:
-            n = len(self.forecasters_.index)
-            m = len(self.forecasters_.columns)
-
-            if X is None:
-                Xs = [None] * n * m
-            elif isinstance(X, VectorizedDF):
-                Xs = X.as_list()
-            else:
-                Xs = [X]
-
             if methodname == "update_predict_single":
                 self._yvec = y
-                ys = y.as_list()
 
-            y_preds = []
-            ix = -1
-            for i, j in product(range(n), range(m)):
-                ix += 1
-                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
-
-                if methodname != "update_predict_single":
-                    y_preds += [method(X=Xs[i], **kwargs)]
-                else:
-                    y_preds += [method(y=ys[ix], X=Xs[i], **kwargs)]
+            y_preds = self._yvec.vectorize_est(
+                self.forecasters_,
+                method=methodname,
+                return_type="list",
+                backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
+                **kwargs,
+            )
 
             # if we vectorize over columns,
             #   we need to replace top column level with variable names - part 1
+            m = len(self.forecasters_.columns)
             col_multiindex = "multiindex" if m > 1 else "none"
             y_pred = self._yvec.reconstruct(
                 y_preds, overwrite_index=True, col_multiindex=col_multiindex
@@ -1787,7 +1820,7 @@ class BaseForecaster(BaseEstimator):
                 y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -1818,7 +1851,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -1889,7 +1922,8 @@ class BaseForecaster(BaseEstimator):
                 f"{self.__class__.__name__} will be refit each time "
                 f"`update` is called with update_params=True. "
                 "To refit less often, use the wrappers in the "
-                "forecasting.stream module, e.g., UpdateEvery."
+                "forecasting.stream module, e.g., UpdateEvery.",
+                obj=self,
             )
             # we need to overwrite the mtype last seen and converter store, since the _y
             #    may have been converted
@@ -1910,7 +1944,8 @@ class BaseForecaster(BaseEstimator):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will update all component cutoffs each time"
-                f" `update` is called with update_params=False."
+                f" `update` is called with update_params=False.",
+                obj=self,
             )
             comp_forecasters = self._components(base_class=BaseForecaster)
             for comp in comp_forecasters.values():
@@ -1927,14 +1962,14 @@ class BaseForecaster(BaseEstimator):
     ):
         """Update forecaster and then make forecasts.
 
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
+        Implements default behaviour of calling update and predict sequentially, but can
+        be overwritten by subclasses to implement more efficient updating algorithms
+        when available.
         """
         self.update(y=y, X=X, update_params=update_params)
         return self.predict(fh=fh, X=X)
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -1965,10 +2000,9 @@ class BaseForecaster(BaseEstimator):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        implements_interval = self._has_implementation_of("_predict_interval")
         implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
-        can_do_proba = implements_interval or implements_quantiles or implements_proba
+        can_do_proba = implements_quantiles or implements_proba
 
         if not can_do_proba:
             raise RuntimeError(
@@ -1978,32 +2012,29 @@ class BaseForecaster(BaseEstimator):
                 "This is likely a bug, please report, and/or set the flag to False."
             )
 
-        if implements_quantiles:
-            alphas = []
-            for c in coverage:
-                # compute quantiles corresponding to prediction interval coverage
-                #  this uses symmetric predictive intervals
-                alphas.extend([0.5 - 0.5 * float(c), 0.5 + 0.5 * float(c)])
+        # we default to _predict_quantiles if that is implemented or _predict_proba
+        # since _predict_quantiles will default to _predict_proba if it is not
+        alphas = []
+        for c in coverage:
+            # compute quantiles corresponding to prediction interval coverage
+            #  this uses symmetric predictive intervals
+            alphas.extend([0.5 - 0.5 * float(c), 0.5 + 0.5 * float(c)])
 
-            # compute quantile forecasts corresponding to upper/lower
-            pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
+        # compute quantile forecasts corresponding to upper/lower
+        pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
 
-            # change the column labels (multiindex) to the format for intervals
-            # idx returned by _predict_quantiles is
-            #   2-level MultiIndex with variable names, alpha
-            idx = pred_int.columns
-            # variable names (unique, in same order)
-            var_names = idx.get_level_values(0).unique()
-            # if was univariate & unnamed variable, replace default
-            if len(var_names) == 1 and var_names == ["Quantiles"]:
-                var_names = ["Coverage"]
-            # idx returned by _predict_interval should be
-            #   3-level MultiIndex with variable names, coverage, lower/upper
-            int_idx = pd.MultiIndex.from_product(
-                [var_names, coverage, ["lower", "upper"]]
-            )
+        # change the column labels (multiindex) to the format for intervals
+        # idx returned by _predict_quantiles is
+        #   2-level MultiIndex with variable names, alpha
+        idx = pred_int.columns
+        # variable names (unique, in same order)
+        var_names = idx.get_level_values(0).unique()
 
-            pred_int.columns = int_idx
+        # idx returned by _predict_interval should be
+        #   3-level MultiIndex with variable names, coverage, lower/upper
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+
+        pred_int.columns = int_idx
 
         return pred_int
 
@@ -2034,9 +2065,8 @@ class BaseForecaster(BaseEstimator):
                 at quantile probability in second col index, for the row index.
         """
         implements_interval = self._has_implementation_of("_predict_interval")
-        implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
-        can_do_proba = implements_interval or implements_quantiles or implements_proba
+        can_do_proba = implements_interval or implements_proba
 
         if not can_do_proba:
             raise RuntimeError(
@@ -2047,7 +2077,6 @@ class BaseForecaster(BaseEstimator):
             )
 
         if implements_interval:
-
             pred_int = pd.DataFrame()
             for a in alpha:
                 # compute quantiles corresponding to prediction interval coverage
@@ -2073,14 +2102,16 @@ class BaseForecaster(BaseEstimator):
             idx = pred_int.columns
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
-            # if was univariate & unnamed variable, replace default
-            if len(var_names) == 1 and var_names == ["Coverage"]:
-                var_names = ["Quantiles"]
+
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
             int_idx = pd.MultiIndex.from_product([var_names, alpha])
 
             pred_int.columns = int_idx
+
+        elif implements_proba:
+            pred_proba = self.predict_proba(fh=fh, X=X)
+            pred_int = pred_proba.quantile(alpha=alpha)
 
         return pred_int
 
@@ -2171,10 +2202,6 @@ class BaseForecaster(BaseEstimator):
             #   the indices and column names are already correct
             pred_var = pd.DataFrame(vars_dict)
 
-            # check whether column format was "nameless", set it to RangeIndex then
-            if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
-                pred_var.columns = pd.RangeIndex(1)
-
         return pred_var
 
     # todo: does not work properly for multivariate or hierarchical
@@ -2196,20 +2223,11 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        pred_dist : tfp Distribution object
-            if marginal=True:
-                batch shape is 1D and same length as fh
-                event shape is 1D, with length equal number of variables being forecast
-                i-th (batch) distribution is forecast for i-th entry of fh
-                j-th (event) index is j-th variable, order as y in `fit`/`update`
-            if marginal=False:
-                there is a single batch
-                event shape is 2D, of shape (len(fh), no. variables)
-                i-th (event dim 1) distribution is forecast for i-th entry of fh
-                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
         """
-        import tensorflow_probability as tfp
-
         # default behaviour is implemented if one of the following three is implemented
         implements_interval = self._has_implementation_of("_predict_interval")
         implements_quantiles = self._has_implementation_of("_predict_quantiles")
@@ -2234,8 +2252,12 @@ class BaseForecaster(BaseEstimator):
         pred_mean = convert_to(pred_mean, to_type=df_types)
         # pred_mean and pred_var now have the same format
 
-        d = tfp.distributions.Normal
-        pred_dist = d(loc=pred_mean, scale=pred_std)
+        # default is normal with predict as mean and pred_var as variance
+        from sktime.proba.normal import Normal
+
+        index = pred_mean.index
+        columns = pred_mean.columns
+        pred_dist = Normal(mu=pred_mean, sigma=pred_std, index=index, columns=columns)
 
         return pred_dist
 
@@ -2329,6 +2351,24 @@ class BaseForecaster(BaseEstimator):
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
+    def _get_varnames(self):
+        """Return variable column for DataFrame-like returns.
+
+        Developer note: currently a helper for predict_interval, predict_quantiles,
+        valid only in the univariate case. Can be extended later.
+        """
+        y = self._y
+        if isinstance(y, pd.Series):
+            var_name = self._y.name
+        elif isinstance(y, pd.DataFrame):
+            return y.columns
+        else:
+            var_name = 0
+        if var_name is None:
+            var_name = 0
+
+        return [var_name]
+
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions.
@@ -2378,6 +2418,7 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         # return series for single step ahead predictions
         y_pred = pd.concat(y_preds)
     else:
+        cutoffs = [cutoff[0] for cutoff in cutoffs]
         y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
 
     return y_pred

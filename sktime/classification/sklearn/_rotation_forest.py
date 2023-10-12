@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A rotation forest (RotF) vector classifier.
 
 A rotation Forest sktime implementation for continuous values only. Fits sklearn
@@ -138,7 +137,7 @@ class RotationForest(BaseEstimator):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        super(RotationForest, self).__init__()
+        super().__init__()
 
     def fit(self, X, y):
         """Fit a forest of trees on cases (X,y), where y is the target variable.
@@ -501,7 +500,7 @@ class RotationForest(BaseEstimator):
         return [results, oob]
 
     def _generate_groups(self, rng):
-        permutation = rng.permutation((np.arange(0, self._n_atts)))
+        permutation = rng.permutation(np.arange(0, self._n_atts))
 
         # select the size of each group.
         group_size_count = np.zeros(self.max_group - self.min_group + 1)

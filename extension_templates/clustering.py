@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Extension template for clusterers.
+"""Extension template for clusterers.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -18,7 +16,8 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by testing clustering/tests
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting            - _fit(self, X)
@@ -27,7 +26,7 @@ Optional implements:
     cluster assignment          -  _predict(self, X)
     fitted parameter inspection -  _get_fitted_params()
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -86,8 +85,8 @@ class MyClusterer(BaseClusterer):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyClusterer" to the name of the class
-        super(MyClusterer, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Metrics to assess performance on forecasting task.
 
@@ -10,18 +9,24 @@ the lower the better.
 """
 
 
-__author__ = ["euanenticott-shell"]
+__author__ = ["euanenticott-shell", "fkiraly"]
 
 __all__ = [
     "_BaseProbaForecastingErrorMetric",
     "PinballLoss",
     "EmpiricalCoverage",
     "ConstraintViolation",
+    "CRPS",
+    "LogLoss",
+    "SquaredDistrLoss",
 ]
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
+    CRPS,
     ConstraintViolation,
     EmpiricalCoverage,
+    LogLoss,
     PinballLoss,
+    SquaredDistrLoss,
     _BaseProbaForecastingErrorMetric,
 )

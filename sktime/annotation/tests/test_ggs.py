@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for GGS module."""
 
 import numpy as np

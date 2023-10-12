@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """BOSS classifiers.
 
-Dictionary based BOSS classifiers based on SFA transform. Contains a single
-BOSS and a BOSS ensemble.
+Dictionary based BOSS classifiers based on SFA transform. Contains a single BOSS and a
+BOSS ensemble.
 """
 
 __author__ = ["MatthewMiddlehurst", "patrickzib"]
@@ -118,17 +117,19 @@ class BOSSEnsemble(BaseClassifier):
     >>> from sktime.classification.dictionary_based import BOSSEnsemble
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = BOSSEnsemble(max_ensemble_size=3)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = BOSSEnsemble(max_ensemble_size=3) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     BOSSEnsemble(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
         "capability:train_estimate": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
+        "capability:predict_proba": True,
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -163,7 +164,7 @@ class BOSSEnsemble(BaseClassifier):
         self._norm_options = [True, False]
         self.alphabet_size = alphabet_size
 
-        super(BOSSEnsemble, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a boss ensemble on cases (X,y), where y is the target variable.
@@ -519,15 +520,16 @@ class IndividualBOSS(BaseClassifier):
     >>> from sktime.classification.dictionary_based import IndividualBOSS
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = IndividualBOSS()
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = IndividualBOSS() # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     IndividualBOSS(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
         "capability:multithreading": True,
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -562,7 +564,7 @@ class IndividualBOSS(BaseClassifier):
         self._subsample = []
         self._train_predictions = []
 
-        super(IndividualBOSS, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a single boss classifier on n_instances cases (X,y).

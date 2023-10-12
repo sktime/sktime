@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Greedy Gaussian Segmentation (GGS).
+"""Greedy Gaussian Segmentation (GGS).
 
 The method approximates solutions for the problem of breaking a
 multivariate time series into segments, where the data in each segment
@@ -36,22 +34,22 @@ References
 
 import logging
 import math
+from dataclasses import asdict, dataclass, field
 from typing import Dict, List, Tuple
 
 import numpy as np
 import numpy.typing as npt
-from attrs import asdict, define, field
 from sklearn.utils.validation import check_random_state
 
 from sktime.base import BaseEstimator
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 logger = logging.getLogger(__name__)
 
 
-@define
+@dataclass
 class GGS:
-    """
-    Greedy Gaussian Segmentation.
+    """Greedy Gaussian Segmentation.
 
     The method approxmates solutions for the problem of breaking a
     multivariate time series into segments, where the data in each segment
@@ -106,9 +104,9 @@ class GGS:
     References
     ----------
     .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
-       "Greedy Gaussian segmentation of multivariate time series.",
-       Adv Data Anal Classif 13, 727–751 (2019).
-       https://doi.org/10.1007/s11634-018-0335-0
+    "Greedy Gaussian segmentation of multivariate time series.",
+    Adv Data Anal Classif 13, 727–751 (2019).
+    https://doi.org/10.1007/s11634-018-0335-0
     """
 
     k_max: int = 10
@@ -117,9 +115,11 @@ class GGS:
     verbose: bool = False
     random_state: int = None
 
-    change_points_: npt.ArrayLike = field(init=False, default=[])
-    _intermediate_change_points: List[List[int]] = field(init=False, default=[])
-    _intermediate_ll: List[float] = field(init=False, default=[])
+    change_points_: npt.ArrayLike = field(init=False, default_factory=list)
+    _intermediate_change_points: List[List[int]] = field(
+        init=False, default_factory=list
+    )
+    _intermediate_ll: List[float] = field(init=False, default_factory=list)
 
     def initialize_intermediates(self) -> None:
         """Initialize the state fo the estimator."""
@@ -127,8 +127,7 @@ class GGS:
         self._intermediate_ll = []
 
     def log_likelihood(self, data: npt.ArrayLike) -> float:
-        """
-        Compute the GGS log-likelihood of the segmented Gaussian model.
+        """Compute the GGS log-likelihood of the segmented Gaussian model.
 
         Parameters
         ----------
@@ -153,8 +152,7 @@ class GGS:
     def cumulative_log_likelihood(
         self, data: npt.ArrayLike, change_points: List[int]
     ) -> float:
-        """
-        Calculate cumulative GGS log-likelihood for all segments.
+        """Calculate cumulative GGS log-likelihood for all segments.
 
         Args
         ----
@@ -162,7 +160,8 @@ class GGS:
             2D `array_like` representing time series with sequence index along
             the first dimension and value series as columns.
         change_points: list of ints
-            Locations of change points as integer indexes. By convention change points
+            Locations of change points as integer indexes.
+            By convention, change points
             include the identity segmentation, i.e. first and last index + 1 values.
 
         Returns
@@ -176,8 +175,7 @@ class GGS:
         return log_likelihood
 
     def add_new_change_point(self, data: npt.ArrayLike) -> Tuple[int, float]:
-        """
-        Add change point.
+        """Add change point.
 
         This methods finds a new change point by that splits the segment and
         optimizes the objective function. See section 3.1 on split subroutine
@@ -242,8 +240,7 @@ class GGS:
     def adjust_change_points(
         self, data: npt.ArrayLike, change_points: List[int], new_index: List[int]
     ) -> List[int]:
-        """
-        Adjust change points.
+        """Adjust change points.
 
         This method adjusts the positions of all change points until the
         result is 1-OPT, i.e., no change of any one breakpoint improves
@@ -255,7 +252,8 @@ class GGS:
             2D `array_like` representing time series with sequence index along
             the first dimension and value series as columns.
         change_points: list of ints
-            Locations of change points as integer indexes. By convention change points
+            Locations of change points as integer indexes.
+            By convention, change points
             include the identity segmentation, i.e. first and last index + 1 values.
         new_index: list of ints
             New change points
@@ -263,7 +261,8 @@ class GGS:
         Returns
         -------
         change_points: list of ints
-            Locations of change points as integer indexes. By convention change points
+            Locations of change points as integer indexes.
+            By convention, change points
             include the identity segmentation, i.e. first and last index + 1 values.
         """
         rng = check_random_state(self.random_state)
@@ -357,9 +356,8 @@ class GGS:
                 logger.info(f"Change point occurs at: {new_index}, LL: {new_value}")
 
             # Adjust current locations of the change points
-            change_points = self.adjust_change_points(data, change_points, [new_index])[
-                :
-            ]
+            change_points = self.adjust_change_points(data, change_points, [new_index])
+            change_points = change_points[:]
 
             # Calculate likelihood
             ll = self.cumulative_log_likelihood(data, change_points)
@@ -445,8 +443,10 @@ class GreedyGaussianSegmentation(BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
 
-        self._adaptee_class = GGS
-        self._adaptee = self._adaptee_class(
+        _check_estimator_deps(self)
+        super().__init__()
+
+        self._adaptee = GGS(
             k_max=k_max,
             lamb=lamb,
             max_shuffles=max_shuffles,
@@ -532,7 +532,16 @@ class GreedyGaussianSegmentation(BaseEstimator):
             Dictionary with the estimator's initialization parameters, with
             keys being argument names and values being argument values.
         """
-        return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
+        attrs_to_ignore = [
+            "change_points_",
+            "_intermediate_change_points",
+            "_intermediate_ll",
+        ]
+        params = asdict(self._adaptee)
+        params = {
+            key: value for key, value in params.items() if key not in attrs_to_ignore
+        }
+        return params
 
     def set_params(self, **parameters):
         """Set the parameters of this object.

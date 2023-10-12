@@ -1,17 +1,15 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformers raise time series to user provided exponent."""
 
-__author__ = ["Ryan Kuhns"]
+__author__ = ["RNKuhns"]
 __all__ = ["ExponentTransformer", "SqrtTransformer"]
-
-from warnings import warn
 
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.warnings import warn
 
 
 class ExponentTransformer(BaseTransformer):
@@ -101,13 +99,14 @@ class ExponentTransformer(BaseTransformer):
                 f"Expected `offset` to be int or float, but found {type(self.offset)}."
             )
 
-        super(ExponentTransformer, self).__init__()
+        super().__init__()
 
         if abs(power) < 1e-6:
             warn(
                 "power close to zero passed to ExponentTransformer, "
                 "inverse_transform will default to identity "
-                "if called, in order to avoid division by zero"
+                "if called, in order to avoid division by zero",
+                obj=self,
             )
             self.set_tags(**{"skip-inverse-transform": True})
 
