@@ -66,7 +66,7 @@ class FhPlexForecaster(BaseForecaster):
     FhPlexForecaster(...)
     >>> f.forecasters_  # get individual fitted forecasters
     {1: NaiveForecaster(), 2: NaiveForecaster(), 3: NaiveForecaster()}
-    >>> fitted_params f.get_fitted_params()  # or via get_fitted_params
+    >>> fitted_params = f.get_fitted_params()  # or via get_fitted_params
     >>> y_pred = f.predict()
 
     Simple example - different parameters per fh element
