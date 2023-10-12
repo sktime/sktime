@@ -20,7 +20,7 @@ Version 0.23.1 - 2023-10-12
 Highlights
 ~~~~~~~~~~
 
-* all forecasters and transformers that broadcast can now use parallelization backends ``joblib``, ``dask`` via ``set_config`` (:pr:`5267`, :pr:`5268`, :pr:`5301`, :pr:`5311`, :pr:`5405`) :user:`fkiraly`
+* hierarchical/multivariate forecaster and transformer broadcasting can now use parallelization backends ``joblib``, ``dask`` via ``set_config`` (:pr:`5267`, :pr:`5268`, :pr:`5301`, :pr:`5311`, :pr:`5405`) :user:`fkiraly`
 * ``PeakTimeFeatures`` transformer to generate indicator features for one or multiple peak hours, days, etc (:pr:`5191`) :user:`ali-parizad`
 * ARCH forecaster interfacing ``arch`` package (:pr:`5326`) :user:`Vasudeva-bit`
 * forecasting reducer ``YfromX`` now makes probabilistic forecasts when using ``skpro`` probabilistic tabular regressors (:pr:`5271`) :user:`fkiraly`
