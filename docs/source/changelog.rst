@@ -14,7 +14,6 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
-
 Version 0.23.1 - 2023-10-12
 ---------------------------
 
@@ -46,6 +45,8 @@ BaseObject and base framework
   This is not a breaking change as inheriting from respective base classes automatically sets the tag as well,
   via the tag inheritance system. The type inspection utility ``scitype`` is also unaffected.
   For extenders, the change enables polymorphic and dynamically typed estimators.
+* warnings from ``sktime`` can now be silenced on a per-estimator basis via
+  the ``warnings`` config that can be set via ``set_config`` (see docstring).
 
 Forecasting
 ^^^^^^^^^^^
@@ -53,9 +54,9 @@ Forecasting
 * hierarchical and multivariate forecasts can now use parallelization and distributed backends,
   including ``joblib`` and ``dask``, if the forecast is obtained via broadcasting.
   To enable parallelization, set the ``backend:parallel`` and/or the ``backend:parallel:params``
-  configuration flags via ``set_config`` before fitting the forecaster.
-  This change extends to all existing third party forecasters that are interface conformant,
-  via inheritance from the updated base framework.
+  configuration flags via ``set_config`` (see docstring) before fitting the forecaster.
+  This change instantaneously extends to all existing third party forecasters
+  that are interface conformant, via inheritance from the updated base framework.
 
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -69,9 +70,20 @@ Transformations
 * hierarchical and multivariate transformers can now use parallelization and distributed backends,
   including ``joblib`` and ``dask``, if the transformation is obtained via broadcasting.
   To enable parallelization, set the ``backend:parallel`` and/or the ``backend:parallel:params``
-  configuration flags via ``set_config`` before fitting the forecaster.
-  This change extends to all existing third party transformers that are interface conformant,
-  via inheritance from the updated base framework.
+  configuration flags via ``set_config`` (see docstring) before fitting the transformer.
+  This change instantaneously extends to all existing third party transformers
+  that are interface conformant, via inheritance from the updated base framework.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* time series splitters, i.e., descendants of ``BaseSplitter``, have moved from
+  ``sktime.forecasting.model_selection`` to ``sktime.`split``.
+  The old location ``model_selection`` is deprecated and will be removed in 0.25.0.
+  Until 0.25.0, it is still available but will raise an informative warning message.
 
 Enhancements
 ~~~~~~~~~~~~
