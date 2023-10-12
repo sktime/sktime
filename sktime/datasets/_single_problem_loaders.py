@@ -343,7 +343,7 @@ def load_tecator(split=None, return_X_y=True, return_type=None):
     https://www.openml.org/search?type=data&sort=runs&id=505&status=active
     """
     name = "Tecator"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
