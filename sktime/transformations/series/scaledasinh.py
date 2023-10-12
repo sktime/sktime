@@ -31,7 +31,6 @@ class ScaledAsinhTransformer(BaseTransformer):
         b= median_abs_deviation(sample data) * 1.4826).
         It is fitted, based on the data provided in "fit".
 
-
     See Also
     --------
     sktime.transformations.series.boxcox.LogTransformer :
