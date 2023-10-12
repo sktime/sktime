@@ -4,7 +4,6 @@ __author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["ComposableTimeSeriesForestClassifier"]
 
 import numbers
-from warnings import warn
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -23,6 +22,7 @@ from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesFo
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
+from sktime.utils.warnings import warn
 
 
 class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
@@ -452,7 +452,8 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 warn(
                     "Some inputs do not have OOB scores. "
                     "This probably means too few trees were used "
-                    "to compute any reliable oob estimates."
+                    "to compute any reliable oob estimates.",
+                    obj=self,
                 )
 
             decision = predictions[k] / predictions[k].sum(axis=1)[:, np.newaxis]
@@ -511,7 +512,8 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                         "a large enough sample of the full training set "
                         "target to properly estimate the class frequency "
                         "distributions. Pass the resulting weights as the "
-                        "class_weight parameter."
+                        "class_weight parameter.",
+                        obj=self,
                     )
 
             if self.class_weight != "balanced_subsample" or not self.bootstrap:
