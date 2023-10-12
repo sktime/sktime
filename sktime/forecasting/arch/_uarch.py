@@ -464,6 +464,29 @@ class ARCH(BaseForecaster):
 
         return pred_var
 
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : sktime time series object, optional (default=None)
+            Exogeneous time series for the forecast
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+        """
+        pred_dist = super()._predict_proba(fh=fh, X=X, marginal=marginal)
+        if pred_dist.columns in ("None", None):
+            pred_dist.columns = pd.Index([0])
+        return pred_dist
+
     def _get_fitted_params(self):
         """Get fitted parameters.
 
