@@ -77,8 +77,9 @@ class BaseObject(_BaseObject):
         "display": """
         display : str, "diagram" (default), or "text"
             how jupyter kernels display instances of self
-            "diagram" = html box diagram representation
-            "text" = string printout
+
+            * "diagram" = html box diagram representation
+            * "text" = string printout
         """,
         "print_changed_only": """
         print_changed_only : bool, default=True
