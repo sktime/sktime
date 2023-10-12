@@ -21,10 +21,14 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
-    """StatsForecast AutoARIMA estimator.
+    """Statsforecast AutoARIMA estimator.
 
-    This implementation is inspired by Hyndman's forecast::auto.arima [1]_
-    and based on the Python implementation of statsforecast [2]_ by Nixtla.
+    Direct interface to ``statsforecast.models.AutoARIMA`` by Nixtla.
+
+    This estimator directly interfaces ``AutoARIMA``,
+    from ``statsforecast`` [2]_ by Nixtla.
+    The ``statsforecast`` implementation is inspired
+    by Hyndman's forecast::auto.arima [1]_.
 
     Returns best ARIMA model according to either AIC, AICc or BIC value.
     The function conducts a search over possible model within
@@ -103,10 +107,12 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         is to use conditional-sum-of-squares to find starting values,
         then maximum likelihood. Can be abbreviated.
         It can be chosen from among the following strings:
+
         - 'CSS-ML' for conditional sum-of-squares to find starting values and
           then maximum likelihood.
         - 'ML' for maximum likelihood.
         - 'CSS' for conditional sum-of-squares.
+
     offset_test_args: dict optional (default None)
         Additional arguments to be passed to the unit root test.
     seasonal_test_args: dict optional (default None)
@@ -317,9 +323,12 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
 
 
 class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
-    """StatsForecast AutoTheta estimator.
+    """Statsforecast AutoTheta estimator.
 
-    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+    Direct interface to ``statsforecast.models.AutoTheta`` by Nixtla.
+
+    This estimator directly interfaces ``AutoTheta``,
+    from ``statsforecast`` [1]_ by Nixtla.
 
     AutoTheta model automatically selects the best Theta (Standard Theta Model ("STM"),
     Optimized Theta Model ("OTM"), Dynamic Standard Theta Model ("DSTM"), Dynamic
@@ -327,12 +336,13 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    season_length : int, optional
+    season_length : int, optional, default=1
         number of observations per unit of time (e.g. 24 for hourly data), by default 1
-    decomposition_type : str, optional
+
+    decomposition_type : str, optional, default="multipliciative"
+        possible values: "additive", "multiplicative"
         type of seasonal decomposition, by default "multiplicative"
 
-        possible values: "additive", "multiplicative"
     model : Optional[str], optional
         controlling Theta Model, by default searches the best model
 
@@ -403,9 +413,11 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
 
 class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
-    """StatsForecast Automatic Exponential Smoothing model.
+    """Statsforecast Automatic Exponential Smoothing model.
 
-    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+    Direct interface to ``statsforecast.models.AutoETS``,
+    from ``statsforecast`` [1]_ by Nixtla.
+    The ``statsforecast`` implementation is a mirror of Hyndman's forecast::ets [2]_.
 
     Automatically selects the best ETS (Error, Trend, Seasonality) model using an
     information criterion. Default is Akaike Information Criterion (AICc), while
@@ -428,10 +440,6 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         Controlling state-space-equations.
     damped : bool
         A parameter that 'dampens' the trend.
-
-    Notes
-    -----
-    This implementation is a mirror of Hyndman's forecast::ets [2]_.
 
     References
     ----------
@@ -498,9 +506,10 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
 
 class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
-    """StatsForecast Complex Exponential Smoothing model.
+    """Statsforecast Complex Exponential Smoothing model.
 
-    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+    Direct interface to ``statsforecast.models.AutoCES``,
+    from ``statsforecast`` [1]_ by Nixtla.
 
     Automatically selects the best Complex Exponential Smoothing model using an
     information criterion. Default is Akaike Information Criterion (AICc), while
@@ -579,8 +588,9 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     """StatsForecast Multiple Seasonal-Trend decomposition using LOESS model.
 
-    This implementation is a wrapper over Nixtla implementation in
-    statsforecast [1]_.
+    Direct interface to ``statsforecast.models.MSTL``,
+    from ``statsforecast`` [1]_ by Nixtla, with a back-adapter that allows
+    to use ``sktime`` forecasters as trend forecasters.
 
     The MSTL (Multiple Seasonal-Trend decomposition using LOESS) decomposes the time
     series in multiple seasonalities using LOESS. Then forecasts the trend using
