@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.23.0"
+version = "0.23.1"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
