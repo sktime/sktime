@@ -157,16 +157,6 @@ def test_multivariate_eval(test_input, expected):
     assert all(a == b for a, b in zip(test_input, expected))
 
 
-# (
-#     test_full,
-#     all_args,
-# ),
-# (
-#     test_types,
-#     all_args[1:],
-# ),
-
-
 class UnivariateDataPipelineTests:
     all_args = [
         "Number of airline passengers",
