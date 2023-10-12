@@ -89,8 +89,9 @@ class BaseObject(_BaseObject):
         "warnings": """
         warnings : str, "on" (default), or "off"
             whether to raise warnings, affects warnings from sktime only
-            "on" = will raise warnings from sktime
-            "off" = will not raise warnings from sktime
+
+            * "on" = will raise warnings from sktime
+            * "off" = will not raise warnings from sktime
         """,
     }
 

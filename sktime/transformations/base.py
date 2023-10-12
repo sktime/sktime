@@ -175,11 +175,11 @@ class BaseTransformer(BaseEstimator):
 
             - "None": no additional parameters, ``backend_params`` is ignored
             - "loky", "multiprocessing" and "threading":
-            any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-            with the exception of ``backend`` which is directly
-            controlled by ``backend:parallel``
+              any valid keys for ``joblib.Parallel`` can be passed here,
+              e.g., ``n_jobs``, with the exception of ``backend`` which is directly
+              controlled by ``backend:parallel``
             - "dask": any valid keys for ``dask.compute``
-            can be passed, e.g., ``scheduler``
+              can be passed, e.g., ``scheduler``
         """,
         "input_conversion": """
         input_conversion : str, one of "on", "off", valid mtype string
