@@ -19,6 +19,10 @@ class Merger(BaseTransformer):
     ...xxxx..
     ....xxxx.
     .....xxxx
+    ......xxxx
+    .......xxxx
+    ........xxxx
+    .........xxxx
     The merger aggregates the data by aligning the time series windows as shown above
     and applying a aggregation function to the overlapping data points.
     The aggregation function can be one of "mean" or "median". I.e., the `mean` or
@@ -34,17 +38,20 @@ class Merger(BaseTransformer):
     >>> from sktime.transformations.merger import Merger
     >>> from sktime.utils._testing.panel import _make_panel
     >>> y = _make_panel(n_instances=10, n_columns=3, n_timepoints=5)
-    >>> result = Merger(method="median").transform(y)
+    >>> result = Merger(method="median").fit_transform(y)
     >>> result.shape
     (14, 3, 1)
     """
 
     _tags = {
         "scitype:transform-input": "Panel",
+        "scitype:transform-output": "Series",
         "X_inner_mtype": "numpy3D",
+        "fit_is_empty": True,
     }
 
-    def __init__(self, method="median"):
+    def __init__(self, method="median", stride=0):
+        self.stride = stride
         if method not in ["median", "mean"]:
             raise ValueError(f"{method} must be 'mean' or 'median'.")
         self.method = method
@@ -75,13 +82,20 @@ class Merger(BaseTransformer):
         return result.reshape((*result.shape, 1))
 
     def _align_temporal(self, horizon, x):
+        x = x.astype(float)
+        if self.stride > 0:
+            x = np.insert(
+                x, np.arange(1, x.shape[0]).repeat(self.stride - 1), np.nan, axis=0
+            )
+        elif self.stride == 0:
+            return x
         r = []
         for i in range(horizon):
             _res = np.concatenate(
                 [
                     np.full(fill_value=np.nan, shape=(i, x.shape[1])),
                     x[:, :, i],
-                    np.full(fill_value=np.nan, shape=(horizon - 1 - i, x.shape[1])),
+                    np.full(fill_value=np.nan, shape=((horizon - 1 - i), x.shape[1])),
                 ]
             )
             r.append(_res)
