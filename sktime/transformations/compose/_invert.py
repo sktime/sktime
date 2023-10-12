@@ -4,9 +4,8 @@
 __author__ = ["fkiraly"]
 __all__ = ["InvertTransform"]
 
-from warnings import warn
-
 from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.utils.warnings import warn
 
 
 class InvertTransform(_DelegatedTransformer):
@@ -75,7 +74,8 @@ class InvertTransform(_DelegatedTransformer):
             warn(
                 "transformer does not have capability to inverse transform, "
                 "according to capability:inverse_transform tag. "
-                "If the tag was correctly set, this transformer will likely crash"
+                "If the tag was correctly set, this transformer will likely crash",
+                obj=self,
             )
         inner_output = transformer.get_tag("scitype:transform-output")
         if transformer.get_tag("scitype:transform-output") != "Series":
@@ -83,7 +83,8 @@ class InvertTransform(_DelegatedTransformer):
                 f"transformer output is not Series but {inner_output}, "
                 "according to scitype:transform-output tag. "
                 "The InvertTransform wrapper supports only Series output, therefore"
-                " this transformer will likely crash on input."
+                " this transformer will likely crash on input.",
+                obj=self,
             )
 
     # attribute for _DelegatedTransformer, which then delegates
