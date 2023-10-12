@@ -528,7 +528,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # check columns
         if isinstance(y_train, pd.Series):
-            assert (pred_cols == pd.Index([0])).all()
+            if y_train.name is not None:
+                assert (pred_cols == y_train.name).all()
+            else:
+                assert (pred_cols == pd.Index([0])).all()
         else:
             assert (pred_cols == y_train.columns).all()
 
