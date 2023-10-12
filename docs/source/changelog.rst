@@ -21,19 +21,56 @@ Version 0.23.1 - 2023-10-12
 Highlights
 ~~~~~~~~~~
 
-* 
-
+* all forecasters and transformers that broadcast can now use parallelization backends ``joblib``, ``dask`` via ``set_config`` (:pr:`5267`, :pr:`5268`, :pr:`5301`, :pr:`5311`, :pr:`5405`) :user:`fkiraly`
+* ``PeakTimeFeatures`` transformer to generate indicator features for one or multiple peak hours, days, etc (:pr:`5191`) :user:`ali-parizad`
+* ARCH forecaster interfacing ``arch`` package (:pr:`5326`) :user:`Vasudeva-bit`
+* forecasting reducer ``YfromX`` now makes probabilistic forecasts when using ``skpro`` probabilistic tabular regressors (:pr:`5271`) :user:`fkiraly`
+* forecasting compositors ``ForecastX`` now allows fitting ``forecaster_y`` on forecasted ``X`` (:pr:`5334`) :user:`benHeid`
+* lucky dynamic time warping distance and aligner, for use in time series classifiers, regressors, clusterers (:pr:`5341`) :user:`fkiraly`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
-*
-
+* ``attrs`` is no longer a soft dependency (time series annotation) of ``sktime``
+* ``arch`` is now a soft dependency (forecasting) of ``sktime``
+* ``skpro`` is now a soft dependency (forecasting) of ``sktime``
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* the ``sktime`` framework now inspects estimator type primarily via the tag ``object_type``.
+  This is not a breaking change as inheriting from respective base classes automatically sets the tag as well,
+  via the tag inheritance system. The type inspection utility ``scitype`` is also unaffected.
+  For extenders, the change enables polymorphic and dynamically typed estimators.
+
+Forecasting
+^^^^^^^^^^^
+
+* hierarchical and multivariate forecasts can now use parallelization and distributed backends,
+  including ``joblib`` and ``dask``, if the forecast is obtained via broadcasting.
+  To enable parallelization, set the ``backend:parallel`` and/or the ``backend:parallel:params``
+  configuration flags via ``set_config`` before fitting the forecaster.
+  This change extends to all existing third party forecasters that are interface conformant,
+  via inheritance from the updated base framework.
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* time series regressors now allow single-column ``pd.DataFrame`` as ``y``.
+  Current behaviour is unaffected, this is not a breaking change for existing code.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* hierarchical and multivariate transformers can now use parallelization and distributed backends,
+  including ``joblib`` and ``dask``, if the transformation is obtained via broadcasting.
+  To enable parallelization, set the ``backend:parallel`` and/or the ``backend:parallel:params``
+  configuration flags via ``set_config`` before fitting the forecaster.
+  This change extends to all existing third party transformers that are interface conformant,
+  via inheritance from the updated base framework.
 
 Enhancements
 ~~~~~~~~~~~~
@@ -41,35 +78,51 @@ Enhancements
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] warnings config (:pr:`4536`) :user:`fkiraly`
+* [ENH] add exports of common utilities in ``utils`` module (:pr:`5266`) :user:`fkiraly`
+* [ENH] in scitype check, replace base class register logic with type tag inspection (:pr:`5288`) :user:`fkiraly`
+* [ENH] parallelization backend calls in utility module - part 1, refactor to utility module (:pr:`5268`) :user:`fkiraly`
+* [ENH] parallelization backend calls in utility module - part 2, backend parameter passing (:pr:`5311`) :user:`fkiraly`
+* [ENH] parallelization backend calls in utility module - part 3, backend parameter passing in base class broadcasting (:pr:`5405`) :user:`fkiraly`
+
 Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] consolidating splitters as their own module with systematic tests and extension (:pr:`5017`) :user:`BensHamza`
-* [ENH] Allow ``evaluate`` to accept any combination of multiple metrics with correct predict method (:pr:`5192`) :user:`hazrulakmal`
+* [ENH] consolidating splitters as their own module with systematic tests and extension (:pr:`5017`, :pr:`5331`) :user:`BensHamza`,  :user:`fkiraly`
+* [ENH] allow ``evaluate`` to accept any combination of multiple metrics with correct predict method (:pr:`5192`) :user:`hazrulakmal`
+* [ENH] add tests for ``temporal_train_test_split`` (:pr:`5332`) :user:`fkiraly`
 
 Data loaders
 ^^^^^^^^^^^^
 
-* [ENH] Dataset loaders module restructure (:pr:`5239`) :user:`hazrulakmal`
+* [ENH] dataset loaders module restructure (:pr:`5239`) :user:`hazrulakmal`
 
 Forecasting
 ^^^^^^^^^^^
 
+* [ENH] Add a ``CurveFitForecaster`` based on ``scipy`` ``optimize_curve`` (:pr:`5240`) :user:`benHeid`
 * [ENH] Restructure the ``trend`` forecasters module (:pr:`5242`) :user:`benHeid`
+* [ENH] ``YfromX`` - probabilistic forecasts (:pr:`5271`) :user:`fkiraly`
+* [ENH] Link ``test_interval_wrappers.py`` to changes in ``evaluate`` for conditional testing (:pr:`5337`) :user:`fkiraly`
+* [ENH] ``joblib`` and ``dask`` backends in broadcasting of estimators in multivariate or hierarchical case - part 1, ``VectorizedDF.vectorize_est`` (:pr:`5267`) :user:`fkiraly`
+* [ENH] ``joblib`` and ``dask`` backends in broadcasting of estimators in multivariate or hierarchical case - part 2, base class config (:pr:`5301`) :user:`fkiraly`
+* [ENH] ARCH model interfacing ``arch`` package (:pr:`5326`) :user:`Vasudeva-bit`
+* [ENH] in ``ForecastX``, enable fitting ``forecaster_y`` on forecasted ``X`` (:pr:`5334`) :user:`benHeid`
+* [ENH] Skip unnecessary fit in ``ForecastX`` if inner ``forecaster_y`` ignores ``X`` (:pr:`5353`) :user:`yarnabrina`
+* [ENH] remove legacy except in ``TestAllEstimators`` for ``predict_proba`` (:pr:`5386`) :user:`fkiraly`
 
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
 
-Pipelines
-^^^^^^^^^
-
-Probability distributions and simulators
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-Time series classification
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+* [ENH] lucky dynamic time warping aligner (:pr:`5341`) :user:`fkiraly`
+* [ENH] sensible default ``_get_distance_matrix`` for time series aligners (:pr:`5347`) :user:`fkiraly`
 
 Time series distances and kernels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] delegator for pairwise time series distances and kernels (:pr:`5340`) :user:`fkiraly`
+* [ENH] lucky dynamic time warping distance (:pr:`5341`) :user:`fkiraly`
+* [ENH] simplified delegator interface to ``dtw-python`` based dynamic time warping distances (:pr:`5348`) :user:`fkiraly`
 
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -79,64 +132,33 @@ Time series regression
 Transformations
 ^^^^^^^^^^^^^^^
 
+* [ENH] ``PeakTimeFeatures`` transformer to generate indicator features for one/multiple peak/hours-day-week-, working hours, etc (:pr:`5191`) :user:`ali-parizad`
+* [ENH] ``VmdTransformer``, add decompose-forecast-recompose as a docstring example and test (:pr:`5250`) :user:`fkiraly`* [ENH] improve ``evaluate`` failure error message (:pr:`5269`) :user:`fkiraly`
+* [ENH] add proper ``inverse_transform`` to ``STLTransformer`` (:pr:`5300`) :user:`fkiraly`
+* [ENH] ``joblib`` and ``dask`` backends in broadcasting of estimators in multivariate or hierarchical case - part 1, ``VectorizedDF.vectorize_est`` (:pr:`5267`) :user:`fkiraly`
+* [ENH] ``joblib`` and ``dask`` backends in broadcasting of estimators in multivariate or hierarchical case - part 2, base class config (:pr:`5301`) :user:`fkiraly`
+
 Testing framework
 ^^^^^^^^^^^^^^^^^
 
 * [ENH] add error message return to ``deep_equals`` assert in ``test_reconstruct_identical``  (:pr:`4927`) :user:`fkiraly`
-
-Enhancements
-~~~~~~~~~~~~
-
-* [MNT] Restructure the ``trend`` forecasters module (:pr:`5242`) :user:`benHeid`
-* [ENH] ``VmdTransformer`` add decompose-forecast-recompose as a docstring example and test (:pr:`5250`) :user:`fkiraly`* [ENH] improve ``evaluate`` failure error message (:pr:`5269`) :user:`fkiraly`
-* [ENH] add exports of common utilities in ``utils`` module (:pr:`5266`) :user:`fkiraly`
-* [ENH] consolidating splitters as their own module with systematic tests and extension (:pr:`5017`) :user:`BensHamza`
-* [ENH] add proper ``inverse_transform`` to ``STLTransformer`` (:pr:`5300`) :user:`fkiraly`
-* [ENH] restore accidentally deleted updates to splitter module (:pr:`5331`) :user:`fkiraly`
-* [ENH] add tests for ``temporal_train_test_split`` (:pr:`5332`) :user:`fkiraly`
-* [ENH] in scitype check, replace base class register logic with type tag inspection (:pr:`5288`) :user:`fkiraly`
-* [ENH] Add a ``CurveFitForecaster`` based on ``scipy`` ``optimize_curve`` (:pr:`5240`) :user:`benHeid`
-* [ENH] Link ``test_interval_wrappers.py`` to changes in ``evaluate`` for conditional testing (:pr:`5337`) :user:`fkiraly`
-* [MNT] simplified CI - merge windows CI step with test matrix (:pr:`5362`) :user:`fkiraly`
-* [ENH] ``joblib`` and ``dask`` backends in broadcasting of estimators in multivariate or hierarchical case - part 1, ``VectorizedDF.vectorize_est`` (:pr:`5267`) :user:`fkiraly`
-* [ENH] ``joblib`` and ``dask`` backends in broadcasting of estimators in multivariate or hierarchical case - part 2, base class config (:pr:`5301`) :user:`fkiraly`
-* [ENH] ``PeakTimeFeatures`` transformer to generate indicator features for one/multiple peak/hours-day-week-, working hours, etc (:pr:`5191`) :user:`ali-parizad`
-* [DOC] Documented ax argument and the figure in plot_series (:pr:`5325`) :user:`ShreeshaM07`
-* [ENH] minor fixes to ``NaiveAligner`` (:pr:`5344`) :user:`fkiraly`
-* [BUG] fix ``temporal_train_test_split`` for hierarchical and panel data in case where ``fh`` is not passed (:pr:`5330`) :user:`fkiraly`
-* [ENH] ARCH model (arch package) Issue #2173 (:pr:`5326`) :user:`Vasudeva-bit`
-* [ENH] refactor parallelization backend calls in utility module (:pr:`5268`) :user:`fkiraly`
-* [ENH] Skip unnecessary fit in ``ForecastX`` if inner ``forecaster_y`` ignores ``X`` (:pr:`5353`) :user:`yarnabrina`
-* [ENH] parallelization backend calls in utility module - part 2, backend parameter passing (:pr:`5311`) :user:`fkiraly`* [ENH] delegator for pairwise time series distances and kernels (:pr:`5340`) :user:`fkiraly`
-* [ENH] sensible default ``_get_distance_matrix`` for time series aligners (:pr:`5347`) :user:`fkiraly`
-* [ENH] lucky dynamic time warping distance and aligner (:pr:`5341`) :user:`fkiraly`
-* [ENH] ``YfromX`` - probabilistic forecasts (:pr:`5271`) :user:`fkiraly`
-* [ENH] simplified delegator interface to ``dtw-python`` based dynamic time warping distances (:pr:`5348`) :user:`fkiraly`
 * [ENH] incremental testing to also test if any parent class in sktime has changed (:pr:`5379`) :user:`fkiraly`
-* [ENH] ``ForecastX`` enable fitting ``forecaster_y`` on forecasted ``X`` (:pr:`5334`) :user:`benHeid`
-* [MNT] warnings config (:pr:`4536`) :user:`fkiraly`
-* [ENH] parallelization backend calls in utility module - part 3, backend parameter passing in base class broadcasting (:pr:`5405`) :user:`fkiraly`
-* [ENH] remove legacy except in ``TestAllEstimators`` for ``predict_proba`` (:pr:`5386`) :user:`fkiraly`
-
 
 Maintenance
 ~~~~~~~~~~~
 
-* [MNT] Revert "instant release action" (:pr:`5264`) :user:`fkiraly`
-* [MNT] [Dependabot](deps-dev): Update numba requirement from <0.58,>=0.53 to >=0.53,<0.59 (:pr:`5285`) :user:`dependabot[bot]`
-* [MNT] [Dependabot](deps-dev): Update holidays requirement from <0.33,>=0.29 to >=0.29,<0.34 (:pr:`5276`) :user:`dependabot[bot]`
-* [MNT] [Dependabot](deps-dev): Update numpy requirement from <1.26,>=1.21.0 to >=1.21.0,<1.27 (:pr:`5275`) :user:`dependabot[bot]`
 * [MNT] revert update numba requirement from <0.58,>=0.53 to >=0.53,<0.59" (:pr:`5297`) :user:`fkiraly`
 * [MNT] bound ``numba<0.58`` (:pr:`5303`) :user:`fkiraly`
-* [ENH] Remove attrs dependency (:pr:`5296`) :user:`Alex-JG3`
+* [MNT] Remove ``attrs`` dependency (:pr:`5296`) :user:`Alex-JG3`
 * [MNT] simplified CI - merge windows CI step with test matrix (:pr:`5362`) :user:`fkiraly`
-* [MNT] [Dependabot](deps): Bump styfle/cancel-workflow-action from 0.11.0 to 0.12.0 (:pr:`5355`) :user:`dependabot[bot]`
 * [MNT] python 3.12 compatibility - replace ``distutils`` calls with equivalent functionality (:pr:`5376`) :user:`fkiraly`
-* [MNT] [Dependabot](deps): Bump stefanzweifel/git-auto-commit-action from 4 to 5 (:pr:`5373`) :user:`dependabot[bot]`
 * [MNT] ``skpro`` as a soft dependency (:pr:`5273`) :user:`fkiraly`
-* [ENH] removed py37.dockerfile and update doc entry for CI (:pr:`5356`) :user:`kurayami07734`
+* [ENH] removed ``py37.dockerfile`` and update doc entry for CI (:pr:`5356`) :user:`kurayami07734`
+* [MNT] [Dependabot](deps): Bump styfle/cancel-workflow-action from 0.11.0 to 0.12.0 (:pr:`5355`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Bump stefanzweifel/git-auto-commit-action from 4 to 5 (:pr:`5373`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps-dev): Update holidays requirement from <0.33,>=0.29 to >=0.29,<0.34 (:pr:`5276`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps-dev): Update numpy requirement from <1.26,>=1.21.0 to >=1.21.0,<1.27 (:pr:`5275`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps-dev): Update arch requirement from <6.2.0,>=5.6.0 to >=5.6.0,<6.3.0 (:pr:`5392`) :user:`dependabot[bot]`
-
 
 Documentation
 ~~~~~~~~~~~~~
@@ -155,20 +177,16 @@ Documentation
 * [DOC] Improved PR template for new contributors (:pr:`5381`) :user:`fkiraly`
 * [DOC] dynamic docstring for ``set_config`` (:pr:`5306`) :user:`fkiraly`
 * [DOC] update docstring of ``temporal_train_test_split`` (:pr:`4170`) :user:`xansh`
+* [DOC] Document ``ax`` argument and the figure in ``plot_series`` (:pr:`5325`) :user:`ShreeshaM07`
 
 Fixes
 ~~~~~
 
-BaseObject and base framework
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [BUG] fix ``temporal_train_test_split`` for hierarchical and panel data in case where ``fh`` is not passed (:pr:`5330`) :user:`fkiraly`
 * [BUG] allow ``alpha`` and ``coverage`` to be passed again via metrics to ``evaluate`` (:pr:`5354`) :user:`fkiraly`, :user:`benheid`
-
-Data loaders
-^^^^^^^^^^^^
 
 Forecasting
 ^^^^^^^^^^^
@@ -178,15 +196,10 @@ Forecasting
 * [BUG] ``statsforecast 1.6.0`` compatibility - fix argument differences between ``sktime`` and ``statsforecast`` (:pr:`5393`) :user:`luca-miniati`
 * [BUG] Fix ``ARCH._check_predict_proba`` (:pr:`5384`) :user:`Vasudeva-bit`
 
-Pipelines
-^^^^^^^^^
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
 
-Probability distributions and simulators
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-Time series classification
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+* [BUG] minor fixes to ``NaiveAligner`` (:pr:`5344`) :user:`fkiraly`
 
 Time series distances and kernels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
