@@ -157,7 +157,7 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         self._y = y
         self._X = X
-        metadata = self._fit_input_checks(X, y)
+        metadata = self._check_classifier_input(X, y)
         if self.get_tag("capability:multiouput"):
             self._fit_instance(X, y, metadata)
             self.estimators = [self]
