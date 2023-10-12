@@ -288,8 +288,8 @@ Depending on the transformer, the transformation parameters can be fitted.
     ExponentTransformer
     SqrtTransformer
 
-Detrending
-~~~~~~~~~~
+Detrending and Decomposition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.detrend
 
@@ -301,6 +301,22 @@ Detrending
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
+
+.. currentmodule:: sktime.transformations.series.detrend.mstl
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MSTL
+
+.. currentmodule:: sktime.transformations.series.vmd
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VmdTransformer
 
 .. currentmodule:: sktime.transformations.series.clear_sky
 
@@ -418,7 +434,7 @@ Binning and segmentation
     IntervalSegmenter
     RandomIntervalSegmenter
 
-Missing value imputation
+Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.impute
@@ -427,6 +443,7 @@ Missing value imputation
     :toctree: auto_generated/
     :template: class.rst
 
+    DropNA
     Imputer
 
 Seasonality and Date-Time Features
@@ -439,6 +456,16 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     DateTimeFeatures
+
+.. currentmodule:: sktime.transformations.series.holiday
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HolidayFeatures
+    CountryHolidaysTransformer
+    FinancialHolidaysTransformer
 
 .. currentmodule:: sktime.transformations.series.time_since
 
@@ -463,6 +490,14 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     FourierTransform
+
+.. currentmodule:: sktime.transformations.series.peak
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PeakTimeFeature
 
 Auto-correlation series
 ~~~~~~~~~~~~~~~~~~~~~~~

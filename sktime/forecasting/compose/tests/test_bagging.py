@@ -8,20 +8,20 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.forecasting.compose import BaggingForecaster
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.bootstrap import STLBootstrapTransformer
 from sktime.transformations.series.boxcox import LogTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-y = load_airline()
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency is not available",
+    not run_test_for_class(BaggingForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("transformer", [LogTransformer, NaiveForecaster])
 def test_bagging_forecaster_transformer_type_error(transformer):
     """Test that the right exception is raised for invalid transformer."""
+    y = load_airline()
+
     with pytest.raises(TypeError) as ex:
         f = BaggingForecaster(
             bootstrap_transformer=transformer, forecaster=NaiveForecaster(sp=12)
@@ -35,12 +35,14 @@ def test_bagging_forecaster_transformer_type_error(transformer):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency is not available",
+    not run_test_for_class([BaggingForecaster, STLBootstrapTransformer]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("forecaster", [LogTransformer])
 def test_bagging_forecaster_forecaster_type_error(forecaster):
     """Test that the right exception is raised for invalid forecaster."""
+    y = load_airline()
+
     with pytest.raises(TypeError) as ex:
         f = BaggingForecaster(
             bootstrap_transformer=STLBootstrapTransformer(sp=12),
@@ -51,17 +53,24 @@ def test_bagging_forecaster_forecaster_type_error(forecaster):
         assert msg == ex.value
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(BaggingForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_calculate_data_quantiles():
     """Test that we calculate quantiles correctly."""
+    y = load_airline()
+
     series_names = ["s1", "s2", "s3"]
     fh = [1, 2]
     alpha = [0, 0.5, 1]
-    quantiles_column_index = pd.MultiIndex.from_product([["Quantiles"], alpha])
 
     index = pd.MultiIndex.from_product(
         [series_names, fh], names=["time_series", "time"]
     )
     df = pd.DataFrame(data=[1, 10, 2, 11, 3, 12], index=index)
+
+    quantiles_column_index = pd.MultiIndex.from_product([[y.name], alpha])
 
     output_df = pd.DataFrame(
         data=[[1.0, 2.0, 3.0], [10.0, 11.0, 12.0]],

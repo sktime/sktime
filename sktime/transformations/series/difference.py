@@ -142,10 +142,24 @@ def _inverse_diff(X, lags, X_diff_seq=None):
 
     # invert last lag index
     if X_diff_seq is not None:
+        # Get the train time series before the last difference
         X_diff_orig = X_diff_seq[len(lags)]
-        X_ix_shift = X.index.shift(-lag_last)
+        # Shift the differenced time series index by the last lag
+        # to match the original time series index
+        X_ix_shift = _shift(X.index, -lag_last)
+        # Get the original time series values for the intersecting
+        # indices between the shifted index and the original index
         X_update = X_diff_orig.loc[X_ix_shift.intersection(X_diff_orig.index)]
-
+        # Set the values of the differenced time series to nan for all indices
+        # that are in the indices of the original and the by the sum of all lags
+        # shifted original time series that are available in the differenced time
+        # series (intersection). These are the indices for which no valid differenced
+        # values exist.
+        X.loc[
+            X_diff_orig.index.difference(
+                _shift(X_diff_orig.index, sum(lags) + lag_last)
+            ).intersection(X.index)
+        ] = np.nan
         X = X.combine_first(X_update)
 
     X_diff_last = X.copy()

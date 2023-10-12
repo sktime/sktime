@@ -1,7 +1,7 @@
 """Delegator mixin that delegates all methods to wrapped forecaster.
 
 Useful for building estimators where all but one or a few methods are delegated. For
-that purpose, inherit from this estimator and then override only the methods     that
+that purpose, inherit from this estimator and then override only the methods that
 are not delegated.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -13,7 +13,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class _DelegatedForecaster(BaseForecaster):
-    """Delegator mixin that delegateas all methods to wrapped forecaster.
+    """Delegator mixin that delegates all methods to wrapped forecaster.
 
     Delegates inner forecaster methods to a wrapped estimator.
         Wrapped estimator is value of attribute with name self._delegate_name.
@@ -149,9 +149,7 @@ class _DelegatedForecaster(BaseForecaster):
             y=y, fh=fh, X=X, update_params=update_params
         )
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -184,13 +182,9 @@ class _DelegatedForecaster(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         estimator = self._get_delegate()
-        return estimator.predict_quantiles(
-            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
-        )
+        return estimator.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -227,9 +221,7 @@ class _DelegatedForecaster(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         estimator = self._get_delegate()
-        return estimator.predict_interval(
-            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
-        )
+        return estimator.predict_interval(fh=fh, X=X, coverage=coverage)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.

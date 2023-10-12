@@ -221,3 +221,51 @@ class SARIMAX(_StatsModelsAdapter):
         conf_int.columns = ["lower", "upper"]
 
         return conf_int
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [
+            # this fails - seems like statsmodels error
+            # {
+            #     "order": (4, 1, 2),
+            #     "trend": "ct",
+            #     "time_varying_regression": True,
+            #     "enforce_stationarity": False,
+            #     "enforce_invertibility": False,
+            #     "concentrate_scale": True,
+            #     "use_exact_diffuse": True,
+            #     "mle_regression": False,
+            # },
+            {
+                "order": (2, 1, 2),
+                "trend": "ct",
+                "enforce_stationarity": False,
+                "enforce_invertibility": False,
+            },
+            {
+                "order": [1, 0, 1],
+                "trend": [1, 1, 0, 1],
+                # It does not work with measurement_errot, not sure why.
+                # "measurement_error": True,
+                "seasonal_order": (1, 0, 1, 2),
+                "hamilton_representation": True,
+                "simple_differencing": True,
+            },
+        ]

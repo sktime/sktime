@@ -21,7 +21,7 @@ import pandas as pd
 from sktime.datatypes import convert_to, scitype
 
 
-def convert_Series_to_Panel(obj, store=None):
+def convert_Series_to_Panel(obj, store=None, return_to_mtype=False):
     """Convert series to a single-series panel.
 
     Adds a dummy dimension to the series.
@@ -35,6 +35,10 @@ def convert_Series_to_Panel(obj, store=None):
     Parameters
     ----------
     obj: an object of scitype Series, of mtype pd.DataFrame, pd.Series, or np.ndarray.
+    store: dict, optional
+        converter store for back-conversion
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
@@ -46,7 +50,10 @@ def convert_Series_to_Panel(obj, store=None):
         obj = pd.DataFrame(obj)
 
     if isinstance(obj, pd.DataFrame):
-        return [obj]
+        if return_to_mtype:
+            return [obj], "df-list"
+        else:
+            return [obj]
 
     if isinstance(obj, np.ndarray):
         if len(obj.shape) == 2:
@@ -55,18 +62,23 @@ def convert_Series_to_Panel(obj, store=None):
             # numpy3D = (instances, variables, time)
             obj = np.expand_dims(obj, 0)
             obj = np.swapaxes(obj, 1, 2)
+            obj_mtype = "numpy3D"
         elif len(obj.shape) == 1:
             # from numpy1D to numpy3D
             # numpy1D = (time)
             # numpy3D = (instances, variables, time)
             obj = np.expand_dims(obj, (0, 1))
+            obj_mtype = "numpy3D"
         else:
             raise ValueError("if obj is np.ndarray, must be of dim 1 or 2")
 
-    return obj
+    if return_to_mtype:
+        return obj, obj_mtype
+    else:
+        return obj
 
 
-def convert_Panel_to_Series(obj, store=None):
+def convert_Panel_to_Series(obj, store=None, return_to_mtype=False):
     """Convert single-series panel to a series.
 
     Removes panel index from the single-series panel to obtain a series.
@@ -78,6 +90,10 @@ def convert_Panel_to_Series(obj, store=None):
     Parameters
     ----------
     obj: an object of scitype Panel, of mtype pd-multiindex, numpy3d, or df-list.
+    store: dict, optional
+        converter store for back-conversion
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
@@ -86,12 +102,16 @@ def convert_Panel_to_Series(obj, store=None):
     """
     if isinstance(obj, list):
         if len(obj) == 1:
-            return obj[0]
+            if return_to_mtype:
+                return obj[0], "pd.DataFrame"
+            else:
+                return obj[0]
         else:
             raise ValueError("obj must be of length 1")
 
     if isinstance(obj, pd.DataFrame):
         obj.index = obj.index.droplevel(level=0)
+        obj_mtype = "pd.DataFrame"
 
     if isinstance(obj, np.ndarray):
         if obj.ndim != 3 or obj.shape[0] != 1:
@@ -101,11 +121,15 @@ def convert_Panel_to_Series(obj, store=None):
         # numpy3D = (instances, variables, time)
         obj = np.reshape(obj, (obj.shape[1], obj.shape[2]))
         obj = np.swapaxes(obj, 0, 1)
+        obj_mtype = "np.ndarray"
 
-    return obj
+    if return_to_mtype:
+        return obj, obj_mtype
+    else:
+        return obj
 
 
-def convert_Series_to_Hierarchical(obj, store=None):
+def convert_Series_to_Hierarchical(obj, store=None, return_to_mtype=False):
     """Convert series to a single-series hierarchical object.
 
     Adds two dimensions to the series to obtain a 3-level MultiIndex, 2 levels added.
@@ -117,6 +141,10 @@ def convert_Series_to_Hierarchical(obj, store=None):
     Parameters
     ----------
     obj: an object of scitype Series, of mtype pd.DataFrame, pd.Series, or np.ndarray.
+    store: dict, optional
+        converter store for back-conversion
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
@@ -128,10 +156,14 @@ def convert_Series_to_Hierarchical(obj, store=None):
     obj_df["__level2"] = 0
     obj_df = obj_df.set_index(["__level1", "__level2"], append=True)
     obj_df = obj_df.reorder_levels([1, 2, 0])
-    return obj_df
+
+    if return_to_mtype:
+        return obj_df, "pd_multiindex_hier"
+    else:
+        return obj_df
 
 
-def convert_Hierarchical_to_Series(obj, store=None):
+def convert_Hierarchical_to_Series(obj, store=None, return_to_mtype=False):
     """Convert single-series hierarchical object to a series.
 
     Removes two dimensions to obtain a series, by removing 2 levels from MultiIndex.
@@ -143,6 +175,10 @@ def convert_Hierarchical_to_Series(obj, store=None):
     Parameters
     ----------
     obj: an object of scitype Hierarchical.
+    store: dict, optional
+        converter store for back-conversion
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
@@ -151,10 +187,14 @@ def convert_Hierarchical_to_Series(obj, store=None):
     obj_df = convert_to(obj, to_type="pd_multiindex_hier", as_scitype="Hierarchical")
     obj_df = obj_df.copy()
     obj_df.index = obj_df.index.get_level_values(-1)
-    return obj_df
+
+    if return_to_mtype:
+        return obj_df, "pd.DataFrame"
+    else:
+        return obj_df
 
 
-def convert_Panel_to_Hierarchical(obj, store=None):
+def convert_Panel_to_Hierarchical(obj, store=None, return_to_mtype=False):
     """Convert panel to a single-panel hierarchical object.
 
     Adds a dimensions to the panel to obtain a 3-level MultiIndex, 1 level is added.
@@ -166,6 +206,10 @@ def convert_Panel_to_Hierarchical(obj, store=None):
     Parameters
     ----------
     obj: an object of scitype Panel.
+    store: dict, optional
+        converter store for back-conversion
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
@@ -176,10 +220,14 @@ def convert_Panel_to_Hierarchical(obj, store=None):
     obj_df["__level2"] = 0
     obj_df = obj_df.set_index(["__level2"], append=True)
     obj_df = obj_df.reorder_levels([2, 0, 1])
-    return obj_df
+
+    if return_to_mtype:
+        return obj_df, "pd_multiindex_hier"
+    else:
+        return obj_df
 
 
-def convert_Hierarchical_to_Panel(obj, store=None):
+def convert_Hierarchical_to_Panel(obj, store=None, return_to_mtype=False):
     """Convert single-series hierarchical object to a series.
 
     Removes one dimensions to obtain a panel, by removing 1 level from MultiIndex.
@@ -190,7 +238,11 @@ def convert_Hierarchical_to_Panel(obj, store=None):
 
     Parameters
     ----------
-    obj: an object of scitype Hierarchical.
+    obj: an object of scitype Hierarchical
+    store: dict, optional
+        converter store for back-conversion
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
@@ -199,10 +251,20 @@ def convert_Hierarchical_to_Panel(obj, store=None):
     obj_df = convert_to(obj, to_type="pd_multiindex_hier", as_scitype="Hierarchical")
     obj_df = obj_df.copy()
     obj_df.index = obj_df.index.get_level_values([-2, -1])
-    return obj_df
+
+    if return_to_mtype:
+        return obj_df, "pd-multiindex"
+    else:
+        return obj_df
 
 
-def convert_to_scitype(obj, to_scitype, from_scitype=None, store=None):
+def convert_to_scitype(
+    obj,
+    to_scitype,
+    from_scitype=None,
+    store=None,
+    return_to_mtype=False,
+):
     """Convert single-series or single-panel between mtypes.
 
     Assumes input is conformant with one of the mtypes
@@ -218,6 +280,8 @@ def convert_to_scitype(obj, to_scitype, from_scitype=None, store=None):
         scitype that obj is of, and being converted from
         if avoided, function will skip type inference from obj
     store : dict, optional. Converter store for back-conversion.
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
@@ -239,4 +303,4 @@ def convert_to_scitype(obj, to_scitype, from_scitype=None, store=None):
     func_name = f"convert_{from_scitype}_to_{to_scitype}"
     func = eval(func_name)
 
-    return func(obj, store=store)
+    return func(obj, store=store, return_to_mtype=return_to_mtype)

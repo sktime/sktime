@@ -15,7 +15,6 @@ __author__ = [
 ]
 
 import math
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -29,6 +28,7 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.warnings import warn
 
 
 class NaiveForecaster(_BaseWindowForecaster):
@@ -111,6 +111,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
+        "ignores-exogeneous-X": True,
         "scitype:y": "univariate",
         "capability:pred_var": True,
         "capability:pred_int": True,
@@ -166,7 +167,10 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         elif self.strategy == "drift":
             if sp != 1:
-                warn("For the `drift` strategy, the `sp` value will be ignored.")
+                warn(
+                    "For the `drift` strategy, the `sp` value will be ignored.",
+                    obj=self,
+                )
             # window length we need for forecasts is just the
             # length of seasonal periodicity
             self.window_length_ = check_window_length(self.window_length, n_timepoints)
@@ -406,9 +410,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return y_pred
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
@@ -442,9 +444,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             np.sqrt(pred_var.to_numpy().reshape(len(pred_var), 1)) * z_scores
         ).reshape(len(y_pred), len(alpha))
 
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
 
         pred_quantiles = pd.DataFrame(
             errors + y_pred.values.reshape(len(y_pred), 1),
@@ -700,9 +700,7 @@ class NaiveVariance(BaseForecaster):
             )
         return self
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
@@ -735,9 +733,7 @@ class NaiveVariance(BaseForecaster):
         z_scores = norm.ppf(alpha)
         errors = [pred_var**0.5 * z for z in z_scores]
 
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         index = pd.MultiIndex.from_product([var_names, alpha])
@@ -851,15 +847,17 @@ class NaiveVariance(BaseForecaster):
                 if self.verbose:
                     warn(
                         f"Couldn't fit the model on "
-                        f"time series window length {len(y_train)}.\n"
+                        f"time series window length {len(y_train)}.\n",
+                        obj=self,
                     )
                 continue
             try:
                 residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X)
             except IndexError:
                 warn(
-                    f"Couldn't predict after fitting on time series of length \
-                     {len(y_train)}.\n"
+                    f"Couldn't predict after fitting on time series of length "
+                    f"{len(y_train)}.\n",
+                    obj=self,
                 )
 
         return residuals_matrix
@@ -881,6 +879,7 @@ class NaiveVariance(BaseForecaster):
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-        params_list = {"forecaster": FORECASTER}
+        params1 = {"forecaster": FORECASTER}
+        params2 = {"forecaster": FORECASTER, "initial_window": 2}
 
-        return params_list
+        return [params1, params2]
