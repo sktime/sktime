@@ -35,7 +35,7 @@ class ScaledAsinhTransformer(BaseTransformer):
         scale parameter, denoted as "b" in [1]_, the median absolute deviation
         (MAD) around the sample median adjusted by a factor for asymptotically
         normal consistency to the standard deviation (Based on [1]_, [2]_
-        b = median_abs_deviation(sample data) :math:`\times` mad_normalization_factor
+        b = median_abs_deviation(sample data) . mad_normalization_factor).
         It is fitted, based on the data provided in "fit".
 
     See Also
@@ -61,7 +61,7 @@ class ScaledAsinhTransformer(BaseTransformer):
     |   :math:`b . sinh(x) + a`
     | where "a" is the shift parameter and "b" is the scale parameter [1]_.
     | a = median(sample data)
-    | b = median_abs_deviation(sample data) :math:`\times` mad_normalization_factor
+    | b = median_abs_deviation(sample data) . mad_normalization_factor
 
     References
     ----------
