@@ -80,6 +80,8 @@ Core Developers
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
+   * - Hazrul Akmal
+     - :user:`hazrulakmal`
    * - Jonathan Bechtel
      - :user:`jonathanbechtel`
    * - Kiril Ralinovski

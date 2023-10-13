@@ -337,4 +337,17 @@ class BaseAligner(BaseEstimator):
         distmat: an (n x n) np.array of floats, where n is length of X passed to fit
             [i,j]-th entry is alignment distance between X[i] and X[j] passed to fit
         """
-        raise NotImplementedError
+        # the default implementation assumes
+        # that the aligner can only align two sequences
+        if self.get_tag("capability:multiple-alignment", False):
+            raise NotImplementedError
+
+        import numpy as np
+
+        dist = self.get_distance()
+
+        distmat = np.zeros((2, 2), dtype="float")
+        distmat[0, 1] = dist
+        distmat[1, 0] = dist
+
+        return distmat

@@ -111,3 +111,21 @@ def test_temporal_train_test_split_int_only_y():
     assert len(y_test) == 29
     assert (y[:43] == y_train).all()
     assert (y[43 : (43 + 29)] == y_test).all()
+
+
+def test_temporal_train_test_split_hierarchical():
+    """Test correctness of temporal_train_test_split for hierarchical data.
+
+    Failure case is bug #5107.
+    """
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    y = _make_hierarchical()
+    y_train, y_test = temporal_train_test_split(y, test_size=0.2)
+
+    # y has 12 time indices per series, the same indices for all series
+    # so 9 indices should be in train and 3 in test
+    # the failure case in 5107 would ignore the hierarchical structure and just
+    # put the last 20 indices of the hierarchical data frame in test
+    assert len(y_train.index.get_level_values(-1).unique()) == 9
+    assert len(y_test.index.get_level_values(-1).unique()) == 3

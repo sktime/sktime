@@ -1,7 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements pipelines for forecasting."""
 
-__author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
 import pandas as pd
@@ -78,6 +77,15 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                 f"the two can be mixed; but, found steps of type {type(estimators)}"
             )
             raise TypeError(msg)
+
+        # if len(estimators) == 1:
+        #     msg = (
+        #         f"in {self_name}, found steps of length 1, "
+        #         f"this will result in the same behaviour "
+        #         f"as not wrapping the single step in a pipeline. "
+        #         f"Consider not wrapping steps in {self_name} as it is redundant."
+        #     )
+        #     warn(msg, obj=self)
 
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)
@@ -162,7 +170,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.24.0 - check why this cannot be easily removed
+                        # todo 0.25.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -1166,47 +1174,57 @@ class TransformedTargetForecaster(_Pipeline):
 class ForecastX(BaseForecaster):
     """Forecaster that forecasts exogeneous data for use in an endogeneous forecast.
 
-    In `predict`, this forecaster carries out a `predict` step on exogeneous `X`.
-    Then, a forecast is made for `y`, using exogeneous data plus its forecasts as `X`.
-    If `columns` argument is provided, will carry `predict` out only for the columns
-    in `columns`, and will use other columns in `X` unchanged.
+    In ``predict``, this forecaster carries out a ``predict`` step on exogeneous ``X``.
+    Then, a forecast is made for ``y``,
+    using exogeneous data plus its forecasts as ``X``.
+    If ``columns`` argument is provided, will carry ``predict`` out only for the columns
+    in ``columns``, and will use other columns in ``X`` unchanged.
 
-    The two forecasters and forecasting horizons (for forecasting `y` resp `X`)
+    The two forecasters and forecasting horizons (for forecasting ``y`` resp ``X``)
     can be selected independently, but default to the same.
 
     The typical use case is extending exogeneous data available only up until the cutoff
     into the future, for use by an exogeneous forecaster that requires such future data.
 
-    If no X is passed in `fit`, behaves like `forecaster_y`.
+    If no X is passed in ``fit``, behaves like ``forecaster_y``.
     In such a case (no exogeneous data), there is no benefit in using this compositor.
 
     Parameters
     ----------
     forecaster_y : BaseForecaster
-        sktime forecaster to use for endogeneous data `y`
-    forecaster_X : BaseForecaster, optional, default = forecaster_y
-        sktime forecaster to use for exogeneous data `X`
+        sktime forecaster to use for endogeneous data ``y``
+    forecaster_X : BaseForecaster
+        sktime forecaster to use for exogeneous data ``X``
     fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
-        optional, default = None = same as used for `y` in any instance.
-        valid inputs to construct ForecastingHorizon are:
+        optional, default = None = same as used for ``y`` in any instance.
+        valid inputs to construct ``ForecastingHorizon`` are:
         int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
     behaviour : str, one of "update" or "refit", optional, default = "update"
-        if "update", forecaster_X is fit to the data batch seen in `fit`,
-            and updated with any `X` seen in calls of `update`.
-            Forecast added to `X` in `predict` is obtained from this state.
-        if "refit", then forecaster_X is fit to `X` in `predict` only,
-            Forecast added to `X` in `predict` is obtained from this state.
+        if "update", ``forecaster_X`` is fit to the data batch seen in ``fit``,
+            and updated with any ``X`` seen in calls of ``update``.
+            Forecast added to ``X`` in ``predict`` is obtained from this state.
+        if "refit", then ``forecaster_X`` is fit to ``X`` in ``predict`` only,
+            Forecast added to ``X`` in ``predict`` is obtained from this state.
     columns : None, or pandas compatible index iterator (e.g., list of str), optional
-        default = None = all columns in X are used for forecast
-        columns to which `forecaster_X` is applied
+        default = None = all columns in ``X`` are used for forecast columns to which
+        ``forecaster_X`` is applied.
+        If not ``None``, must be a non-empty list of valid column names.
+        Note that ``[]`` and ``None`` do not imply the same.
+    fit_behaviour : str, one of "use_actual", "use_forecast", optional,
+        default = "use_actual"
+        if "use_actual", then ``forecaster_y`` uses the actual ``X`` as
+            exogenous features in `fit`
+        if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
+            ``forecaster_X`` as exogenous features in ``fit``
 
     Attributes
     ----------
     forecaster_X_ : BaseForecaster
-        clone of forecaster_X, state updates with `fit` and `update`
-        created only if behaviour="update" and `X` passed is not None
+        clone of ``forecaster_X``, state updates with ``fit`` and ``update``
+        created only if ``behaviour="update"`` and ``X`` passed is not None
+        and ``forecaster_y`` has ``ignores-exogeneous-X`` tag as ``False``
     forecaster_y_ : BaseForecaster
-        clone of forecaster_y, state updates with `fit` and `update`
+        clone of ``forecaster_y``, state updates with ``fit`` and ``update``
 
     Examples
     --------
@@ -1253,8 +1271,19 @@ class ForecastX(BaseForecaster):
     }
 
     def __init__(
-        self, forecaster_y, forecaster_X, fh_X=None, behaviour="update", columns=None
+        self,
+        forecaster_y,
+        forecaster_X,
+        fh_X=None,
+        behaviour="update",
+        columns=None,
+        fit_behaviour="use_actual",
     ):
+        if fit_behaviour not in ["use_actual", "use_forecast"]:
+            raise ValueError(
+                'fit_behaviour must be one of "use_actual", "use_forecast"'
+            )
+        self.fit_behaviour = fit_behaviour
         if behaviour not in ["update", "refit"]:
             raise ValueError('behaviour must be one of "update", "refit"')
 
@@ -1276,6 +1305,7 @@ class ForecastX(BaseForecaster):
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:insample",
+            "ignores-exogeneous-X",
         ]
 
         self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)
@@ -1315,7 +1345,16 @@ class ForecastX(BaseForecaster):
             self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X)
 
         self.forecaster_y_ = self.forecaster_y.clone()
-        self.forecaster_y_.fit(y=y, X=X, fh=fh)
+        if self.fit_behaviour == "use_actual":
+            self.forecaster_y_.fit(y=y, X=X, fh=fh)
+        elif self.fit_behaviour == "use_forecast":
+            if not self.forecaster_X_.get_tag("capability:insample"):
+                raise ValueError(
+                    "forecaster_X does not have `capability:insample`. "
+                    "Thus, it is not valid with `fit_behaviour=use_forecast`."
+                )
+            x_insample = self.forecaster_X_.predict(fh=X.index, X=X)
+            self.forecaster_y_.fit(y=y, X=x_insample, fh=fh)
 
         return self
 
@@ -1356,7 +1395,7 @@ class ForecastX(BaseForecaster):
             forecaster = self.forecaster_X_c.clone()
             forecaster.fit(y=self._get_Xcols(self._X), fh=fh)
 
-        X_pred = getattr(forecaster, method)()
+        X_pred = getattr(forecaster, method)(fh=fh)
         if X is not None:
             X_pred = X_pred.combine_first(X)
 
