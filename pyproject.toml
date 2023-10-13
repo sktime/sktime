@@ -95,6 +95,7 @@ regression = [
 ]
 transformations = [
     "esig>=0.9.7,<0.10",
+    "iisignature>=0.24",
     "filterpy>=1.4.5,<1.5",
     "holidays>=0.29,<0.33",
     "mne>=1.5,<1.6",
@@ -112,6 +113,7 @@ all_extras = [
     "dask",
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
+    "iisignature>=0.24",
     "filterpy>=1.4.5; python_version < '3.11'",
     "gluonts>=0.9.0",
     "h5py",

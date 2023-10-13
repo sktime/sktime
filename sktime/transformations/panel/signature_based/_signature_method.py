@@ -10,6 +10,8 @@ from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
 
 class SignatureTransformer(BaseTransformer):
     """Transformation class from the signature method.
@@ -32,6 +34,7 @@ class SignatureTransformer(BaseTransformer):
     sig_tfm: str, String to specify the type of signature transform. One of:
         ['signature', 'logsignature']).
     depth: int, Signature truncation depth.
+    backend: str, The backend to use for signature computation. One of: 'esig', or 'iisignature'.
 
     Attributes
     ----------
@@ -62,7 +65,15 @@ class SignatureTransformer(BaseTransformer):
         rescaling=None,
         sig_tfm="signature",
         depth=4,
+        backend="esig",
     ):
+        if backend == "esig":
+            _check_soft_dependencies("esig")
+        elif backend == "iisignature":
+            _check_soft_dependencies("iisignature")
+        else:
+            raise ValueError("backend must be one of 'esig' or 'iisignature'")
+
         self.augmentation_list = augmentation_list
         self.window_name = window_name
         self.window_depth = window_depth
@@ -71,6 +82,7 @@ class SignatureTransformer(BaseTransformer):
         self.rescaling = rescaling
         self.sig_tfm = sig_tfm
         self.depth = depth
+        self.backend = backend
 
         super().__init__()
         self.setup_feature_pipeline()
@@ -86,6 +98,7 @@ class SignatureTransformer(BaseTransformer):
             sig_tfm=self.sig_tfm,
             sig_depth=self.depth,
             rescaling=self.rescaling,
+            backend=self.backend,
         )
 
         # The so-called 'signature method' as defined in the reference paper
