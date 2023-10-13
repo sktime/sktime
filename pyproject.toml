@@ -182,7 +182,7 @@ all_extras_pandas2 = [
 cython_extras = [
     "mrseql",
     "mrsqm; python_version < '3.11'",
-    "numba<0.58",
+    "numba<0.59",
 ]
 
 dev = [
