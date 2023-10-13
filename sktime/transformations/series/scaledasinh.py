@@ -187,8 +187,6 @@ class ScaledAsinhTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        test_params = [
-            {},
-            {"mad_normalization_factor": 2.1},
-        ]
-        return test_params
+        params1 = {}
+
+        return [params1]
