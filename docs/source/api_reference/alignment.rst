@@ -38,6 +38,14 @@ Dynamic time warping
 
     AlignerDtwNumba
 
+.. currentmodule:: sktime.alignment.lucky
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AlignerLuckyDtw
+
 
 Edit distance based aligners
 ----------------------------

@@ -38,6 +38,7 @@ sktime/classification/sklearn/_continuous_interval_tree.py @MatthewMiddlehurst
 sktime/classification/sklearn/_rotation_forest.py @MatthewMiddlehurst
 
 sktime/forecasting/adapters/_hcrystalball.py @MichalChromcak
+sktime/forecasting/arch/_uarch.py @Vasudeva-bit
 sktime/forecasting/arima.py @HYang1996
 sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
 sktime/forecasting/bats.py @aiwalter

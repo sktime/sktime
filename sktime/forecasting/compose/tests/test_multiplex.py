@@ -11,12 +11,10 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.split import ExpandingWindowSplitter
 from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_scoring
 

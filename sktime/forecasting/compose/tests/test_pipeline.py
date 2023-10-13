@@ -14,19 +14,17 @@ from sklearn.svm import SVR
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
 from sktime.datatypes._utilities import get_window
+from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import (
     ForecastingPipeline,
     TransformedTargetForecaster,
     make_reduction,
 )
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-    temporal_train_test_split,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.transformations.compose import OptionalPassthrough
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
@@ -445,8 +443,8 @@ def test_forecastx_logic():
     """Test that ForecastX logic is as expected, compared to manual execution."""
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.compose import ForecastX
-    from sktime.forecasting.model_selection import temporal_train_test_split
     from sktime.forecasting.var import VAR
+    from sktime.split import temporal_train_test_split
 
     # test case: using pipeline execution
     y, X = load_longley()
@@ -481,6 +479,49 @@ def test_forecastx_logic():
     assert np.allclose(y_pred, y_pred_manual)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_forecastx_fit_behavior():
+    from sktime.forecasting.compose import ForecastX
+    from sktime.forecasting.model_selection import temporal_train_test_split
+
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+
+    pipe = ForecastX(
+        forecaster_X=NaiveForecaster(),
+        forecaster_y=ARIMA(),
+    )
+    pipe = pipe.fit(y_train, X=X_train, fh=y_test.index)
+    y_pred_forecast_X_use_gt = pipe.predict(fh=y_test.index)
+
+    naive = NaiveForecaster()
+    naive.fit(X_train)
+    x_pred_train = naive.predict(fh=X_train.index)
+    arima = ARIMA()
+    arima.fit(y_train, X_train)
+
+    y_pred = arima.predict(fh=y_test.index, X=naive.predict(fh=y_test.index))
+
+    pd.testing.assert_series_equal(y_pred_forecast_X_use_gt, y_pred)
+
+    pipe = ForecastX(
+        forecaster_X=NaiveForecaster(),
+        forecaster_y=ARIMA(),
+        fit_behaviour="use_forecast",
+    )
+    pipe = pipe.fit(y_train, X=X_train, fh=y_test.index)
+    y_pred_forecast_X_use_forecast = pipe.predict(fh=y_test.index)
+
+    arima = ARIMA()
+    arima.fit(y_train, x_pred_train)
+    y_pred = arima.predict(fh=y_test.index, X=naive.predict(fh=y_test.index))
+
+    pd.testing.assert_series_equal(y_pred_forecast_X_use_forecast, y_pred)
+
+
 def test_forecastx_attrib_broadcast():
     """Test ForecastX broadcasting and forecaster attributes."""
     from sktime.forecasting.compose import ForecastX
@@ -502,9 +543,7 @@ def test_forecastx_attrib_broadcast():
     model_1 = model.clone()
     model_1.fit(df[["c"]], X=df[["d", "e"]], fh=[1, 2, 3])
 
-    assert hasattr(model_1, "forecaster_X_")
-    assert isinstance(model_1.forecaster_X_, NaiveForecaster)
-    assert model_1.forecaster_X_.is_fitted
+    assert not hasattr(model_1, "forecaster_X_")
 
     assert hasattr(model_1, "forecaster_y_")
     assert isinstance(model_1.forecaster_y_, NaiveForecaster)
@@ -512,15 +551,138 @@ def test_forecastx_attrib_broadcast():
 
     model_2 = model.clone()
     model_2.fit(df[["c", "d"]], X=df[["e"]], fh=[1, 2, 3])
-    assert hasattr(model_2, "forecaster_X_")
 
-    assert hasattr(model_2, "forecaster_X_")
-    assert isinstance(model_2.forecaster_X_, NaiveForecaster)
-    assert model_2.forecaster_X_.is_fitted
+    assert not hasattr(model_2, "forecaster_X_")
 
     assert hasattr(model_2, "forecaster_y_")
     assert isinstance(model_2.forecaster_y_, NaiveForecaster)
     assert model_2.forecaster_y_.is_fitted
+
+
+def test_forecastx_skip_forecaster_X_fitting_logic():
+    """Test that ForecastX does not fit forecaster_X, if forecaster_y ignores X"""
+    from sklearn.linear_model import LinearRegression
+
+    from sktime.forecasting.compose import ForecastX, YfromX
+
+    y, X = load_longley()
+
+    fh = [1, 2, 3]
+
+    model_supporting_exogenous = YfromX(LinearRegression())
+    model_ignoring_exogenous = NaiveForecaster()
+
+    model_1 = ForecastX(
+        model_supporting_exogenous.clone(), model_supporting_exogenous.clone()
+    )
+    model_2 = ForecastX(
+        model_supporting_exogenous.clone(), model_ignoring_exogenous.clone()
+    )
+    model_3 = ForecastX(
+        model_ignoring_exogenous.clone(), model_supporting_exogenous.clone()
+    )
+    model_4 = ForecastX(
+        model_ignoring_exogenous.clone(), model_ignoring_exogenous.clone()
+    )
+
+    assert hasattr(model_1, "forecaster_y")
+    assert hasattr(model_2, "forecaster_y")
+    assert hasattr(model_3, "forecaster_y")
+    assert hasattr(model_4, "forecaster_y")
+
+    assert hasattr(model_1, "forecaster_X")
+    assert hasattr(model_2, "forecaster_X")
+    assert hasattr(model_3, "forecaster_X")
+    assert hasattr(model_4, "forecaster_X")
+
+    assert not hasattr(model_1, "forecaster_y_")
+    assert not hasattr(model_2, "forecaster_y_")
+    assert not hasattr(model_3, "forecaster_y_")
+    assert not hasattr(model_4, "forecaster_y_")
+
+    assert not hasattr(model_1, "forecaster_X_")
+    assert not hasattr(model_2, "forecaster_X_")
+    assert not hasattr(model_3, "forecaster_X_")
+    assert not hasattr(model_4, "forecaster_X_")
+
+    model_1.fit(y, X=X, fh=fh)
+    model_2.fit(y, X=X, fh=fh)
+    model_3.fit(y, X=X, fh=fh)
+    model_4.fit(y, X=X, fh=fh)
+
+    assert hasattr(model_1, "forecaster_y_")
+    assert hasattr(model_2, "forecaster_y_")
+    assert hasattr(model_3, "forecaster_y_")
+    assert hasattr(model_4, "forecaster_y_")
+
+    assert model_1.forecaster_y_.is_fitted
+    assert model_2.forecaster_y_.is_fitted
+    assert model_3.forecaster_y_.is_fitted
+    assert model_4.forecaster_y_.is_fitted
+
+    assert hasattr(model_1, "forecaster_X_")
+    assert hasattr(model_2, "forecaster_X_")
+    assert not hasattr(model_3, "forecaster_X_")
+    assert not hasattr(model_4, "forecaster_X_")
+
+    assert model_1.forecaster_X_.is_fitted
+    assert model_2.forecaster_X_.is_fitted
+
+
+@pytest.mark.parametrize(
+    "forecasting_algorithm", [make_reduction(SVR(), window_length=2), NaiveForecaster()]
+)
+@pytest.mark.parametrize(
+    "future_unknown_columns",
+    [["GNPDEFL", "GNP"], ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP"], None],
+)
+def test_forecastx_flow_known_unknown_columns(
+    forecasting_algorithm, future_unknown_columns
+):
+    """Test that ForecastX does not fit forecaster_X, if forecaster_y ignores X"""
+    from sktime.forecasting.compose import ForecastX
+
+    y, X = load_longley()
+
+    fh = [1, 2]
+
+    y_train_val, y_test, X_train_val, X_test = temporal_train_test_split(
+        y, X, test_size=max(fh)
+    )
+    y_train, y_val, X_train, X_val = temporal_train_test_split(
+        y_train_val, X_train_val, test_size=max(fh)
+    )
+
+    model = ForecastX(
+        forecasting_algorithm.clone(),
+        forecasting_algorithm.clone(),
+        columns=future_unknown_columns,
+    )
+
+    assert hasattr(model, "forecaster_y")
+    assert hasattr(model, "forecaster_X")
+
+    assert not hasattr(model, "forecaster_y_")
+    assert not hasattr(model, "forecaster_X_")
+
+    model.fit(y_train, X=X_train, fh=fh)
+
+    assert hasattr(model, "forecaster_y_")
+    assert model.forecaster_y_.is_fitted
+
+    if model.get_tag("ignores-exogeneous-X"):
+        assert not hasattr(model, "forecaster_X_")
+    else:
+        assert hasattr(model, "forecaster_X_")
+        assert model.forecaster_X_.is_fitted
+
+    y_val_pred = model.predict(X=X_test)
+    np.testing.assert_array_equal(y_val.index, y_val_pred.index)
+
+    model.update(y_val, X=X_val)
+
+    y_test_pred = model.predict(X=X_test)
+    np.testing.assert_array_equal(y_test.index, y_test_pred.index)
 
 
 @pytest.mark.skipif(

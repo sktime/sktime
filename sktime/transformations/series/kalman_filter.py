@@ -12,12 +12,11 @@ __all__ = [
     "KalmanFilterTransformerFP",
 ]
 
-from warnings import warn
-
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 
 def _get_t_matrix(time_t, matrices, shape, time_steps):
@@ -1194,7 +1193,8 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
                     "Class parameter `control_transition` was initiated with user data "
                     "but received no data through `transform` argument, `y`. "
                     "Therefore, omitting `control_transition` "
-                    "when calculating the result. "
+                    "when calculating the result. ",
+                    obj=self,
                 )
             y = np.zeros(y_dim)
 

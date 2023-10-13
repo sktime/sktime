@@ -13,11 +13,6 @@ from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    SlidingWindowSplitter,
-    temporal_train_test_split,
-)
 from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
     TEST_FHS,
@@ -27,6 +22,11 @@ from sktime.forecasting.tests._config import (
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+from sktime.split import (
+    ExpandingWindowSplitter,
+    SlidingWindowSplitter,
+    temporal_train_test_split,
+)
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
@@ -515,9 +515,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
 
     def _check_predict_proba(self, pred_dist, y_train, fh_int):
-        from sktime.proba.base import BaseDistribution
+        assert hasattr(pred_dist, "get_tag")
+        obj_type = pred_dist.get_tag("object_type", None, False)
+        assert obj_type == "distribution"
 
-        assert isinstance(pred_dist, BaseDistribution)
         pred_cols = pred_dist.columns
         pred_index = pred_dist.index
 
@@ -527,7 +528,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # check columns
         if isinstance(y_train, pd.Series):
-            assert (pred_cols == pd.Index([0])).all()
+            if y_train.name is not None:
+                assert (pred_cols == y_train.name).all()
+            else:
+                assert (pred_cols == pd.Index([0])).all()
         else:
             assert (pred_cols == y_train.columns).all()
 
