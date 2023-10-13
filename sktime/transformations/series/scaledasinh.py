@@ -18,17 +18,24 @@ class ScaledAsinhTransformer(BaseTransformer):
     Combined with an sktime.forecasting.compose.TransformedTargetForecaster,
     can be usefull in time series that exhibit spikes [1]_, [2]_
 
+    Parameters
+    ----------
+    mad_normalization_factor : float, default = 1.4826
+        The normalization factor used to adjust the median absolute deviation
+        (MAD) for asymptotically normal consistency to the standard deviation.
+        The default value based on [1]_, [2]_ is 1.4826.
+
     Attributes
     ----------
     shift_parameter_asinh_ : float
         shift parameter, denoted as "a" in [1]_, the median of sample data.
         It is fitted, based on the data provided in "fit".
 
-    scale_parameter_asinh : float
+    scale_parameter_asinh_ : float
         scale parameter, denoted as "b" in [1]_, the median absolute deviation
         (MAD) around the sample median adjusted by a factor for asymptotically
         normal consistency to the standard deviation (Based on [1]_, [2]_
-        b= median_abs_deviation(sample data) * 1.4826).
+        b= median_abs_deviation(sample data) * mad_normalization_factor).
         It is fitted, based on the data provided in "fit".
 
     See Also
@@ -54,7 +61,7 @@ class ScaledAsinhTransformer(BaseTransformer):
     |   :math:`b . sinh(x) + a`
     | where "a" is the shift parameter and "b" is the scale parameter [1]_.
     | a = median(sample data)
-    | b = median_abs_deviation(sample data) :math:`. 1.4826`
+    | b = median_abs_deviation(sample data) * mad_normalization_factor
 
     References
     ----------
@@ -89,8 +96,9 @@ class ScaledAsinhTransformer(BaseTransformer):
         "skip-inverse-transform": False,
     }
 
-    def __init__(self):
+    def __init__(self, mad_normalization_factor=1.4826):
         super().__init__()
+        self.mad_normalization_factor = mad_normalization_factor
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -110,7 +118,9 @@ class ScaledAsinhTransformer(BaseTransformer):
         """
         self.shift_parameter_asinh_ = np.median(X)
 
-        self.scale_parameter_asinh_ = stats.median_abs_deviation(X) * 1.4826
+        self.scale_parameter_asinh_ = (
+            stats.median_abs_deviation(X) * self.mad_normalization_factor
+        )
 
         return self
 
