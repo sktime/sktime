@@ -15,7 +15,6 @@ __author__ = [
 ]
 
 import math
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -29,6 +28,7 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.warnings import warn
 
 
 class NaiveForecaster(_BaseWindowForecaster):
@@ -167,7 +167,10 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         elif self.strategy == "drift":
             if sp != 1:
-                warn("For the `drift` strategy, the `sp` value will be ignored.")
+                warn(
+                    "For the `drift` strategy, the `sp` value will be ignored.",
+                    obj=self,
+                )
             # window length we need for forecasts is just the
             # length of seasonal periodicity
             self.window_length_ = check_window_length(self.window_length, n_timepoints)
@@ -844,15 +847,17 @@ class NaiveVariance(BaseForecaster):
                 if self.verbose:
                     warn(
                         f"Couldn't fit the model on "
-                        f"time series window length {len(y_train)}.\n"
+                        f"time series window length {len(y_train)}.\n",
+                        obj=self,
                     )
                 continue
             try:
                 residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X)
             except IndexError:
                 warn(
-                    f"Couldn't predict after fitting on time series of length \
-                     {len(y_train)}.\n"
+                    f"Couldn't predict after fitting on time series of length "
+                    f"{len(y_train)}.\n",
+                    obj=self,
                 )
 
         return residuals_matrix
