@@ -189,6 +189,4 @@ class ScaledAsinhTransformer(BaseTransformer):
         """
         params1 = {}
 
-        params2 = {"mad_normalization_factor": 1.5}
-
-        return [params1, params2]
+        return [params1]
