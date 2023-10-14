@@ -216,7 +216,7 @@ class _HeterogenousMetaEstimator:
 
         Returns
         -------
-        bool : True if obj is (str, cls_type) tuple, False otherise
+        bool : True if obj is (str, cls_type) tuple, False otherwise
         """
         if cls_type is None:
             cls_type = BaseEstimator
@@ -783,7 +783,7 @@ def is_flat(obj):
 
 
 class _ColumnEstimator:
-    """Mixin class with utilities for by-column applicates."""
+    """Mixin class with utilities for by-column applicants."""
 
     def _coerce_to_pd_index(self, obj, ref=None):
         """Coerce obj to pandas Index, replacing ints by index elements.

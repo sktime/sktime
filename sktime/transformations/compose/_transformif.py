@@ -145,7 +145,7 @@ class TransformIf(_DelegatedTransformer):
     _delegate_name = "transformer_"
 
     def _evaluate_condition(self):
-        """Evalutes the condition, as described in the docstring of the class."""
+        """Evaluates the condition, as described in the docstring of the class."""
         param = self.param
 
         params = self.if_estimator_.get_fitted_params()

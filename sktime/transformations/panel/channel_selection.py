@@ -52,7 +52,7 @@ class _distance_matrix:
     """Create distance matrix."""
 
     def distance(self, centroid_frame):
-        """Fuction to create DM."""
+        """Function to create DM."""
         distance_pair = list(
             itertools.combinations(range(0, centroid_frame.shape[0]), 2)
         )

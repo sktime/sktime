@@ -13,7 +13,7 @@ The ``datasets`` module contains:
 Loaders from dataset repositories
 ---------------------------------
 
-These loaders access dataset respositories on the internet and fetch one or multiple
+These loaders access dataset repositories on the internet and fetch one or multiple
 datasets from there, individual datasets specifiable as strings.
 
 These loaders can be used to access reference datasets for benchmarking.

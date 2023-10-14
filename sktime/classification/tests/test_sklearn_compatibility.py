@@ -1,4 +1,4 @@
-"""Unit tests for sktime classifier compatability with sklearn interfaces."""
+"""Unit tests for sktime classifier compatibility with sklearn interfaces."""
 
 __author__ = ["MatthewMiddlehurst"]
 __all__ = [

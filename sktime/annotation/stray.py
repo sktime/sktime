@@ -22,7 +22,7 @@ class STRAY(BaseTransformer):
     ability to detect clusters of outliers in multi-dimensional data without
     requiring a model of the typical behavior of the system. However, it suffers
     from some limitations that affect its accuracy. STRAY is an extension of
-    HDoutliers that uses extreme value theory for the anomolous threshold
+    HDoutliers that uses extreme value theory for the anomalous threshold
     calculation, to deal with data streams that exhibit non-stationary behavior.
 
     Parameters
@@ -41,7 +41,7 @@ class STRAY(BaseTransformer):
         Proportion of possible candidates for outliers. This defines the starting point
         for the bottom up searching algorithm.
     size_threshold : int, optional (default=50)
-        Sample size to calculate an emperical threshold.
+        Sample size to calculate an empirical threshold.
     outlier_tail : str {"min", "max"}, optional (default="max")
         Direction of the outlier tail.
 

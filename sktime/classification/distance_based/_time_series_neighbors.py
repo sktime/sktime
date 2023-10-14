@@ -153,7 +153,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             raise ValueError(
                 f"Unrecognised distance measure string: {distance}. "
                 f"Allowed values for string codes are: {DISTANCES_SUPPORTED}. "
-                "Alternatively, pass a callable distance measure into the constuctor."
+                "Alternatively, pass a callable distance measure into the constructor."
             )
 
         self.knn_estimator_ = KNeighborsClassifier(
@@ -212,7 +212,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime comatible Panel data container, of mtype X_inner_mtype, with n series
+        X : sktime compatible Panel data container, of mtype X_inner_mtype, with n series
             data to fit the estimator to
         y : {array-like, sparse matrix}
             Target values of shape = [n]
