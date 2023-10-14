@@ -188,5 +188,6 @@ class ScaledAsinhTransformer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {}
+        params2 = {"mad_normalization_factor": 1.5}
 
-        return [params1]
+        return [params1, params2]
