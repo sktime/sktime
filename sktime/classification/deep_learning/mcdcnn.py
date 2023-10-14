@@ -215,6 +215,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self.history = self.model_.fit(
             X,
             y_onehot,
+            epochs=self.n_epochs,
             batch_size=self.batch_size,
             verbose=self.verbose,
             callbacks=self.callbacks_,
