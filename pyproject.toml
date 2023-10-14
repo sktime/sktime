@@ -141,7 +141,6 @@ binder = [
 ]
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
-  "mrsqm<0.1,>=0.0.3",
   "numba<0.59,>=0.53",
   "tensorflow<=2.14,>=2",
   "tsfresh<0.21,>=0.17",
