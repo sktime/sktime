@@ -147,7 +147,7 @@ classification = [
 ]
 clustering = [
   'numba<0.59,>=0.53; python_version < "3.12"',
-  "tslearn<0.6.3,>=0.5.2",
+  'tslearn<0.6.3,>=0.5.2; python_version < "3.12"',
 ]
 cython_extras = [
   "mrseql",
