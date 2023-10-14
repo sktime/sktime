@@ -7,7 +7,6 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 from inspect import getfullargspec, isfunction, signature
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -44,6 +43,7 @@ from sktime.performance_metrics.forecasting._functions import (
     median_squared_scaled_error,
     relative_loss,
 )
+from sktime.utils.warnings import warn
 
 __author__ = ["mloning", "tch", "RNKuhns", "fkiraly"]
 __all__ = [
@@ -455,7 +455,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             warn(
                 "y_pred and y_true do not have the same row index. "
                 "This may indicate incorrect objects passed to the metric. "
-                "Indices of y_true will be used for y_pred."
+                "Indices of y_true will be used for y_pred.",
+                obj=self,
             )
             y_pred_orig = y_pred_orig.copy()
             if isinstance(y_pred_orig, VectorizedDF):
@@ -466,7 +467,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             warn(
                 "y_pred and y_true do not have the same column index. "
                 "This may indicate incorrect objects passed to the metric. "
-                "Indices of y_true will be used for y_pred."
+                "Indices of y_true will be used for y_pred.",
+                obj=self,
             )
             y_pred_orig = y_pred_orig.copy()
             if isinstance(y_pred_orig, VectorizedDF):
