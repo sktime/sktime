@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Preprocessing algorithm DOBIN (Distance based Outlier BasIs using Neighbors)."""
 
 import warnings
@@ -59,17 +58,17 @@ class DOBIN(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.dobin import DOBIN
-    >>> from sklearn.preprocessing import MinMaxScaler
-    >>> import numpy as np
-    >>> import pandas as pd
-    >>> from sktime.datasets import load_uschange
-    >>> _, X = load_uschange()
-    >>> scaler = MinMaxScaler()
-    >>> X = scaler.fit_transform(X)
-    >>> model = DOBIN()
-    >>> X_outlier = model.fit_transform(pd.DataFrame(X))
-    >>> X_outlier.head()
+    >>> from sktime.transformations.series.dobin import DOBIN  # doctest: +SKIP
+    >>> from sklearn.preprocessing import MinMaxScaler  # doctest: +SKIP
+    >>> import numpy as np  # doctest: +SKIP
+    >>> import pandas as pd  # doctest: +SKIP
+    >>> from sktime.datasets import load_uschange  # doctest: +SKIP
+    >>> _, X = load_uschange()  # doctest: +SKIP
+    >>> scaler = MinMaxScaler()  # doctest: +SKIP
+    >>> X = scaler.fit_transform(X)  # doctest: +SKIP
+    >>> model = DOBIN()  # doctest: +SKIP
+    >>> X_outlier = model.fit_transform(pd.DataFrame(X))  # doctest: +SKIP
+    >>> X_outlier.head()  # doctest: +SKIP
             DB0       DB1       DB2       DB3
     0  1.151965  0.116488  0.286064  0.288140
     1  1.191976  0.100772  0.050835  0.225985
@@ -92,7 +91,7 @@ class DOBIN(BaseTransformer):
     ):
         self.frac = frac
         self.k = k
-        super(DOBIN, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -239,17 +238,7 @@ def close_distance_matrix(X: npt.ArrayLike, k: int, frac: float):
 
     dist = pd.DataFrame(
         [
-            (
-                (
-                    X.iloc[
-                        i,
-                    ]
-                    - X.iloc[
-                        j,
-                    ]
-                )
-                ** 2
-            ).tolist()
+            ((X.iloc[i,] - X.iloc[j,]) ** 2).tolist()
             for (i, j) in zip(
                 np.repeat(indices[:, 0], repeats=k), indices[:, 1:].flatten()
             )
@@ -261,6 +250,4 @@ def close_distance_matrix(X: npt.ArrayLike, k: int, frac: float):
 
     mask = row_sums > q_frac
 
-    return dist.loc[
-        mask,
-    ]
+    return dist.loc[mask,]

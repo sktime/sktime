@@ -25,5 +25,5 @@ rules before submitting:
 
 .. note::
 
-   To find out more about how to take part in sktime’s community, check out our `governance
+   To find out more about how to take part in sktime's community, check out our `governance
    guidelines <https://www.sktime.net/en/latest/governance.html>`__.

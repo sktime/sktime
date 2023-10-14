@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Bootstrapping method based on any sktime splitter."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -123,7 +122,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
         self.replace = replace
         self.random_state = random_state
 
-        super(SplitterBootstrapTransformer, self).__init__()
+        super().__init__()
 
         self._rng = check_random_state(random_state)
 
@@ -155,7 +154,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
         rng = self._rng
 
         if splitter is None:
-            from sktime.forecasting.model_selection import SlidingWindowSplitter
+            from sktime.split import SlidingWindowSplitter
 
             splitter = SlidingWindowSplitter(fh=[1], window_length=3, step_length=1)
 
@@ -208,7 +207,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.split import ExpandingWindowSplitter
 
         params = [
             {},

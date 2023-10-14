@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements a composite Time series Forest Regressor that accepts a pipeline."""
 
@@ -7,7 +6,6 @@ __author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["ComposableTimeSeriesForestRegressor"]
 
 import numbers
-from warnings import warn
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -25,6 +23,7 @@ from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesFo
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
+from sktime.utils.warnings import warn
 
 
 class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
@@ -48,7 +47,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         The function to measure the quality of a split. Supported criteria are
         "squared_error" for the mean squared error, which is equal to variance reduction
         as feature selection criterion and minimizes the L2 loss using the mean of each
-        terminal node, "friedman_mse", which uses mean squared error with Friedman’s
+        terminal node, "friedman_mse", which uses mean squared error with Friedman's
         improvement score for potential splits, "absolute_error" for the mean absolute
         error, which minimizes the L1 loss using the median of each terminal node,
         and "poisson" which uses reduction in Poisson deviance to find splits.
@@ -191,7 +190,6 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         warm_start=False,
         max_samples=None,
     ):
-
         self.estimator = estimator
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
@@ -206,7 +204,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         self.max_samples = max_samples
 
         # Pass on params.
-        super(ComposableTimeSeriesForestRegressor, self).__init__(
+        super().__init__(
             base_estimator=None,
             n_estimators=n_estimators,
             estimator_params=None,
@@ -226,10 +224,10 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     def fit(self, X, y, **kwargs):
         """Wrap fit to call BaseRegressor.fit.
 
-        This is a fix to get around the problem with multiple inheritance. The
-        problem is that if we just override _fit, this class inherits the fit from
-        the sklearn class BaseTimeSeriesForest. This is the simplest solution,
-        albeit a little hacky.
+        This is a fix to get around the problem with multiple inheritance. The problem
+        is that if we just override _fit, this class inherits the fit from the sklearn
+        class BaseTimeSeriesForest. This is the simplest solution, albeit a little
+        hacky.
         """
         return BaseRegressor.fit(self, X=X, y=y, **kwargs)
 
@@ -245,17 +243,16 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
 
     def _validate_estimator(self):
-
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
                 "n_estimators must be an integer, "
-                "got {0}.".format(type(self.n_estimators))
+                "got {}.".format(type(self.n_estimators))
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
                 "n_estimators must be greater than zero, "
-                "got {0}.".format(self.n_estimators)
+                "got {}.".format(self.n_estimators)
             )
 
         # Set base estimator
@@ -367,9 +364,10 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
         if (n_predictions == 0).any():
             warn(
-                "Some inputs do not have OOB scores. "
+                "Some inputs in ComposableTimeSeriesRegressor do not have OOB scores. "
                 "This probably means too few trees were used "
-                "to compute any reliable oob estimates."
+                "to compute any reliable oob estimates.",
+                obj=self,
             )
             n_predictions[n_predictions == 0] = 1
 

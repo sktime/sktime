@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multiplexer transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -62,9 +61,8 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     >>> from sktime.transformations.compose import MultiplexTransformer
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.forecasting.model_selection import (
-    ...     ForecastingGridSearchCV,
-    ...     ExpandingWindowSplitter)
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> # create MultiplexTransformer:
     >>> multiplexer = MultiplexTransformer(transformers=[
     ...     ("impute_mean", Imputer(method="mean", missing_values = -1)),
@@ -117,7 +115,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
         transformers: list,
         selected_transformer=None,
     ):
-        super(MultiplexTransformer, self).__init__()
+        super().__init__()
         self.selected_transformer = selected_transformer
 
         self.transformers = transformers

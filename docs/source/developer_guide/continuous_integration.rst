@@ -66,8 +66,9 @@ We recommend that you also set this up locally as it will ensure that you never 
 These checks run automatically before you make a new commit.
 To setup, simply navigate to the sktime folder and install our pre-commit configuration:
 
-::
-   pre-commit install
+   .. code:: bash
+
+      pre-commit install
 
 pre-commit should now automatically run anything you make a commit! Please let us know if you encounter any issues getting this setup.
 
@@ -104,6 +105,45 @@ Further, developer IDEs such as pycharm or vs code will automatically recognize
 the tests via ``pytest``, refer to the documentation of the IDEs for testing
 via the embedded graphical user interface.
 
+Running docstring examples via ``doctest``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sktime's Python modules are equipped with docstrings that include examples
+demonstrating the usage of specific classes within each module. These examples
+can be executed using doctest to ensure the expected functionality of the
+modules after making modifications, thereby identifying any unforeseen bugs.
+
+To run doctest on all the files with ``pytest``, navigate to the root directory and execute
+the following command:
+
+  .. code:: bash
+
+      pytest --doctest-modules
+
+To run doctest on all the files without ``pytest``, navigate to the root directory and execute
+the following command:
+
+(for ``UNIX`` based OS)
+  .. code:: bash
+
+      find . -name "*.py" -print0 | xargs -0 python -m doctest -v -o=ELLIPSIS
+
+(for windows)
+  .. code:: bash
+
+      for /r %G in (*.py) do python -m doctest -v "%G" -o=ELLIPSIS
+
+To run doctest on a specific module, navigate to the directory where the
+module is located and execute the following command:
+
+   .. code:: bash
+
+      python -m doctest -v -o=ELLIPSIS {filename}
+
+
+Executing this command will display the test results for all the docstrings
+contained within the module.
+
 Alternative: dockerized testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -117,8 +157,6 @@ with the image of name ``PYTHON_VERSION`` based on the following python versions
 +----------------+----------------+
 | Python version | PYTHON_VERSION |
 +================+================+
-|     3.7.16     |      py37      |
-+----------------+----------------+
 |     3.8.16     |      py38      |
 +----------------+----------------+
 |     3.9.16     |      py39      |
@@ -131,8 +169,8 @@ with the image of name ``PYTHON_VERSION`` based on the following python versions
 The dockerized tests can be also executed via `make <https://www.gnu.org/software/make/>`_,
 via the command ``make dockertest PYTHON_VERSION=<python version>``.
 The ``PYTHON_VERSION`` argument specifies the python version and is the same string as in the table above.
-For example, to execute the tests in the Python version ``3.7.16``,
-use ``make dockertest PYTHON_VERSION=py37``.
+For example, to execute the tests in the Python version ``3.8.16``,
+use ``make dockertest PYTHON_VERSION=py38``.
 
 
 Continuous integration

@@ -1,18 +1,16 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements the probabilistic Squaring Residuals forecaster."""
 
 __all__ = ["SquaringResiduals"]
 __author__ = ["kcc-lion"]
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.datatypes._convert import convert_to
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingWindowSplitter
+from sktime.utils.warnings import warn
 
 
 class SquaringResiduals(BaseForecaster):
@@ -111,7 +109,7 @@ class SquaringResiduals(BaseForecaster):
         self.initial_window = initial_window
         self.distr = distr
         self.distr_kwargs = distr_kwargs
-        super(SquaringResiduals, self).__init__()
+        super().__init__()
 
         assert self.distr in ["norm", "laplace", "t", "cauchy"]
         assert self.strategy in ["square", "abs"]
@@ -124,7 +122,7 @@ class SquaringResiduals(BaseForecaster):
         if self.residual_forecaster is None:
             self.residual_forecaster = NaiveForecaster()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -199,7 +197,7 @@ class SquaringResiduals(BaseForecaster):
             self._res_forecasters[step_ahead] = res_step_forecaster_
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -270,7 +268,7 @@ class SquaringResiduals(BaseForecaster):
             forecaster.update(X=X, y=y, update_params=update_params)
         return self
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -314,10 +312,13 @@ class SquaringResiduals(BaseForecaster):
 
         errors = [pred_var * z for z in z_scores]
 
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
+        index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)
         for a, error in zip(alpha, errors):
-            pred_quantiles[("Quantiles", a)] = y_pred + error
+            pred_quantiles[(var_name, a)] = y_pred + error
 
         pred_quantiles.index = fh_abs.to_pandas()
 
@@ -347,7 +348,11 @@ class SquaringResiduals(BaseForecaster):
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
         if cov:
-            warn(f"cov={cov} is not supported. Defaulting to cov=False instead.")
+            warn(
+                f"cov={cov} is not supported in SquaringResiduals. "
+                "Defaulting to cov=False instead.",
+                obj=self,
+            )
         fh_abs = fh.to_absolute(self.cutoff)
         fh_rel = fh.to_relative(self.cutoff)
         fh_rel_index = fh_rel.to_pandas()

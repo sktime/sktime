@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Conditional transformation based on fitted parameters."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -122,7 +121,7 @@ class TransformIf(_DelegatedTransformer):
         else:
             self.else_trafo_ = else_trafo
 
-        super(TransformIf, self).__init__()
+        super().__init__()
 
         self.clone_tags(if_estimator, tag_names=["univariate-only"])
         if_scitypes = mtype_to_scitype(if_estimator.get_tag("X_inner_mtype"))

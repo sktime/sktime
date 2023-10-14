@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for MultiplexForecaster and associated dunders."""
 
@@ -12,12 +11,10 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.split import ExpandingWindowSplitter
 from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_scoring
 
@@ -109,9 +106,9 @@ def test_multiplex_with_grid_search():
 def test_multiplex_or_dunder():
     """Test that the MultiplexForecaster magic "|" dunder methodbahves as expected.
 
-    A MultiplexForecaster can be created by using the "|" dunder method on
-    either forecaster or MultiplexForecaster objects. Here we test that it performs
-    as expected on all the use cases, and raises the expected error in some others.
+    A MultiplexForecaster can be created by using the "|" dunder method on either
+    forecaster or MultiplexForecaster objects. Here we test that it performs as expected
+    on all the use cases, and raises the expected error in some others.
     """
     # test a simple | example with two forecasters:
     multiplex_two_forecaster = AutoETS() | NaiveForecaster()

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests simple forecasts based on naive assumptions."""
 
@@ -193,12 +192,11 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
 ):
     """Check that naive forecasters yield the right forecasts given simple data.
 
-    Test for perfectly cyclic data, and for robustness against a missing value.
-    More specifically,
-    check time series of n * window_length with a 1:n-1 train/test split,
-    for different combinations of the period and seasonal periodicity.
-    The time series contains perfectly cyclic data,
-    so switching between the "mean" and "last" strategies should not make a difference.
+    Test for perfectly cyclic data, and for robustness against a missing value. More
+    specifically, check time series of n * window_length with a 1:n-1 train/test split,
+    for different combinations of the period and seasonal periodicity. The time series
+    contains perfectly cyclic data, so switching between the "mean" and "last"
+    strategies should not make a difference.
     """
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
     freq = pd.Timedelta("1H")
@@ -395,13 +393,11 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     y_pred_ints = forecaster.fit(y).predict_interval(fh=h, coverage=coverage)
 
     expected = pd.DataFrame(
-        columns=pd.MultiIndex.from_product(
-            [["Coverage"], [coverage], ["lower", "upper"]]
-        ),
+        columns=pd.MultiIndex.from_product([[0], [coverage], ["lower", "upper"]]),
         index=y_pred_ints.index,
     )
 
-    expected[("Coverage", coverage, "lower")] = lower
-    expected[("Coverage", coverage, "upper")] = upper
+    expected[(0, coverage, "lower")] = lower
+    expected[(0, coverage, "upper")] = upper
 
     pd.testing.assert_frame_equal(y_pred_ints, expected)

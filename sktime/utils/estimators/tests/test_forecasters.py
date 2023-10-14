@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for Mock Forecasters."""
 
 __author__ = ["ltsaprounis"]
@@ -53,10 +52,8 @@ def test_mock_univariate_forecaster_log(y, X_train, X_pred, fh):
         ("_fit", {"y": y_series, "X": _X_train, "fh": fh}),
         ("_predict", {"fh": fh, "X": _X_pred}),
         ("_update", {"y": y_series, "X": _X_train, "update_params": fh}),
-        (
-            "_predict_quantiles",
-            {"fh": fh, "X": _X_pred, "alpha": [0.1, 0.9]},
-        ),
+        ("_predict_quantiles", {"fh": fh, "X": _X_pred, "alpha": [0.1, 0.9]}),
     ]
 
-    assert deep_equals(forecaster.log, expected_log)
+    equals, msg = deep_equals(forecaster.log, expected_log, return_msg=True)
+    assert equals, msg

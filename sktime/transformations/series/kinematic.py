@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Kinematic transformers."""
 
@@ -82,7 +81,6 @@ class KinematicFeatures(BaseTransformer):
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, features=None):
-
         self.features = features
         if features is None:
             self._features = ["v_abs", "a_abs", "curv"]
@@ -91,7 +89,7 @@ class KinematicFeatures(BaseTransformer):
         else:
             self._features = features
 
-        super(KinematicFeatures, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

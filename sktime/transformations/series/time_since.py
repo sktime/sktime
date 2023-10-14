@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """A transformer to compute the time elapsed since a reference time."""
 from __future__ import annotations
@@ -17,7 +16,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class TimeSince(BaseTransformer):
-    """Computes element-wise time elapsed between the time index and a reference start time.
+    """Compute element-wise time elapsed between time index and a reference start time.
 
     Creates a column(s) which represents: `t` - `start`, where `start` is
     a reference time and `t` is the time index. The type of `start` must be
@@ -62,11 +61,13 @@ class TimeSince(BaseTransformer):
 
         Create a single column with time elapsed since start date of time series.
         The output is in units of integer number of months, same as the index `freq`.
+
     >>> transformer = TimeSince()
     >>> Xt = transformer.fit_transform(X)
 
         Create multiple columns with different start times. The output is in units
         of integer number of months, same as the index `freq`.
+
     >>> transformer = TimeSince(["2000-01", "2000-02"])
     >>> Xt = transformer.fit_transform(X)
     """
@@ -109,7 +110,7 @@ class TimeSince(BaseTransformer):
         self.freq = freq
         self.keep_original_columns = keep_original_columns
         self.positive_only = positive_only
-        super(TimeSince, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 
 __author__ = ["tch"]
 __all__ = ["TEST_YS", "TEST_YS_ZERO"]

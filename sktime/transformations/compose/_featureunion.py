@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Feature union."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -78,7 +77,6 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         transformer_weights=None,
         flatten_transform_index=True,
     ):
-
         self.transformer_list = transformer_list
         self.transformer_list_ = self._check_estimators(
             transformer_list, cls_type=BaseTransformer
@@ -88,7 +86,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         self.transformer_weights = transformer_weights
         self.flatten_transform_index = flatten_transform_index
 
-        super(FeatureUnion, self).__init__()
+        super().__init__()
 
         # todo: check for transform-input, transform-output
         #   for now, we assume it's always Series/Series or Series/Panel

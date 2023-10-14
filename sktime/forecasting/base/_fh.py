@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functionality for specifying forecast horizons in sktime."""
@@ -62,8 +61,8 @@ DELEGATED_METHODS = (
 def _delegator(method):
     """Automatically decorate ForecastingHorizon class with pandas.Index methods.
 
-    Also delegates method calls to wrapped pandas.Index object.
-    methods from pandas.Index and delegate method calls to wrapped pandas.Index
+    Also delegates method calls to wrapped pandas.Index object. methods from
+    pandas.Index and delegate method calls to wrapped pandas.Index
     """
 
     def delegated(obj, *args, **kwargs):
@@ -80,7 +79,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
 
     Parameters
     ----------
-    values : int, list, array, certain pd.Index types
+    values : int, range, list of int, array of int, certain pd.Index types
         Forecasting horizon with steps ahead to predict.
 
     Raises
@@ -107,6 +106,11 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     elif is_int(values):
         values = pd.Index([values], dtype=int)
 
+    # convert range object to pandas.RangeIndex
+    # range has to be for integers, no need to separate check
+    elif isinstance(values, range):
+        values = pd.Index(values)
+
     elif is_timedelta_or_date_offset(values):
         values = pd.Index([values])
 
@@ -121,9 +125,10 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     else:
         valid_types = (
             "int",
+            "range",
             "1D np.ndarray of type int",
             "1D np.ndarray of type timedelta or dateoffset",
-            "list",
+            "list of type int",
             *[f"pd.{index_type.__name__}" for index_type in VALID_INDEX_TYPES],
         )
         raise TypeError(
@@ -210,24 +215,28 @@ class ForecastingHorizon:
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> import numpy as np
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y, test_size=6)
 
         List as ForecastingHorizon
+
     >>> ForecastingHorizon([1, 2, 3])  # doctest: +SKIP
     >>> # ForecastingHorizon([1, 2, 3], is_relative=True)
 
         Numpy as ForecastingHorizon
+
     >>> ForecastingHorizon(np.arange(1, 7))  # doctest: +SKIP
     >>> # ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
 
         Absolute ForecastingHorizon with a pandas Index
+
     >>> ForecastingHorizon(y_test.index, is_relative=False) # doctest: +SKIP
     >>> # ForecastingHorizon(['1960-07', ..., '1960-12'], is_relative=False)
 
         Converting
+
     >>> # set cutoff (last time point of training data)
     >>> cutoff = y_train.index[-1]
     >>> cutoff
@@ -243,6 +252,7 @@ class ForecastingHorizon:
     >>> # ForecastingHorizon(['1960-07', ..., '1960-12'], is_relative=False)
 
         Automatically casted ForecastingHorizon from list when calling predict()
+
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> forecaster.fit(y_train)
     NaiveForecaster(...)
@@ -251,6 +261,7 @@ class ForecastingHorizon:
     >>> # ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
 
         This is identical to give an object of ForecastingHorizon
+
     >>> y_pred = forecaster.predict(fh=ForecastingHorizon([1,2,3]))
     >>> forecaster.fh  # doctest: +SKIP
     >>> # ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
@@ -434,12 +445,11 @@ class ForecastingHorizon:
         """
         return self.to_pandas().to_numpy(**kwargs)
 
-    def _coerce_cutoff_to_index_element(self, cutoff):
-        """Coerces cutoff to index element, and updates self.freq with cutoff."""
+    def _coerce_cutoff_to_index(self, cutoff):
+        """Coerces cutoff to pandas index, and updates self.freq with cutoff."""
         self.freq = cutoff
-        if isinstance(cutoff, pd.Index):
-            assert len(cutoff) > 0
-            cutoff = cutoff[-1]
+        if not isinstance(cutoff, pd.Index):
+            cutoff = pd.Index([cutoff])
         return cutoff
 
     def to_relative(self, cutoff=None):
@@ -457,8 +467,8 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Relative representation of forecasting horizon.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
-        return _to_relative(fh=self, cutoff=cutoff)
+        cutoff = self._coerce_cutoff_to_index(cutoff)
+        return _to_relative(fh=self, cutoff=_HashIndex(cutoff))
 
     def to_absolute(self, cutoff):
         """Return absolute version of forecasting horizon values.
@@ -475,8 +485,8 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
-        return _to_absolute(fh=self, cutoff=cutoff)
+        cutoff = self._coerce_cutoff_to_index(cutoff)
+        return _to_absolute(fh=self, cutoff=_HashIndex(cutoff))
 
     def to_absolute_index(self, cutoff=None):
         """Return absolute values of the horizon as a pandas.Index.
@@ -498,8 +508,8 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
-        fh_abs = _to_absolute(fh=self, cutoff=cutoff)
+        cutoff = self._coerce_cutoff_to_index(cutoff)
+        fh_abs = _to_absolute(fh=self, cutoff=_HashIndex(cutoff))
         return fh_abs.to_pandas()
 
     def to_absolute_int(self, start, cutoff=None):
@@ -520,15 +530,11 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon as zero-based
             integer index.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
+        cutoff = self._coerce_cutoff_to_index(cutoff)
         freq = self.freq
 
-        if isinstance(cutoff, pd.Timestamp):
-            # coerce to pd.Period for reliable arithmetic operations and
-            # computations of time deltas
-            cutoff = _coerce_to_period(cutoff, freq=freq)
-
         absolute = self.to_absolute_index(cutoff)
+
         if isinstance(absolute, pd.DatetimeIndex):
             # coerce to pd.Period for reliable arithmetics and computations of
             # time deltas
@@ -675,6 +681,16 @@ class ForecastingHorizon:
         return f"{class_name}({pandas_repr}, is_relative={self.is_relative})"
 
 
+class _HashIndex:
+    """Helper to make cutoff: pd.Index hashable via lru_cache."""
+
+    def __init__(self, index):
+        self.index = index
+
+    def __hash__(self):
+        return int(pd.util.hash_pandas_object(self.index).sum())
+
+
 # This function needs to be outside ForecastingHorizon
 # since the lru_cache decorator has known, problematic interactions
 # with object methods, see B019 error of flake8-bugbear for a detail explanation.
@@ -689,7 +705,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
     Parameters
     ----------
     fh : ForecastingHorizon
-    cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+    cutoff : _HashIndex wrapping pd.Index, optional (default=None)
         Cutoff value required to convert a relative forecasting
         horizon to an absolute one (and vice versa).
 
@@ -702,6 +718,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         return fh._new()
 
     else:
+        cutoff = cutoff.index  # unwrap cutoff from _HashIndex
         absolute = fh.to_pandas()
         _check_cutoff(cutoff, absolute)
 
@@ -711,7 +728,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        # TODO: 0.19.0:
+        # TODO: 0.25.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #
@@ -737,7 +754,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         if pandas_version_with_bugfix:
             relative = absolute - cutoff
         else:
-            relative = pd.Index([date - cutoff for date in absolute])
+            relative = pd.Index([date - cutoff[0] for date in absolute])
 
         # Coerce durations (time deltas) into integer values for given frequency
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
@@ -757,7 +774,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
     Parameters
     ----------
     fh : ForecastingHorizon
-    cutoff : pd.Period, pd.Timestamp, int
+    cutoff : _HashIndex wrapping pd.Index
         Cutoff value is required to convert a relative forecasting
         horizon to an absolute one (and vice versa).
 
@@ -770,21 +787,18 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         return fh._new()
 
     else:
+        cutoff = cutoff.index
         relative = fh.to_pandas()
         _check_cutoff(cutoff, relative)
-        is_timestamp = isinstance(cutoff, pd.Timestamp)
+        is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
         if is_timestamp:
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        if _check_soft_dependencies("pandas>=2.0.0", severity="none"):
-            if is_timestamp or isinstance(cutoff, pd.Period):
-                cutoff = pd.PeriodIndex([cutoff])
-
-            if isinstance(cutoff, pd.Index):
-                cutoff = cutoff[[0] * len(relative)]
+        if isinstance(cutoff, pd.Index):
+            cutoff = cutoff[[0] * len(relative)]
 
         absolute = cutoff + relative
 

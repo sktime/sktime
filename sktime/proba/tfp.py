@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Probability distribution objects with tensorflow-probability back-end."""
 
@@ -38,7 +37,6 @@ class TFNormal(_BaseTFDistribution):
     }
 
     def __init__(self, mu, sigma, index=None, columns=None):
-
         self.mu = mu
         self.sigma = sigma
         self.index = index
@@ -53,8 +51,8 @@ class TFNormal(_BaseTFDistribution):
         # todo: untangle index handling
         # and broadcast of parameters.
         # move this functionality to the base class
-        # 0.18.0?
-        self._mu, self._sigma = self._get_bc_params()
+        # 0.19.0?
+        self._mu, self._sigma = self._get_bc_params(self.mu, self.sigma, dtype="float")
         distr = tfd.Normal(loc=self._mu, scale=self._sigma)
         shape = self._mu.shape
 
@@ -64,17 +62,7 @@ class TFNormal(_BaseTFDistribution):
         if columns is None:
             columns = pd.RangeIndex(shape[1])
 
-        super(TFNormal, self).__init__(index=index, columns=columns, distr=distr)
-
-    def _get_bc_params(self):
-        """Fully broadcast parameters of self, given param shapes and index, columns."""
-        to_broadcast = [self.mu, self.sigma]
-        if hasattr(self, "index") and self.index is not None:
-            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
-        if hasattr(self, "columns") and self.columns is not None:
-            to_broadcast += [self.columns.to_numpy()]
-        bc = np.broadcast_arrays(*to_broadcast)
-        return np.array(bc[0], dtype="float"), np.array(bc[1], dtype="float")
+        super().__init__(index=index, columns=columns, distr=distr)
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.

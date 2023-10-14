@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for BaseObject universal base class that require sktime or sklearn imports."""
 
@@ -50,3 +49,18 @@ def test_get_fitted_params_sklearn_nested():
 
     assert "regressor" in params.keys()
     assert "regressor__n_features_in" in params.keys()
+
+
+def test_clone_nested_sklearn():
+    """Tests nested set_params of with sklearn components has no side effects."""
+    from sklearn.ensemble import GradientBoostingRegressor
+
+    from sktime.forecasting.compose import make_reduction
+
+    sklearn_model = GradientBoostingRegressor(random_state=5, learning_rate=0.02)
+    original_model = make_reduction(sklearn_model)
+    copy_model = original_model.clone()
+    copy_model.set_params(estimator__random_state=42, estimator__learning_rate=0.01)
+
+    # failure condition, see issue #4704: the setting of the copy also sets the orig
+    assert original_model.get_params()["estimator__random_state"] == 5

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Residual Network (ResNet) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus", "nilesh05apr"]
@@ -14,8 +13,7 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class ResNetClassifier(BaseDeepClassifier):
-    """
-    Residual Neural Network as described in [1].
+    """Residual Neural Network as described in [1].
 
     Parameters
     ----------
@@ -78,7 +76,7 @@ class ResNetClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(ResNetClassifier, self).__init__()
+        super().__init__()
         self.n_epochs = n_epochs
         self.callbacks = callbacks
         self.verbose = verbose

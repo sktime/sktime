@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests the ARDL model."""
 __author__ = ["kcc-lion"]
 
@@ -8,12 +7,12 @@ from numpy.testing import assert_allclose
 from sktime.datasets import load_macroeconomic
 from sktime.forecasting.ardl import ARDL
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARDL, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ARDL),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_against_statsmodels():
     """Compare sktime's ARDL interface with statsmodels ARDL."""
@@ -41,8 +40,8 @@ def test_against_statsmodels():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARDL, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ARDL),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_against_statsmodels_2():
     """Compare sktime's ARDL interface with statsmodels ARDL with different data."""
@@ -73,8 +72,8 @@ def test_against_statsmodels_2():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARDL, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ARDL),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_against_statsmodels_3():
     """Compare sktime's ARDL interface with statsmodels ARDL with X=None."""
@@ -101,8 +100,8 @@ def test_against_statsmodels_3():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARDL, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ARDL),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_against_statsmodels_4():
     """Compare sktime's ARDL interface with statsmodels ARDL."""
@@ -128,8 +127,8 @@ def test_against_statsmodels_4():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARDL, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ARDL),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_auto_ardl():
     """Compare sktime's ARDL interface with statsmodels ardl_select_order."""
@@ -162,8 +161,8 @@ def test_auto_ardl():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARDL, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ARDL),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_against_statsmodels_5():
     """Compare sktime's ARDL interface with statsmodels ARDL."""

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for pairwise panel transformer dunders."""
 
 __author__ = ["fkiraly"]

@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """Symbolic Fourier Approximation (SFA) Transformer.
 
 Configurable SFA transform for discretising time series into words.
-
 """
 
 __author__ = ["patrickzib"]
@@ -209,7 +207,7 @@ class SFAFast(BaseTransformer):
         else:
             n_jobs = self.n_jobs
 
-        super(SFAFast, self).__init__()
+        super().__init__()
         # super raises numba import exception if not available
         # so now we know we can use numba
 
@@ -658,7 +656,7 @@ class SFAFast(BaseTransformer):
 
         state = self.__dict__.copy()
 
-        if type(state["relevant_features"]) == Dict:
+        if isinstance(state["relevant_features"], Dict):
             state["relevant_features"] = dict(state["relevant_features"])
         return state
 
@@ -668,7 +666,7 @@ class SFAFast(BaseTransformer):
         from numba.typed import Dict
 
         self.__dict__.update(state)
-        if type(self.relevant_features) == dict:
+        if isinstance(self.relevant_features, dict):
             typed_dict = Dict.empty(key_type=types.uint32, value_type=types.uint32)
             for key, value in self.relevant_features.items():
                 typed_dict[key] = value

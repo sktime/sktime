@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The Elastic Ensemble (EE).
 
 An ensemble of elastic nearest neighbour classifiers.
@@ -75,18 +74,18 @@ class ElasticEnsemble(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.distance_based import ElasticEnsemble
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
     >>> clf = ElasticEnsemble(
     ...     proportion_of_param_options=0.1,
     ...     proportion_train_for_test=0.1,
     ...     distance_measures = ["dtw","ddtw"],
     ...     majority_vote=True,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     ElasticEnsemble(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
@@ -130,7 +129,7 @@ class ElasticEnsemble(BaseClassifier):
         self.train = None
         self.constituent_build_times = None
 
-        super(ElasticEnsemble, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Build an ensemble of 1-NN classifiers from the training set (X, y).
@@ -267,7 +266,6 @@ class ElasticEnsemble(BaseClassifier):
             # If 100 parameter options are being considered per measure,
             # use a GridSearchCV
             if self.proportion_of_param_options == 1:
-
                 grid = GridSearchCV(
                     estimator=KNeighborsTimeSeriesClassifier(
                         distance=this_measure, n_neighbors=1
@@ -292,7 +290,7 @@ class ElasticEnsemble(BaseClassifier):
                     param_distributions=ElasticEnsemble._get_100_param_options(
                         self.distance_measures[dm], X
                     ),
-                    n_iter=100 * self.proportion_of_param_options,
+                    n_iter=int(100 * self.proportion_of_param_options),
                     cv=LeaveOneOut(),
                     scoring="accuracy",
                     n_jobs=self._threads_to_use,

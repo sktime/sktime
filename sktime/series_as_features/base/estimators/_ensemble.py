@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements base class for time series forests."""
 
@@ -7,14 +6,13 @@ __author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["BaseTimeSeriesForest"]
 
 from abc import abstractmethod
-from warnings import catch_warnings, simplefilter, warn
+from warnings import catch_warnings, simplefilter
 
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from numpy import float64 as DOUBLE
 from sklearn.base import clone
-from sklearn.ensemble._base import _set_random_states
 from sklearn.ensemble._forest import (
     MAX_INT,
     BaseForest,
@@ -25,6 +23,8 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array, check_random_state, compute_sample_weight
 
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils.random_state import set_random_state
+from sktime.utils.warnings import warn
 
 
 def _parallel_build_trees(
@@ -90,7 +90,7 @@ class BaseTimeSeriesForest(BaseForest):
         class_weight=None,
         max_samples=None,
     ):
-        super(BaseTimeSeriesForest, self).__init__(
+        super().__init__(
             base_estimator, n_estimators=n_estimators, estimator_params=estimator_params
         )
         self.bootstrap = bootstrap
@@ -112,7 +112,7 @@ class BaseTimeSeriesForest(BaseForest):
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
 
         if random_state is not None:
-            _set_random_states(estimator, random_state)
+            set_random_state(estimator, random_state)
 
         if append:
             self.estimators_.append(estimator)
@@ -164,6 +164,7 @@ class BaseTimeSeriesForest(BaseForest):
                 "(n_samples,), for example using ravel().",
                 DataConversionWarning,
                 stacklevel=2,
+                obj=self,
             )
 
         if y.ndim == 1:
@@ -213,7 +214,8 @@ class BaseTimeSeriesForest(BaseForest):
         elif n_more_estimators == 0:
             warn(
                 "Warm-start fitting without increasing n_estimators does not "
-                "fit new trees."
+                "fit new trees.",
+                obj=self,
             )
         else:
             if self.warm_start and len(self.estimators_) > 0:

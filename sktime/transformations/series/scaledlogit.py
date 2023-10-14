@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements the scaled logit transformation."""
 
@@ -6,11 +5,11 @@ __author__ = ["ltsaprounis"]
 __all__ = ["ScaledLogitTransformer"]
 
 from copy import deepcopy
-from warnings import warn
 
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.warnings import warn
 
 
 class ScaledLogitTransformer(BaseTransformer):
@@ -109,7 +108,7 @@ class ScaledLogitTransformer(BaseTransformer):
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
 
-        super(ScaledLogitTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -132,6 +131,7 @@ class ScaledLogitTransformer(BaseTransformer):
                 "X in ScaledLogitTransformer should not have values "
                 "greater than upper_bound",
                 RuntimeWarning,
+                obj=self,
             )
 
         if self.lower_bound is not None and np.any(X <= self.lower_bound):
@@ -139,6 +139,7 @@ class ScaledLogitTransformer(BaseTransformer):
                 "X in ScaledLogitTransformer should not have values "
                 "lower than lower_bound",
                 RuntimeWarning,
+                obj=self,
             )
 
         if self.upper_bound and self.lower_bound:

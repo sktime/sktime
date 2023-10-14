@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Normal/Gaussian probability distribution."""
 
@@ -37,7 +36,6 @@ class Normal(BaseDistribution):
     }
 
     def __init__(self, mu, sigma, index=None, columns=None):
-
         self.mu = mu
         self.sigma = sigma
         self.index = index
@@ -46,8 +44,8 @@ class Normal(BaseDistribution):
         # todo: untangle index handling
         # and broadcast of parameters.
         # move this functionality to the base class
-        # 0.18.0?
-        self._mu, self._sigma = self._get_bc_params()
+        # 0.19.0?
+        self._mu, self._sigma = self._get_bc_params(self.mu, self.sigma)
         shape = self._mu.shape
 
         if index is None:
@@ -56,17 +54,7 @@ class Normal(BaseDistribution):
         if columns is None:
             columns = pd.RangeIndex(shape[1])
 
-        super(Normal, self).__init__(index=index, columns=columns)
-
-    def _get_bc_params(self):
-        """Fully broadcast parameters of self, given param shapes and index, columns."""
-        to_broadcast = [self.mu, self.sigma]
-        if hasattr(self, "index") and self.index is not None:
-            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
-        if hasattr(self, "columns") and self.columns is not None:
-            to_broadcast += [self.columns.to_numpy()]
-        bc = np.broadcast_arrays(*to_broadcast)
-        return bc[0], bc[1]
+        super().__init__(index=index, columns=columns)
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -150,35 +138,6 @@ class Normal(BaseDistribution):
         d = self.loc[p.index, p.columns]
         icdf_arr = d.mu + d.sigma * np.sqrt(2) * erfinv(2 * p.values - 1)
         return pd.DataFrame(icdf_arr, index=p.index, columns=p.columns)
-
-    def sample(self, n_samples=None):
-        """Sample from the distribution.
-
-        Parameters
-        ----------
-        n_samples : int, optional, default = None
-
-        Returns
-        -------
-        if `n_samples` is `None`:
-        returns a sample that contains a single sample from `self`,
-        in `pd.DataFrame` mtype format convention, with `index` and `columns` as `self`
-        if n_samples is `int`:
-        returns a `pd.DataFrame` that contains `n_samples` i.i.d. samples from `self`,
-        in `pd-multiindex` mtype format convention, with same `columns` as `self`,
-        and `MultiIndex` that is product of `RangeIndex(n_samples)` and `self.index`
-        """
-
-        def gen_unif():
-            np_unif = np.random.uniform(size=self.shape)
-            return pd.DataFrame(np_unif, index=self.index, columns=self.columns)
-
-        if n_samples is None:
-            return self.ppf(gen_unif())
-        else:
-            pd_smpl = [self.ppf(gen_unif()) for _ in range(n_samples)]
-            df_spl = pd.concat(pd_smpl, keys=range(n_samples))
-            return df_spl
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

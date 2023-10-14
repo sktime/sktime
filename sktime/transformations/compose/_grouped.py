@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing transformations by group."""
 
-from warnings import warn
-
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.utils.warnings import warn
 
 __author__ = ["fkiraly"]
 __all__ = ["TransformByLevel"]
@@ -72,14 +70,13 @@ class TransformByLevel(_DelegatedTransformer):
     _delegate_name = "transformer_"
 
     def __init__(self, transformer, groupby="local", raise_warnings=True):
-
         self.transformer = transformer
         self.groupby = groupby
         self.raise_warnings = raise_warnings
 
         self.transformer_ = transformer.clone()
 
-        super(TransformByLevel, self).__init__()
+        super().__init__()
 
         if raise_warnings and self.transformer_.get_tag("scitype:instancewise"):
             warn(
@@ -87,6 +84,7 @@ class TransformByLevel(_DelegatedTransformer):
                 "transforms by instance already, wrapping in TransformByLevel "
                 "will not change the estimator logic, compared to not wrapping it.",
                 stacklevel=2,
+                obj=self,
             )
 
         self.clone_tags(self.transformer_)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for seasonality."""
 
@@ -72,6 +71,7 @@ class SeasonalityACF(BaseParamFitter):
 
     Series should be stationary before applying ACF.
     To pipeline SeasonalityACF with the Differencer, use the ParamFitterPipeline:
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
@@ -109,7 +109,7 @@ class SeasonalityACF(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACF, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -297,7 +297,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACFqstat, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -463,7 +463,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
         self.min_period = min_period
         self.max_period = max_period
         self.thresh = thresh
-        super(SeasonalityPeriodogram, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.

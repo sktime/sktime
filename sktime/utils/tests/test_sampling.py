@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing sampling utilities."""
 
 import numpy as np

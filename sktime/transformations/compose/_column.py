@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
 """Columnwise transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
-__all__ = ["ColumnwiseTransformer"]
+
+__all__ = ["ColumnEnsembleTransformer", "ColumnwiseTransformer"]
 
 import pandas as pd
-from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.multiindex import rename_multiindex
 from sktime.utils.validation.series import check_series
 
 # mtypes that are native pandas
@@ -17,7 +17,9 @@ from sktime.utils.validation.series import check_series
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
 
-class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
+class ColumnEnsembleTransformer(
+    _HeterogenousMetaEstimator, _ColumnEstimator, BaseTransformer
+):
     """Column-wise application of transformers.
 
     Applies transformations to columns of an array or pandas DataFrame. Simply
@@ -30,6 +32,9 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
     This is useful for heterogeneous or columnar data, to combine several
     feature extraction mechanisms or transformations into a single transformer.
 
+    Note: this estimator has the same effect as combining
+    ``FeatureUnion`` with ``ColumnSelect``, but can be more convenient or compact.
+
     Parameters
     ----------
     transformers : sktime trafo, or list of tuples (str, estimator, int or pd.index)
@@ -40,6 +45,28 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
 
         If transformer, clones of transformer are applied to all columns.
         If list of tuples, transformer in tuple is applied to column with int/str index
+
+    remainder : {"drop", "passthrough"} or estimator, default "drop"
+        By default, only the specified columns in `transformations` are
+        transformed and combined in the output, and the non-specified
+        columns are dropped. (default of ``"drop"``).
+        By specifying ``remainder="passthrough"``, all remaining columns that
+        were not specified in `transformations` will be automatically passed
+        through. This subset of columns is concatenated with the output of
+        the transformations.
+        By setting ``remainder`` to be an estimator, the remaining
+        non-specified columns will use the ``remainder`` estimator. The
+        estimator must support `fit` and `transform`.
+
+    feature_names_out : str, one of "auto" (default), "flat", "multiindex", "original"
+        determines how return columns of return DataFrame-s are named
+        has no effect if return mtype is one without column names
+        "flat": columns are flat, e.g., "transformername__variablename"
+        "multiindex": columns are MultiIndex, e.g., (transformername, variablename)
+        "original: columns are as produced by transformers, e.g., variablename
+            if this results in non-unique index, ValueError exception is raised
+        "auto": as "original" for any unique columns under "original",
+            column names as "flat" otherwise
 
     Attributes
     ----------
@@ -54,6 +81,42 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
         ``remainder`` parameter. If there are remaining columns, then
         ``len(transformers_)==len(transformations)+1``, otherwise
         ``len(transformers_)==len(transformations)``.
+
+    Examples
+    --------
+    .. Doctest::
+
+        >>> import pandas as pd
+        >>> from sktime.transformations.compose import ColumnEnsembleTransformer
+        >>> from sktime.transformations.series.detrend import Detrender
+        >>> from sktime.transformations.series.difference import Differencer
+        >>> from sktime.datasets import load_longley
+
+    Using integers (column iloc references) for indexing:
+
+    .. Doctest::
+
+        >>> y = load_longley()[1][["GNP", "UNEMP"]]
+        >>> transformer = ColumnEnsembleTransformer([("difference", Differencer(), 1),
+        ...                                 ("trend", Detrender(), 0),
+        ...                                 ])
+        >>> y_transformed = transformer.fit_transform(y)
+
+    Using strings for indexing:
+
+    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    >>> transformer = ColumnEnsembleTransformer(
+    ...     [("foo", Differencer(), "a"), ("bar", Detrender(), "b")]
+    ... )
+    >>> transformed_df = transformer.fit_transform(df)
+
+    Applying one transformer to multiple columns, multivariate:
+
+    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+    >>> transformer = ColumnEnsembleTransformer(
+    ...    [("ab", Differencer(), ["a", 1]), ("c", Detrender(), 2)]
+    ... )
+    >>> transformed_df = transformer.fit_transform(df)
     """
 
     _tags = {
@@ -68,16 +131,27 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "_transformers"
+    _steps_attr = "transformers"
     # if the estimator is fittable, _HeterogenousMetaEstimator also
     # provides an override for get_fitted_params for params from the fitted estimators
     # the fitted estimators should be in a different attribute, _steps_fitted_attr
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "transformers_"
 
-    def __init__(self, transformers):
+    def __init__(self, transformers, remainder=None, feature_names_out="auto"):
         self.transformers = transformers
-        super(ColumnEnsembleTransformer, self).__init__()
+        self.remainder = remainder
+        self.feature_names_out = feature_names_out
+        super().__init__()
+
+        # check remainder argument
+        if remainder not in ["drop", "passthrough", None]:
+            if not isinstance(remainder, BaseTransformer):
+                raise ValueError(
+                    "the remainder parameter of ColumnEnsembleTransformer "
+                    ' must be one of the strings "drop", "passthrough", None,'
+                    "or an sktime transformer inheriting from BaseTransformer"
+                )
 
         # set requires-fh-in-fit depending on transformers
         if isinstance(transformers, BaseTransformer):
@@ -96,7 +170,7 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
             self.clone_tags(transformers, tags_to_clone)
         else:
             l_transformers = [(x[0], x[1]) for x in transformers]
-            self._anytagis_then_set("fit_is_empty", False, True, l_transformers)
+            # self._anytagis_then_set("fit_is_empty", False, True, l_transformers)
             self._anytagis_then_set("requires_y", True, False, l_transformers)
             self._anytagis_then_set(
                 "X-y-must-have-same-index", True, False, l_transformers
@@ -123,10 +197,9 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
     def _transformers(self):
         """Make internal list of transformers.
 
-        The list only contains the name and transformers, dropping
-        the columns. This is for the implementation of get_params
-        via _HeterogenousMetaEstimator._get_params which expects
-        lists of tuples of len 2.
+        The list only contains the name and transformers, dropping the columns. This is
+        for the implementation of get_params via _HeterogenousMetaEstimator._get_params
+        which expects lists of tuples of len 2.
         """
         transformers = self.transformers
         if isinstance(transformers, BaseTransformer):
@@ -148,6 +221,46 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
                 )
             ]
 
+    def _check_transformers(self, X):
+        transformers = self.transformers
+
+        if isinstance(transformers, BaseTransformer):
+            for col in X.columns:
+                transformers = [(str(col), transformers, pd.Index([col]))]
+
+        coerced_trafo = []
+        indices = []
+        for name, transformer, index in transformers:
+            c_index = self._coerce_to_pd_index(index, X)
+            indices += [c_index]
+            coerced_trafo += [(name, transformer, c_index)]
+        transformers = coerced_trafo
+
+        # handle remainder
+        remainder = self.remainder
+
+        # in the None / "drop" case, we are already done
+        if remainder != "passthrough" and not isinstance(remainder, BaseTransformer):
+            return transformers
+
+        # if remainder == "passthrough" or isinstance(remainder, BaseTransformer)
+        if isinstance(remainder, BaseTransformer):
+            rem_t = self.remainder.clone()
+        elif remainder == "passthrough":
+            from sktime.transformations.compose import Id
+
+            rem_t = Id()
+
+        remain_idx = set()
+        for idx in indices:
+            remain_idx = remain_idx.union(set(idx))
+        remain_idx = set(X.columns).difference(remain_idx)
+        remain_idx = self._coerce_to_pd_index(remain_idx, X)
+
+        transformers.append(("remainder", rem_t, remain_idx))
+
+        return transformers
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -165,17 +278,15 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
         -------
         self: reference to self
         """
-        transformers = self._check_transformers(y)
+        transformers = self._check_transformers(X)
 
         self.transformers_ = []
         self._Xcolumns = list(X.columns)
 
-        for (name, transformer, index) in transformers:
+        for name, transformer, index in transformers:
             transformer_ = transformer.clone()
 
-            pd_index = self._coerce_to_pd_index(index)
-
-            transformer_.fit(X.loc[:, pd_index], y)
+            transformer_.fit(X.loc[:, index], y)
             self.transformers_.append((name, transformer_, index))
 
         return self
@@ -199,15 +310,19 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
         """
         Xts = []
         keys = []
-        for _, est, index in getattr(self, self._steps_fitted_attr):
-            pd_index = self._coerce_to_pd_index(index)
+        for name, est, index in getattr(self, self._steps_fitted_attr):
+            Xts += [est.transform(X.loc[:, index], y)]
+            keys += [name]
 
-            Xts += [est.transform(X.loc[:, pd_index], y)]
-            keys += [index]
+        Xt = pd.concat(Xts, axis=1, keys=keys)
 
-        keys = self._get_indices(self._Xcolumns, keys)
+        # set output column names according to feature_names_out param
+        feature_names_out = self.feature_names_out
+        msg = f"resulting column index in {self.__class__.__name__}"
+        Xt.columns = rename_multiindex(
+            Xt.columns, feature_names_out=feature_names_out, idx_name=msg
+        )
 
-        Xt = pd.concat(Xts, axis=1)
         return Xt
 
     @classmethod
@@ -222,16 +337,29 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer
 
         TRANSFORMERS = [
             ("transformer1", ExponentTransformer()),
-            ("transformer2", ExponentTransformer()),
+            ("transformer2", BoxCoxTransformer()),
         ]
 
-        return {
+        params1 = {
             "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
         }
+
+        params2 = {
+            "transformers": [("transformer1", ExponentTransformer(), [0])],
+            "remainder": BoxCoxTransformer(method="fixed"),
+        }
+
+        params3 = {
+            "transformers": [("transformer1", BoxCoxTransformer(), [0])],
+            "remainder": "passthrough",
+        }
+
+        return [params1, params2, params3]
 
 
 class ColumnwiseTransformer(BaseTransformer):
@@ -287,7 +415,7 @@ class ColumnwiseTransformer(BaseTransformer):
     def __init__(self, transformer, columns=None):
         self.transformer = transformer
         self.columns = columns
-        super(ColumnwiseTransformer, self).__init__()
+        super().__init__()
 
         tags_to_clone = [
             "y_inner_mtype",
@@ -399,7 +527,6 @@ class ColumnwiseTransformer(BaseTransformer):
 
         return X
 
-    @if_delegate_has_method(delegate="transformer")
     def update(self, X, y=None, update_params=True):
         """Update parameters.
 

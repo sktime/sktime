@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 """Base class for clustering."""
-__author__ = ["chrisholder", "TonyBagnall"]
+__author__ = ["chrisholder", "TonyBagnall", "achieveordie"]
 __all__ = ["BaseClusterer"]
 
 import time
@@ -10,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes import check_is_scitype, convert_to, scitype_to_mtype
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
@@ -29,6 +28,7 @@ class BaseClusterer(BaseEstimator):
     """
 
     _tags = {
+        "object_type": "clusterer",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
         # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
         # types are allowable, see datatypes/panel/_registry.py for options.
@@ -43,7 +43,7 @@ class BaseClusterer(BaseEstimator):
         self._class_dictionary = {}
         self._threads_to_use = 1
         self.n_clusters = n_clusters
-        super(BaseClusterer, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):
@@ -242,8 +242,9 @@ class BaseClusterer(BaseEstimator):
         """
         preds = self._predict(X)
         n_instances = len(preds)
-        n_clusters = self.n_clusters
-        if n_clusters is None:
+        if hasattr(self, "n_clusters") and self.n_clusters is not None:
+            n_clusters = self.n_clusters
+        else:
             n_clusters = max(preds) + 1
         dists = np.zeros((X.shape[0], n_clusters))
         for i in range(n_instances):
@@ -371,6 +372,17 @@ class BaseClusterer(BaseEstimator):
         """
         X = self._initial_conversion(X)
 
+        ALLOWED_SCITYPES = [
+            "Panel",
+        ]
+        FORBIDDEN_MTYPES = []
+
+        mtypes_messages = []
+        for scitype in ALLOWED_SCITYPES:
+            mtypes = set(scitype_to_mtype(scitype))
+            mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
+            mtypes_messages.append(f"For {scitype} scitype: {mtypes}")
+
         X_metadata_required = [
             "n_instances",
             "has_nans",
@@ -378,15 +390,22 @@ class BaseClusterer(BaseEstimator):
             "is_equal_length",
         ]
         X_valid, _, X_metadata = check_is_scitype(
-            X, scitype="Panel", return_metadata=X_metadata_required
+            X, scitype=ALLOWED_SCITYPES, return_metadata=X_metadata_required
         )
         if not X_valid:
             raise TypeError(
-                f"X is not of a supported input data type."
-                f"X must be of type np.ndarray or pd.DataFrame, found {type(X)}"
-                f"Use datatypes.check_is_mtype to check conformance with "
-                f"specifications."
+                "X must be in a sktime compatible format, of scitype: "
+                f"{', '.join(ALLOWED_SCITYPES)}. "
+                "For instance a pandas.DataFrame must have a 2-level MultiIndex. "
+                "In case of numpy array, it must be "
+                "a 3D array as (num_instance, num_vars, series). "
+                "If you think X is already is an sktime supported input format, "
+                "run `sktime.datatypes.check_raise(X, MTYPE)` to diagnose the error, "
+                "where MTYPE is the string of the type specification you want for X. "
+                "Possible mtype specification strings are as follows: "
+                f"{', '.join(mtypes_messages)}"
             )
+
         n_cases = X_metadata["n_instances"]
         if n_cases < enforce_min_instances:
             raise ValueError(

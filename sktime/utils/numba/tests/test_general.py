@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for numba functions."""
 
 __author__ = ["TonyBagnall"]

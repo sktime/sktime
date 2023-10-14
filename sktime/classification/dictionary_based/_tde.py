@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """TDE classifiers.
 
-Dictionary based TDE classifiers based on SFA transform. Contains a single
-IndividualTDE and TDE.
+Dictionary based TDE classifiers based on SFA transform. Contains a single IndividualTDE
+and TDE.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -10,7 +9,6 @@ __all__ = ["TemporalDictionaryEnsemble", "IndividualTDE", "histogram_intersectio
 
 import math
 import time
-import warnings
 from collections import defaultdict
 
 import numpy as np
@@ -22,6 +20,7 @@ from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X_y
+from sktime.utils.warnings import warn
 
 
 class TemporalDictionaryEnsemble(BaseClassifier):
@@ -208,7 +207,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self._prev_parameters_y = []
         self._min_window = min_window
 
-        super(TemporalDictionaryEnsemble, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit an ensemble on cases (X,y), where y is the target variable.
@@ -235,10 +234,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         ending in "_" and sets is_fitted flag to True.
         """
         if self.n_parameter_samples <= self.randomly_selected_params:
-            warnings.warn(
+            warn(
                 "TemporalDictionaryEnsemble warning: n_parameter_samples <= "
-                "randomly_selected_params, ensemble member parameters will be fully "
-                "randomly selected.",
+                "randomly_selected_params, ensemble member parameters will be "
+                "fully randomly selected.",
+                obj=self,
                 stacklevel=2,
             )
 
@@ -255,10 +255,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         if self.min_window >= max_window:
             self._min_window = max_window
-            warnings.warn(
+            warn(
                 f"TemporalDictionaryEnsemble warning: min_window = "
                 f"{self.min_window} is larger than max_window = {max_window}."
                 f" min_window has been set to {max_window}.",
+                obj=self,
                 stacklevel=2,
             )
 
@@ -719,7 +720,7 @@ class IndividualTDE(BaseClassifier):
         self._subsample = []
         self._train_predictions = []
 
-        super(IndividualTDE, self).__init__()
+        super().__init__()
 
     # todo remove along with BOSS and SFA workarounds when Dict becomes serialisable.
     def __getstate__(self):

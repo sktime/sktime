@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
-"""
-Hidden Markov Model with Poisson emissions.
+"""Hidden Markov Model with Poisson emissions.
 
 Please see the original library
 (https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py)
@@ -14,8 +11,7 @@ __all__ = ["PoissonHMM"]
 
 
 class PoissonHMM(BaseHMMLearn):
-    """
-    Hidden Markov Model with Poisson emissions.
+    """Hidden Markov Model with Poisson emissions.
 
     Parameters
     ----------
@@ -99,7 +95,6 @@ class PoissonHMM(BaseHMMLearn):
         init_params: str = "stl",
         implementation: str = "log",
     ):
-
         self.n_components = n_components
         self.startprob_prior = startprob_prior
         self.transmat_prior = transmat_prior
@@ -113,7 +108,7 @@ class PoissonHMM(BaseHMMLearn):
         self.params = params
         self.init_params = init_params
         self.implementation = implementation
-        super(PoissonHMM, self).__init__()
+        super().__init__()
 
     def _fit(self, X, Y=None):
         """Create a new instance of wrapped hmmlearn estimator.
@@ -146,7 +141,7 @@ class PoissonHMM(BaseHMMLearn):
             self.init_params,
             self.implementation,
         )
-        return super(PoissonHMM, self)._fit(X, Y)
+        return super()._fit(X, Y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

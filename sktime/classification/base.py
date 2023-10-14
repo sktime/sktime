@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Abstract base class for time series classifiers.
+"""Abstract base class for time series classifiers.
 
     class name: BaseClassifier
 
@@ -26,7 +24,6 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
 from abc import ABC, abstractmethod
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -36,6 +33,7 @@ from sktime.datatypes import check_is_scitype, convert_to
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.warnings import warn
 
 
 class BaseClassifier(BaseEstimator, ABC):
@@ -55,6 +53,7 @@ class BaseClassifier(BaseEstimator, ABC):
     """
 
     _tags = {
+        "object_type": "classifier",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multivariate": False,
@@ -90,7 +89,7 @@ class BaseClassifier(BaseEstimator, ABC):
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
 
-        super(BaseClassifier, self).__init__()
+        super().__init__()
         _check_estimator_deps(self)
 
     def __rmul__(self, other):
@@ -662,7 +661,7 @@ class BaseClassifier(BaseEstimator, ABC):
         #   see discussion in PR 2366 why
         if len(problems) > 0:
             if self.is_composite():
-                warn(msg)
+                warn(msg, obj=self)
             else:
                 raise ValueError(msg)
 
@@ -757,7 +756,8 @@ class BaseClassifier(BaseEstimator, ABC):
             if len(np.unique(y)) == 1:
                 warn(
                     "only single class label seen in y passed to "
-                    f"fit of classifier {type(self).__name__}"
+                    f"fit of classifier {type(self).__name__}",
+                    obj=self,
                 )
 
         return X_metadata

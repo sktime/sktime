@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test the Padder transformer."""
 
 from sktime.datasets import load_basic_motions

@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
-"""
-ClaSP (Classification Score Profile) Transformer implementation.
+"""ClaSP (Classification Score Profile) Transformer implementation.
 
 Notes
 -----
@@ -79,7 +76,7 @@ class ClaSPTransformer(BaseTransformer):
         self.window_length = int(window_length)
         self.scoring_metric = scoring_metric
         self.exclusion_radius = exclusion_radius
-        super(ClaSPTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Compute ClaSP.
