@@ -57,7 +57,7 @@ dependencies = [
 [project.optional-dependencies]
 alignment = [
   "dtw-python<1.4,>=1.3",
-  "numba<0.59,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
 ]
 all_extras = [
   "arch<6.3.0,>=5.6",
@@ -132,7 +132,7 @@ all_extras_pandas2 = [
 ]
 annotation = [
   "hmmlearn<0.4,>=0.2.7",
-  "numba<0.59,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
   "pyod<1.2,>=0.8",
 ]
 binder = [
@@ -141,12 +141,12 @@ binder = [
 ]
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
-  "numba<0.59,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
   "tensorflow<=2.14,>=2",
   "tsfresh<0.21,>=0.17",
 ]
 clustering = [
-  "numba<0.59,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
   "tslearn<0.6.3,>=0.5.2",
 ]
 cython_extras = [
@@ -212,7 +212,7 @@ param_est = [
   "statsmodels<0.15,>=0.12.1",
 ]
 regression = [
-  "numba<0.59,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
   "tensorflow<=2.14,>=2",
 ]
 transformations = [
@@ -220,7 +220,7 @@ transformations = [
   "filterpy<1.5,>=1.4.5",
   "holidays<0.35,>=0.29",
   "mne<1.6,>=1.5",
-  "numba<0.59,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
   "pycatch22<0.5,>=0.4",
   "pykalman-bardo<0.10,>=0.9.7",
   "statsmodels<0.15,>=0.12.1",
