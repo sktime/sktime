@@ -133,7 +133,7 @@ all_extras_pandas2 = [
 annotation = [
   "hmmlearn<0.4,>=0.2.7",
   'numba<0.59,>=0.53; python_version < "3.12"',
-  "pyod<1.2,>=0.8",
+  'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 binder = [
   "jupyter",
