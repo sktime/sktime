@@ -142,10 +142,6 @@ def test_gscv(forecaster, param_grid, cv, scoring, error_score, multivariate):
         cv=cv,
         scoring=scoring,
         error_score=error_score,
-        # todo 0.24.0: remove this
-        # and/or add a test for tune_by_variable=True
-        # in this case, the forecaster is expected to vectorize over columns
-        tune_by_variable=False,
     )
     gscv.fit(y, X)
 
@@ -211,10 +207,6 @@ def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score, n_c
         cv=cv,
         scoring=scoring,
         error_score=error_score,
-        # todo 0.24.0: remove this
-        # and/or add a test for tune_by_variable=True
-        # in this case, the forecaster is expected to vectorize over columns
-        tune_by_variable=False,
     )
     gscv.fit(y, X)
 

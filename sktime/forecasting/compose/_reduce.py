@@ -25,8 +25,6 @@ __all__ = [
     "YfromX",
 ]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -44,6 +42,7 @@ from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.sklearn import is_sklearn_regressor
 from sktime.utils.validation import check_window_length
+from sktime.utils.warnings import warn
 
 
 def _concat_y_X(y, X):
@@ -464,11 +463,11 @@ class _DirectReducer(_Reducer):
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
-                    "Pooling has been changed by default to 'local', which"
+                    "Pooling is by default 'local', which"
                     + " means that separate models will be fit at the level of"
                     + " each instance. If you wish to fit a single model to"
                     + " all instances, please specify pooling = 'global'.",
-                    DeprecationWarning,
+                    obj=self,
                 )
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
@@ -774,11 +773,11 @@ class _RecursiveReducer(_Reducer):
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
-                    "Pooling has been changed by default to 'local', which"
+                    "Pooling is by default 'local', which"
                     + " means that separate models will be fit at the level of"
                     + " each instance. If you wish to fit a single model to"
                     + " all instances, please specify pooling = 'global'.",
-                    DeprecationWarning,
+                    obj=self,
                 )
         if self.transformers is not None:
             self.transformers_ = clone(self.transformers)
@@ -1488,7 +1487,8 @@ def _infer_scitype(estimator):
             "The `scitype` of the given `estimator` cannot be inferred. "
             'Assuming "tabular-regressor" = scikit-learn regressor interface. '
             "If this warning is followed by an unexpected exception, "
-            "please consider report as a bug on the sktime issue tracker."
+            "please consider report as a bug on the sktime issue tracker.",
+            obj=estimator,
         )
         return "tabular-regressor"
 

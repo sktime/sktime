@@ -9,7 +9,6 @@ __all__ = ["TemporalDictionaryEnsemble", "IndividualTDE", "histogram_intersectio
 
 import math
 import time
-import warnings
 from collections import defaultdict
 
 import numpy as np
@@ -21,6 +20,7 @@ from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X_y
+from sktime.utils.warnings import warn
 
 
 class TemporalDictionaryEnsemble(BaseClassifier):
@@ -234,10 +234,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         ending in "_" and sets is_fitted flag to True.
         """
         if self.n_parameter_samples <= self.randomly_selected_params:
-            warnings.warn(
+            warn(
                 "TemporalDictionaryEnsemble warning: n_parameter_samples <= "
-                "randomly_selected_params, ensemble member parameters will be fully "
-                "randomly selected.",
+                "randomly_selected_params, ensemble member parameters will be "
+                "fully randomly selected.",
+                obj=self,
                 stacklevel=2,
             )
 
@@ -254,10 +255,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         if self.min_window >= max_window:
             self._min_window = max_window
-            warnings.warn(
+            warn(
                 f"TemporalDictionaryEnsemble warning: min_window = "
                 f"{self.min_window} is larger than max_window = {max_window}."
                 f" min_window has been set to {max_window}.",
+                obj=self,
                 stacklevel=2,
             )
 
