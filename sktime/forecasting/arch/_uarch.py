@@ -483,7 +483,7 @@ class ARCH(BaseForecaster):
             predictive distribution
         """
         pred_dist = super()._predict_proba(fh=fh, X=X, marginal=marginal)
-        if pred_dist.columns in ("None", None):
+        if self._y.name is None:
             pred_dist.columns = pd.Index([0])
         return pred_dist
 

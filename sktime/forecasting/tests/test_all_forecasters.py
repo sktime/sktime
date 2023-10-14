@@ -528,7 +528,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # check columns
         if isinstance(y_train, pd.Series):
-            if y_train.name not in (None, "None"):
+            if y_train.name is not None:
                 assert (pred_cols == y_train.name).all()
             else:
                 assert (pred_cols == pd.Index([0])).all()
@@ -554,10 +554,16 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 and no NotImplementedError is raised when calling predict_proba
         """
         y_train = _make_series(n_columns=n_columns)
-        estimator_instance.fit(y_train, fh=fh_int_oos)
 
         if estimator_instance.get_tag("capability:pred_int"):
             try:
+                # y_train.name is "None" (str)
+                estimator_instance.fit(y_train, fh=fh_int_oos)
+                pred_dist = estimator_instance.predict_proba()
+                self._check_predict_proba(pred_dist, y_train, fh_int_oos)
+                # y_train.name is None (None)
+                estimator_instance.fit(y_train, fh=fh_int_oos)
+                y_train.name = None
                 pred_dist = estimator_instance.predict_proba()
                 self._check_predict_proba(pred_dist, y_train, fh_int_oos)
             except NotImplementedError:
