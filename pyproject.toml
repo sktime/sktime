@@ -142,7 +142,7 @@ binder = [
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   'numba<0.59,>=0.53; python_version < "3.12"',
-  "tensorflow<=2.14,>=2",
+  'tensorflow<=2.14,>=2; python_version < "3.12"',
   "tsfresh<0.21,>=0.17",
 ]
 clustering = [
@@ -202,7 +202,7 @@ mlflow_tests = [
 ]
 networks = [
   "keras-self-attention<0.52,>=0.51",
-  "tensorflow<=2.14,>=2",
+  'tensorflow<=2.14,>=2; python_version < "3.12"',
 ]
 pandas1 = [
   "pandas<2.0.0",
@@ -213,7 +213,7 @@ param_est = [
 ]
 regression = [
   'numba<0.59,>=0.53; python_version < "3.12"',
-  "tensorflow<=2.14,>=2",
+  'tensorflow<=2.14,>=2; python_version < "3.12"',
 ]
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
