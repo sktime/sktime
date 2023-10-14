@@ -189,4 +189,4 @@ class ScaledAsinhTransformer(BaseTransformer):
         """
         params1 = {}
 
-        return [params1]
+        return params1
