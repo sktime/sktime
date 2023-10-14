@@ -32,6 +32,9 @@ def temporal_train_test_split(
 ) -> SPLIT_TYPE:
     """Split time series data containers into a single train/test split.
 
+    Creates a single train/test split of endogenous time series ``y``,
+    an optionally exogeneous time series ``X``.
+
     Splits time series ``y`` into a single temporally ordered train and test split.
     The split is based on ``test_size`` and ``train_size`` parameters,
     which can signify fractions of total number of indices,
@@ -47,7 +50,9 @@ def temporal_train_test_split(
     Parameters
     ----------
     y : time series in sktime compatible data container format
+        endogenous time series
     X : time series in sktime compatible data container format, optional, default=None
+        exogenous time series
     test_size : float, int or None, optional (default=None)
         If float, must be between 0.0 and 1.0, and is interpreted as the proportion
         of the dataset to include in the test split. Proportions are rounded to the

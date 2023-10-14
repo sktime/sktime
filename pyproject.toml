@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.23.0"
+version = "0.24.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -27,7 +27,7 @@ maintainers = [
 authors = [
     { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
 ]
-requires-python = ">=3.8,<3.12"
+requires-python = ">=3.8,<3.13"
 classifiers = [
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
@@ -42,6 +42,7 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development",
 ]
@@ -49,17 +50,17 @@ dependencies = [
   "numpy<1.27,>=1.21",
   "packaging",
   "pandas<2.2.0,>=1.1",
-  "scikit-base<0.6.0",
+  "scikit-base<0.7.0",
   "scikit-learn<1.4.0,>=0.24",
   "scipy<2.0.0,>=1.2",
 ]
 [project.optional-dependencies]
 alignment = [
   "dtw-python<1.4,>=1.3",
-  "numba<0.58,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
 ]
 all_extras = [
-  "arch<6.3,>=5.6",
+  "arch<6.3.0,>=5.6",
   "cloudpickle",
   "dash!=2.9.0",
   "dask",
@@ -67,35 +68,35 @@ all_extras = [
   'esig==0.9.7; python_version < "3.10"',
   'filterpy>=1.4.5; python_version < "3.11"',
   "gluonts>=0.9",
-  "h5py",
+  'h5py; python_version < "3.12"',
   'hmmlearn>=0.2.7; python_version < "3.11"',
   "holidays",
   'keras-self-attention; python_version < "3.11"',
   "kotsu>=0.3.1",
   "matplotlib>=3.3.2",
   "mne",
-  "numba<0.58,>=0.53",
-  "pmdarima!=1.8.1,<3.0.0,>=1.8",
-  "prophet>=1.1",
+  'numba<0.59,>=0.53; python_version < "3.12"',
+  'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
+  'prophet>=1.1; python_version < "3.12"',
   "pycatch22",
-  'pykalman>=0.9.5; python_version < "3.11"',
+  "pykalman-bardo<0.10,>=0.9.7",
   'pyod>=0.8; python_version < "3.11"',
   "scikit-optimize",
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
-  "skpro<2.1,>=2",
-  "statsforecast<1.7.0,>=0.5.2",
+  "skpro<2.2.0,>=2",
+  'statsforecast<1.7.0,>=0.5.2; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
-  "tbats>=1.1",
+  'tbats>=1.1; python_version < "3.12"',
   'tensorflow; python_version < "3.11"',
-  "tsfresh>=0.17",
+  'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
 all_extras_pandas2 = [
-  "arch<6.3,>=5.6",
+  "arch<6.3.0,>=5.6",
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2023.7.1",
@@ -103,35 +104,35 @@ all_extras_pandas2 = [
   'esig==0.9.7; python_version < "3.10"',
   'filterpy>=1.4.5; python_version < "3.11"',
   "gluonts>=0.9",
-  "h5py",
+  'h5py; python_version < "3.12"',
   'hmmlearn>=0.2.7; python_version < "3.11"',
   "holidays",
   'keras-self-attention; python_version < "3.11"',
   "kotsu>=0.3.1",
   "matplotlib>=3.3.2",
   "mne",
-  "numba<0.58,>=0.53",
-  "pmdarima!=1.8.1,<3.0.0,>=1.8",
-  "prophet>=1.1",
+  'numba<0.59,>=0.53; python_version < "3.12"',
+  'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
+  'prophet>=1.1; python_version < "3.12"',
   "pycatch22",
-  'pykalman>=0.9.5; python_version < "3.11"',
+  "pykalman-bardo<0.10,>=0.9.7",
   'pyod>=0.8; python_version < "3.11"',
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
-  "skpro<2.1,>=2",
-  "statsforecast<1.7.0,>=0.5.2",
+  "skpro<2.2.0,>=2",
+  'statsforecast<1.7.0,>=0.5.2; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
-  "tbats>=1.1",
+  'tbats>=1.1; python_version < "3.12"',
   'tensorflow; python_version < "3.11"',
-  "tsfresh>=0.17",
+  'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
 annotation = [
   "hmmlearn<0.4,>=0.2.7",
-  "numba<0.58,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
   "pyod<1.2,>=0.8",
 ]
 binder = [
@@ -139,19 +140,20 @@ binder = [
   "pandas<2.0.0",
 ]
 classification = [
-  'esig<0.10,>=0.9.7; python_version < "3.11"',
-  "numba<0.58,>=0.53",
+  "esig<0.10,>=0.9.7",
+  "mrsqm<0.1,>=0.0.3",
+  'numba<0.59,>=0.53; python_version < "3.12"',
   "tensorflow<=2.14,>=2",
-  "tsfresh<0.21,>=0.17",
+  'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
-  "numba<0.58,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
   "tslearn<0.6.3,>=0.5.2",
 ]
 cython_extras = [
   "mrseql",
   'mrsqm; python_version < "3.11"',
-  "numba<0.58",
+  "numba<0.59",
 ]
 dev = [
   "backoff",
@@ -182,13 +184,13 @@ docs = [
   "tabulate",
 ]
 forecasting = [
-  "arch<6.3,>=5.6",
-  "pmdarima!=1.8.1,<2.1,>=1.8",
-  "prophet<1.2,>=1.1",
-  "skpro<2.1,>=2",
-  "statsforecast<1.7,>=0.5.2",
+  "arch<6.3.0,>=5.6",
+  'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
+  'prophet<1.2,>=1.1; python_version < "3.12"',
+  "skpro<2.2.0,>=2",
+  'statsforecast<1.7.0,>=0.5.2; python_version < "3.12"',
   "statsmodels<0.15,>=0.12.1",
-  "tbats<1.2,>=1.1",
+  'tbats<1.2,>=1.1; python_version < "3.12"',
 ]
 mlflow = [
   "mlflow",
@@ -211,20 +213,20 @@ param_est = [
   "statsmodels<0.15,>=0.12.1",
 ]
 regression = [
-  "numba<0.58,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
   "tensorflow<=2.14,>=2",
 ]
 transformations = [
-  'esig<0.10,>=0.9.7; python_version < "3.11"',
+  "esig<0.10,>=0.9.7",
   "filterpy<1.5,>=1.4.5",
-  "holidays<0.34,>=0.29",
+  "holidays<0.35,>=0.29",
   "mne<1.6,>=1.5",
-  "numba<0.58,>=0.53",
+  'numba<0.59,>=0.53; python_version < "3.12"',
   "pycatch22<0.5,>=0.4",
-  "pykalman<0.10,>=0.9.5",
+  "pykalman-bardo<0.10,>=0.9.7",
   "statsmodels<0.15,>=0.12.1",
-  "stumpy<1.13,>=1.5.1",
-  "tsfresh<0.21,>=0.17",
+  'stumpy<1.13,>=1.5.1; python_version < "3.12"',
+  'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 [project.urls]
 "API Reference" = "https://www.sktime.net/en/stable/api_reference.html"
@@ -237,14 +239,8 @@ Repository = "https://github.com/sktime/sktime"
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = [
-  "build",
   "setuptools>61",
-  "toml",
-  "wheel",
 ]
-
-[tool.setuptools]
-zip-safe = true
 
 [tool.setuptools.package-data]
 sktime = [
