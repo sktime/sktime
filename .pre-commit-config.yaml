@@ -76,3 +76,8 @@ repos:
     hooks:
       - id: shellcheck
         name: shellcheck
+
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: 1.2.0
+    hooks:
+      - id: pyproject-fmt
