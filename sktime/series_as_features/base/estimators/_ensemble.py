@@ -6,7 +6,7 @@ __author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["BaseTimeSeriesForest"]
 
 from abc import abstractmethod
-from warnings import catch_warnings, simplefilter, warn
+from warnings import catch_warnings, simplefilter
 
 import numpy as np
 import pandas as pd
@@ -24,6 +24,7 @@ from sklearn.utils import check_array, check_random_state, compute_sample_weight
 
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.random_state import set_random_state
+from sktime.utils.warnings import warn
 
 
 def _parallel_build_trees(
@@ -163,6 +164,7 @@ class BaseTimeSeriesForest(BaseForest):
                 "(n_samples,), for example using ravel().",
                 DataConversionWarning,
                 stacklevel=2,
+                obj=self,
             )
 
         if y.ndim == 1:
@@ -212,7 +214,8 @@ class BaseTimeSeriesForest(BaseForest):
         elif n_more_estimators == 0:
             warn(
                 "Warm-start fitting without increasing n_estimators does not "
-                "fit new trees."
+                "fit new trees.",
+                obj=self,
             )
         else:
             if self.warm_start and len(self.estimators_) > 0:
