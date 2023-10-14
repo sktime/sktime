@@ -1264,7 +1264,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         dimensions = optimizer.space.dimensions
         test_score_name = f"test_{self._check_scoring.name}"
 
-        @use_named_args(dimensions)  # decorater to convert candidate param list to dict
+        @use_named_args(dimensions)  # decorator to convert candidate param list to dict
         def _fit_and_score(**params):
             # Clone forecaster.
             forecaster = self.forecaster.clone()
@@ -1320,7 +1320,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             scores = list(-mean_test_score)
         # Update optimizer with evaluation metrics.
         optimizer.tell(candidate_params, scores)
-        # keep updating the cv_results_ attribute by concatinating the result dataframe
+        # keep updating the cv_results_ attribute by concatenating the result dataframe
         self.cv_results_ = pd.concat([self.cv_results_, results_df], ignore_index=True)
 
         try:

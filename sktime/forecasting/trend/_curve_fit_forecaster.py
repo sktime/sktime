@@ -47,7 +47,7 @@ class CurveFitForecaster(BaseForecaster):
     function: Callable[[Iterable[float], ...], Iterable[float]]
         The function that should be fitted and used to make forecasts.
         The signature of the functions is `function(x, ...)`.
-        It takes the independent variables as first argument and the parametrs
+        It takes the independent variables as first argument and the parameters
         to fit as separate remaining arguments.
         See scipy.optimize.curve_fit for more information.
     curve_fit_params: dict, default=None
