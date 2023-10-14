@@ -224,7 +224,7 @@ transformations = [
   "pycatch22<0.5,>=0.4",
   "pykalman-bardo<0.10,>=0.9.7",
   "statsmodels<0.15,>=0.12.1",
-  "stumpy<1.13,>=1.5.1",
+  'stumpy<1.13,>=1.5.1; python_version < "3.12"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 [project.urls]
