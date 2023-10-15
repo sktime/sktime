@@ -1,4 +1,4 @@
-name: test sktime extras
+name: extras validation
 on:
   pull_request:
     branches:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 jobs:
   test_installations:
-    name: test installation of extras
+    name: extras installation
     strategy:
       fail-fast: false
       matrix:
