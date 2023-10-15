@@ -10,7 +10,9 @@ from sktime.base import BaseEstimator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
-def is_initialised_estimator(estimator: BaseEstimator) -> bool:
+# TODO: typo but need to be deprecated
+# See https://www.sktime.net/en/stable/developer_guide/deprecation.html
+def is_initalised_estimator(estimator: BaseEstimator) -> bool:
     """Check if estimator is initialised BaseEstimator object."""
     if isinstance(estimator, BaseEstimator):
         return True
@@ -28,7 +30,7 @@ def _check_estimators_type(objs: Union[dict, list, BaseEstimator]) -> None:
     if isinstance(objs, BaseEstimator):
         objs = [objs]
     items = objs.values() if isinstance(objs, dict) else objs
-    compatible = all(is_initialised_estimator(estimator) for estimator in items)
+    compatible = all(is_initalised_estimator(estimator) for estimator in items)
     if not compatible:
         raise TypeError(
             "One or many estimator(s) is not an initialised BaseEstimator "
@@ -56,7 +58,7 @@ def coerce_estimator_and_id(estimators, estimator_id=None):
         return estimators
     elif isinstance(estimators, list):
         return {estimator.__class__.__name__: estimator for estimator in estimators}
-    elif is_initialised_estimator(estimators):
+    elif is_initalised_estimator(estimators):
         estimator_id = estimator_id or estimators.__class__.__name__
         return {estimator_id: estimators}
     else:
