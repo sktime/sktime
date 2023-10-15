@@ -116,3 +116,29 @@ def _parallelize_dask(fun, iter, meta, backend, backend_params):
 
 
 para_dict["dask"] = _parallelize_dask
+
+
+def _get_parallel_test_fixtures():
+    """Return fixtures for parallelization tests.
+
+    Returns a list of parameter fixtures, where each fixture
+    is a dict with keys "backend" and "backend_params".
+    """
+    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    fixtures = []
+
+    # test no parallelization
+    fixtures.append({"backend": "None", "backend_params": {}})
+
+    # test joblib backends
+    for backend in ["loky", "multiprocessing", "threading"]:
+        fixtures.append({"backend": backend, "backend_params": {}})
+        fixtures.append({"backend": backend, "backend_params": {"n_jobs": 2}})
+        fixtures.append({"backend": backend, "backend_params": {"n_jobs": -1}})
+
+    # test dask backends
+    if _check_soft_dependencies("dask"):
+        fixtures.append({"backend": "dask", "backend_params": {}})
+        fixtures.append({"backend": "dask", "backend_params": {"scheduler": "sync"}})
+
+    return fixtures
