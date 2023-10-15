@@ -23,7 +23,9 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
+from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
+from sktime.utils.warnings import warn
 
 
 class BaseGridSearch(_DelegatedForecaster):
@@ -36,6 +38,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "capability:pred_int:insample": True,
     }
 
+    # todo 0.26.0: remove n_jobs, pre_dispatch parameters and all related logic
     def __init__(
         self,
         forecaster,
@@ -52,6 +55,7 @@ class BaseGridSearch(_DelegatedForecaster):
         error_score=np.nan,
         tune_by_instance=False,
         tune_by_variable=False,
+        backend_params=None,
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -67,6 +71,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.error_score = error_score
         self.tune_by_instance = tune_by_instance
         self.tune_by_variable = tune_by_variable
+        self.backend_params = backend_params
 
         super().__init__()
 
@@ -181,9 +186,23 @@ class BaseGridSearch(_DelegatedForecaster):
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
-        parallel = Parallel(
-            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend=self.backend
-        )
+        # todo 0.26.0: remove this logic and only use backend_params
+        backend = self.backend
+        backend_params = self.backend_params if self.backend_params else {}
+        if backend in ["threading", "multiprocessing", "loky"]:
+            n_jobs = self.n_jobs
+            pre_dispatch = self.pre_dispatch
+            backend_params["n_jobs"] = n_jobs
+            backend_params["pre_dispatch"] = pre_dispatch
+            if n_jobs is not None or pre_dispatch is not None:
+                warn(
+                    f"in {self.__class__.__name__}, n_jobs and pre_dispatch "
+                    "parameters are deprecated and will be removed in 0.26.0. "
+                    "Please use n_jobs and pre_dispatch directly in the backend_params "
+                    "argument instead.",
+                    obj=self,
+                    stacklevel=2,
+                )
 
         def _fit_and_score(params):
             # Clone forecaster.
@@ -228,8 +247,12 @@ class BaseGridSearch(_DelegatedForecaster):
                     )
                 )
 
-            out = parallel(
-                delayed(_fit_and_score)(params) for params in candidate_params
+            out = parallelize(
+                fun=_fit_and_score,
+                iterable=candidate_params,
+                meta=params,
+                backend=backend,
+                backend_params=backend_params,
             )
 
             if len(out) < 1:
