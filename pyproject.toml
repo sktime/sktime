@@ -189,7 +189,7 @@ forecasting = [
   "skpro<2.2,>=2",
   'statsforecast<1.7,>=0.5.2; python_version < "3.12"',
   "statsmodels<0.15,>=0.12.1",
-  "tbats<1.2,>=1.1",
+  'tbats<1.2,>=1.1; python_version < "3.12"',
 ]
 mlflow = [
   "mlflow",
