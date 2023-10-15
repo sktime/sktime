@@ -204,7 +204,7 @@ class BaseGridSearch(_DelegatedForecaster):
                     stacklevel=2,
                 )
 
-        def _fit_and_score(params):
+        def _fit_and_score(params, meta):
             # Clone forecaster.
             forecaster = self.forecaster.clone()
 
