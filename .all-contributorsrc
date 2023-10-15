@@ -2358,6 +2358,15 @@
       ]
     },
     {
+      "login": "ali-parizad",
+      "name": "Ali Parizad",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13907016?v=4",
+      "profile": "https://github.com/ali-parizad",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "BensHamza",
       "name": "Hamza Benslimane",
       "avatar_url": "https://avatars.githubusercontent.com/u/96446862?v=4",
@@ -2366,6 +2375,63 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "Vasudeva-bit",
+      "name": "Vasudeva Kilaru",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70791259?v=4",
+      "profile": "https://github.com/Vasudeva-bit",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "geronimos",
+      "name": "Geronimo Bergk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29955288?s=96&v=4",
+      "profile": "https://github.com/geronimos",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "julnow",
+      "name": "Julian Nowak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21206185?v=4",
+      "profile": "https://github.com/julnow",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "pirnerjonas",
+      "name": "Jonas Pirner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/48887249?v=4",
+      "profile": "https://github.com/pirnerjonas",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "adamkells",
+      "name": "Adam Kells",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19709277?v=4",
+      "profile": "https://github.com/adamkells",
+      "contributions": [
+        "test"
+      ]
     }
+    {
+      "login": "xansh",
+      "name": "Ansh Kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65403652?s=400&u=a45b5dcca057cfaef737d5fab99850aca6da1607&v=4",
+      "profile": "https://github.com/xansh",
+      "contributions": [
+        "doc"
+      ]
+    },
   ]
 }
