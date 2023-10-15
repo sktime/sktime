@@ -459,9 +459,19 @@ class ForecastingGridSearchCV(BaseGridSearch):
     error_score : numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score : bool, optional (default=False)
-    backend : str, optional (default="loky")
-        Specify the parallelisation backend implementation in joblib, where
-        "loky" is used by default.
+
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
+        Runs parallel evaluate if specified and `strategy` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
@@ -482,6 +492,18 @@ class ForecastingGridSearchCV(BaseGridSearch):
         and are available in fields of the forecasters_ attribute.
         Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
         If False, the same best parameter is selected for all variables.
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading":
+            any valid keys for ``joblib.Parallel`` can be passed here,
+            e.g., ``n_jobs``, with the exception of ``backend``
+            which is directly controlled by ``backend``
+        - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
 
     Attributes
     ----------
@@ -592,6 +614,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         error_score=np.nan,
         tune_by_instance=False,
         tune_by_variable=False,
+        backend_params=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -608,6 +631,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             error_score=error_score,
             tune_by_instance=tune_by_instance,
             tune_by_variable=tune_by_variable,
+            backend_params=backend_params,
         )
         self.param_grid = param_grid
 
@@ -761,16 +785,25 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch : str, optional (default='2*n_jobs')
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
         function calls.
     pre_dispatch : str, optional (default='2*n_jobs')
-    backend : str, optional (default="loky")
-        Specify the parallelisation backend implementation in joblib, where
-        "loky" is used by default.
+
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
+        Runs parallel evaluate if specified and `strategy` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
@@ -791,6 +824,18 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         and are available in fields of the forecasters_ attribute.
         Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
         If False, the same best parameter is selected for all variables.
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading":
+            any valid keys for ``joblib.Parallel`` can be passed here,
+            e.g., ``n_jobs``, with the exception of ``backend``
+            which is directly controlled by ``backend``
+        - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
 
     Attributes
     ----------
@@ -835,6 +880,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         error_score=np.nan,
         tune_by_instance=False,
         tune_by_variable=False,
+        backend_params=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -851,6 +897,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             error_score=error_score,
             tune_by_instance=tune_by_instance,
             tune_by_variable=tune_by_variable,
+            backend_params=backend_params,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -1003,9 +1050,19 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
-    backend : str, optional (default="loky")
-        Specify the parallelisation backend implementation in joblib, where
-        "loky" is used by default.
+
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
+        Runs parallel evaluate if specified and `strategy` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
     tune_by_instance : bool, optional (default=False)
         Whether to tune parameter by each time series instance separately,
         in case of Panel or Hierarchical data passed to the tuning estimator.
@@ -1022,6 +1079,18 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         and are available in fields of the forecasters_ attribute.
         Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
         If False, the same best parameter is selected for all variables.
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading":
+            any valid keys for ``joblib.Parallel`` can be passed here,
+            e.g., ``n_jobs``, with the exception of ``backend``
+            which is directly controlled by ``backend``
+        - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
 
     Attributes
     ----------
@@ -1105,6 +1174,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         error_score=np.nan,
         tune_by_instance=False,
         tune_by_variable=False,
+        backend_params=None,
     ):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -1126,6 +1196,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             error_score=error_score,
             tune_by_instance=tune_by_instance,
             tune_by_variable=tune_by_variable,
+            backend_params=backend_params,
         )
 
     def _fit(self, y, X=None, fh=None):
