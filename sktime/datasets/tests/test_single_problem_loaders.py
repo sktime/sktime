@@ -14,6 +14,7 @@ from sktime.datasets import (  # Univariate; Unequal length; Multivariate
     load_japanese_vowels,
     load_osuleaf,
     load_plaid,
+    load_tecator,
     load_UCR_UEA_dataset,
     load_unit_test,
 )
@@ -25,6 +26,7 @@ UNIVARIATE_PROBLEMS = [
     load_italy_power_demand,
     load_osuleaf,
     load_unit_test,
+    load_tecator,
 ]
 MULTIVARIATE_PROBLEMS = [
     load_basic_motions,
