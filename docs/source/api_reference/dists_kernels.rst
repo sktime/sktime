@@ -181,7 +181,7 @@ See docstring of ``AggrDist`` and ``FlatDist``.
     AggrDist
     FlatDist
 
-Advanced time series kernels that cannot be expressed as aggregates or flat aggregates:
+Advanced time series kernels that cannot be expressed as aggregates or flat applicates:
 
 .. currentmodule:: sktime.dists_kernels.gak
 
