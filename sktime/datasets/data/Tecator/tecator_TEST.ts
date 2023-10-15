@@ -6,8 +6,7 @@
 # For more information see: https://www.openml.org/search?type=data&sort=runs&id=505&status=active
 # References:
 # [1] C.Borggaard and H.H.Thodberg, "Optimal Minimal Neural Interpretation of Spectra", Analytical Chemistry 64 (1992), p 545-551.
-# [2] H.H.Thodberg, "Ace of Bayes: Application of Neural Networks with Pruning" Manuscript 1132, Danish Meat Research Institute (1993), available by anonymous ftp in the file: pub/neuroprose/thodberg.ace-of-bayes.ps.Z on the Internet node https://www.openml.org/d/505
-# [3] Revised and extended version of (2), in preparation, to be submitted to IEEE Trans. Neural Networks (1995) available by anonymous ftp in the file: pub/neuroprose/thodberg.bayesARD.ps.Z on the Internet node archive.cis.ohio-state.edu (128.146.8.52).
+# [2] H.H.Thodberg, "Ace of Bayes: Application of Neural Networks with Pruning" Manuscript 1132, Danish Meat Research Institute (1993)
 
 @problemName TECATOR
 @timeStamps false
