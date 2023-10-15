@@ -36,8 +36,8 @@ from sktime.split import SingleWindowSplitter, SlidingWindowSplitter
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
-from sktime.utils.parallel import _get_parallel_test_fixtures
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.parallel import _get_parallel_test_fixtures
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 TEST_METRICS_PROBA = [CRPS(), PinballLoss()]

@@ -125,6 +125,7 @@ def _get_parallel_test_fixtures():
     is a dict with keys "backend" and "backend_params".
     """
     from sktime.utils.validation._dependencies import _check_soft_dependencies
+
     fixtures = []
 
     # test no parallelization
