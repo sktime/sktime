@@ -138,7 +138,7 @@ def _get_parallel_test_fixtures():
         fixtures.append({"backend": backend, "backend_params": {"n_jobs": -1}})
 
     # test dask backends
-    if _check_soft_dependencies("dask"):
+    if _check_soft_dependencies("dask", severity="none"):
         fixtures.append({"backend": "dask", "backend_params": {}})
         fixtures.append({"backend": "dask", "backend_params": {"scheduler": "sync"}})
 
