@@ -137,7 +137,7 @@ annotation = [
 ]
 binder = [
   "jupyter",
-  "pandas<2.0.0",
+  "pandas<3.0.0",
 ]
 classification = [
   "esig<0.10,>=0.9.7",
@@ -206,7 +206,7 @@ networks = [
   "tensorflow<=2.14,>=2",
 ]
 pandas1 = [
-  "pandas<2.0.0",
+  "pandas<3.0.0",
 ]
 param_est = [
   "seasonal<0.4,>=0.3.1",
