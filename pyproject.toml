@@ -182,6 +182,7 @@ docs = [
   "sphinx-issues<4.0.0",
   "sphinx-version-warning",
   "tabulate",
+  "foo",
 ]
 forecasting = [
   "arch<6.3.0,>=5.6",
