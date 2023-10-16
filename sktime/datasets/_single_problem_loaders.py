@@ -183,7 +183,7 @@ def load_tecator(split=None, return_X_y=True, return_type=None):
     Manuscript 1132, Danish Meat Research Institute (1993), p 1-12.
     """
     name = "Tecator"
-    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_plaid(split=None, return_X_y=True, return_type=None):
