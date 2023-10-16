@@ -14,7 +14,7 @@ from sktime.transformations.base import BaseTransformer
 class ScaledAsinhTransformer(BaseTransformer):
     r"""Hyperbolic sine transformation and its inverse [1]_.
 
-    Known as variance stabilizing transformation [2]_,
+    Known as variance stabilizing transformation,
     Combined with an sktime.forecasting.compose.TransformedTargetForecaster,
     can be usefull in time series that exhibit spikes [1]_, [2]_
 
@@ -35,7 +35,7 @@ class ScaledAsinhTransformer(BaseTransformer):
         scale parameter, denoted as "b" in [1]_, the median absolute deviation
         (MAD) around the sample median adjusted by a factor for asymptotically
         normal consistency to the standard deviation (Based on [1]_, [2]_
-        b = median_abs_deviation(sample data) . mad_normalization_factor).
+        b = median_abs_deviation(sample data) :math:`\times` mad_normalization_factor).
         It is fitted, based on the data provided in "fit".
 
     See Also
@@ -61,7 +61,7 @@ class ScaledAsinhTransformer(BaseTransformer):
     |   :math:`b . sinh(x) + a`
     | where "a" is the shift parameter and "b" is the scale parameter [1]_.
     | a = median(sample data)
-    | b = median_abs_deviation(sample data) . mad_normalization_factor
+    | b = median_abs_deviation(sample data) :math:`\times` mad_normalization_factor
 
     References
     ----------
@@ -187,7 +187,7 @@ class ScaledAsinhTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        test_params = [
-            {},
-        ]
-        return test_params
+        params1 = {}
+        params2 = {"mad_normalization_factor": 1.6}
+
+        return [params1, params2]
