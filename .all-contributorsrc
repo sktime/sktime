@@ -2414,6 +2414,24 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "adamkells",
+      "name": "Adam Kells",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19709277?v=4",
+      "profile": "https://github.com/adamkells",
+      "contributions": [
+        "test"
+      ]
     }
+    {
+      "login": "xansh",
+      "name": "Ansh Kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65403652?s=400&u=a45b5dcca057cfaef737d5fab99850aca6da1607&v=4",
+      "profile": "https://github.com/xansh",
+      "contributions": [
+        "doc"
+      ]
+    },
   ]
 }

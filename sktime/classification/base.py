@@ -24,7 +24,6 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
 from abc import ABC, abstractmethod
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -35,6 +34,7 @@ from sktime.datatypes._vectorize import VectorizedDF
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.warnings import warn
 
 
 class BaseClassifier(BaseEstimator, ABC):
@@ -870,7 +870,7 @@ class BaseClassifier(BaseEstimator, ABC):
         #   see discussion in PR 2366 why
         if len(problems) > 0:
             if self.is_composite():
-                warn(msg)
+                warn(msg, obj=self)
             else:
                 raise ValueError(msg)
 
@@ -962,7 +962,8 @@ class BaseClassifier(BaseEstimator, ABC):
             if len(np.unique(y)) == 1:
                 warn(
                     "only single class label seen in y passed to "
-                    f"fit of classifier {type(self).__name__}"
+                    f"fit of classifier {type(self).__name__}",
+                    obj=self,
                 )
 
         return {"X": X_metadata, "y": y_metadata}
