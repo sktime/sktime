@@ -14,6 +14,54 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.24.0 - 2023-10-13
+---------------------------
+
+Maintenance release:
+
+* support for python 3.12
+* scheduled deprecations
+* soft dependency updates
+
+For last non-maintenance content updates, see 0.23.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``pykalman`` dependencies have been replaced by the fork ``pykalman-bardo``.
+  ``pykalman`` is abandoned, and ``pykalman-bardo`` is a maintained fork.
+  This is a soft dependency, and the switch does not affect users installing
+  ``sktime`` using one of its dependency sets.
+  Mid-term, we expect ``pykalman-bardo`` to be merged back into ``pykalman``,
+  after which the dependency will be switched back to ``pykalman``.
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.35``.
+* ``numba`` (classification, regression, and transformations soft dependency) bounds have been updated to ``>=0.53,<0.59``.
+* ``skpro`` (forecasting soft dependency) bounds have been updated to ``>=2.0.0,<2.2.0``.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* in forecasting tuners ``ForecastingGridSearchCV``, ``ForecastingRandomizedSearchCV``,
+  ``ForecastingSkoptSearchCV``, the default of parameter ``tune_by_variable``
+  has been switched from ``True`` to ``False``.
+
+Contents
+~~~~~~~~
+
+* [MNT] Update ``numba`` requirement from ``<0.58,>=0.53`` to ``>=0.53,<0.59`` (:pr:`5299`, :pr:`5319`) :user:`dependabot[bot]`, :user:`fkiraly`
+* [MNT] [Dependabot](deps-dev): Update ``skpro`` requirement from ``<2.1.0,>=2.0.0`` to ``>=2.0.0,<2.2.0`` (:pr:`5396`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps-dev): Update ``holidays`` requirement from ``<0.34,>=0.29`` to ``>=0.29,<0.35`` (:pr:`5342`) :user:`dependabot[bot]`
+* [MNT] Migrate from ``pykalman`` to ``pykalman-bardo`` (:pr:`5277`) :user:`mbalatsko`
+* [MNT] 0.24.0 deprecations and change actions (:pr:`5404`) :user:`fkiraly`
+* 🚀 python 3.12 🚀  (:pr:`5345`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`mbalatsko`
+
+
 Version 0.23.1 - 2023-10-12
 ---------------------------
 
