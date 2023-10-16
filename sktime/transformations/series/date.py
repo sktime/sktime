@@ -34,7 +34,7 @@ _RAW_DUMMIES = [
 
 
 class DateTimeFeatures(BaseTransformer):
-    """DateTime feature extraction for use in e.g. tree based models.
+    """DateTime feature extraction, e.g., for use as exogenous data in forecasting.
 
     DateTimeFeatures uses a date index column and generates date features
     identifying e.g. year, week of the year, day of the week.
