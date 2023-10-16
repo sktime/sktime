@@ -21,20 +21,31 @@ class SignatureTransformer(BaseTransformer):
 
     Parameters
     ----------
-    augmentation_list: tuple of strings, contains the augmentations to be
-        applied before application of the signature transform.
-    window_name: str, The name of the window transform to apply.
+    augmentation_list: Possible augmentation strings are
+        ['leadlag', 'ir', 'addtime', 'cumsum', 'basepoint']
+        default: ('basepoint', 'addtime')
+    window_name: str, String from ['global', 'sliding', 'expanding', 'dyadic']
+        default: 'dyadic'
     window_depth: int, The depth of the dyadic window. (Active only if
-        `window_name == 'dyadic'`).
+        `window_name == 'dyadic']`.
+        default: 3
     window_length: int, The length of the sliding/expanding window. (Active
-        only if `window_name in ['sliding, 'expanding']`.
+        only if `window_name in ['sliding, 'expanding'].
+        default: None
     window_step: int, The step of the sliding/expanding window. (Active
-        only if `window_name in ['sliding, 'expanding']`.
-    rescaling: str or None, The method of signature rescaling.
-    sig_tfm: str, String to specify the type of signature transform. One of:
-        ['signature', 'logsignature']).
+        only if `window_name in ['sliding, 'expanding'].
+        default: None
+    rescaling: "pre" or "post",
+                "pre": rescale the path last signature term should be roughly O(1)
+                "post": Rescals the output signature by multiplying the depth-d term by d!.
+                        Aim is that every term become ~O(1).
+        default: None
+    sig_tfm: One of: [‘signature’, ‘logsignature’]).
+        default: 'signature'
     depth: int, Signature truncation depth.
+        default: 4
     backend: str, The backend to use for signature computation. One of: 'esig', or 'iisignature'.
+        default: 'esig'
 
     Attributes
     ----------
@@ -72,7 +83,7 @@ class SignatureTransformer(BaseTransformer):
         elif backend == "iisignature":
             _check_soft_dependencies("iisignature")
         else:
-            raise ValueError("backend must be one of 'esig' or 'iisignature'")
+            raise ValueError("Error in SignatureTransformer, backend must be one of 'esig' or 'iisignature'")
 
         self.augmentation_list = augmentation_list
         self.window_name = window_name

@@ -95,7 +95,7 @@ regression = [
 ]
 transformations = [
     "esig>=0.9.7,<0.10",
-    "iisignature>=0.24",
+    "iisignature>=0.24, <0.25",
     "filterpy>=1.4.5,<1.5",
     "holidays>=0.29,<0.33",
     "mne>=1.5,<1.6",
