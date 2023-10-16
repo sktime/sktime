@@ -11,6 +11,7 @@ __all__ = [
 ]
 
 import itertools
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -610,6 +611,7 @@ def load_from_tsfile(
     replace_missing_vals_with="NaN",
     return_y=True,
     return_data_type="nested_univ",
+    y_dtype="str",
 ):
     """Load time series .ts file into X and (optionally) y.
 
@@ -637,6 +639,9 @@ def load_from_tsfile(
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
+    y_dtype : str, optional, default 'float'
+        cast y to this dtype before returning, accepted arguments are
+        'str', 'int', and 'float'.
 
     Returns
     -------
@@ -655,6 +660,15 @@ def load_from_tsfile(
     ValueError if return_data_type = numpy2d but the data are multivariate and/
     or unequal length series
     """
+    if y_dtype == "str":
+        warnings.warn(
+            """Starting in sktime versions 0.26, the datatype
+                      returned for y will be 'float' by default.  To preserve
+                      the current behavior, set y_dtype='str'.""",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     return_data_type = _alias_mtype_check(return_data_type)
 
     if not isinstance(return_data_type, str):
@@ -675,6 +689,14 @@ def load_from_tsfile(
         return_separate_X_and_y=True,
         replace_missing_vals_with=replace_missing_vals_with,
     )
+
+    # convert y to specified dtype
+    if y_dtype == "str":
+        y = y.astype(str)
+    elif y_dtype == "int":
+        y = y.astype(np.int8)
+    elif y_dtype == "float":
+        y = y.astype(np.float32)
 
     X = convert(X, from_type="nested_univ", to_type=return_data_type)
 
