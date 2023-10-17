@@ -35,7 +35,6 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
 
     _tags = {
         "scitype:y": "both",
-        "y_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
         "python_dependencies": "torch",
@@ -59,7 +58,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         custom_dataset_train=None,
         custom_dataset_pred=None,
         batch_size=8,
-        scale=True,
+        scale=False,
         shuffle=True,
     ):
         self.seq_len = seq_len
