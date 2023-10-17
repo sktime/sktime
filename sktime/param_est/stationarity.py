@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for stationarity."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "Vasudeva-bit"]
 __all__ = [
     "StationarityADF",
     "StationarityKPSS",
@@ -447,7 +447,7 @@ class ArchStationarityADF(BaseParamFitter):
 
 
 class ArchDickeyFullerGLS(BaseParamFitter):
-    """Test for stationarity via the Dickey-Fuller GLS (DFGLS).
+    """Test for stationarity via the Dickey-Fuller GLS (DFGLS) Unit Root Test.
 
     Uses `arch.unitroot.DFGLS` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
@@ -480,7 +480,8 @@ class ArchDickeyFullerGLS(BaseParamFitter):
     Attributes
     ----------
     stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the ADF test is rejected at `p_threshold`
+        more precisely, whether the null of the DickeyFullerGLS test is rejected at
+        `p_threshold`
     test_statistic_ : float
         The ADF test statistic, of running `adfuller` on `y` in `fit`
     pvalue_ : float : float
@@ -590,7 +591,7 @@ class ArchDickeyFullerGLS(BaseParamFitter):
 
 
 class ArchPhillipsPerron(BaseParamFitter):
-    """Test for stationarity via the PhillipsPerron.
+    """Test for stationarity via the PhillipsPerron Unit Root Test.
 
     Uses `arch.unitroot.PhillipsPerron` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
@@ -618,7 +619,8 @@ class ArchPhillipsPerron(BaseParamFitter):
     Attributes
     ----------
     stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the ADF test is rejected at `p_threshold`
+        more precisely, whether the null of the PhillipsPerron test is rejected at
+        `p_threshold`
     test_statistic_ : float
         The ADF test statistic, of running `adfuller` on `y` in `fit`
     pvalue_ : float : float
@@ -724,7 +726,7 @@ class ArchPhillipsPerron(BaseParamFitter):
 
 
 class ArchStationarityKPSS(BaseParamFitter):
-    """Test for stationarity via the Kwiatkowski-Phillips-Schmidt-Shin Test.
+    """Test for stationarity via the Kwiatkowski-Phillips-Schmidt-Shin Unit Root Test.
 
     Uses `arch.unitroot.KPSS` as a test for trend-stationairty,
     and derives a boolean statement whether a series is (trend-)stationary.
@@ -748,7 +750,7 @@ class ArchStationarityKPSS(BaseParamFitter):
     Attributes
     ----------
     stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the ADF test is rejected at `p_threshold`
+        more precisely, whether the null of the KPSS test is rejected at `p_threshold`
     test_statistic_ : float
         The ADF test statistic, of running `adfuller` on `y` in `fit`
     pvalue_ : float : float
@@ -850,7 +852,7 @@ class ArchStationarityKPSS(BaseParamFitter):
 
 
 class ArchZivotAndrews(BaseParamFitter):
-    """Test for stationarity via the ZivotAndrews.
+    """Test for stationarity via the ZivotAndrews Unit Root Test.
 
     Uses `arch.unitroot.ZivotAndrews` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
@@ -885,7 +887,8 @@ class ArchZivotAndrews(BaseParamFitter):
     Attributes
     ----------
     stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the ADF test is rejected at `p_threshold`
+        more precisely, whether the null of the ZivotAndrews test is rejected at
+        `p_threshold`
     test_statistic_ : float
         The ADF test statistic, of running `adfuller` on `y` in `fit`
     pvalue_ : float : float
@@ -999,7 +1002,7 @@ class ArchZivotAndrews(BaseParamFitter):
 
 
 class ArchVarianceRatio(BaseParamFitter):
-    """Test for stationarity via the VarianceRatio.
+    """Test for stationarity via the VarianceRatio Unit Root Test.
 
     Uses `arch.unitroot.VarianceRatio` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
@@ -1029,7 +1032,8 @@ class ArchVarianceRatio(BaseParamFitter):
     Attributes
     ----------
     stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the ADF test is rejected at `p_threshold`
+        more precisely, whether the null of the VarianceRatio test is rejected at
+        `p_threshold`
     test_statistic_ : float
         The ADF test statistic, of running `adfuller` on `y` in `fit`
     pvalue_ : float : float
