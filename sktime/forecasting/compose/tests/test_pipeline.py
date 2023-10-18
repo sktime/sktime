@@ -14,6 +14,7 @@ from sklearn.svm import SVR
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
 from sktime.datatypes._utilities import get_window
+from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import (
     ForecastingPipeline,
     TransformedTargetForecaster,
@@ -476,6 +477,49 @@ def test_forecastx_logic():
 
     # compare that test and comparison case results are equal
     assert np.allclose(y_pred, y_pred_manual)
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_forecastx_fit_behavior():
+    from sktime.forecasting.compose import ForecastX
+    from sktime.forecasting.model_selection import temporal_train_test_split
+
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+
+    pipe = ForecastX(
+        forecaster_X=NaiveForecaster(),
+        forecaster_y=ARIMA(),
+    )
+    pipe = pipe.fit(y_train, X=X_train, fh=y_test.index)
+    y_pred_forecast_X_use_gt = pipe.predict(fh=y_test.index)
+
+    naive = NaiveForecaster()
+    naive.fit(X_train)
+    x_pred_train = naive.predict(fh=X_train.index)
+    arima = ARIMA()
+    arima.fit(y_train, X_train)
+
+    y_pred = arima.predict(fh=y_test.index, X=naive.predict(fh=y_test.index))
+
+    pd.testing.assert_series_equal(y_pred_forecast_X_use_gt, y_pred)
+
+    pipe = ForecastX(
+        forecaster_X=NaiveForecaster(),
+        forecaster_y=ARIMA(),
+        fit_behaviour="use_forecast",
+    )
+    pipe = pipe.fit(y_train, X=X_train, fh=y_test.index)
+    y_pred_forecast_X_use_forecast = pipe.predict(fh=y_test.index)
+
+    arima = ARIMA()
+    arima.fit(y_train, x_pred_train)
+    y_pred = arima.predict(fh=y_test.index, X=naive.predict(fh=y_test.index))
+
+    pd.testing.assert_series_equal(y_pred_forecast_X_use_forecast, y_pred)
 
 
 def test_forecastx_attrib_broadcast():

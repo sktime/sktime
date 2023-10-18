@@ -6,12 +6,12 @@ __author__ = ["mloning"]
 __all__ = ["_StatsModelsAdapter"]
 
 import inspect
-from warnings import warn
 
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.warnings import warn
 
 
 class _StatsModelsAdapter(BaseForecaster):
@@ -67,7 +67,8 @@ class _StatsModelsAdapter(BaseForecaster):
                 warn(
                     f"NotImplementedWarning: {self.__class__.__name__} "
                     f"can not accept new data when update_params=False. "
-                    f"Call with update_params=True to refit with new data."
+                    f"Call with update_params=True to refit with new data.",
+                    obj=self,
                 )
             else:
                 # only append unseen data to fitted forecaster
