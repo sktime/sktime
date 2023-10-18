@@ -39,9 +39,11 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.base import BaseEstimator
+# from sktime.base import BaseEstimator
+from sktime.annotation.base._base import BaseSeriesAnnotator
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 logger = logging.getLogger(__name__)
@@ -367,7 +369,7 @@ class GGS:
         return change_points
 
 
-class GreedyGaussianSegmentation(BaseEstimator):
+class GreedyGaussianSegmentation(BaseSeriesAnnotator):
     """Greedy Gaussian Segmentation Estimator.
 
     The method approxmates solutions for the problem of breaking a
@@ -428,6 +430,8 @@ class GreedyGaussianSegmentation(BaseEstimator):
        https://doi.org/10.1007/s11634-018-0335-0
     """
 
+    _tags = {"fit_is_empty": True}
+
     def __init__(
         self,
         k_max: int = 10,
@@ -444,7 +448,7 @@ class GreedyGaussianSegmentation(BaseEstimator):
         self.random_state = random_state
 
         _check_estimator_deps(self)
-        super().__init__()
+        super().__init__(fmt="dense", labels="int_label")
 
         self._adaptee = GGS(
             k_max=k_max,
@@ -454,33 +458,31 @@ class GreedyGaussianSegmentation(BaseEstimator):
             random_state=random_state,
         )
 
-    def fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
+    def _fit(self, X, Y=None):
         """Fit method for compatibility with sklearn-type estimator interface.
-
-        It sets the internal state of the estimator and returns the initialized
-        instance.
 
         Parameters
         ----------
-        X: array_like
-            2D `array_like` representing time series with sequence index along
-            the first dimension and value series as columns.
+        X: array_like (1D or 2D), pd.Series, or pd.DataFrame
+            1D array of timeseries values, or 2D array with index along the first
+            dimension and columns representing features of the timeseries. If pd.Series,
+            the values of the timeseries are the values of the series. If pd.DataFrame,
+            each column represents a feature of the timeseries.
         y: array_like
             Placeholder for compatibility with sklearn-api, not used, default=None.
         """
-        self._adaptee.initialize_intermediates()
         return self
 
-    def predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
+    def _predict(self, X) -> npt.ArrayLike:
         """Perform segmentation.
 
         Parameters
         ----------
-        X: array_like
-            2D `array_like` representing time series with sequence index along
-            the first dimension and value series as columns.
-        y: array_like
-            Placeholder for compatibility with sklearn-api, not used, default=None.
+        X: array_like (1D or 2D), pd.Series, or pd.DataFrame
+            1D array of timeseries values, or 2D array with index along the first
+            dimension and columns representing features of the timeseries. If pd.Series,
+            the values of the timeseries are the values of the series. If pd.DataFrame,
+            each column represents a feature of the timeseries.
 
         Returns
         -------
@@ -489,6 +491,15 @@ class GreedyGaussianSegmentation(BaseEstimator):
             dimension of X. The numerical values represent distinct segments
             labels for each of the data points.
         """
+        if isinstance(X, pd.Series):
+            X = X.values[:, np.newaxis]
+        elif isinstance(X, pd.DataFrame):
+            X = X.values
+        elif len(X.shape) == 1:
+            X = X[:, np.newaxis]
+        elif len(X.shape) > 2:
+            raise ValueError("X must not have more than two dimensions.")
+        self._adaptee.initialize_intermediates()
         self.change_points_ = self._adaptee.find_change_points(X)
 
         labels = np.zeros(X.shape[0], dtype=np.int32)
@@ -498,16 +509,16 @@ class GreedyGaussianSegmentation(BaseEstimator):
             labels[start:stop] = i
         return labels
 
-    def fit_predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
+    def fit_predict(self, X) -> npt.ArrayLike:
         """Perform segmentation.
 
         Parameters
         ----------
-        X: array_like
-            2D `array_like` representing time series with sequence index along
-            the first dimension and value series as columns.
-        y: array_like
-            Placeholder for compatibility with sklearn-api, not used, default=None.
+        X: array_like (1D or 2D), pd.Series, or pd.DataFrame
+            1D array of timeseries values, or 2D array with index along the first
+            dimension and columns representing features of the timeseries. If pd.Series,
+            the values of the timeseries are the values of the series. If pd.DataFrame,
+            each column represents a feature of the timeseries.
 
         Returns
         -------
@@ -516,7 +527,7 @@ class GreedyGaussianSegmentation(BaseEstimator):
             dimension of X. The numerical values represent distinct segments
             labels for each of the data points.
         """
-        return self.fit(X, y).predict(X, y)
+        return self.fit(X, None).predict(X)
 
     def get_params(self, deep: bool = True) -> Dict:
         """Return initialization parameters.
@@ -562,3 +573,20 @@ class GreedyGaussianSegmentation(BaseEstimator):
     def __repr__(self) -> str:
         """Return a string representation of the estimator."""
         return self._adaptee.__repr__()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {"k_max": 10, "lamb": 1.0}
+        return params
