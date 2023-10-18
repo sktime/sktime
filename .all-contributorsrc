@@ -2416,16 +2416,6 @@
       ]
     },
     {
-      "login": "tpvasconcelos",
-      "name": "Tomas P. de Vasconcelos",
-      "avatar_url": "https://avatars.githubusercontent.com/u/17701527?v=4",
-      "profile": "https://github.com/tpvasconcelos",
-      "contributions": [
-        "bug",
-        "code"
-      ]
-    },
-    {
       "login": "adamkells",
       "name": "Adam Kells",
       "avatar_url": "https://avatars.githubusercontent.com/u/19709277?v=4",
@@ -2441,6 +2431,16 @@
       "profile": "https://github.com/xansh",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "tpvasconcelos",
+      "name": "Tomas P. de Vasconcelos",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17701527?v=4",
+      "profile": "https://github.com/tpvasconcelos",
+      "contributions": [
+        "bug",
+        "code"
       ]
     }
   ]
