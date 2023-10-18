@@ -34,8 +34,8 @@ References
 
 import logging
 import math
-from dataclasses import asdict, dataclass, field
-from typing import Dict, List, Tuple
+from dataclasses import dataclass, field
+from typing import List, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -528,47 +528,6 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
             labels for each of the data points.
         """
         return self.fit(X, None).predict(X)
-
-    def get_params(self, deep: bool = True) -> Dict:
-        """Return initialization parameters.
-
-        Parameters
-        ----------
-        deep: bool
-            Dummy argument for compatibility with sklearn-api, not used.
-
-        Returns
-        -------
-        params: dict
-            Dictionary with the estimator's initialization parameters, with
-            keys being argument names and values being argument values.
-        """
-        attrs_to_ignore = [
-            "change_points_",
-            "_intermediate_change_points",
-            "_intermediate_ll",
-        ]
-        params = asdict(self._adaptee)
-        params = {
-            key: value for key, value in params.items() if key not in attrs_to_ignore
-        }
-        return params
-
-    def set_params(self, **parameters):
-        """Set the parameters of this object.
-
-        Parameters
-        ----------
-        parameters : dict
-            Initialization parameters for th estimator.
-
-        Returns
-        -------
-        self : reference to self (after parameters have been set)
-        """
-        for key, value in parameters.items():
-            setattr(self._adaptee, key, value)
-        return self
 
     def __repr__(self) -> str:
         """Return a string representation of the estimator."""
