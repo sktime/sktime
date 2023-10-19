@@ -410,10 +410,6 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
     change_points_: array_like, default=[]
         Locations of change points as integer indexes. By convention change points
         include the identity segmentation, i.e. first and last index + 1 values.
-    _intermediate_change_points: List[List[int]], default=[]
-        Intermediate values of change points for each value of k = 1...k_max
-    _intermediate_ll: List[float], default=[]
-        Intermediate values for log-likelihood for each value of k = 1...k_max
 
     Notes
     -----
@@ -457,6 +453,22 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
             verbose=verbose,
             random_state=random_state,
         )
+
+    @property
+    def _intermediate_change_points(self) -> List[List[int]]:
+        """Intermediate values of change points for each value of k = 1...k_max.
+
+        Default value is an empty list.
+        """
+        return self._adaptee._intermediate_change_points
+
+    @property
+    def _intermediate_ll(self) -> List[float]:
+        """Intermediate values for log-likelihood for each value of k = 1...k_max.
+
+        Default value is an empty list.
+        """
+        return self._adaptee._intermediate_ll
 
     def _fit(self, X, Y=None):
         """Fit method for compatibility with sklearn-type estimator interface.
