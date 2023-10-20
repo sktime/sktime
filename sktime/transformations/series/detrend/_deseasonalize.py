@@ -363,16 +363,25 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 class STLTransformer(BaseTransformer):
     """Remove seasonal components from a time-series using STL.
 
-    Interfaces STL from statsmodels as an sktime transformer.
+    Interfaces ``statsmodels.tsa.seasonal.STL`` as an sktime transformer.
 
-    The STLTransformer is a descriptive transformer to remove seasonality
-    from a series and is based on statsmodels.STL. It returns deseasonalized
-    data. Components are returned in addition if return_components=True
-    STLTransformer can not inverse_transform on indices not seen in fit().
-    This means that for pipelining, the Deseasonalizer or Detrender must be
-    used instead of STLTransformer.
+    ``STLTransformer`` can be used to perform deseasonalization or decomposition:
 
-    Important note: the returned series has seasonality removed, but not trend.
+    If ``return_components=False``, it will return the deseasonalized series, i.e.,
+    the trend component from ``statsmodels`` ``STL``.
+
+    If ``return_components=True``, it will transform the series into a decomposition
+    of component, returning the trend, seasonal, and residual components.
+
+    ``STLTransformer`` performs ``inverse_transform`` by summing any components,
+    and can be used for pipelining in a ``TransformedTargetForecaster``.
+
+    Important: for separate forecasts of trend and seasonality, and an
+    inverse transform that respects seasonality, ensure
+    that ``return_components=True`` is set, otherwise the inverse will just
+    return the trend component.
+
+    An alternative for pipeline-style composition is ``STLForecaster``.
 
     Parameters
     ----------
@@ -414,7 +423,7 @@ class STLTransformer(BaseTransformer):
         the two are linearly interpolated. Higher values reduce estimation
         time.
     return_components : bool, default=False
-        if False, will return only the STL transformed series
+        if False, will return only the trend component
         if True, will return the transformed series, as well as three components
             as variables in the returned multivariate series (DataFrame cols)
             "transformed" - the transformed series
