@@ -115,6 +115,7 @@ def test_load_forecastingdata():
     assert metadata["contain_equal_length"] is False
 
 
+@pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #5460")
 @pytest.mark.parametrize("name", TSF_SUBSAMPLE)
 def test_check_link_downloadable(name):
     """Test dataset URL from forecasting.org is downloadable and exits."""
