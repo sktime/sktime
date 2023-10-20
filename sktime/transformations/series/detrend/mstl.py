@@ -63,7 +63,7 @@ class MSTL(BaseTransformer):
         if True, will return the transformed series, as well as three components
             as variables in the returned multivariate series (DataFrame cols)
             "transformed" - the transformed series
-            "seasonal" - the seasonal component(s)
+            "seasonal" - the seasonal component(s), summed up if multiple
             "trend" - the trend component
             "resid" - the residuals after de-trending, de-seasonalizing
 
