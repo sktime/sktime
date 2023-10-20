@@ -47,7 +47,6 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from sktime.datasets._data_io import (
     _download_and_extract,
@@ -63,7 +62,6 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
-@pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #5460")
 def load_UCR_UEA_dataset(
     name, split=None, return_X_y=True, return_type=None, extract_path=None
 ):
