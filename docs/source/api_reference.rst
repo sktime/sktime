@@ -31,3 +31,4 @@ For a scientific manual, see the :ref:`user_guide`.
     api_reference/deployment
     api_reference/utils
     api_reference/exceptions
+    api_reference/pipeline

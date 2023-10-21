@@ -48,14 +48,13 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        # import inside method to avoid hard dependency
+    def _get_statsforecast_class(self):
         from statsforecast.models import GARCH as _GARCH
 
-        return _GARCH(
-            p=self.p,
-            q=self.q,
-        )
+        return _GARCH
+
+    def _get_statsforecast_params(self):
+        return {"p": self.p, "q": self.q}
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -110,13 +109,13 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        # import inside method to avoid hard dependency
+    def _get_statsforecast_class(self):
         from statsforecast.models import ARCH as _ARCH
 
-        return _ARCH(
-            p=self.p,
-        )
+        return _ARCH
+
+    def _get_statsforecast_params(self):
+        return {"p": self.p}
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

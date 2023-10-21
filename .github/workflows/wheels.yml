@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v4
         with:
@@ -35,10 +35,10 @@ jobs:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -86,9 +86,14 @@ jobs:
             python-version: '3.11'
             bitness: 64
             platform_id: win_amd64
+          - os: windows-latest
+            python: 312
+            python-version: '3.12'
+            bitness: 64
+            platform_id: win_amd64
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: test

@@ -26,67 +26,89 @@ from sktime.datatypes import get_examples
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+from sktime.split import temporal_train_test_split
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
-# Load data that will be the basis of tests
-y = load_airline()
-y_multi = get_examples(mtype="pd-multiindex", as_scitype="Panel")[0]
 
-# y train will be univariate data set
-y_train, y_test = temporal_train_test_split(y)
+@pytest.fixture
+def y_dict():
+    """Dictionary of dataframes for tests."""
+    y_dict = {}
 
-# Create train and test panel sample data
-mi = pd.MultiIndex.from_product([[0], y_train.index], names=["instances", "timepoints"])
-y_group1 = pd.DataFrame(y_train.values, index=mi, columns=["y"])
+    # Load data that will be the basis of tests
+    y = load_airline()
+    y_multi = get_examples(mtype="pd-multiindex", as_scitype="Panel")[0]
+    y_dict["y_multi"] = y_multi
 
-mi = pd.MultiIndex.from_product([[1], y_train.index], names=["instances", "timepoints"])
-y_group2 = pd.DataFrame(y_train.values, index=mi, columns=["y"])
+    # y train will be univariate data set
+    y_train, y_test = temporal_train_test_split(y)
+    y_dict["y_train"] = y_train
 
-y_train_grp = pd.concat([y_group1, y_group2])
+    # Create train and test panel sample data
+    mi = pd.MultiIndex.from_product(
+        [[0], y_train.index], names=["instances", "timepoints"]
+    )
+    y_group1 = pd.DataFrame(y_train.values, index=mi, columns=["y"])
 
-mi = pd.MultiIndex.from_product([[0], y_test.index], names=["instances", "timepoints"])
-y_group1 = pd.DataFrame(y_test.values, index=mi, columns=["y"])
+    mi = pd.MultiIndex.from_product(
+        [[1], y_train.index], names=["instances", "timepoints"]
+    )
+    y_group2 = pd.DataFrame(y_train.values, index=mi, columns=["y"])
 
-mi = pd.MultiIndex.from_product([[1], y_test.index], names=["instances", "timepoints"])
-y_group2 = pd.DataFrame(y_test.values, index=mi, columns=["y"])
+    y_train_grp = pd.concat([y_group1, y_group2])
+    y_dict["y_train_grp"] = y_train_grp
 
-y_test_grp = pd.concat([y_group1, y_group2])
+    mi = pd.MultiIndex.from_product(
+        [[0], y_test.index], names=["instances", "timepoints"]
+    )
+    y_group1 = pd.DataFrame(y_test.values, index=mi, columns=["y"])
 
-# Get hierachical data
-y_train_hier = get_examples(mtype="pd_multiindex_hier")[0]
+    mi = pd.MultiIndex.from_product(
+        [[1], y_test.index], names=["instances", "timepoints"]
+    )
+    y_group2 = pd.DataFrame(y_test.values, index=mi, columns=["y"])
 
-# Create unbalanced hierachical data, i.e. not a full tree with all branches.
-X = y_train_hier.reset_index().copy()
-X = X[~((X["bar"] == 2) & (X["foo"] == "b"))]
-X = X[["foo", "bar"]].drop_duplicates()
+    y_test_grp = pd.concat([y_group1, y_group2])
+    y_dict["y_test_grp"] = y_test_grp
 
-time_names = y_train.index.names[-1]
-timeframe = y_train.index.to_frame()
+    # Get hierachical data
+    y_train_hier = get_examples(mtype="pd_multiindex_hier")[0]
 
-X2 = X.merge(timeframe, how="cross")
+    # Create unbalanced hierachical data, i.e. not a full tree with all branches.
+    X = y_train_hier.reset_index().copy()
+    X = X[~((X["bar"] == 2) & (X["foo"] == "b"))]
+    X = X[["foo", "bar"]].drop_duplicates()
 
-freq_inferred = y_train.index.freq
+    time_names = y_train.index.names[-1]
+    timeframe = y_train.index.to_frame()
 
-x_names = X.columns
-if not isinstance(x_names, list):
-    x_names = x_names.to_list()
+    X2 = X.merge(timeframe, how="cross")
 
-y_train_reset = y_train.reset_index()
+    freq_inferred = y_train.index.freq
 
-X3 = X2.merge(y_train_reset, on="Period")
+    x_names = X.columns
+    if not isinstance(x_names, list):
+        x_names = x_names.to_list()
 
-freq_inferred = y_train.index.freq
+    y_train_reset = y_train.reset_index()
 
-y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
-    lambda df: df.drop(x_names, axis=1).set_index(time_names).asfreq(freq_inferred)
-)
+    X3 = X2.merge(y_train_reset, on="Period")
 
-# Create integer index data
-y_numeric = y_train.copy()
-y_numeric.index = pd.to_numeric(y_numeric.index)
+    freq_inferred = y_train.index.freq
+
+    y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
+        lambda df: df.drop(x_names, axis=1).set_index(time_names).asfreq(freq_inferred)
+    )
+    y_dict["y_train_hier_unequal"] = y_train_hier_unequal
+
+    # Create integer index data
+    y_numeric = y_train.copy()
+    y_numeric.index = pd.to_numeric(y_numeric.index)
+    y_dict["y_numeric"] = y_numeric
+
+    return y_dict
 
 
 # Get different WindowSummarizer functions
@@ -112,25 +134,27 @@ def check_eval(test_input, expected):
     "y, index_names",
     [
         (
-            y_train_grp,
+            "y_train_grp",
             ["instances", "timepoints"],
         ),
         (
-            y_train,
+            "y_train",
             [None],
         ),
         (
-            y_numeric,
+            "y_numeric",
             [None],
         ),
         (
-            y_train_hier_unequal,
+            "y_train_hier_unequal",
             ["foo", "bar", "Period"],
         ),
     ],
 )
-def test_recursive_reduction(y, index_names):
+def test_recursive_reduction(y, index_names, y_dict):
     """Test index column names match input names for recursive reduction."""
+    y = y_dict[y]
+
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )
@@ -157,25 +181,27 @@ def test_recursive_reduction(y, index_names):
     "y, index_names",
     [
         (
-            y_train_grp,
+            "y_train_grp",
             ["instances", "timepoints"],
         ),
         (
-            y_train,
+            "y_train",
             [None],
         ),
         (
-            y_numeric,
+            "y_numeric",
             [None],
         ),
         (
-            y_train_hier_unequal,
+            "y_train_hier_unequal",
             ["foo", "bar", "Period"],
         ),
     ],
 )
-def test_direct_reduction(y, index_names):
+def test_direct_reduction(y, index_names, y_dict):
     """Test index column names match input names for direct reduction."""
+    y = y_dict[y]
+
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )
@@ -201,25 +227,27 @@ def test_direct_reduction(y, index_names):
     "y, index_names",
     [
         (
-            y_train_grp,
+            "y_train_grp",
             ["instances", "timepoints"],
         ),
         (
-            y_train,
+            "y_train",
             [None],
         ),
         (
-            y_numeric,
+            "y_numeric",
             [None],
         ),
         (
-            y_train_hier_unequal,
+            "y_train_hier_unequal",
             ["foo", "bar", "Period"],
         ),
     ],
 )
-def test_list_reduction(y, index_names):
+def test_list_reduction(y, index_names, y_dict):
     """Test index column names match input names for recursive reduction."""
+    y = y_dict[y]
+
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )

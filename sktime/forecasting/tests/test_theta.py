@@ -7,9 +7,9 @@ import numpy as np
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.theta import ThetaForecaster, ThetaModularForecaster
+from sktime.split import temporal_train_test_split
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 

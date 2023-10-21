@@ -6,7 +6,7 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
-All clusterers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
+All forecasters in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="forecaster"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
@@ -149,6 +149,7 @@ Trend forecasters
     TrendForecaster
     PolynomialTrendForecaster
     STLForecaster
+    CurveFitForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
@@ -281,7 +282,7 @@ ARCH models
 
     StatsForecastARCH
     StatsForecastGARCH
-
+    ARCH
 
 Structural time series models
 -----------------------------

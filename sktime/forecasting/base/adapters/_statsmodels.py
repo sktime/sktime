@@ -6,12 +6,12 @@ __author__ = ["mloning"]
 __all__ = ["_StatsModelsAdapter"]
 
 import inspect
-from warnings import warn
 
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.warnings import warn
 
 
 class _StatsModelsAdapter(BaseForecaster):
@@ -67,7 +67,8 @@ class _StatsModelsAdapter(BaseForecaster):
                 warn(
                     f"NotImplementedWarning: {self.__class__.__name__} "
                     f"can not accept new data when update_params=False. "
-                    f"Call with update_params=True to refit with new data."
+                    f"Call with update_params=True to refit with new data.",
+                    obj=self,
                 )
             else:
                 # only append unseen data to fitted forecaster
@@ -147,8 +148,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
         raise NotImplementedError("abstract method")
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -202,9 +202,7 @@ class _StatsModelsAdapter(BaseForecaster):
             **get_prediction_arguments
         )
 
-        var_names = self._get_varnames(
-            default="Coverage", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
         columns = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=valid_indices, columns=columns)

@@ -246,7 +246,14 @@ class Evaluator:
             y = np.array(metrics_per_estimator_dataset[perm[1]])
             signs = np.sum([i[0] > i[1] for i in zip(x, y)])
             n = len(x)
-            p_val = stats.binomtest(signs, n).pvalue
+
+            # this if/else is for compatibility with scipy < 0.15.0
+            if hasattr(stats, "binomtest"):
+                binom = stats.binomtest
+            else:
+                binom = stats.binom_test
+
+            p_val = binom(signs, n).pvalue
             sign_test = {"estimator_1": perm[0], "estimator_2": perm[1], "p_val": p_val}
 
             sign_df = pd.concat(
