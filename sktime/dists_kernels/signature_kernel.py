@@ -867,7 +867,7 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
 
 
 class SignatureKernel(BasePairwiseTransformerPanel):
-    """Compute the sequential kernel matrix row features on collection of series.
+    """Time series signature kernel, including high-order and low-rank variants.
 
     Implements the signature kernel of Kiraly et al, see [1]_ and [2]_,
     including higher-order and low-rank approximation variants described therein.

@@ -10,7 +10,7 @@ Distances and kernel functions are treated the same, as they have the same forma
 
 Below, we list separately pairwise transformers for time series, and pairwise transformers for tabular data.
 
-.. automodule:: sktime.dists_kernels
+.. autosummary:: sktime.dists_kernels
    :no-members:
    :no-inherited-members:
 
@@ -24,7 +24,7 @@ Standalone, performant ``numba`` distance functions are available in the :mod:`s
 These are not wrapped in the ``sktime`` ``BaseObject`` interface and can therefore
 be used within other ``numba`` compiled functions for end-to-end compilation.
 
-.. automodule:: sktime.distances
+.. autosummary:: sktime.distances
    :no-members:
    :no-inherited-members:
 
