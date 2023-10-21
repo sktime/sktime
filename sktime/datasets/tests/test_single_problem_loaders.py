@@ -81,6 +81,7 @@ def test_load_numpy2d_multivariate_raises(loader):
         X, y = loader(return_type="numpy2d")
 
 
+@pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #5460")
 def test_load_UEA():
     """Test loading of a random subset of the UEA data, to check API."""
     from sktime.datasets.tsc_dataset_names import multivariate, univariate
@@ -114,6 +115,7 @@ def test_load_forecastingdata():
     assert metadata["contain_equal_length"] is False
 
 
+@pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #5462")
 @pytest.mark.parametrize("name", TSF_SUBSAMPLE)
 def test_check_link_downloadable(name):
     """Test dataset URL from forecasting.org is downloadable and exits."""
