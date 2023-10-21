@@ -15,6 +15,7 @@ import pandas as pd
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.parallel import parallelize
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
@@ -73,7 +74,7 @@ def _check_scores(metrics) -> Dict:
 
 
 def _get_column_order_and_datatype(
-    metric_types: Dict, return_data: bool = True, cutoff_dtype=None
+    metric_types: Dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
 ) -> Dict:
     """Get the ordered column name and input datatype of results."""
     others_metadata = {
@@ -86,11 +87,21 @@ def _get_column_order_and_datatype(
     }
     fit_metadata, metrics_metadata = {"fit_time": "float"}, {}
     for scitype in metric_types:
-        fit_metadata[f"{scitype}_time"] = "float"
-        if return_data:
-            y_metadata[f"y_{scitype}"] = "object"
         for metric in metric_types.get(scitype):
-            metrics_metadata[f"test_{metric.name}"] = "float"
+            pred_args = _get_pred_args_from_metric(scitype, metric)
+            if pred_args == {} or old_naming:
+                time_key = f"{scitype}_time"
+                result_key = f"test_{metric.name}"
+                y_pred_key = f"y_{scitype}"
+            else:
+                argval = list(pred_args.values())[0]
+                time_key = f"{scitype}_{argval}_time"
+                result_key = f"test_{metric.name}_{argval}"
+                y_pred_key = f"y_{scitype}_{argval}"
+            fit_metadata[time_key] = "float"
+            metrics_metadata[result_key] = "float"
+            if return_data:
+                y_metadata[y_pred_key] = "object"
     fit_metadata.update(others_metadata)
     if return_data:
         fit_metadata.update(y_metadata)
@@ -160,20 +171,29 @@ def _select_fh_from_y(y):
     return fh
 
 
-def _evaluate_window(
-    y_train,
-    y_test,
-    X_train,
-    X_test,
-    i,
-    fh,
-    forecaster,
-    strategy,
-    scoring,
-    return_data,
-    error_score,
-    cutoff_dtype,
-):
+def _get_pred_args_from_metric(scitype, metric):
+    pred_args = {
+        "pred_quantiles": "alpha",
+        "pred_interval": "coverage",
+    }
+    if scitype in pred_args.keys():
+        val = getattr(metric, pred_args[scitype], None)
+        if val is not None:
+            return {pred_args[scitype]: val}
+    return {}
+
+
+def _evaluate_window(x, meta):
+    # unpack args
+    i, (y_train, y_test, X_train, X_test) = x
+    fh = meta["fh"]
+    forecaster = meta["forecaster"]
+    strategy = meta["strategy"]
+    scoring = meta["scoring"]
+    return_data = meta["return_data"]
+    error_score = meta["error_score"]
+    cutoff_dtype = meta["cutoff_dtype"]
+
     # set default result values in case estimator fitting fails
     score = error_score
     fit_time = np.nan
@@ -181,7 +201,9 @@ def _evaluate_window(
     cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
     y_pred = pd.NA
     temp_result = dict()
-
+    y_preds_cache = dict()
+    old_naming = True
+    old_name_mapping = {}
     if fh is None:
         fh = _select_fh_from_y(y_test)
 
@@ -206,15 +228,40 @@ def _evaluate_window(
         # cache prediction from the first scitype and reuse it to compute other metrics
         for scitype in scoring:
             method = getattr(forecaster, pred_type[scitype])
-            start_pred = time.perf_counter()
-            y_pred = method(fh, X_test)
-            pred_time = time.perf_counter() - start_pred
-            temp_result[f"{scitype}_time"] = [pred_time]
+            if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
+                scoring.get(scitype)
+            ):
+                old_naming = False
             for metric in scoring.get(scitype):
+                pred_args = _get_pred_args_from_metric(scitype, metric)
+                if pred_args == {}:
+                    time_key = f"{scitype}_time"
+                    result_key = f"test_{metric.name}"
+                    y_pred_key = f"y_{scitype}"
+                else:
+                    argval = list(pred_args.values())[0]
+                    time_key = f"{scitype}_{argval}_time"
+                    result_key = f"test_{metric.name}_{argval}"
+                    y_pred_key = f"y_{scitype}_{argval}"
+                    old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
+                    old_name_mapping[
+                        f"test_{metric.name}_{argval}"
+                    ] = f"test_{metric.name}"
+                    old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
+
+                # make prediction
+                if y_pred_key not in y_preds_cache.keys():
+                    start_pred = time.perf_counter()
+                    y_pred = method(fh, X_test, **pred_args)
+                    pred_time = time.perf_counter() - start_pred
+                    temp_result[time_key] = [pred_time]
+                    y_preds_cache[y_pred_key] = [y_pred]
+                else:
+                    y_pred = y_preds_cache[y_pred_key][0]
+
                 score = metric(y_test, y_pred, y_train=y_train)
-                temp_result[f"test_{metric.name}"] = [score]
-            if return_data:
-                temp_result[f"y_{scitype}"] = [y_pred]
+                temp_result[result_key] = [score]
+
         # get cutoff
         cutoff = forecaster.cutoff
 
@@ -254,9 +301,14 @@ def _evaluate_window(
     if return_data:
         temp_result["y_train"] = [y_train]
         temp_result["y_test"] = [y_test]
+        temp_result.update(y_preds_cache)
     result = pd.DataFrame(temp_result)
     result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
-    column_order = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+    if old_naming:
+        result = result.rename(columns=old_name_mapping)
+    column_order = _get_column_order_and_datatype(
+        scoring, return_data, cutoff_dtype, old_naming=old_naming
+    )
     result = result.reindex(columns=column_order.keys())
 
     # Return forecaster if "update"
@@ -266,6 +318,8 @@ def _evaluate_window(
         return result
 
 
+# todo 0.25.0: remove compute argument and docstring
+# todo 0.25.0: remove kwargs and docstring
 def evaluate(
     forecaster,
     cv,
@@ -276,8 +330,9 @@ def evaluate(
     return_data: bool = False,
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
-    compute: bool = True,
+    compute: bool = None,
     cv_X=None,
+    backend_params: Optional[dict] = None,
     **kwargs,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
@@ -355,23 +410,37 @@ def evaluate(
         FitFailedWarning is raised.
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
         Runs parallel evaluate if specified and `strategy` is set as "refit".
-        - "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
-        - "dask": uses `dask`, requires `dask` package in environment
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
-        backend (`cloudpickle`) for "dask" and "loky" is generally more robust than the
-        standard `pickle` library used in "multiprocessing".
-    compute : bool, default=True
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    compute : bool, default=True, deprecated and will be removed in 0.25.0.
         If backend="dask", whether returned DataFrame is computed.
         If set to True, returns `pd.DataFrame`, otherwise `dask.dataframe.DataFrame`.
     cv_X : sktime BaseSplitter descendant, optional
         determines split of ``X`` into test and train folds
         default is ``X`` being split to identical ``loc`` indices as ``y``
         if passed, must have same number of splits as ``cv``
-    **kwargs : Keyword arguments
-        Only relevant if backend is specified. Additional kwargs are passed into
-        `dask.distributed.get_client` or `dask.distributed.Client` if backend is
-        set to "dask", otherwise kwargs are passed into `joblib.Parallel`.
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading":
+            any valid keys for ``joblib.Parallel`` can be passed here,
+            e.g., ``n_jobs``, with the exception of ``backend``
+            which is directly controlled by ``backend``
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+            e.g., ``scheduler``
 
     Returns
     -------
@@ -442,11 +511,37 @@ def evaluate(
     >>> results = evaluate(forecaster=NaiveVariance(forecaster),
     ... y=y, cv=cv, scoring=loss)
     """
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        raise RuntimeError(
-            "running evaluate with backend='dask' requires the dask package installed,"
-            "but dask is not present in the python environment"
+    if backend in ["dask", "dask_lazy"]:
+        if not _check_soft_dependencies("dask", severity="none"):
+            raise RuntimeError(
+                "running evaluate with backend='dask' requires the dask package "
+                "installed, but dask is not present in the python environment"
+            )
+
+    # todo 0.25.0: remove kwargs and this warning
+    if kwargs != {}:
+        warnings.warn(
+            "in evaluate, kwargs will no longer be supported from sktime 0.25.0. "
+            "to pass configuration arguments to the parallelization backend, "
+            "use backend_params instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
+        backend = "dask_lazy"
+
+    # todo 0.25.0: remove compute argument and logic, and remove this warning
+    if compute is not None:
+        warnings.warn(
+            "the compute argument of evaluate is deprecated and will be removed "
+            "in sktime 0.25.0. For the same behaviour in the future, "
+            'use backend="dask_lazy"',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    if compute is None:
+        compute = True
+    if backend == "dask" and not compute:
+        backend = "dask_lazy"
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
@@ -523,74 +618,44 @@ def evaluate(
     # generator for y and X splits to iterate over below
     yx_splits = gen_y_X_train_test(y, X, cv, cv_X)
 
+    # sequential strategies cannot be parallelized
+    not_parallel = strategy in ["update", "no-update_params"]
+
     # dispatch by backend and strategy
-    if backend is None or strategy in ["update", "no-update_params"]:
+    if not_parallel:
         # Run temporal cross-validation sequentially
         results = []
-        for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
-            if strategy == "update" or (strategy == "no-update_params" and i == 0):
-                result, forecaster = _evaluate_window(
-                    y_train,
-                    y_test,
-                    X_train,
-                    X_test,
-                    i,
-                    **_evaluate_window_kwargs,
-                )
+        for x in enumerate(yx_splits):
+            is_first = x[0] == 0  # first iteration
+            if strategy == "update" or (strategy == "no-update_params" and is_first):
+                result, forecaster = _evaluate_window(x, _evaluate_window_kwargs)
                 _evaluate_window_kwargs["forecaster"] = forecaster
             else:
-                result = _evaluate_window(
-                    y_train,
-                    y_test,
-                    X_train,
-                    X_test,
-                    i,
-                    **_evaluate_window_kwargs,
-                )
+                result = _evaluate_window(x, _evaluate_window_kwargs)
             results.append(result)
-        results = pd.concat(results)
-
-    elif backend == "dask":
-        # Use Dask delayed instead of joblib,
-        # which uses Futures under the hood
-        import dask.dataframe as dd
-        from dask import delayed as dask_delayed
-
-        results = []
-        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
-        for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits):
-            results.append(
-                dask_delayed(_evaluate_window)(
-                    y_train,
-                    y_test,
-                    X_train,
-                    X_test,
-                    i,
-                    **_evaluate_window_kwargs,
-                )
-            )
-        results = dd.from_delayed(
-            results,
-            meta=metadata,
-        )
-        if compute:
-            results = results.compute()
-
     else:
-        # Otherwise use joblib
-        from joblib import Parallel, delayed
-
-        results = Parallel(backend=backend, **kwargs)(
-            delayed(_evaluate_window)(
-                y_train,
-                y_test,
-                X_train,
-                X_test,
-                i,
-                **_evaluate_window_kwargs,
-            )
-            for i, (y_train, y_test, X_train, X_test) in enumerate(yx_splits)
+        if backend == "dask":
+            backend_in = "dask_lazy"
+        else:
+            backend_in = backend
+        results = parallelize(
+            fun=_evaluate_window,
+            iter=enumerate(yx_splits),
+            meta=_evaluate_window_kwargs,
+            backend=backend_in,
+            backend_params=backend_params,
         )
+
+    # final formatting of dask dataframes
+    if backend in ["dask", "dask_lazy"] and not not_parallel:
+        import dask.dataframe as dd
+
+        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+
+        results = dd.from_delayed(results, meta=metadata)
+        if backend == "dask":
+            results = results.compute()
+    else:
         results = pd.concat(results)
 
     # final formatting of results DataFrame

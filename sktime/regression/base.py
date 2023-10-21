@@ -24,7 +24,6 @@ __author__ = ["mloning", "fkiraly"]
 
 import time
 from abc import ABC, abstractmethod
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -33,6 +32,7 @@ from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
+from sktime.utils.warnings import warn
 
 
 class BaseRegressor(BaseEstimator, ABC):
@@ -354,7 +354,7 @@ class BaseRegressor(BaseEstimator, ABC):
         #   see discussion in PR 2366 why
         if len(problems) > 0:
             if self.is_composite():
-                warn(msg)
+                warn(msg, obj=self)
             else:
                 raise ValueError(msg)
 
@@ -430,9 +430,12 @@ def _check_regressor_input(
     # Check y if passed
     if y is not None:
         # Check y valid input
-        if not isinstance(y, (pd.Series, np.ndarray)):
+        if not isinstance(y, (pd.Series, np.ndarray)) and not (
+            isinstance(y, pd.DataFrame) and y.shape[1] == 1
+        ):
             raise ValueError(
-                f"y must be a np.array or a pd.Series, but found type: {type(y)}"
+                f"y must be a np.array, pd.Series or a 1-D pd.DataFrame,"
+                f"but found type: {type(y)}"
             )
         # Check matching number of labels
         n_labels = y.shape[0]
