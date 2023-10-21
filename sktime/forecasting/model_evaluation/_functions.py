@@ -527,7 +527,6 @@ def evaluate(
             DeprecationWarning,
             stacklevel=2,
         )
-        backend = "dask_lazy"
 
     # todo 0.25.0: remove compute argument and logic, and remove this warning
     if compute is not None:
@@ -646,6 +645,7 @@ def evaluate(
             backend_params=backend_params,
         )
 
+    print(backend)
     # final formatting of dask dataframes
     if backend in ["dask", "dask_lazy"] and not not_parallel:
         import dask.dataframe as dd
