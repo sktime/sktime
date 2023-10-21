@@ -25,6 +25,8 @@ jobs:
         uses: ./.github/actions/test-base
         with:
           python-version-identifier: ${{ matrix.python-version }}
+          sub-sample-estimators: "False"
+          test-affected-estimators: "False"
   test_components:
     name: test individual components
     strategy:
@@ -35,6 +37,7 @@ jobs:
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
         operating-system:
           - macos-latest
           - ubuntu-latest
@@ -56,3 +59,5 @@ jobs:
         with:
           sktime-component-identifier: ${{ matrix.sktime-component }}
           python-version-identifier: ${{ matrix.python-version }}
+          sub-sample-estimators: "False"
+          test-affected-estimators: "False"

@@ -43,3 +43,5 @@ jobs:
         uses: ./.github/actions/test-base
         with:
           python-version-identifier: ${{ matrix.python-version }}
+          sub-sample-estimators: "True"
+          test-affected-estimators: "True"
