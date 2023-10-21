@@ -203,8 +203,8 @@ class TimeSeriesSVC(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime compatible Panel data container, of mtype X_inner_mtype, with n series
-            data to fit the estimator to
+        X : sktime compatible Panel data container, of mtype X_inner_mtype,
+            with n time series to fit the estimator to
         y : {array-like, sparse matrix}
             Target values of shape = [n]
         """
