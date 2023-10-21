@@ -10,10 +10,6 @@ Distances and kernel functions are treated the same, as they have the same forma
 
 Below, we list separately pairwise transformers for time series, and pairwise transformers for tabular data.
 
-.. autosummary:: sktime.dists_kernels
-   :no-members:
-   :no-inherited-members:
-
 All time series distances and kernels in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="transformer-pairwise-panel"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
@@ -23,10 +19,6 @@ Distances and kernels for vector-valued features can be listed using ``estimator
 Standalone, performant ``numba`` distance functions are available in the :mod:`sktime.distance` module.
 These are not wrapped in the ``sktime`` ``BaseObject`` interface and can therefore
 be used within other ``numba`` compiled functions for end-to-end compilation.
-
-.. autosummary:: sktime.distances
-   :no-members:
-   :no-inherited-members:
 
 Time series distances/kernels
 -----------------------------
