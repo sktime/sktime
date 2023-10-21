@@ -311,6 +311,14 @@ class BaseForecaster(BaseEstimator):
         else:
             return ColumnSelect(key) ** self
 
+    def set_config(self, **config_dict):
+        """Set config flags to given values.
+
+        Dummy method to capture dynamic docstring generation in sphinx,
+        with config setting specific to this base class.
+        """
+        return super().set_config(**config_dict)
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
