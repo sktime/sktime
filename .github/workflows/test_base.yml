@@ -1,11 +1,11 @@
-name: test base workflow
+name: test base module
 on:
   pull_request:
     branches:
       - main
 jobs:
   detect:
-    name: check for changes in base framework
+    name: check for changes in base module
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -20,7 +20,7 @@ jobs:
               - sktime/base/**
   test:
     needs: detect
-    name: test base framework
+    name: test base module
     if: ${{ needs.detect.outputs.base == 'true' }}
     strategy:
       fail-fast: false
