@@ -647,7 +647,6 @@ def evaluate(
             backend_params=backend_params,
         )
 
-    print(backend)
     # final formatting of dask dataframes
     if backend in ["dask", "dask_lazy"] and not not_parallel:
         import dask.dataframe as dd
