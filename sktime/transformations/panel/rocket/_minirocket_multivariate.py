@@ -142,7 +142,7 @@ class MiniRocketMultivariate(BaseTransformer):
         )
 
         X = X.astype(np.float32)
-        # change n_jobs dependend on value and existing cores
+        # change n_jobs depended on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()

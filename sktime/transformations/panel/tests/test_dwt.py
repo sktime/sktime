@@ -93,7 +93,7 @@ def test_output_dimensions(num_levels, corr_series_length):
     assert num_cols == 1
 
 
-def test_dwt_performs_correcly_along_each_dim():
+def test_dwt_performs_correctly_along_each_dim():
     """Test that DWT produces the same result along each dimension."""
     X = _make_nested_from_array(
         np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), n_instances=1, n_columns=2

@@ -284,7 +284,7 @@ class _Reducer(_BaseWindowForecaster):
         and t= 1 etc- up to the forecasting horizon.
 
         Will also apply any transformers passed to the recursive reducer to y. This en
-        bloc approach of directly applying the transformers is more efficient than
+        block approach of directly applying the transformers is more efficient than
         creating all lags first across the window and then applying the transformers
         to the lagged data.
 

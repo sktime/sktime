@@ -36,7 +36,7 @@ class Imputer(BaseTransformer):
         * "constant" : same constant value (given in arg value) for all NaN
         * "mean" : pd.Series.mean() of *fit* data
         * "median" : pd.Series.median() of *fit* data
-        * "backfill" ot "bfill" : adapted from pd.Series.fillna()
+        * "backfill" to "bfill" : adapted from pd.Series.fillna()
         * "pad" or "ffill" : adapted from pd.Series.fillna()
         * "random" : random values between pd.Series.min() and .max() of *fit* data
             if pd.Series dtype is int, sample is uniform discrete
@@ -59,7 +59,7 @@ class Imputer(BaseTransformer):
         Use a given Forecaster to impute by insample predictions when
         method="forecaster". Before fitting, missing data is imputed with
         method="ffill" or "bfill" as heuristic. in case of multivariate X,
-        the forecaster is applied separete to each column like a
+        the forecaster is applied separate to each column like a
         ColumnEnsembleForecaster.
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None

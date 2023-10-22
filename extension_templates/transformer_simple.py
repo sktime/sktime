@@ -138,7 +138,7 @@ class MyTransformer(BaseTransformer):
         # univariate-only controls whether internal X can be univariate/multivariate
         # if True (only univariate), always applies vectorization over variables
         "univariate-only": False,
-        # valid values: True = inner _fit, _transform receive only univariate serie
+        # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
         #
         # requires_y = does y need to be passed in fit?
