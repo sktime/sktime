@@ -8,10 +8,7 @@ __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 import pandas as pd
 from joblib import Parallel, delayed
 
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    SlidingWindowSplitter,
-)
+from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
 
@@ -147,7 +144,7 @@ class WindowSummarizer(BaseTransformer):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()
     >>> kwargs = {
     ...     "lag_feature": {
@@ -291,6 +288,7 @@ class WindowSummarizer(BaseTransformer):
         lags = func_dict["summarizer"] == "lag"
         # Convert lags to default list notation with window_length 1
         boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
+        func_dict.loc[:, "window"] = func_dict["window"].astype("object")
         func_dict.loc[lags, "window"] = boost_lag
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
@@ -811,7 +809,7 @@ class SplitterSummarizer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.summarize import SplitterSummarizer
     >>> from sktime.transformations.series.summarize import SummaryTransformer
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = SplitterSummarizer(

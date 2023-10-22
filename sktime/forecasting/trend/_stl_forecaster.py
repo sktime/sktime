@@ -180,6 +180,21 @@ class STLForecaster(BaseForecaster):
         self.forecaster_resid = forecaster_resid
         super().__init__()
 
+        for forecaster in (
+            self.forecaster_trend,
+            self.forecaster_seasonal,
+            self.forecaster_resid,
+        ):
+            if forecaster is not None and not forecaster.get_tag(
+                "ignores-exogeneous-X"
+            ):
+                ignore_exogenous = False
+                break
+        else:  # none of the forecasters (if provided) use exogenous feature variables
+            ignore_exogenous = True  # corresponding to NaiveForecaster in missing case
+
+        self.set_tags(**{"ignores-exogeneous-X": ignore_exogenous})
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 

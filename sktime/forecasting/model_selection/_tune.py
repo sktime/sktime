@@ -11,7 +11,6 @@ __all__ = [
 
 from collections.abc import Sequence
 from typing import Dict, List, Optional, Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -22,8 +21,8 @@ from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
+from sktime.split.base import BaseSplitter
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -37,8 +36,6 @@ class BaseGridSearch(_DelegatedForecaster):
         "capability:pred_int:insample": True,
     }
 
-    # todo 0.24.0: replace all tune_by_variable defaults in this file with False
-    # remove deprecation message in BaseGridSearch.__init__
     def __init__(
         self,
         forecaster,
@@ -54,7 +51,7 @@ class BaseGridSearch(_DelegatedForecaster):
         update_behaviour="full_refit",
         error_score=np.nan,
         tune_by_instance=False,
-        tune_by_variable=None,
+        tune_by_variable=False,
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -72,20 +69,6 @@ class BaseGridSearch(_DelegatedForecaster):
         self.tune_by_variable = tune_by_variable
 
         super().__init__()
-
-        # todo 0.24.0: remove this
-        if tune_by_variable is None:
-            warn(
-                f"in {self.__class__.__name__}, the default for tune_by_variable "
-                "will change from True to False in 0.24.0. "
-                "This will tune one parameter setting for all variables, while "
-                "currently it tunes one parameter per variable. "
-                "In order to maintain the current behaviour, ensure to set "
-                "the parameter tune_by_variable to True explicitly before upgrading "
-                "to version 0.24.0.",
-                DeprecationWarning,
-            )
-            tune_by_variable = True
 
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -468,7 +451,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         and are available in fields of the forecasters_ attribute.
         Has the same effect as applying ForecastByLevel wrapper to self.
         If False, the same best parameter is selected for all instances.
-    tune_by_variable : bool, optional (default=True)
+    tune_by_variable : bool, optional (default=False)
         Whether to tune parameter by each time series variable separately,
         in case of multivariate data passed to the tuning estimator.
         Only applies if time series passed are strictly multivariate.
@@ -509,9 +492,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     Examples
     --------
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sktime.forecasting.model_selection import (
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import (
     ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
@@ -533,7 +516,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
@@ -585,7 +568,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         update_behaviour="full_refit",
         error_score=np.nan,
         tune_by_instance=False,
-        tune_by_variable=None,
+        tune_by_variable=False,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -648,13 +631,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import (
             MeanAbsolutePercentageError,
             mean_absolute_percentage_error,
         )
+        from sktime.split import SingleWindowSplitter
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
@@ -777,7 +760,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         and are available in fields of the forecasters_ attribute.
         Has the same effect as applying ForecastByLevel wrapper to self.
         If False, the same best parameter is selected for all instances.
-    tune_by_variable : bool, optional (default=True)
+    tune_by_variable : bool, optional (default=False)
         Whether to tune parameter by each time series variable separately,
         in case of multivariate data passed to the tuning estimator.
         Only applies if time series passed are strictly multivariate.
@@ -828,7 +811,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         update_behaviour="full_refit",
         error_score=np.nan,
         tune_by_instance=False,
-        tune_by_variable=None,
+        tune_by_variable=False,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -872,10 +855,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.split import SingleWindowSplitter
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
@@ -1008,7 +991,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         and are available in fields of the forecasters_ attribute.
         Has the same effect as applying ForecastByLevel wrapper to self.
         If False, the same best parameter is selected for all instances.
-    tune_by_variable : bool, optional (default=True)
+    tune_by_variable : bool, optional (default=False)
         Whether to tune parameter by each time series variable separately,
         in case of multivariate data passed to the tuning estimator.
         Only applies if time series passed are strictly multivariate.
@@ -1043,9 +1026,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     Examples
     --------
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingSkoptSearchCV)
+    >>> from sktime.forecasting.model_selection import ForecastingSkoptSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> from sktime.forecasting.compose import make_reduction
     >>> y = load_shampoo_sales()
@@ -1099,7 +1081,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         update_behaviour: str = "full_refit",
         error_score=np.nan,
         tune_by_instance=False,
-        tune_by_variable=None,
+        tune_by_variable=False,
     ):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -1455,10 +1437,10 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.split import SingleWindowSplitter
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
