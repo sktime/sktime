@@ -48,7 +48,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
     distance_params: dict, defaults = None
-        Dictonary containing kwargs for the distance metric being used.
+        Dictionary containing kwargs for the distance metric being used.
 
     Attributes
     ----------

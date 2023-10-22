@@ -1129,7 +1129,7 @@ def load_solar(
     """Get national solar estimates for GB from Sheffield Solar PV_Live API.
 
     This function calls the Sheffield Solar PV_Live API to extract national solar data
-    for the GB eletricity network. Note that these are estimates of the true solar
+    for the GB electricity network. Note that these are estimates of the true solar
     generation, since the true values are "behind the meter" and essentially
     unknown.
 
@@ -1352,7 +1352,7 @@ def load_forecastingdata(
 
         url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
 
-        # This also tests the validitiy of the URL, can't rely on the html
+        # This also tests the validity of the URL, can't rely on the html
         # status code as it always returns 200
         try:
             _download_and_extract(

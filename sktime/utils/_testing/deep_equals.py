@@ -262,8 +262,8 @@ def _fh_equals(x, y, return_msg=False):
 
     Parameters
     ----------
-    x: ForcastingHorizon
-    y: ForcastingHorizon
+    x: ForecastingHorizon
+    y: ForecastingHorizon
     return_msg : bool, optional, default=False
         whether to return informative message about what is not equal
 

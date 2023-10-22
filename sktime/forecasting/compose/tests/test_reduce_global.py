@@ -73,10 +73,10 @@ def y_dict():
     y_test_grp = pd.concat([y_group1, y_group2])
     y_dict["y_test_grp"] = y_test_grp
 
-    # Get hierachical data
+    # Get hierarchical data
     y_train_hier = get_examples(mtype="pd_multiindex_hier")[0]
 
-    # Create unbalanced hierachical data, i.e. not a full tree with all branches.
+    # Create unbalanced hierarchical data, i.e. not a full tree with all branches.
     X = y_train_hier.reset_index().copy()
     X = X[~((X["bar"] == 2) & (X["foo"] == "b"))]
     X = X[["foo", "bar"]].drop_duplicates()

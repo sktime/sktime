@@ -941,7 +941,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         * If None, defaults to MeanAbsolutePercentageError()
 
     optimizer_kwargs: dict, optional
-        Arguments passed to Optimizer to control the bahaviour of the bayesian search.
+        Arguments passed to Optimizer to control the behaviour of the bayesian search.
         For example, {'base_estimator': 'RF'} would use a Random Forest surrogate
         instead of the default Gaussian Process. Please refer to the `skopt.Optimizer`
         documentation for more information.

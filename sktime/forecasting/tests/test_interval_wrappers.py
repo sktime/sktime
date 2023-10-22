@@ -40,7 +40,7 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
 
     We test once with an internal forecaster that needs pd.DataFrame conversion,
     and one that accepts pd.Series.
-    We do this with a trick: the vanilla NaiveForecaster can accept both; we mimick a
+    We do this with a trick: the vanilla NaiveForecaster can accept both; we mimic a
     "pd.DataFrame only" forecaster by restricting its y_inner_mtype tag to pd.Series.
     """
     y = load_airline()

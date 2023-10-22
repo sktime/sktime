@@ -246,7 +246,7 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
 
         msg = (
             f"check_is_mtype returns wrong metadata on scitype {scitype}, "
-            f"mtype {mtype}, fixture {fixture_index}, when quering full metadata. "
+            f"mtype {mtype}, fixture {fixture_index}, when querying full metadata. "
             f"returned: {metadata}; expected: {expected_metadata}"
         )
 
@@ -268,7 +268,7 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
 
             msg = (
                 f"check_is_mtype returns wrong metadata on scitype {scitype}, "
-                f"mtype {mtype}, fixture {fixture_index}, when quering "
+                f"mtype {mtype}, fixture {fixture_index}, when querying "
                 f"metadata for metadata key {metadata_key}. "
                 f"returned: {metadata[metadata_key]}; "
                 f"expected: {expected_metadata[metadata_key]}"
