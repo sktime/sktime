@@ -153,7 +153,7 @@ all_extras_pandas2 = [
 # names are identical with the names of the modules and estimator type strings
 # dependency sets are selected to cover the most popular estimators in each module
 # (this is a subjective choice, and may change over time as the ecosystem evolves,
-# removals are always accompanied by a deprecation warning)
+# removals are rare and always accompanied by a deprecation warning)
 #
 # users can install via "pip install sktime[forecasting,transformations]" etc
 #
