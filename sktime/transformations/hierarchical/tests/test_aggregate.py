@@ -20,7 +20,7 @@ from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 def test_aggregator_fit_transform_index(flatten_single_levels):
     """Tests fit_transform of aggregator function.
 
-    This test asserts that the output of Aggregator using fit_transfrom() with a named
+    This test asserts that the output of Aggregator using fit_transform() with a named
     multiindex is equal to an unnamed one. It also tests that Aggregator does not change
     the names of the input index in both cases.
     """

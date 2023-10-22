@@ -27,7 +27,7 @@ class ContractableBOSS(BaseClassifier):
     described in Middlehurst, Vickers and Bagnall (2019). [1, 2]_
 
     Overview: Input "n" series of length "m" and cBOSS randomly samples
-    `n_parameter_samples` parameter sets, evaluting each with LOOCV. It then
+    `n_parameter_samples` parameter sets, evaluating each with LOOCV. It then
     retains `max_ensemble_size` classifiers with the highest accuracy
     There are three primary parameters:
         - alpha: alphabet size

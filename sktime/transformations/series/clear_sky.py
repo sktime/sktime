@@ -10,7 +10,7 @@ from joblib import Parallel, delayed
 from sktime.transformations.base import BaseTransformer
 
 # todo: update function?
-# todo: clock changes, time-zone aware index, miliseconds?
+# todo: clock changes, time-zone aware index, milliseconds?
 
 
 class ClearSky(BaseTransformer):
@@ -30,7 +30,7 @@ class ClearSky(BaseTransformer):
     The weights are defined using von-mises kernels with bandwidths chosen by the
     user.
 
-    This transformation can be inacurate at low values, in the solar example during
+    This transformation can be inaccurate at low values, in the solar example during
     early morning and late evening. Therefore, clear sky values below a threshold can
     be fixed to zero in the transformed domain. Denominator values of zero are set
     to zero in the transformed domain by default.
@@ -353,7 +353,7 @@ def _check_index(X):
             raise ValueError("Input index frequency cannot be inferred and is not set.")
 
     tod = pd.timedelta_range(start="0T", end="1D", freq=freq_ind)
-    # checck frequency of tod
+    # check frequency of tod
     if (tod.freq > pd.offsets.Day(1)) | (tod.freq < pd.offsets.Second(1)):
         raise ValueError(
             """

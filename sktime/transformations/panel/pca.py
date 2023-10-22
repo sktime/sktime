@@ -9,7 +9,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class PCATransformer(BaseTransformer):
-    """Principal Components Analysis applied to panel of time seires.
+    """Principal Components Analysis applied to panel of time series.
 
     Provides a simple wrapper around ``sklearn.decomposition.PCA``.
 

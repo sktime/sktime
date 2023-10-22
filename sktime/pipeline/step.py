@@ -46,8 +46,8 @@ class Step:
     input_edges : dict
         A dict with string keys to string values. Identifying the
         predcessors.  The keys of the edges dict specify to which argument
-        of fit/predict/.. the output of the predessors (the value of the
-        dict specifies the predessors name) shuold be passed.
+        of fit/predict/.. the output of the predecessors (the value of the
+        dict specifies the predecessors name) should be passed.
     method : str
         The method that should be called on the skobject. If None, the pipeline
          selects the method based on the method

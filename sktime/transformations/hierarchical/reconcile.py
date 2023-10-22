@@ -18,9 +18,9 @@ from sktime.utils.warnings import warn
 
 
 class Reconciler(BaseTransformer):
-    """Hierarchical reconcilation transformer.
+    """Hierarchical reconciliation transformer.
 
-    Hierarchical reconciliation is a transfromation which is used to make the
+    Hierarchical reconciliation is a transformation which is used to make the
     predictions in a hierarchy of time-series sum together appropriately.
 
     The methods implemented in this class only require the structure of the
@@ -294,7 +294,7 @@ def _get_s_matrix(X):
         else:
             s_matrix.loc["__total", i] = 1.0
 
-    # drop new levels not present in orginal matrix
+    # drop new levels not present in original matrix
     s_matrix = s_matrix.loc[s_matrix.index.isin(al_inds)]
 
     return s_matrix
@@ -548,7 +548,7 @@ def _parent_child_df(s_matrix):
     for i in s_matrix.columns:
         # get all connections
         connected_nodes = s_matrix[(s_matrix[i] == 1)].sum(axis=1)
-        # for non-flattened hiearchies make sure "__totals" are above
+        # for non-flattened hierarchies make sure "__totals" are above
         connected_nodes = (connected_nodes + total_count).dropna()
         connected_nodes = connected_nodes.sort_values(ascending=False)
 

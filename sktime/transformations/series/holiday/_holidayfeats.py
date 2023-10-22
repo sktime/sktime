@@ -44,7 +44,7 @@ class HolidayFeatures(BaseTransformer):
     return_indicator : bool, default=False
         Whether or not to return an indicator variable equal to 1 if a time
         point is a holiday or not.
-    keep_original_columns : bool, defalut=False
+    keep_original_columns : bool, default=False
         Keep original columns in X passed to `.transform()`.
 
     Examples

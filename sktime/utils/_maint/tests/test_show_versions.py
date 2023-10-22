@@ -9,7 +9,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def test_show_versions_runs():
-    """Test that show_versions runs without exeptions."""
+    """Test that show_versions runs without exceptions."""
     # only prints, should return None
     assert show_versions() is None
 
