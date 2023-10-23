@@ -223,19 +223,10 @@ dev = [
   "wheel",
 ]
 
-# CI related soft dependency sets - not for users of sktime
-binder = [
-  "jupyter",
-  "pandas<2.0.0",
-]
-cython_extras = [
-  "mrseql",
-  'mrsqm; python_version < "3.11"',
-  "numba<0.59",
-]
-dl = [
-  "tensorflow",
-]
+# CI related soft dependency sets - not for users of sktime, only for developers
+# docs and tests are standard dep sets for development use
+# they are stable and subject to deprecation policies
+# contributors should use the dev dependency set for contributing to sktime, see above
 docs = [
   "jupyter",
   "myst-parser",
@@ -250,6 +241,28 @@ docs = [
   "sphinx-version-warning",
   "tabulate",
 ]
+tests = [
+  "pytest<7.5,>=7.4",
+  "pytest-cov<4.2,>=4.1",
+  "pytest-randomly<3.16,>=3.15",
+  "pytest-timeout<2.2,>=2.1",
+  "pytest-xdist<3.4,>=3.3",
+]
+
+# CI related soft dependency sets - not for users of sktime, only for developers
+# these are special testing cases and may be changed or removed at any time
+binder = [
+  "jupyter",
+  "pandas<2.0.0",
+]
+cython_extras = [
+  "mrseql",
+  'mrsqm; python_version < "3.11"',
+  "numba<0.59",
+]
+dl = [
+  "tensorflow",
+]
 mlflow = [
   "mlflow",
 ]
@@ -261,13 +274,6 @@ mlflow_tests = [
 ]
 pandas1 = [
   "pandas<2.0.0",
-]
-tests = [
-  "pytest<7.5,>=7.4",
-  "pytest-cov<4.2,>=4.1",
-  "pytest-randomly<3.16,>=3.15",
-  "pytest-timeout<2.2,>=2.1",
-  "pytest-xdist<3.4,>=3.3",
 ]
 
 [project.urls]
