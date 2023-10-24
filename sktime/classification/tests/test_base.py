@@ -525,9 +525,9 @@ def test_save_estimator_using_cloudpickle(foo):
     est = _DummyComposite(foo)
 
     serialized = est.save(serialization_format="cloudpickle")
-    deserialized = load(serialized)
+    loaded_est = load(serialized)
 
     if callable(foo):
-        assert serialized.foo(2) == deserialized.foo(2)
+        assert est.foo(2) == loaded_est.foo(2)
     else:
-        assert serialized.foo == deserialized.foo
+        assert est.foo == loaded_est.foo
