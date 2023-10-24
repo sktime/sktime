@@ -34,7 +34,9 @@ def load(serial):
 
     Examples
     --------
-    Example 1: saving an estimator as pickle and loading
+    Example 1: saving an estimator as cloudpickle and loading it back
+        Note: `cloudpickle` is a soft dependency and is not present
+        with the base-installation.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -46,7 +48,7 @@ def load(serial):
     NaiveForecaster()
     >>>
     >>> # 2. save the fitted estimator
-    >>> pkl = forecaster.save()
+    >>> pkl = forecaster.save(serialization_format="cloudpickle")
     >>>
     >>> # 3. load the saved estimator (can do this on empty kernel)
     >>> from sktime.base import load

@@ -66,6 +66,11 @@ from sklearn.base import BaseEstimator as _BaseEstimator
 from sktime.exceptions import NotFittedError
 from sktime.utils.random_state import set_random_state
 
+SERIALIZATION_FORMATS = {
+    "pickle",
+    "cloudpickle",
+}
+
 
 class BaseObject(_BaseObject):
     """Base class for parametric objects with tags in sktime.
@@ -157,7 +162,7 @@ class BaseObject(_BaseObject):
         doc += doc_end
         return doc
 
-    def save(self, path=None):
+    def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
@@ -177,6 +182,12 @@ class BaseObject(_BaseObject):
                 path="/home/stored/estimator" then a zip file `estimator.zip` will be
                 stored in `/home/stored/`.
 
+        serialization_format: str, default = "pickle"
+            Module to use for serialization.
+            The available options are present under
+            `sktime.base._base.SERIALIZATION_FORMATS`. Note that non-default formats
+            might require installation of other soft dependencies.
+
         Returns
         -------
         if `path` is None - in-memory serialized self
@@ -187,21 +198,44 @@ class BaseObject(_BaseObject):
         from pathlib import Path
         from zipfile import ZipFile
 
-        if path is None:
-            return (type(self), pickle.dumps(self))
-        if not isinstance(path, (str, Path)):
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        if serialization_format not in SERIALIZATION_FORMATS:
+            raise ValueError(
+                f"The provided `serialization_format`='{serialization_format}' "
+                "is not yet supported. The possible formats are: "
+                f"{SERIALIZATION_FORMATS}."
+            )
+
+        if path is not None and not isinstance(path, (str, Path)):
             raise TypeError(
                 "`path` is expected to either be a string or a Path object "
                 f"but found of type:{type(path)}."
             )
+        if path is not None:
+            path = Path(path) if isinstance(path, str) else path
+            path.mkdir()
 
-        path = Path(path) if isinstance(path, str) else path
-        path.mkdir()
+        if serialization_format == "cloudpickle":
+            _check_soft_dependencies("cloudpickle", severity="error")
+            import cloudpickle
 
-        with open(path / "_metadata", "wb") as file:
-            pickle.dump(type(self), file)
-        with open(path / "_obj", "wb") as file:
-            pickle.dump(self, file)
+            if path is None:
+                return (type(self), cloudpickle.dumps(self))
+
+            with open(path / "_metadata", "wb") as file:
+                cloudpickle.dump(type(self), file)
+            with open(path / "_obj", "wb") as file:
+                cloudpickle.dump(self, file)
+
+        elif serialization_format == "pickle":
+            if path is None:
+                return (type(self), pickle.dumps(self))
+
+            with open(path / "_metadata", "wb") as file:
+                pickle.dump(type(self), file)
+            with open(path / "_obj", "wb") as file:
+                pickle.dump(self, file)
 
         shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
