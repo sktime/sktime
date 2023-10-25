@@ -82,7 +82,7 @@ def test_data_arrow_head():
     """Create sample data for univariate classification."""
     X_train, y_train = load_arrow_head(split="TRAIN")
     X_test, y_test = load_arrow_head(split="TEST")
-    return y_train, y_test, X_train, X_test
+    return y_train.astype(int), y_test.astype(int), X_train, X_test
 
 
 @pytest.fixture(scope="module")
