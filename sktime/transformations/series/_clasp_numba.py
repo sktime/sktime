@@ -111,7 +111,10 @@ def _compute_distances_iterative(X, m, k):
         )
         dist[trivialMatchRange[0] : trivialMatchRange[1]] = np.inf
 
-        idx = np.argpartition(dist, k)
+        if k >= len(dist):
+            idx = np.argpartition(dist, len(dist) - 1)
+        else:
+            idx = np.argpartition(dist, k)
 
         knns[order, :] = idx[:k]
         dot_prev = dot_rolled
