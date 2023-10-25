@@ -1,4 +1,4 @@
-name: "components unit tests"
+name: "shared components unit tests"
 
 inputs:
     sktime-component-identifier:
