@@ -71,10 +71,10 @@ class ShapeDTW(BaseClassifier):
                                 - params = None
 
         - 'hog1d'               : use a histogram of gradients in one
-                                  dimension as the shape desciptor
+                                  dimension as the shape descriptor
                                   function.
                                 - params = num_intervals_hog1d
-                                                    (defualt=2)
+                                                    (default=2)
                                          = num_bins_hod1d
                                                     (default=8)
                                          = scaling_factor_hog1d
@@ -395,7 +395,7 @@ class ShapeDTW(BaseClassifier):
             num_bins = parameters.get("num_bins_hog1d")
             scaling_factor = parameters.get("scaling_factor_hog1d")
 
-            # All 3 paramaters are None
+            # All 3 parameters are None
             if num_intervals is None and num_bins is None and scaling_factor is None:
                 return HOG1DTransformer()
 
@@ -426,7 +426,7 @@ class ShapeDTW(BaseClassifier):
                 scaling_factor=scaling_factor,
             )
         else:
-            raise ValueError("Invalid shape desciptor function.")
+            raise ValueError("Invalid shape descriptor function.")
 
     def _check_metric_params(self, parameters):
         """Check for an invalid metric_params."""

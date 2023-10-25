@@ -33,7 +33,7 @@ class BaggingForecaster(BaseForecaster):
     horizon by calculating the sampled forecast quantiles.
 
     Bergmeir et al. (2016) [2] show that, on average, bagging ETS forecasts gives better
-    forecasts than just applying ETS directly. The default bootstraping transformer
+    forecasts than just applying ETS directly. The default bootstrapping transformer
     and forecaster are selected as in [2].
 
     Parameters

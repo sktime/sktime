@@ -61,7 +61,7 @@ class _PredictionWeightedEnsembler:
         self.weights /= np.sum(self.weights)
 
     def _update(self, y_pred, y_true):
-        """Update fitted paramters and performs a new ensemble fit.
+        """Update fitted parameters and performs a new ensemble fit.
 
         Resets the weights over the estimators by passing previous
         observations to the weighting algorithm.
@@ -183,7 +183,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
 
         Update the weights on each of the estimators by performing a potential
         function update with a root-finding search. low_c represents the lower
-        bound on the window that the root finding is occuring over.
+        bound on the window that the root finding is occurring over.
 
         Parameters
         ----------
