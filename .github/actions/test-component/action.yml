@@ -38,8 +38,8 @@ runs:
         shell: "bash"
         run: >-
             python3 -m pytest sktime/${{ inputs.sktime-component-identifier }}
-                --matrixdesign ${{ inputs.sub-sample-estimators }}
-                --only_changed_modules ${{ inputs.test-affected-estimators }}
+            --matrixdesign ${{ inputs.sub-sample-estimators }}
+            --only_changed_modules ${{ inputs.test-affected-estimators }}
     -
         name: "send coverage to codecov"
         uses: "codecov/codecov-action@v3"
