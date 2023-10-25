@@ -112,7 +112,7 @@ def test_mixed_algebra_dunders():
 
 
 def test_pw_trafo_pipeline_mul_dunder():
-    """Tests creation of pairwise panel trafo pipeliens using mul dunder."""
+    """Tests creation of pairwise panel trafo pipelines using mul dunder."""
     from sktime.transformations.series.exponent import ExponentTransformer
 
     t3 = EditDist()
@@ -142,7 +142,7 @@ def test_pw_trafo_pipeline_mul_dunder():
 
 @pytest.mark.parametrize("constant", [0, 1, -0.25])
 def test_dunders_with_constants(constant):
-    """Tests creation of pairwise panel trafo pipeliens using mul dunder."""
+    """Tests creation of pairwise panel trafo pipelines using mul dunder."""
     t = EditDist()
 
     m = t.transform(X1, X2)
@@ -167,7 +167,7 @@ def test_dunders_with_constants(constant):
 
 
 def test_getitem_dunder():
-    """Tests creation of pairwise panel trafo pipeliens using mul dunder."""
+    """Tests creation of pairwise panel trafo pipelines using mul dunder."""
     t = EditDist()
 
     idx_sub = ["var_1", "var_2"]

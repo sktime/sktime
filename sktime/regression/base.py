@@ -76,7 +76,7 @@ class BaseRegressor(BaseEstimator, ABC):
         self._threads_to_use = 1
         self._X_metadata = {}
 
-        # required for compatability with some sklearn interfaces
+        # required for compatibility with some sklearn interfaces
         # i.e. CalibratedRegressorCV
         self._estimator_type = "regressor"
 

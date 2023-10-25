@@ -26,7 +26,7 @@ class Deseasonalizer(BaseTransformer):
 
     `transform` aligns seasonal components stored in `seasonal_` with
     the time index of the passed :term:`series <Time series>` and then
-    substracts them ("additive" model) from the passed :term:`series <Time series>`
+    subtracts them ("additive" model) from the passed :term:`series <Time series>`
     or divides the passed series by them ("multiplicative" model).
 
     Parameters
@@ -247,7 +247,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 
     Transform aligns seasonal components stored in `seasonal_` with
     the time index of the passed series and then
-    substracts them ("additive" model) from the passed series
+    subtracts them ("additive" model) from the passed series
     or divides the passed series by them ("multiplicative" model).
 
 
@@ -613,7 +613,7 @@ class STLTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # test case 1: all default parmameters
+        # test case 1: all default parameters
         params1 = {}
 
         # test case 2: return all components

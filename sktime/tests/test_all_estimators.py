@@ -793,7 +793,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         # this test is too harsh for the current estimator base
         # params_not_tested = set(unreserved_param_names).difference(params_tested)
         # assert len(params_not_tested) == 0, (
-        #     f"get_test_params shoud set each parameter of {estimator_class} "
+        #     f"get_test_params should set each parameter of {estimator_class} "
         #     f"to a non-default value at least once, but the following "
         #     f"parameters are not tested: {params_not_tested}"
         # )
@@ -1257,7 +1257,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             (including hyper-parameters and fitted parameters)
         2. expected output type of the method matches actual output type
             - only for abstract BaseEstimator methods, common to all estimator scitypes
-            list of BaseEstimator methdos tested: get_fitted_params
+            list of BaseEstimator methods tested: get_fitted_params
             scitype specific method outputs are tested in TestAll[estimatortype] class
         """
         estimator = estimator_instance

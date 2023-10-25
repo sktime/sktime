@@ -23,7 +23,7 @@ class ForecastKnownValues(BaseForecaster):
       e.g., in combination with ReconcilerForecaster for an isolated reconciliation step
 
     When forecasting, uses `pandas.DataFrame.reindex` under the hood to obtain predicted
-    values from `y_known`. Paramters other than `y_known` are directly passed
+    values from `y_known`. Parameters other than `y_known` are directly passed
     on to `pandas.DataFrame.reindex`.
 
     Parameters

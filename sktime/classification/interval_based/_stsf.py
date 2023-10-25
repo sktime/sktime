@@ -58,7 +58,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         The classes labels.
     intervals : array-like of shape [n_estimators][3][7][n_intervals][2]
         Stores indexes of all start and end points for all estimators. Each estimator
-        contains indexes for each representaion and feature combination.
+        contains indexes for each representation and feature combination.
     estimators_ : list of shape (n_estimators) of DecisionTreeClassifier
         The collections of estimators trained in fit.
 

@@ -1,8 +1,6 @@
 name: test base module
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 jobs:
   detect:
     name: check for changes in base module

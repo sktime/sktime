@@ -103,8 +103,8 @@ def test_data_loaders(dataset):
 
     dataset: dictionary with values to assert against should contain:
         'columns' : list with column names in correct order,
-        'len_y'   : lenght of the y series (int),
-        'len_X'   : lenght of the X series/dataframe (int),
+        'len_y'   : length of the y series (int),
+        'len_X'   : length of the X series/dataframe (int),
         'data_types_X' : dictionary with column name keys and dtype as value,
         'data_type_y'  : dtype if y column (string)
         'data'    : tuple with y series and X series/dataframe if one is not

@@ -1,8 +1,6 @@
 name: test modules
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 jobs:
   detect:
     name: detect change in module

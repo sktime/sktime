@@ -307,7 +307,7 @@ def plot_correlations(
         Whether to compute ACF via FFT.
 
     acf_adjusted : bool, default = True
-        If True, denonimator of ACF calculations uses n-k instead of n, where
+        If True, denominator of ACF calculations uses n-k instead of n, where
         n is number of observations and k is the lag.
 
     pacf_method : str, default = 'ywadjusted'

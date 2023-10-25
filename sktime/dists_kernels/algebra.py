@@ -1,4 +1,4 @@
-"""Arithmetics with distances/kernels, e.g., addition, multiplication."""
+"""Arithmetic with distances/kernels, e.g., addition, multiplication."""
 
 __author__ = ["fkiraly"]
 

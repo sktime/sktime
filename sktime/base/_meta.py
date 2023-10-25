@@ -216,7 +216,7 @@ class _HeterogenousMetaEstimator:
 
         Returns
         -------
-        bool : True if obj is (str, cls_type) tuple, False otherise
+        bool : True if obj is (str, cls_type) tuple, False otherwise
         """
         if cls_type is None:
             cls_type = BaseEstimator

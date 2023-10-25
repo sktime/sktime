@@ -270,7 +270,7 @@ def check_fh(fh, enforce_relative: bool = False, freq=None):
         If True, checks if fh is relative.
     freq : str, or pd.Index, optional (default=None)
         object carrying frequency information on values
-        ignored unless values is without inferrable freq
+        ignored unless values is without inferable freq
         Frequency string or pd.Index
 
     Returns
