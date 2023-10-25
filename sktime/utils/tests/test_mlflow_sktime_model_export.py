@@ -102,7 +102,7 @@ def cnn_model(test_data_basic_motions):
     """Create an instance of fitted ResNet Classifier model."""
     from sktime.classification.deep_learning.cnn import CNNClassifier
 
-    y_train, _, X_train, _ = test_data_basic_motions()
+    y_train, _, X_train, _ = test_data_basic_motions
 
     return CNNClassifier(n_epochs=1, n_conv_layers=1, kernel_size=3).fit(
         X_train, y_train
@@ -210,7 +210,7 @@ def test_cnn_model_save_and_load(
     )
     loaded_model = mlflow_sktime.load_model(model_uri=model_path)
 
-    _, _, _, X_test = test_data_basic_motions()
+    _, _, _, X_test = test_data_basic_motions
 
     np.testing.assert_array_almost_equal(
         cnn_model.predict(X_test), loaded_model.predict(X_test)
