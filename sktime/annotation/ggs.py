@@ -42,7 +42,6 @@ import numpy.typing as npt
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-# from sktime.base import BaseEstimator
 from sktime.annotation.base._base import BaseSeriesAnnotator
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
