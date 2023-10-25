@@ -32,12 +32,12 @@ runs:
         name: "install dependencies"
         shell: "bash"
         run: |
-            python3 -m pip install ".[${{ inputs.sktime-component-identifier }},tests]"
+            python -m pip install ".[${{ inputs.sktime-component-identifier }},tests]"
     -
         name: "run unit tests"
         shell: "bash"
         run: >-
-            python3 -m pytest sktime/${{ inputs.sktime-component-identifier }}
+            python -m pytest sktime/${{ inputs.sktime-component-identifier }}
             --matrixdesign ${{ inputs.sub-sample-estimators }}
             --only_changed_modules ${{ inputs.test-affected-estimators }}
     -
