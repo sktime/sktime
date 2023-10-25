@@ -1,13 +1,8 @@
 name: test base workflow
 on:
-  workflow_run:
-    workflows:
-      - validate code quality workflow
-    types:
-      - completed
+  workflow_call:
 jobs:
   detect:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: check for changes in base framework
     runs-on: ubuntu-latest
     permissions:
