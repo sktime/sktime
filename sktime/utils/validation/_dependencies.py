@@ -138,17 +138,7 @@ def _check_soft_dependencies(
                 pkg_ref = import_module(package_import_name)
         # if package cannot be imported, make the user aware of installation requirement
         except ModuleNotFoundError as e:
-            # Handle mlflow differently since it is not included with other soft
-            # dependencies hence should be treated as an extra dependency
-            if package == "mlflow":
-                if msg is None:
-                    msg = (
-                        f"{e}. `mlflow` is an extra dependency and is not included "
-                        "in the base sktime installation. "
-                        "Please run `pip install mlflow` "
-                        "or `pip install sktime[mlflow]` to install the package."
-                    )
-            elif obj is None and msg is None:
+            if obj is None and msg is None:
                 msg = (
                     f"{e}. '{package}' is a soft dependency and not included in the "
                     f"base sktime installation. Please run: `pip install {package}` to "
@@ -262,6 +252,26 @@ def _check_dl_dependencies(msg=None, severity="error"):
                 "Error in calling _check_dl_dependencies, severity "
                 f'argument must be "error", "warning", or "none", found "{severity}".'
             )
+
+
+def _check_mlflow_dependencies(
+    msg=None, severity="error", suppress_import_stdout=False
+):
+    """Check if `mlflow` is installed."""
+    if not isinstance(msg, str):
+        msg = (
+            "`mlflow` is an extra dependency and is not included "
+            "in the base sktime installation. "
+            "Please run `pip install mlflow` "
+            "or `pip install sktime[mlflow]` to install the package."
+        )
+
+        return _check_soft_dependencies(
+            "mlflow",
+            msg=msg,
+            severity=severity,
+            suppress_import_stdout=suppress_import_stdout,
+        )
 
 
 def _check_python_version(obj, package=None, msg=None, severity="error"):
