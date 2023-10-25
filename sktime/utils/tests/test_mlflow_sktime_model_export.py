@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_airline, load_basic_motions, load_longley
+from sktime.datasets import load_airline, load_arrow_head, load_longley
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import temporal_train_test_split
@@ -78,10 +78,10 @@ def test_data_longley():
 
 
 @pytest.fixture(scope="module")
-def test_data_basic_motions():
-    """Create sample data for multivariate classification."""
-    X_train, y_train = load_basic_motions(split="TRAIN")
-    X_test, y_test = load_basic_motions(split="TEST")
+def test_data_arrow_head():
+    """Create sample data for univariate classification."""
+    X_train, y_train = load_arrow_head(split="TRAIN")
+    X_test, y_test = load_arrow_head(split="TEST")
     return y_train, y_test, X_train, X_test
 
 
@@ -98,11 +98,11 @@ def auto_arima_model(test_data_airline):
     reaons="skip test if required soft dependency is not available.",
 )
 @pytest.fixture(scope="module")
-def cnn_model(test_data_basic_motions):
+def cnn_model(test_data_arrow_head):
     """Create an instance of fitted ResNet Classifier model."""
     from sktime.classification.deep_learning.cnn import CNNClassifier
 
-    y_train, _, X_train, _ = test_data_basic_motions
+    y_train, _, X_train, _ = test_data_arrow_head
 
     return CNNClassifier(n_epochs=1, n_conv_layers=1, kernel_size=3).fit(
         X_train, y_train
@@ -198,7 +198,7 @@ def test_auto_arima_model_pyfunc_output(
 )
 @pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
 def test_cnn_model_save_and_load(
-    cnn_model, test_data_basic_motions, model_path, serialization_format
+    cnn_model, test_data_arrow_head, model_path, serialization_format
 ):
     """Test saving and loading of DL sktime estimator."""
     from sktime.utils import mlflow_sktime
@@ -210,7 +210,7 @@ def test_cnn_model_save_and_load(
     )
     loaded_model = mlflow_sktime.load_model(model_uri=model_path)
 
-    _, _, _, X_test = test_data_basic_motions
+    _, _, _, X_test = test_data_arrow_head
 
     np.testing.assert_array_almost_equal(
         cnn_model.predict(X_test), loaded_model.predict(X_test)
