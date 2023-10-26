@@ -16,7 +16,7 @@ from sktime.utils.validation.forecasting import check_regressor
 class FeatureSelection(BaseTransformer):
     """Select exogenous features.
 
-    Transformer to enable tuneable feauture selection of exogenous data. The
+    Transformer to enable tuneable feature selection of exogenous data. The
     FeatureSelection implements multiple methods to select features (columns).
     In case X is a pd.Series, then it is just passed through, unless method="none",
     then None is returned in transform().
@@ -24,7 +24,7 @@ class FeatureSelection(BaseTransformer):
     Parameters
     ----------
     method : str, required
-        The method of how to select the features. Implemeted methods are:
+        The method of how to select the features. Implemented methods are:
         * "feature-importances": Use feature_importances_ of the regressor (meta-model)
           to select n_columns with highest importance values.
           Requires parameter n_columns.
@@ -37,7 +37,7 @@ class FeatureSelection(BaseTransformer):
         regressor must have an attribute "feature_importances_". If None,
         then a GradientBoostingRegressor(max_depth=5) is used.
     n_columns : int, optional
-        Number of feautres (columns) to select. n_columns must be <=
+        Number of features (columns) to select. n_columns must be <=
         number of X columns. Some methods require n_columns to be given.
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor and to

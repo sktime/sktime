@@ -25,7 +25,7 @@ class PoissonHMM(BaseHMMLearn):
         of the transition probabilities :attr:`transmat_`.
     lambdas_prior, lambdas_weight : array, shape (n_components,), optional
         The gamma prior on the lambda values using alpha-beta notation,
-        respectivley. If None, will be set based on the method of
+        respectively. If None, will be set based on the method of
         moments.
     algorithm : {"viterbi", "map"}, optional
         Decoder algorithm.
@@ -48,7 +48,7 @@ class PoissonHMM(BaseHMMLearn):
     implementation: string, optional
         Determines if the forward-backward algorithm is implemented with
         logarithms ("log"), or using scaling ("scaling").  The default is
-        to use logarithms for backwards compatability.
+        to use logarithms for backwards compatibility.
 
     Attributes
     ----------

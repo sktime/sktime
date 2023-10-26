@@ -614,7 +614,7 @@ class IndividualTDE(BaseClassifier):
     bigrams : bool, default=False
         Whether to record word bigrams in the SFA transform.
     dim_threshold : float, default=0.85
-        Accuracy threshold as a propotion of the highest accuracy dimension for words
+        Accuracy threshold as a proportion of the highest accuracy dimension for words
         extracted from each dimensions. Only applicable for multivariate data.
     max_dims : int, default=20
         Maximum number of dimensions words are extracted from. Only applicable for
@@ -643,7 +643,7 @@ class IndividualTDE(BaseClassifier):
 
     See Also
     --------
-    TemporalDictinaryEnsemble, SFA
+    TemporalDictionaryEnsemble, SFA
 
     Notes
     -----

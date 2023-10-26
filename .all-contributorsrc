@@ -2423,7 +2423,7 @@
       "contributions": [
         "test"
       ]
-    }
+    },
     {
       "login": "xansh",
       "name": "Ansh Kumar",
@@ -2433,5 +2433,15 @@
         "doc"
       ]
     },
+    {
+      "login": "tpvasconcelos",
+      "name": "Tomas P. de Vasconcelos",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17701527?v=4",
+      "profile": "https://github.com/tpvasconcelos",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    }
   ]
 }

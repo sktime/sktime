@@ -725,7 +725,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_train, fh=FH0)
         estimator_instance.fit(y_train[3:], fh=FH0)
-        # using np.squeeze to make the test flexible to shape differeces like
+        # using np.squeeze to make the test flexible to shape differences like
         # (50,) and (50, 1)
         assert np.all(np.squeeze(estimator_instance._y) == np.squeeze(y_train[3:]))
 

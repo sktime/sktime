@@ -438,7 +438,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     See Also
     --------
     sktime.transformations.bootstrap.STLBootstrapTransformer :
-        Transofrmer that utilises BoxCox, STL and Moving Block Bootstrapping to create
+        Transformer that utilises BoxCox, STL and Moving Block Bootstrapping to create
         a panel of similar time series.
 
     References

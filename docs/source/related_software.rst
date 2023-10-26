@@ -204,7 +204,7 @@ Time series databases and frameworks
 
    * - Project Name
      - Description
-   * - `artic <https://github.com/manahl/arctic>`_
+   * - `arctic <https://github.com/manahl/arctic>`_
      - High performance datastore for time series and tick data
    * - `automl_service <https://github.com/crawles/automl_service>`_
      - Fully automated time series classification pipeline, deployed as a web service

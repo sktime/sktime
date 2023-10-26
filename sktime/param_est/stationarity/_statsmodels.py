@@ -21,7 +21,7 @@ class StationarityADF(BaseParamFitter):
     Parameters
     ----------
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for stationarity
+        significance threshold to apply in testing for stationarity
     maxlag : int or None, optional, default=None
         Maximum lag which is included in test, default value of
         12*(nobs/100)^{1/4} is used when ``None``.
@@ -165,7 +165,7 @@ class StationarityKPSS(BaseParamFitter):
     Parameters
     ----------
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for stationarity
+        significance threshold to apply in testing for stationarity
     regression : str, one of {"c","ct","ctt","n"}, optional, default="c"
         Constant and trend order to include in regression.
 
