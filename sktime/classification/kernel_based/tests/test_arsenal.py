@@ -6,6 +6,12 @@ from sktime.datasets import load_unit_test
 from sktime.tests.test_switch import run_test_for_class
 
 
+# A reference to this issue is also present inside sktime/tests/_config.py,
+# and needs to be removed from `EXCLUDED_TESTS` upon resolution.
+@pytest.mark.skip(
+    reason="Fails because of `len(obj.estimators_)==1`, "
+    "refer issue #5488 for details."
+)
 @pytest.mark.skipif(
     not run_test_for_class(Arsenal),
     reason="run test only if softdeps are present and incrementally (if requested)",

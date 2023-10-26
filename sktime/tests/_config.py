@@ -179,6 +179,8 @@ EXCLUDED_TESTS = {
     ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # Arsenal Classifier contract fails on `len(obj.estimators)=1`, refer to #5488
+    # The actual test is present in test_arsenal::test_contracted_arsenal.py, present
+    # here only for reference.
     "Arsenal": ["test_contracted_arsenal"],
 }
 
