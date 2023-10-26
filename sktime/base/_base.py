@@ -57,7 +57,6 @@ __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
 import warnings
-from collections import defaultdict
 from copy import deepcopy
 
 from skbase.base import BaseObject as _BaseObject
