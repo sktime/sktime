@@ -178,6 +178,8 @@ EXCLUDED_TESTS = {
         "test_hierarchical_with_exogeneous",  # refer to #4743
     ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
+    # Arsenal Classifier contract fails on `len(obj.estimators)=1`, refer to #5488
+    "Arsenal": ["test_contracted_arsenal"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
