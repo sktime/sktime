@@ -21,7 +21,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
-    """Statsforecast AutoARIMA estimator.
+    """StatsForecast AutoARIMA estimator.
 
     Direct interface to ``statsforecast.models.AutoARIMA`` by Nixtla.
 
@@ -413,7 +413,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
 
 class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
-    """Statsforecast Automatic Exponential Smoothing model.
+    """StatsForecast Automatic Exponential Smoothing model.
 
     Direct interface to ``statsforecast.models.AutoETS``,
     from ``statsforecast`` [1]_ by Nixtla.
@@ -506,7 +506,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
 
 class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
-    """Statsforecast Complex Exponential Smoothing model.
+    """StatsForecast Complex Exponential Smoothing model.
 
     Direct interface to ``statsforecast.models.AutoCES``,
     from ``statsforecast`` [1]_ by Nixtla.
