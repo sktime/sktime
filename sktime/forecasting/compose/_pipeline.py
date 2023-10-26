@@ -78,6 +78,15 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
             )
             raise TypeError(msg)
 
+        # if len(estimators) == 1:
+        #     msg = (
+        #         f"in {self_name}, found steps of length 1, "
+        #         f"this will result in the same behaviour "
+        #         f"as not wrapping the single step in a pipeline. "
+        #         f"Consider not wrapping steps in {self_name} as it is redundant."
+        #     )
+        #     warn(msg, obj=self)
+
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)
 
@@ -161,11 +170,11 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.24.0 - check why this cannot be easily removed
+                        # todo 0.25.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
-                        #   i.d., special 1st level name of prediction objet
+                        #   i.d., special 1st level name of prediction object
                         #   in the case where there is only one variable
                         if len(yt[ix].columns) == 1:
                             temp = yt[ix].columns

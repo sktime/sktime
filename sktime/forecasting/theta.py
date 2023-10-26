@@ -3,8 +3,6 @@
 __all__ = ["ThetaForecaster", "ThetaModularForecaster"]
 __author__ = ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
@@ -20,6 +18,7 @@ from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils.slope_and_trend import _fit_trend
 from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.warnings import warn
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -126,7 +125,10 @@ class ThetaForecaster(ExponentialSmoothing):
         """
         sp = check_sp(self.sp)
         if sp > 1 and not self.deseasonalize:
-            warn("`sp` is ignored when `deseasonalise`=False")
+            warn(
+                "`sp` in ThetaForecaster is ignored when `deseasonalise`=False",
+                obj=self,
+            )
 
         if self.deseasonalize:
             self.deseasonalizer_ = Deseasonalizer(sp=self.sp, model="multiplicative")
@@ -303,7 +305,7 @@ class ThetaForecaster(ExponentialSmoothing):
         Returns
         -------
         params :dict or list of dict , default = {}
-            arameters to create testing instances of the class
+            parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params
@@ -515,7 +517,7 @@ class ThetaModularForecaster(BaseForecaster):
         params1 = {"theta_values": (0, 3)}
         params2 = {"weights": [1.0, 0.8]}
 
-        # params1 and params2 invoke ExpoentialSmoothing which requires statsmodels
+        # params1 and params2 invoke ExponentialSmoothing which requires statsmodels
         if _check_estimator_deps(ExponentialSmoothing, severity="none"):
             params = [params0, params1, params2]
         else:

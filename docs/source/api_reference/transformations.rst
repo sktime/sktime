@@ -288,6 +288,14 @@ Depending on the transformer, the transformation parameters can be fitted.
     ExponentTransformer
     SqrtTransformer
 
+.. currentmodule:: sktime.transformations.series.scaledasinh
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ScaledAsinhTransformer
+
 Detrending and Decomposition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

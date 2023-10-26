@@ -81,7 +81,7 @@ The release manager process happens at every release and is as follows:
 Special deprecations
 ====================
 
-This section outlines the deprecation process for some advaned cases.
+This section outlines the deprecation process for some advanced cases.
 
 Deprecating tags
 ----------------

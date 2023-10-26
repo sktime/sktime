@@ -25,8 +25,6 @@ __all__ = [
     "YfromX",
 ]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -44,6 +42,7 @@ from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.sklearn import is_sklearn_regressor
 from sktime.utils.validation import check_window_length
+from sktime.utils.warnings import warn
 
 
 def _concat_y_X(y, X):
@@ -279,13 +278,13 @@ class _Reducer(_BaseWindowForecaster):
 
         In recursive forecasting, the time based features need to be recalculated for
         every time step that is forecast. This is done in an iterative fashion over
-        every forecasting horizon step. Shift specifies the timestemp over which the
+        every forecasting horizon step. Shift specifies the timestamp over which the
         iteration is done, i.e. a shift of 0 will get a window between window_length
         steps in the past and t=0, shift = 1 will be window_length - 1 steps in the past
         and t= 1 etc- up to the forecasting horizon.
 
         Will also apply any transformers passed to the recursive reducer to y. This en
-        bloc approach of directly applying the transformers is more efficient than
+        block approach of directly applying the transformers is more efficient than
         creating all lags first across the window and then applying the transformers
         to the lagged data.
 
@@ -464,11 +463,11 @@ class _DirectReducer(_Reducer):
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
-                    "Pooling has been changed by default to 'local', which"
+                    "Pooling is by default 'local', which"
                     + " means that separate models will be fit at the level of"
                     + " each instance. If you wish to fit a single model to"
                     + " all instances, please specify pooling = 'global'.",
-                    DeprecationWarning,
+                    obj=self,
                 )
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
@@ -774,11 +773,11 @@ class _RecursiveReducer(_Reducer):
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
-                    "Pooling has been changed by default to 'local', which"
+                    "Pooling is by default 'local', which"
                     + " means that separate models will be fit at the level of"
                     + " each instance. If you wish to fit a single model to"
                     + " all instances, please specify pooling = 'global'.",
-                    DeprecationWarning,
+                    obj=self,
                 )
         if self.transformers is not None:
             self.transformers_ = clone(self.transformers)
@@ -1207,7 +1206,7 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
     For the hybrid dir-rec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the recusrive
+    for training the next forecaster, following the recursive
     strategy.
 
     Parameters
@@ -1286,7 +1285,7 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     For the hybrid dir-rec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the recusrive
+    for training the next forecaster, following the recursive
     strategy.
 
     Parameters
@@ -1488,7 +1487,8 @@ def _infer_scitype(estimator):
             "The `scitype` of the given `estimator` cannot be inferred. "
             'Assuming "tabular-regressor" = scikit-learn regressor interface. '
             "If this warning is followed by an unexpected exception, "
-            "please consider report as a bug on the sktime issue tracker."
+            "please consider report as a bug on the sktime issue tracker.",
+            obj=estimator,
         )
         return "tabular-regressor"
 
@@ -1685,7 +1685,7 @@ class _ReducerMixin:
 
         Parameters
         ----------
-        fh : ForecastingHorizon, fh of self; or, iterable coercable to pd.Index
+        fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
 
         Returns
         -------

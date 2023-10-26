@@ -7,7 +7,6 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 from inspect import getfullargspec, isfunction, signature
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -44,6 +43,7 @@ from sktime.performance_metrics.forecasting._functions import (
     median_squared_scaled_error,
     relative_loss,
 )
+from sktime.utils.warnings import warn
 
 __author__ = ["mloning", "tch", "RNKuhns", "fkiraly"]
 __all__ = [
@@ -455,7 +455,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             warn(
                 "y_pred and y_true do not have the same row index. "
                 "This may indicate incorrect objects passed to the metric. "
-                "Indices of y_true will be used for y_pred."
+                "Indices of y_true will be used for y_pred.",
+                obj=self,
             )
             y_pred_orig = y_pred_orig.copy()
             if isinstance(y_pred_orig, VectorizedDF):
@@ -466,7 +467,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             warn(
                 "y_pred and y_true do not have the same column index. "
                 "This may indicate incorrect objects passed to the metric. "
-                "Indices of y_true will be used for y_pred."
+                "Indices of y_true will be used for y_pred.",
+                obj=self,
             )
             y_pred_orig = y_pred_orig.copy()
             if isinstance(y_pred_orig, VectorizedDF):
@@ -927,7 +929,7 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     `square_root` is True. Both MSSE and RMSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MASE loss metric.  Like MASE and other
+    This is a squared variant of the MASE loss metric.  Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
     forecast methods on a single series or between series.
 
@@ -1037,7 +1039,7 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
     `square_root` is True. Both MdSSE and RMdSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MdASE loss metric. Like MASE and other
+    This is a squared variant of the MdASE loss metric. Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
     forecast methods on a single series or between series.
 
@@ -1155,7 +1157,7 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
     hierarchy indices, see below.
 
     `evaluate_by_index` returns, at a time index :math:`t_i`,
-    the abolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
+    the absolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
     for all time indices :math:`t_1, \dots, t_n` in the input.
 
     MAE output is non-negative floating point. The best value is 0.0.
@@ -1537,7 +1539,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     Like MAE and MdAE, GMAE is measured in the same units as the input data.
     Because GMAE takes the absolute value of the forecast error rather than
     squaring it, MAE penalizes large errors to a lesser degree than squared error
-    varients like MSE, RMSE or GMSE or RGMSE.
+    variants like MSE, RMSE or GMSE or RGMSE.
 
     Parameters
     ----------
@@ -1752,7 +1754,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     hierarchy indices, see below.
 
     `evaluate_by_index` returns, at a time index :math:`t_i`,
-    the abolute percentage error at that time index,
+    the absolute percentage error at that time index,
     :math:`\left| \frac{y_i - \widehat{y}_i}{y_i} \right|`,
     or :math:`\frac{2|y_i - \widehat{y}_i|}{|y_i| + |\widehat{y}_i|}`,
     the symmetric version, if `symmetric` is True, for all time indices
@@ -2563,7 +2565,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         asymmetric threshold.
     left_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values less than
-        the asymetric threshold.
+        the asymmetric threshold.
     right_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values greater
         than the asymmetric threshold.
@@ -2585,7 +2587,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
 
     Notes
     -----
-    Setting `left_error_function` and `right_error_function` to "aboslute", but
+    Setting `left_error_function` and `right_error_function` to "absolute", but
     choosing different values for `left_error_penalty` and `right_error_penalty`
     results in the "lin-lin" error function discussed in [2]_.
 
@@ -2823,7 +2825,7 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     comparing the loss of 3rd party forecasts or surveys of professional
     forecasters.
 
-    Only metrics that do not require y_train are curretnly supported.
+    Only metrics that do not require y_train are currently supported.
 
     Parameters
     ----------

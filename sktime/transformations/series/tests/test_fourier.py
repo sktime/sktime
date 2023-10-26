@@ -15,7 +15,7 @@ Y_datetime = deepcopy(Y)
 Y_datetime.index = Y_datetime.index.to_timestamp(freq="M")
 
 
-def test_fourier_list_length_missmatch():
+def test_fourier_list_length_mismatch():
     """Tests exception raised when sp_list & fourier_terms_list lengths don't match."""
     with pytest.raises(ValueError) as ex:
         FourierFeatures(sp_list=[365, 52], fourier_terms_list=[1])

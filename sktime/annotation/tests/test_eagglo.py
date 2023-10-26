@@ -9,10 +9,10 @@ from sktime.annotation.eagglo import EAgglo
 
 
 def test_fit_default_params_univariate():
-    """Test univariate data and defualt parameters.
+    """Test univariate data and default parameters.
 
-    These numbers are generated from the original implemention in R, with the following
-    code:
+    These numbers are generated from the original implementation in R,
+    with the following code:
 
     set.seed(1234) X <- c(rnorm(15, mean = -6), 0, rnorm(16, mean = 6)) X <-
     as.matrix(X[c(1,2,17,18)]) ret = e.agglo(X)
@@ -50,9 +50,9 @@ def test_fit_other_params_univariate():
 
 
 def test_fit_default_params_multivariate():
-    """Test multivariate data with defauly parameters.
+    """Test multivariate data with default parameters.
 
-    These numbers are generated from the original implemention
+    These numbers are generated from the original implementation
     in R, with the following code:
 
     set.seed(1234)

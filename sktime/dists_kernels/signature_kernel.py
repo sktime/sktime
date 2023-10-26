@@ -515,7 +515,7 @@ def seq_kernel(
     lowrank=False,
     rankbound=float("inf"),
 ):
-    """Compute the sequential kernel between seqeuence/time series.
+    """Compute the sequential kernel between sequence/time series.
 
     Provides interface for vanilla sequential kernel, low-rank, and higher-order.
 
@@ -603,7 +603,7 @@ def seq_kernel_XY(
     lowrank=False,
     rankbound=float("inf"),
 ):
-    """Compute the sequential kernel between two different collections of seqeuence.
+    """Compute the sequential kernel between two different collections of sequence.
 
     Provides interface for vanilla sequential kernel, low-rank, and higher-order.
 

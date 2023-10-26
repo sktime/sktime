@@ -38,6 +38,7 @@ __all__ = [
     "write_ndarray_to_tsfile",
     "write_results_to_uea_format",
     "write_tabular_transformation_to_arff",
+    "load_tecator",
 ]
 
 from sktime.datasets._data_io import (
@@ -79,6 +80,7 @@ from sktime.datasets._single_problem_loaders import (
     load_plaid,
     load_shampoo_sales,
     load_solar,
+    load_tecator,
     load_UCR_UEA_dataset,
     load_unit_test,
     load_unit_test_tsf,

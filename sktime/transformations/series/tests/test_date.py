@@ -13,33 +13,84 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.date import DateTimeFeatures
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
-if run_test_for_class(DateTimeFeatures):
-    # Load multivariate dataset longley and apply calendar extraction
 
+@pytest.fixture
+def load_split_data():
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+    return X_train
 
+
+@pytest.fixture
+def featurescope_step(load_split_data):
     # Test that comprehensive feature_scope works for weeks
     pipe = DateTimeFeatures(
         ts_freq="W", feature_scope="comprehensive", keep_original_columns=True
     )
-    pipe.fit(X_train)
-    test_full_featurescope = pipe.transform(X_train).columns.to_list()
+    test_full_featurescope = pipe.fit_transform(load_split_data)
+    return test_full_featurescope
 
+
+@pytest.fixture
+def featurescope_step_output():
+    return [
+        "GNPDEFL",
+        "GNP",
+        "UNEMP",
+        "ARMED",
+        "POP",
+        "year",
+        "quarter_of_year",
+        "month_of_year",
+        "week_of_year",
+        "month_of_quarter",
+        "week_of_quarter",
+        "week_of_month",
+    ]
+
+
+@pytest.fixture
+def reduced_featurescope_step(load_split_data):
     # Test that minimal feature_scope works for weeks
     pipe = DateTimeFeatures(
         ts_freq="W", feature_scope="minimal", keep_original_columns=True
     )
-    pipe.fit(X_train)
-    test_reduced_featurescope = pipe.transform(X_train).columns.to_list()
+    test_reduced_featurescope = pipe.fit_transform(load_split_data)
+    return test_reduced_featurescope
 
+
+@pytest.fixture
+def reduced_featurescope_step_output():
+    return ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "month_of_year"]
+
+
+@pytest.fixture
+def test_changing_frequency_step(load_split_data):
     # Test that comprehensive feature_scope works for months
     pipe = DateTimeFeatures(
         ts_freq="M", feature_scope="comprehensive", keep_original_columns=True
     )
-    pipe.fit(X_train)
-    test_changing_frequency = pipe.transform(X_train).columns.to_list()
+    test_changing_frequency = pipe.fit_transform(load_split_data)
+    return test_changing_frequency
 
+
+@pytest.fixture
+def test_changing_frequency_step_output():
+    return [
+        "GNPDEFL",
+        "GNP",
+        "UNEMP",
+        "ARMED",
+        "POP",
+        "year",
+        "quarter_of_year",
+        "month_of_year",
+        "month_of_quarter",
+    ]
+
+
+@pytest.fixture
+def test_manspec_with_tsfreq_step(load_split_data):
     # Test that manual_selection works for with provided arguments
     # Should ignore feature scope and raise warning for second_of_minute,
     # since ts_freq = "M" is provided.
@@ -50,72 +101,71 @@ if run_test_for_class(DateTimeFeatures):
         manual_selection=["year", "second_of_minute"],
         keep_original_columns=True,
     )
-    pipe.fit(X_train)
-    test_manspec_with_tsfreq = pipe.transform(X_train).columns.to_list()
+    test_manspec_with_tsfreq = pipe.fit_transform(load_split_data)
+    return test_manspec_with_tsfreq
 
+
+@pytest.fixture
+def test_manspec_with_tsfreq_step_output():
+    return ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "second_of_minute"]
+
+
+@pytest.fixture
+def test_manspec_wo_tsfreq_step(load_split_data):
     # Test that manual_selection works for with provided arguments
     # Should ignore feature scope and raise no warning for second_of_minute,
     # since ts_freq is not provided.
-
     pipe = DateTimeFeatures(
         manual_selection=["year", "second_of_minute"], keep_original_columns=True
     )
-    pipe.fit(X_train)
-    test_manspec_wo_tsfreq = pipe.transform(X_train).columns.to_list()
-
-    # Test that prior test works for with univariate dataset
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y)
-
-    pipe = DateTimeFeatures(
-        manual_selection=["year", "second_of_minute"], keep_original_columns=True
-    )
-    pipe.fit(y_train)
-    test_univariate_data = pipe.transform(y_train).columns.to_list()
-
-    # Test that prior test also works when Index is converted to DateTime index
-    y.index = y.index.to_timestamp().astype("datetime64[ns]")
-    y_train, y_test = temporal_train_test_split(y)
-    pipe = DateTimeFeatures(
-        manual_selection=["year", "second_of_minute"], keep_original_columns=True
-    )
-    pipe.fit(y_train)
-    test_diffdateformat = pipe.transform(y_train).columns.to_list()
-
-    pipe = DateTimeFeatures(
-        ts_freq="L", feature_scope="comprehensive", keep_original_columns=True
-    )
-    pipe.fit(y_train)
-    y_train_t = pipe.transform(y_train)
-    test_full = y_train_t.columns.to_list()
-    test_types = y_train_t.select_dtypes(include=["int64"]).columns.to_list()
-
-else:
-    test_full_featurescope = []
-    test_reduced_featurescope = []
-    test_changing_frequency = []
-    test_manspec_with_tsfreq = []
-    test_manspec_wo_tsfreq = []
-    test_univariate_data = []
-    test_diffdateformat = []
-    test_full = []
-    test_types = []
+    test_manspec_wo_tsfreq = pipe.fit_transform(load_split_data)
+    return test_manspec_wo_tsfreq
 
 
-# Test `is_weekend` works in manual selection
 @pytest.fixture
-def df_datetime_daily_idx():
-    """Create timeseries with Datetime index, daily frequency."""
-    return pd.DataFrame(
-        data={"y": [1, 1, 1, 1, 1, 1, 1]},
-        index=pd.date_range(start="2000-01-01", freq="D", periods=7),
-    )
+def test_manspec_wo_tsfreq_step_output():
+    return ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "second_of_minute"]
 
 
-@pytest.fixture()
-def df_panel():
-    """Create panel data of two time series using pd-multiindex mtype."""
-    return _make_hierarchical(hierarchy_levels=(2,), min_timepoints=3, max_timepoints=3)
+@pytest.mark.skipif(
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (
+            "featurescope_step",
+            "featurescope_step_output",
+        ),
+        (
+            "reduced_featurescope_step",
+            "reduced_featurescope_step_output",
+        ),
+        (
+            "test_changing_frequency_step",
+            "test_changing_frequency_step_output",
+        ),
+        (
+            "test_manspec_with_tsfreq_step",
+            "test_manspec_with_tsfreq_step_output",
+        ),
+        (
+            "test_manspec_wo_tsfreq_step",
+            "test_manspec_wo_tsfreq_step_output",
+        ),
+    ],
+)
+def test_multivariate_eval(test_input, expected, request):
+    """Tests which columns are returned for different arguments.
+
+    For a detailed description of what these arguments do, and how they interact, see
+    the docstring of DateTimeFeatures.
+    """
+    test_input = request.getfixturevalue(test_input).columns.to_list()
+    expected = request.getfixturevalue(expected)
+    assert len(test_input) == len(expected)
+    assert all(a == b for a, b in zip(test_input, expected))
 
 
 all_args = [
@@ -140,6 +190,70 @@ all_args = [
 ]
 
 
+@pytest.fixture
+def test_univariate_data_step():
+    y = load_airline()
+    # Test that prior test works for with univariate dataset
+    y_train, y_test = temporal_train_test_split(y)
+    pipe = DateTimeFeatures(
+        manual_selection=["year", "second_of_minute"], keep_original_columns=True
+    )
+    test_univariate_data = pipe.fit_transform(y_train)
+    return test_univariate_data
+
+
+@pytest.fixture
+def test_univariate_data_step_output():
+    return ["Number of airline passengers", "year", "second_of_minute"]
+
+
+@pytest.fixture()
+def test_diffdateformat():
+    y = load_airline()
+    # Test that prior test also works when Index is converted to DateTime index
+    y.index = y.index.to_timestamp().astype("datetime64[ns]")
+    y_train, y_test = temporal_train_test_split(y)
+    pipe = DateTimeFeatures(
+        manual_selection=["year", "second_of_minute"], keep_original_columns=True
+    )
+    test_diffdateformat = pipe.fit_transform(y_train)
+    return test_diffdateformat
+
+
+@pytest.fixture
+def test_diffdateformat_output():
+    return ["Number of airline passengers", "year", "second_of_minute"]
+
+
+@pytest.fixture
+def test_comprehensive_transform():
+    y = load_airline()
+    # Test that prior test also works when Index is converted to DateTime index
+    y.index = y.index.to_timestamp().astype("datetime64[ns]")
+    y_train, y_test = temporal_train_test_split(y)
+    pipe = DateTimeFeatures(
+        ts_freq="L", feature_scope="comprehensive", keep_original_columns=True
+    )
+    y_train_t = pipe.fit_transform(y_train)
+    return y_train_t
+
+
+@pytest.fixture
+def test_comprehensive_transform_output():
+    return all_args
+
+
+@pytest.fixture
+def test_types(test_comprehensive_transform):
+    test_types = test_comprehensive_transform.select_dtypes(include=["int64"])
+    return test_types
+
+
+@pytest.fixture
+def test_types_output():
+    return all_args[1:]
+
+
 @pytest.mark.skipif(
     not run_test_for_class(DateTimeFeatures),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -148,74 +262,48 @@ all_args = [
     "test_input,expected",
     [
         (
-            test_full_featurescope,
-            [
-                "GNPDEFL",
-                "GNP",
-                "UNEMP",
-                "ARMED",
-                "POP",
-                "year",
-                "quarter_of_year",
-                "month_of_year",
-                "week_of_year",
-                "month_of_quarter",
-                "week_of_quarter",
-                "week_of_month",
-            ],
+            "test_univariate_data_step",
+            "test_univariate_data_step_output",
         ),
         (
-            test_reduced_featurescope,
-            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "month_of_year"],
+            "test_diffdateformat",
+            "test_diffdateformat_output",
         ),
         (
-            test_changing_frequency,
-            [
-                "GNPDEFL",
-                "GNP",
-                "UNEMP",
-                "ARMED",
-                "POP",
-                "year",
-                "quarter_of_year",
-                "month_of_year",
-                "month_of_quarter",
-            ],
+            "test_comprehensive_transform",
+            "test_comprehensive_transform_output",
         ),
         (
-            test_manspec_with_tsfreq,
-            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "second_of_minute"],
-        ),
-        (
-            test_manspec_wo_tsfreq,
-            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "second_of_minute"],
-        ),
-        (
-            test_univariate_data,
-            ["Number of airline passengers", "year", "second_of_minute"],
-        ),
-        (
-            test_diffdateformat,
-            ["Number of airline passengers", "year", "second_of_minute"],
-        ),
-        (
-            test_full,
-            all_args,
-        ),
-        (
-            test_types,
-            all_args[1:],
+            "test_types",
+            "test_types_output",
         ),
     ],
 )
-def test_eval(test_input, expected):
+def test_uniivariate_eval(test_input, expected, request):
     """Tests which columns are returned for different arguments.
 
-    For a detailed description what these arguments do, and how they interact see
-    docstring of DateTimeFeatures.
+    For a detailed description of what these arguments do, and how they interact, see
+    the docstring of DateTimeFeatures.
     """
+    test_input = request.getfixturevalue(test_input).columns.to_list()
+    expected = request.getfixturevalue(expected)
     assert len(test_input) == len(expected)
-    assert all([a == b for a, b in zip(test_input, expected)])
+    assert all(a == b for a, b in zip(test_input, expected))
+
+
+@pytest.fixture
+def df_datetime_daily_idx():
+    """Create timeseries with Datetime index, daily frequency."""
+    return pd.DataFrame(
+        data={"y": [1, 1, 1, 1, 1, 1, 1]},
+        index=pd.date_range(start="2000-01-01", freq="D", periods=7),
+    )
+
+
+@pytest.fixture
+def df_panel():
+    """Create panel data of two time series using pd-multiindex mtype."""
+    return _make_hierarchical(hierarchy_levels=(2,), min_timepoints=3, max_timepoints=3)
 
 
 @pytest.mark.skipif(

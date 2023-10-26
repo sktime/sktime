@@ -423,7 +423,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     information criterion. Default is Akaike Information Criterion (AICc), while
     particular models are estimated using maximum likelihood. The state-space
     equations can be determined based on their $M$ multiplicative, $A$ additive, $Z$
-    optimized or $N$ ommited components. The `model` string parameter defines the ETS
+    optimized or $N$ omitted components. The `model` string parameter defines the ETS
     equations: E in [$M, A, Z$], T in [$N, A, M, Z$], and S in [$N, A, M, Z$].
 
     For example when model='ANN' (additive error, no trend, and no seasonality), ETS
@@ -514,9 +514,9 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     Automatically selects the best Complex Exponential Smoothing model using an
     information criterion. Default is Akaike Information Criterion (AICc), while
     particular models are estimated using maximum likelihood. The state-space equations
-    can be determined based on their $S$ simple, $P$ parial, $Z$ optimized or $N$
-    ommited components. The `model` string parameter defines the kind of CES model:
-    $N$ for simple CES (withous seasonality), $S$ for simple seasonality (lagged CES),
+    can be determined based on their $S$ simple, $P$ partial, $Z$ optimized or $N$
+    omitted components. The `model` string parameter defines the kind of CES model:
+    $N$ for simple CES (without seasonality), $S$ for simple seasonality (lagged CES),
     $P$ for partial seasonality (without complex part), $F$ for full seasonality
     (lagged CES with real and complex seasonal parts).
 
