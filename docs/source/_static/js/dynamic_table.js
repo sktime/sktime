@@ -13,7 +13,7 @@ function includeHTML() {
   z = document.getElementsByTagName("*");
   for (i = 0; i < z.length; i++) {
 	elmnt = z[i];
-	/*search for elements with a certain atrribute:*/
+	/*search for elements with a certain attribute:*/
 	file = elmnt.getAttribute("w3-include-html");
 	if (file) {
 	  /*make an HTTP request using the attribute value as the file name:*/

@@ -101,7 +101,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         Keys are transformer names and values are the fitted transformer
         objects.
     sparse_output_ : bool
-        Boolean flag indicating wether the output of ``transform`` is a
+        Boolean flag indicating whether the output of ``transform`` is a
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformations and the `sparse_threshold` keyword.
     """
@@ -293,7 +293,7 @@ class ColumnConcatenator(BaseTransformer):
         Xst = pd.DataFrame(X.stack())
         Xt = Xst.swaplevel(-2, -1).sort_index().droplevel(-2)
 
-        # the above has the right structure, but the wrong indes
+        # the above has the right structure, but the wrong index
         # the time index is in general non-unique now, we replace it by integer index
         inst_idx = Xt.index.get_level_values(0)
         t_idx = [range(len(Xt.loc[x])) for x in inst_idx.unique()]

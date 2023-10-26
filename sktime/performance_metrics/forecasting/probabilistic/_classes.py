@@ -360,13 +360,13 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         return alpha
 
     def _handle_multioutput(self, loss, multioutput):
-        """Specificies how multivariate outputs should be handled.
+        """Handle output according to multioutput parameter.
 
         Parameters
         ----------
         loss : float, np.ndarray the evaluated metric value.
 
-        multioutput : string "uniform_average" or "raw_values" determines how \
+        multioutput : string "uniform_average" or "raw_values" determines how
             multioutput results will be treated.
         """
         if isinstance(multioutput, str):

@@ -54,7 +54,7 @@ def test_pred_errors_against_y_test(fh):
 
     Raises
     ------
-    AssertionError - if point forecasts do not lie withing the prediction intervals
+    AssertionError - if point forecasts do not lie within the prediction intervals
     """
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)

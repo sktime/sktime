@@ -40,7 +40,7 @@ def test_resizing():
         [length == ts_lens_after_cut[0] for length in ts_lens_after_cut]
     )  # are different
 
-    # 3) make tranformer, set target length `target_len` and apply it
+    # 3) make transformer, set target length `target_len` and apply it
     target_len = 50
     Xt = TSInterpolator(target_len).fit_transform(X)
 

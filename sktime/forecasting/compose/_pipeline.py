@@ -174,7 +174,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
-                        #   i.d., special 1st level name of prediction objet
+                        #   i.d., special 1st level name of prediction object
                         #   in the case where there is only one variable
                         if len(yt[ix].columns) == 1:
                             temp = yt[ix].columns
