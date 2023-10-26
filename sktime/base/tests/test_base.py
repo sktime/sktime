@@ -40,6 +40,7 @@ from copy import deepcopy
 import pytest
 
 from sktime.base import BaseEstimator, BaseObject
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 # Fixture class for testing tag system
@@ -288,6 +289,10 @@ class AliasTester(BaseObject):
         self.bar = bar
 
 
+@pytest.mark.skipif(
+    _check_soft_dependencies("skbase<0.6.1", severity="none"),
+    reason="aliasing was introduced in skbase 0.6.1",
+)
 def test_param_alias():
     """Tests parameter aliasing with parameter string shorthands.
 
@@ -328,6 +333,10 @@ def test_param_alias():
     assert uber_composite.get_params()["bar"] == 424243
 
 
+@pytest.mark.skipif(
+    _check_soft_dependencies("skbase<0.6.1", severity="none"),
+    reason="aliasing was introduced in skbase 0.6.1",
+)
 def test_nested_set_params_and_alias():
     """Tests that nested param setting works correctly.
 
