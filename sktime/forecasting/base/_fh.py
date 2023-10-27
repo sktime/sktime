@@ -695,26 +695,49 @@ class ForecastingHorizon:
         fh_idx : pd.Index, expected index of y_pred returned by predict
             assumes pandas based return mtype
         """
-        if cutoff is None:
-            from sktime.datatypes import get_cutoff
+        from sktime.datatypes import get_cutoff
 
-            cutoff = get_cutoff(y)
+        def _make_y_pred(y_single):
+            """Make y_pred from single instance y, used in list comprehension."""
+            cutoff = get_cutoff(y_single)
+            return pd.Index(self.to_absolute_index(cutoff))
 
-        fh_idx = pd.Index(self.to_absolute_index(cutoff))
-        y_index = y.index
+        if hasattr(y, "index"):
+            y_index = y.index
 
-        if isinstance(y_index, pd.MultiIndex):
+        if cutoff is None and not isinstance(y_index, pd.MultiIndex):
+            _cutoff = get_cutoff(y)
+
+        if cutoff is not None:
+
+            fh_idx = pd.Index(self.to_absolute_index(_cutoff))
+
+            if isinstance(y_index, pd.MultiIndex):
+                y_inst_idx = y_index.droplevel(-1).unique()
+                if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
+                    fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
+                elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
+                    fh_list = [x + (y,) for y in fh_idx for x in y_inst_idx]
+                elif sort_by_time:  # and not isinstance(y_inst_idx, pd.MultiIndex):
+                    fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
+                else:  # not sort_by_time and not isinstance(y_inst_idx, pd.MultiIndex):
+                    fh_list = [(x, y) for y in fh_idx for x in y_inst_idx]
+
+                fh_idx = pd.Index(fh_list)
+
+        else:  # cutoff is None and isinstance(y_index, pd.MultiIndex)
+
             y_inst_idx = y_index.droplevel(-1).unique()
-            if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
-                fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
-            elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
-                fh_list = [x + (y,) for y in fh_idx for x in y_inst_idx]
-            elif sort_by_time:  # and not isinstance(y_inst_idx, pd.MultiIndex):
-                fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
-            else:  # not sort_by_time and not isinstance(y_inst_idx, pd.MultiIndex):
-                fh_list = [(x, y) for y in fh_idx for x in y_inst_idx]
 
-        fh_idx = pd.Index(fh_list)
+            if isinstance(y_inst_idx, pd.MultiIndex):
+                fh_list = [x + (y,) for x in y_inst_idx for y in _make_y_pred(x)]
+            else:
+                fh_list = [(x, y) for x in y_inst_idx for y in _make_y_pred(x)]
+
+            fh_idx = pd.Index(fh_list)
+
+            if not sort_by_time:
+                fh_idx = fh_idx.sort_values()
 
         # replicating index names
         if hasattr(y_index, "names") and y_index.names is not None:
