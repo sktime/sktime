@@ -43,6 +43,7 @@ class FittedForecaster(_DelegatedForecaster):
     >>> pickled_forecaster = pickle.dumps(NaiveForecaster(sp=12).fit(y_train))
     >>> fitted_forecaster = FittedForecaster(pickled_forecaster)
     >>> fitted_forecaster.fit(y_deploy)
+    FittedForecaster(...)
     >>> y_pred = fitted_forecaster.predict(fh=12)
     """
 
