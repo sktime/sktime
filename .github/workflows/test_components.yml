@@ -15,22 +15,31 @@ jobs:
         with:
           filters: |
             alignment:
+              - sktime/base/**
               - sktime/alignment/**
             annotation:
+              - sktime/base/**
               - sktime/annotation/**
             classification:
+              - sktime/base/**
               - sktime/classification/**
             clustering:
+              - sktime/base/**
               - sktime/clustering/**
             forecasting:
+              - sktime/base/**
               - sktime/forecasting/**
             networks:
+              - sktime/base/**
               - sktime/networks/**
             param_est:
+              - sktime/base/**
               - sktime/param_est/**
             regression:
+              - sktime/base/**
               - sktime/regression/**
             transformations:
+              - sktime/base/**
               - sktime/transformations/**
   test:
     needs: detect
