@@ -733,7 +733,6 @@ class ForecastingHorizon:
             fh_idx = pd.Index(fh_list)
 
         elif isinstance(y_index, pd.MultiIndex):
-
             y_inst_idx = y_index.droplevel(-1).unique()
 
             if isinstance(y_inst_idx, pd.MultiIndex):
