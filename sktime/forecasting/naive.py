@@ -550,14 +550,19 @@ class NaiveForecaster(_BaseWindowForecaster):
         se_res = np.sqrt(mse_res)
 
         window_length = self.window_length or T
+
+        def sqrt_flr(x):
+            """Square root of x, floored at 1 - to deal with in-sample predictions."""
+            return np.sqrt(max(x, 1))
+
         # Formulas from:
         # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)
         partial_se_formulas = {
-            "last": lambda h: np.sqrt(h)
+            "last": sqrt_flr
             if sp == 1
-            else np.sqrt(np.floor((h - 1) / sp) + 1),
-            "mean": lambda h: np.repeat(np.sqrt(1 + (1 / window_length)), len(h)),
-            "drift": lambda h: np.sqrt(h * (1 + (h / (T - 1)))),
+            else sqrt_flr(np.floor((h - 1) / sp) + 1),
+            "mean": lambda h: np.repeat(sqrt_flr(1 + (1 / window_length)), len(h)),
+            "drift": lambda h: sqrt_flr(h * (1 + (h / (T - 1)))),
         }
 
         fh_periods = np.array(fh.to_relative(self.cutoff))
