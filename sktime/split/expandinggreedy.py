@@ -63,7 +63,7 @@ class ExpandingGreedySplitter(BaseSplitter):
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         if isinstance(y, pd.MultiIndex):
-            groups = pd.Series(index=y).groupby(y.names[:-1])
+            groups = pd.Series(index=y, dtype="float64").groupby(y.names[:-1])
             reverse_idx = groups.transform("size") - groups.cumcount() - 1
         else:
             reverse_idx = np.arange(len(y))[::-1]
