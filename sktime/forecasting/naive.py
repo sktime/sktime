@@ -553,7 +553,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         def sqrt_flr(x):
             """Square root of x, floored at 1 - to deal with in-sample predictions."""
-            return np.sqrt(np.max(x, 1))
+            return np.sqrt(np.maximum(x, 1))
 
         # Formulas from:
         # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)
