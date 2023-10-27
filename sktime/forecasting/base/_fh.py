@@ -674,6 +674,54 @@ class ForecastingHorizon:
             relative = self.to_relative(cutoff)
             return relative - relative.to_pandas()[0]
 
+    def get_expected_pred_idx(self, y=None, cutoff=None, sort_by_time=False):
+        """Construct DataFrame Index expected in y_pred, return of _predict.
+
+        Parameters
+        ----------
+        y : pd.DataFrame, pd.Series, pd.Index, or None
+            data to compute fh relative to,
+            assumed in sktime pandas based mtype or index thereof
+        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+            Cutoff value to use in computing resulting index.
+            If cutoff is not provided, is computed from ``y`` via ``get_cutoff``.
+        sort_by_time : bool, optional (default=False)
+            for MultiIndex returns, whether to sort by time index (level -1)
+            - If True, result Index is sorted sort by time index (level -1)
+            - If False, result Index is sorted overall
+
+        Returns
+        -------
+        fh_idx : pd.Index, expected index of y_pred returned by predict
+            assumes pandas based return mtype
+        """
+        if cutoff is None:
+            from sktime.datatypes import get_cutoff
+
+            cutoff = get_cutoff(y)
+
+        fh_idx = pd.Index(self.to_absolute_index(cutoff))
+        y_index = y.index
+
+        if isinstance(y_index, pd.MultiIndex):
+            y_inst_idx = y_index.droplevel(-1).unique()
+            if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
+                fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
+            elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
+                fh_list = [x + (y,) for y in fh_idx for x in y_inst_idx]
+            elif sort_by_time:  # and not isinstance(y_inst_idx, pd.MultiIndex):
+                fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
+            else:  # not sort_by_time and not isinstance(y_inst_idx, pd.MultiIndex):
+                fh_list = [(x, y) for y in fh_idx for x in y_inst_idx]
+
+        fh_idx = pd.Index(fh_list)
+
+        # replicaging index names
+        if hasattr(y_index, "names") and y_index.names is not None:
+            fh_idx.names = y_index.names
+
+        return fh_idx
+
     def __repr__(self):
         """Generate repr based on wrapped index repr."""
         class_name = self.__class__.__name__
