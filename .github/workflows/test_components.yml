@@ -29,9 +29,9 @@ jobs:
             forecasting:
               - sktime/base/**
               - sktime/forecasting/**
-            networks:
-              - sktime/base/**
-              - sktime/networks/**
+            # networks:
+            #   - sktime/base/**
+            #   - sktime/networks/**
             param_est:
               - sktime/base/**
               - sktime/param_est/**
