@@ -35,6 +35,7 @@ def load(serial):
     Examples
     --------
     Example 1: saving an estimator as pickle and loading
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>>
@@ -55,6 +56,7 @@ def load(serial):
     >>> y_pred = forecaster_loaded.predict()
 
     Example 2: saving a deep learning estimator on the hard drive and loading
+
     >>> import numpy as np
     >>> from sktime.classification.deep_learning import CNNClassifier
     >>>

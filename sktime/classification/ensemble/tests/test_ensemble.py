@@ -10,6 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 from sktime.classification.ensemble import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
@@ -29,6 +30,10 @@ std_transformer = TabularToSeriesAdaptor(
 
 
 # Check simple cases.
+@pytest.mark.skipif(
+    not run_test_for_class(ComposableTimeSeriesForestClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_tsf_predict_proba():
     """Test composable TSF predict proba."""
     clf = ComposableTimeSeriesForestClassifier(n_estimators=2)
@@ -95,6 +100,10 @@ def test_equivalent_model_specifications(n_intervals, n_estimators):
 
 
 # Compare TimeSeriesForest ensemble predictions using pipeline as estimator
+@pytest.mark.skipif(
+    not run_test_for_class(ComposableTimeSeriesForestClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("n_intervals", ["sqrt", 1])
 @pytest.mark.parametrize("n_estimators", [1, 3])
 def test_tsf_predictions(n_estimators, n_intervals):

@@ -7,9 +7,9 @@ import numpy as np
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.theta import ThetaForecaster, ThetaModularForecaster
+from sktime.split import temporal_train_test_split
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 
@@ -54,7 +54,7 @@ def test_pred_errors_against_y_test(fh):
 
     Raises
     ------
-    AssertionError - if point forecasts do not lie withing the prediction intervals
+    AssertionError - if point forecasts do not lie within the prediction intervals
     """
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
@@ -68,8 +68,8 @@ def test_pred_errors_against_y_test(fh):
 
     # Performance should be good enough that all point forecasts lie within the
     # prediction intervals.
-    assert np.all(y_test > intervals[("Coverage", 0.9, "lower")].values)
-    assert np.all(y_test < intervals[("Coverage", 0.9, "upper")].values)
+    assert np.all(y_test > intervals[(y.name, 0.9, "lower")].values)
+    assert np.all(y_test < intervals[(y.name, 0.9, "upper")].values)
 
 
 @pytest.mark.skipif(

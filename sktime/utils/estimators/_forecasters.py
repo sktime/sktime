@@ -141,10 +141,8 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         """
         return self
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
     @_method_logger
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -175,9 +173,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         fh_index = fh.to_absolute_index(self.cutoff)
@@ -326,9 +322,7 @@ class MockForecaster(BaseForecaster):
         """
         return self
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -360,9 +354,6 @@ class MockForecaster(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         cols = self._y.columns
-
-        if legacy_interface and len(cols) == 1:
-            cols = ["Quantiles"]
 
         col_index = pd.MultiIndex.from_product([cols, alpha])
         fh_index = fh.to_absolute_index(self.cutoff)

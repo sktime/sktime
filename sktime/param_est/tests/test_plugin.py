@@ -11,6 +11,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.param_est.fixed import FixedParams
 from sktime.param_est.plugin import PluginParamsForecaster
 from sktime.param_est.seasonality import SeasonalityACF
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.difference import Differencer
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
@@ -37,6 +38,10 @@ def test_seasonality_acf():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PluginParamsForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_paramplugin_dict():
     """Test PluginParamsForecaster with param: dict.
 
@@ -46,11 +51,8 @@ def test_paramplugin_dict():
 
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.compose import EnsembleForecaster, make_reduction
-    from sktime.forecasting.model_selection import (
-        ExpandingWindowSplitter,
-        ForecastingGridSearchCV,
-    )
-    from sktime.param_est.plugin import PluginParamsForecaster
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    from sktime.split import ExpandingWindowSplitter
 
     y, X = load_longley()
     horizon = ForecastingHorizon(np.arange(1, 4), is_relative=True)

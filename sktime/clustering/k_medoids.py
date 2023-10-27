@@ -19,9 +19,15 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
         centroids to generate.
-    init_algorithm: str, defaults = 'forgy'
-        Method for initializing cluster centers. Any of the following are valid:
-        ['kmeans++', 'random', 'forgy']
+    init_algorithm: str, np.ndarray (3d array of shape (n_clusters, n_dimensions,
+        series_length)), defaults = 'forgy'
+        Method for initializing cluster centers or an array of initial cluster centers.
+        If string, any of the following strings are valid:
+            ['kmeans++', 'random', 'forgy'].
+        If 3D np.ndarray, initializes cluster centers with the provided array. The array
+            must have shape (n_clusters, n_dimensions, series_length) and the number of
+            clusters in the array must be the same as what is provided to the n_clusters
+            argument.
     metric: str or Callable, defaults = 'dtw'
         Distance metric to compute similarity between time series. Any of the following
         are valid: ['dtw', 'euclidean', 'erp', 'edr', 'lcss', 'squared', 'ddtw', 'wdtw',
@@ -42,7 +48,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
     distance_params: dict, defaults = None
-        Dictonary containing kwargs for the distance metric being used.
+        Dictionary containing kwargs for the distance metric being used.
 
     Attributes
     ----------

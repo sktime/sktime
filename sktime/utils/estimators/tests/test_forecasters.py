@@ -52,12 +52,7 @@ def test_mock_univariate_forecaster_log(y, X_train, X_pred, fh):
         ("_fit", {"y": y_series, "X": _X_train, "fh": fh}),
         ("_predict", {"fh": fh, "X": _X_pred}),
         ("_update", {"y": y_series, "X": _X_train, "update_params": fh}),
-        (
-            "_predict_quantiles",
-            # todo 0.22.0: change the value of "legacy_interface" to False
-            # todo 0.23.0: remove the key "legacy_interface"
-            {"fh": fh, "X": _X_pred, "alpha": [0.1, 0.9], "legacy_interface": True},
-        ),
+        ("_predict_quantiles", {"fh": fh, "X": _X_pred, "alpha": [0.1, 0.9]}),
     ]
 
     equals, msg = deep_equals(forecaster.log, expected_log, return_msg=True)

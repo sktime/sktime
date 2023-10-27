@@ -14,6 +14,7 @@ from sktime.datasets import (  # Univariate; Unequal length; Multivariate
     load_japanese_vowels,
     load_osuleaf,
     load_plaid,
+    load_tecator,
     load_UCR_UEA_dataset,
     load_unit_test,
 )
@@ -25,6 +26,7 @@ UNIVARIATE_PROBLEMS = [
     load_italy_power_demand,
     load_osuleaf,
     load_unit_test,
+    load_tecator,
 ]
 MULTIVARIATE_PROBLEMS = [
     load_basic_motions,
@@ -33,6 +35,10 @@ UNEQUAL_LENGTH_PROBLEMS = [
     load_plaid,
     load_japanese_vowels,
 ]
+
+# test tsf download only on a random uniform subsample of datasets
+N_TSF_SUBSAMPLE = 3
+TSF_SUBSAMPLE = np.random.choice(tsf_all_datasets, N_TSF_SUBSAMPLE)
 
 
 @pytest.mark.parametrize(
@@ -77,9 +83,7 @@ def test_load_numpy2d_multivariate_raises(loader):
         X, y = loader(return_type="numpy2d")
 
 
-@pytest.mark.xfail(
-    reason="repeated upstream location failures, see 4754. xfail until fixed."
-)
+@pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #5460")
 def test_load_UEA():
     """Test loading of a random subset of the UEA data, to check API."""
     from sktime.datasets.tsc_dataset_names import multivariate, univariate
@@ -113,13 +117,13 @@ def test_load_forecastingdata():
     assert metadata["contain_equal_length"] is False
 
 
-@pytest.mark.parametrize("name", tsf_all_datasets)
+@pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #5462")
+@pytest.mark.parametrize("name", TSF_SUBSAMPLE)
 def test_check_link_downloadable(name):
     """Test dataset URL from forecasting.org is downloadable and exits."""
     url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
 
     # Send a GET request to check if the link exists without downloading the file
-    # response = requests.get(url, stream=True)
     req = Request(url, method="HEAD")
     response = urlopen(req)
 

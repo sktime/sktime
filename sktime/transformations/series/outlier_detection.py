@@ -11,7 +11,7 @@ from math import ceil
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.split import SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 
 
@@ -24,7 +24,7 @@ class HampelFilter(BaseTransformer):
     Parameters
     ----------
     window_length : int, optional (default=10)
-        Lenght of the sliding window
+        Length of the sliding window
     n_sigma : int, optional
         Defines how strong a point must outly to be an "outlier", by default 3
     k : float, optional

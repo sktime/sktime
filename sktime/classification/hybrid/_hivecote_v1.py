@@ -97,6 +97,7 @@ class HIVECOTEV1(BaseClassifier):
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "hybrid",
+        "python_dependencies": "numba",
     }
 
     def __init__(

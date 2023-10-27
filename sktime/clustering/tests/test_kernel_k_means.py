@@ -4,7 +4,7 @@ import pytest
 
 from sktime.clustering.kernel_k_means import TimeSeriesKernelKMeans
 from sktime.datasets import load_basic_motions
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 
 expected_results = [
     0,
@@ -98,8 +98,8 @@ expected_labels = [
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(TimeSeriesKernelKMeans, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(TimeSeriesKernelKMeans),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_kernel_k_means():
     """Test implementation of kernel k means."""

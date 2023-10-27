@@ -120,7 +120,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
             raise ValueError(
                 f"Unrecognised distance measure string: {distance}. "
                 f"Allowed values for string codes are: {DISTANCES_SUPPORTED}. "
-                "Alternatively, pass a callable distance measure into the constuctor."
+                "Alternatively, pass a callable distance measure into the constructor."
             )
 
         self.knn_estimator_ = KNeighborsRegressor(

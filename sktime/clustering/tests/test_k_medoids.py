@@ -5,7 +5,7 @@ from sklearn import metrics
 
 from sktime.clustering.k_medoids import TimeSeriesKMedoids
 from sktime.datasets import load_basic_motions
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 expected_results = {
     "medoids": [
@@ -107,8 +107,8 @@ expected_labels = {
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(TimeSeriesKMedoids),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_kmedoids():
     """Test implementation of Kmedoids."""

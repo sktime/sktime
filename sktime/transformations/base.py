@@ -58,6 +58,7 @@ from sktime.datatypes import (
     VectorizedDF,
     check_is_mtype,
     check_is_scitype,
+    convert,
     convert_to,
     mtype_to_scitype,
     update_data,
@@ -100,6 +101,7 @@ class BaseTransformer(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        "object_type": "transformer",  # type of object
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -109,6 +111,7 @@ class BaseTransformer(BaseEstimator):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
         "capability:inverse_transform:range": None,
+        "capability:inverse_transform:exact": True,
         # inverting range of inverse transform = domain of invertibility of transform
         "univariate-only": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
@@ -142,12 +145,57 @@ class BaseTransformer(BaseEstimator):
         # "on" - input check and conversion is carried out
         # "off" - input check and conversion is not done before passing to inner methods
         # valid mtype string - input is assumed to specified mtype
-        "output_conversion": "on"
+        "output_conversion": "on",
         # controls output conversion for _transform, _inverse_transform
         # valid values:
         # "on" - if input_conversion is "on", output conversion is carried out
         # "off" - output of _transform, _inverse_transform is directly returned
         # valid mtype string - output is converted to specified mtype
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend
+    }
+
+    _config_doc = {
+        "backend:parallel": """
+        backend:parallel : str, optional, default="None"
+            backend to use for parallelization when broadcasting/vectorizing, one of
+
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel``
+            - "dask": uses ``dask``, requires ``dask`` package in environment
+        """,
+        "backend:parallel:params": """
+        backend:parallel:params : dict, optional, default={} (no parameters passed)
+            additional parameters passed to the parallelization backend as config.
+            Valid keys depend on the value of ``backend:parallel``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading":
+              any valid keys for ``joblib.Parallel`` can be passed here,
+              e.g., ``n_jobs``, with the exception of ``backend`` which is directly
+              controlled by ``backend:parallel``
+            - "dask": any valid keys for ``dask.compute``
+              can be passed, e.g., ``scheduler``
+        """,
+        "input_conversion": """
+        input_conversion : str, one of "on", "off", valid mtype string
+            controls input checks and conversions,
+            for _fit, _transform, _inverse_transform, _update
+            "on" - input check and conversion is carried out
+            "off" - input check and conversion not done before passing to inner methods
+            valid mtype string - input is assumed to specified mtype
+        """,
+        "output_conversion": """
+        output_conversion : str, one of "on", "off", valid mtype string
+            controls output conversion for _transform, _inverse_transform
+            "on" - if input_conversion is "on", output conversion is carried out
+            "off" - output of _transform, _inverse_transform is directly returned
+            valid mtype string - output is converted to specified mtype
+        """,
     }
 
     # allowed mtypes for transformers - Series and Panel
@@ -228,7 +276,7 @@ class BaseTransformer(BaseEstimator):
             return NotImplemented
 
     def __or__(self, other):
-        """Magic | method, return MultiplexTranformer.
+        """Magic | method, return MultiplexTransformer.
 
         Implemented for `other` being either a MultiplexTransformer or a transformer.
 
@@ -864,7 +912,7 @@ class BaseTransformer(BaseEstimator):
             _converter_store_X : dict, metadata from X conversion, for back-conversion
             _X_mtype_last_seen : str, mtype of X seen last
             _X_input_scitype : str, scitype of X seen last
-            _convert_case : str, coversion case (see above), one of
+            _convert_case : str, conversion case (see above), one of
                 "case 1: scitype supported"
                 "case 2: higher scitype supported"
                 "case 3: requires vectorization"
@@ -927,6 +975,7 @@ class BaseTransformer(BaseEstimator):
 
         # checking X
         X_metadata_required = ["is_univariate"]
+
         X_valid, msg, X_metadata = check_is_scitype(
             X,
             scitype=ALLOWED_SCITYPES,
@@ -998,13 +1047,14 @@ class BaseTransformer(BaseEstimator):
                 raise TypeError("y " + msg_invalid_input)
 
             y_scitype = y_metadata["scitype"]
+            y_mtype = y_metadata["mtype"]
 
         else:
             # y_scitype is used below - set to None if y is None
             y_scitype = None
         # end checking y
 
-        # no compabitility checks between X and y
+        # no compatibility checks between X and y
         # end compatibility checking X and y
 
         # convert X & y to supported inner type, if necessary
@@ -1023,7 +1073,9 @@ class BaseTransformer(BaseEstimator):
                 as_scitype = "Panel"
             else:
                 as_scitype = "Hierarchical"
-            X = convert_to_scitype(X, to_scitype=as_scitype, from_scitype=X_scitype)
+            X, X_mtype = convert_to_scitype(
+                X, to_scitype=as_scitype, from_scitype=X_scitype, return_to_mtype=True
+            )
             X_scitype = as_scitype
             # then pass to case 1, which we've reduced to, X now has inner scitype
 
@@ -1032,8 +1084,9 @@ class BaseTransformer(BaseEstimator):
         #   and does not require vectorization because of cols (multivariate)
         if not requires_vectorization:
             # converts X
-            X_inner = convert_to(
+            X_inner = convert(
                 X,
+                from_type=X_mtype,
                 to_type=X_inner_mtype,
                 store=metadata["_converter_store_X"],
                 store_behaviour="reset",
@@ -1041,8 +1094,9 @@ class BaseTransformer(BaseEstimator):
 
             # converts y, returns None if y is None
             if y_inner_mtype != ["None"] and y is not None:
-                y_inner = convert_to(
+                y_inner = convert(
                     y,
+                    from_type=y_mtype,
                     to_type=y_inner_mtype,
                     as_scitype=y_scitype,
                 )
@@ -1145,11 +1199,17 @@ class BaseTransformer(BaseEstimator):
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
             #   this happens only for Series, not Panel
             if X_input_scitype == "Series":
+                if X_input_mtype == "pd.Series":
+                    Xt_metadata_required = ["is_univariate"]
+                else:
+                    Xt_metadata_required = []
+
                 valid, msg, metadata = check_is_mtype(
                     Xt,
                     ["pd.DataFrame", "pd.Series", "np.ndarray"],
-                    return_metadata=True,
+                    return_metadata=Xt_metadata_required,
                 )
+
                 if not valid:
                     raise TypeError(
                         f"_transform output of {type(self)} does not comply "
@@ -1157,9 +1217,20 @@ class BaseTransformer(BaseEstimator):
                         " for mtype specifications. Returned error message:"
                         f" {msg}. Returned object: {Xt}"
                     )
-                if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
+                if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
+                # Xt_mtype = metadata["mtype"]
+            # else:
+            #     Xt_mtype = X_input_mtype
 
+            # Xt = convert(
+            #     Xt,
+            #     from_type=Xt_mtype,
+            #     to_type=X_output_mtype,
+            #     as_scitype=X_input_scitype,
+            #     store=_converter_store_X,
+            #     store_behaviour="freeze",
+            # )
             Xt = convert_to(
                 Xt,
                 to_type=X_output_mtype,
@@ -1211,12 +1282,17 @@ class BaseTransformer(BaseEstimator):
                     method="clone",
                     rowname_default="transformers",
                     colname_default="transformers",
+                    # no backend parallelization necessary for clone
                 )
             else:
                 transformers_ = self.transformers_
 
             self.transformers_ = X.vectorize_est(
-                transformers_, method=methodname, **kwargs
+                transformers_,
+                method=methodname,
+                backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
+                **kwargs,
             )
             return self
 
@@ -1243,12 +1319,24 @@ class BaseTransformer(BaseEstimator):
                     method="clone",
                     rowname_default="transformers",
                     colname_default="transformers",
+                    # no backend parallelization necessary for clone
                 )
-                transformers_ = X.vectorize_est(transformers_, method="fit", **kwargs)
+                transformers_ = X.vectorize_est(
+                    transformers_,
+                    method="fit",
+                    backend=self.get_config()["backend:parallel"],
+                    backend_params=self.get_config()["backend:parallel:params"],
+                    **kwargs,
+                )
 
             # transform the i-th series/panel with the i-th stored transformer
             Xts = X.vectorize_est(
-                transformers_, method=methodname, return_type="list", **kwargs
+                transformers_,
+                method=methodname,
+                return_type="list",
+                backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
+                **kwargs,
             )
             Xt = X.reconstruct(Xts, overwrite_index=False)
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Configuration file for the Sphinx documentation builder."""
 
+import datetime
 import os
 import sys
 from importlib import import_module
@@ -18,8 +19,9 @@ if not ON_READTHEDOCS:
     sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
+current_year = datetime.datetime.now().year
 project = "sktime"
-project_copyright = "2019 - present (BSD-3-Clause License)"
+project_copyright = f"2019 - {current_year} (BSD-3-Clause License)"
 author = "sktime developers"
 
 # The full version, including alpha/beta/rc tags
@@ -47,9 +49,11 @@ extensions = [
     "nbsphinx",  # integrates example notebooks
     "sphinx_gallery.load_style",
     "myst_parser",
+    "sphinx_copybutton",
     "sphinx_design",
     "sphinx_issues",
     "versionwarning.extension",
+    "sphinx.ext.doctest",
 ]
 
 # Recommended by sphinx_design when using the MyST Parser
@@ -395,7 +399,7 @@ nbsphinx_execute = "never"  # always  # whether to run notebooks
 nbsphinx_allow_errors = False  # False
 nbsphinx_timeout = 600  # seconds, set to -1 to disable timeout
 
-# add Binder launch buttom at the top
+# add Binder launch button at the top
 current_file = "{{ env.doc2path( env.docname, base=None) }}"
 
 # make sure Binder points to latest stable release, not main
@@ -425,11 +429,11 @@ Generated using nbsphinx_. The Jupyter notebook can be found here_.
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     "python": (f"https://docs.python.org/{sys.version_info.major}", None),
-    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
-    "matplotlib": ("https://matplotlib.org/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-    "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
+    "joblib": ("https://joblib.readthedocs.io/en/stable/", None),
     "scikit-learn": ("https://scikit-learn.org/stable/", None),
     "statsmodels": ("https://www.statsmodels.org/stable/", None),
 }
@@ -448,3 +452,7 @@ versionwarning_messages = {
 # Show warning at top of page
 versionwarning_body_selector = "div.document"
 versionwarning_banner_title = ""
+
+copybutton_prompt_text = r">>> |\.\.\. |\$ "
+copybutton_prompt_is_regexp = True
+copybutton_line_continuation_character = "\\"

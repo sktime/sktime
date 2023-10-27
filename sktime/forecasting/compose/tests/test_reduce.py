@@ -26,15 +26,12 @@ from sktime.forecasting.compose import (
     make_reduction,
 )
 from sktime.forecasting.compose._reduce import _sliding_window_transform
-from sktime.forecasting.model_selection import (
-    SlidingWindowSplitter,
-    temporal_train_test_split,
-)
-from sktime.forecasting.model_selection.tests.test_split import _get_windows
 from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
+from sktime.split import SlidingWindowSplitter, temporal_train_test_split
+from sktime.split.tests.test_split import _get_windows
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
@@ -567,7 +564,7 @@ def test_direct_vs_recursive():
 
     Test reduction forecasters by making prediction on airline dataset using linear
     estimators. Wenn windows_identical = False, all observations should be considered
-    (see documenation in make_reduction function), so results for direct and recursive
+    (see documentation in make_reduction function), so results for direct and recursive
     forecasting should match for the first forecasting horizon. With the
     windows_identical
     """

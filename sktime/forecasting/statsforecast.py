@@ -247,45 +247,48 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        # import inside method to avoid hard dependency
-        from statsforecast.models import AutoARIMA as _AutoARIMA
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import AutoARIMA
 
-        return _AutoARIMA(
-            d=self.d,
-            D=self.D,
-            max_p=self.max_p,
-            max_q=self.max_q,
-            max_P=self.max_P,
-            max_Q=self.max_Q,
-            max_order=self.max_order,
-            max_d=self.max_d,
-            max_D=self.max_D,
-            start_p=self.start_p,
-            start_q=self.start_q,
-            start_P=self.start_P,
-            start_Q=self.start_Q,
-            stationary=self.stationary,
-            seasonal=self.seasonal,
-            ic=self.information_criterion,
-            stepwise=self.stepwise,
-            nmodels=self.n_fits,
-            trace=self.trace,
-            approximation=self.approximation,
-            method=self.method,
-            truncate=self.truncate,
-            test=self.test,
-            test_kwargs=self.offset_test_args,
-            seasonal_test=self.seasonal_test,
-            seasonal_test_kwargs=self.seasonal_test_args,
-            allowdrift=self.trend,
-            allowmean=self.with_intercept,
-            blambda=self.blambda,
-            biasadj=self.biasadj,
-            parallel=self.parallel,
-            num_cores=self.n_jobs,
-            season_length=self.sp,
-        )
+        return AutoARIMA
+
+    def _get_statsforecast_params(self):
+        return {
+            "d": self.d,
+            "D": self.D,
+            "max_p": self.max_p,
+            "max_q": self.max_q,
+            "max_P": self.max_P,
+            "max_Q": self.max_Q,
+            "max_order": self.max_order,
+            "max_d": self.max_d,
+            "max_D": self.max_D,
+            "start_p": self.start_p,
+            "start_q": self.start_q,
+            "start_P": self.start_P,
+            "start_Q": self.start_Q,
+            "stationary": self.stationary,
+            "seasonal": self.seasonal,
+            "ic": self.information_criterion,
+            "stepwise": self.stepwise,
+            "nmodels": self.n_fits,
+            "trace": self.trace,
+            "approximation": self.approximation,
+            "method": self.method,
+            "truncate": self.truncate,
+            "test": self.test,
+            "test_kwargs": self.offset_test_args,
+            "seasonal_test": self.seasonal_test,
+            "seasonal_test_kwargs": self.seasonal_test_args,
+            "allowdrift": self.trend,
+            "allowmean": self.with_intercept,
+            "blambda": self.blambda,
+            "biasadj": self.biasadj,
+            "parallel": self.parallel,
+            "num_cores": self.n_jobs,
+            "season_length": self.sp,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -306,7 +309,10 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"approximation": True, "max_p": 4, "max_Q": 1}
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        params = [{}, {"approximation": True, "max_p": 4, "max_Q": 1}]
+
         return params
 
 
@@ -357,15 +363,18 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        """Create underlying forecaster instance."""
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
         from statsforecast.models import AutoTheta
 
-        return AutoTheta(
-            season_length=self.season_length,
-            decomposition_type=self.decomposition_type,
-            model=self.model,
-        )
+        return AutoTheta
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "decomposition_type": self.decomposition_type,
+            "model": self.model,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -402,7 +411,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     information criterion. Default is Akaike Information Criterion (AICc), while
     particular models are estimated using maximum likelihood. The state-space
     equations can be determined based on their $M$ multiplicative, $A$ additive, $Z$
-    optimized or $N$ ommited components. The `model` string parameter defines the ETS
+    optimized or $N$ omitted components. The `model` string parameter defines the ETS
     equations: E in [$M, A, Z$], T in [$N, A, M, Z$], and S in [$N, A, M, Z$].
 
     For example when model='ANN' (additive error, no trend, and no seasonality), ETS
@@ -449,13 +458,18 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
+    def _get_statsforecast_class(self):
         """Create underlying forecaster instance."""
         from statsforecast.models import AutoETS
 
-        return AutoETS(
-            season_length=self.season_length, model=self.model, damped=self.damped
-        )
+        return AutoETS
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "model": self.model,
+            "damped": self.damped,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -491,9 +505,9 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     Automatically selects the best Complex Exponential Smoothing model using an
     information criterion. Default is Akaike Information Criterion (AICc), while
     particular models are estimated using maximum likelihood. The state-space equations
-    can be determined based on their $S$ simple, $P$ parial, $Z$ optimized or $N$
-    ommited components. The `model` string parameter defines the kind of CES model:
-    $N$ for simple CES (withous seasonality), $S$ for simple seasonality (lagged CES),
+    can be determined based on their $S$ simple, $P$ partial, $Z$ optimized or $N$
+    omitted components. The `model` string parameter defines the kind of CES model:
+    $N$ for simple CES (without seasonality), $S$ for simple seasonality (lagged CES),
     $P$ for partial seasonality (without complex part), $F$ for full seasonality
     (lagged CES with real and complex seasonal parts).
 
@@ -524,11 +538,17 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        """Create underlying forecaster instance."""
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
         from statsforecast.models import AutoCES
 
-        return AutoCES(season_length=self.season_length, model=self.model)
+        return AutoCES
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "model": self.model,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -575,6 +595,12 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     trend_forecaster : estimator, optional, default=StatsForecastAutoETS()
         Sktime estimator used to make univariate forecasts. Multivariate estimators are
         not supported.
+    stl_kwargs : dict, optional
+        Extra arguments to pass to [`statsmodels.tsa.seasonal.STL`]
+        (https://www.statsmodels.org/dev/generated/statsmodels.tsa.seasonal.STL.html#statsmodels.tsa.seasonal.STL).
+        The `period` and `seasonal` arguments are reserved.
+    pred_int_kwargs : dict, optional
+        Extra arguments to pass to [`statsforecast.utils.ConformalIntervals`].
 
     References
     ----------
@@ -603,6 +629,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         self,
         season_length: Union[int, List[int]],
         trend_forecaster=None,
+        stl_kwargs: Optional[Dict] = None,
+        pred_int_kwargs: Optional[Dict] = None,
     ):
         super().__init__()
 
@@ -614,6 +642,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             self._trend_forecaster = clone(trend_forecaster)
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
+        self.stl_kwargs = stl_kwargs
+        self.pred_int_kwargs = pred_int_kwargs
 
         # checks if trend_forecaster is already wrapped with
         # StatsForecastBackAdapter
@@ -630,14 +660,24 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                     "forecaster."
                 )
 
-    def _instantiate_model(self):
-        """Create underlying forecaster instance."""
+        # check if prediction interval kwargs are passed
+        if self.pred_int_kwargs:
+            from statsforecast.utils import ConformalIntervals
+
+            self._trend_forecaster.prediction_intervals = ConformalIntervals(
+                **self.pred_int_kwargs
+            )
+
+    def _get_statsforecast_class(self):
         from statsforecast.models import MSTL
 
-        return MSTL(
-            season_length=self.season_length,
-            trend_forecaster=self._trend_forecaster,
-        )
+        return MSTL
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "trend_forecaster": self._trend_forecaster,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -672,6 +712,12 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                 },
                 {
                     "season_length": 4,
+                },
+                {
+                    "season_length": 4,
+                    "pred_int_kwargs": {
+                        "n_windows": 2,
+                    },
                 },
             ]
         except ModuleNotFoundError:

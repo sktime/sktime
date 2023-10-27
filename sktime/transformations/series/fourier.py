@@ -4,7 +4,6 @@
 __author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
-from distutils.log import warn
 from typing import List, Optional
 
 import numpy as np
@@ -27,7 +26,7 @@ class FourierFeatures(BaseTransformer):
     Where :math:`t` is the number of time steps elapsed from the beginning of the time
     series.
 
-    The output of the trasform is a pandas DataFrame that includes the fourier terms as
+    The output of the transform is a pandas DataFrame that includes the fourier terms as
     additional columns with the naming convention stated above (sin_sp_k and cos_sp_k).
     For instance for sp_list = [12, 3] and fourier_terms_list = [2, 1] the transformed
     series will have the additional columns:
@@ -181,9 +180,10 @@ class FourierFeatures(BaseTransformer):
             if self.freq_ is None:
                 ValueError("X has no known frequency and none is supplied")
             if self.freq_ == time_index.freq and self.freq_ != self.freq:
-                warn(
-                    f"Using frequency from index: {time_index.freq}, which \
-                     does not match the frequency given:{self.freq}."
+                warnings.warn(
+                    f"Using frequency from index: {time_index.freq}, which"
+                    f"does not match the frequency given:{self.freq}.",
+                    stacklevel=2,
                 )
             time_index = time_index.to_period(self.freq_)
         # this is used to make sure that time t is calculated with reference to
