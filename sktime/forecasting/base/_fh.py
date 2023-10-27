@@ -704,28 +704,33 @@ class ForecastingHorizon:
 
         if hasattr(y, "index"):
             y_index = y.index
+        elif isinstance(y, pd.Index):
+            y_index = y
+        else:
+            y_index = pd.Index(y)
 
         if cutoff is None and not isinstance(y_index, pd.MultiIndex):
             _cutoff = get_cutoff(y)
+        else:
+            _cutoff = cutoff
 
-        if cutoff is not None:
-
+        if cutoff is not None or not isinstance(y_index, pd.MultiIndex):
             fh_idx = pd.Index(self.to_absolute_index(_cutoff))
 
-            if isinstance(y_index, pd.MultiIndex):
-                y_inst_idx = y_index.droplevel(-1).unique()
-                if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
-                    fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
-                elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
-                    fh_list = [x + (y,) for y in fh_idx for x in y_inst_idx]
-                elif sort_by_time:  # and not isinstance(y_inst_idx, pd.MultiIndex):
-                    fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
-                else:  # not sort_by_time and not isinstance(y_inst_idx, pd.MultiIndex):
-                    fh_list = [(x, y) for y in fh_idx for x in y_inst_idx]
+        if cutoff is not None and isinstance(y_index, pd.MultiIndex):
+            y_inst_idx = y_index.droplevel(-1).unique()
+            if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
+                fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
+            elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
+                fh_list = [x + (y,) for y in fh_idx for x in y_inst_idx]
+            elif sort_by_time:  # and not isinstance(y_inst_idx, pd.MultiIndex):
+                fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
+            else:  # not sort_by_time and not isinstance(y_inst_idx, pd.MultiIndex):
+                fh_list = [(x, y) for y in fh_idx for x in y_inst_idx]
 
-                fh_idx = pd.Index(fh_list)
+            fh_idx = pd.Index(fh_list)
 
-        else:  # cutoff is None and isinstance(y_index, pd.MultiIndex)
+        elif isinstance(y_index, pd.MultiIndex):
 
             y_inst_idx = y_index.droplevel(-1).unique()
 
