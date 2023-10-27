@@ -716,7 +716,7 @@ class ForecastingHorizon:
 
         fh_idx = pd.Index(fh_list)
 
-        # replicaging index names
+        # replicating index names
         if hasattr(y_index, "names") and y_index.names is not None:
             fh_idx.names = y_index.names
 
