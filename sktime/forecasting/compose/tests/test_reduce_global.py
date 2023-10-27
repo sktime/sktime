@@ -364,6 +364,9 @@ def test_timezoneaware_index():
     y = load_solar(api_version=None)
     y_notz = y.copy().tz_localize(None)
 
+    assert y.index.tz is not None
+    assert y_notz.index.tz is None
+
     window_trafo = WindowSummarizer(n_jobs=1, **{"lag_feature": {"lag": [1, 2, 48]}})
     regressor = LinearRegression()
     forecaster = make_reduction(
@@ -375,13 +378,20 @@ def test_timezoneaware_index():
     )
 
     # check coefficients
-    tzaware = forecaster.clone().fit(y).get_fitted_params()["estimator__coef"]
-    tznaive = forecaster.clone().fit(y_notz).get_fitted_params()["estimator__coef"]
-    np.testing.assert_almost_equal(tzaware, tznaive)
+    tzaware = forecaster.clone().fit(y)
+    tznaive = forecaster.clone().fit(y_notz)
+    tzaware_coef = tzaware.get_fitted_params()["estimator__coef"]
+    tznaive_coef = tznaive.get_fitted_params()["estimator__coef"]
+
+    np.testing.assert_almost_equal(tzaware_coef, tznaive_coef)
 
     fh = np.arange(1, 97)
-    pred_tzaware = forecaster.clone().fit_predict(y, fh=fh)
-    pred_tznaive = forecaster.clone().fit_predict(y_notz, fh=fh)
+    pred_tzaware = tzaware.predict(fh=fh)
+    pred_tznaive = tznaive.predict(fh=fh)
+
+    msg = "Time-zone of predictions not consistent with training data."
+    assert pred_tzaware.index.tz == y.index.tz, msg
+    assert pred_tznaive.index.tz == y_notz.index.tz, msg
 
     # These should give us identical predictions
     np.testing.assert_almost_equal(pred_tzaware.values, pred_tznaive.values)
