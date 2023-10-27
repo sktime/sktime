@@ -706,8 +706,10 @@ class ForecastingHorizon:
             y_index = y.index
         elif isinstance(y, pd.Index):
             y_index = y
+            y = pd.DataFrame(index=y_index)
         else:
             y_index = pd.Index(y)
+            y = pd.DataFrame(index=y_index)
 
         if cutoff is None and not isinstance(y_index, pd.MultiIndex):
             _cutoff = get_cutoff(y)
@@ -735,14 +737,15 @@ class ForecastingHorizon:
             y_inst_idx = y_index.droplevel(-1).unique()
 
             if isinstance(y_inst_idx, pd.MultiIndex):
-                fh_list = [x + (y,) for x in y_inst_idx for y in _make_y_pred(x)]
+                fh_list = [x + (z,) for x in y_inst_idx for z in _make_y_pred(y.loc[x])]
             else:
-                fh_list = [(x, y) for x in y_inst_idx for y in _make_y_pred(x)]
+                fh_list = [(x, z) for x in y_inst_idx for z in _make_y_pred(y.loc[x])]
 
             fh_idx = pd.Index(fh_list)
 
-            if not sort_by_time:
-                fh_idx = fh_idx.sort_values()
+            if sort_by_time:
+                fh_df = pd.DataFrame(index=fh_idx)
+                fh_idx = fh_df.sort_index(level=-1).index
 
         # replicating index names
         if hasattr(y_index, "names") and y_index.names is not None:
