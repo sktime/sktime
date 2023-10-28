@@ -57,7 +57,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        sktime-component: ${{ fromJSON(needs.detect.outputs.components) }}
+        sktime-component: ${{ fromJSON(needs.detect_components_with_extras.outputs.components) }}
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
