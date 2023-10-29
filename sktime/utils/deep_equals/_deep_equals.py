@@ -9,8 +9,6 @@ Objects compared can have one of the following valid types:
 from skbase.utils.deep_equals._common import _make_ret
 from skbase.utils.deep_equals._deep_equals import deep_equals as _deep_equals
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
 __author__ = ["fkiraly"]
 __all__ = ["deep_equals"]
 
@@ -168,6 +166,8 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     """
     if not hasattr(x, "compute"):
         return None
+
+    from sktime.utils.validation._dependencies import _check_soft_dependencies
 
     dask_available = _check_soft_dependencies("dask", severity="none")
 
