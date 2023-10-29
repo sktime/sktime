@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.deep_equals._deep_equals import deep_equals
 
 # examples used for comparison below
 EXAMPLES = [
