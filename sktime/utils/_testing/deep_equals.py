@@ -65,8 +65,8 @@ def deep_equals(x, y, return_msg=False):
         "The legacy deep_equals from sktime.utils._testing.deep_equals is "
         "deprecated and should be replaced by the new deep_equals,"
         " from sktime.utils.deep_equals, which requires scikit-base>=0.6.1. "
-    )      
-        
+    )
+
     removal_schedule = (
         "The legacy deep_equals is not scheduled for removal yet, this "
         "warning will change to specify a removal date when it is scheduled."
