@@ -7,6 +7,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 if _check_soft_dependencies(
     "scikit-base<0.6.1",
     package_import_alias={"scikit-base": "skbase"},
+    severity="none",
 ):
     from sktime.utils._testing.deep_equals import deep_equals
 
