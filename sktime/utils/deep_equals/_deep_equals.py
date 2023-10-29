@@ -166,12 +166,12 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
         if unequal, returns string
     returns None if this function does not apply, i.e., x is not csr_matrix
     """
+    if not hasattr(x, "compute"):
+        return None
+
     dask_available = _check_soft_dependencies("dask", severity="none")
 
     if not dask_available:
-        return None
-
-    if not hasattr(x, "compute"):
         return None
 
     import dask
