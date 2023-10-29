@@ -47,7 +47,7 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-  test_components:
+  test_components_with_extras:
     needs: code_quality
     name: test module
     strategy:
