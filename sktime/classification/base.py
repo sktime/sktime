@@ -30,7 +30,6 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
-from sktime.datatypes._vectorize import VectorizedDF
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
@@ -57,7 +56,7 @@ class BaseClassifier(BaseEstimator, ABC):
         "object_type": "classifier",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
-        "capability:multioutput": False,  # whether classifier supports multioutput
+        "capability:multioutput": False,
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -90,7 +89,6 @@ class BaseClassifier(BaseEstimator, ABC):
         # required for compatability with some sklearn interfaces
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
-        self.estimators = None
 
         super().__init__()
         _check_estimator_deps(self)
@@ -134,213 +132,7 @@ class BaseClassifier(BaseEstimator, ABC):
             return NotImplemented
 
     def fit(self, X, y):
-        """
-        Fit time series classifier to training data.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
-
-        Returns
-        -------
-        estimators : list of reference to a single instance or estimator instances.
-        """
-        self._y = y
-        self._X = X
-        metadata = self._check_classifier_input(X, y)
-        if self.get_tag("capability:multiouput"):
-            self._fit_instance(X, y, metadata)
-            self.estimators = [self]
-            return self
-        else:
-            vdf = VectorizedDF(
-                X=[X] * len(y.columns),
-                y=[(lambda col: y[col])(col) for col in y.columns],
-            )
-            self.estimators = vdf.vectorize_est(estimator=self, method="clone")
-            for col, est in zip(y.columns, self.estimators):
-                est.fit(X, y[col], metadata)
-
-            return self.estimators
-
-    def predict(self, X):
-        """Predicts labels for sequences in X.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-
-        Returns
-        -------
-        predictions : pd.DataFrame
-        """
-        predictions = []
-
-        for est in self.estimators:
-            pred = est._predict_instance(X)
-            predictions.append(pred)
-
-        predictions = pd.concat(predictions, axis=1)
-        predictions.columns = (
-            self._y.columns if self._y.columns not in [None, "None"] else pd.Index([0])
-        )
-        return predictions
-
-    def predict_proba(self, X):
-        """Predicts labels probabilities for sequences in X.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-
-        Returns
-        -------
-        pred_dist : pd.DataFrame
-        """
-        pred_dist = []
-
-        for est in self.estimators:
-            pred = est._predict_proba_instance(X)
-            pred_dist.append(pred)
-
-        pred_dist = pd.concat(pred_dist, axis=1)
-        pred_dist.columns = (
-            self._y.columns if self._y.columns not in [None, "None"] else pd.Index([0])
-        )
-        return pred_dist
-
-    def fit_predict(self, X, y, cv=None, change_state=True):
-        """Fit and predict labels for sequences in X.
-
-        Convenience method to produce in-sample predictions and
-        cross-validated out-of-sample predictions.
-
-        Writes to self, if change_state=True:
-            Sets self.is_fitted to True.
-            Sets fitted model attributes ending in "_".
-
-        Does not update state if change_state=False.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
-        cv : None, int, or sklearn cross-validation object, optional, default=None
-            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
-            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
-                where multiple X_train, y_train, X_test are obtained from cv folds
-                returned y is union over all test fold predictions
-                cv test folds must be non-intersecting
-            int : equivalent to cv=KFold(cv, shuffle=True, random_state=x),
-                i.e., k-fold cross-validation predictions out-of-sample
-                random_state x is taken from self if exists, otherwise x=None
-        change_state : bool, optional (default=True)
-            if False, will not change the state of the classifier,
-                i.e., fit/predict sequence is run with a copy, self does not change
-            if True, will fit self to the full X and y,
-                end state will be equivalent to running fit(X, y)
-
-        Returns
-        -------
-        predictions : pd.DataFrame
-        """
-        predictions = []
-
-        for est in self.estimators:
-            pred = est._fit_predict_instance(X, y, cv, change_state)
-            predictions.append(pred)
-
-        predictions = pd.concat(predictions, axis=1)
-        predictions.columns = (
-            self._y.columns if self._y.columns not in [None, "None"] else pd.Index([0])
-        )
-        return predictions
-
-    def fit_predict_proba(self, X, y, cv=None, change_state=True):
-        """Fit and predict labels probabilities for sequences in X.
-
-        Convenience method to produce in-sample predictions and
-        cross-validated out-of-sample predictions.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
-        cv : None, int, or sklearn cross-validation object, optional, default=None
-            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
-            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
-                where multiple X_train, y_train, X_test are obtained from cv folds
-                returned y is union over all test fold predictions
-                cv test folds must be non-intersecting
-            int : equivalent to cv=Kfold(int), i.e., k-fold cross-validation predictions
-        change_state : bool, optional (default=True)
-            if False, will not change the state of the classifier,
-                i.e., fit/predict sequence is run with a copy, self does not change
-            if True, will fit self to the full X and y,
-                end state will be equivalent to running fit(X, y)
-
-        Returns
-        -------
-        pred_dist : pd.DataFrame
-        """
-        pred_dist = []
-
-        for est in self.estimators:
-            pred = est._fit_predict_proba_instance(X, y, cv, change_state)
-            pred_dist.append(pred)
-
-        pred_dist = pd.concat(pred_dist, axis=1)
-        pred_dist.columns = (
-            self._y.columns if self._y.columns not in [None, "None"] else pd.Index([0])
-        )
-        return pred_dist
-
-    def _fit_instance(self, X, y, metadata):
-        """Fit time series classifier to training data (single instance).
+        """Fit time series classifier to training data.
 
         Parameters
         ----------
@@ -372,7 +164,9 @@ class BaseClassifier(BaseEstimator, ABC):
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
         X, y = self._internal_convert(X, y)
-        X_metadata = metadata["X"]
+        X_metadata = self._check_classifier_input(
+            X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
+        )
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
@@ -414,8 +208,8 @@ class BaseClassifier(BaseEstimator, ABC):
         self._is_fitted = True
         return self
 
-    def _predict_instance(self, X) -> np.ndarray:
-        """Predicts labels for sequences in X (single instance).
+    def predict(self, X) -> np.ndarray:
+        """Predicts labels for sequences in X.
 
         Parameters
         ----------
@@ -446,8 +240,8 @@ class BaseClassifier(BaseEstimator, ABC):
         # call internal _predict_proba
         return self._predict(X)
 
-    def _predict_proba_instance(self, X) -> np.ndarray:
-        """Predicts labels probabilities for sequences in X (single instance).
+    def predict_proba(self, X) -> np.ndarray:
+        """Predicts labels probabilities for sequences in X.
 
         Parameters
         ----------
@@ -480,8 +274,8 @@ class BaseClassifier(BaseEstimator, ABC):
         # call internal _predict_proba
         return self._predict_proba(X)
 
-    def _fit_predict_instance(self, X, y, cv=None, change_state=True) -> np.ndarray:
-        """Fit and predict labels for sequences in X (single instance).
+    def fit_predict(self, X, y, cv=None, change_state=True) -> np.ndarray:
+        """Fit and predict labels for sequences in X.
 
         Convenience method to produce in-sample predictions and
         cross-validated out-of-sample predictions.
@@ -602,10 +396,8 @@ class BaseClassifier(BaseEstimator, ABC):
 
         return y_pred
 
-    def _fit_predict_proba_instance(
-        self, X, y, cv=None, change_state=True
-    ) -> np.ndarray:
-        """Fit and predict labels probabilities for sequences in X (single instance).
+    def fit_predict_proba(self, X, y, cv=None, change_state=True) -> np.ndarray:
+        """Fit and predict labels probabilities for sequences in X.
 
         Convenience method to produce in-sample predictions and
         cross-validated out-of-sample predictions.
@@ -915,7 +707,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        metadata : dict with metadata for X, y returned by datatypes.check_is_scitype
+        metadata : dict with metadata for X returned by datatypes.check_is_scitype
 
         Raises
         ------
@@ -943,20 +735,23 @@ class BaseClassifier(BaseEstimator, ABC):
         # Check y if passed
         if y is not None:
             # Check y valid input
-            if not isinstance(y, (pd.Series, pd.DataFrame, np.ndarray)):
+            if not isinstance(y, (pd.Series, np.ndarray)):
                 raise ValueError(
-                    f"y must be a pd.Series, or np.array but found type:{type(y)}"
+                    f"y must be a np.array or a pd.Series, but found type: {type(y)}"
                 )
-            _, _, y_metadata = check_is_scitype(
-                y, scitype="Table", return_metadata=return_metadata
-            )
             # Check matching number of labels
-            n_labels = y_metadata["n_instances"]
+            n_labels = y.shape[0]
             if n_cases != n_labels:
                 raise ValueError(
                     f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "
                     f"{n_labels}"
                 )
+            if isinstance(y, np.ndarray):
+                if y.ndim > 1:
+                    raise ValueError(
+                        f"np.ndarray y must be 1-dimensional, "
+                        f"but found {y.ndim} dimensions"
+                    )
             # warn if only a single class label is seen
             # this should not raise exception since this can occur by train subsampling
             if len(np.unique(y)) == 1:
@@ -966,7 +761,7 @@ class BaseClassifier(BaseEstimator, ABC):
                     obj=self,
                 )
 
-        return {"X": X_metadata, "y": y_metadata}
+        return X_metadata
 
     def _internal_convert(self, X, y=None):
         """Convert X and y if necessary as a user convenience.
