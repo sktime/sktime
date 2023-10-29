@@ -176,7 +176,7 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
 
     import dask
 
-    if not isinstance(x, dask.dataframe):
+    if not isinstance(x, dask.dataframe.DataFrame):
         return None
 
     x = x.compute()
