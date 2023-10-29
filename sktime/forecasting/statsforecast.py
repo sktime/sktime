@@ -411,7 +411,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     information criterion. Default is Akaike Information Criterion (AICc), while
     particular models are estimated using maximum likelihood. The state-space
     equations can be determined based on their $M$ multiplicative, $A$ additive, $Z$
-    optimized or $N$ ommited components. The `model` string parameter defines the ETS
+    optimized or $N$ omitted components. The `model` string parameter defines the ETS
     equations: E in [$M, A, Z$], T in [$N, A, M, Z$], and S in [$N, A, M, Z$].
 
     For example when model='ANN' (additive error, no trend, and no seasonality), ETS
@@ -505,9 +505,9 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     Automatically selects the best Complex Exponential Smoothing model using an
     information criterion. Default is Akaike Information Criterion (AICc), while
     particular models are estimated using maximum likelihood. The state-space equations
-    can be determined based on their $S$ simple, $P$ parial, $Z$ optimized or $N$
-    ommited components. The `model` string parameter defines the kind of CES model:
-    $N$ for simple CES (withous seasonality), $S$ for simple seasonality (lagged CES),
+    can be determined based on their $S$ simple, $P$ partial, $Z$ optimized or $N$
+    omitted components. The `model` string parameter defines the kind of CES model:
+    $N$ for simple CES (without seasonality), $S$ for simple seasonality (lagged CES),
     $P$ for partial seasonality (without complex part), $F$ for full seasonality
     (lagged CES with real and complex seasonal parts).
 
@@ -595,6 +595,12 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     trend_forecaster : estimator, optional, default=StatsForecastAutoETS()
         Sktime estimator used to make univariate forecasts. Multivariate estimators are
         not supported.
+    stl_kwargs : dict, optional
+        Extra arguments to pass to [`statsmodels.tsa.seasonal.STL`]
+        (https://www.statsmodels.org/dev/generated/statsmodels.tsa.seasonal.STL.html#statsmodels.tsa.seasonal.STL).
+        The `period` and `seasonal` arguments are reserved.
+    pred_int_kwargs : dict, optional
+        Extra arguments to pass to [`statsforecast.utils.ConformalIntervals`].
 
     References
     ----------
@@ -623,6 +629,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         self,
         season_length: Union[int, List[int]],
         trend_forecaster=None,
+        stl_kwargs: Optional[Dict] = None,
+        pred_int_kwargs: Optional[Dict] = None,
     ):
         super().__init__()
 
@@ -634,6 +642,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             self._trend_forecaster = clone(trend_forecaster)
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
+        self.stl_kwargs = stl_kwargs
+        self.pred_int_kwargs = pred_int_kwargs
 
         # checks if trend_forecaster is already wrapped with
         # StatsForecastBackAdapter
@@ -649,6 +659,14 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                     " that the forecaster you pass into the model is a sktime "
                     "forecaster."
                 )
+
+        # check if prediction interval kwargs are passed
+        if self.pred_int_kwargs:
+            from statsforecast.utils import ConformalIntervals
+
+            self._trend_forecaster.prediction_intervals = ConformalIntervals(
+                **self.pred_int_kwargs
+            )
 
     def _get_statsforecast_class(self):
         from statsforecast.models import MSTL
@@ -694,6 +712,12 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                 },
                 {
                     "season_length": 4,
+                },
+                {
+                    "season_length": 4,
+                    "pred_int_kwargs": {
+                        "n_windows": 2,
+                    },
                 },
             ]
         except ModuleNotFoundError:

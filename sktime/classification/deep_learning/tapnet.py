@@ -46,7 +46,7 @@ class TapNetClassifier(BaseDeepClassifier):
     loss                : str, default = "binary_crossentropy"
         loss function for the classifier
     optimizer           : str or None, default = "Adam(lr=0.01)"
-        gradient updating function for the classifer
+        gradient updating function for the classifier
     use_bias            : bool, default = True
         whether to use bias in the output dense layer
     use_rp              : bool, default = True

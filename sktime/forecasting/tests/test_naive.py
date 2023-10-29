@@ -301,7 +301,7 @@ def test_naive_predict_var_backwards(strategy, sp, window_length, n_periods):
 
     T = len(y.dropna())
     if strategy == "last":
-        # This is trival because square root of (h) when h=1 is just 1
+        # This is trivial because square root of (h) when h=1 is just 1
         sigma_res = sigma / np.sqrt(h)
     elif strategy == "mean":
         sigma_res = sigma / np.sqrt(1 + (1 / T))

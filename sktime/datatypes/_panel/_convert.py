@@ -710,7 +710,7 @@ convert_dict[("numpy3D", "pd-multiindex", "Panel")] = from_3d_numpy_to_multi_ind
 def from_multi_index_to_nested(
     multi_ind_dataframe, instance_index=None, cells_as_numpy=False
 ):
-    """Convert a pandas DataFrame witha multi-index to a nested DataFrame.
+    """Convert a pandas DataFrame with multi-index to a nested DataFrame.
 
     Parameters
     ----------

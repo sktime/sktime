@@ -1,1 +1,1 @@
-"""Tests hierarchical transfromations to predictions."""
+"""Tests hierarchical transformations to predictions."""

@@ -282,7 +282,7 @@ ARCH models
 
     StatsForecastARCH
     StatsForecastGARCH
-
+    ARCH
 
 Structural time series models
 -----------------------------

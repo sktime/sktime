@@ -515,9 +515,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
 
     def _check_predict_proba(self, pred_dist, y_train, fh_int):
-        from sktime.proba.base import BaseDistribution
+        assert hasattr(pred_dist, "get_tag")
+        obj_type = pred_dist.get_tag("object_type", None, False)
+        assert obj_type == "distribution"
 
-        assert isinstance(pred_dist, BaseDistribution)
         pred_cols = pred_dist.columns
         pred_index = pred_dist.index
 
@@ -527,7 +528,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # check columns
         if isinstance(y_train, pd.Series):
-            assert (pred_cols == pd.Index([0])).all()
+            if y_train.name is not None:
+                assert (pred_cols == y_train.name).all()
+            else:
+                assert (pred_cols == pd.Index([0])).all()
         else:
             assert (pred_cols == y_train.columns).all()
 
@@ -721,7 +725,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_train, fh=FH0)
         estimator_instance.fit(y_train[3:], fh=FH0)
-        # using np.squeeze to make the test flexible to shape differeces like
+        # using np.squeeze to make the test flexible to shape differences like
         # (50,) and (50, 1)
         assert np.all(np.squeeze(estimator_instance._y) == np.squeeze(y_train[3:]))
 
