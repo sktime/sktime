@@ -5,7 +5,7 @@ __author__ = ["fkiraly"]
 from sktime.datatypes import SCITYPE_REGISTER, scitype_to_mtype
 from sktime.datatypes._convert import _conversions_defined, convert
 from sktime.datatypes._examples import get_examples
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.deep_equals import deep_equals
 
 SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
 

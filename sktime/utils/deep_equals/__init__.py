@@ -9,7 +9,7 @@ if _check_soft_dependencies(
     package_import_alias={"scikit-base": "skbase"},
     severity="none",
 ):
-    from sktime.utils._testing.deep_equals import deep_equals
+    from sktime.utils.deep_equals import deep_equals
 
 else:
     from sktime.utils.deep_equals import deep_equals

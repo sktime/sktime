@@ -110,7 +110,7 @@ class BaseObject(_BaseObject):
 
         Nested BaseObject descendants from get_params are compared via __eq__ as well.
         """
-        from sktime.utils._testing.deep_equals import deep_equals
+        from sktime.utils.deep_equals import deep_equals
 
         if not isinstance(other, BaseObject):
             return False

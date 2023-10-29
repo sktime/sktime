@@ -8,7 +8,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.deep_equals import deep_equals
 from sktime.utils.estimators import MockUnivariateForecasterLogger
 
 y_series = load_airline().iloc[:-5]

@@ -22,7 +22,7 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.subset import ColumnSelect
 from sktime.transformations.series.summarize import SummaryTransformer
 from sktime.transformations.series.theta import ThetaLinesTransformer
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 
