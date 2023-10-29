@@ -62,7 +62,11 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         from sktime.forecasting.base import ForecastingHorizon
 
         # save fh and y for prediction later
-        self._fh = fh
+        if fh.is_relative:
+            self._fh = fh
+        else:
+            fh = fh.to_relative(self.cutoff)
+            self._fh = fh
         self._y = y
 
         if type(fh) is ForecastingHorizon:
