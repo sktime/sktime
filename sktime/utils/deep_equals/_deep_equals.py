@@ -146,12 +146,12 @@ def _csv_matrix_equals_plugin(x, y, return_msg=False, deep_equals=None):
 def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     """Test two dask dataframes for equality.
 
-    Correct if both x and y are dask.DataFrame.
+    Correct if both x and y are dask.dataframe.
 
     Parameters
     ----------
-    x: csr_matrix
-    y: ForcastingHorizon
+    x: dask.dataframe
+    y: dask.dataframe
     return_msg : bool, optional, default=False
         whether to return informative message about what is not equal
 
@@ -162,7 +162,7 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     msg : str, only returned if return_msg = True
         indication of what is the reason for not being equal
         if unequal, returns string
-    returns None if this function does not apply, i.e., x is not csr_matrix
+    returns None if this function does not apply, i.e., x is not dask.dataframe
     """
     if not hasattr(x, "compute"):
         return None
@@ -176,7 +176,7 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
 
     import dask
 
-    if not isinstance(x, dask.DataFrame):
+    if not isinstance(x, dask.dataframe):
         return None
 
     x = x.compute()
