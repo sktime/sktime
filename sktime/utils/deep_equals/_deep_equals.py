@@ -58,7 +58,7 @@ def deep_equals(x, y, return_msg=False, plugins=None):
     """
     # call deep_equals_custom with default plugins
     plugins_default = [
-        _csv_matrix_equals_plugin,
+        _csr_matrix_equals_plugin,
         _dask_dataframe_equals_plugin,
         _fh_equals_plugin,
     ]
@@ -110,7 +110,7 @@ def _fh_equals_plugin(x, y, return_msg=False, deep_equals=None):
     return ret(True, "")
 
 
-def _csv_matrix_equals_plugin(x, y, return_msg=False, deep_equals=None):
+def _csr_matrix_equals_plugin(x, y, return_msg=False, deep_equals=None):
     """Test two scipy csr_matrix for equality.
 
     Correct if both x and y are csr_matrix.
@@ -141,6 +141,8 @@ def _csv_matrix_equals_plugin(x, y, return_msg=False, deep_equals=None):
     # csr-matrix must not be compared using np.any(x!=y)
     if not np.allclose(x.A, y.A):
         return ret(False, " !=, {} != {}", [x, y])
+
+    return ret(True, "")
 
 
 def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):

@@ -4,6 +4,7 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 import pytest
+from scipy.sparse import csr_matrix
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.deep_equals._deep_equals import deep_equals
@@ -26,6 +27,7 @@ EXAMPLES = [
     ForecastingHorizon([1, 2, 3], is_relative=False),
     {"foo": [42], "bar": pd.Series([1, 2])},
     {"bar": [42], "foo": pd.Series([1, 2])},
+    csr_matrix((3, 4), dtype=np.int8),
 ]
 
 
