@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-# Import the function you want to test
 from sktime.annotation.plotting.utils import (
     plot_time_series_with_change_points,
     plot_time_series_with_profiles,
@@ -38,10 +37,8 @@ def test_plot_time_series_with_change_points(time_series_data):
     true_cps = time_series_data["true_cps"]
     font_size = time_series_data["font_size"]
 
-    # Call the function to be tested
     fig, ax = plot_time_series_with_change_points(ts_name, ts, true_cps, font_size)
 
-    # Assertions to check if the function produces the expected output
     assert isinstance(fig, plt.Figure)
     assert isinstance(ax, plt.Axes)
     assert ax.get_title() == ts_name
@@ -57,7 +54,6 @@ def test_plot_time_series_with_profiles(time_series_data):
     found_cps = time_series_data["found_cps"]
     score_name = time_series_data["score_name"]
 
-    # Call the function
     fig, ax = plot_time_series_with_profiles(
         ts_name, ts, profiles, true_cps, found_cps, score_name, font_size
     )
