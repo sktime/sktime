@@ -35,14 +35,14 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         learning rate to train model with
     Examples
     --------
-    >>> from sktime.forecasting.ltsf import LTSFLinearForecaster # doctest +SKIP
+    >>> from sktime.forecasting.ltsf import LTSFLinearForecaster # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> model = LTSFLinearForecaster(10, 3) # doctest +SKIP
+    >>> model = LTSFLinearForecaster(10, 3) # doctest: +SKIP
     >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest +SKIP
+    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
     LTSFLinearForecaster(pred_len=3, seq_len=10)
-    >>> y_pred = model.predict() # doctest +SKIP
-    >>> y_pred # doctest +SKIP
+    >>> y_pred = model.predict() # doctest: +SKIP
+    >>> y_pred # doctest: +SKIP
     1961-01    515.456726
     1961-02    576.704712
     1961-03    559.859680
