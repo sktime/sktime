@@ -45,12 +45,15 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         "y_inner_mtype": "pd.DataFrame",
         "capability:insample": False,
         "capability:pred_int:insample": False,
+        "python_dependencies": "torch",
+        "scitype:y": "both",
+        "ignores-exogeneous-X": True,
     }
 
     def __init__(self):
         super().__init__()
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, fh, X=None):
         """Fit the network.
 
         Changes to state:
@@ -69,6 +72,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         else:
             fh = fh.to_relative(self.cutoff)
             self._fh = fh
+
         self._y = y
 
         if type(fh) is ForecastingHorizon:
@@ -162,7 +166,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
                 y=y,
                 seq_len=self.network.seq_len,
                 fh=self._fh._values[-1],
-                scale=self.scale,
             )
 
         return DataLoader(
@@ -191,7 +194,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
             dataset = PyTorchPredDataset(
                 y=y[-self.network.seq_len :],
                 seq_len=self.network.seq_len,
-                scale=self.scale,
             )
 
         return DataLoader(
@@ -219,18 +221,10 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
 class PyTorchTrainDataset:
     """Dataset for use in sktime deep learning forecasters."""
 
-    def __init__(self, y, seq_len, fh, scale):
-        self.y = y
+    def __init__(self, y, seq_len, fh):
+        self.y = y.values
         self.seq_len = seq_len
         self.fh = fh
-
-        if scale:
-            from sklearn.preprocessing import StandardScaler
-
-            self.scaler = StandardScaler()
-            self.y = self.scaler.fit_transform(y.values)
-        else:
-            self.y = self.y.values
 
     def __len__(self):
         """Return length of dataset."""
@@ -249,17 +243,9 @@ class PyTorchTrainDataset:
 class PyTorchPredDataset:
     """Dataset for use in sktime deep learning forecasters."""
 
-    def __init__(self, y, seq_len, scale):
-        self.y = y
+    def __init__(self, y, seq_len):
+        self.y = y.values
         self.seq_len = seq_len
-
-        if scale:
-            from sklearn.preprocessing import StandardScaler
-
-            self.scaler = StandardScaler()
-            self.y = self.scaler.fit_transform(y.values)
-        else:
-            self.y = self.y.values
 
     def __len__(self):
         """Return length of dataset."""
