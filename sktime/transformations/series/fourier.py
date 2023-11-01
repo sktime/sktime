@@ -261,7 +261,7 @@ class FourierFeatures(BaseTransformer):
         return X_transformed
 
     def _offset_frac_since_prev_offset(self, datetime_index, period_str):
-        """Get time passed as fraction of the current period
+        """Get time passed as fraction of the current period.
 
         Parameters
         ----------
