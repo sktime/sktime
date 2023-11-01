@@ -997,8 +997,8 @@ class BaseTransformer(BaseEstimator):
             f"or with MultiIndex and last(-1) level an sktime compatible time index. "
             f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES} ."
         )
-        msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
         if not X_valid or X_mtype not in ALLOWED_MTYPES:
+            msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             check_is_error_msg(
                 msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
             )
@@ -1038,8 +1038,8 @@ class BaseTransformer(BaseEstimator):
             y_mtype = y_metadata["mtype"]
 
             # raise informative error message if y is is in wrong format
-            msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             if not y_valid or y_mtype not in ALLOWED_MTYPES:
+                msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
                 check_is_error_msg(
                     msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
                 )
