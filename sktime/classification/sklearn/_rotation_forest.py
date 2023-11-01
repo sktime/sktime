@@ -30,7 +30,7 @@ class RotationForest(BaseEstimator):
     transformed using PCA.
 
     Intended as a benchmark for time series data and a base classifier for
-    transformation based appraoches such as ShapeletTransformClassifier, this sktime
+    transformation based approaches such as ShapeletTransformClassifier, this sktime
     implementation only works with continuous attributes.
 
     Parameters

@@ -26,7 +26,7 @@ def average_of_slope_transform(X: np.ndarray) -> np.ndarray:
     -------
     np.ndarray (2d array of shape nxm where n is len(q.shape[0]-2) and m is
                 len(q.shape[1]))
-        The derviative of the time series X.
+        The derivative of the time series X.
     """
     from sktime.distances._ddtw_numba import average_of_slope
 

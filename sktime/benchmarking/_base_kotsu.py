@@ -1,4 +1,4 @@
-"""Interface to overide kotsu code for sktime use."""
+"""Interface to override kotsu code for sktime use."""
 
 import re
 import warnings

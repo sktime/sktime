@@ -84,5 +84,6 @@ sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/scaledlogit.py @ltsaprounis
 sktime/transformations/series/time_since.py @KishManani
 sktime/transformations/series/theta.py @GuzalBulatova
+sktime/transformations/series/scaledasinh.py @ali-parizad
 
 sktime/utils/mlflow_sktime.py @benjaminbluhm

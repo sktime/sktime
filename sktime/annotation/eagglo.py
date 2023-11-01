@@ -119,7 +119,9 @@ class EAgglo(BaseTransformer):
         self._X = X
 
         if self.alpha <= 0 or self.alpha > 2:
-            raise ValueError(f"alowed values for 'alpha' are (0, 2], got: {self.alpha}")
+            raise ValueError(
+                f"allowed values for 'alpha' are (0, 2], got: {self.alpha}"
+            )
 
         self._initialize_params(X)
 

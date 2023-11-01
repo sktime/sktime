@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 class GGS:
     """Greedy Gaussian Segmentation.
 
-    The method approxmates solutions for the problem of breaking a
+    The method approximates solutions for the problem of breaking a
     multivariate time series into segments, where the data in each segment
     could be modeled as independent samples from a multivariate Gaussian
     distribution. It uses a dynamic programming search algorithm with
@@ -62,7 +62,7 @@ class GGS:
     to the data by computing the approximate solution to the combinatorial
     problem of finding the approximate covariance-regularized  maximum
     log-likelihood for fixed number of change points and a reagularization
-    strength. It follows an interative procedure
+    strength. It follows an interactive procedure
     where a new breakpoint is added and then adjusting all breakpoints to
     (approximately) maximize the objective. It is similar to the top-down
     search used in other change point detection problems.
@@ -122,7 +122,7 @@ class GGS:
     _intermediate_ll: List[float] = field(init=False, default_factory=list)
 
     def initialize_intermediates(self) -> None:
-        """Initialize the state fo the estimator."""
+        """Initialize the state for the estimator."""
         self._intermediate_change_points = []
         self._intermediate_ll = []
 
@@ -370,7 +370,7 @@ class GGS:
 class GreedyGaussianSegmentation(BaseEstimator):
     """Greedy Gaussian Segmentation Estimator.
 
-    The method approxmates solutions for the problem of breaking a
+    The method approximates solutions for the problem of breaking a
     multivariate time series into segments, where the data in each segment
     could be modeled as independent samples from a multivariate Gaussian
     distribution. It uses a dynamic programming search algorithm with
@@ -381,7 +381,7 @@ class GreedyGaussianSegmentation(BaseEstimator):
     to the data by computing the approximate solution to the combinatorial
     problem of finding the approximate covariance-regularized  maximum
     log-likelihood for fixed number of change points and a reagularization
-    strength. It follows an interative procedure
+    strength. It follows an interactive procedure
     where a new breakpoint is added and then adjusting all breakpoints to
     (approximately) maximize the objective. It is similar to the top-down
     search used in other change point detection problems.
@@ -436,7 +436,7 @@ class GreedyGaussianSegmentation(BaseEstimator):
         verbose: bool = False,
         random_state: int = None,
     ):
-        # this is ugly and necessary only because of dum `test_constructor`
+        # this is ugly and necessary only because of dumb `test_constructor`
         self.k_max = k_max
         self.lamb = lamb
         self.max_shuffles = max_shuffles

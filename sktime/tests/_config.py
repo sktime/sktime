@@ -39,7 +39,7 @@ EXCLUDE_ESTIMATORS = [
     "EditDist",
     "CNNClassifier",
     "FCNClassifier",
-    "InceptionTimeClassifer",
+    "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
     "CNNRegressor",
