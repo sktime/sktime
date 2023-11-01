@@ -11,7 +11,7 @@ from sktime.utils.numba.njit import njit
 
 
 @njit(fastmath=True, cache=True)
-def _online_shapelet_distance(series, shapelet, sorted_indicies, position, length):
+def _online_shapelet_distance(series, shapelet, sorted_indices, position, length):
     subseq = series[position : position + length]
 
     sum = 0.0
@@ -58,8 +58,8 @@ def _online_shapelet_distance(series, shapelet, sorted_indicies, position, lengt
             dist = 0
             use_std = std != 0
             for j in range(length):
-                val = (series[pos + sorted_indicies[j]] - mean) / std if use_std else 0
-                temp = shapelet[sorted_indicies[j]] - val
+                val = (series[pos + sorted_indices[j]] - mean) / std if use_std else 0
+                temp = shapelet[sorted_indices[j]] - val
                 dist += temp * temp
 
                 if dist > best_dist:
@@ -198,7 +198,7 @@ def _find_shapelet_quality(
     X,
     y,
     shapelet,
-    sorted_indicies,
+    sorted_indices,
     position,
     length,
     dim,
@@ -215,7 +215,7 @@ def _find_shapelet_quality(
     for i, series in enumerate(X):
         if i != inst_idx:
             distance = _online_shapelet_distance(
-                series[dim], shapelet, sorted_indicies, position, length
+                series[dim], shapelet, sorted_indices, position, length
             )
         else:
             distance = 0

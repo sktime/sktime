@@ -15,6 +15,8 @@ keywords = [
   "time-series-regression",
 ]
 license = { file = "LICENSE" }
+# sktime is governed by the Community Council, see docs/source/get_involved/governance
+# use the email or sktime discord (governance channel) to get in touch
 maintainers = [
   { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
   { name = "Franz Király" },
@@ -24,6 +26,8 @@ maintainers = [
   { name = "Sagar Mishra" },
   { name = "Ugochukwu Onyeka" },
 ]
+# sktime has a large number of contributors,
+# for full credits see contributors.md
 authors = [
     { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
 ]
@@ -46,19 +50,32 @@ classifiers = [
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development",
 ]
+# core dependencies of sktime
+# this set should be kept minimal!
 dependencies = [
-  "numpy<1.27,>=1.21",
-  "packaging",
-  "pandas<2.2.0,>=1.1",
-  "scikit-base<0.7.0",
-  "scikit-learn<1.4.0,>=0.24",
-  "scipy<2.0.0,>=1.2",
+  "numpy<1.27,>=1.21",  # required for framework layer and base class logic
+  "packaging",  # for estimator specific dependency parsing
+  "pandas<2.2.0,>=1.1",  # pandas is the main in-memory data container
+  "scikit-base<0.7.0",  # base module for sklearn compatible base API
+  "scikit-learn<1.4.0,>=0.24",  # required for estimators and framework layer
+  "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
+
 [project.optional-dependencies]
-alignment = [
-  "dtw-python<1.4,>=1.3",
-  'numba<0.59,>=0.53; python_version < "3.12"',
-]
+# there are the following dependency sets:
+# - all_extras_pandas2, all_extras - all soft dependencies
+# - single-task soft dependencies, e.g., forecasting, classification, etc.
+# - dev - the developer dependency set, for contributors to sktime
+# - CI related, e.g., binder, docs, tests. Not for users of sktime.
+#
+# soft dependencies are not required for the core functionality of sktime
+# but are required by popular estimators, e.g., prophet, tbats, etc.
+
+# all soft dependencies
+#
+# users can install via "pip install sktime[all_extras]"
+# or "pip install sktime[all_extras_pandas2]", to install only pandas 2 compatible deps
+#
 all_extras = [
   "arch<6.3.0,>=5.6",
   "cloudpickle",
@@ -130,14 +147,24 @@ all_extras_pandas2 = [
   'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
+
+# single-task dependencies, e.g., forecasting, classification, etc.
+# manually curated and intentionally smaller to avoid dependeny conflicts
+# names are identical with the names of the modules and estimator type strings
+# dependency sets are selected to cover the most popular estimators in each module
+# (this is a subjective choice, and may change over time as the ecosystem evolves,
+# removals are rare and always accompanied by a deprecation warning)
+#
+# users can install via "pip install sktime[forecasting,transformations]" etc
+#
+alignment = [
+  "dtw-python<1.4,>=1.3",
+  'numba<0.59,>=0.53; python_version < "3.12"',
+]
 annotation = [
   "hmmlearn<0.4,>=0.2.7",
   'numba<0.59,>=0.53; python_version < "3.12"',
   'pyod<1.2,>=0.8; python_version < "3.12"',
-]
-binder = [
-  "jupyter",
-  "pandas<2.0.0",
 ]
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
@@ -149,39 +176,6 @@ clustering = [
   'numba<0.59,>=0.53; python_version < "3.12"',
   'tslearn<0.6.3,>=0.5.2; python_version < "3.12"',
 ]
-cython_extras = [
-  "mrseql",
-  'mrsqm; python_version < "3.11"',
-  "numba<0.59",
-]
-dev = [
-  "backoff",
-  "httpx",
-  "pre-commit",
-  "pytest",
-  "pytest-cov",
-  "pytest-randomly",
-  "pytest-timeout",
-  "pytest-xdist",
-  "wheel",
-]
-dl = [
-  "tensorflow",
-]
-docs = [
-  "jupyter",
-  "myst-parser",
-  "nbsphinx>=0.8.6",
-  "numpydoc",
-  "pydata-sphinx-theme",
-  "Sphinx!=7.2.0,<8.0.0",
-  "sphinx-copybutton",
-  "sphinx-design<0.6.0",
-  "sphinx-gallery<0.15.0",
-  "sphinx-issues<4.0.0",
-  "sphinx-version-warning",
-  "tabulate",
-]
 forecasting = [
   "arch<6.3,>=5.6",
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
@@ -191,21 +185,9 @@ forecasting = [
   "statsmodels<0.15,>=0.12.1",
   'tbats<1.2,>=1.1; python_version < "3.12"',
 ]
-mlflow = [
-  "mlflow",
-]
-mlflow_tests = [
-  "boto3",
-  "botocore",
-  "mlflow",
-  "moto",
-]
 networks = [
   "keras-self-attention<0.52,>=0.51",
   'tensorflow<=2.14,>=2; python_version < "3.12"',
-]
-pandas1 = [
-  "pandas<2.0.0",
 ]
 param_est = [
   "seasonal<0.4,>=0.3.1",
@@ -227,6 +209,73 @@ transformations = [
   'stumpy<1.13,>=1.5.1; python_version < "3.12"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
+
+# dev - the developer dependency set, for contributors to sktime
+dev = [
+  "backoff",
+  "httpx",
+  "pre-commit",
+  "pytest",
+  "pytest-cov",
+  "pytest-randomly",
+  "pytest-timeout",
+  "pytest-xdist",
+  "wheel",
+]
+
+# CI related soft dependency sets - not for users of sktime, only for developers
+# docs and tests are standard dep sets for development use
+# they are stable and subject to deprecation policies
+# contributors should use the dev dependency set for contributing to sktime, see above
+docs = [
+  "jupyter",
+  "myst-parser",
+  "nbsphinx>=0.8.6",
+  "numpydoc",
+  "pydata-sphinx-theme",
+  "Sphinx!=7.2.0,<8.0.0",
+  "sphinx-copybutton",
+  "sphinx-design<0.6.0",
+  "sphinx-gallery<0.15.0",
+  "sphinx-issues<4.0.0",
+  "sphinx-version-warning",
+  "tabulate",
+]
+tests = [
+  "pytest<7.5,>=7.4",
+  "pytest-cov<4.2,>=4.1",
+  "pytest-randomly<3.16,>=3.15",
+  "pytest-timeout>=2.1,<2.3",
+  "pytest-xdist<3.4,>=3.3",
+]
+
+# CI related soft dependency sets - not for users of sktime, only for developers
+# these are for specual uses and may be changed or removed at any time
+binder = [
+  "jupyter",
+  "pandas<2.0.0",
+]
+cython_extras = [
+  "mrseql",
+  'mrsqm; python_version < "3.11"',
+  "numba<0.59",
+]
+dl = [
+  "tensorflow",
+]
+mlflow = [
+  "mlflow",
+]
+mlflow_tests = [
+  "boto3",
+  "botocore",
+  "mlflow",
+  "moto",
+]
+pandas1 = [
+  "pandas<2.0.0",
+]
+
 [project.urls]
 "API Reference" = "https://www.sktime.net/en/stable/api_reference.html"
 Documentation = "https://www.sktime.net"
