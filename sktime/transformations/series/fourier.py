@@ -189,8 +189,8 @@ class FourierFeatures(BaseTransformer):
                 raise ValueError("X has no known frequency and none is supplied")
             if self.freq_ == time_index.freq and self.freq_ != self.freq:
                 warnings.warn(
-                    f"Using frequency from index: {time_index.freq}, which \
-                     does not match the frequency given:{self.freq}.",
+                    f"Using frequency from index: {time_index.freq}, which "
+                    f"does not match the frequency given:{self.freq}.",
                     stacklevel=2,
                 )
             time_index = time_index.to_period(self.freq_)
