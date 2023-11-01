@@ -29,7 +29,12 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes import (
+    MTYPE_LIST_PANEL,
+    check_is_scitype,
+    check_is_scitype_error_msg,
+    convert_to,
+)
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.warnings import warn
@@ -411,15 +416,21 @@ def _check_regressor_input(
         If y or X is invalid input data type, or there is not enough data
     """
     # Check X is valid input type and recover the data characteristics
-    X_valid, _, X_metadata = check_is_scitype(
+    X_valid, msg, X_metadata = check_is_scitype(
         X, scitype="Panel", return_metadata=return_metadata
     )
+    # raise informative error message if X is in wrong format
+    allowed_msg = (
+        f"Allowed scitypes for classifiers are Panel mtypes, "
+        f"for instance a pandas.DataFrame with MultiIndex and last(-1) "
+        f"level an sktime compatible time index. "
+        f"Allowed compatible mtype format specifications are: {MTYPE_LIST_PANEL} ."
+    )
     if not X_valid:
-        raise TypeError(
-            f"X is not of a supported input data type."
-            f"X must be in a supported mtype format for Panel, found {type(X)}"
-            f"Use datatypes.check_is_mtype to check conformance with specifications."
+        check_is_scitype_error_msg(
+            msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
         )
+
     n_cases = X_metadata["n_instances"]
     if n_cases < enforce_min_instances:
         raise ValueError(
