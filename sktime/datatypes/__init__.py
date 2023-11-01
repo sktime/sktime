@@ -5,6 +5,7 @@ __author__ = ["fkiraly"]
 from sktime.datatypes._check import (
     check_is_mtype,
     check_is_scitype,
+    check_is_scitype_error_msg,
     check_raise,
     mtype,
     scitype,
@@ -31,6 +32,7 @@ __all__ = [
     "ALL_TIME_SERIES_MTYPES",
     "check_is_mtype",
     "check_is_scitype",
+    "check_is_scitype_error_msg",
     "check_raise",
     "convert",
     "convert_to",

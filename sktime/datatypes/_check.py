@@ -437,6 +437,48 @@ def check_is_scitype(
         return _ret(False, msg, None, return_metadata)
 
 
+def check_is_scitype_error_msg(
+    msg, var_name="obj", allowed_msg=None, raise_exception=False
+):
+    """Format and possibly raise error message from check_is_scitype.
+
+    Parameters
+    ----------
+    msg: dict[str, str]
+        error message from check_is_scitype
+    var_name: str, optional, default="obj"
+        name of input in error messages
+    allowed_msg: str, optional, default=None
+        message component detailing allowed mtypes or scitype combinations
+    raise_exception: bool or Exception, optional, default=False
+        whether to raise exception or return error message
+        if False, returns formatted error message
+        if True, raises TypeError with formatted error message
+        if Exception, raises that Exception with formatted error message
+
+    Returns
+    -------
+    str - formatted error message
+    """
+    msg_invalid_input = (
+        f"{var_name} must be in an sktime compatible format. {allowed_msg}"
+        f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb. "
+        f"If you think the data is already in an sktime supported input format, "
+        f"run sktime.datatypes.check_raise(data, mtype) to diagnose the error, "
+        f"where mtype is the string of the type specification you want. "
+        f"Error message for checked mtypes, in format [mtype: message], as follows:"
+    )
+    for mtype, err in msg.items():
+        msg_invalid_input += f" [{mtype}: {err}] "
+
+    if raise_exception is True:
+        raise TypeError(msg_invalid_input)
+    elif raise_exception is False:
+        return msg_invalid_input
+    else:
+        raise raise_exception(msg_invalid_input)
+
+
 def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPES):
     """Infer the scitype of an object.
 
