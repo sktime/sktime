@@ -56,9 +56,9 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
+    check_is_error_msg,
     check_is_mtype,
     check_is_scitype,
-    check_is_error_msg,
     convert,
     convert_to,
     mtype_to_scitype,

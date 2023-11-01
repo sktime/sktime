@@ -31,8 +31,8 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     MTYPE_LIST_PANEL,
-    check_is_scitype,
     check_is_error_msg,
+    check_is_scitype,
     convert_to,
 )
 from sktime.utils.sklearn import is_sklearn_transformer
