@@ -31,7 +31,8 @@ class TimeSeriesForestClassifier(
     For each tree
         - sample sqrt(m) intervals,
         - find mean, std and slope for each interval, concatenate to form new
-        data set,
+        data set, if inner series length is set, then intervals are sampled
+        within bins of length inner_series_length.
         - build decision tree on new data set.
     Ensemble the trees with averaged probability estimates.
 
@@ -52,6 +53,10 @@ class TimeSeriesForestClassifier(
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
+    inner_series_length: int, default=None
+        The maximum length of unique segments within X from which we extract
+        intervals is determined. This helps prevent the extraction of
+        intervals that span across distinct inner series.
     random_state : int or None, default=None
         Seed for random number generation.
 
@@ -61,6 +66,10 @@ class TimeSeriesForestClassifier(
         The number of classes.
     classes_ : list
         The classes labels.
+    feature_importances_ : pandas Dataframe of shape (series_length, 3)
+        The feature temporal importances for each feature type (mean, std, slope).
+        It shows how much each time point of your input dataset, through the
+        feature types extracted (mean, std, slope), contributed to the predictions.
 
     Notes
     -----
