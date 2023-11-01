@@ -260,7 +260,6 @@ cython_extras = [
   "numba<0.59",
 ]
 dl = [
-  "tensorflow",
   "torch",
 ]
 mlflow = [
