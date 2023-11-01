@@ -287,9 +287,7 @@ def test__check_classifier_input():
         _check_classifier_input(test_X5, test_y1)
     # 4. Test incorrect data type: y is a List
     test_y3 = [1, 2, 3, 4, 5]
-    with pytest.raises(
-        TypeError, match=r".*X is not of a supported input data " r"type.*"
-    ):
+    with pytest.raises(TypeError, match="must be in an sktime compatible format"):
         _check_classifier_input(test_X1, test_y3)
     # 5. Test incorrect: too few cases or too short a series
     with pytest.raises(ValueError, match=r".*Minimum number of cases required*."):
