@@ -171,7 +171,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         return DataLoader(
             dataset,
             self.batch_size,
-            shuffle=self.shuffle,
         )
 
     def build_pytorch_pred_dataloader(self, y, fh):
@@ -199,7 +198,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         return DataLoader(
             dataset,
             self.batch_size,
-            shuffle=self.shuffle,
         )
 
     def get_y_true(self, y):
@@ -207,15 +205,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         dataloader = self.build_pytorch_pred_dataloader(y)
         y_true = [y.flatten().numpy() for _, y in dataloader]
         return np.concatenate(y_true, axis=0)
-
-    # def save(self, save_model_path=None):
-    #     """Save model state dict."""
-    #     from torch import save
-
-    #     if save_model_path:
-    #         save(self.network.state_dict(), save_model_path)
-    #     else:
-    #         save(self.network.state_dict(), "model.pth")
 
 
 class PyTorchTrainDataset:
