@@ -80,7 +80,16 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
 
-        super().__init__()
+        super().__init__(
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            in_channels=in_channels,
+            individual=individual,
+            criterion_kwargs=criterion_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            lr=lr,
+        )
 
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
