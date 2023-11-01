@@ -171,7 +171,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         return DataLoader(
             dataset,
             self.batch_size,
-            shuffle=self.shuffle,
         )
 
     def build_pytorch_pred_dataloader(self, y, fh):
@@ -199,7 +198,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         return DataLoader(
             dataset,
             self.batch_size,
-            shuffle=self.shuffle,
         )
 
     def get_y_true(self, y):
