@@ -50,7 +50,7 @@ def mock_s3_bucket():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.fixture
@@ -94,7 +94,7 @@ def naive_forecaster_model_with_regressor(test_data_longley):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
@@ -117,7 +117,7 @@ def test_auto_arima_model_save_and_load(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
@@ -169,7 +169,7 @@ def test_auto_arima_model_pyfunc_output(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_auto_arima_model_pyfunc_with_params_output(auto_arima_model, model_path):
@@ -223,7 +223,7 @@ def test_auto_arima_model_pyfunc_with_params_output(auto_arima_model, model_path
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_auto_arima_model_pyfunc_without_params_output(auto_arima_model, model_path):
@@ -277,7 +277,7 @@ def test_auto_arima_model_pyfunc_without_params_output(auto_arima_model, model_p
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_auto_arima_model_pyfunc_without_conf_output(auto_arima_model, model_path):
@@ -300,7 +300,7 @@ def test_auto_arima_model_pyfunc_without_conf_output(auto_arima_model, model_pat
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_naive_forecaster_model_with_regressor_pyfunc_output(
@@ -355,7 +355,7 @@ def test_naive_forecaster_model_with_regressor_pyfunc_output(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("use_signature", [True, False])
@@ -390,7 +390,7 @@ def test_signature_and_examples_saved_correctly(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("use_signature", [True, False])
@@ -413,7 +413,7 @@ def test_predict_var_signature_saved_correctly(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("use_signature", [True, False])
@@ -461,7 +461,7 @@ def test_signature_and_example_for_pyfunc_predict(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_load_from_remote_uri_succeeds(auto_arima_model, model_path, mock_s3_bucket):
@@ -487,7 +487,7 @@ def test_load_from_remote_uri_succeeds(auto_arima_model, model_path, mock_s3_buc
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("should_start_run", [True, False])
@@ -531,7 +531,7 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
 
 @pytest.mark.xfail(reason="known failure to be debugged, see #4904")
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_log_model_calls_register_model(auto_arima_model, tmp_path):
@@ -562,7 +562,7 @@ def test_log_model_calls_register_model(auto_arima_model, tmp_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_log_model_no_registered_model_name(auto_arima_model, tmp_path):
@@ -586,7 +586,7 @@ def test_log_model_no_registered_model_name(auto_arima_model, tmp_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_pyfunc_raises_invalid_attribute_type(auto_arima_model, model_path):
@@ -607,7 +607,7 @@ def test_pyfunc_raises_invalid_attribute_type(auto_arima_model, model_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_pyfunc_raises_invalid_dict_key(auto_arima_model, model_path):
@@ -628,7 +628,7 @@ def test_pyfunc_raises_invalid_dict_key(auto_arima_model, model_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_pyfunc_raises_invalid_dict_value_type(auto_arima_model, model_path):
@@ -648,7 +648,7 @@ def test_pyfunc_raises_invalid_dict_value_type(auto_arima_model, model_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_pyfunc_raises_invalid_dict_value(auto_arima_model, model_path):
@@ -669,7 +669,7 @@ def test_pyfunc_raises_invalid_dict_value(auto_arima_model, model_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_pyfunc_predict_proba_raises_invalid_attribute_type(
@@ -693,7 +693,7 @@ def test_pyfunc_predict_proba_raises_invalid_attribute_type(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(severity="none"),
+    not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_pyfunc_predict_proba_raises_invalid_dict_value(auto_arima_model, model_path):

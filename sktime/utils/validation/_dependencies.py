@@ -289,12 +289,12 @@ def _check_mlflow_dependencies(
             "or `pip install sktime[mlflow]` to install the package."
         )
 
-        return _check_soft_dependencies(
-            "mlflow",
-            msg=msg,
-            severity=severity,
-            suppress_import_stdout=suppress_import_stdout,
-        )
+    return _check_soft_dependencies(
+        "mlflow",
+        msg=msg,
+        severity=severity,
+        suppress_import_stdout=suppress_import_stdout,
+    )
 
 
 def _check_python_version(obj, package=None, msg=None, severity="error"):
