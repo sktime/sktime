@@ -141,20 +141,21 @@ class LTSFDLinearNetwork:
             in_channels,
             individual,
         ):
+            from layers import SeriesDecomposer
+
             super().__init__()
             self.seq_len = seq_len
             self.pred_len = pred_len
 
             # Decompsition Kernel Size
             kernel_size = 25
-            self.decompsition = self._series_decomp(kernel_size)
+            self.decompsition = SeriesDecomposer(kernel_size)._build()
             self.individual = individual
             self.in_channels = in_channels
 
-            self.Linear_Seasonal = nn.ModuleList()
-            self.Linear_Trend = nn.ModuleList()
-
             if self.individual:
+                self.Linear_Seasonal = nn.ModuleList()
+                self.Linear_Trend = nn.ModuleList()
                 for _ in range(self.in_channels):
                     self.Linear_Seasonal.append(nn.Linear(self.seq_len, self.pred_len))
                     self.Linear_Trend.append(nn.Linear(self.seq_len, self.pred_len))
@@ -202,39 +203,6 @@ class LTSFDLinearNetwork:
 
             x = seasonal_output + trend_output
             return x.permute(0, 2, 1)  # to [Batch, Output length, Channel]
-
-        class _series_decomp(nn.Module):
-            """Series decomposition block."""
-
-            def __init__(self, kernel_size):
-                super().__init__()
-                self.moving_avg = self._moving_avg(kernel_size, stride=1)
-
-            def forward(self, x):
-                moving_mean = self.moving_avg(x)
-                res = x - moving_mean
-                return res, moving_mean
-
-            class _moving_avg(nn.Module):
-                """Moving average block to highlight the trend of time series."""
-
-                def __init__(self, kernel_size, stride):
-                    super().__init__()
-                    self.kernel_size = kernel_size
-                    self.avg = nn.AvgPool1d(
-                        kernel_size=kernel_size, stride=stride, padding=0
-                    )
-
-                def forward(self, x):
-                    from torch import cat
-
-                    # padding on the both ends of time series
-                    front = x[:, 0:1, :].repeat(1, (self.kernel_size - 1) // 2, 1)
-                    end = x[:, -1:, :].repeat(1, (self.kernel_size - 1) // 2, 1)
-                    x = cat([front, x, end], dim=1)
-                    x = self.avg(x.permute(0, 2, 1))
-                    x = x.permute(0, 2, 1)
-                    return x
 
     def __init__(self, seq_len, pred_len, in_channels=1, individual=False):
         self.seq_len = seq_len
@@ -294,6 +262,7 @@ class LTSFNLinearNetwork:
             self.individual = individual
 
             if self.individual:
+                self.Linear = nn.ModuleList()
                 for _ in range(self.in_channels):
                     self.Linear.append(nn.Linear(self.seq_len, self.pred_len))
             else:
