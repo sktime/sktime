@@ -386,6 +386,18 @@ LTSF Forecasters
 
     LTSFLinearForecaster
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LTSFDLinearForecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LTSFNLinearForecaster
+
 .. currentmodule:: sktime.forecasting.stream
 
 .. autosummary::
