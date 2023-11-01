@@ -261,6 +261,7 @@ cython_extras = [
 ]
 dl = [
   "tensorflow",
+  "torch",
 ]
 mlflow = [
   "mlflow",
