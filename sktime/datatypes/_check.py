@@ -35,6 +35,7 @@ from sktime.datatypes._proba import check_dict_Proba
 from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._table import check_dict_Table
+from sktime.utils.warnings import warn
 
 # pool convert_dict-s
 check_dict = dict()
@@ -86,12 +87,14 @@ def _coerce_list_of_str(obj, var_name="obj"):
     return obj
 
 
+# todo 0.26.0: change default for msg_return_dict to "dict", update docstring
 def check_is_mtype(
     obj,
     mtype: Union[str, List[str]],
     scitype: str = None,
     return_metadata=False,
     var_name="obj",
+    msg_return_dict=None,
 ):
     """Check object for compliance with mtype specification, return metadata.
 
@@ -107,14 +110,23 @@ def check_is_mtype(
         if False, returns only "valid" return
         if True, returns all three return objects
         if str, list of str, metadata return dict is subset to keys in return_metadata
-    var_name: str, optional, default="obj" - name of input in error messages
+    var_name: str, optional, default="obj"
+        name of input in error messages
+    msg_return_dict: str, "list" or "dict", optional, default="list"
+        whether returned msg, if returned is a str, dict or list
+        if "list", msg is str if mtype is str, list of str if mtype is list
+        if "dict", msg is dict if mtype is str, list of str if mtype is list,
+        if dict, has with mtype as key and error message for mtype as value
 
     Returns
     -------
     valid: bool - whether obj is a valid object of mtype/scitype
-    msg: str or list of str - error messages if object is not valid, otherwise None
-            str if mtype is str; list of len(mtype) with message per mtype if list
-            returned only if return_metadata is True or str, list of str
+    msg: str or list/dict of str - error messages if object is not valid, otherwise None
+        list or dict type is controlled via msg_return_dict
+        if str: error message for tested mtype
+        it list: list of len(mtype) with message per mtype if list, same order as mtype
+        if dict: dict with mtype as key and error message for mtype as value
+        returned only if return_metadata is True or str, list of str
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True or str, list of str
         Keys populated depend on (assumed, otherwise identified) scitype of obj.
@@ -153,7 +165,24 @@ def check_is_mtype(
 
     # we loop through individual mtypes in mtype and see whether they pass the check
     #  for each check we remember whether it passed and what it returned
-    msg = []
+
+    # initialize loop variables
+    if msg_return_dict is None:
+        # todo 0.26.0: remove this warning, and change default to "dict"
+        warn(
+            "From sktime 0.26.0 onwards, msg return of check_is_mtype "
+            "will default to dict if mtype is a list. "
+            "To retain the old behaviour, set msg_return_dict='list' explicitly. "
+            "To move to the new behaviour, set msg_return_dict='dict' explicitly. "
+            "Setting msg_return_dict explicitly will silence the warning."
+        )
+        msg = []
+        msg_return_dict = "list"
+    elif msg_return_dict == "list":
+        msg = []
+    elif msg_return_dict == "dict":
+        msg = dict()
+
     found_mtype = []
     found_scitype = []
 
@@ -179,7 +208,10 @@ def check_is_mtype(
             found_scitype.append(scitype_of_m)
             final_result = res
         elif _metadata_requested(return_metadata):
-            msg.append(res[1])
+            if msg_return_dict == "list":
+                msg.append(res[1])
+            else:
+                msg[m] = res[1]
 
     # there are three options on the result of check_is_mtype:
     # a. two or more mtypes are found - this is unexpected and an error with checks
@@ -437,15 +469,13 @@ def check_is_scitype(
         return _ret(False, msg, None, return_metadata)
 
 
-def check_is_scitype_error_msg(
-    msg, var_name="obj", allowed_msg=None, raise_exception=False
-):
-    """Format and possibly raise error message from check_is_scitype.
+def check_is_error_msg(msg, var_name="obj", allowed_msg=None, raise_exception=False):
+    """Format and possibly raise error message from check_is_mtype or check_is_scitype.
 
     Parameters
     ----------
     msg: dict[str, str]
-        error message from check_is_scitype
+        error message from check_is_scitype, or from check_is_mtype with dict return
     var_name: str, optional, default="obj"
         name of input in error messages
     allowed_msg: str, optional, default=None

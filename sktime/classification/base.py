@@ -32,7 +32,7 @@ from sktime.base import BaseEstimator
 from sktime.datatypes import (
     MTYPE_LIST_PANEL,
     check_is_scitype,
-    check_is_scitype_error_msg,
+    check_is_error_msg,
     convert_to,
 )
 from sktime.utils.sklearn import is_sklearn_transformer
@@ -730,7 +730,7 @@ class BaseClassifier(BaseEstimator, ABC):
             f"Allowed compatible mtype format specifications are: {MTYPE_LIST_PANEL} ."
         )
         if not X_valid:
-            check_is_scitype_error_msg(
+            check_is_error_msg(
                 msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
             )
 

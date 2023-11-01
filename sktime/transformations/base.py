@@ -58,7 +58,7 @@ from sktime.datatypes import (
     VectorizedDF,
     check_is_mtype,
     check_is_scitype,
-    check_is_scitype_error_msg,
+    check_is_error_msg,
     convert,
     convert_to,
     mtype_to_scitype,
@@ -999,7 +999,7 @@ class BaseTransformer(BaseEstimator):
         )
         msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
         if not X_valid or X_mtype not in ALLOWED_MTYPES:
-            check_is_scitype_error_msg(
+            check_is_error_msg(
                 msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
             )
 
@@ -1040,7 +1040,7 @@ class BaseTransformer(BaseEstimator):
             # raise informative error message if y is is in wrong format
             msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             if not y_valid or y_mtype not in ALLOWED_MTYPES:
-                check_is_scitype_error_msg(
+                check_is_error_msg(
                     msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
                 )
 
