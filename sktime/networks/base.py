@@ -206,15 +206,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         y_true = [y.flatten().numpy() for _, y in dataloader]
         return np.concatenate(y_true, axis=0)
 
-    # def save(self, save_model_path=None):
-    #     """Save model state dict."""
-    #     from torch import save
-
-    #     if save_model_path:
-    #         save(self.network.state_dict(), save_model_path)
-    #     else:
-    #         save(self.network.state_dict(), "model.pth")
-
 
 class PyTorchTrainDataset:
     """Dataset for use in sktime deep learning forecasters."""
