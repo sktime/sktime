@@ -50,7 +50,26 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         "ignores-exogeneous-X": True,
     }
 
-    def __init__(self):
+    def __init__(
+        self,
+        num_epochs=16,
+        batch_size=8,
+        in_channels=1,
+        individual=False,
+        criterion_kwargs=None,
+        optimizer=None,
+        optimizer_kwargs=None,
+        lr=0.001,
+    ):
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
+        self.in_channels = in_channels
+        self.individual = individual
+        self.criterion_kwargs = criterion_kwargs
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
+        self.lr = lr
+
         super().__init__()
 
     def _fit(self, y, fh, X=None):
@@ -128,6 +147,16 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
     def _predict(self, X=None, fh=None):
         """Predict with fitted model."""
         from torch import cat
+
+        if fh is None:
+            fh = self._fh
+
+        if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
+            raise ValueError(
+                f"fh of {fh} passed to {self.__class__.__name__} is not "
+                "within `pred_len`. Please use a fh that aligns with the `pred_len` of "
+                "the forecaster."
+            )
 
         if X is None:
             dataloader = self.build_pytorch_pred_dataloader(self._y, fh)
