@@ -65,7 +65,6 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         lr=0.001,
         custom_dataset_train=None,
         custom_dataset_pred=None,
-        shuffle=True,
     ):
         self.seq_len = seq_len
         self.pred_len = pred_len
@@ -80,7 +79,6 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         self.custom_dataset_train = custom_dataset_train
         self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
-        self.shuffle = shuffle
 
         super().__init__()
 
