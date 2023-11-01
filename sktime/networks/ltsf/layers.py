@@ -13,7 +13,7 @@ else:
         pass
 
 
-class SeriesDecomposer(nn_module):
+class SeriesDecomposer:
     """Series decomposition block."""
 
     def __init__(self, kernel_size):
@@ -22,7 +22,7 @@ class SeriesDecomposer(nn_module):
     def _build(self):
         return self._SeriesDecomposer(self.kernel_size)
 
-    class _SeriesDecomposer(nn.Module):
+    class _SeriesDecomposer(nn_module):
         """Series decomposition block."""
 
         def __init__(self, kernel_size):
@@ -35,7 +35,7 @@ class SeriesDecomposer(nn_module):
             return res, moving_mean
 
 
-class MovingAverage(nn_module):
+class MovingAverage:
     """Moving average block to highlight the trend of time series."""
 
     def __init__(self, kernel_size, stride):
@@ -45,7 +45,7 @@ class MovingAverage(nn_module):
     def _build(self):
         return self._MovingAverage(self.kernel_size, self.stride)
 
-    class _MovingAverage(nn.Module):
+    class _MovingAverage(nn_module):
         """Moving average block to highlight the trend of time series."""
 
         def __init__(self, kernel_size, stride):
