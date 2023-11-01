@@ -52,7 +52,6 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_issues",
-    "versionwarning.extension",
     "sphinx.ext.doctest",
 ]
 
@@ -440,18 +439,6 @@ intersphinx_mapping = {
 
 # -- Options for _todo extension ----------------------------------------------
 todo_include_todos = False
-
-# sphinx-version-warning config
-versionwarning_messages = {
-    "latest": (
-        "This document is for the development version. "
-        'For the stable version documentation, see <a href="/en/stable/">here</a>.'
-    )
-}
-
-# Show warning at top of page
-versionwarning_body_selector = "div.document"
-versionwarning_banner_title = ""
 
 copybutton_prompt_text = r">>> |\.\.\. |\$ "
 copybutton_prompt_is_regexp = True

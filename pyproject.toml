@@ -238,7 +238,6 @@ docs = [
   "sphinx-design<0.6.0",
   "sphinx-gallery<0.15.0",
   "sphinx-issues<4.0.0",
-  "sphinx-version-warning",
   "tabulate",
 ]
 tests = [
