@@ -23,23 +23,27 @@ class FourierFeatures(BaseTransformer):
         - sin_sp_k = :math:`sin(\frac{2 \pi k t}{sp})`
         - cos_sp_k = :math:`cos(\frac{2 \pi k t}{sp})`
 
-    Where :math:`t` is the number of time steps elapsed from the beginning of the time
-    series.
+    Where :math:`t` is the elapsed time since the beginning of the seasonal period and
+    :math:`sp` the total time of the seasonal period.
 
-    The output of the transform is a pandas DataFrame that includes the fourier terms as
+    The transformed output is a pandas DataFrame that includes the fourier terms as
     additional columns with the naming convention stated above (sin_sp_k and cos_sp_k).
-    For instance for sp_list = [12, 3] and fourier_terms_list = [2, 1] the transformed
+    For instance for sp_list = [12, "Y"] and fourier_terms_list = [2, 1] the transformed
     series will have the additional columns:
-    "cos_12_1", "sin_12_1", "cos_12_2", "sin_12_2", "cos_3_1", "sin_3_1"
+    "cos_12_1", "sin_12_1", "cos_12_2", "sin_12_2", "cos_Y_1", "sin_Y_1"
 
     The implementation is based on the fourier function from the R forecast package [3]_
 
     Parameters
     ----------
-    sp_list : List[float]
-        list of seasonal periods
+    sp_list : List[float or str]
+        List of seasonal periods. A float defines the length of the seasonality starting
+        at the beginning of the time series in number of timesteps. A string should
+        match the column name in X that contains the :math:`t/sp` values or should match
+        a pandas period alias:
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#period-aliases
     fourier_terms_list : List[int]
-        list of number of fourier terms (K) for each seasonal period.
+        List of number of fourier terms (K) for each seasonal period (sp).
         Each K matches to the sp (seasonal period) of the sp_list.
         For example, if sp_list = [7, 365] and fourier_terms_list = [3, 9], the seasonal
         frequency of 7 will have 3 fourier terms and the seasonal frequency of 365
@@ -66,7 +70,7 @@ class FourierFeatures(BaseTransformer):
     >>> from sktime.transformations.series.fourier import FourierFeatures
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = FourierFeatures(sp_list=[12], fourier_terms_list=[4])
+    >>> transformer = FourierFeatures(sp_list=[12, "Y"], fourier_terms_list=[4, 1])
     >>> y_hat = transformer.fit_transform(y)
     """
 
@@ -124,11 +128,16 @@ class FourierFeatures(BaseTransformer):
                 "to the length of fourier_terms_list."
             )
 
-        if np.any(np.array(self.sp_list) / np.array(self.fourier_terms_list) < 1):
-            raise ValueError(
-                "In FourierFeatures the number of each element of fourier_terms_list"
-                "needs to be lower from the corresponding element of the sp_list"
-            )
+        for i in range(len(self.sp_list)):
+            if (
+                not isinstance(sp_list[i], str)
+                and sp_list[i] / fourier_terms_list[i] < 1
+            ):
+                raise ValueError(
+                    "In FourierFeatures the number of each element of "
+                    "fourier_terms_list needs to be lower from the corresponding "
+                    "element of the sp_list"
+                )
 
         super().__init__()
 
@@ -144,11 +153,6 @@ class FourierFeatures(BaseTransformer):
             Data to fit transform to
         y : Series or Panel of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for transformation
-        freq : str, optional, default = None
-            Only used when X has a pd.DatetimeIndex without a specified frequency.
-            Specifies the frequency of the index of your data. The string should
-            match a pandas offset alias:
-            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
 
         Returns
         -------
@@ -160,17 +164,21 @@ class FourierFeatures(BaseTransformer):
         coefficient_list = []
         for i, sp in enumerate(self.sp_list):
             for k in range(1, self.fourier_terms_list[i] + 1):
-                coef = k / sp
-                if coef not in coefficient_list:
-                    coefficient_list.append(coef)
+                if not isinstance(sp, str):  # periodicity sp relative to start
+                    coef = k / sp
+                    if coef not in coefficient_list:
+                        coefficient_list.append(coef)
+                        self.sp_k_pairs_list_.append((sp, k))
+                    else:
+                        warnings.warn(
+                            f"The terms sin_{sp}_{k} and cos_{sp}_{k} from "
+                            "FourierFeatures will be skipped because the resulting "
+                            "coefficient already exists from other seasonal period, "
+                            "fourier term pairs.",
+                            stacklevel=2,
+                        )
+                else:  # periodicity sp from offset string or X column
                     self.sp_k_pairs_list_.append((sp, k))
-                else:
-                    warnings.warn(
-                        f"The terms sin_{sp}_{k} and cos_{sp}_{k} from FourierFeatures "
-                        "will be skipped because the resulting coefficient already "
-                        "exists from other seasonal period, fourier term pairs.",
-                        stacklevel=2,
-                    )
 
         time_index = X.index
 
@@ -178,11 +186,11 @@ class FourierFeatures(BaseTransformer):
             # Chooses first non None value
             self.freq_ = time_index.freq or self.freq or pd.infer_freq(time_index)
             if self.freq_ is None:
-                ValueError("X has no known frequency and none is supplied")
+                raise ValueError("X has no known frequency and none is supplied")
             if self.freq_ == time_index.freq and self.freq_ != self.freq:
                 warnings.warn(
-                    f"Using frequency from index: {time_index.freq}, which"
-                    f"does not match the frequency given:{self.freq}.",
+                    f"Using frequency from index: {time_index.freq}, which \
+                     does not match the frequency given:{self.freq}.",
                     stacklevel=2,
                 )
             time_index = time_index.to_period(self.freq_)
@@ -211,10 +219,12 @@ class FourierFeatures(BaseTransformer):
         transformed version of X
         """
         X_transformed = pd.DataFrame(index=X.index)
-        time_index = X.index
+        X_df = pd.DataFrame(X)
 
-        if isinstance(time_index, pd.DatetimeIndex):
-            time_index = time_index.to_period(self.freq_)
+        if isinstance(X.index, pd.DatetimeIndex):
+            time_index = X.index.to_period(self.freq_)
+        else:
+            time_index = X.index
 
         # get the integer form of the PeriodIndex
         int_index = time_index.astype("int64") - self.min_t_
@@ -223,13 +233,75 @@ class FourierFeatures(BaseTransformer):
             sp = sp_k[0]
             k = sp_k[1]
 
-            X_transformed[f"sin_{sp}_{k}"] = np.sin(int_index * 2 * k * np.pi / sp)
-            X_transformed[f"cos_{sp}_{k}"] = np.cos(int_index * 2 * k * np.pi / sp)
+            if not isinstance(sp, str):  # periodicity sp relative to start
+                X_transformed[f"sin_{sp}_{k}"] = np.sin(int_index * 2 * k * np.pi / sp)
+                X_transformed[f"cos_{sp}_{k}"] = np.cos(int_index * 2 * k * np.pi / sp)
+
+            elif sp in X_df.columns:  # periodicity sp from X column
+                frac_index = X_df[sp].values
+                X_transformed[f"sin_{sp}_{k}"] = np.sin(frac_index * 2 * k * np.pi)
+                X_transformed[f"cos_{sp}_{k}"] = np.cos(frac_index * 2 * k * np.pi)
+
+            else:  # periodicity sp from offset string
+                if isinstance(X.index, pd.PeriodIndex):
+                    datetime_index = X.index.to_timestamp()
+                else:
+                    datetime_index = X.index
+
+                frac_index = self._offset_frac_since_prev_offset(
+                    datetime_index=datetime_index,
+                    period_str=sp,
+                )
+                X_transformed[f"sin_{sp}_{k}"] = np.sin(frac_index * 2 * k * np.pi)
+                X_transformed[f"cos_{sp}_{k}"] = np.cos(frac_index * 2 * k * np.pi)
 
         if self.keep_original_columns:
             X_transformed = pd.concat([X, X_transformed], axis=1, copy=True)
 
         return X_transformed
+
+    def _offset_frac_since_prev_offset(self, datetime_index, period_str):
+        """Get time passed as fraction of the current period
+
+        Parameters
+        ----------
+        datetime_index : pandas DatetimeIndex
+        period_str : pandas period str
+            Cannot contain digits
+
+        Returns
+        -------
+        numpy array containing the time passed between [previous offset, next offset)
+        as fraction in the interval [0, 1) for every datetime in datetimes
+        """
+
+        def _get_frac(datetime, offset_boundaries):
+            i = np.searchsorted(offset_boundaries, datetime, side="right")
+            prev = offset_boundaries[i - 1]
+            next = offset_boundaries[i]
+            period_timedelta = next - prev
+            since_prev_timedelta = datetime - prev
+            return since_prev_timedelta / period_timedelta
+
+        offset = pd.tseries.frequencies.to_offset(period_str)
+        offset_boundaries = pd.date_range(
+            start=np.amin(datetime_index) - offset,
+            end=np.amax(datetime_index) + offset,
+            freq=period_str,
+            tz=datetime_index.tz,
+        )
+
+        # date_range created with offsets <= 1day have boundaries on the first
+        # moment of the new period, but date_range created with offsets > 1day
+        # have boundaries on the last day of the period rather than the desired
+        # first day of new period. workaround: shift by 1 day
+        offset_td = pd.to_timedelta(offset, errors="coerce")
+        if not offset_td <= pd.Timedelta(days=1):
+            offset_boundaries = offset_boundaries + pd.Timedelta(days=1)
+
+        fracs = [_get_frac(dt, offset_boundaries) for dt in datetime_index]
+
+        return np.array(fracs)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -253,6 +325,8 @@ class FourierFeatures(BaseTransformer):
         params = [
             {"sp_list": [12], "fourier_terms_list": [4]},
             {"sp_list": [12, 6.2], "fourier_terms_list": [3, 4]},
+            {"sp_list": ["Y"], "fourier_terms_list": [4]},
+            {"sp_list": ["Y", "Q"], "fourier_terms_list": [3, 4]},
         ]
         return params
 
