@@ -992,7 +992,8 @@ class BaseTransformer(BaseEstimator):
 
         # raise informative error message if X is in wrong format
         allowed_msg = (
-            f"Allowed scitypes for transformations are Series, Panel or Hierarchical, "
+            f"Allowed scitypes for X in transformations are "
+            f"Series, Panel or Hierarchical, "
             f"for instance a pandas.DataFrame with sktime compatible time indices, "
             f"or with MultiIndex and last(-1) level an sktime compatible time index. "
             f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES} ."
@@ -1038,8 +1039,12 @@ class BaseTransformer(BaseEstimator):
             y_mtype = y_metadata["mtype"]
 
             # raise informative error message if y is is in wrong format
-            if not y_valid or y_mtype not in ALLOWED_MTYPES:
-                msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
+            if not y_valid:
+                allowed_msg = (
+                    f"Allowed scitypes for y in transformations depend on X passed. "
+                    f"Passed X scitype was {X_scitype}, "
+                    f"so allowed scitypes for y are {y_possible_scitypes}. "
+                )
                 check_is_error_msg(
                     msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
                 )
