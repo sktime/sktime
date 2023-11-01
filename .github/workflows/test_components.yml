@@ -1,8 +1,6 @@
 name: test individual components workflow
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 jobs:
   detect:
     name: check for changes in individual components

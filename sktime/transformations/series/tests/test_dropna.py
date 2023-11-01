@@ -15,7 +15,7 @@ from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 @pytest.fixture
 def X_few_na():
-    """DataFrame with occasional missings."""
+    """DataFrame with occasional missing."""
     _, X_few_na = load_longley()
     X_few_na.loc["1947", "GNPDEFL"] = np.nan
     X_few_na.loc["1950", "GNPDEFL"] = np.nan
@@ -25,7 +25,7 @@ def X_few_na():
 
 @pytest.fixture
 def X_few_na_expected(X_few_na):
-    """Expected results for a DataFrame with occasional missings."""
+    """Expected results for a DataFrame with occasional missing."""
     return {
         "0": {
             "None": X_few_na.drop(labels=["1947", "1950"], axis=0),
@@ -94,7 +94,7 @@ def X_many_na_expected(X_many_na):
 @pytest.mark.parametrize("axis", DropNA.VALID_AXIS_VALUES)
 @pytest.mark.parametrize("how", DropNA.VALID_HOW_VALUES)
 def test_dropna_few_na(axis, how, X_few_na, X_few_na_expected):
-    """Test expected results on a DataFrame with occasional missings."""
+    """Test expected results on a DataFrame with occasional missing."""
     transformer = DropNA(axis=axis, how=how, thresh=None)
     X_transformed = transformer.fit_transform(X_few_na)
     X_expected = X_few_na_expected[str(axis)][str(how)]

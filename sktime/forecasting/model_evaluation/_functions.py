@@ -523,11 +523,12 @@ def evaluate(
         warnings.warn(
             "in evaluate, kwargs will no longer be supported from sktime 0.25.0. "
             "to pass configuration arguments to the parallelization backend, "
-            "use backend_params instead.",
+            "use backend_params instead. "
+            f"The following kwargs were found: {kwargs.keys()}, pass these as "
+            "dict elements to backend_params instead.",
             DeprecationWarning,
             stacklevel=2,
         )
-        backend = "dask_lazy"
 
     # todo 0.25.0: remove compute argument and logic, and remove this warning
     if compute is not None:

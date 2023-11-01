@@ -58,7 +58,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     def _expected_trafo_output_scitype(self, X_scitype, trafo_input, trafo_output):
         """Return expected output scitype, given X scitype and input/output.
 
-        Paramaters
+        Parameters
         ----------
         X_scitype : str, scitype of the input to transform
         trafo_input : str, scitype of "instance"

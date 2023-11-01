@@ -231,7 +231,7 @@ class _StatsForecastAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        # initializaing cutoff and fh related info
+        # initializing cutoff and fh related info
         cutoff = self.cutoff
         fh_oos = fh.to_out_of_sample(cutoff)
         fh_ins = fh.to_in_sample(cutoff)

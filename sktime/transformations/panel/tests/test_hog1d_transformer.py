@@ -102,7 +102,7 @@ def test_output_dimensions(num_bins, corr_series_length):
     assert num_cols == 1
 
 
-def test_hog1d_performs_correcly_along_each_dim():
+def test_hog1d_performs_correctly_along_each_dim():
     """Test that HOG1D produces the same result along each dimension."""
     X = _make_nested_from_array(
         np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_instances=1, n_columns=2
