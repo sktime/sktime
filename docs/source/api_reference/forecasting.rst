@@ -327,6 +327,17 @@ Structural time series models
 
     DynamicFactor
 
+Transformer (deep learning) based forecasters
+---------------------------------------------
+
+.. currentmodule:: sktime.forecasting.ltsf
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LTSFLinearForecaster
+
 Intermittent time series forecasters
 ------------------------------------
 
@@ -374,17 +385,6 @@ Online and stream forecasting
     OnlineEnsembleForecaster
     NormalHedgeEnsemble
     NNLSEnsemble
-
-LTSF Forecasters
-----------------
-
-.. currentmodule:: sktime.forecasting.ltsf
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    LTSFLinearForecaster
 
 .. currentmodule:: sktime.forecasting.stream
 
