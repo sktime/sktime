@@ -14,9 +14,13 @@ else:
 
 
 class LTSFLinearNetwork:
-    """LSTF-Linear Network.
+    """LTSF-Linear Forecaster.
 
-    Just one Linear layer. Taken from _[1].
+    Implementation of the Long-Term Short-Term Feature (LTSF) linear forecaster,
+    aka LTSF-Linear, by Zeng et al [1]_.
+
+    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
+    which is unfortunately not available as a package.
 
     Parameters
     ----------
@@ -34,13 +38,11 @@ class LTSFLinearNetwork:
 
     References
     ----------
-    [1] @inproceedings{Zeng2022AreTE,
-        title={Are Transformers Effective for Time Series Forecasting?},
-        author={Ailing Zeng and Muxi Chen and Lei Zhang and Qiang Xu},
-        journal={Proceedings of the AAAI Conference on Artificial Intelligence},
-        year={2023}
-    }
-        [Source]: https://github.com/cure-lab/LTSF-Linear/blob/main/models/Linear.py
+    .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
+    Are transformers effective for time series forecasting?
+    Proceedings of the AAAI conference on artificial intelligence 2023
+    (Vol. 37, No. 9, pp. 11121-11128).
+    .. [2] https://github.com/cure-lab/LTSF-Linear
     """
 
     class _LTSFLinearNetwork(nn_module):
@@ -104,9 +106,13 @@ class LTSFLinearNetwork:
 
 
 class LTSFDLinearNetwork:
-    """LTSF-DLinear Network.
+    """LTSF-DLinear Forecaster.
 
-    Decomposition-Linear network. Taken from _[1].
+    Implementation of the Long-Term Short-Term Feature (LTSF) decomposition linear
+    forecaster, aka LTSF-DLinear, by Zeng et al [1]_.
+
+    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
+    which is unfortunately not available as a package.
 
     Parameters
     ----------
@@ -124,13 +130,11 @@ class LTSFDLinearNetwork:
 
     References
     ----------
-    [1] @inproceedings{Zeng2022AreTE,
-        title={Are Transformers Effective for Time Series Forecasting?},
-        author={Ailing Zeng and Muxi Chen and Lei Zhang and Qiang Xu},
-        journal={Proceedings of the AAAI Conference on Artificial Intelligence},
-        year={2023}
-    }
-        [Source]: https://github.com/cure-lab/LTSF-Linear/blob/main/models/DLinear.py
+    .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
+    Are transformers effective for time series forecasting?
+    Proceedings of the AAAI conference on artificial intelligence 2023
+    (Vol. 37, No. 9, pp. 11121-11128).
+    .. [2] https://github.com/cure-lab/LTSF-Linear
     """
 
     class _LTSFDLinearNetwork(nn_module):
@@ -217,9 +221,13 @@ class LTSFDLinearNetwork:
 
 
 class LTSFNLinearNetwork:
-    """LSTF-NLinear Network.
+    """LTSF-NLinear Forecaster.
 
-    Normalization-Linear network. Taken from _[1].
+    Implementation of the Long-Term Short-Term Feature (LTSF) normalization linear
+    forecaster, aka LTSF-NLinear, by Zeng et al [1]_.
+
+    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
+    which is unfortunately not available as a package.
 
     Parameters
     ----------
@@ -237,13 +245,11 @@ class LTSFNLinearNetwork:
 
     References
     ----------
-    [1] @inproceedings{Zeng2022AreTE,
-        title={Are Transformers Effective for Time Series Forecasting?},
-        author={Ailing Zeng and Muxi Chen and Lei Zhang and Qiang Xu},
-        journal={Proceedings of the AAAI Conference on Artificial Intelligence},
-        year={2023}
-    }
-        [Source]: https://github.com/cure-lab/LTSF-Linear/blob/main/models/NLinear.py
+    .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
+    Are transformers effective for time series forecasting?
+    Proceedings of the AAAI conference on artificial intelligence 2023
+    (Vol. 37, No. 9, pp. 11121-11128).
+    .. [2] https://github.com/cure-lab/LTSF-Linear
     """
 
     class _LTSFNLinearNetwork(nn_module):
@@ -308,3 +314,216 @@ class LTSFNLinearNetwork:
         return self._LTSFNLinearNetwork(
             self.seq_len, self.pred_len, self.in_channels, self.individual
         )
+
+
+class LTSFAutoformerNetwork:
+    """Network for LTSFAutoFormer.
+
+    Autoformer is the first method to achieve the series-wise connection,
+    with inherent O(LlogL) complexity.
+    """
+
+    class _LTSFAutoformerNetwork(nn_module):
+        def __init__(
+            self,
+            seq_len,
+            label_len,
+            pred_len,
+            output_attention,
+            moving_avg,
+            embed_type,
+            enc_in,
+            dec_in,
+            d_model,
+            embed,
+            freq,
+            dropout,
+            factor,
+            n_heads,
+            e_layers,
+            d_layers,
+            c_out,
+            activation,
+        ):
+            super().__init__()
+
+            from embed import (
+                DataEmbedding,
+                DataEmbeddingWithoutPositional,
+                DataEmbeddingWithoutPositionalTemporal,
+                DataEmbeddingWithoutTemporal,
+            )
+            from layers import (
+                AutoCorrelation,
+                AutoCorrelationLayer,
+                Decoder,
+                DecoderLayer,
+                Encoder,
+                EncoderLayer,
+                LTSFLayerNorm,
+                SeriesDecomposer,
+            )
+
+            self.seq_len = seq_len
+            self.label_len = label_len
+            self.pred_len = pred_len
+            self.output_attention = output_attention
+            self.moving_avg = moving_avg
+            self.embed_type = embed_type
+            self.enc_in = enc_in
+            self.dec_in = dec_in
+            self.d_model = d_model
+            self.embed = embed
+            self.freq = freq
+            self.dropout = dropout
+            self.factor = factor
+            self.n_heads = n_heads
+            self.e_layers = e_layers
+            self.d_layers = d_layers
+            self.c_out = c_out
+            self.activation = activation
+
+            # Decomp
+            kernel_size = self.moving_avg
+            self.decomp = SeriesDecomposer(kernel_size)._build()
+
+            # Embedding
+            # The series-wise connection inherently contains the sequential information.
+            # Thus, we can discard the position embedding of transformers.
+            if self.embed_type == 0:
+                self.enc_embedding = DataEmbeddingWithoutPositional(
+                    self.enc_in, self.d_model, self.embed, self.freq, self.dropout
+                )._build()
+                self.dec_embedding = DataEmbeddingWithoutPositional(
+                    self.dec_in, self.d_model, self.embed, self.freq, self.dropout
+                )._build()
+            elif self.embed_type == 1:
+                self.enc_embedding = DataEmbedding(
+                    self.enc_in, self.d_model, self.embed, self.freq, self.dropout
+                )._build()
+                self.dec_embedding = DataEmbedding(
+                    self.dec_in, self.d_model, self.embed, self.freq, self.dropout
+                )._build()
+            elif self.embed_type == 2:
+                self.enc_embedding = DataEmbeddingWithoutPositional(
+                    self.enc_in, self.d_model, self.embed, self.freq, self.dropout
+                )._build()
+                self.dec_embedding = DataEmbeddingWithoutPositional(
+                    self.dec_in, self.d_model, self.embed, self.freq, self.dropout
+                )._build()
+            elif self.embed_type == 3:
+                self.enc_embedding = DataEmbeddingWithoutTemporal(
+                    self.enc_in, self.d_model, self.embed, self.freq, self.dropout
+                )._build()
+                self.dec_embedding = DataEmbeddingWithoutTemporal(
+                    self.dec_in, self.d_model, self.embed, self.freq, self.dropout
+                )._build()
+            elif self.embed_type == 4:
+                self.enc_embedding = DataEmbeddingWithoutPositionalTemporal(
+                    self.enc_in, self.d_model, self.embed, self.freq, self.dropout
+                )._build()
+                self.dec_embedding = DataEmbeddingWithoutPositionalTemporal(
+                    self.dec_in, self.d_model, self.embed, self.freq, self.dropout
+                )._build()
+
+            # Encoder
+            self.encoder = Encoder(
+                [
+                    EncoderLayer(
+                        AutoCorrelationLayer(
+                            AutoCorrelation(
+                                False,
+                                self.factor,
+                                attention_dropout=self.dropout,
+                                output_attention=self.output_attention,
+                            )._build(),
+                            self.d_model,
+                            self.n_heads,
+                        )._build(),
+                        self.d_model,
+                        self.d_ff,
+                        moving_avg=self.moving_avg,
+                        dropout=self.dropout,
+                        activation=self.activation,
+                    )._build()
+                    for _ in range(self.e_layers)
+                ],
+                norm_layer=LTSFLayerNorm(self.d_model)._build(),
+            )._build()
+            # Decoder
+            self.decoder = Decoder(
+                [
+                    DecoderLayer(
+                        AutoCorrelationLayer(
+                            AutoCorrelation(
+                                True,
+                                self.factor,
+                                attention_dropout=self.dropout,
+                                output_attention=False,
+                            )._build(),
+                            self.d_model,
+                            self.n_heads,
+                        )._build(),
+                        AutoCorrelationLayer(
+                            AutoCorrelation(
+                                False,
+                                self.factor,
+                                attention_dropout=self.dropout,
+                                output_attention=False,
+                            )._build(),
+                            self.d_model,
+                            self.n_heads,
+                        )._build(),
+                        self.d_model,
+                        self.c_out,
+                        self.d_ff,
+                        moving_avg=self.moving_avg,
+                        dropout=self.dropout,
+                        activation=self.activation,
+                    )
+                    for _ in range(self.d_layers)._build()
+                ],
+                norm_layer=LTSFLayerNorm(self.d_model)._build(),
+                projection=nn.Linear(self.d_model, self.c_out, bias=True),
+            )._build()
+
+        def forward(
+            self,
+            x_enc,
+            x_mark_enc,
+            x_dec,
+            x_mark_dec,
+            enc_self_mask=None,
+            dec_self_mask=None,
+            dec_enc_mask=None,
+        ):
+            from torch import cat, mean, zeros
+
+            # decomp init
+            _mean = mean(x_enc, dim=1).unsqueeze(1).repeat(1, self.pred_len, 1)
+            _zeros = zeros(
+                [x_dec.shape[0], self.pred_len, x_dec.shape[2]], device=x_enc.device
+            )
+            seasonal_init, trend_init = self.decomp(x_enc)
+            # decoder input
+            trend_init = cat([trend_init[:, -self.label_len :, :], _mean], dim=1)
+            seasonal_init = cat([seasonal_init[:, -self.label_len :, :], _zeros], dim=1)
+            # enc
+            enc_out = self.enc_embedding(x_enc, x_mark_enc)
+            enc_out, attns = self.encoder(enc_out, attn_mask=enc_self_mask)
+            # dec
+            dec_out = self.dec_embedding(seasonal_init, x_mark_dec)
+            seasonal_part, trend_part = self.decoder(
+                dec_out,
+                enc_out,
+                x_mask=dec_self_mask,
+                cross_mask=dec_enc_mask,
+                trend=trend_init,
+            )
+            # final
+            dec_out = trend_part + seasonal_part
+
+            if self.output_attention:
+                return dec_out[:, -self.pred_len :, :], attns
+            else:
+                return dec_out[:, -self.pred_len :, :]  # [B, L, D]
