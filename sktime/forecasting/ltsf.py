@@ -1,6 +1,6 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
 
-from sktime.networks.base import BaseDeepNetworkPyTorch
+from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 
 
 class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
@@ -69,7 +69,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         seq_len,
         pred_len,
         *,
-        num_epochs=50,
+        num_epochs=16,
         batch_size=8,
         in_channels=1,
         individual=False,
@@ -232,7 +232,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         seq_len,
         pred_len,
         *,
-        num_epochs=50,
+        num_epochs=16,
         batch_size=8,
         in_channels=1,
         individual=False,
@@ -396,7 +396,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         seq_len,
         pred_len,
         *,
-        num_epochs=50,
+        num_epochs=16,
         batch_size=8,
         in_channels=1,
         individual=False,
