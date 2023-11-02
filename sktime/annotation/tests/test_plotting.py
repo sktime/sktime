@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
@@ -36,6 +35,8 @@ def time_series_data():
     reason="Seaborn is required as a dependency for this plot.",
 )
 def test_plot_time_series_with_change_points(time_series_data):
+    import matplotlib.pyplot as plt
+
     # Access data from the fixture
     ts_name = time_series_data["ts_name"]
     ts = time_series_data["ts"]
@@ -54,6 +55,8 @@ def test_plot_time_series_with_change_points(time_series_data):
     reason="Seaborn is required as a dependency for this plot.",
 )
 def test_plot_time_series_with_profiles(time_series_data):
+    import matplotlib.pyplot as plt
+
     # Access data from the fixture
     ts_name = time_series_data["ts_name"]
     ts = time_series_data["ts"]
