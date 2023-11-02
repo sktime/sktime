@@ -31,6 +31,10 @@ def time_series_data():
     }
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="Seaborn is required as a dependency for this plot.",
+)
 def test_plot_time_series_with_change_points(time_series_data):
     # Access data from the fixture
     ts_name = time_series_data["ts_name"]
@@ -46,7 +50,7 @@ def test_plot_time_series_with_change_points(time_series_data):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("seaborn", severity="none"),
+    not _check_soft_dependencies("seaborn", "matplotlib", severity="none"),
     reason="Seaborn is required as a dependency for this plot.",
 )
 def test_plot_time_series_with_profiles(time_series_data):
