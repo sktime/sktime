@@ -6,6 +6,12 @@ from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     """LTSF-Linear Forecaster.
 
+    Implementation of the Long-Term Short-Term Feature (LTSF) linear forecaster,
+    aka LTSF-Linear, by Zeng et al [1]_.
+
+    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
+    which is unfortunately not available as a package.
+
     Parameters
     ----------
     seq_len : int
@@ -33,6 +39,15 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         keyword arguments to pass to optimizer
     lr : float, default=0.003
         learning rate to train model with
+
+    References
+    ----------
+    .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
+    Are transformers effective for time series forecasting?
+    Proceedings of the AAAI conference on artificial intelligence 2023
+    (Vol. 37, No. 9, pp. 11121-11128).
+    .. [2] https://github.com/cure-lab/LTSF-Linear
+
     Examples
     --------
     >>> from sktime.forecasting.ltsf import LTSFLinearForecaster # doctest: +SKIP
