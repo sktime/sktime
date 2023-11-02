@@ -184,9 +184,9 @@ class BaseObject(_BaseObject):
 
         serialization_format: str, default = "pickle"
             Module to use for serialization.
-            The available options are present under
-            `sktime.base._base.SERIALIZATION_FORMATS`. Note that non-default formats
-            might require installation of other soft dependencies.
+            The available options are "pickle" and "cloudpickle".
+            Note that non-default formats might require
+            installation of other soft dependencies.
 
         Returns
         -------
