@@ -261,7 +261,7 @@ cython_extras = [
 ]
 dl = [
   'tensorflow<=2.14,>=2; python_version < "3.12"',
-  "torch",
+  'torch; python_version < "3.12"',
 ]
 mlflow = [
   "mlflow",
