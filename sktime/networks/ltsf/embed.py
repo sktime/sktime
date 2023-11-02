@@ -19,7 +19,7 @@ import math
 class PositionalEmbedding:
     """Positional Embedding."""
 
-    class _PositionalEmbedding(nn.Module):
+    class _PositionalEmbedding(nn_module):
         def __init__(self, d_model, max_len=5000):
             super().__init__()
             from torch import arange, cos, sin, zeros
