@@ -127,7 +127,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             }
 
     def _build_network(self, fh):
-        from sktime.networks.ltsf.ltsf import LTSFLinearNetwork
+        from sktime.networks.ltsf._ltsf import LTSFLinearNetwork
 
         return LTSFLinearNetwork(
             self.seq_len,
@@ -290,7 +290,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
             }
 
     def _build_network(self, fh):
-        from sktime.networks.ltsf.ltsf import LTSFDLinearNetwork
+        from sktime.networks.ltsf._ltsf import LTSFDLinearNetwork
 
         return LTSFDLinearNetwork(
             self.seq_len,
@@ -454,7 +454,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             }
 
     def _build_network(self, fh):
-        from sktime.networks.ltsf.ltsf import LTSFNLinearNetwork
+        from sktime.networks.ltsf._ltsf import LTSFNLinearNetwork
 
         return LTSFNLinearNetwork(
             self.seq_len,
