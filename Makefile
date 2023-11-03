@@ -30,6 +30,13 @@ test: ## Run unit tests
 	cp setup.cfg ${TEST_DIR}
 	python -m pytest
 
+test_without_datasets: ## Run unit tests skipping sktime/datasets
+	-rm -rf ${TEST_DIR}
+	mkdir -p ${TEST_DIR}
+	cp .coveragerc ${TEST_DIR}
+	cp setup.cfg ${TEST_DIR}
+	python -m pytest --ignore sktime/datasets
+
 test_check_suite: ## run only estimator contract tests in TestAll classes
 	-rm -rf ${TEST_DIR}
 	mkdir -p ${TEST_DIR}
