@@ -1,9 +1,9 @@
-name: test individual components workflow
+name: test modules
 on:
   workflow_call:
 jobs:
   detect:
-    name: check for changes in individual components
+    name: detect change in module
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -34,7 +34,7 @@ jobs:
               - sktime/transformations/**
   test:
     needs: detect
-    name: test specific component
+    name: test module
     strategy:
       fail-fast: false
       matrix:

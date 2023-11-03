@@ -1,4 +1,4 @@
-name: test all workflow
+name: weekly test all estimators
 on:
   schedule:
     - cron: 0 0 * * 0
@@ -23,7 +23,7 @@ jobs:
         shell: bash
   test_base:
     needs: code_quality
-    name: test base framework
+    name: test base module
     strategy:
       fail-fast: false
       matrix:
@@ -49,7 +49,7 @@ jobs:
           test-affected-estimators: "False"
   test_components:
     needs: code_quality
-    name: test individual components
+    name: test module
     strategy:
       fail-fast: false
       matrix:

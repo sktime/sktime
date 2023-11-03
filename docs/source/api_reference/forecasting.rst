@@ -337,6 +337,9 @@ Transformer (deep learning) based forecasters
     :template: class.rst
 
     LTSFLinearForecaster
+    LTSFDLinearForecaster
+    LTSFNLinearForecaster
+
 
 Intermittent time series forecasters
 ------------------------------------
