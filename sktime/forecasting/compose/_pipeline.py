@@ -849,10 +849,13 @@ class TransformedTargetForecaster(_Pipeline):
         # logic below checks whether there is at least one such transformer
         # if there is, we override the ignores-exogenous-X tag to False
         # also see discussion in bug issue #5518
-        pre_use_y = self._anytag_notnone_val("y_inner_mtype", self.transformers_pre_)
-        post_use_y = self._anytag_notnone_val("y_inner_mtype", self.transformers_post_)
+        pre_ts = self.transformers_pre_
+        post_ts = self.transformers_post_
+        pre_use_y = [est.get_tag("y_inner_mtype") != "None" for _, est in pre_ts]
+        post_use_y = [est.get_tag("y_inner_mtype") != "None" for _, est in post_ts]
+        any_t_use_y = any(pre_use_y) or any(post_use_y)
 
-        if pre_use_y != "None" and post_use_y != "None":
+        if any_t_use_y:
             self.set_tags(**{"ignores-exogeneous-X": False})
 
     @property
