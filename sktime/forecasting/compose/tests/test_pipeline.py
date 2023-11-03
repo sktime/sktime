@@ -18,6 +18,7 @@ from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import (
     ForecastingPipeline,
     TransformedTargetForecaster,
+    YfromX,
     make_reduction,
 )
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
@@ -705,3 +706,46 @@ def test_featurizer_forecastingpipeline_logic():
 
     forecaster.fit(y_train, X=X_train, fh=[1])  # try to forecast next year
     forecaster.predict(X=X_test)  # dummy X to predict next year
+
+
+def test_exogenousx_ignore_tag_set()
+    """Tests that TransformedTargetForecaster sets X tag for feature selection.
+
+    If the forecaster ignores X, but the feature selector does not, then the
+    ignores-exogenous-X tag should be correctly set to False, not True.
+
+    This is the failure case in bug report #5518.
+
+    More generally, the tag should be set to True iff all steps in the pipeline
+    ignore X.
+    """
+    from sktime.transformations.series.feature_selection import FeatureSelection
+
+    fcst_does_not_ignore_x = YfromX.create_test_instance()
+    fcst_ignores_x = NaiveForecaster()
+
+    trafo_ignores_x = ExponentTransformer()
+    trafo_does_not_ignore_x = FeatureSelection()
+
+    # check that ignores-exogenous-X tag is set correctly
+    pipe1 = trafo_ignores_x * fcst_does_not_ignore_x
+    pipe2 = trafo_ignores_x * fcst_ignores_x
+    pipe3 = trafo_does_not_ignore_x * fcst_does_not_ignore_x
+    pipe4 = trafo_does_not_ignore_x * fcst_ignores_x
+    pipe5 = trafo_ignores_x * trafo_does_not_ignore_x * fcst_does_not_ignore_x
+    pipe6 = trafo_ignores_x * trafo_does_not_ignore_x * fcst_ignores_x
+    pipe7 = trafo_ignores_x * trafo_ignores_x * fcst_does_not_ignore_x
+    pipe8 = trafo_ignores_x * fcst_ignores_x * trafo_does_not_ignore_x
+    pipe9 = trafo_does_not_ignore_x * fcst_ignores_x * fcst_ignores_x
+    pipe10 = trafo_ignores_x * fcst_ignores_x * trafo_ignores_x
+
+    assert not pipe1.get_tag("ignores-exogenous-X")
+    assert pipe2.get_tag("ignores-exogenous-X")
+    assert not pipe3.get_tag("ignores-exogenous-X")
+    assert not pipe4.get_tag("ignores-exogenous-X")
+    assert not pipe5.get_tag("ignores-exogenous-X")
+    assert not pipe6.get_tag("ignores-exogenous-X")
+    assert not pipe7.get_tag("ignores-exogenous-X")
+    assert not pipe8.get_tag("ignores-exogenous-X")
+    assert not pipe9.get_tag("ignores-exogenous-X")
+    assert pipe10.get_tag("ignores-exogenous-X")
