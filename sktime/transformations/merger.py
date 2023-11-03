@@ -51,7 +51,7 @@ class Merger(BaseTransformer):
     >>> y = _make_panel(n_instances=10, n_columns=3, n_timepoints=5)
     >>> result = Merger(method="median", stride=1).fit_transform(y)
     >>> result.shape
-    (14, 3, 1)
+    (14, 3)
     """
 
     _tags = {
