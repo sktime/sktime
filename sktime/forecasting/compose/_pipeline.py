@@ -843,11 +843,11 @@ class TransformedTargetForecaster(_Pipeline):
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
-        # above, we cloned the ignores-exogenous-X tag,
+        # above, we cloned the ignores-exogeneous-X tag,
         # but we also need to check whether X is used as y in some transformer
         # in this case X is not ignored by the pipe, even if the forecaster ignores it
         # logic below checks whether there is at least one such transformer
-        # if there is, we override the ignores-exogenous-X tag to False
+        # if there is, we override the ignores-exogeneous-X tag to False
         # also see discussion in bug issue #5518
         pre_ts = self.transformers_pre_
         post_ts = self.transformers_post_

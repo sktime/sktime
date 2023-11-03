@@ -711,7 +711,7 @@ def test_exogenousx_ignore_tag_set():
     """Tests that TransformedTargetForecaster sets X tag for feature selection.
 
     If the forecaster ignores X, but the feature selector does not, then the
-    ignores-exogenous-X tag should be correctly set to False, not True.
+    ignores-exogeneous-X tag should be correctly set to False, not True.
 
     This is the failure case in bug report #5518.
 
@@ -727,7 +727,7 @@ def test_exogenousx_ignore_tag_set():
     trafo_ignores_x = ExponentTransformer()
     trafo_does_not_ignore_x = FeatureSelection()
 
-    # check that ignores-exogenous-X tag is set correctly
+    # check that ignores-exogeneous-X tag is set correctly
     pipe1 = trafo_ignores_x * fcst_does_not_ignore_x
     pipe2 = trafo_ignores_x * fcst_ignores_x
     pipe3 = trafo_does_not_ignore_x * fcst_does_not_ignore_x
@@ -739,13 +739,13 @@ def test_exogenousx_ignore_tag_set():
     pipe9 = trafo_does_not_ignore_x * fcst_ignores_x * fcst_ignores_x
     pipe10 = trafo_ignores_x * fcst_ignores_x * trafo_ignores_x
 
-    assert not pipe1.get_tag("ignores-exogenous-X")
-    assert pipe2.get_tag("ignores-exogenous-X")
-    assert not pipe3.get_tag("ignores-exogenous-X")
-    assert not pipe4.get_tag("ignores-exogenous-X")
-    assert not pipe5.get_tag("ignores-exogenous-X")
-    assert not pipe6.get_tag("ignores-exogenous-X")
-    assert not pipe7.get_tag("ignores-exogenous-X")
-    assert not pipe8.get_tag("ignores-exogenous-X")
-    assert not pipe9.get_tag("ignores-exogenous-X")
-    assert pipe10.get_tag("ignores-exogenous-X")
+    assert not pipe1.get_tag("ignores-exogeneous-X")
+    assert pipe2.get_tag("ignores-exogeneous-X")
+    assert not pipe3.get_tag("ignores-exogeneous-X")
+    assert not pipe4.get_tag("ignores-exogeneous-X")
+    assert not pipe5.get_tag("ignores-exogeneous-X")
+    assert not pipe6.get_tag("ignores-exogeneous-X")
+    assert not pipe7.get_tag("ignores-exogeneous-X")
+    assert not pipe8.get_tag("ignores-exogeneous-X")
+    assert not pipe9.get_tag("ignores-exogeneous-X")
+    assert pipe10.get_tag("ignores-exogeneous-X")
