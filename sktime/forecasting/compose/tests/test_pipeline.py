@@ -707,7 +707,7 @@ def test_featurizer_forecastingpipeline_logic():
     forecaster.predict(X=X_test)  # dummy X to predict next year
 
 
-def test_exogenousx_ignore_tag_set()
+def test_exogenousx_ignore_tag_set():
     """Tests that TransformedTargetForecaster sets X tag for feature selection.
 
     If the forecaster ignores X, but the feature selector does not, then the
