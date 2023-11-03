@@ -337,21 +337,7 @@ Transformer (deep learning) based forecasters
     :template: class.rst
 
     LTSFLinearForecaster
-
-.. currentmodule:: sktime.forecasting.ltsf
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     LTSFDLinearForecaster
-
-.. currentmodule:: sktime.forecasting.ltsf
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     LTSFNLinearForecaster
 
 

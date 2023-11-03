@@ -338,7 +338,6 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
     Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
     which is unfortunately not available as a package.
 
-
     Parameters
     ----------
     seq_len : int
