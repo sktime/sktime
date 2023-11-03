@@ -1219,6 +1219,8 @@ class BaseTransformer(BaseEstimator):
                     )
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
+            elif X_input_scitype == "Panel":
+                X_output_mtype = "pd.DataFrame"
                 # Xt_mtype = metadata["mtype"]
             # else:
             #     Xt_mtype = X_input_mtype
@@ -1234,7 +1236,7 @@ class BaseTransformer(BaseEstimator):
             Xt = convert_to(
                 Xt,
                 to_type=X_output_mtype,
-                as_scitype=X_input_scitype,
+                as_scitype=output_scitype,
                 store=_converter_store_X,
                 store_behaviour="freeze",
             )
