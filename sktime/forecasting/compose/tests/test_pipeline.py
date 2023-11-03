@@ -736,7 +736,7 @@ def test_exogenousx_ignore_tag_set():
     pipe6 = trafo_ignores_x * trafo_does_not_ignore_x * fcst_ignores_x
     pipe7 = trafo_ignores_x * trafo_ignores_x * fcst_does_not_ignore_x
     pipe8 = trafo_ignores_x * fcst_ignores_x * trafo_does_not_ignore_x
-    pipe9 = trafo_does_not_ignore_x * fcst_ignores_x * fcst_ignores_x
+    pipe9 = trafo_does_not_ignore_x * fcst_ignores_x * trafo_ignores_x
     pipe10 = trafo_ignores_x * fcst_ignores_x * trafo_ignores_x
 
     assert not pipe1.get_tag("ignores-exogeneous-X")
