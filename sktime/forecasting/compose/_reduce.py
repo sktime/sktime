@@ -278,13 +278,13 @@ class _Reducer(_BaseWindowForecaster):
 
         In recursive forecasting, the time based features need to be recalculated for
         every time step that is forecast. This is done in an iterative fashion over
-        every forecasting horizon step. Shift specifies the timestemp over which the
+        every forecasting horizon step. Shift specifies the timestamp over which the
         iteration is done, i.e. a shift of 0 will get a window between window_length
         steps in the past and t=0, shift = 1 will be window_length - 1 steps in the past
         and t= 1 etc- up to the forecasting horizon.
 
         Will also apply any transformers passed to the recursive reducer to y. This en
-        bloc approach of directly applying the transformers is more efficient than
+        block approach of directly applying the transformers is more efficient than
         creating all lags first across the window and then applying the transformers
         to the lagged data.
 
@@ -343,6 +343,9 @@ class _Reducer(_BaseWindowForecaster):
         # first observation after the window (this is what the window is summarized to).
 
         index_range = _index_range(relative_int, cutoff)
+        if isinstance(cutoff, pd.DatetimeIndex):
+            if cutoff.tzinfo is not None:
+                index_range = index_range.tz_localize(cutoff.tzinfo)
         # index_range will convert the indices to the date format of cutoff
 
         y_raw = _create_fcst_df(index_range, self._y)
@@ -869,6 +872,9 @@ class _RecursiveReducer(_Reducer):
             fh_max = fh.to_relative(self.cutoff)[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
             index_range = _index_range(relative, self.cutoff)
+            if isinstance(self.cutoff, pd.DatetimeIndex):
+                if self.cutoff.tzinfo is not None:
+                    index_range = index_range.tz_localize(self.cutoff.tzinfo)
 
             y_pred = _create_fcst_df(index_range, self._y)
 
@@ -1206,7 +1212,7 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
     For the hybrid dir-rec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the recusrive
+    for training the next forecaster, following the recursive
     strategy.
 
     Parameters
@@ -1285,7 +1291,7 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     For the hybrid dir-rec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the recusrive
+    for training the next forecaster, following the recursive
     strategy.
 
     Parameters
@@ -1685,7 +1691,7 @@ class _ReducerMixin:
 
         Parameters
         ----------
-        fh : ForecastingHorizon, fh of self; or, iterable coercable to pd.Index
+        fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
 
         Returns
         -------

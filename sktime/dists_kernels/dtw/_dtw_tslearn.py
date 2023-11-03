@@ -101,7 +101,7 @@ class DtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
 
 class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
-    """Dynamic time warping distance, from tslearn.
+    """Soft dynamic time warping distance, from tslearn.
 
     Direct interface to ``tslearn.metrics.cdist_soft_dtw`` and
     ``tslearn.metrics.cdist_soft_dtw_normalized``.

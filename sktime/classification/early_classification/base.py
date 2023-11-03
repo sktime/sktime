@@ -80,7 +80,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         """An array containing the state info for each decision in X from update and
         predict methods.
 
-        Contains classifier dependant information for future decisions on the data and
+        Contains classifier dependent information for future decisions on the data and
         information on when a cases decision has been made. Each row contains
         information for a case from the latest decision on its safety made in
         update/predict. Successive updates are likely to remove rows from the
@@ -324,7 +324,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         Returns
         -------
         An array containing the state info for each decision in X from update and
-        predict methods. Contains classifier dependant information for future decisions
+        predict methods. Contains classifier dependent information for future decisions
         on the data and information on when a cases decision has been made. Each row
         contains information for a case from the latest decision on its safety made in
         update/predict. Successive updates are likely to remove rows from the

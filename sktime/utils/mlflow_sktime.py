@@ -28,7 +28,7 @@ mlflow.pyfunc
     `{"predict_method": {"predict": {}, "predict_interval": {"coverage": [0.1, 0.9]}}`.
     `Dict[str, list]`, with default parameters in predict method, for example
     `{"predict_method": ["predict", "predict_interval"}` (Note: when including
-    `predict_proba` method the former appraoch must be followed as `quantiles`
+    `predict_proba` method the former approach must be followed as `quantiles`
     parameter has to be provided by the user). If no prediction config is defined
     `pyfunc.predict()` will return output from sktime `predict()` method.
 """
@@ -52,9 +52,12 @@ import yaml
 import sktime
 from sktime import utils
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_mlflow_dependencies,
+    _check_soft_dependencies,
+)
 
-if _check_soft_dependencies("mlflow", severity="warning"):
+if _check_mlflow_dependencies(severity="warning"):
     from mlflow import pyfunc
 
 FLAVOR_NAME = "mlflow_sktime"
@@ -93,7 +96,7 @@ def get_default_pip_requirements(include_cloudpickle=False):
     Calls to :func:`save_model()` and :func:`log_model()` produce a pip environment
     that, at a minimum, contains these requirements.
     """
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.utils.requirements_utils import _get_pinned_requirement
 
     pip_deps = [_get_pinned_requirement("sktime")]
@@ -111,7 +114,7 @@ def get_default_conda_env(include_cloudpickle=False):
     The default Conda environment for MLflow Models produced by calls to
     :func:`save_model()` and :func:`log_model()`
     """
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.utils.environment import _mlflow_conda_env
 
     return _mlflow_conda_env(
@@ -211,7 +214,7 @@ def save_model(
     >>> loaded_model = mlflow_sktime.load_model(model_uri=model_path)  # doctest: +SKIP
     >>> loaded_model.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """  # noqa: E501
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.models import Model
     from mlflow.models.model import MLMODEL_FILE_NAME
@@ -420,7 +423,7 @@ def log_model(
     ...     sktime_model=forecaster,
     ...     artifact_path=artifact_path)  # doctest: +SKIP
     """  # noqa: E501
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.models import Model
 
     if await_registration_for is None:
@@ -493,7 +496,7 @@ def load_model(model_uri, dst_path=None):
     ...     path=model_path)
     >>> loaded_model = mlflow_sktime.load_model(model_uri=model_path)  # doctest: +SKIP
     """  # noqa: E501
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.tracking.artifact_utils import _download_artifact_from_uri
     from mlflow.utils.model_utils import (
         _add_code_from_conf_to_system_path,
@@ -519,7 +522,7 @@ def load_model(model_uri, dst_path=None):
 
 
 def _save_model(model, path, serialization_format):
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.protos.databricks_pb2 import INTERNAL_ERROR
 
@@ -542,7 +545,7 @@ def _save_model(model, path, serialization_format):
 
 
 def _load_model(path, serialization_format):
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
 
@@ -585,7 +588,7 @@ def _load_pyfunc(path):
     ----------
     .. [1] https://www.mlflow.org/docs/latest/python_api/mlflow.pyfunc.html#mlflow.pyfunc.load_model
     """  # noqa: E501
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.utils.model_utils import _get_flavor_configuration
 
@@ -621,7 +624,7 @@ def _load_pyfunc(path):
 
 class _SktimeModelWrapper:
     def __init__(self, sktime_model):
-        _check_soft_dependencies("mlflow", severity="error")
+        _check_mlflow_dependencies(severity="error")
         self.sktime_model = sktime_model
 
     def predict(self, X):

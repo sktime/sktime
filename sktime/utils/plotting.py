@@ -176,20 +176,23 @@ def plot_series(
         ax.legend()
     if pred_interval is not None:
         check_interval_df(pred_interval, series[-1].index)
-        ax = plot_interval(ax, pred_interval)
+        ax = plot_interval(ax, pred_interval, index)
     if _ax_kwarg_is_none:
         return fig, ax
     else:
         return ax
 
 
-def plot_interval(ax, interval_df):
+def plot_interval(ax, interval_df, ix=None):
     cov = interval_df.columns.levels[1][0]
     var_name = interval_df.columns.levels[0][0]
+    x_ix = np.argwhere(ix.isin(interval_df.index)).ravel()
+    x_ix = np.array(x_ix)
+
     ax.fill_between(
-        ax.get_lines()[-1].get_xdata(),
-        interval_df[var_name][cov]["lower"].astype("float64"),
-        interval_df[var_name][cov]["upper"].astype("float64"),
+        x_ix,
+        interval_df[var_name][cov]["lower"].astype("float64").to_numpy(),
+        interval_df[var_name][cov]["upper"].astype("float64").to_numpy(),
         alpha=0.2,
         color=ax.get_lines()[-1].get_c(),
         label=f"{int(cov * 100)}% prediction interval",
@@ -307,7 +310,7 @@ def plot_correlations(
         Whether to compute ACF via FFT.
 
     acf_adjusted : bool, default = True
-        If True, denonimator of ACF calculations uses n-k instead of n, where
+        If True, denominator of ACF calculations uses n-k instead of n, where
         n is number of observations and k is the lag.
 
     pacf_method : str, default = 'ywadjusted'

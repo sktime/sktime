@@ -2,7 +2,10 @@
 """Parameter estimators for stationarity."""
 
 __author__ = ["fkiraly"]
-__all__ = ["StationarityADF", "StationarityKPSS"]
+__all__ = [
+    "StationarityADF",
+    "StationarityKPSS",
+]
 
 from sktime.param_est.base import BaseParamFitter
 
@@ -18,7 +21,7 @@ class StationarityADF(BaseParamFitter):
     Parameters
     ----------
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for stationarity
+        significance threshold to apply in testing for stationarity
     maxlag : int or None, optional, default=None
         Maximum lag which is included in test, default value of
         12*(nobs/100)^{1/4} is used when ``None``.
@@ -62,7 +65,7 @@ class StationarityADF(BaseParamFitter):
     >>> sty_est = StationarityADF()  # doctest: +SKIP
     >>> sty_est.fit(X)  # doctest: +SKIP
     StationarityADF(...)
-    >>> sp_est.get_fitted_params()["stationary"]  # doctest: +SKIP
+    >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
     False
     """
 
@@ -162,7 +165,7 @@ class StationarityKPSS(BaseParamFitter):
     Parameters
     ----------
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for stationarity
+        significance threshold to apply in testing for stationarity
     regression : str, one of {"c","ct","ctt","n"}, optional, default="c"
         Constant and trend order to include in regression.
 
@@ -201,7 +204,7 @@ class StationarityKPSS(BaseParamFitter):
     >>> sty_est = StationarityKPSS()  # doctest: +SKIP
     >>> sty_est.fit(X)  # doctest: +SKIP
     StationarityKPSS(...)
-    >>> sp_est.get_fitted_params()["stationary"]  # doctest: +SKIP
+    >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
     False
     """
 
