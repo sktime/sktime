@@ -508,3 +508,26 @@ def test_deep_estimator_full(optimizer):
 
     # check if components are same
     assert full_dummy.__dict__ == deserialized_full.__dict__
+
+
+DUMMY_EST_PARAMETERS_FOO = [None, 10.3, "string", {"key": "value"}, lambda x: x**2]
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("cloudpickle", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("foo", DUMMY_EST_PARAMETERS_FOO)
+def test_save_estimator_using_cloudpickle(foo):
+    """Check if serialization works with cloudpickle."""
+    from sktime.base._serialize import load
+
+    est = _DummyComposite(foo)
+
+    serialized = est.save(serialization_format="cloudpickle")
+    loaded_est = load(serialized)
+
+    if callable(foo):
+        assert est.foo(2) == loaded_est.foo(2)
+    else:
+        assert est.foo == loaded_est.foo
