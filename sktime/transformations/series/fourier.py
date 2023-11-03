@@ -36,11 +36,13 @@ class FourierFeatures(BaseTransformer):
 
     Parameters
     ----------
-    sp_list : List[float or str]
-        List of seasonal periods. A float defines the length of the seasonality starting
-        at the beginning of the time series in number of timesteps. A string should
-        match the column name in X that contains the :math:`t/sp` values or should match
-        a pandas period alias:
+    sp_list : List[float and/or str]
+        List of seasonal periods. Can be defined with the following options:
+        * float : Periodicity defined as number of timesteps since the beginning of the
+        data seen in `fit`.
+        * string : Periodicity defined as a column name in X that contains the
+        :math:`t/sp` values
+        * string : Periodicity defined as a pandas period alias:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#period-aliases
     fourier_terms_list : List[int]
         List of number of fourier terms (K) for each seasonal period (sp).
