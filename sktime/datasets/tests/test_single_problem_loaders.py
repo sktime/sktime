@@ -138,3 +138,18 @@ def test_check_link_downloadable(name):
 
     assert "application/octet-stream" in content_type, "URL is not downloadable."
     assert "attachment" in content_disposition, "URL is not downloadable."
+
+
+@pytest.mark.parametrize("loader", UNIVARIATE_PROBLEMS + UNEQUAL_LENGTH_PROBLEMS)
+@pytest.mark.parametrize("y_dtype", ["str", "int", "float"])
+def test_load_correct_y_dtype(loader, y_dtype):
+    """Test that all data loading functions with y_dtype argument return
+    correct value.
+    """
+    X, y = loader(y_dtype=y_dtype)
+    if y_dtype == "str":
+        assert y.dtype.type == np.str_
+    elif y_dtype == "int":
+        assert y.dtype.type == np.int8
+    elif y_dtype == "float":
+        assert y.dtype.type == np.float32
