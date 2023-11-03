@@ -208,7 +208,7 @@ class ForecastingHorizon:
             absolute, if not relative and values of supported absolute index type
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
-        ignored unless values is without inferrable freq
+        ignored unless values is without inferable freq
 
     Examples
     --------
@@ -441,7 +441,7 @@ class ForecastingHorizon:
         Returns
         -------
         fh : np.ndarray
-            NumPy array containg forecasting horizon's underlying values.
+            NumPy array containing forecasting horizon's underlying values.
         """
         return self.to_pandas().to_numpy(**kwargs)
 
@@ -536,7 +536,7 @@ class ForecastingHorizon:
         absolute = self.to_absolute_index(cutoff)
 
         if isinstance(absolute, pd.DatetimeIndex):
-            # coerce to pd.Period for reliable arithmetics and computations of
+            # coerce to pd.Period for reliable arithmetic and computations of
             # time deltas
             absolute = _coerce_to_period(absolute, freq=freq)
 
@@ -723,7 +723,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         _check_cutoff(cutoff, absolute)
 
         if isinstance(absolute, pd.DatetimeIndex):
-            # coerce to pd.Period for reliable arithmetics and computations of
+            # coerce to pd.Period for reliable arithmetic and computations of
             # time deltas
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)

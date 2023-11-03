@@ -276,7 +276,7 @@ class BaseTransformer(BaseEstimator):
             return NotImplemented
 
     def __or__(self, other):
-        """Magic | method, return MultiplexTranformer.
+        """Magic | method, return MultiplexTransformer.
 
         Implemented for `other` being either a MultiplexTransformer or a transformer.
 
@@ -912,7 +912,7 @@ class BaseTransformer(BaseEstimator):
             _converter_store_X : dict, metadata from X conversion, for back-conversion
             _X_mtype_last_seen : str, mtype of X seen last
             _X_input_scitype : str, scitype of X seen last
-            _convert_case : str, coversion case (see above), one of
+            _convert_case : str, conversion case (see above), one of
                 "case 1: scitype supported"
                 "case 2: higher scitype supported"
                 "case 3: requires vectorization"
@@ -1054,7 +1054,7 @@ class BaseTransformer(BaseEstimator):
             y_scitype = None
         # end checking y
 
-        # no compabitility checks between X and y
+        # no compatibility checks between X and y
         # end compatibility checking X and y
 
         # convert X & y to supported inner type, if necessary

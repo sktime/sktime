@@ -81,7 +81,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         labels="indicator",
     ):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est

@@ -63,7 +63,7 @@ def test_series_in_series_out_supported():
         "X_inner_mtype" supports "Series
 
     X input to fit/transform has Series scitype
-    X ouput from fit/transform should be Series
+    X output from fit/transform should be Series
     """
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer

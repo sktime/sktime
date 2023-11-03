@@ -301,9 +301,14 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         return True
     # now we know that est_version is not compatible with sys_version
 
+    if isclass(obj):
+        class_name = obj.__name__
+    else:
+        class_name = type(obj).__name__
+
     if not isinstance(msg, str):
         msg = (
-            f"{type(obj).__name__} requires python version to be {est_specifier},"
+            f"{class_name} requires python version to be {est_specifier},"
             f" but system python version is {sys.version}."
         )
 
