@@ -28,9 +28,11 @@ class FourierFeatures(BaseTransformer):
 
     The transformed output is a pandas DataFrame that includes the fourier terms as
     additional columns with the naming convention stated above (sin_sp_k and cos_sp_k).
-    For instance for sp_list = [12, "Y"] and fourier_terms_list = [2, 1] the transformed
-    series will have the additional columns:
-    "cos_12_1", "sin_12_1", "cos_12_2", "sin_12_2", "cos_Y_1", "sin_Y_1"
+    The number of fourier terms :math:`K` in the fourier_terms_list defines the set
+    :math:`\{K-i|i\in\mathbb{Z},K>i\geq0\}` that contains the fourier terms
+    :math:`k` that will be used for :math:`sp`. For example, sp_list = [12, "Y"] and
+    fourier_terms_list = [2, 1]. The transformed series will then have the additional
+    columns: "cos_12_1", "sin_12_1", "cos_12_2", "sin_12_2", "cos_Y_1", "sin_Y_1"
 
     The implementation is based on the fourier function from the R forecast package [3]_
 
@@ -45,11 +47,11 @@ class FourierFeatures(BaseTransformer):
         * string : Periodicity defined as a pandas period alias:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#period-aliases
     fourier_terms_list : List[int]
-        List of number of fourier terms (K) for each seasonal period (sp).
-        Each K matches to the sp (seasonal period) of the sp_list.
-        For example, if sp_list = [7, 365] and fourier_terms_list = [3, 9], the seasonal
-        frequency of 7 will have 3 fourier terms and the seasonal frequency of 365
-        will have 9 fourier terms.
+        List of number of fourier terms (:math:`K`) per corresponding (:math:`sp`); each
+        :math:`K` matches to one :math:`sp` of the sp_list. For example, if sp_list =
+        [7, "Y"] and fourier_terms_list = [3, 9], the seasonality of 7 timesteps will
+        have 3 sin_sp_k and 3 cos_sp_k fourier terms and the yearly seasonality "Y" will
+        have 9 sin_sp_k and 9 cos_sp_k fourier terms.
     freq : str, optional, default = None
         Only used when X has a pd.DatetimeIndex without a specified frequency.
         Specifies the frequency of the index of your data. The string should
