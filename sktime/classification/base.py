@@ -56,7 +56,6 @@ class BaseClassifier(BaseEstimator, ABC):
         "object_type": "classifier",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
-        "capability:multioutput": False,
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -86,7 +85,7 @@ class BaseClassifier(BaseEstimator, ABC):
         self._threads_to_use = 1
         self._X_metadata = []  # metadata/properties of X seen in fit
 
-        # required for compatability with some sklearn interfaces
+        # required for compatibility with some sklearn interfaces
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
 
@@ -358,7 +357,7 @@ class BaseClassifier(BaseEstimator, ABC):
         if len(self._class_dictionary) == 1:
             return self._single_class_y_pred(X)
 
-        # Convert data to format easily useable for applying cv
+        # Convert data to format easily usable for applying cv
         if isinstance(X, np.ndarray):
             X = convert_to(
                 X,

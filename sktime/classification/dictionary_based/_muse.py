@@ -173,16 +173,6 @@ class MUSE(BaseClassifier):
 
         super().__init__()
 
-    def vec_fit(self, X, y):
-        """Fit the model according to the given training data."""
-        estimators_ = y.vectorize_est(
-            self,
-            method="clone",
-        )
-        y.vectorize_est(estimators_, method="fit", args={"X": X, "y": y})
-        self.estimators_ = estimators_
-        return self
-
     def _fit(self, X, y):
         """Build a WEASEL+MUSE classifiers from the training set (X, y).
 
