@@ -391,7 +391,7 @@ Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] speed up ``BaseSplitter`` boilerplate (:pr:`5063`) :user:`fkiraly`
-* [ENH] Allow unrestriced ID string for ``BaseBenchmarking`` (:pr:`5130`) :user:`hazrulakmal`
+* [ENH] Allow unrestricted ID string for ``BaseBenchmarking`` (:pr:`5130`) :user:`hazrulakmal`
 
 Data loaders
 ^^^^^^^^^^^^
@@ -913,7 +913,7 @@ Users should use a new, temporary ``legacy_interface`` argument to handle the ch
 * Users - change period. The two forecaster methods ``predict_quantiles`` and ``predict_intervals``
   will have a new boolean argument, ``legacy_interface``. If ``True``, the methods
   produce returns with the current naming convention. If ``False``, the methods produce
-  returns with the future, post-change naming covention.
+  returns with the future, post-change naming convention.
 * Users - early and late phase. In the early phase (0.21.X), the default value of ``legacy_interface``
   will be ``True``. In the late phase (0.22.X), the default value of ``legacy_interface`` will be ``False``.
   This change of default will occur in 0.22.0, and may be breaking for users who do not specify the argument.
@@ -1389,7 +1389,7 @@ Probability distributions
 * specification of default sample sizes for Monte Carlo approximations now
   use the ``scikit-base`` config system
 * a ``quantile`` method was added, which returns a table of quantiles in
-  the same format as ``BaseForecaster.predict_quantiles`` returne quantile forecasts
+  the same format as ``BaseForecaster.predict_quantiles`` return quantile forecasts
 * a ``ppf`` method was added for returning quantiles
 
 Enhancements
@@ -1439,7 +1439,7 @@ Time series distances and kernels
 Transformations
 ^^^^^^^^^^^^^^^
 
-* [ENH] remove unneccesary conversion in ``TSFreshFeatureExtractor`` (:pr:`4571`) :user:`fkiraly`
+* [ENH] remove unnecessary conversion in ``TSFreshFeatureExtractor`` (:pr:`4571`) :user:`fkiraly`
 
 Testing framework
 ^^^^^^^^^^^^^^^^^
@@ -2500,7 +2500,7 @@ Data types, checks, conversions
 * [ENH] ``dask`` mtypes - part 1, ``Series`` (:pr:`3554`) :user:`fkiraly`
 * [ENH] ``dask`` mtypes - part 2, ``Panel`` and ``Hierarchical`` (:pr:`4011`) :user:`fkiraly`
 * [ENH] speed up mtype check for ``pandas`` based mtypes with ``pd.PeriodIndex`` (:pr:`3991`) :user:`fkiraly`
-* [ENH] improve performance of ``pandas`` based panel and hierachical mtype checks (:pr:`3935`) :user:`danbartl`
+* [ENH] improve performance of ``pandas`` based panel and hierarchical mtype checks (:pr:`3935`) :user:`danbartl`
 * [ENH] Speed up hierarchical checks and unify with panel approach (:pr:`4061`) :user:`danbartl`
 
 Distances, kernels
@@ -3741,7 +3741,7 @@ Highlights
 
 * forecasting reducers constructed via ``make_reduction`` now fully support global/hierarchical forecasting (:pr:`2486`) :user:`danbartl`
 * forecasting metric classes now fully support hierarchical data and hierarchy averaging via ``multilevel`` argument (:pr:`2601`) :user:`fkiraly`
-* probabilisitic forecasting functionality for ``DynamicFactor``, ``VAR`` and ``VECM`` (:pr:`2925`, :pr:`3105`) :user:`AurumnPegasus`, :user:`lbventura`
+* probabilistic forecasting functionality for ``DynamicFactor``, ``VAR`` and ``VECM`` (:pr:`2925`, :pr:`3105`) :user:`AurumnPegasus`, :user:`lbventura`
 * ``update`` features for ``AutoARIMA``, ``BATS``, ``TBATS``, and forecasting tuners (:pr:`3055`, :pr:`3068`, :pr:`3086`) :user:`fkiraly`, :user:`jelc53`
 * new transformer: ``ClearSky`` transformer for solar irradiance time series (:pr:`3130`) :user:`ciaran-g`
 * new transformer: ``Filter`` transformer for low/high-pass and band filtering, interfaces ``mne`` ``filter_data`` (:pr:`3067`) :user:`fkiraly`, :user:`sveameyer13`
@@ -4628,7 +4628,7 @@ Distances, kernels
 Forecasting
 ^^^^^^^^^^^
 
-* [ENH] Extended sliding and expanding window splitters to allow timdelta forecasting horizon (:pr:`2551`) :user:`khrapovs`
+* [ENH] Extended sliding and expanding window splitters to allow timedelta forecasting horizon (:pr:`2551`) :user:`khrapovs`
 * [ENH] Removed ``interval_width`` parameter of Prophet (:pr:`2630`) :user:`phershbe`
 
 Time series classification
@@ -4804,7 +4804,7 @@ Clustering
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [BUG] fixing direct conversions from/to ``numpyflat`` mtype being overriden by indirect ones (:pr:`2517`) :user:`fkiraly`
+* [BUG] fixing direct conversions from/to ``numpyflat`` mtype being overridden by indirect ones (:pr:`2517`) :user:`fkiraly`
 
 Distances, kernels
 ^^^^^^^^^^^^^^^^^^
@@ -4919,7 +4919,7 @@ Highlights
 * GSoC 2022 application instructions - apply by Apr 19 for GSoC with sktime! (:pr:`2373`) :user:`lmmentel` :user:`Lovkush-A` :user:`fkiraly`
 * enhancements and bugfixes for probabilistic and hierarchical forecasting features introduced in 0.11.0
 * reconciliation transformers for hierarchical predictions (:pr:`2287`, :pr:`2292`) :user:`ciaran-g`
-* pipeline, tuning and evaluation compabitility for probabilistic forecasting (:pr:`2234`, :pr:`2318`) :user:`eenticott-shell` :user:`fkiraly`
+* pipeline, tuning and evaluation compatibility for probabilistic forecasting (:pr:`2234`, :pr:`2318`) :user:`eenticott-shell` :user:`fkiraly`
 * interface to ``statsmodels`` ``SARIMAX`` (:pr:`2400`) :user:`TNTran92`
 * reduction with transform-on-y predictors (e.g., lags, window summaries), and for hierarchical data (:pr:`2396`) :user:`danbartl`
 
@@ -5030,7 +5030,7 @@ Documentation
 ~~~~~~~~~~~~~
 
 * [DOC] fix 0.11.0 release note highlights formatting (:pr:`2310`) :user:`fkiraly`
-* [DOC] typo fix contsructor -> constructor in extension templates (:pr:`2348`) :user:`fkiraly`
+* [DOC] typo fix constructor -> constructor in extension templates (:pr:`2348`) :user:`fkiraly`
 * [DPC] fixed the issue with ``'docs/source/developer_guide/testing_framework.rst'`` (:pr:`2335`) :user:`0saurabh0`
 * [DOC] Updated conda installation instructions (:pr:`2365`) :user:`RISHIKESHAVAN`
 * [DOC] updated extension templates: link to docs and reference to `check_estimator` (:pr:`2303`) :user:`fkiraly`
@@ -5221,7 +5221,7 @@ Fixed
 ~~~~~
 
 *  [BUG] fixed state change caused by `ThetaForecaster.predict_quantiles` (:pr:`2108`) :user:`fkiraly`
-*  [BUG] ``_make_hierachical`` is renamed to ``_make_hierarchical`` (typo/bug) issue #2195 (:pr:`2196`) :user:`Vasudeva-bit`
+*  [BUG] ``_make_hierarchical`` is renamed to ``_make_hierarchical`` (typo/bug) issue #2195 (:pr:`2196`) :user:`Vasudeva-bit`
 *  [BUG] fix wrong output type of ``PaddingTransformer._transform`` (:pr:`2217`) :user:`fkiraly`
 *  [BUG] fixing ``nested_dataframe_has_nans`` (:pr:`2216`) :user:`fkiraly`
 *  [BUG] Testing vectorization for forecasters, plus various bugfixes (:pr:`2188`) :user:`fkiraly`
@@ -5590,7 +5590,7 @@ Testing module
 * [ENH] Test refactor with scenarios (:pr:`1833`) :user:`fkiraly`
 * [ENH] Test scenarios for advanced testing	(:pr:`1819`) :user:`fkiraly`
 * [ENH] pytest conditional fixtures	(:pr:`1839`) :user:`fkiraly`
-* [ENH] Test enhacements documentation (:pr:`1922`) :user:`fkiraly`
+* [ENH] Test enhancements documentation (:pr:`1922`) :user:`fkiraly`
 * [ENH] split tests in series_as_features into classification and regression (:pr:`1959`) :user:`tonybagnall`
 * [ENH] Testing for metadata returns of ``check_is_mtype`` (:pr:`1748`) :user:`fkiraly`
 * [ENH] Extended deep_equals, with precise indication of why equality fails	(:pr:`1844`) :user:`fkiraly`
@@ -5610,7 +5610,7 @@ Maintenance
 
 * [MNT] Switch the extra dependency from `fbprophet` to `prophet` (:pr:`1958`) :user:`lmmentel`
 * [MNT] Updated code dependency version, i.e. `numpy` and `statsmodels` to reduce dependency conflicts (:pr:`1921`) :user:`lmmentel`
-* [MNT] Move all the CI/CD worfklows over to github actions and drop azure pipelines and appveyor (:pr:`1620`, :pr:`1920`) :user:`lmemntel`
+* [MNT] Move all the CI/CD workflows over to github actions and drop azure pipelines and appveyor (:pr:`1620`, :pr:`1920`) :user:`lmemntel`
 * [MNT] Refactor legacy test config	(:pr:`1792`) :user:`lmmentel`
 * [FIX] Add missing init files (:pr:`1695`) :user:`mloning`
 * [MNT] Add shellcheck to pre-commit (:pr:`1703`) :user:`mloning`
@@ -5998,7 +5998,7 @@ Fixed
 * [BUG] incorrect/missing weighted geometric mean in forecasting ensemble (:pr:`1370`) :user:`fkiraly`
 * [BUG] :pr:`1469`: stripping names of index X and y  (:pr:`1493`) :user:`boukepostma`
 * [BUG] W-XXX frequency bug from :pr:`866` (:pr:`1409`) :user:`xiaobenbenecho`
-* [BUG] Pandas.NA for unpredictible insample forecasts in AutoARIMA (:pr:`1442`) :user:`IlyasMoutawwakil`
+* [BUG] Pandas.NA for unpredictable insample forecasts in AutoARIMA (:pr:`1442`) :user:`IlyasMoutawwakil`
 * [BUG] missing :code:`extract_path` in :code:`_data_io` (:pr:`1475`) :user:`yairbeer`
 * [BUG] Refactor sktime/.../_panels/_examples.py for tsai compatibility (:pr:`1453`) :user:`bobbys-dev`
 * [BUG] Grid/random search tag fix (:pr:`1455`) :user:`fkiraly`
@@ -6173,7 +6173,7 @@ Fixed
 * [DOC] Update ColumnwiseTransformer and TabularToSeriesAdaptor docstrings (:pr:`1322`) :user:`GuzalBulatova`
 * [DOC] Update transformer docstrings (:pr:`1314`) :user:`RNKuhns`
 * [DOC] Description and link to cosine added (:pr:`1326`) :user:`AreloTanoh`
-* [DOC] naive forcasting docstring edits (:pr:`1333`) :user:`AreloTanoh`
+* [DOC] naive foreasting docstring edits (:pr:`1333`) :user:`AreloTanoh`
 * [DOC] Update .all-contributorsrc (:pr:`1336`) :user:`pul95`
 * [DOC] Typo in transformations.rst fixed (:pr:`1324`) :user:`AreloTanoh`
 * [DOC] Add content to documentation guide for use in docsprint (:pr:`1297`) :user:`RNKuhns`

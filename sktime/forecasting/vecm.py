@@ -58,7 +58,7 @@ class VECM(_StatsModelsAdapter):
         Deterministic terms inside the cointegration relation.
     exog_coint_fc : optional, a scalar (float), 1D ndarray of size nobs,
         2D ndarray/pd.DataFrame of size (any, neqs)
-        Forcasted value of exog_coint
+        Forecasted value of exog_coint
 
     Example
     -------

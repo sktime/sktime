@@ -98,7 +98,7 @@ algorithm. They have the same voting rights as core developers with
 regard to their algorithm.
 
 In sktime, algorithms are encapsulated in classes with specific
-interface requirements and are called estimators. To faciliate
+interface requirements and are called estimators. To facilitate
 maintainership questions, we try to write algorithms in separate files
 when possible.
 

@@ -31,7 +31,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     ----------
     forecasters : sktime forecaster, or list of tuples (str, estimator, int or pd.index)
         if tuples, with name = str, estimator is forecaster, index as int or index
-        if last element is index, it must be int, str, or pd.Index coercable
+        if last element is index, it must be int, str, or pd.Index coercible
         if last element is int x, and is not in columns, is interpreted as x-th column
         all columns must be present in an index
 

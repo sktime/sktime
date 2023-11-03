@@ -85,7 +85,7 @@ class BaseClassifier(BaseEstimator, ABC):
         self._threads_to_use = 1
         self._X_metadata = []  # metadata/properties of X seen in fit
 
-        # required for compatability with some sklearn interfaces
+        # required for compatibility with some sklearn interfaces
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
 
@@ -357,7 +357,7 @@ class BaseClassifier(BaseEstimator, ABC):
         if len(self._class_dictionary) == 1:
             return self._single_class_y_pred(X)
 
-        # Convert data to format easily useable for applying cv
+        # Convert data to format easily usable for applying cv
         if isinstance(X, np.ndarray):
             X = convert_to(
                 X,

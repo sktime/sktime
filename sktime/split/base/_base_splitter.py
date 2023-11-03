@@ -395,7 +395,7 @@ class BaseSplitter(BaseObject):
         n_splits : int
             The number of splits.
         """
-        raise NotImplementedError("abstract method")
+        return len(list(self.split(y)))
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.

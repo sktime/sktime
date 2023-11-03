@@ -79,7 +79,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self.ensemble_algorithm.update(estimator_predictions.T, y)
 
     def _update(self, y, X=None, update_params=False):
-        """Update fitted paramters and performs a new ensemble fit.
+        """Update fitted parameters and performs a new ensemble fit.
 
         Parameters
         ----------

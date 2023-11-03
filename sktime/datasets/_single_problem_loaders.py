@@ -13,6 +13,7 @@ __author__ = [
     "jasonlines",
     "achieveordie",
     "ciaran-g",
+    "jonathanbechtel",
 ]
 
 __all__ = [
@@ -38,6 +39,7 @@ __all__ = [
     "load_macroeconomic",
     "load_unit_test_tsf",
     "load_covid_3month",
+    "load_tecator",
 ]
 
 import os
@@ -120,6 +122,68 @@ def load_UCR_UEA_dataset(
     >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
     """
     return _load_dataset(name, split, return_X_y, return_type, extract_path)
+
+
+def load_tecator(split=None, return_X_y=True, return_type=None):
+    """Load the Tecator time series regression problem and returns X and y.
+
+    Parameters
+    ----------
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
+
+
+    Returns
+    -------
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The target values for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_tecator
+    >>> X, y = load_tecator()
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Series length:      100
+    Train cases:        172
+    Test cases:         43
+
+    The purpose of this dataset is to measure the fat content of meat based off its near
+      infrared absorbance spectrum.
+    The absorbance spectrum is measured in the wavelength range of 850 nm to 1050 nm.
+    The fat content is measured by standard chemical analysis methods.
+    The dataset contains 215 samples of meat, each with 100 spectral measurements.
+    For more information see:
+    https://www.openml.org/search?type=data&sort=runs&id=505&status=active
+    References
+    ----------
+    [1] C.Borggaard and H.H.Thodberg, "Optimal Minimal Neural Interpretation of Spectra"
+    , Analytical Chemistry 64 (1992), p 545-551.
+    [2] H.H.Thodberg, "Ace of Bayes: Application of Neural Networks with Pruning"
+    Manuscript 1132, Danish Meat Research Institute (1993), p 1-12.
+    """
+    name = "Tecator"
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_plaid(split=None, return_X_y=True, return_type=None):
@@ -1129,7 +1193,7 @@ def load_solar(
     """Get national solar estimates for GB from Sheffield Solar PV_Live API.
 
     This function calls the Sheffield Solar PV_Live API to extract national solar data
-    for the GB eletricity network. Note that these are estimates of the true solar
+    for the GB electricity network. Note that these are estimates of the true solar
     generation, since the true values are "behind the meter" and essentially
     unknown.
 
@@ -1352,7 +1416,7 @@ def load_forecastingdata(
 
         url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
 
-        # This also tests the validitiy of the URL, can't rely on the html
+        # This also tests the validity of the URL, can't rely on the html
         # status code as it always returns 200
         try:
             _download_and_extract(
