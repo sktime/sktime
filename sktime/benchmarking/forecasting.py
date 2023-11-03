@@ -68,7 +68,7 @@ class ForecastingBenchmark(BaseBenchmark):
 
     Parameters
     ----------
-    id_format: str, optional (defualt=None)
+    id_format: str, optional (default=None)
         A regex used to enforce task/estimator ID to match a certain format
 
     """

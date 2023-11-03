@@ -26,7 +26,7 @@ class FourierFeatures(BaseTransformer):
     Where :math:`t` is the number of time steps elapsed from the beginning of the time
     series.
 
-    The output of the trasform is a pandas DataFrame that includes the fourier terms as
+    The output of the transform is a pandas DataFrame that includes the fourier terms as
     additional columns with the naming convention stated above (sin_sp_k and cos_sp_k).
     For instance for sp_list = [12, 3] and fourier_terms_list = [2, 1] the transformed
     series will have the additional columns:

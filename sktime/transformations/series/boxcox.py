@@ -126,7 +126,7 @@ class BoxCoxTransformer(BaseTransformer):
     Attributes
     ----------
     lambda_ : float
-        The Box-Cox lambda paramter that was fitted, based on the supplied
+        The Box-Cox lambda parameter that was fitted, based on the supplied
         `method` and data provided in `fit`.
 
     See Also
@@ -144,7 +144,7 @@ class BoxCoxTransformer(BaseTransformer):
     References
     ----------
     .. [1] Box, G. E. P. & Cox, D. R. (1964) An analysis of transformations,
-       Journal ofthe Royal Statistical Society, Series B, 26, 211-252.
+       Journal of the Royal Statistical Society, Series B, 26, 211-252.
     .. [2] V.M. Guerrero, "Time-series analysis supported by Power
        Transformations ", Journal of Forecasting, vol. 12, pp. 37-48, 1993.
 

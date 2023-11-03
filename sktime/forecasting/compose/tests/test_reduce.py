@@ -564,7 +564,7 @@ def test_direct_vs_recursive():
 
     Test reduction forecasters by making prediction on airline dataset using linear
     estimators. Wenn windows_identical = False, all observations should be considered
-    (see documenation in make_reduction function), so results for direct and recursive
+    (see documentation in make_reduction function), so results for direct and recursive
     forecasting should match for the first forecasting horizon. With the
     windows_identical
     """
