@@ -51,6 +51,7 @@ Deep learning
     MACNNClassifier
     MLPClassifier
     MCDCNNClassifier
+    ResNetClassifier
     SimpleRNNClassifier
     TapNetClassifier
 
