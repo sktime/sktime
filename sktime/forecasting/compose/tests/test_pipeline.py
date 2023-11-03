@@ -18,7 +18,6 @@ from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import (
     ForecastingPipeline,
     TransformedTargetForecaster,
-    YfromX,
     make_reduction,
 )
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
@@ -719,6 +718,7 @@ def test_exogenousx_ignore_tag_set()
     More generally, the tag should be set to True iff all steps in the pipeline
     ignore X.
     """
+    from sktime.forecasting.compose import YfromX
     from sktime.transformations.series.feature_selection import FeatureSelection
 
     fcst_does_not_ignore_x = YfromX.create_test_instance()
