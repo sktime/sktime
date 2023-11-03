@@ -853,7 +853,7 @@ class TransformedTargetForecaster(_Pipeline):
         post_use_y = self._anytag_notnone_val("y_inner_mtype", self.transformers_post_)
 
         if pre_use_y != "None" and post_use_y != "None":
-            self.set_tags("ignores-exogeneous-X": False)
+            self.set_tags(**{"ignores-exogeneous-X": False})
 
     @property
     def forecaster_(self):
