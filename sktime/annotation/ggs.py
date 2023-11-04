@@ -540,10 +540,6 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         """
         return self.fit(X, None).predict(X)
 
-    def __repr__(self) -> str:
-        """Return a string representation of the estimator."""
-        return self._adaptee.__repr__()
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
