@@ -348,7 +348,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_old = lagger.fit_transform(_y)
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
-            y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            y_filled = full_y.ffill().bfill()
             # subset to rows that contain elements we wanted to fill
             y_pred = y_filled.loc["b"]
             # convert to pd.Series from pd.DataFrame
@@ -361,7 +361,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_new_mask = pd.Series(index=expected_index, dtype="float64")
             y_new = _pivot_sp(y_new_mask, sp, anchor=_y, anchor_side="end")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
-            y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            y_filled = full_y.ffill().bfill()
             # subset to rows that contain elements we wanted to fill
             y_pred = y_filled.loc["b"]
             # reformat to wide
@@ -550,14 +550,19 @@ class NaiveForecaster(_BaseWindowForecaster):
         se_res = np.sqrt(mse_res)
 
         window_length = self.window_length or T
+
+        def sqrt_flr(x):
+            """Square root of x, floored at 1 - to deal with in-sample predictions."""
+            return np.sqrt(np.maximum(x, 1))
+
         # Formulas from:
         # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)
         partial_se_formulas = {
-            "last": lambda h: np.sqrt(h)
+            "last": sqrt_flr
             if sp == 1
-            else np.sqrt(np.floor((h - 1) / sp) + 1),
-            "mean": lambda h: np.repeat(np.sqrt(1 + (1 / window_length)), len(h)),
-            "drift": lambda h: np.sqrt(h * (1 + (h / (T - 1)))),
+            else lambda h: sqrt_flr(np.floor((h - 1) / sp) + 1),
+            "mean": lambda h: np.repeat(sqrt_flr(1 + (1 / window_length)), len(h)),
+            "drift": lambda h: sqrt_flr(h * (1 + (h / (T - 1)))),
         }
 
         fh_periods = np.array(fh.to_relative(self.cutoff))

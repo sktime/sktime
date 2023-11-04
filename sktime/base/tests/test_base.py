@@ -29,6 +29,8 @@ __all__ = [
     "test_reset",
     "test_reset_composite",
     "test_components",
+    "test_param_alias",
+    "test_nested_set_params_and_alias",
     "test_get_fitted_params",
     "test_eq_dunder",
 ]
@@ -38,6 +40,7 @@ from copy import deepcopy
 import pytest
 
 from sktime.base import BaseEstimator, BaseObject
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 # Fixture class for testing tag system
@@ -278,6 +281,109 @@ def test_components():
     assert set(comp_comps.keys()) == {"foo_"}
     assert comp_comps["foo_"] is composite.foo_
     assert comp_comps["foo_"] is not composite.foo
+
+
+class AliasTester(BaseObject):
+    def __init__(self, a, bar=42):
+        self.a = a
+        self.bar = bar
+
+
+@pytest.mark.skipif(
+    _check_soft_dependencies("skbase<0.6.1", severity="none"),
+    reason="aliasing was introduced in skbase 0.6.1",
+)
+def test_param_alias():
+    """Tests parameter aliasing with parameter string shorthands.
+
+    Raises
+    ------
+    AssertionError if parameters that should be set via __ are not set
+    AssertionError if error that should be raised is not raised
+    """
+    non_composite = AliasTester(a=42, bar=4242)
+    composite = CompositionDummy(foo=non_composite)
+
+    # this should write to a of foo, because there is only one suffix called a
+    composite.set_params(**{"a": 424242})
+    assert composite.get_params()["foo__a"] == 424242
+
+    # this should write to bar of composite, because "bar" is a full parameter string
+    #   there is a suffix in foo, but if the full string is there, it writes to that
+    composite.set_params(**{"bar": 424243})
+    assert composite.get_params()["bar"] == 424243
+
+    # trying to write to bad_param should raise an exception
+    # since bad_param is neither a suffix nor a full parameter string
+    with pytest.raises(ValueError, match=r"Invalid parameter keys provided to"):
+        composite.set_params(**{"bad_param": 424242})
+
+    # new example: highly nested composite with identical suffixes
+    non_composite1 = composite
+    non_composite2 = AliasTester(a=42, bar=4242)
+    uber_composite = CompositionDummy(foo=non_composite1, bar=non_composite2)
+
+    # trying to write to a should raise an exception
+    # since there are two suffix a, and a is not a full parameter string
+    with pytest.raises(ValueError, match=r"does not uniquely determine parameter key"):
+        uber_composite.set_params(**{"a": 424242})
+
+    # same as above, should overwrite "bar" of uber_composite
+    uber_composite.set_params(**{"bar": 424243})
+    assert uber_composite.get_params()["bar"] == 424243
+
+
+@pytest.mark.skipif(
+    _check_soft_dependencies("skbase<0.6.1", severity="none"),
+    reason="aliasing was introduced in skbase 0.6.1",
+)
+def test_nested_set_params_and_alias():
+    """Tests that nested param setting works correctly.
+
+    This specifically tests that parameters of components can be provided,
+    even if that component is not present in the object that set_params is called on,
+    but is also being set in the same set_params call.
+
+    Also tests alias resolution, using recursive end state after set_params.
+
+    Raises
+    ------
+    AssertionError if parameters that should be set via __ are not set
+    AssertionError if error that should be raised is not raised
+    """
+    non_composite = AliasTester(a=42, bar=4242)
+    composite = CompositionDummy(foo=0)
+
+    # this should write to a of foo
+    # potential error here is that composite does not have foo__a to start with
+    # so error catching or writing foo__a to early could cause an exception
+    composite.set_params(**{"foo": non_composite, "foo__a": 424242})
+    assert composite.get_params()["foo__a"] == 424242
+
+    non_composite = AliasTester(a=42, bar=4242)
+    composite = CompositionDummy(foo=0)
+
+    # same, and recognizing that foo__a is the only matching suffix in the end state
+    composite.set_params(**{"foo": non_composite, "a": 424242})
+    assert composite.get_params()["foo__a"] == 424242
+
+    # new example: highly nested composite with identical suffixes
+    non_composite1 = composite
+    non_composite2 = AliasTester(a=42, bar=4242)
+    uber_composite = CompositionDummy(foo=42, bar=42)
+
+    # trying to write to a should raise an exception
+    # since there are two suffix a, and a is not a full parameter string
+    with pytest.raises(ValueError, match=r"does not uniquely determine parameter key"):
+        uber_composite.set_params(
+            **{"a": 424242, "foo": non_composite1, "bar": non_composite2}
+        )
+
+    uber_composite = CompositionDummy(foo=non_composite1, bar=42)
+
+    # same as above, should overwrite "bar" of uber_composite
+    uber_composite.set_params(**{"bar": 424243})
+    assert uber_composite.get_params()["bar"] == 424243
 
 
 class FittableCompositionDummy(BaseEstimator):
