@@ -81,6 +81,19 @@ class SignatureTransformer(BaseTransformer):
         depth=4,
         backend="esig",
     ):
+
+        self.augmentation_list = augmentation_list
+        self.window_name = window_name
+        self.window_depth = window_depth
+        self.window_length = window_length
+        self.window_step = window_step
+        self.rescaling = rescaling
+        self.sig_tfm = sig_tfm
+        self.depth = depth
+        self.backend = backend
+
+        super().__init__()
+
         if backend == "esig":
             _check_soft_dependencies("esig")
         elif backend == "iisignature":
@@ -98,17 +111,6 @@ class SignatureTransformer(BaseTransformer):
                 "must be one of 'esig' or 'iisignature'"
             )
 
-        self.augmentation_list = augmentation_list
-        self.window_name = window_name
-        self.window_depth = window_depth
-        self.window_length = window_length
-        self.window_step = window_step
-        self.rescaling = rescaling
-        self.sig_tfm = sig_tfm
-        self.depth = depth
-        self.backend = backend
-
-        super().__init__()
         self.setup_feature_pipeline()
 
     def setup_feature_pipeline(self):
