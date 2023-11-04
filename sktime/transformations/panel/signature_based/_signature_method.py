@@ -20,31 +20,34 @@ class SignatureTransformer(BaseTransformer):
 
     Parameters
     ----------
-    augmentation_list: Possible augmentation strings are
+    augmentation_list: list or tuple of strings, possible strings are
         ['leadlag', 'ir', 'addtime', 'cumsum', 'basepoint']
+        Augmentations to apply to the data before computing the signature.
+        The order of the augmentations is the order in which they are applied.
         default: ('basepoint', 'addtime')
-    window_name: str, String from ['global', 'sliding', 'expanding', 'dyadic']
+    window_name: str, one of ``['global', 'sliding', 'expanding', 'dyadic']``
         default: 'dyadic'
-    window_depth: int, The depth of the dyadic window. (Active only if
-        `window_name == 'dyadic']`.
-        default: 3
-    window_length: int, The length of the sliding/expanding window. (Active
-        only if `window_name in ['sliding, 'expanding'].
-        default: None
-    window_step: int, The step of the sliding/expanding window. (Active
-        only if `window_name in ['sliding, 'expanding'].
-        default: None
-    rescaling: "pre" or "post",
-                "pre": rescale the path last signature term should be roughly O(1)
-                "post": Rescals the output signature by multiplying the depth-d term by d!.
-                        Aim is that every term become ~O(1).
-        default: None
+        Type of the window to use for the signature transform.
+    window_depth: 3 (default) or int
+        The depth of the dyadic window.
+        Ignored unless ``window_name`` is ``'dyadic'``.
+    window_length: None (default) or int
+        The length of the sliding/expanding window. (Active
+        Ignored unless ``window_name`` is one of ``['sliding, 'expanding']``.
+    window_step: None (default) or int
+        The step of the sliding/expanding window.
+        Ignored unless ``window_name`` is one of ``['sliding, 'expanding']``.
+    rescaling: None (default) or str, "pre" or "post",
+        None: No rescaling is applied.
+        "pre": rescale the path last signature term should be roughly O(1)
+        "post": Rescales the output signature by multiplying the depth-d term by d!.
+            Aim is that every term becomes ~O(1).
     sig_tfm: One of: [‘signature’, ‘logsignature’]).
         default: 'signature'
     depth: int, Signature truncation depth.
         default: 4
-    backend: str, The backend to use for signature computation. One of: 'esig', or 'iisignature'.
-        default: 'esig'
+    backend: str, one of: 'esig' (default), or 'iisignature'.
+        The backend to use for signature computation.
 
     Attributes
     ----------
