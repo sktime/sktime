@@ -81,7 +81,6 @@ class SignatureTransformer(BaseTransformer):
         depth=4,
         backend="esig",
     ):
-
         self.augmentation_list = augmentation_list
         self.window_name = window_name
         self.window_depth = window_depth
