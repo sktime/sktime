@@ -28,12 +28,12 @@ mlflow.pyfunc
     `{"predict_method": {"predict": {}, "predict_interval": {"coverage": [0.1, 0.9]}}`.
     `Dict[str, list]`, with default parameters in predict method, for example
     `{"predict_method": ["predict", "predict_interval"}` (Note: when including
-    `predict_proba` method the former approach must be followed as `quantiles`
+    `predict_proba` method the former appraoch must be followed as `quantiles`
     parameter has to be provided by the user). If no prediction config is defined
     `pyfunc.predict()` will return output from sktime `predict()` method.
 """
 
-__author__ = ["benjaminbluhm"]
+__author__ = ["benjaminbluhm", "achieveordie"]
 __all__ = [
     "get_default_pip_requirements",
     "get_default_conda_env",
@@ -44,18 +44,15 @@ __all__ = [
 
 import logging
 import os
-import pickle
 
 import pandas as pd
 import yaml
 
 import sktime
 from sktime import utils
+from sktime.base._serialize import load
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.validation._dependencies import (
-    _check_mlflow_dependencies,
-    _check_soft_dependencies,
-)
+from sktime.utils.validation._dependencies import _check_mlflow_dependencies
 
 if _check_mlflow_dependencies(severity="warning"):
     from mlflow import pyfunc
@@ -261,7 +258,7 @@ def save_model(
     if input_example is not None:
         _save_example(mlflow_model, input_example, path)
 
-    model_data_subpath = "model.pkl"
+    model_data_subpath = "model"
     model_data_path = os.path.join(path, model_data_subpath)
     _save_model(
         sktime_model, model_data_path, serialization_format=serialization_format
@@ -526,22 +523,12 @@ def _save_model(model, path, serialization_format):
     from mlflow.exceptions import MlflowException
     from mlflow.protos.databricks_pb2 import INTERNAL_ERROR
 
-    with open(path, "wb") as out:
-        if serialization_format == SERIALIZATION_FORMAT_PICKLE:
-            pickle.dump(model, out)
-        elif serialization_format == SERIALIZATION_FORMAT_CLOUDPICKLE:
-            _check_soft_dependencies("cloudpickle", severity="error")
-            import cloudpickle
-
-            cloudpickle.dump(model, out)
-        else:
-            raise MlflowException(
-                message="Unrecognized serialization format: "
-                "{serialization_format}".format(
-                    serialization_format=serialization_format
-                ),
-                error_code=INTERNAL_ERROR,
-            )
+    if serialization_format not in SUPPORTED_SERIALIZATION_FORMATS:
+        raise MlflowException(
+            message="Unrecognized serialization format: " f"{serialization_format}.",
+            error_code=INTERNAL_ERROR,
+        )
+    model.save(path=path, serialization_format=serialization_format)
 
 
 def _load_model(path, serialization_format):
@@ -562,14 +549,7 @@ def _load_model(path, serialization_format):
             error_code=INVALID_PARAMETER_VALUE,
         )
 
-    with open(path, "rb") as pickled_model:
-        if serialization_format == SERIALIZATION_FORMAT_PICKLE:
-            return pickle.load(pickled_model)
-        elif serialization_format == SERIALIZATION_FORMAT_CLOUDPICKLE:
-            _check_soft_dependencies("cloudpickle", severity="error")
-            import cloudpickle
-
-            return cloudpickle.load(pickled_model)
+    return load(path)
 
 
 def _load_pyfunc(path):
