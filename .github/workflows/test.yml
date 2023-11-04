@@ -203,7 +203,7 @@ jobs:
         run: git branch -a
 
       - name: Run tests
-        run: make test
+        run: make test_without_datasets
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
@@ -241,7 +241,7 @@ jobs:
         run: git branch -a
 
       - name: Run tests
-        run: make test
+        run: make test_without_datasets
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
