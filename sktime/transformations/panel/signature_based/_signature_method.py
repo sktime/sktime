@@ -28,7 +28,7 @@ class SignatureTransformer(BaseTransformer):
     window_name: str, one of ``['global', 'sliding', 'expanding', 'dyadic']``
         default: 'dyadic'
         Type of the window to use for the signature transform.
-    window_depth: 3 (default) or int
+    window_depth: int, default=3
         The depth of the dyadic window.
         Ignored unless ``window_name`` is ``'dyadic'``.
     window_length: None (default) or int
@@ -42,11 +42,11 @@ class SignatureTransformer(BaseTransformer):
         "pre": rescale the path last signature term should be roughly O(1)
         "post": Rescales the output signature by multiplying the depth-d term by d!.
             Aim is that every term becomes ~O(1).
-    sig_tfm: One of: [‘signature’, ‘logsignature’]).
-        default: 'signature'
-    depth: int, Signature truncation depth.
-        default: 4
-    backend: str, one of: 'esig' (default), or 'iisignature'.
+    sig_tfm: str, one of ``['signature', 'logsignature']``. default: ``'signature'``
+        The type of signature transform to use, plain or logaritmic.
+    depth: int, default=4
+        Signature truncation depth.
+    backend: str, one of: ``'esig'`` (default), or ``'iisignature'``.
         The backend to use for signature computation.
 
     Attributes
