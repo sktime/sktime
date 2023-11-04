@@ -229,7 +229,27 @@ class _Reducer(_BaseWindowForecaster):
             and np.sum(np.isinf(last_window)) == 0
         )
 
-    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+        """
+        kwargs = {"X": X, "alpha": alpha, "method": "_predict_quantiles"}
+
+        y_pred = self._predict_boilerplate(fh, **kwargs)
+
+        return y_pred
+
+
+    def _predict_in_sample(self, fh, X=None, **kwargs):
         # Note that we currently only support out-of-sample predictions. For the
         # direct and multioutput strategy, we need to check this already during fit,
         # as the fh is required for fitting.
@@ -534,9 +554,7 @@ class _DirectReducer(_Reducer):
             self.estimators_.append(estimator)
         return self
 
-    def _predict_last_window(
-        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
+    def _predict_last_window(self, fh, X=None, **kwargs):
         """.
 
         In recursive reduction, iteration must be done over the
@@ -551,8 +569,6 @@ class _DirectReducer(_Reducer):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        return_pred_int : bool
-        alpha : float or array-like
 
         Returns
         -------
@@ -663,9 +679,7 @@ class _MultioutputReducer(_Reducer):
         self.estimator_.fit(Xt, yt)
         return self
 
-    def _predict_last_window(
-        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
+    def _predict_last_window(self, fh, X=None, **kwargs):
         """Predict to training data.
 
         Parameters
@@ -674,8 +688,6 @@ class _MultioutputReducer(_Reducer):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        return_pred_int : bool
-        alpha : float or array-like
 
         Returns
         -------
@@ -826,9 +838,7 @@ class _RecursiveReducer(_Reducer):
         self.estimator_.fit(Xt, yt)
         return self
 
-    def _predict_last_window(
-        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
+    def _predict_last_window(self, fh, X=None, **kwargs):
         """.
 
         In recursive reduction, iteration must be done over the
@@ -1022,9 +1032,7 @@ class _DirRecReducer(_Reducer):
             self.estimators_.append(estimator)
         return self
 
-    def _predict_last_window(
-        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
+    def _predict_last_window(self, fh, X=None, **kwargs):
         """Fit to training data.
 
         Parameters
@@ -1033,8 +1041,6 @@ class _DirRecReducer(_Reducer):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        return_pred_int : bool
-        alpha : float or array-like
 
         Returns
         -------
