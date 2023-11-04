@@ -63,6 +63,7 @@ class _WindowSignatureTransform(BaseTransformer):
 
     def _transform(self, X, y=None):
         import esig
+
         if self.backend == "iisignature":
             esig.set_backend("iisignature")
 
