@@ -89,7 +89,8 @@ class SignatureTransformer(BaseTransformer):
                 "iisignature backend of SignatureTransformer is experimental "
                 "and not systematically tested, due to lack of stable installation "
                 "process for iisignature via pip. Kindly exercise caution, "
-                "and report any issues on the sktime issue tracker."
+                "and report any issues on the sktime issue tracker.",
+                stacklevel=2,
             )
         else:
             raise ValueError(
