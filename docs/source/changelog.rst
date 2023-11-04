@@ -253,7 +253,7 @@ Benchmarking, Metrics, Splitters
 Forecasting
 ^^^^^^^^^^^
 
-* [BUG] fix ``STLForecaster`` tag ``ignores-exogenous-X`` to be correctly set for composites (:pr:`5365`) :user:`yarnabrina`
+* [BUG] fix ``STLForecaster`` tag ``ignores-exogeneous-X`` to be correctly set for composites (:pr:`5365`) :user:`yarnabrina`
 * [BUG] ``statsforecast 1.6.0`` compatibility - in ``statsforecast`` adapter, fixing ``RuntimeError: dictionary changed size during iteration`` (:pr:`5317`) :user:`arnaujc91`
 * [BUG] ``statsforecast 1.6.0`` compatibility - fix argument differences between ``sktime`` and ``statsforecast`` (:pr:`5393`) :user:`luca-miniati`
 * [BUG] Fix ``ARCH._check_predict_proba`` (:pr:`5384`) :user:`Vasudeva-bit`
