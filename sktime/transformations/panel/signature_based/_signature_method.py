@@ -10,6 +10,7 @@ from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
 from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 
 class SignatureTransformer(BaseTransformer):
@@ -84,6 +85,12 @@ class SignatureTransformer(BaseTransformer):
             _check_soft_dependencies("esig")
         elif backend == "iisignature":
             _check_soft_dependencies("iisignature")
+            warn(
+                "iisignature backend of SignatureTransformer is experimental "
+                "and not systematically tested, due to lack of stable installation "
+                "process for iisignature via pip. Kindly exercise caution, "
+                "and report any issues on the sktime issue tracker."
+            )
         else:
             raise ValueError(
                 "Error in SignatureTransformer, backend "
