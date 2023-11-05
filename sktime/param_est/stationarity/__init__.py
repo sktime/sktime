@@ -4,20 +4,20 @@ __author__ = ["fkiraly", "Vasudeva-bit"]
 __all__ = [
     "StationarityADF",
     "StationarityKPSS",
-    "ArchStationarityADF",
-    "ArchDickeyFullerGLS",
-    "ArchPhillipsPerron",
-    "ArchStationarityKPSS",
-    "ArchZivotAndrews",
-    "ArchVarianceRatio",
+    "StationarityADFArch",
+    "StationarityDFGLS",
+    "StationarityPhillipsPerron",
+    "StationarityKPSSArch",
+    "StationarityZivotAndrews",
+    "StationarityVarianceRatio",
 ]
 
 from sktime.param_est.stationarity._arch import (
-    ArchDickeyFullerGLS,
-    ArchPhillipsPerron,
-    ArchStationarityADF,
-    ArchStationarityKPSS,
-    ArchVarianceRatio,
-    ArchZivotAndrews,
+    StationarityADFArch,
+    StationarityDFGLS,
+    StationarityKPSSArch,
+    StationarityPhillipsPerron,
+    StationarityVarianceRatio,
+    StationarityZivotAndrews,
 )
 from sktime.param_est.stationarity._statsmodels import StationarityADF, StationarityKPSS
