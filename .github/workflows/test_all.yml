@@ -115,7 +115,7 @@ jobs:
       - name: install core, test and all soft dependencies
         run: python3 -m pip install .[all_extras_pandas2,tests]
       - name: run unit tests
-        run: python3 -m pytest sktime --ignore sktime/alignment --ignore sktime/annotation --ignore sktime/classification --ignore sktime/clustering --ignore sktime/forecasting --ignore sktime/networks --ignore sktime/param_est --ignore sktime/regression --ignore sktime/transformations --matrixdesign False --only_changed_modules False
+        run: python3 -m pytest sktime --ignore sktime/alignment --ignore sktime/annotation --ignore sktime/classification --ignore sktime/clustering --ignore sktime/datasets --ignore sktime/forecasting --ignore sktime/networks --ignore sktime/param_est --ignore sktime/regression --ignore sktime/transformations --matrixdesign False --only_changed_modules False
       - name: test coverage
         uses: codecov/codecov-action@v3
         with:
