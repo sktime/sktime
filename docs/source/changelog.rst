@@ -26,8 +26,9 @@ Highlights
 ~~~~~~~~~~
 
 * ``torch`` adapter, LTSF forecasters - linear, D-linear, N-linear (:pr:`4891`, :pr:`5514`) :user:`luca-miniati`
-* ``TimeSeriesForestClassifier`` feature importance and optimized interval generation (:pr:`5338`) :user:`YHallouard`
+* more period options in ``FourierFeatures``: ``pandas`` period alias and from offset column (:pr:`5513`) :user:`Ram0nB`
 * ``iisignature`` backend option for ``SignatureTransformer`` (:pr:`5398`) :user:`sz85512678`
+* ``TimeSeriesForestClassifier`` feature importance and optimized interval generation (:pr:`5338`) :user:`YHallouard`
 * all stationarity tests from ``arch`` package available as estimators (:pr:`5439`) :user:`Vasudeva-bit`
 * Hyperbolic sine transformation and its inverse, ``ScaledAsinhTransformer``, for soft input or output clipping (:pr:`5389`) :user:`ali-parizad`
 * estimator serialization: user choice of ``serialization_format`` in ``save`` method and ``mlfow`` plugin,
@@ -37,6 +38,7 @@ Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
 * ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.36``.
+* ``torch`` is now a managed soft dependency for neural networks (``dl`` test set)
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -50,6 +52,7 @@ Core interface changes
   being the standard serialization backend.
   To select the serialization backend, use the ``serialization_format`` parameter
   of estimators' ``save`` method.
+  ``cloudpickle`` is already a soft dependency, therefore no dependency change is required.
 
 Enhancements
 ~~~~~~~~~~~~
@@ -107,6 +110,7 @@ Transformations
 * [ENH] Add Hyperbolic Sine transformation and its inverse (ScaledAsinhTransformer) (:pr:`5389`) :user:`ali-parizad`
 * [ENH] ``iisignature`` backend option for ``SignatureTransformer`` (:pr:`5398`) :user:`sz85512678`
 * [ENH] general inverse transform for ``MSTL`` transformer (:pr:`5457`) :user:`fkiraly`
+* [ENH] more period options in ``FourierFeatures``: ``pandas`` period alias and from offset column (:pr:`5513`) :user:`Ram0nB`
 
 Maintenance
 ~~~~~~~~~~~
@@ -209,6 +213,7 @@ Contributors
 :user:`kianmeng`,
 :user:`luca-miniati`,
 :user:`pseudomo`,
+:user:`Ram0nB`,
 :user:`sz85512678`,
 :user:`szepeviktor`,
 :user:`tpvasconcelos`,
