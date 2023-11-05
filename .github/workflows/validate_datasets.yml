@@ -40,9 +40,9 @@ jobs:
       - name: unit test step
         run: python3 -m pytest -m "not datadownload" sktime/datasets
         shell: bash
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+    # concurrency:
+    #   group: ${{ github.workflow }}-${{ github.ref }}
+    #   cancel-in-progress: true
   test_external_data:
     name: test data downloaded from external sources
     strategy:
@@ -78,6 +78,6 @@ jobs:
       - name: unit test step
         run: python3 -m pytest -m "datadownload" sktime/datasets
         shell: bash
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+    # concurrency:
+    #   group: ${{ github.workflow }}-${{ github.ref }}
+    #   cancel-in-progress: true

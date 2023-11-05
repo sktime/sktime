@@ -39,6 +39,6 @@ jobs:
         with:
           sktime-extra-identifier: ${{ matrix.sktime-extra }}
           python-version-identifier: ${{ matrix.python-version }}
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+    # concurrency:
+    #   group: ${{ github.workflow }}-${{ github.ref }}
+    #   cancel-in-progress: true
