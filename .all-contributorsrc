@@ -2377,6 +2377,15 @@
       ]
     },
     {
+      "login": "sz85512678",
+      "name": "Zhen Shao",
+      "avatar_url": "https://avatars.githubusercontent.com/sz85512678",
+      "profile": "https://github.com/sz85512678",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "Vasudeva-bit",
       "name": "Vasudeva Kilaru",
       "avatar_url": "https://avatars.githubusercontent.com/u/70791259?v=4",
@@ -2421,6 +2430,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/19709277?v=4",
       "profile": "https://github.com/adamkells",
       "contributions": [
+      "test"
+      ]
+    },
+    {
+      "login": "YHallouard",
+      "name": "Yann Hallouard",
+      "avatar_url": "https://avatars.githubusercontent.com/YHallouard",
+      "profile": "https://www.linkedin.com/in/yann-hallouard/",
+      "contributions": [
+        "code",
         "test"
       ]
     },

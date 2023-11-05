@@ -1213,6 +1213,11 @@ def load_solar(
     api_version : string or None, default="v4"
         API version to call. If None then a stored sample of the data is loaded.
 
+    Returns
+    -------
+    y : pd.Series
+        The solar generation time-series, as requested by parameters, see above
+
     References
     ----------
     .. [1] https://www.solar.sheffield.ac.uk/pvlive/

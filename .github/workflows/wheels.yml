@@ -55,7 +55,7 @@ jobs:
         run: python -m pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
 
       - name: Run tests
-        run: make test
+        run: make test_without_datasets
 
   test_windows_wheels:
     needs: build_wheels

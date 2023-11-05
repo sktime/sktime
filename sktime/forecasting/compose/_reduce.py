@@ -343,6 +343,9 @@ class _Reducer(_BaseWindowForecaster):
         # first observation after the window (this is what the window is summarized to).
 
         index_range = _index_range(relative_int, cutoff)
+        if isinstance(cutoff, pd.DatetimeIndex):
+            if cutoff.tzinfo is not None:
+                index_range = index_range.tz_localize(cutoff.tzinfo)
         # index_range will convert the indices to the date format of cutoff
 
         y_raw = _create_fcst_df(index_range, self._y)
@@ -869,6 +872,9 @@ class _RecursiveReducer(_Reducer):
             fh_max = fh.to_relative(self.cutoff)[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
             index_range = _index_range(relative, self.cutoff)
+            if isinstance(self.cutoff, pd.DatetimeIndex):
+                if self.cutoff.tzinfo is not None:
+                    index_range = index_range.tz_localize(self.cutoff.tzinfo)
 
             y_pred = _create_fcst_df(index_range, self._y)
 
