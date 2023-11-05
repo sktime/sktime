@@ -13,7 +13,7 @@ from sktime.param_est.base import BaseParamFitter
 class StationarityADF(BaseParamFitter):
     """Test for stationarity via the Augmented Dickey-Fuller Unit Root Test (ADF).
 
-    Uses `statsmodels.tsa.stattools.adfuller` as a test for unit roots,
+    Uses ``statsmodels.tsa.stattools.adfuller`` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
 
     Also returns test results for the unit root test as fitted parameters.
@@ -46,13 +46,14 @@ class StationarityADF(BaseParamFitter):
 
     Attributes
     ----------
-    stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the ADF test is rejected at `p_threshold`
+    stationary_ : bool
+        whether the series in ``fit`` is stationary according to the test
+        more precisely, whether the null of the ADF test is rejected at ``p_threshold``
     test_statistic_ : float
-        The ADF test statistic, of running `adfuller` on `y` in `fit`
+        The ADF test statistic, of running ``adfuller`` on ``y`` in ``fit``
     pvalue_ : float : float
         MacKinnon's approximate p-value based on MacKinnon (1994, 2010),
-        obtained when running `adfuller` on `y` in `fit`
+        obtained when running `adfuller` on ``y`` in ``fit``
     usedlag_ : int
         The number of lags used in the test.
 
@@ -157,7 +158,7 @@ class StationarityADF(BaseParamFitter):
 class StationarityKPSS(BaseParamFitter):
     """Test for stationarity via the Kwiatkowski-Phillips-Schmidt-Shin Test.
 
-    Uses `statsmodels.tsa.stattools.kpss` as a test for trend-stationairty,
+    Uses ``statsmodels.tsa.stattools.kpss`` as a test for trend-stationairty,
     and derives a boolean statement whether a series is (trend-)stationary.
 
     Also returns test results for the trend-stationarity test as fitted parameters.
@@ -183,12 +184,13 @@ class StationarityKPSS(BaseParamFitter):
 
     Attributes
     ----------
-    stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the KPSS test is accepted at `p_threshold`
+    stationary_ : bool
+        whether the series in ``fit`` is stationary according to the test
+        more precisely, whether the null of the KPSS test is accepted at ``p_threshold``
     test_statistic_ : float
-        The KPSS test statistic, of running `kpss` on `y` in `fit`
+        The KPSS test statistic, of running ``kpss`` on ``y`` in ``fit``
     pvalue_ : float : float
-        The p-value of the KPSS test, of running `kpss` on `y` in `fit`.
+        The p-value of the KPSS test, of running ``kpss`` on ``y`` in ``fit``.
         The p-value is interpolated from Table 1 in Kwiatkowski et al. (1992),
         and a boundary point is returned if the test statistic is outside the table of
         critical values, that is, if the p-value is outside the interval (0.01, 0.1).
