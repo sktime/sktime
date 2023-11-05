@@ -99,6 +99,11 @@ Parameter estimation and hypothesis testing
 
 * [ENH] Interface to stationarity tests from ``arch`` package (:pr:`5439`) :user:`Vasudeva-bit`
 
+Time series annotation
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Add unit tests for change point and segmentation plotting functions (:pr:`5509`) :user:`adamkells`
+
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
