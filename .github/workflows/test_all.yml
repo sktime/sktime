@@ -21,6 +21,9 @@ jobs:
       - name: check missing __init__ files
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
   test_base:
     needs: code_quality
     name: test base module
@@ -47,6 +50,9 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
   test_components_with_extras:
     needs: code_quality
     name: test module
@@ -84,6 +90,9 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
   test_components_without_extras:
     needs: code_quality
     name: test all components without extras
@@ -120,3 +129,6 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           flags: ${{ matrix.python-version }},components_without_extras
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
