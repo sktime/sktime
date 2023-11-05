@@ -198,7 +198,7 @@ Transformations
 * [ENH] add proper ``inverse_transform`` to ``STLTransformer`` (:pr:`5300`) :user:`fkiraly`
 * [ENH] ``joblib`` and ``dask`` backends in broadcasting of estimators in multivariate or hierarchical case - part 1, ``VectorizedDF.vectorize_est`` (:pr:`5267`) :user:`fkiraly`
 * [ENH] ``joblib`` and ``dask`` backends in broadcasting of estimators in multivariate or hierarchical case - part 2, base class config (:pr:`5301`) :user:`fkiraly`
-* [ENH] Refactor of `DateTimeFeatures` tests to `pytest` fixtures (:pr:`5397`) :user:`adamkells`
+* [ENH] Refactor of ``DateTimeFeatures`` tests to ``pytest`` fixtures (:pr:`5397`) :user:`adamkells`
 
 Testing framework
 ^^^^^^^^^^^^^^^^^
