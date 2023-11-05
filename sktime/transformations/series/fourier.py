@@ -28,11 +28,16 @@ class FourierFeatures(BaseTransformer):
 
     The transformed output is a pandas DataFrame that includes the fourier terms as
     additional columns with the naming convention stated above (sin_sp_k and cos_sp_k).
-    The number of fourier terms :math:`K` in the fourier_terms_list defines the set
-    :math:`\{K-i|i\in\mathbb{Z},K>i\geq0\}` that contains the fourier terms
-    :math:`k` that will be used for :math:`sp`. For example, sp_list = [12, "Y"] and
-    fourier_terms_list = [2, 1]. The transformed series will then have the additional
-    columns: "cos_12_1", "sin_12_1", "cos_12_2", "sin_12_2", "cos_Y_1", "sin_Y_1"
+    The numbers of Fourier terms :math:`K` in the fourier_terms_list
+    determines the number of Fourier terms that will be used for each seasonal period,
+    i.e., Fourier terms :math:`k = 1\dots K` (integers), cos and sine, will be generated
+    for the seasonality :math:`sp` at the same list index.
+    For example, consider sp_list = [12, "Y"] and fourier_terms_list = [2, 1].
+    This says that we compute 2 (2 cos, 2 sine) Fourier terms for
+    seasonality 12 periods, and 1 Fourier term (1 cos and 1 sine)
+    for seasonality 1 year.
+    The transformed series will then have columns with the following names:
+    "cos_12_1", "sin_12_1", "cos_12_2", "sin_12_2", "cos_Y_1", "sin_Y_1"
 
     The implementation is based on the fourier function from the R forecast package [3]_
 
