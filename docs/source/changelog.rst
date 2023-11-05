@@ -210,6 +210,7 @@ Contributors
 ~~~~~~~~~~~~
 
 :user:`achieveordie`,
+:user:`adamkells`,
 :user:`Alex-JG3`,
 :user:`ali-parizad`,
 :user:`ciaran-g`,
