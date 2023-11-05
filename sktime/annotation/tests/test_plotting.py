@@ -31,7 +31,7 @@ def time_series_data():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("matplotlib", severity="none"),
+    not _check_soft_dependencies("matplotlib", "seaborn", severity="none"),
     reason="Seaborn is required as a dependency for this plot.",
 )
 def test_plot_time_series_with_change_points(time_series_data):
