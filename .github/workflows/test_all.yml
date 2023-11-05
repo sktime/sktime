@@ -69,7 +69,7 @@ jobs:
           - classification
           - clustering
           - forecasting
-          # - networks
+          - networks
           - param_est
           - regression
           - transformations
