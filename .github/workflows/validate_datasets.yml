@@ -1,12 +1,8 @@
 name: datasets validation
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - sktime/datasets/**
   schedule:
     - cron: 0 0 1 * *
+  workflow_call:
   workflow_dispatch:
 jobs:
   test_internal_data:
