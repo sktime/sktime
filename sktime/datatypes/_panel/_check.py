@@ -233,7 +233,8 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         ):
             msg = (
                 f"The (time) index of {var_name} must be sorted monotonically "
-                f"increasing, but found: {index}"
+                f"increasing. Use {var_name}.sort_index() to sort the index, or "
+                f"{var_name}.duplicated() to find duplicates."
             )
             return _ret(False, msg, None, return_metadata)
 
@@ -396,10 +397,10 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
 
     # Check instance index is unique
     if not obj.index.is_unique:
-        duplicates = obj.index[obj.index.duplicated()].unique().to_list()
         msg = (
             f"The instance index of {var_name} must be unique, "
-            f"but found duplicates: {duplicates}"
+            f"but found duplicates. Use {var_name}.duplicated() "
+            f"to find the duplicates."
         )
         return _ret(False, msg, None, return_metadata)
 
