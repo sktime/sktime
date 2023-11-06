@@ -746,6 +746,8 @@ class ForecastingHorizon:
                 fh_df = pd.DataFrame(index=fh_idx)
                 fh_idx = fh_df.sort_index(level=-1).index
 
+            fh_idx.names = y_index.names
+
         # replicating index names
         if hasattr(y_index, "names") and y_index.names is not None:
             fh_idx.names = y_index.names
