@@ -8,7 +8,7 @@ __all__ = ["_BaseWindowForecaster"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.split import CutoffSplitter
 from sktime.utils.datetime import _shift
 

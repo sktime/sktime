@@ -32,7 +32,6 @@ from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
