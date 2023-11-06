@@ -165,7 +165,8 @@ class BaseTransformer(BaseEstimator):
             backend to use for parallelization when broadcasting/vectorizing, one of
 
             - "None": executes loop sequentally, simple list comprehension
-            - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel``
+            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
+            - "joblib_custom": custom and 3rd party ``joblib`` backends, e.g., ``spark``
             - "dask": uses ``dask``, requires ``dask`` package in environment
         """,
         "backend:parallel:params": """
@@ -174,10 +175,18 @@ class BaseTransformer(BaseEstimator):
             Valid keys depend on the value of ``backend:parallel``:
 
             - "None": no additional parameters, ``backend_params`` is ignored
-            - "loky", "multiprocessing" and "threading":
-              any valid keys for ``joblib.Parallel`` can be passed here,
-              e.g., ``n_jobs``, with the exception of ``backend`` which is directly
-              controlled by ``backend:parallel``
+            - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+              any valid keys for ``joblib.Parallel`` can be passed here, e.g.,
+              ``n_jobs``, with the exception of ``backend`` which is directly
+              controlled by ``backend``.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "joblib_custom": custom and 3rd party ``joblib`` backends,
+              e.g., ``spark``. Any valid keys for ``joblib.Parallel``
+              can be passed here, e.g., ``n_jobs``,
+            ``backend`` must be passed as a key of ``backend_params`` in this case.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
             - "dask": any valid keys for ``dask.compute``
               can be passed, e.g., ``scheduler``
         """,
