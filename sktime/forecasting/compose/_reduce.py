@@ -248,7 +248,6 @@ class _Reducer(_BaseWindowForecaster):
 
         return y_pred
 
-
     def _predict_in_sample(self, fh, X=None, **kwargs):
         # Note that we currently only support out-of-sample predictions. For the
         # direct and multioutput strategy, we need to check this already during fit,
