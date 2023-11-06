@@ -69,13 +69,19 @@ def craft(spec):
         this will have the property that ``spec == str(obj)`` (up to formatting)
     """
     register = dict(all_estimators())  # noqa: F841
+    notfound_list = []
 
     for x in _extract_class_names(spec):
-        exec(f"{x} = register['{x}']")
-
+        if x in register.keys():
+            exec(f"{x} = register['{x}']")
+        else:
+            notfound_list += [x]
     try:
         obj = eval(spec)
     except Exception:
+        pass
+
+    try:
         from textwrap import indent
 
         spec_fun = indent(spec, "    ")
@@ -87,6 +93,12 @@ def build_obj():
         )
         exec(spec_fun, locals())
         obj = eval("build_obj()")
+    except Exception:
+        raise RuntimeError(
+            "in craft, spec could not be resolved."
+            "Typically, this is due to classes not present in all_estimators scope. "
+            f"Classes not found in all_estimators scope: {notfound_list}"
+        )
 
     return obj
 
@@ -115,21 +127,18 @@ def deps(spec):
     dep_strs = []
 
     for x in _extract_class_names(spec):
-        if x not in register.keys():
-            raise RuntimeError(
-                f"class {x} is required to build spec, but was not found "
-                "in all_estimators scope"
-            )
-        cls = register[x]
+        if x in register.keys():
+            cls = register[x]
 
-        new_deps = cls.get_class_tag("python_dependencies")
+        if hasattr(cls, "get_class_tag"):
+            new_deps = cls.get_class_tag("python_dependencies")
 
-        if isinstance(new_deps, list):
-            dep_strs += new_deps
-        elif isinstance(new_deps, str) and len(new_deps) > 0:
-            dep_strs += [new_deps]
+            if isinstance(new_deps, list):
+                dep_strs += new_deps
+            elif isinstance(new_deps, str) and len(new_deps) > 0:
+                dep_strs += [new_deps]
 
-        reqs = list(set(dep_strs))
+            reqs = list(set(dep_strs))
 
     return reqs
 
@@ -158,15 +167,11 @@ def imports(spec):
     import_strs = []
 
     for x in _extract_class_names(spec):
-        if x not in register.keys():
-            raise RuntimeError(
-                f"class {x} is required to build spec, but was not found "
-                "in all_estimators scope"
-            )
-        cls = register[x]
+        if x in register.keys():
+            cls = register[x]
 
-        import_str = f"from {cls.__module__} import {x}"
-        import_strs += [import_str]
+            import_str = f"from {cls.__module__} import {x}"
+            import_strs += [import_str]
 
     if len(import_strs) == 0:
         imports_str = ""
