@@ -1573,7 +1573,8 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     A pandas dataframe or series
     """
     if not isinstance(target_date, ForecastingHorizon):
-        fh = ForecastingHorizon(target_date, is_relative=False)
+        ix = pd.Index(target_date)
+        fh = ForecastingHorizon(ix, is_relative=False)
     else:
         fh = target_date.to_absolute()
 
