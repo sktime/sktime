@@ -902,7 +902,9 @@ class _RecursiveReducer(_Reducer):
             # Fill pre-allocated arrays with available data.
             last[:, 0, :window_length] = y_last
             if X is not None:
-                X_to_use = np.concatenate([X_last.T, X.T], axis=1)
+                X_to_use = np.concatenate([X_last.T, X.iloc[
+                    -(last.shape[2] - window_length) :, :
+                ].T], axis=1)
                 if X_to_use.shape[1] < window_length + fh_max:
                     X_to_use = np.pad(
                         X_to_use,
