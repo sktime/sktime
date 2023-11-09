@@ -196,7 +196,11 @@ class Lag(BaseTransformer):
 
     def _yield_shift_param_names(self):
         """Yield string representation of (periods, freq) pairs."""
-        for lag, freq in self._yield_shift_params():
+        need_suffix = False
+        if len(set(self.lags)) != len(self.lags):
+            need_suffix = True
+        for i, el in enumerate(self._yield_shift_params()):
+            lag, freq = el
             if freq is None:
                 name = str(lag)
             elif lag is None:
@@ -204,7 +208,7 @@ class Lag(BaseTransformer):
             else:
                 name = f"{lag}{freq}"
             name = "lag_" + name
-            yield name
+            yield (name + "_" + str(i)) if need_suffix else name
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -350,8 +354,9 @@ class Lag(BaseTransformer):
         params1 = {"lags": 2, "index_out": "original"}
         params2 = {"lags": [-1, 4]}
         params3 = {"lags": [0, 1, -1], "index_out": "shift"}
+        params4 = {"lags": [0, 0, 0]}
 
-        return [params1, params2, params3]
+        return [params1, params2, params3, params4]
 
 
 class ReducerTransform(BaseTransformer):
