@@ -43,6 +43,7 @@ from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.sklearn import is_sklearn_regressor
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
+from transformations.series.lag import Lag
 
 
 def _concat_y_X(y, X):
@@ -225,17 +226,20 @@ class _Reducer(_BaseWindowForecaster):
 
     def _get_X_input(self, X, X_last, window_length, last_shape):
         if self.exog_strategy == "lagging":
+            lags = list(range(0, -window_length, -1))
             X_to_use = np.concatenate(
-                [X_last.T, X.iloc[-(last_shape[2] - window_length):, :].T], axis=1
+                [X_last.T, X.iloc[-(last_shape):].T], axis=1
             )
+            return Lag(lags, index_out="original").fit_transform(X_to_use.reshape(-1, 1))[:last_shape[2] - window_length]
+
+        elif self.exog_strategy == "direct":
+            X_to_use  = X.iloc[:(last_shape[2] - window_length)].T
             if X_to_use.shape[1] < last_shape[2]:
                 X_to_use = np.pad(
                     X_to_use,
                     ((0, 0), (0, last_shape[2] - X_to_use.shape[1])),
                     "edge",
                 )
-            elif X_to_use.shape[1] > last_shape[2]:
-                X_to_use = X_to_use[:, : last_shape[2]]
         return X_to_use
 
     def _is_predictable(self, last_window):
@@ -415,6 +419,7 @@ class _DirectReducer(_Reducer):
         transformers=None,
         pooling="local",
         windows_identical=True,
+        exog_strategy="lagging",
     ):
         self.windows_identical = windows_identical
         super().__init__(
@@ -914,13 +919,15 @@ class _RecursiveReducer(_Reducer):
             y_pred = np.zeros(fh_max)
 
             # Array with input data for prediction.
-            last = np.zeros((1, n_columns, window_length + fh_max))
+            input_y = np.zeros((1, window_length + fh_max))
 
             # Fill pre-allocated arrays with available data.
-            last[:, 0, :window_length] = y_last
+            input_y[:, :window_length] = y_last
+            input_X =  None
             if X is not None:
-                last[:, 1:] = self._get_X_input(X, X_last, window_length, last.shape)
+                input_X = self._get_X_input(X, X_last, window_length, fh_max)
 
+            last = np.concatenate((input_y, input_X), axis=-1)
             # Recursively generate predictions by iterating over forecasting horizon.
             for i in range(fh_max):
                 # Slice prediction window.
@@ -1108,6 +1115,7 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         transformers=None,
         pooling="local",
         windows_identical=True,
+        exog_strategy="lagging",
     ):
         super(_DirectReducer, self).__init__(
             estimator=estimator, window_length=window_length, transformers=transformers
@@ -1189,9 +1197,10 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         window_length=10,
         transformers=None,
         pooling="local",
+        exog_strategy="lagging",
     ):
         super(_RecursiveReducer, self).__init__(
-            estimator=estimator, window_length=window_length, transformers=transformers
+            estimator=estimator, window_length=window_length, transformers=transformers, exog_strategy=exog_strategy
         )
         self.pooling = pooling
 
@@ -1324,6 +1333,7 @@ def make_reduction(
     transformers=None,
     pooling="local",
     windows_identical=True,
+    exog_strategy="lagging",
 ):
     r"""Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1474,6 +1484,7 @@ def make_reduction(
         "transformers": transformers,
         "pooling": pooling,
         "windows_identical": windows_identical,
+        "exog_strategy": exog_strategy,
     }
 
     return construct_dispatch(Forecaster, dispatch_params)
