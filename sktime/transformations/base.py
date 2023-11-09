@@ -1194,7 +1194,6 @@ class BaseTransformer(BaseEstimator):
         if output_scitype == "Series":
             # output mtype is input mtype
             X_output_mtype = X_input_mtype
-
             # exception to this: if the transformer outputs multivariate series,
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
             #   this happens only for Series, not Panel
@@ -1219,8 +1218,12 @@ class BaseTransformer(BaseEstimator):
                     )
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
-            elif X_input_scitype == "Panel":
+            elif self.get_tags()["scitype:transform-input"] == "Panel":
+                # Input has always to be Panel
                 X_output_mtype = "pd.DataFrame"
+            elif X_input_scitype == "Panel":
+                # Input can be Panel, since it is supported by the used mtype
+                output_scitype = "Panel"
                 # Xt_mtype = metadata["mtype"]
             # else:
             #     Xt_mtype = X_input_mtype
@@ -1233,7 +1236,7 @@ class BaseTransformer(BaseEstimator):
             #     store=_converter_store_X,
             #     store_behaviour="freeze",
             # )
-            Xt = convert_to(
+            return convert_to(
                 Xt,
                 to_type=X_output_mtype,
                 as_scitype=output_scitype,
@@ -1252,7 +1255,7 @@ class BaseTransformer(BaseEstimator):
                 # else this is only zeros and should be reset to RangeIndex
                 else:
                     Xt = Xt.reset_index(drop=True)
-            Xt = convert_to(
+            return convert_to(
                 Xt,
                 to_type="pd_DataFrame_Table",
                 as_scitype="Table",
