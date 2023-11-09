@@ -1221,9 +1221,9 @@ class BaseTransformer(BaseEstimator):
             elif self.get_tags()["scitype:transform-input"] == "Panel":
                 # Input has always to be Panel
                 X_output_mtype = "pd.DataFrame"
-            elif X_input_scitype == "Panel":
-                # Input can be Panel, since it is supported by the used mtype
-                output_scitype = "Panel"
+            else:
+                # Input can be Panel or Hierachical, since it is supported by the used mtype
+                output_scitype = X_input_scitype
                 # Xt_mtype = metadata["mtype"]
             # else:
             #     Xt_mtype = X_input_mtype
