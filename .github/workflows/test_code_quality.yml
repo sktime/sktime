@@ -40,6 +40,7 @@ jobs:
         with:
           filters: |
             datasets:
+              - sktime/base/**
               - sktime/datasets/**
             pyproject:
               - pyproject.toml
