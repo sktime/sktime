@@ -4,6 +4,8 @@
 
 __author__ = ["Lovkush-A", "mloning", "LuisZugasti", "AyushmaanSeth"]
 
+from unittest.mock import MagicMock
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -613,3 +615,52 @@ def test_recursive_reducer_X_not_fit_to_fh():
     assert pred3.shape == (3,)
     pred4 = forecaster.predict(X=X_test, fh=[1])
     assert pred4.shape == (1,)
+
+def test_correct_assignment_of_X_according_to_X_lagging_strategy():
+    y = pd.DataFrame([1, 1, 1, 1, 1])
+    X = pd.DataFrame([1, 2, 3, 4, 5])
+    X_test = pd.DataFrame([6, 7, 8])
+
+    # Lagging strategy
+    forecaster = make_reduction(
+        MagicMock(), window_length=2, strategy="recursive"
+    )
+    forecaster.fit(y, X)
+    forecaster.predict(X=X_test, fh=[1, 2, 3])
+    call_args = forecaster.estimator_.predict.call_args_list
+    assert len(call_args) == 3
+    for call, expected in zip(call_args,
+                              [np.array([[1., 1., 4., 5.]]),
+                               np.array([[1., 1., 5., 6.]]),
+                               np.array([[1., 1., 6., 7.]]), ]
+                              ):
+        assert len(call.args) == 1
+        np.testing.assert_array_equal(call.args[0], expected)
+
+    forecaster = make_reduction(
+        MagicMock(), window_length=2, strategy="direct"
+    )
+    forecaster.fit(y, X, fh=[1, 2, 3])
+    forecaster.predict(X=X_test, fh=[1, 2, 3])
+    for estimator in forecaster.estimators_:
+        call_args = estimator.predict.call_args_list
+        assert len(call_args) == 1
+        np.testing.assert_array_equal(
+            call_args[0].args[0],
+            np.array([[1., 1., 4., 5.]])
+        )
+
+    forecaster = make_reduction(
+        MagicMock(), window_length=2, strategy="multioutput"
+    )
+    forecaster.fit(y, X, fh=[1, 2, 3])
+    forecaster.estimator_.predict.return_value = pd.Series(
+        [1, 1, 1],
+        dtype="float"
+    )
+    forecaster.predict(X=X_test, fh=[1, 2, 3])
+    assert len(forecaster.estimator_.predict.call_args_list) == 1
+    np.testing.assert_array_equal(
+        forecaster.estimator_.predict.call_args_list[0].args[0],
+        np.array([[1., 1., 4., 5.]]),
+    )
