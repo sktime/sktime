@@ -1177,10 +1177,20 @@ class BaseTransformer(BaseEstimator):
         #   skipped for output_scitype = "Primitives"
         #       since then the output always is a pd.DataFrame
         if case == "case 2: higher scitype supported" and output_scitype == "Series":
-            Xt = convert_to(
-                Xt,
-                to_type=["pd-multiindex", "numpy3D", "df-list", "pd_multiindex_hier"],
-            )
+            if self.get_tags()["scitype:transform-input"] == "Panel":
+                # Conversion from Series to Panel done for being compatible with
+                # algorithm. Thus, the returned Series should stay a Series.
+                pass
+            else:
+                Xt = convert_to(
+                    Xt,
+                    to_type=[
+                        "pd-multiindex",
+                        "numpy3D",
+                        "df-list",
+                        "pd_multiindex_hier",
+                    ],
+                )
             Xt = convert_to_scitype(Xt, to_scitype=X_input_scitype)
 
         # now, in all cases, Xt is in the right scitype,
