@@ -913,6 +913,8 @@ class _RecursiveReducer(_Reducer):
                     )
                 elif X_to_use.shape[1] > window_length + fh_max:
                     X_to_use = X_to_use[:, : window_length + fh_max]
+                # else X_to_use.shape[1] == window_length + fh_max
+                # and there are no additional steps to take
                 last[:, 1:] = X_to_use
 
             # Recursively generate predictions by iterating over forecasting horizon.
