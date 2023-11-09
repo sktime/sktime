@@ -16,9 +16,6 @@ jobs:
           filters: |
             base:
               - sktime/base/**
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true
   test:
     needs: detect
     name: test base module
@@ -46,6 +43,3 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "True"
           test-affected-estimators: "True"
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true

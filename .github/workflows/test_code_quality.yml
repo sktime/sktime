@@ -24,9 +24,6 @@ jobs:
       - name: check missing __init__ files
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true
   detect:
     name: detect changes
     runs-on: ubuntu-latest
@@ -44,36 +41,21 @@ jobs:
               - sktime/datasets/**
             pyproject:
               - pyproject.toml
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true
   test_install_extras:
     needs: detect
     name: validate extra installs
     if: ${{ needs.detect.outputs.pyproject == 'true' }}
     uses: ./.github/workflows/validate_extras.yml
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true
   unit_test_base:
     needs: code_quality
     name: run unit tests for base framework
     uses: ./.github/workflows/test_base.yml
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true
   unit_test_components:
     needs: code_quality
     name: run unit tests for individual components
     uses: ./.github/workflows/test_components.yml
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true
   unit_test_datasets:
     needs: detect
     name: run unit tests for datasets
     if: ${{ needs.detect.outputs.datasets == 'true' }}
     uses: ./.github/workflows/validate_datasets.yml
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true

@@ -41,9 +41,6 @@ jobs:
             transformations:
               - sktime/base/**
               - sktime/transformations/**
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true
   test:
     needs: detect
     name: test module
@@ -72,9 +69,6 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "True"
           test-affected-estimators: "True"
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true
   detect_components_without_extras:
     name: check for changes in individual components without extras
     runs-on: ubuntu-latest
@@ -102,9 +96,6 @@ jobs:
               - sktime/split/**
               - sktime/tests/**
               - sktime/utils/**
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true
   test_components_without_extras:
     needs: detect_components_without_extras
     name: test all components without extras
@@ -142,6 +133,3 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           flags: ${{ matrix.python-version }},components_without_extras
-    # concurrency:
-    #   group: ${{ github.workflow }}-${{ github.ref }}
-    #   cancel-in-progress: true
