@@ -208,6 +208,7 @@ class _Reducer(_BaseWindowForecaster):
         window_length=10,
         transformers=None,
         pooling="local",
+        exog_strategy="lagging",
     ):
         super().__init__(window_length=window_length)
         self.transformers = transformers
@@ -215,11 +216,27 @@ class _Reducer(_BaseWindowForecaster):
         self.estimator = estimator
         self.pooling = pooling
         self._cv = None
+        self.exog_strategy = exog_strategy
 
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
         # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
+
+    def _get_X_input(self, X, X_last, window_length, last_shape):
+        if self.exog_strategy == "lagging":
+            X_to_use = np.concatenate(
+                [X_last.T, X.iloc[-(last_shape[2] - window_length):, :].T], axis=1
+            )
+            if X_to_use.shape[1] < last_shape[2]:
+                X_to_use = np.pad(
+                    X_to_use,
+                    ((0, 0), (0, last_shape[2] - X_to_use.shape[1])),
+                    "edge",
+                )
+            elif X_to_use.shape[1] > last_shape[2]:
+                X_to_use = X_to_use[:, : last_shape[2]]
+        return X_to_use
 
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
@@ -599,7 +616,7 @@ class _DirectReducer(_Reducer):
             # Fill pre-allocated arrays with available data.
             X_pred[:, 0, :] = y_last
             if self._X is not None:
-                X_pred[:, 1:, :] = X_last.T
+                X_pred[:, 1:, :] = self._get_X_input(X, X_last, window_length, X_pred.shape)
 
             # We need to make sure that X has the same order as used in fit.
             if self._estimator_scitype == "tabular-regressor":
@@ -702,7 +719,7 @@ class _MultioutputReducer(_Reducer):
         # Fill pre-allocated arrays with available data.
         X_pred[:, 0, :] = y_last
         if self._X is not None:
-            X_pred[:, 1:, :] = X_last.T
+            X_pred[:, 1:, :] = self._get_X_input(X, X_last, window_length, X_pred.shape)
 
         # We need to make sure that X has the same order as used in fit.
         if self._estimator_scitype == "tabular-regressor":
@@ -901,15 +918,14 @@ class _RecursiveReducer(_Reducer):
             fh_max = fh.to_relative(self.cutoff)[-1]
 
             y_pred = np.zeros(fh_max)
+
+            # Array with input data for prediction.
             last = np.zeros((1, n_columns, window_length + fh_max))
 
             # Fill pre-allocated arrays with available data.
             last[:, 0, :window_length] = y_last
             if X is not None:
-                last[:, 1:, :window_length] = X_last.T
-                last[:, 1:, window_length:] = X.iloc[
-                    -(last.shape[2] - window_length) :, :
-                ].T
+                last[:, 1:] = self._get_X_input(X, X_last, window_length, last.shape)
 
             # Recursively generate predictions by iterating over forecasting horizon.
             for i in range(fh_max):
