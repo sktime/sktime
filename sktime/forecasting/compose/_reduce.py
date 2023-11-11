@@ -569,7 +569,7 @@ class _DirectReducer(_Reducer):
 
         yt, Xt = self._transform(y, X)
         if hasattr(Xt, "columns"):
-            Xt.columns = Xt.columns.astype(str) 
+            Xt.columns = Xt.columns.astype(str)
 
         # Iterate over forecasting horizon, fitting a separate estimator for each step.
         self.estimators_ = []
