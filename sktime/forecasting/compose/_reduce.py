@@ -303,6 +303,7 @@ class _Reducer(_BaseWindowForecaster):
         from sklearn.pipeline import make_pipeline
 
         from sktime.transformations.panel.reduce import Tabularizer
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
         #   reducers with Tabular take an sklearn estimator, e.g., LinearRegressor
@@ -313,7 +314,20 @@ class _Reducer(_BaseWindowForecaster):
         if "TimeSeries" in cls.__name__:
             est = make_pipeline(Tabularizer(), est)
 
-        params = {"estimator": est, "window_length": 3}
+        params = [{"estimator": est, "window_length": 3}]
+
+        PROBA_IMPLEMENTED = ["DirectTabularRegressionForecaster"]
+        self_supports_proba = cls.__name__ in PROBA_IMPLEMENTED
+
+        if _check_soft_dependencies("skpro", severity="none") and self_supports_proba:
+            from skpro.regression.residual import ResidualDouble
+
+            params_proba = {
+                "estimator": ResidualDouble.create_test_instance(),
+                "pooling": "global",
+            }
+            params = params + [params_proba]
+
         return params
 
     def _get_shifted_window(self, shift=0, y_update=None, X_update=None):
@@ -602,6 +616,10 @@ class _DirectReducer(_Reducer):
         else:
             method = "predict"
 
+        # estimator type for case branches
+        est_type = self._est_type
+        # "regressor" for sklearn, "regressor_proba" for skpro
+
         if self._X is not None and X is None:
             raise ValueError(
                 "`X` must be passed to `predict` if `X` is given in `fit`."
@@ -624,9 +642,13 @@ class _DirectReducer(_Reducer):
             y_pred = _create_fcst_df(fh_abs, self._y)
 
             for i, estimator in enumerate(self.estimators_):
-                y_pred_short = getattr(estimator, method)(X_last)
-                y_pred_curr = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_short)
-                y_pred.update(y_pred_curr)
+                y_pred_est = getattr(estimator, method)(X_last)
+                if est_type == "regressor":
+                    y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_est)
+                else:  # est_type == "regressor_proba"
+                    y_pred_v = y_pred_est.values
+                    y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
+                y_pred.update(y_pred_i)
         else:
             # Pre-allocate arrays.
             if self._X is None:
@@ -650,11 +672,21 @@ class _DirectReducer(_Reducer):
                 X_pred = X_pred.reshape(1, -1)
 
             # Allocate array for predictions.
-            y_pred = np.zeros(len(fh))
+            if est_type == "regressor":            
+                y_pred = np.zeros(len(fh))
+            else:  # est_type == "regressor_proba"
+                y_pred = pd.DataFrame()
 
             # Iterate over estimators/forecast horizon
             for i, estimator in enumerate(self.estimators_):
-                y_pred[i] = getattr(estimator, method)(X_pred)
+                y_pred_est = getattr(estimator, method)(X_pred)
+                if est_type == "regressor":    
+                    y_pred[i] = y_pred_est
+                else:  # est_type == "regressor_proba"
+                    y_pred_v = y_pred_est.values
+                    y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
+                    y_pred.update(y_pred_i)
+                                        
         return y_pred
 
 
