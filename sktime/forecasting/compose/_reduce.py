@@ -672,7 +672,7 @@ class _DirectReducer(_Reducer):
                 X_pred = X_pred.reshape(1, -1)
 
             # Allocate array for predictions.
-            if est_type == "regressor":            
+            if est_type == "regressor":
                 y_pred = np.zeros(len(fh))
             else:  # est_type == "regressor_proba"
                 y_pred = pd.DataFrame()
