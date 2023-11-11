@@ -200,7 +200,6 @@ class _Reducer(_BaseWindowForecaster):
         "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
         "handles-missing-data": True,
         "capability:insample": False,
-        "capability:pred_int": True,
     }
 
     def __init__(
@@ -221,26 +220,6 @@ class _Reducer(_BaseWindowForecaster):
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
         # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
-
-        # for dealing with probabilistic regressors:
-        # self._est_type encodes information what type of estimator is passed
-        if hasattr(estimator, "get_tags"):
-            _est_type = estimator.get_tag("object_type", "regressor", False)
-        else:
-            _est_type = "regressor"
-
-        if _est_type not in ["regressor", "regressor_proba"]:
-            raise TypeError(
-                f"error in {type(self).__name}, "
-                "estimator must be either an sklearn compatible "
-                "regressor, or an skpro probabilistic regressor."
-            )
-
-        # has probabilistic mode iff the estimator is of type regressor_proba
-        self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
-
-        self._est_type = _est_type
-
 
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
