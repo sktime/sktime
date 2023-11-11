@@ -568,7 +568,8 @@ class _DirectReducer(_Reducer):
             raise NotImplementedError("In-sample predictions are not implemented.")
 
         yt, Xt = self._transform(y, X)
-        Xt.columns = [str(col) for col in Xt.columns]
+        if hasattr(Xt, "columns"):
+            Xt.columns = Xt.columns.astype(str) 
 
         # Iterate over forecasting horizon, fitting a separate estimator for each step.
         self.estimators_ = []
