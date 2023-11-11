@@ -680,13 +680,13 @@ class _DirectReducer(_Reducer):
             # Iterate over estimators/forecast horizon
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_pred)
-                if est_type == "regressor":    
+                if est_type == "regressor":
                     y_pred[i] = y_pred_est
                 else:  # est_type == "regressor_proba"
                     y_pred_v = y_pred_est.values
                     y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
                     y_pred.update(y_pred_i)
-                                        
+
         return y_pred
 
 
