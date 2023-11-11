@@ -1606,68 +1606,31 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     -------
     A pandas dataframe or series
     """
-    oi = origin_df.index
-    if not isinstance(oi, pd.MultiIndex):
-        if isinstance(origin_df, pd.Series):
-            if fill is None:
-                template = pd.Series(np.zeros(len(target_date)), index=target_date)
-            else:
-                template = pd.Series(fill, index=target_date)
-            template.name = origin_df.name
-            return template
-        else:
-            if fill is None:
-                template = pd.DataFrame(
-                    np.zeros((len(target_date), len(origin_df.columns))),
-                    index=target_date,
-                    columns=origin_df.columns.to_list(),
-                )
-            else:
-                template = pd.DataFrame(
-                    fill, index=target_date, columns=origin_df.columns.to_list()
-                )
-            return template
+    if not isinstance(target_date, ForecastingHorizon):
+        ix = pd.Index(target_date)
+        fh = ForecastingHorizon(ix, is_relative=False)
     else:
-        idx = origin_df.index.to_frame(index=False)
-        instance_names = idx.columns[0:-1].to_list()
-        time_names = idx.columns[-1]
-        idx = idx[instance_names].drop_duplicates()
+        fh = target_date.to_absolute()
 
-        timeframe = pd.DataFrame(target_date, columns=[time_names])
-        target_frame = idx.merge(timeframe, how="cross")
-        if hasattr(target_date, "freq"):
-            freq_inferred = target_date.freq
-            mi = (
-                target_frame.groupby(instance_names, as_index=True)
-                .apply(
-                    lambda df: df.drop(instance_names, axis=1)
-                    .set_index(time_names)
-                    .asfreq(freq_inferred)
-                )
-                .index
-            )
-        else:
-            mi = (
-                target_frame.groupby(instance_names, as_index=True)
-                .apply(lambda df: df.drop(instance_names, axis=1).set_index(time_names))
-                .index
-            )
+    index = fh.get_expected_pred_idx(origin_df)
 
-        if fill is None:
-            template = pd.DataFrame(
-                np.zeros((len(target_date) * idx.shape[0], len(origin_df.columns))),
-                index=mi,
-                columns=origin_df.columns.to_list(),
-            )
-        else:
-            template = pd.DataFrame(
-                fill,
-                index=mi,
-                columns=origin_df.columns.to_list(),
-            )
+    if isinstance(origin_df, pd.Series):
+        columns = [origin_df.name]
+    else:
+        columns = origin_df.columns.to_list()
 
-        template = template.astype(origin_df.dtypes.to_dict())
-        return template
+    if fill is None:
+        values = 0
+    else:
+        values = fill
+
+    res = pd.DataFrame(values, index=index, columns=columns)
+
+    if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
+        res = res.iloc[:, 0]
+        res.name = origin_df.name
+
+    return res
 
 
 def _coerce_col_str(X):

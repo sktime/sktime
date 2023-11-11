@@ -106,6 +106,7 @@ def y_dict():
     # Create integer index data
     y_numeric = y_train.copy()
     y_numeric.index = pd.to_numeric(y_numeric.index)
+    y_numeric.index.names = [None]  # setting None to cover "no index name" case
     y_dict["y_numeric"] = y_numeric
 
     return y_dict
@@ -139,7 +140,7 @@ def check_eval(test_input, expected):
         ),
         (
             "y_train",
-            [None],
+            ["Period"],
         ),
         (
             "y_numeric",
@@ -186,7 +187,7 @@ def test_recursive_reduction(y, index_names, y_dict):
         ),
         (
             "y_train",
-            [None],
+            ["Period"],
         ),
         (
             "y_numeric",
@@ -232,7 +233,7 @@ def test_direct_reduction(y, index_names, y_dict):
         ),
         (
             "y_train",
-            [None],
+            ["Period"],
         ),
         (
             "y_numeric",
