@@ -241,6 +241,7 @@ class _Reducer(_BaseWindowForecaster):
 
         self._est_type = _est_type
 
+
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
         return (
