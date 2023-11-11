@@ -266,7 +266,7 @@ class _Reducer(_BaseWindowForecaster):
         alpha : list of float (guaranteed not None and floats in [0,1] interval)
             A list of probabilities at which quantile forecasts are computed.
         """
-        kwargs = {"X": X, "alpha": alpha, "method": "_predict_quantiles"}
+        kwargs = {"X": X, "alpha": alpha, "method": "predict_quantiles"}
 
         y_pred = self._predict_boilerplate(fh, **kwargs)
 
@@ -597,6 +597,11 @@ class _DirectReducer(_Reducer):
         -------
         y_return = pd.Series or pd.DataFrame
         """
+        if "method" in kwargs:
+            method = kwargs["method"]
+        else:
+            method = "predict"
+
         if self._X is not None and X is None:
             raise ValueError(
                 "`X` must be passed to `predict` if `X` is given in `fit`."
@@ -619,7 +624,7 @@ class _DirectReducer(_Reducer):
             y_pred = _create_fcst_df(fh_abs, self._y)
 
             for i, estimator in enumerate(self.estimators_):
-                y_pred_short = estimator.predict(X_last)
+                y_pred_short = getattr(estimator, method)(X_last)
                 y_pred_curr = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_short)
                 y_pred.update(y_pred_curr)
         else:
@@ -649,7 +654,7 @@ class _DirectReducer(_Reducer):
 
             # Iterate over estimators/forecast horizon
             for i, estimator in enumerate(self.estimators_):
-                y_pred[i] = estimator.predict(X_pred)
+                y_pred[i] = getattr(estimator, method)(X_pred)
         return y_pred
 
 
