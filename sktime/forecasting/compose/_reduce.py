@@ -199,6 +199,7 @@ class _Reducer(_BaseWindowForecaster):
         "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
         "handles-missing-data": True,
         "capability:insample": False,
+        "capability:pred_int": True,
     }
 
     def __init__(
