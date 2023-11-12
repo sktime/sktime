@@ -56,6 +56,7 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
+    check_is_error_msg,
     check_is_mtype,
     check_is_scitype,
     convert,
@@ -992,32 +993,25 @@ class BaseTransformer(BaseEstimator):
             var_name="X",
         )
 
-        msg_invalid_input = (
-            f"must be in an sktime compatible format, "
-            f"of scitype Series, Panel or Hierarchical, "
-            f"for instance a pandas.DataFrame with sktime compatible time indices, "
-            f"or with MultiIndex and last(-1) level an sktime compatible time index. "
-            f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES} ."
-            # f"See the transformers tutorial examples/05_transformers.ipynb, or"
-            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb. "
-            f"If you think the data is already in an sktime supported input format, "
-            f"run sktime.datatypes.check_raise(data, mtype) to diagnose the error, "
-            f"where mtype is the string of the type specification you want. "
-            f"Error message for checked mtypes, in format [mtype: message], as follows:"
-        )
-        if not X_valid:
-            for mtype, err in msg.items():
-                msg_invalid_input += f" [{mtype}: {err}] "
-            raise TypeError("X " + msg_invalid_input)
-
         X_scitype = X_metadata["scitype"]
         X_mtype = X_metadata["mtype"]
         # remember these for potential back-conversion (in transform etc)
         metadata["_X_mtype_last_seen"] = X_mtype
         metadata["_X_input_scitype"] = X_scitype
 
-        if X_mtype not in ALLOWED_MTYPES:
-            raise TypeError("X " + msg_invalid_input)
+        # raise informative error message if X is in wrong format
+        allowed_msg = (
+            f"Allowed scitypes for X in transformations are "
+            f"Series, Panel or Hierarchical, "
+            f"for instance a pandas.DataFrame with sktime compatible time indices, "
+            f"or with MultiIndex and last(-1) level an sktime compatible time index. "
+            f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES} ."
+        )
+        if not X_valid or X_mtype not in ALLOWED_MTYPES:
+            msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
+            check_is_error_msg(
+                msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
+            )
 
         if X_scitype in X_inner_scitype:
             case = "case 1: scitype supported"
@@ -1050,13 +1044,19 @@ class BaseTransformer(BaseEstimator):
             y_valid, msg, y_metadata = check_is_scitype(
                 y, scitype=y_possible_scitypes, return_metadata=[], var_name="y"
             )
-            if not y_valid:
-                for mtype, err in msg.items():
-                    msg_invalid_input += f" [{mtype}: {err}] "
-                raise TypeError("y " + msg_invalid_input)
-
             y_scitype = y_metadata["scitype"]
             y_mtype = y_metadata["mtype"]
+
+            # raise informative error message if y is is in wrong format
+            if not y_valid:
+                allowed_msg = (
+                    f"Allowed scitypes for y in transformations depend on X passed. "
+                    f"Passed X scitype was {X_scitype}, "
+                    f"so allowed scitypes for y are {y_possible_scitypes}. "
+                )
+                check_is_error_msg(
+                    msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
+                )
 
         else:
             # y_scitype is used below - set to None if y is None
