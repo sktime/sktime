@@ -116,7 +116,7 @@ def _parallelize_joblib(fun, iter, meta, backend, backend_params):
                 "backend dispatch, where the first layer is joblib, "
                 "and the second layer is a custom backend of joblib, e.g., spark."
                 "For first-party joblib backends, please use the backend string "
-                'of sktime directly, e.g., by specifying "multiprocessing".'
+                'of sktime directly, e.g., by specifying "multiprocessing" or "loky".'
             )
         # in all other cases, we ensure the backend parameter is one of
         # "loky", "multiprocessing" or "threading", as passed via backend
