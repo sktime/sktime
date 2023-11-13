@@ -47,7 +47,7 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-  test_components:
+  test_components_with_extras:
     needs: code_quality
     name: test module
     strategy:
@@ -84,3 +84,39 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
+  test_components_without_extras:
+    needs: code_quality
+    name: test all components without extras
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+        operating-system:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.operating-system }}
+    steps:
+      - name: checkout pull request branch
+        uses: actions/checkout@v4
+      - name: update local git tracking reference
+        run: git remote set-branches origin main
+      - name: update local shallow clone
+        run: git fetch --depth 1
+      - name: create python virtual environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: install core, test and all soft dependencies
+        run: python3 -m pip install .[all_extras_pandas2,tests]
+      - name: run unit tests
+        run: python3 -m pytest sktime --ignore sktime/alignment --ignore sktime/annotation --ignore sktime/classification --ignore sktime/clustering --ignore sktime/datasets --ignore sktime/forecasting --ignore sktime/networks --ignore sktime/param_est --ignore sktime/regression --ignore sktime/transformations --matrixdesign False --only_changed_modules False
+      - name: test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          flags: ${{ matrix.python-version }},components_without_extras
