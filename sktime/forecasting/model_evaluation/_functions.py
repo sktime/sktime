@@ -413,7 +413,7 @@ def evaluate(
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
-        - "joblib_custom": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as "dask",
           but changes the return to (lazy) ``dask.dataframe.DataFrame``.
@@ -441,7 +441,7 @@ def evaluate(
           with the exception of ``backend`` which is directly controlled by ``backend``.
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
-        - "joblib_custom": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
           any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
           ``backend`` must be passed as a key of ``backend_params`` in this case.
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters

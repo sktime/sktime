@@ -167,7 +167,7 @@ class BaseTransformer(BaseEstimator):
 
             - "None": executes loop sequentally, simple list comprehension
             - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
-            - "joblib_custom": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
             - "dask": uses ``dask``, requires ``dask`` package in environment
         """,
         "backend:parallel:params": """
@@ -182,7 +182,7 @@ class BaseTransformer(BaseEstimator):
               controlled by ``backend``.
               If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
               will default to ``joblib`` defaults.
-            - "joblib_custom": custom and 3rd party ``joblib`` backends,
+            - "joblib": custom and 3rd party ``joblib`` backends,
               e.g., ``spark``. Any valid keys for ``joblib.Parallel``
               can be passed here, e.g., ``n_jobs``,
             ``backend`` must be passed as a key of ``backend_params`` in this case.

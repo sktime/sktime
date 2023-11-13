@@ -511,7 +511,7 @@ class VectorizedDF:
 
             - "None": executes loop sequentally, simple list comprehension
             - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
-            - "joblib_custom": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
             - "dask": uses ``dask``, requires ``dask`` package in environment
             - "dask_lazy": same as "dask", but returns delayed object instead
 
