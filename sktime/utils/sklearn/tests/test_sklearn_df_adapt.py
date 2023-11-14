@@ -18,7 +18,7 @@ def test_prep_skl_df_coercion(copy_df):
 
     assert np.all(res.columns == ["0", "b"])
 
-    if copy_df:
+    if not copy_df:
         assert res is mixed_example
 
 
