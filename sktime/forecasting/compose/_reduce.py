@@ -224,23 +224,19 @@ class _Reducer(_BaseWindowForecaster):
         # therefore this is commented out until sktime and sklearn are better aligned
         # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
 
-    def _get_X_input(self, X, X_last, window_length, last_shape):
+    def _get_X_input(self, X_last, X, window_length, repeats, shifts):
         if self.exog_strategy == "lagging":
-            lags = list(range(0, -window_length, -1))
+            indices = np.array(list(range(0, window_length))).reshape((-1, window_length)).repeat(repeats, axis=0) + \
+                      np.array(np.linspace(0, (repeats - 1) * shifts, repeats, dtype="int")).reshape(repeats, -1).repeat(
+                          window_length, axis=1)
             X_to_use = np.concatenate(
-                [X_last.T, X.iloc[-(last_shape):].T], axis=1
+                [X_last.T, X.T], axis=1
             )
-            return Lag(lags, index_out="original").fit_transform(X_to_use.reshape(-1, 1))[:last_shape[2] - window_length]
+            return X_to_use.take(indices)
 
         elif self.exog_strategy == "direct":
-            X_to_use  = X.iloc[:(last_shape[2] - window_length)].T
-            if X_to_use.shape[1] < last_shape[2]:
-                X_to_use = np.pad(
-                    X_to_use,
-                    ((0, 0), (0, last_shape[2] - X_to_use.shape[1])),
-                    "edge",
-                )
-        return X_to_use
+            X_to_use = X
+            return X_to_use
 
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
@@ -616,19 +612,23 @@ class _DirectReducer(_Reducer):
             X_pred = np.zeros((1, n_columns, window_length))
 
             # Fill pre-allocated arrays with available data.
-            X_pred[:, 0, :] = y_last
+            X_input = None
             if self._X is not None:
-                X_pred[:, 1:, :] = self._get_X_input(X, X_last, window_length, X_pred.shape)
+                X_input = self._get_X_input(X_last, X, window_length, len(self.fh), 0)
 
             # We need to make sure that X has the same order as used in fit.
-            if self._estimator_scitype == "tabular-regressor":
-                X_pred = X_pred.reshape(1, -1)
 
             # Allocate array for predictions.
             y_pred = np.zeros(len(fh))
 
             # Iterate over estimators/forecast horizon
             for i, estimator in enumerate(self.estimators_):
+                if X_input is not None:
+                    X_pred = np.concatenate([y_last, X_input[i]])
+                else:
+                    X_pred = y_last
+                if self._estimator_scitype == "tabular-regressor":
+                    X_pred = X_pred.reshape(1, -1)
                 y_pred[i] = estimator.predict(X_pred)
         return y_pred
 
@@ -721,7 +721,7 @@ class _MultioutputReducer(_Reducer):
         # Fill pre-allocated arrays with available data.
         X_pred[:, 0, :] = y_last
         if self._X is not None:
-            X_pred[:, 1:, :] = self._get_X_input(X, X_last, window_length, X_pred.shape)
+            X_pred[:, 1:, :] = self._get_X_input(X_last, X, window_length, 1, 0)
 
         # We need to make sure that X has the same order as used in fit.
         if self._estimator_scitype == "tabular-regressor":
@@ -740,16 +740,27 @@ class _RecursiveReducer(_Reducer):
         # transform is simply a one-step ahead horizon, regardless of the horizon
         # used during prediction.
         fh = ForecastingHorizon([1])
-        return _sliding_window_transform(
-            y,
-            self.window_length_,
-            fh,
-            X=X,
-            transformers=self.transformers_,
-            scitype=self._estimator_scitype,
-            pooling=self.pooling,
-        )
-
+        if self.exog_strategy == "Lagging":
+            return _sliding_window_transform(
+                y,
+                self.window_length_,
+                fh,
+                X=X,
+                transformers=self.transformers_,
+                scitype=self._estimator_scitype,
+                pooling=self.pooling,
+            )
+        else:
+            y, X_ = _sliding_window_transform(
+                y,
+                self.window_length_,
+                fh,
+                transformers=self.transformers_,
+                scitype=self._estimator_scitype,
+                pooling=self.pooling,
+            )
+            X = [X_] if X is None else [X_, X[self.window_length_:]]
+            return y, np.concatenate(X, axis=-1)
     def _fit(self, y, X, fh):
         """Fit to training data.
 
@@ -915,23 +926,19 @@ class _RecursiveReducer(_Reducer):
                 n_columns = X.shape[1] + 1
             window_length = self.window_length_
             fh_max = fh.to_relative(self.cutoff)[-1]
-
             y_pred = np.zeros(fh_max)
 
-            # Array with input data for prediction.
-            input_y = np.zeros((1, window_length + fh_max))
+            input_y = y_last
 
-            # Fill pre-allocated arrays with available data.
-            input_y[:, :window_length] = y_last
             input_X =  None
             if X is not None:
-                input_X = self._get_X_input(X, X_last, window_length, fh_max)
+                input_X = self._get_X_input(X_last, X, window_length, fh_max, 1)
 
-            last = np.concatenate((input_y, input_X), axis=-1)
             # Recursively generate predictions by iterating over forecasting horizon.
             for i in range(fh_max):
                 # Slice prediction window.
-                X_pred = last[:, :, i : window_length + i]
+                from sktime.datatypes._convert import convert_to
+                X_pred = np.concatenate([input_y, convert_to(input_X, "numpy2D")[i]])
 
                 # Reshape data into tabular array.
                 if self._estimator_scitype == "tabular-regressor":
@@ -941,7 +948,7 @@ class _RecursiveReducer(_Reducer):
                 y_pred[i] = self.estimator_.predict(X_pred)[0]
 
                 # Update last window with previous prediction.
-                last[:, 0, window_length + i] = y_pred[i]
+                input_y = np.concatenate([input_y[1:], [y_pred[i]]])
 
         # While the recursive strategy requires to generate predictions for all steps
         # until the furthest step in the forecasting horizon, we only return the
