@@ -14,7 +14,8 @@ from sktime.transformations.base import BaseTransformer
 class MSTL(BaseTransformer):
     """Season-Trend decomposition using LOESS for multiple seasonalities.
 
-    Direct interface for `statsmodels.tsa.seasonal.MSTL`.
+    Direct interface for ``statsmodels.tsa.seasonal.MSTL``.
+    ``MSTL`` can be used to perform deseasonalization or decomposition:
 
     `fit` stores the decomposed values in self.trend_, self.seasonal_, and self.resid_.
     If `return_components=False`, then `transform` returns a pd.Series of the
@@ -24,9 +25,17 @@ class MSTL(BaseTransformer):
     well as three components as variables in the returned multivariate series
     (DataFrame cols)
         "transformed" - the transformed series
-        "seasonal" - the seasonal component(s)
+        "seasonal" - the seasonal component(s), summed up if multiple
         "trend" - the trend component
         "resid" - the residuals after de-trending, de-seasonalizing
+
+    ``MSTL`` performs ``inverse_transform`` by summing any components,
+    and can be used for pipelining in a ``TransformedTargetForecaster``.
+
+    Important: for separate forecasts of trend and seasonalities, and an
+    inverse transform that respects seasonality, ensure
+    that ``return_components=True`` is set, otherwise the inverse will just
+    return the trend component.
 
     Parameters
     ----------
@@ -54,7 +63,7 @@ class MSTL(BaseTransformer):
         if True, will return the transformed series, as well as three components
             as variables in the returned multivariate series (DataFrame cols)
             "transformed" - the transformed series
-            "seasonal" - the seasonal component(s)
+            "seasonal" - the seasonal component(s), summed up if multiple
             "trend" - the trend component
             "resid" - the residuals after de-trending, de-seasonalizing
 
@@ -99,6 +108,7 @@ class MSTL(BaseTransformer):
         "univariate-only": True,
         "capability:inverse_transform": True,
         "capability:inverse_transform:exact": False,
+        "skip-inverse-transform": False,
         "fit_is_empty": False,
         "python_dependencies": "statsmodels",
     }
@@ -181,10 +191,11 @@ class MSTL(BaseTransformer):
         return ret_obj
 
     def _inverse_transform(self, X, y=None):
-        if len(self.seasonal_.shape) > 1:
-            return self.seasonal_.sum(axis=1) + self.resid_ + self.trend_
-        else:
-            return self.seasonal_ + self.resid_ + self.trend_
+        # for inverse transform, we sum up the columns
+        # this will be close if return_components=True
+        row_sums = X.sum(axis=1)
+        row_sums.columns = self.fit_column_names
+        return row_sums
 
     def _make_return_object(self, X, mstl):
         if len(mstl.seasonal.shape) > 1:

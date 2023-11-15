@@ -193,7 +193,7 @@ and are identical with the test-fixture-strings returned by ``check_estimator``.
 
 To run tests only for a given estimator from the console, the command ``pytest -k "EstimatorName"`` can be used.
 This will typically have the same effect as using ``check_estimator(EstimatorName)``, only via direct ``pytest`` call.
-When using Visual Studio Code or pycharm, tests can also be sub-setted using GUI filter
+When using Visual Studio Code or pycharm, tests can also be sub-set using GUI filter
 functionality - for this, refer to the respecetive IDE documentation on test integration.
 
 To identify codebase locations of tests applying to a specific estimator,
