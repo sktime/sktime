@@ -31,6 +31,7 @@ from sklearn.base import clone
 from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.datatypes._utilities import get_time_index
+from sktime.datatypes._convert import convert_to
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._fh import _index_range
@@ -423,6 +424,7 @@ class _DirectReducer(_Reducer):
             window_length=window_length,
             transformers=transformers,
             pooling=pooling,
+            exog_strategy=exog_strategy
         )
 
     def _transform(self, y, X=None):
@@ -615,7 +617,7 @@ class _DirectReducer(_Reducer):
             X_input = None
             if self._X is not None:
                 X_input = self._get_X_input(X_last, X, window_length, len(self.fh), 0)
-
+                X_input = convert_to(X_input, "numpy2D")
             # We need to make sure that X has the same order as used in fit.
 
             # Allocate array for predictions.
@@ -716,13 +718,14 @@ class _MultioutputReducer(_Reducer):
 
         # Pre-allocate arrays.
         window_length = self.window_length_
-        X_pred = np.zeros((1, n_columns, window_length))
 
         # Fill pre-allocated arrays with available data.
-        X_pred[:, 0, :] = y_last
-        if self._X is not None:
-            X_pred[:, 1:, :] = self._get_X_input(X_last, X, window_length, 1, 0)
+        X_pred = y_last
 
+        if self._X is not None:
+            X_input = self._get_X_input(X_last, X, window_length, 1, 0)
+            X_input = convert_to(X_input, "numpy2D")
+            X_pred = np.concatenate([X_pred, X_input.reshape((-1,))])
         # We need to make sure that X has the same order as used in fit.
         if self._estimator_scitype == "tabular-regressor":
             X_pred = X_pred.reshape(1, -1)
@@ -937,7 +940,6 @@ class _RecursiveReducer(_Reducer):
             # Recursively generate predictions by iterating over forecasting horizon.
             for i in range(fh_max):
                 # Slice prediction window.
-                from sktime.datatypes._convert import convert_to
                 X_pred = np.concatenate([input_y, convert_to(input_X, "numpy2D")[i]])
 
                 # Reshape data into tabular array.
@@ -1125,7 +1127,8 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         exog_strategy="lagging",
     ):
         super(_DirectReducer, self).__init__(
-            estimator=estimator, window_length=window_length, transformers=transformers
+            estimator=estimator, window_length=window_length, transformers=transformers,
+            exog_strategy=exog_strategy
         )
         self.pooling = pooling
         self.windows_identical = windows_identical
