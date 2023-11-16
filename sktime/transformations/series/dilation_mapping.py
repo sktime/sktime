@@ -1,0 +1,109 @@
+"""DilationMapping transformer.
+
+A transformer for applying dilation mapping to time series data.
+"""
+
+__author__ = ["fspinna"]
+__all__ = ["DilationMappingTransformer"]
+
+import pandas as pd
+
+from sktime.transformations.base import BaseTransformer
+
+
+class DilationMappingTransformer(BaseTransformer):
+    r"""DilationMapping transformer.
+
+    A transformer for applying dilation mapping to time series data, as seen in:
+    @article{schafer2023weasel,
+        title={WEASEL 2.0--A Random Dilated Dictionary Transform for Fast,
+        Accurate and Memory Constrained Time Series Classification},
+        author={Sch{\"a}fer, Patrick and Leser, Ulf},
+        journal={arXiv preprint arXiv:2301.10194},
+        year={2023}
+    }
+    The transformation is applied both to the values and the indices of the series.
+
+    Parameters
+    ----------
+    dilation : int, default=2
+        The dilation factor. Determines the spacing between original data points in the
+        transformed series. Must be an integer greater than 0. A dilation of 1 means no
+        change, while higher values increase the spacing.
+
+    Attributes
+    ----------
+    dilation_ : int
+        The actual dilation factor used. This is equal to the `dilation` parameter.
+    """
+
+    _tags = {
+        "scitype:transform-input": "Panel",
+        "scitype:transform-output": "Panel",
+        "scitype:instancewise": True,
+        "scitype:transform-labels": "None",
+        "X_inner_mtype": "nested_univ",
+        "y_inner_mtype": "None",
+        "univariate-only": False,
+        "requires_y": False,
+        "fit_is_empty": True,
+        "capability:inverse_transform": False,
+        "capability:unequal_length": True,
+        "handles-missing-data": True,
+    }
+
+    def __init__(self, dilation=2):
+        self.dilation = dilation
+
+        super().__init__()
+
+        if dilation < 1:
+            raise ValueError("Dilation must be greater than 0")
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        #  X_transformed : Series of mtype nested_univ
+        #       transformed version of X
+        """
+        return X.applymap(self._dilate_series, d=self.dilation)
+
+    def _dilate_series(self, x, d):
+        x_dilated = pd.Series()
+        for i in range(0, d):
+            x_dilated = pd.concat((x_dilated, x[i::d]))
+        return x_dilated
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = [{"dilation": 2}]
+        return params
