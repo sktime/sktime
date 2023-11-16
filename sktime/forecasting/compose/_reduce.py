@@ -429,17 +429,28 @@ class _DirectReducer(_Reducer):
 
     def _transform(self, y, X=None):
         fh = self.fh.to_relative(self.cutoff)
-        return _sliding_window_transform(
-            y,
-            window_length=self.window_length_,
-            fh=fh,
-            X=X,
-            transformers=self.transformers_,
-            scitype=self._estimator_scitype,
-            pooling=self.pooling,
-            windows_identical=self.windows_identical,
-        )
-
+        if self.exog_strategy == "lagging":
+            return _sliding_window_transform(
+                y,
+                window_length=self.window_length_,
+                fh=fh,
+                X=X,
+                transformers=self.transformers_,
+                scitype=self._estimator_scitype,
+                pooling=self.pooling,
+                windows_identical=self.windows_identical,
+            )
+        elif self.exog_strategy == "direct":
+            y, X_ = _sliding_window_transform(
+                y,
+                self.window_length_,
+                fh,
+                transformers=self.transformers_,
+                scitype=self._estimator_scitype,
+                pooling=self.pooling,
+            )
+            X = [X_] if X is None else [X_.repeat(3, axis=0), X[self.window_length_:]]
+            return y, np.concatenate(X, axis=-1)
     def _fit(self, y, X, fh):
         """Fit to training data.
 
@@ -643,13 +654,24 @@ class _MultioutputReducer(_Reducer):
 
     def _transform(self, y, X=None):
         fh = self.fh.to_relative(self.cutoff)
-        return _sliding_window_transform(
-            y,
-            window_length=self.window_length,
-            fh=fh,
-            X=X,
-            scitype=self._estimator_scitype,
-        )
+        if self.exog_strategy == "Lagging":
+            return _sliding_window_transform(
+                y,
+                window_length=self.window_length,
+                fh=fh,
+                X=X,
+                scitype=self._estimator_scitype,
+            )
+        else:
+            y, X_ =  _sliding_window_transform(
+                y,
+                window_length=self.window_length,
+                fh=fh,
+                scitype=self._estimator_scitype,
+            )
+            X = [X_] if X is None else [X_, X[self.window_length_:].T]
+            return y, np.concatenate(X, axis=-1)
+
 
     def _fit(self, y, X, fh):
         """Fit to training data.
