@@ -7,8 +7,8 @@ from skbase.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("torch", severity="none"):
     import FrEIA.framework as Ff
     import FrEIA.modules as Fm
-    import torch.nn as nn
     import torch
+    import torch.nn as nn
 
 else:
 
