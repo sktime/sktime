@@ -292,6 +292,14 @@ Depending on the transformer, the transformation parameters can be fitted.
 
     ScaledAsinhTransformer
 
+.. currentmodule:: sktime.transformations.series.dilation_mapping
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DilationMappingTransformer
+
 Detrending and Decomposition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
