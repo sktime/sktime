@@ -38,11 +38,11 @@ class DilationMappingTransformer(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Panel",
-        "scitype:transform-output": "Panel",
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
-        "X_inner_mtype": "nested_univ",
+        "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
         "univariate-only": False,
         "requires_y": False,
@@ -78,13 +78,13 @@ class DilationMappingTransformer(BaseTransformer):
         #  X_transformed : Series of mtype nested_univ
         #       transformed version of X
         """
-        return X.applymap(self._dilate_series, d=self.dilation)
+        return self._dilate_series(X, self.dilation)
 
-    def _dilate_series(self, x, d):
-        x_dilated = pd.Series()
+    def _dilate_series(self, X, d):
+        X_dilated = pd.DataFrame(columns=X.columns)
         for i in range(0, d):
-            x_dilated = pd.concat((x_dilated, x[i::d]))
-        return x_dilated
+            X_dilated = pd.concat((X_dilated, X[i::d]), axis=0)
+        return X_dilated.reset_index(drop=True)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
