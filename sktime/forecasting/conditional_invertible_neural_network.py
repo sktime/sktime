@@ -106,7 +106,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         window_size=28 * 24,
         epochs=50,
         verbose=False,
-        f_statistic=default_sine,
+        f_statistic=None,
         init_param_f_statistic=None,
     ):
         self.n_coupling_layers = n_coupling_layers
@@ -119,13 +119,13 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self.lr = lr
         self.weight_decay = weight_decay
         self.window_size = window_size
-        self.f_statistic = f_statistic
+        self.f_statistic = f_statistic if f_statistic is not None else default_sine
         self.init_param_f_statistic = (
             init_param_f_statistic
             if init_param_f_statistic is not None
             else [1, 0, 0, 10, 1, 1]
         )
-        self.fourier_terms_list = fourier_terms_list if fourier_terms_list else [1, 1]
+        self.fourier_terms_list = fourier_terms_list if fourier_terms_list else [1]
         super().__init__()
 
     def _fit(self, y, fh, X=None):
