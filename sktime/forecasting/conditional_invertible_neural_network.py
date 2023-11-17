@@ -70,8 +70,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     --------
     >>> from sktime.forecasting.conditional_invertible_neural_network import (
     ...     cINNForecaster,
-    ...)
-
+    ... )
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> model = cINNForecaster()
