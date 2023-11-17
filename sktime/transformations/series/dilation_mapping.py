@@ -83,7 +83,7 @@ class DilationMappingTransformer(BaseTransformer):
 
         Returns
         -------
-        #  X_transformed : Series of mtype nested_univ
+        #  X_transformed : Series of mtype pd.Series
         #       transformed version of X
         """
         return self._dilate_series(X, self.dilation)
