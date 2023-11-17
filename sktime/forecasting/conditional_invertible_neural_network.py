@@ -99,9 +99,9 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
     def __init__(
         self,
-        n_coupling_layers,
-        hidden_dim_size,
-        sample_dim,
+        n_coupling_layers=10,
+        hidden_dim_size=32,
+        sample_dim=24,
         encoded_cond_size=64,
         lr=5e-4,
         weight_decay=1e-5,
