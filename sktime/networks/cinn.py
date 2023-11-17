@@ -113,14 +113,14 @@ class cINNNetwork:
             """Return the trainable parameters of the cINN."""
             return self.trainable_parameters
 
-        def create_subnet(self, hidden_dim_size=32, activation=nn.ReLU):
+        def create_subnet(self, hidden_dim_size, activation):
             """Create a subnet for the cINN.
 
             Parameters
             ----------
-            hidden_dim_size : int, optional (default=32)
+            hidden_dim_size : int, optional
                 Number of hidden units in the subnet.
-            activation : torch.nn.Module, optional (default=nn.ReLU)
+            activation : torch.nn.Module, optional
                 Activation function to use in the subnet.
             """
 
