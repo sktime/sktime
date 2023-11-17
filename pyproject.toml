@@ -262,7 +262,7 @@ cython_extras = [
 dl = [
   'tensorflow<=2.14,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
-  'FrEIA',
+  'FrEIA; python_version < "3.12"',
 ]
 mlflow = [
   "mlflow",
