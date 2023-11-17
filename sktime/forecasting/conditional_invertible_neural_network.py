@@ -8,9 +8,13 @@ import numpy as np
 import pandas as pd
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base.adapters._pytorch import (
+    BaseDeepNetworkPyTorch,
+    PyTorchTrainDataset,
+)
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.trend import CurveFitForecaster
 from sktime.transformations.merger import Merger
 from sktime.transformations.series.fourier import FourierFeatures
@@ -66,11 +70,11 @@ class cINNNetwork(nn.Module):
         )
         self.hidden_dim_size = hidden_dim_size
         self.activation = activation
-        self.cinn = self.build_inn(
+        self.network = self.build_inn(
             horizon, cond_features, encoded_cond_size, num_coupling_layers
         )
         self.trainable_parameters = [
-            p for p in self.cinn.parameters() if p.requires_grad
+            p for p in self.network.parameters() if p.requires_grad
         ]
         for p in self.trainable_parameters:
             p.data = 0.01 * torch.randn_like(p)
@@ -113,6 +117,10 @@ class cINNNetwork(nn.Module):
             nodes.append(Ff.Node(nodes[-1], Fm.PermuteRandom, {"seed": k}))
         return Ff.GraphINN(nodes + [cond, Ff.OutputNode(nodes[-1])], verbose=False)
 
+    def parameters(self, recurse: bool = True):
+        """Return the trainable parameters of the cINN."""
+        return self.trainable_parameters
+
     def create_subnet(self, hidden_dim_size=32, activation=nn.ReLU):
         """Create a subnet for the cINN.
 
@@ -150,10 +158,10 @@ class cINNNetwork(nn.Module):
                 c = self._calculate_condition(torch.from_numpy(c.astype("float32")))
             else:
                 c = self._calculate_condition(c)
-            z, jac = self.cinn(torch.from_numpy(x.astype("float32")), c=c, rev=rev)
+            z, jac = self.network(torch.from_numpy(x.astype("float32")), c=c, rev=rev)
         else:
             c = self._calculate_condition(c)
-            z, jac = self.cinn(x.float(), c=c, rev=rev)
+            z, jac = self.network(x.float(), c=c, rev=rev)
         return z, jac
 
     def _calculate_condition(self, c):
@@ -173,10 +181,10 @@ class cINNNetwork(nn.Module):
             Condition tensor of shape (batch_size, cond_features * horizon).
         """
         c = self._calculate_condition(c)
-        return self.cinn(z, c=c, rev=True)[0].detach().numpy()
+        return self.network(z, c=c, rev=True)[0].detach().numpy()
 
 
-class cINNForecaster(BaseForecaster):
+class cINNForecaster(BaseDeepNetworkPyTorch):
     """
     Conditional Invertible Neural Network Forecaster.
 
@@ -208,6 +216,20 @@ class cINNForecaster(BaseForecaster):
         Function to use for the rolling mean transformer.
     init_param_f_statistic : list of float, optional (default=[1, 0, 0, 10, 1, 1])
         Initial parameters for the f_statistic function.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.cinn import cINNForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> model = cINNForecaster()
+    >>> model.fit(y) # doctest: +SKIP
+    cINNForecaster(...)
+    >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
+    >>> y_pred # doctest: +SKIP
+    1961-01    515.456726
+    1961-02    576.704712
+    1961-03    559.859680
     """
 
     _tags = {
@@ -232,18 +254,18 @@ class cINNForecaster(BaseForecaster):
         encoded_cond_size=64,
         lr=5e-4,
         weight_decay=1e-5,
-        sp_list=[24],
-        fourier_terms_list=[1, 1],
+        sp_list=None,
+        fourier_terms_list=None,
         window_size=28 * 24,
         epochs=50,
         verbose=False,
         f_statistic=default_sine,
-        init_param_f_statistic=[1, 0, 0, 10, 1, 1],
+        init_param_f_statistic=None,
     ):
         self.n_coupling_layers = n_coupling_layers
         self.hidden_dim_size = hidden_dim_size
         self.sample_dim = sample_dim
-        self.sp_list = sp_list
+        self.sp_list = sp_list if sp_list is not None else [24]
         self.verbose = verbose
         self.epochs = epochs
         self.encoded_cond_size = encoded_cond_size
@@ -251,12 +273,15 @@ class cINNForecaster(BaseForecaster):
         self.weight_decay = weight_decay
         self.window_size = window_size
         self.f_statistic = f_statistic
-        self.init_param_f_statistic = init_param_f_statistic
-        self.fourier_terms_list = fourier_terms_list
-        # leave this as is
+        self.init_param_f_statistic = (
+            init_param_f_statistic
+            if init_param_f_statistic is not None
+            else [1, 0, 0, 10, 1, 1]
+        )
+        self.fourier_terms_list = fourier_terms_list if fourier_terms_list else [1, 1]
         super().__init__()
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, fh, X=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -286,14 +311,13 @@ class cINNForecaster(BaseForecaster):
         self : reference to self
         """
         # Fit the rolling mean forecaster
-        # TODO future work might extend this features to use also min, max, etc.
         rolling_mean = WindowSummarizer(
             lag_feature={"mean": [[-self.window_size // 2, self.window_size // 2]]},
             truncate="fill",
         ).fit_transform(y)
 
         self.function = CurveFitForecaster(
-            self.f_statistic, {"p0": self.init_param_f_statistic}
+            self.f_statistic, {"p0": self.init_param_f_statistic}, normalise_index=True
         )
         self.function.fit(rolling_mean.dropna())
         self.fourier_features = FourierFeatures(
@@ -301,19 +325,12 @@ class cINNForecaster(BaseForecaster):
         )
         self.fourier_features.fit(y)
 
-        y, X = self._prepare_data(y, X)
-        dataset = TensorDataset(y, X)
+        dataset = self._prepare_data(y, X)
         data_loader = DataLoader(dataset, batch_size=64, shuffle=True)
 
-        self.cinn = self.cINNNetwork(
-            horizon=self.sample_dim,
-            cond_features=self.n_cond_features,
-            encoded_cond_size=self.encoded_cond_size,
-            num_coupling_layers=self.n_coupling_layers,
-        )
-        self.optimizer = torch.optim.Adam(
-            self.cinn.trainable_parameters, lr=self.lr, weight_decay=self.weight_decay
-        )
+        self.network = self._build_network(None)
+
+        self.optimizer = self._instatiate_optimizer()
 
         # Fit the cINN
         for epoch in range(self.epochs):
@@ -322,15 +339,24 @@ class cINNForecaster(BaseForecaster):
         self.z_mean_ = 0
         self.z_std_ = 0.3
 
-    def _run_epoch(self, epoch, data_loader):
-        for i, _input in enumerate(data_loader):
-            (x, c) = _input
+    def _build_network(self, fh):
+        return cINNNetwork(
+            horizon=self.sample_dim,
+            cond_features=self.n_cond_features,
+            encoded_cond_size=self.encoded_cond_size,
+            num_coupling_layers=self.n_coupling_layers,
+        )
 
-            z, log_j = self.cinn(x, c)  # torch.cat([c, w], axis=-1))
+    def _run_epoch(self, epoch, data_loader):
+        nll = None
+        for i, _input in enumerate(data_loader):
+            (c, x) = _input
+
+            z, log_j = self.network(x, c)  # torch.cat([c, w], axis=-1))
             nll = torch.mean(z**2) / 2 - torch.mean(log_j) / self.sample_dim
             nll.backward()
 
-            torch.nn.utils.clip_grad_norm(self.cinn.trainable_parameters, 1.0)
+            torch.nn.utils.clip_grad_norm(self.network.trainable_parameters, 1.0)
             self.optimizer.step()
             self.optimizer.zero_grad()
             if not i % 100 and self.verbose:
@@ -338,8 +364,7 @@ class cINNForecaster(BaseForecaster):
                 pass
         return nll.detach().numpy()
 
-    # todo: implement this, mandatory
-    def _predict(self, fh, X):
+    def _predict(self, X=None, fh=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -365,18 +390,24 @@ class cINNForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        if fh is None:
+            fh = self._fh
+
         index = list(fh.to_absolute(self.cutoff))
         X = X.loc[index]
         z = np.random.normal(self.z_mean_, self.z_std_, (len(X)))
         z = pd.Series(z, index=index)
 
-        z, X = self._prepare_data(z, X)
+        dataset = self._prepare_data(z, X)
+        X, z = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(X))))
 
-        res = self.cinn.reverse_sample(z, c=X).reshape((-1, self.sample_dim))
+        res = self.network.reverse_sample(
+            z, c=X.reshape((-1, self.sample_dim * self.n_cond_features))
+        )
 
-        result = Merger().fit_transform(res)
+        result = Merger(stride=1).fit_transform(res.reshape((len(res), 1, 24)))
 
-        return pd.DataFrame(result, index=index)
+        return pd.DataFrame(result.values, index=index)
 
     def _prepare_data(self, yz, X):
         cal_features = self.fourier_features.transform(yz)
@@ -389,60 +420,9 @@ class cINNForecaster(BaseForecaster):
         )
         self.n_cond_features = len(X.columns)
 
-        Zt = []
-        Xt = []
+        dataset = PyTorchTrainDataset(yz, 0, fh=self.sample_dim, X=X)
+        return dataset
 
-        for k in range(self.sample_dim):
-            i = k
-            j = len(X) - self.sample_dim + 1 + k
-            Zt.append(yz[i:j])
-            Xt.append(X[i:j])
-
-        yz = np.stack(Zt).swapaxes(0, 1)
-        X = np.stack(Xt).swapaxes(0, 1).swapaxes(1, 2)
-
-        yz = torch.from_numpy(yz.astype("float32"))
-        X = torch.from_numpy(X.astype("float32"))
-        return yz, X
-
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
-
-        Returns
-        -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
-        """
-        # TODO Lukas Probably you should implement this method!
-
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -462,5 +442,7 @@ class cINNForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
-        # TODO
+        params = [
+            {},
+        ]
+        return params

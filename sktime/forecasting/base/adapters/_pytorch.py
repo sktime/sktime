@@ -1,9 +1,11 @@
+import abc
 from abc import ABC
 
 import numpy as np
 import pandas as pd
+from torch.utils.data import Dataset
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -56,8 +58,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         X : iterable-style or map-style dataset
             see (https://pytorch.org/docs/stable/data.html) for more information
         """
-        from sktime.forecasting.base import ForecastingHorizon
-
         # save fh and y for prediction later
         if fh.is_relative:
             self._fh = fh
@@ -66,36 +66,37 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
             self._fh = fh
 
         self._y = y
-
-        if type(fh) is ForecastingHorizon:
-            self.network = self._build_network(fh._values[-1])
+        if isinstance(self.fh, ForecastingHorizon):
+            self.network = self._build_network(self.fh._values[-1])
         else:
-            self.network = self._build_network(fh)
+            self.network = self._build_network(self.fh)
 
-        if self.criterion:
-            if self.criterion in self.criterions.keys():
-                if self.criterion_kwargs:
-                    self._criterion = self.criterions[self.criterion](
-                        **self.criterion_kwargs
-                    )
-                else:
-                    self._criterion = self.criterions[self.criterion]()
-            else:
-                raise TypeError(
-                    f"Please pass one of {self.criterions.keys()} for `criterion`."
-                )
-        else:
-            # default criterion
-            self._criterion = torch.nn.MSELoss()
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instatiate_optimizer()
 
+        dataloader = self.build_pytorch_train_dataloader(y)
+        self.network.train()
+
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+    def _run_epoch(self, epoch, dataloader):
+        for x, y in dataloader:
+            y_pred = self.network(x)
+            loss = self._criterion(y_pred, y)
+            self._optimizer.zero_grad()
+            loss.backward()
+            self._optimizer.step()
+
+    def _instatiate_optimizer(self):
         if self.optimizer:
             if self.optimizer in self.optimizers.keys():
                 if self.optimizer_kwargs:
-                    self._optimizer = self.optimizers[self.optimizer](
+                    return self.optimizers[self.optimizer](
                         self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
                     )
                 else:
-                    self._optimizer = self.optimizers[self.optimizer](
+                    return self.optimizers[self.optimizer](
                         self.network.parameters(), lr=self.lr
                     )
             else:
@@ -104,18 +105,22 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
                 )
         else:
             # default optimizer
-            self._optimizer = torch.optim.Adam(self.network.parameters(), lr=self.lr)
+            return torch.optim.Adam(self.network.parameters(), lr=self.lr)
 
-        dataloader = self.build_pytorch_train_dataloader(y)
-        self.network.train()
-
-        for _ in range(self.num_epochs):
-            for x, y in dataloader:
-                y_pred = self.network(x)
-                loss = self._criterion(y_pred, y)
-                self._optimizer.zero_grad()
-                loss.backward()
-                self._optimizer.step()
+    def _instantiate_criterion(self):
+        if self.criterion:
+            if self.criterion in self.criterions.keys():
+                if self.criterion_kwargs:
+                    return self.criterions[self.criterion](**self.criterion_kwargs)
+                else:
+                    return self.criterions[self.criterion]()
+            else:
+                raise TypeError(
+                    f"Please pass one of {self.criterions.keys()} for `criterion`."
+                )
+        else:
+            # default criterion
+            return torch.nn.MSELoss()
 
     def _predict(self, X=None, fh=None):
         """Predict with fitted model."""
@@ -170,10 +175,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
                 fh=self._fh._values[-1],
             )
 
-        return DataLoader(
-            dataset,
-            self.batch_size,
-        )
+        return DataLoader(dataset, self.batch_size, shuffle=True)
 
     def build_pytorch_pred_dataloader(self, y, fh):
         """Build PyTorch DataLoader for prediction."""
@@ -208,12 +210,17 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         y_true = [y.flatten().numpy() for _, y in dataloader]
         return np.concatenate(y_true, axis=0)
 
+    @abc.abstractmethod
+    def _build_network(self, fh):
+        pass
 
-class PyTorchTrainDataset:
+
+class PyTorchTrainDataset(Dataset):
     """Dataset for use in sktime deep learning forecasters."""
 
-    def __init__(self, y, seq_len, fh):
+    def __init__(self, y, seq_len, fh=None, X=None):
         self.y = y.values
+        self.X = X.values if X is not None else X
         self.seq_len = seq_len
         self.fh = fh
 
@@ -225,18 +232,26 @@ class PyTorchTrainDataset:
         """Return data point."""
         from torch import from_numpy, tensor
 
+        hist_y = tensor(self.y[i : i + self.seq_len]).float()
+        if self.X is not None:
+            exog_data = tensor(
+                self.X[i + self.seq_len : i + self.seq_len + self.fh]
+            ).float()
+        else:
+            exog_data = tensor([])
         return (
-            tensor(self.y[i : i + self.seq_len]).float(),
+            torch.cat([hist_y, exog_data]),
             from_numpy(self.y[i + self.seq_len : i + self.seq_len + self.fh]).float(),
         )
 
 
-class PyTorchPredDataset:
+class PyTorchPredDataset(Dataset):
     """Dataset for use in sktime deep learning forecasters."""
 
-    def __init__(self, y, seq_len):
+    def __init__(self, y, seq_len, X=None):
         self.y = y.values
         self.seq_len = seq_len
+        self.X = X.values if X is not None else X
 
     def __len__(self):
         """Return length of dataset."""
@@ -246,7 +261,14 @@ class PyTorchPredDataset:
         """Return data point."""
         from torch import from_numpy, tensor
 
+        hist_y = tensor(self.y[i : i + self.seq_len]).float()
+        if self.X is not None:
+            exog_data = tensor(
+                self.X[i + self.seq_len : i + self.seq_len + self.fh]
+            ).float()
+        else:
+            exog_data = tensor([])
         return (
-            tensor(self.y[i : i + self.seq_len]).float(),
+            torch.cat([hist_y, exog_data]),
             from_numpy(self.y[i + self.seq_len : i + self.seq_len]).float(),
         )
