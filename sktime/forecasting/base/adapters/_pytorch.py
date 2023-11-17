@@ -22,7 +22,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
     """Abstract base class for deep learning networks using torch.nn."""
 
     _tags = {
-        "python_dependencies": "torch",
+        "python_dependencies": ["torch"],
         "y_inner_mtype": "pd.DataFrame",
         "capability:insample": False,
         "capability:pred_int:insample": False,
