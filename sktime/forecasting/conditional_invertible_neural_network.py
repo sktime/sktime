@@ -10,11 +10,11 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base.adapters._pytorch import (
     BaseDeepNetworkPyTorch,
     PyTorchTrainDataset,
 )
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.trend import CurveFitForecaster
 from sktime.transformations.merger import Merger
 from sktime.transformations.series.fourier import FourierFeatures
@@ -62,7 +62,7 @@ class cINNNetwork(nn.Module):
         hidden_dim_size=64,
         activation=nn.ReLU,
     ) -> None:
-        super(cINNNetwork, self).__init__()
+        super().__init__()
         self.cond_net = nn.Sequential(
             nn.Linear(cond_features * horizon, 128),
             nn.ReLU(),
@@ -219,7 +219,9 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
     Examples
     --------
-    >>> from sktime.forecasting.cinn import cINNForecaster
+    >>> from sktime.forecasting.conditional_invertible_neural_network import (
+    ...     cINNForecaster,
+    ...)
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> model = cINNForecaster()
