@@ -3,13 +3,19 @@ from abc import ABC
 
 import numpy as np
 import pandas as pd
-from torch.utils.data import Dataset
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
+    from torch.utils.data import Dataset
+else:
+
+    class Dataset:
+        """Dummy class if torch is unavailable."""
+
+        pass
 
 
 class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
