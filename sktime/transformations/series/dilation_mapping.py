@@ -35,6 +35,14 @@ class DilationMappingTransformer(BaseTransformer):
     ----------
     dilation_ : int
         The actual dilation factor used. This is equal to the `dilation` parameter.
+
+    Example
+    ----------
+    >>> from sktime.transformations.series.dilation_mapping import \
+    ...     DilationMappingTransformer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> y_transform = DilationMappingTransformer(dilation=2).fit_transform(y)
     """
 
     _tags = {
