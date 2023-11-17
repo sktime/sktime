@@ -77,10 +77,6 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     >>> model.fit(y) # doctest: +SKIP
     cINNForecaster(...)
     >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
-    >>> y_pred # doctest: +SKIP
-    1961-01    515.456726
-    1961-02    576.704712
-    1961-03    559.859680
     """
 
     _tags = {
