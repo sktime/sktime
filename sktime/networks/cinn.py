@@ -50,7 +50,7 @@ class cINNNetwork:
             encoded_cond_size=64,
             num_coupling_layers=15,
             hidden_dim_size=64,
-            activation=nn.ReLU,
+            activation=None,
         ) -> None:
             super().__init__()
             self.cond_net = nn.Sequential(
@@ -59,7 +59,7 @@ class cINNNetwork:
                 nn.Linear(128, encoded_cond_size),
             )
             self.hidden_dim_size = hidden_dim_size
-            self.activation = activation
+            self.activation = activation if activation is not None else nn.ReLU
             self.network = self.build_inn(
                 horizon, cond_features, encoded_cond_size, num_coupling_layers
             )
@@ -184,14 +184,14 @@ class cINNNetwork:
         encoded_cond_size=64,
         num_coupling_layers=15,
         hidden_dim_size=64,
-        activation=nn.ReLU,
+        activation=None,
     ) -> None:
         self.horizon = horizon
         self.cond_features = cond_features
         self.encoded_cond_size = encoded_cond_size
         self.num_coupling_layers = num_coupling_layers
         self.hidden_dim_size = hidden_dim_size
-        self.activation = activation
+        self.activation = activation if activation is not None else nn.ReLU
 
     def build(self):
         """Build the cINN."""
