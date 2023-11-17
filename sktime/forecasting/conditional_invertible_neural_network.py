@@ -73,7 +73,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     ... )
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> model = cINNForecaster()
+    >>> model = cINNForecaster() # doctest: +SKIP
     >>> model.fit(y) # doctest: +SKIP
     cINNForecaster(...)
     >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
@@ -290,6 +290,9 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
-            {"epochs": 1},
+            {
+                "epochs": 1,
+                "window_size": 4,
+            }
         ]
         return params
