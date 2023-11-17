@@ -361,9 +361,9 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             torch.nn.utils.clip_grad_norm(self.network.trainable_parameters, 1.0)
             self.optimizer.step()
             self.optimizer.zero_grad()
-            if not i % 100 and self.verbose:
-                print(epoch, i, nll.detach().numpy())
-                pass
+#            if not i % 100 and self.verbose:
+#                print(epoch, i, nll.detach().numpy())
+#                pass
         return nll.detach().numpy()
 
     def _predict(self, X=None, fh=None):
