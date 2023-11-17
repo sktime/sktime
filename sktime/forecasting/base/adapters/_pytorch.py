@@ -231,7 +231,7 @@ class PyTorchTrainDataset(Dataset):
 
     def __len__(self):
         """Return length of dataset."""
-        return len(self.y) - self.seq_len - self.fh + 1
+        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
 
     def __getitem__(self, i):
         """Return data point."""
