@@ -290,6 +290,6 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
-            {},
+            {"epochs": 1},
         ]
         return params
