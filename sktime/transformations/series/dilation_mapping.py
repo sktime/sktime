@@ -50,9 +50,9 @@ class DilationMappingTransformer(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
-        "X_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
-        "univariate-only": False,
+        "univariate-only": True,
         "requires_y": False,
         "fit_is_empty": True,
         "capability:inverse_transform": False,
@@ -88,11 +88,11 @@ class DilationMappingTransformer(BaseTransformer):
         """
         return self._dilate_series(X, self.dilation)
 
-    def _dilate_series(self, X, d):
-        X_dilated = pd.DataFrame(columns=X.columns)
+    def _dilate_series(self, x, d):
+        x_dilated = pd.Series(name=x.name)
         for i in range(0, d):
-            X_dilated = pd.concat((X_dilated, X[i::d]), axis=0)
-        return X_dilated.reset_index(drop=True)
+            x_dilated = pd.concat((x_dilated, x[i::d]), axis=0)
+        return x_dilated.reset_index(drop=True)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
