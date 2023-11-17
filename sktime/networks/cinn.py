@@ -5,17 +5,19 @@ import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
-    import FrEIA.framework as Ff
-    import FrEIA.modules as Fm
     import torch
     import torch.nn as nn
-
 else:
 
     class nn:
         """Dummy class if torch is unavailable."""
 
         pass
+
+
+if _check_soft_dependencies("FrEIA", severity="none"):
+    import FrEIA.framework as Ff
+    import FrEIA.modules as Fm
 
 
 class cINNNetwork:

@@ -3,8 +3,7 @@ __author__ = ["benHeid"]
 
 import numpy as np
 import pandas as pd
-import torch
-from torch.utils.data import DataLoader
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base.adapters._pytorch import (
@@ -16,6 +15,10 @@ from sktime.networks.cinn import cINNNetwork
 from sktime.transformations.merger import Merger
 from sktime.transformations.series.fourier import FourierFeatures
 from sktime.transformations.series.summarize import WindowSummarizer
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch.utils.data import DataLoader
 
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
