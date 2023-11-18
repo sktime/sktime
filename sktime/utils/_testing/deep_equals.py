@@ -109,6 +109,9 @@ def deep_equals(x, y, return_msg=False):
                 False, f".dtypes, x.dtypes = {x.dtypes} != y.dtypes = {y.dtypes}"
             )
         # check index for equality
+        # we are not recursing due to ambiguity in integer index types
+        # which may differ from pandas version to pandas version
+        # and would upset the type check, e.g., RangeIndex(2) vs Index([0, 1])
         xix = x.index
         yix = y.index
         if hasattr(x, "dtype") and hasattr(y, "dtype"):
@@ -125,9 +128,7 @@ def deep_equals(x, y, return_msg=False):
                     ".index.dtypes, x.dtypes = {} != y.index.dtypes = {}",
                     [xix.dtypes, yix.dtypes],
                 )
-        eq, msg = deep_equals(xix.values, yix.values, return_msg=True)
-        if not eq:
-            return ret(False, ".index.values" + msg)
+        return ret(xix.equals(yix), ".index.values" + msg)
         # if columns, dtypes are equal and at least one is object, recurse over Series
         if sum(x.dtypes == "object") > 0:
             for c in x.columns:
