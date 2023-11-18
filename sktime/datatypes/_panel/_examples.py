@@ -68,7 +68,7 @@ example_dict[("pd-multiindex", "Panel", 0)] = X
 example_dict_lossy[("pd-multiindex", "Panel", 0)] = False
 
 cols = [f"var_{i}" for i in range(2)]
-X = pd.DataFrame(columns=cols, index=[0, 1, 2])
+X = pd.DataFrame(columns=cols, index=pd.RangeIndex(3))
 X["var_0"] = pd.Series(
     [pd.Series([1, 2, 3]), pd.Series([1, 2, 3]), pd.Series([1, 2, 3])]
 )
@@ -143,7 +143,7 @@ example_dict[("pd-multiindex", "Panel", 1)] = X
 example_dict_lossy[("pd-multiindex", "Panel", 1)] = False
 
 cols = [f"var_{i}" for i in range(1)]
-X = pd.DataFrame(columns=cols, index=[0, 1, 2])
+X = pd.DataFrame(columns=cols, index=pd.RangeIndex(3))
 X["var_0"] = pd.Series(
     [pd.Series([4, 5, 6]), pd.Series([4, 55, 6]), pd.Series([42, 5, 6])]
 )
@@ -211,7 +211,7 @@ example_dict[("pd-multiindex", "Panel", 2)] = X
 example_dict_lossy[("pd-multiindex", "Panel", 2)] = False
 
 cols = [f"var_{i}" for i in range(1)]
-X = pd.DataFrame(columns=cols, index=[0])
+X = pd.DataFrame(columns=cols, index=pd.RangeIndex(1))
 X["var_0"] = pd.Series([pd.Series([4, 5, 6])])
 
 example_dict[("nested_univ", "Panel", 2)] = X
