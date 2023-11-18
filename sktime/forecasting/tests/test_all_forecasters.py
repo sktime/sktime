@@ -871,7 +871,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 assert set(X_test.index).issubset(y_pred_q.index)
 
     def test_fit_predict(self, estimator_instance, n_columns):
-        """Check fit_predict method."""
+        """Check fit_predict method against fit and predict."""
         y = _make_series(n_columns=n_columns)
         X = _make_series(n_columns=3)
 
@@ -895,4 +895,3 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 f"reason: {msg_de}"
             )
             raise AssertionError(msg)
- 
