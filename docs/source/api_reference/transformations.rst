@@ -292,7 +292,6 @@ Depending on the transformer, the transformation parameters can be fitted.
 
     ScaledAsinhTransformer
 
-
 Detrending and Decomposition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
