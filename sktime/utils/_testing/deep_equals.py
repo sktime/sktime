@@ -111,7 +111,7 @@ def deep_equals(x, y, return_msg=False):
         # check index for equality
         eq, msg = deep_equals(x.index, y.index, return_msg=True)
         if not eq:
-            return ret(False, f".index" + msg)
+            return ret(False, ".index" + msg)
         # if columns, dtypes are equal and at least one is object, recurse over Series
         if sum(x.dtypes == "object") > 0:
             for c in x.columns:
