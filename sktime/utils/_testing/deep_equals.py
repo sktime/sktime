@@ -165,7 +165,11 @@ def deep_equals(x, y, return_msg=False):
                     return ret(False, f'["{c}"]' + msg)
             return ret(True)
         else:
-            eq, msg = deep_equals(x.values, y.values, return_msg=True)
+            if isinstance(x.index, pd.MultiIndex):
+                x = x.reset_index()
+            if isinstance(y.index, pd.MultiIndex):
+                y = y.reset_index()
+            eq, msg = deep_equals(x, y, return_msg=True)
             return ret(eq, ".df_equals, x = {} != y = {}", [x, y])
     elif isinstance(x, pd.Index):
         if hasattr(x, "dtype") and hasattr(y, "dtype"):
