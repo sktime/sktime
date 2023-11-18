@@ -14,7 +14,8 @@ from sktime.transformations.base import BaseTransformer
 class DilationMappingTransformer(BaseTransformer):
     r"""DilationMapping transformer.
 
-    A transformer for applying dilation mapping to time series data, as seen in:
+    A transformer for applying convolutional dilation mapping to time series data,
+    as seen in:
     @article{schafer2023weasel,
         title={WEASEL 2.0--A Random Dilated Dictionary Transform for Fast,
         Accurate and Memory Constrained Time Series Classification},
@@ -22,7 +23,12 @@ class DilationMappingTransformer(BaseTransformer):
         journal={arXiv preprint arXiv:2301.10194},
         year={2023}
     }
-    The transformation is applied both to the values and the indices of the series.
+    Dilated convolutions 'inflate' the kernel by inserting spaces between
+    its elements. A kernel of size :math:`k`, when dilated by a factor :math:`d`,
+    attains an effective size :math:`k = k + (k - 1)(d - 1)`. This transformation
+    reorders the timesteps of a time series to simulate the effect of dilation.
+    For instance, in a pipeline, it enables a dilation-like effect for downstream
+    models that do not inherently support such a feature.
 
     Parameters
     ----------
@@ -33,7 +39,7 @@ class DilationMappingTransformer(BaseTransformer):
 
     Attributes
     ----------
-    dilation_ : int
+    dilation : int
         The actual dilation factor used. This is equal to the `dilation` parameter.
 
     Example
