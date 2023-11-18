@@ -13,6 +13,7 @@ from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
     TEST_FHS,
@@ -37,6 +38,7 @@ from sktime.utils._testing.forecasting import (
     make_forecasting_problem,
 )
 from sktime.utils._testing.series import _make_series
+from sktime.utils.deep_equals import deep_equals
 from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
@@ -867,3 +869,30 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 assert np.all(y_pred_q.index == X_test.index)
             else:
                 assert set(X_test.index).issubset(y_pred_q.index)
+
+    def test_fit_predict(self, estimator_instance, n_columns):
+        """Check fit_predict method."""
+        y = _make_series(n_columns=n_columns)
+        X = _make_series(n_columns=3)
+
+        fh = ForecastingHorizon([1, 2, 3])
+
+        y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
+
+        y_pred = estimator_instance.fit_predict(
+            y=y_train, X=X_train, fh=fh, X_pred=X_test
+        )
+
+        # check that fit_predict returns the same as fit and predict
+        estimator_instance.fit(y=y_train, X=X_train, fh=fh)
+        y_pred_expected = estimator_instance.predict(X=X_test)
+
+        eq, msg_de = deep_equals(y_pred, y_pred_expected)
+        if not eq:
+            msg = (
+                f"in estimator {type(estimator_instance).__name__}, "
+                "fit_predict does not return the same as fit and predict. "
+                f"reason: {msg_de}"
+            )
+            raise AssertionError(msg)
+ 
