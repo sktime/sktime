@@ -109,9 +109,25 @@ def deep_equals(x, y, return_msg=False):
                 False, f".dtypes, x.dtypes = {x.dtypes} != y.dtypes = {y.dtypes}"
             )
         # check index for equality
-        eq, msg = deep_equals(x.index, y.index, return_msg=True)
+        xix = x.index
+        yix = y.index
+        if hasattr(x, "dtype") and hasattr(y, "dtype"):
+            if not xix.dtype == yix.dtype:
+                return ret(
+                    False,
+                    ".index.dtype, x.index.dtype = {} != y.index.dtype = {}",
+                    [xix.dtype, yix.dtype],
+                )
+        if hasattr(xix, "dtypes") and hasattr(yix, "dtypes"):
+            if not x.dtypes.equals(y.dtypes):
+                return ret(
+                    False,
+                    ".index.dtypes, x.dtypes = {} != y.index.dtypes = {}",
+                    [xix.dtypes, yix.dtypes],
+                )
+        eq, msg = deep_equals(xix.values, yix.values, return_msg=True)
         if not eq:
-            return ret(False, ".index" + msg)
+            return ret(False, ".index.values" + msg)
         # if columns, dtypes are equal and at least one is object, recurse over Series
         if sum(x.dtypes == "object") > 0:
             for c in x.columns:
