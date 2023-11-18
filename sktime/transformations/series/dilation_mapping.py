@@ -25,7 +25,7 @@ class DilationMappingTransformer(BaseTransformer):
     }
     Dilated convolutions 'inflate' the kernel by inserting spaces between
     its elements. A kernel of size :math:`k`, when dilated by a factor :math:`d`,
-    attains an effective size :math:`k = k + (k - 1)(d - 1)`. This transformation
+    attains an effective size :math:`k' = k + (k - 1)(d - 1)`. This transformation
     reorders the timesteps of a time series to simulate the effect of dilation.
     For instance, in a pipeline, it enables a dilation-like effect for downstream
     models that do not inherently support such a feature.
