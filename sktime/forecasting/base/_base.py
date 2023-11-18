@@ -459,12 +459,12 @@ class BaseForecaster(BaseEstimator):
 
         return y_out
 
-    def fit_predict(self, y, X=None, fh=None, X_test=None):
+    def fit_predict(self, y, X=None, fh=None, X_pred=None):
         """Fit and forecast time series at future horizon.
 
-        Same as ``fit(y, X, fh).predict(X_test)``.
-        If ````X_test`` is not passed, same as
-        ``fit(y, fh, X).predict(X_test)``.
+        Same as ``fit(y, X, fh).predict(X_pred)``.
+        If ``X_pred`` is not passed, same as
+        ``fit(y, fh, X).predict(X)``.
 
         State change:
             Changes state to "fitted".
@@ -503,12 +503,14 @@ class BaseForecaster(BaseEstimator):
         X : time series in sktime compatible format, optional (default=None)
             Exogeneous time series to fit to
             Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
-            If self.get_tag("X-y-must-have-same-index"),
+            If ``self.get_tag("X-y-must-have-same-index")`` is True,
             X.index must contain y.index.
-            If, in addition, X_test is not passed, X must also contain fh.index.
-        X_test : time series in sktime compatible format, optional (default=None)
+            If, in addition, X_pred is not passed, X must also contain fh.index.
+        X_pred : time series in sktime compatible format, optional (default=None)
             Exogeneous time series to use in predict
             If passed, will be used in predict instead of X.
+            If ``self.get_tag("X-y-must-have-same-index")`` is True,
+            X_pred.index must contain fh.index.
 
         Returns
         -------
@@ -517,9 +519,9 @@ class BaseForecaster(BaseEstimator):
             y_pred has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
-        # if X_test is passed, run fit/predict with different X
-        if X_test is not None:
-            return self.fit(y=y, X=X, fh=fh).predict(X=X_test)
+        # if X_pred is passed, run fit/predict with different X
+        if X_pred is not None:
+            return self.fit(y=y, X=X, fh=fh).predict(X=X_pred)
         # otherwise, we use the same X for fit and predict
         # below code carries out conversion and checks for X only once
 
