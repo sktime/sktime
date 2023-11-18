@@ -43,7 +43,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         Number of coupling layers in the cINN.
     hidden_dim_size : int, optional (default=64)
         Number of hidden units in the subnet.
-    sample_dim : int, optional (default=12)
+    sample_dim : int, optional (default=24)
         Dimension of the samples that the cINN is creating
     batch_size : int, optional (default=64)
         Batch size for the training.
@@ -57,7 +57,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         List of seasonal periods to use for the Fourier features.
     fourier_terms_list : list of int, optional (default=[1, 1])
         List of number of Fourier terms to use for the Fourier features.
-    window_size : int, optional (default=2)
+    window_size : int, optional (default=24*30)
         Window size for the rolling mean transformer.
     num_epochs : int, optional (default=50)
         Number of epochs to train the cINN.
@@ -67,6 +67,9 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         Function to use for the rolling mean transformer.
     init_param_f_statistic : list of float, optional (default=[1, 0, 0, 10, 1, 1])
         Initial parameters for the f_statistic function.
+    deterministic : bool, optional (default=False)
+        Whether to use a deterministic or stochastic cINN. Note, deterministic
+        should only used for testing.
 
     References
     ----------
@@ -103,18 +106,19 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self,
         n_coupling_layers=10,
         hidden_dim_size=32,
-        sample_dim=12,
+        sample_dim=24,
         batch_size=64,
         encoded_cond_size=64,
         lr=5e-4,
         weight_decay=1e-5,
         sp_list=None,
         fourier_terms_list=None,
-        window_size=2,
+        window_size=24 * 30,
         num_epochs=50,
         verbose=False,
         f_statistic=None,
         init_param_f_statistic=None,
+        deterministic=False,
     ):
         self.n_coupling_layers = n_coupling_layers
         self.hidden_dim_size = hidden_dim_size
@@ -135,6 +139,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         )
         self.fourier_terms_list = fourier_terms_list
         self._fourier_terms_list = fourier_terms_list if fourier_terms_list else [1]
+        self.deterministic = deterministic
         super().__init__(num_epochs, batch_size, lr=lr)
 
     def _fit(self, y, fh, X=None):
@@ -258,6 +263,8 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             index = list(fh.to_absolute(self.cutoff))
         if X is not None:
             X = pd.concat([self._X, X]).loc[index]
+        if self.deterministic:
+            np.random.seed(42)
         z = np.random.normal(self.z_mean_, self.z_std_, (len(index)))
         z = pd.Series(z, index=index)
 
@@ -272,7 +279,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             res.reshape((len(res), 1, self.sample_dim))
         )
 
-        return pd.DataFrame(result.values, index=index).loc[
+        return pd.Series(result.values.reshape(-1), index=index, name=self._y.name).loc[
             list(fh.to_absolute(self.cutoff))
         ]
 
@@ -321,11 +328,117 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             {
                 "num_epochs": 1,
                 "window_size": 2,
+                "sample_dim": 12,
                 "f_statistic": _test_function,
                 "init_param_f_statistic": [1, 1],
+                "deterministic": True,
             }
         ]
         return params
+
+    def save(self, path=None, serialization_format="pickle"):
+        """Save serialized self to bytes-like object or to (.zip) file.
+
+        Behaviour:
+        if `path` is None, returns an in-memory serialized self
+        if `path` is a file, stores the zip with that name at the location.
+        The contents of the zip file are:
+        _metadata - contains class of self, i.e., type(self).
+        _obj - serialized self. This class uses the default serialization (pickle).
+        keras/ - model, optimizer and state stored inside this directory.
+        history - serialized history object.
+
+
+        Parameters
+        ----------
+        path : None or file location (str or Path)
+            if None, self is saved to an in-memory object
+            if file location, self is saved to that file location. For eg:
+                path="estimator" then a zip file `estimator.zip` will be made at cwd.
+                path="/home/stored/estimator" then a zip file `estimator.zip` will be
+                stored in `/home/stored/`.
+
+        serialization_format: str, default = "pickle"
+            Module to use for serialization.
+            The available options are present under
+            `sktime.base._base.SERIALIZATION_FORMATS`. Note that non-default formats
+            might require installation of other soft dependencies.
+
+        Returns
+        -------
+        if `path` is None - in-memory serialized self
+        if `path` is file location - ZipFile with reference to the file
+        """
+        tmp_network = None
+        tmp_forecasters = None
+        if hasattr(self, "network"):
+            self._state_dict = self.network.state_dict()
+            tmp_network = self.network
+            del self.network
+        if hasattr(self, "forecasters_"):
+            self._stored_forecasters = []
+            for forecaster in self.forecasters_.values[0, :]:
+                self._stored_forecasters.append(
+                    forecaster.save(serialization_format=serialization_format)
+                )
+            tmp_forecasters = self.forecasters_
+            del self.forecasters_
+        serial = super().save(path, serialization_format)
+        if tmp_network is not None:
+            self.network = tmp_network
+        if tmp_forecasters is not None:
+            self.forecasters_ = tmp_forecasters
+        return serial
+
+    @classmethod
+    def load_from_serial(cls, serial):
+        """Load object from serialized memory container.
+
+        Parameters
+        ----------
+        serial : 1st element of output of `cls.save(None)`
+
+        Returns
+        -------
+        deserialized self resulting in output `serial`, of `cls.save(None)`
+        """
+        import pickle
+
+        cinn_forecaster = pickle.loads(serial)
+        if hasattr(cinn_forecaster, "_state_dict"):
+            cinn_forecaster.network = cINNNetwork(
+                horizon=cinn_forecaster.sample_dim,
+                cond_features=cinn_forecaster.n_cond_features,
+                encoded_cond_size=cinn_forecaster.encoded_cond_size,
+                num_coupling_layers=cinn_forecaster.n_coupling_layers,
+            ).build()
+            cinn_forecaster.network.load_state_dict(cinn_forecaster._state_dict)
+        if hasattr(cinn_forecaster, "_stored_forecasters"):
+            forecasters = []
+            for forecaster in cinn_forecaster._stored_forecasters:
+                forecasters.append(forecaster[0].load_from_serial(forecaster[1]))
+            cinn_forecaster.forecasters_ = pd.DataFrame([forecasters])
+            cinn_forecaster.stored_forecasters = None
+        cinn_forecaster._state_dict = None
+        return cinn_forecaster
+
+    @classmethod
+    def load_from_path(cls, path):
+        """Load object from file location.
+
+        Parameters
+        ----------
+        serial : result of ZipFile(path).open("object)
+
+        Returns
+        -------
+        deserialized self resulting in output at `path`, of `cls.save(path)`
+        """
+        from zipfile import ZipFile
+
+        with ZipFile(path, "r") as file:
+            cinn_forecaster = cls.load_from_serial(file.open("_obj").read())
+        return cinn_forecaster
 
 
 def _test_function(x, a, b):
