@@ -411,7 +411,7 @@ Differencing, slope, kinematics
     KinematicFeatures
 
 Binning, sampling and segmentation
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.binning
 
