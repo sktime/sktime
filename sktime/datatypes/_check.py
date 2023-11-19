@@ -333,6 +333,7 @@ def mtype(
             mtype=m_plus_scitype[0],
             scitype=m_plus_scitype[1],
             return_metadata=[],
+            msg_return_dict="list"
         )
         if valid:
             mtypes_positive += [m_plus_scitype[0]]

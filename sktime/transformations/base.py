@@ -1216,6 +1216,7 @@ class BaseTransformer(BaseEstimator):
                 valid, msg, metadata = check_is_mtype(
                     Xt,
                     ["pd.DataFrame", "pd.Series", "np.ndarray"],
+                    msg_return_dict="list",
                     return_metadata=Xt_metadata_required,
                 )
 

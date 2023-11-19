@@ -830,7 +830,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.predict(X=X_test)
 
         assert isinstance(y_pred, pd.DataFrame)
-        assert check_is_mtype(y_pred, "pd_multiindex_hier")
+        assert check_is_mtype(y_pred, "pd_multiindex_hier", msg_return_dict="list")
         msg = (
             "returned columns after predict are not as expected. "
             f"expected: {y_train.columns}. Found: {y_pred.columns}"
