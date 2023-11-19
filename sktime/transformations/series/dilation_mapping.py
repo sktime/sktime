@@ -12,23 +12,25 @@ from sktime.transformations.base import BaseTransformer
 
 
 class DilationMappingTransformer(BaseTransformer):
-    r"""DilationMapping transformer.
+    r"""Dilation mapping transformer.
 
-    A transformer for applying convolutional dilation mapping to time series data,
-    as seen in:
-    @article{schafer2023weasel,
-        title={WEASEL 2.0--A Random Dilated Dictionary Transform for Fast,
-        Accurate and Memory Constrained Time Series Classification},
-        author={Sch{\"a}fer, Patrick and Leser, Ulf},
-        journal={arXiv preprint arXiv:2301.10194},
-        year={2023}
-    }
-    Dilated convolutions 'inflate' the kernel by inserting spaces between
-    its elements. A kernel of size :math:`k`, when dilated by a factor :math:`d`,
-    attains an effective size :math:`k' = k + (k - 1)(d - 1)`. This transformation
+    A transformer for applying an index grid dilation mapping to time series data,
+    in the terminology of [1]_.
+
+    This transformation is motivated by kernel dilation, it
     reorders the timesteps of a time series to simulate the effect of dilation.
     For instance, in a pipeline, it enables a dilation-like effect for downstream
     models that do not inherently support such a feature.
+
+    Mathematically, the mapping operates on sequences :math:`x_1, \dots, x_k`.
+    The dilation with factor :math:`d` is defined as the sequence
+    :math:`x_1, x_{1+d}, x_{1+2d}, \dots, x_2, x_{2+d}, x_{2+2d}, \dots, x_d, x_{2d}, \dots`,
+    where the subsequences with grid spacing :math:`d` are maximal.
+
+    The resulting sequence is of equal length to the input sequence.
+
+    This transformer reorders the values, and resets the sequence index
+    to a ``RangeIndex``, if the mtype is ``pandas`` based.
 
     Parameters
     ----------
@@ -37,10 +39,12 @@ class DilationMappingTransformer(BaseTransformer):
         transformed series. Must be an integer greater than 0. A dilation of 1 means no
         change, while higher values increase the spacing.
 
-    Attributes
+    References
     ----------
-    dilation : int
-        The actual dilation factor used. This is equal to the `dilation` parameter.
+    .. [1] Patrick Schäfer and Ulf Leser,
+       "WEASEL 2.0--A Random Dilated Dictionary Transform for Fast,
+       Accurate and Memory Constrained Time Series Classification", 2023,
+       arXiv preprint arXiv:2301.10194.
 
     Example
     ----------
@@ -49,7 +53,7 @@ class DilationMappingTransformer(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> y_transform = DilationMappingTransformer(dilation=2).fit_transform(y)
-    """
+    """  # noqa: E501
 
     _tags = {
         "scitype:transform-input": "Series",
