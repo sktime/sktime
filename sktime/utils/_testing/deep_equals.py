@@ -152,7 +152,7 @@ def deep_equals(x, y, return_msg=False):
                     return ret(False, f'["{c}"]' + msg)
             return ret(True)
         else:
-            return ret(x.equals(y), ".df_equals, x = {} != y = {}, x==y = {}", [x, y, pos])
+            return ret(x.equals(y), ".df_equals, x = {} != y = {}", [x, y])
     elif isinstance(x, pd.Index):
         if hasattr(x, "dtype") and hasattr(y, "dtype"):
             if not x.dtype == y.dtype:
