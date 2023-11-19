@@ -887,7 +887,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         estimator_instance.fit(y=y_train, X=X_train, fh=fh)
         y_pred_expected = estimator_instance.predict(X=X_test)
 
-        eq, msg_de = deep_equals(y_pred, y_pred_expected)
+        eq, msg_de = deep_equals(y_pred, y_pred_expected, return_msg=True)
         if not eq:
             msg = (
                 f"in estimator {type(estimator_instance).__name__}, "
