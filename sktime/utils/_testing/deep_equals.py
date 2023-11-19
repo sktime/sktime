@@ -114,7 +114,7 @@ def deep_equals(x, y, return_msg=False):
         # and would upset the type check, e.g., RangeIndex(2) vs Index([0, 1])
         xix = x.index
         yix = y.index
-        if hasattr(x, "dtype") and hasattr(y, "dtype"):
+        if hasattr(xix, "dtype") and hasattr(xix, "dtype"):
             if not xix.dtype == yix.dtype:
                 return ret(
                     False,
@@ -130,7 +130,34 @@ def deep_equals(x, y, return_msg=False):
                 )
         ix_eq = xix.equals(yix)
         if not ix_eq:
-            return ret(False, ".index.values, x = {} != y = {}", [xix, yix])
+            if not len(xix) == len(yix):
+                return ret(
+                    False,
+                    ".index.len, x.index.len = {} != y.index.len = {}",
+                    [len(xix), len(yix)],
+                )
+            if hasattr(xix, "name") and hasattr(yix, "name"):
+                if not xix.name == yix.name:
+                    return ret(
+                        False,
+                        ".index.name, x.index.name = {} != y.index.name = {}",
+                        [xix.name, yix.name],
+                    )
+            if hasattr(xix, "names") and hasattr(yix, "names"):
+                if not len(xix.names) == len(yix.names):
+                    return ret(
+                        False,
+                        ".index.names, x.index.names = {} != y.index.name = {}",
+                        [xix.names, yix.names],
+                    )
+                if not np.all(xix.names == yix.names):
+                    return ret(
+                        False,
+                        ".index.names, x.index.names = {} != y.index.name = {}",
+                        [xix.names, yix.names],
+                    )
+            elts_eq = np.all(xix == yix)
+            return ret(elts_eq, ".index.equals, x = {} != y = {}", [xix, yix])
         # if columns, dtypes are equal and at least one is object, recurse over Series
         if sum(x.dtypes == "object") > 0:
             for c in x.columns:
