@@ -219,7 +219,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             nll = torch.mean(z**2) / 2 - torch.mean(log_j) / self.sample_dim
             nll.backward()
 
-            torch.nn.utils.clip_grad_norm(self.network.trainable_parameters, 1.0)
+            torch.nn.utils.clip_grad_norm_(self.network.trainable_parameters, 1.0)
             self.optimizer.step()
             self.optimizer.zero_grad()
         #            if not i % 100 and self.verbose:
