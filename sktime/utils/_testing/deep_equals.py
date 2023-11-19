@@ -114,7 +114,7 @@ def deep_equals(x, y, return_msg=False):
         # and would upset the type check, e.g., RangeIndex(2) vs Index([0, 1])
         xix = x.index
         yix = y.index
-        if hasattr(x, "dtype") and hasattr(y, "dtype"):
+        if hasattr(xix, "dtype") and hasattr(xix, "dtype"):
             if not xix.dtype == yix.dtype:
                 return ret(
                     False,
@@ -136,26 +136,12 @@ def deep_equals(x, y, return_msg=False):
                     ".index.len, x.index.len = {} != y.index.len = {}",
                     [len(xix), len(yix)],
                 )
-            pos = xix == yix
-            if not np.all(pos):
-                return ret(
-                    False,
-                    ".index.values, x = {} != y = {}, x==y : {}",
-                    [xix, yix, pos],
-                )
             if hasattr(xix, "name") and hasattr(yix, "name"):
                 if not xix.name == yix.name:
                     return ret(
                         False,
                         ".index.name, x.index.name = {} != y.index.name = {}",
                         [xix.name, yix.name],
-                    )
-            if hasattr(xix, "names") and hasattr(yix, "names"):
-                if not np.all(xix.names == yix.names):
-                    return ret(
-                        False,
-                        ".index.names, x.index.names = {} != y.index.names = {}",
-                        [xix.names, yix.names],
                     )
             return ret(False, ".index.equals, x = {} != y = {}", [xix, yix])
         # if columns, dtypes are equal and at least one is object, recurse over Series
