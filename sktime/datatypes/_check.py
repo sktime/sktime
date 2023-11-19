@@ -269,6 +269,7 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
         scitype=scitype,
         return_metadata=[],
         var_name=var_name,
+        msg_return_dict="list",
     )
 
     if valid:
@@ -333,7 +334,7 @@ def mtype(
             mtype=m_plus_scitype[0],
             scitype=m_plus_scitype[1],
             return_metadata=[],
-            msg_return_dict="list"
+            msg_return_dict="list",
         )
         if valid:
             mtypes_positive += [m_plus_scitype[0]]
