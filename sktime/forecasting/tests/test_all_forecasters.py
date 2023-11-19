@@ -871,7 +871,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 assert set(X_test.index).issubset(y_pred_q.index)
 
     def test_fit_predict(self, estimator_instance, n_columns):
-        """Check fit_predict method against fit and predict."""
+        """Check fit_predict method against interface expectations.
+
+        Does not check directly against fit and predict, as either may
+        be stochastic and not return the same result each time.
+        """
         y = _make_series(n_columns=n_columns)
         X = _make_series(n_columns=3)
 
@@ -883,15 +887,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y=y_train, X=X_train, fh=fh, X_pred=X_test
         )
 
-        # check that fit_predict returns the same as fit and predict
-        estimator_instance.fit(y=y_train, X=X_train, fh=fh)
-        y_pred_expected = estimator_instance.predict(X=X_test)
-
-        eq, msg_de = deep_equals(y_pred, y_pred_expected, return_msg=True)
-        if not eq:
-            msg = (
-                f"in estimator {type(estimator_instance).__name__}, "
-                "fit_predict does not return the same as fit and predict. "
-                f"reason: {msg_de}"
-            )
-            raise AssertionError(msg)
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_train)
