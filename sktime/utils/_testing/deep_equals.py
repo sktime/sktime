@@ -143,7 +143,21 @@ def deep_equals(x, y, return_msg=False):
                         ".index.name, x.index.name = {} != y.index.name = {}",
                         [xix.name, yix.name],
                     )
-            return ret(False, ".index.equals, x = {} != y = {}", [xix, yix])
+            if hasattr(xix, "names") and hasattr(yix, "names"):
+                if not len(xix.names) == len(yix.names):
+                    return ret(
+                        False,
+                        ".index.names, x.index.names = {} != y.index.name = {}",
+                        [xix.names, yix.names],
+                    )
+                if not np.all(xix.names == yix.names):
+                    return ret(
+                        False,
+                        ".index.names, x.index.names = {} != y.index.name = {}",
+                        [xix.names, yix.names],
+                    )
+            elts_eq = np.all(xix == yix)
+            return ret(elts_eq, ".index.equals, x = {} != y = {}", [xix, yix])
         # if columns, dtypes are equal and at least one is object, recurse over Series
         if sum(x.dtypes == "object") > 0:
             for c in x.columns:
