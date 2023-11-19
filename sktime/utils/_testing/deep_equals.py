@@ -157,6 +157,9 @@ def deep_equals(x, y, return_msg=False):
                         ".index.names, x.index.names = {} != y.index.names = {}",
                         [xix.names, yix.names],
                     )
+            ix_eq = xix.equals(yix)
+            if not ix_eq:
+                return ret(False, ".index.equals, x = {} != y = {}", [xix, yix])
         # if columns, dtypes are equal and at least one is object, recurse over Series
         if sum(x.dtypes == "object") > 0:
             for c in x.columns:
@@ -165,10 +168,7 @@ def deep_equals(x, y, return_msg=False):
                     return ret(False, f'["{c}"]' + msg)
             return ret(True)
         else:
-            eq = x.equals(y)
-            if not eq:
-                pos = x == y
-                return ret(eq, ".df_equals, x = {} != y = {}, x==y = {}", [x, y, pos])
+            return ret(x.equals(y), ".df_equals, x = {} != y = {}, x==y = {}", [x, y, pos])
     elif isinstance(x, pd.Index):
         if hasattr(x, "dtype") and hasattr(y, "dtype"):
             if not x.dtype == y.dtype:
