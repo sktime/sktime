@@ -29,7 +29,6 @@ from sktime.split import (
     temporal_train_test_split,
 )
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
     _assert_correct_pred_time_index,
