@@ -4,17 +4,118 @@
 __author__ = ["fkiraly"]
 
 import pandas as pd
+from frouros.detectors.base import BaseDetector
+from frouros.detectors.concept_drift.base import BaseConceptDrift
+from frouros.detectors.concept_drift.streaming.base import BaseConceptDriftStreaming
+from frouros.detectors.data_drift.base import BaseDataDrift
+from frouros.detectors.data_drift.batch.base import BaseDataDriftBatch
+from frouros.detectors.data_drift.streaming.base import BaseDataDriftStreaming
+from sktime.forecasting.model_selection._tune import BaseGridSearch
 
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.model_evaluation._functions import _check_strategy
 
 # prepare tags to clone - exceptions are TAGS_TO_KEEP
+
 TAGS_TO_KEEP = ["fit_is_empty", "X_inner_mtype", "y_inner_mtype"]
 # fit must be executed to fit the wrapped estimator and remember the cutoff
 # mtype tags are set so X/y is passed through, conversions happen in wrapped estimator
 TAGS_TO_CLONE = _DelegatedForecaster().get_tags().keys()
 TAGS_TO_CLONE = list(set(TAGS_TO_CLONE).difference(TAGS_TO_KEEP))
+
+class UpdateModelEveryDrift(_DelegatedForecaster):
+    """Refits or updates model upon concept drift detection
+
+
+    Parameters
+    ----------
+    drift_detector : a drift detector from the frouros package
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        defines the ingestion mode when the forecaster sees new data when window expands
+        "refit" = forecaster is refitted to each training window
+        "update" = forecaster is updated with training window data, in sequence provided
+        "no-update_params" = fit to first training window, re-used without fit or update
+    compare_val : only used if drift detector is of batch type, will need to supply compare_val to detect drift.
+    grid_search : A compatible grid search class to perform a grid search on drift detection.
+        Only used when strategy is set to refit.
+    """
+
+    _delegate_name = "forecaster_"
+
+    _tags = {
+        "fit_is_empty": False,
+        "requires-fh-in-fit": False,
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+    }
+
+    def __init__(
+        self, forecaster, drift_detector: BaseDetector=None, strategy="refit", compare_val=None, grid_search: BaseGridSearch=None
+    ):
+        ## Maybe the base grid searcher method of refitting should be extended to the delegate class so all other
+        ## classes defined in this file can use such a strategy.
+        _check_strategy(strategy)
+        self.forecaster = forecaster
+        self.forecaster_ = forecaster.clone()
+        self.compare_val = compare_val
+        self.drift_detector = drift_detector
+        self.strategy = strategy
+        self.grid_search = grid_search
+
+        super().__init__()
+
+        self.clone_tags(forecaster, TAGS_TO_CLONE)
+
+    def _fit(self, y, X, fh):
+        ### Need to fit some of the detectors, as used in the BaseDataDrift class which has fit method
+        if(isinstance(self.drift_detector, BaseDataDrift)):
+            self.drift_detector.fit(y)
+        estimator = self._get_delegate()
+        estimator.fit(y=y, fh=fh, X=X)
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        driftDetected = False
+        ## TO DO: Compare input with drift vals for data drift, make this a function and make it possible to detect drift
+        ## using a metric measurement of model performance?
+        if isinstance(self.drift_detector, BaseDataDrift):
+            if isinstance(self.drift_detector, BaseDataDriftBatch):
+                driftVal = self.drift_detector.compare(y)
+            if isinstance(self.drift_detector, BaseDataDriftStreaming):
+                driftVal,_ = self.drift_detector.update(value=y)
+        if isinstance(self.drift_detector, BaseConceptDrift):
+            if isinstance(self.drift_detector, BaseConceptDriftStreaming):
+                _ = self.drift_detector.update(value=y)
+                driftDetected = self.drift_detector.drift
+        if driftDetected:
+            self.__update_model(y, X)
+        return self
+
+    def __update_model(self, y, X):
+        estimator = self._get_delegate()
+        if self.strategy == "refit":
+            self.drift_detector.reset()
+            parameters = None
+            if isinstance(self.drift_detector, BaseDataDrift):
+                self.drift_detector.fit(y)
+            if self.grid_search:
+                ## Could maybe just replace the current estimator with the best forecaster here to avoid refitting again?
+                gscv = self.grid_search.fit(y)
+                parameters = gscv.best_params_
+            ## Store FH from first call to fit and then use it here? Or supply as param to class?
+            estimator.fit(y=y, X=X)
+            if parameters != None:
+                estimator.set_params(**parameters)
+        else:
+            update_params = True if self.strategy == "update" else False
+            estimator.update(y=y, X=X, update_params=update_params)
+
+    @classmethod
+    def get_test_params(cls):
+        ## Only return drift detector? Or maybe the params used in the detector as well
+        pass
 
 
 class UpdateRefitsEvery(_DelegatedForecaster):
