@@ -156,7 +156,7 @@ def _check_equal_index(X):
 
 
 def from_3d_numpy_to_2d_array(X):
-    """Convert 2D NumPy Panel to 2D numpy Panel.
+    """Convert 3D NumPy Panel to 2D numpy Panel.
 
     Converts 3D numpy array (n_instances, n_columns, n_timepoints) to
     a 2D numpy array with shape (n_instances, n_columns*n_timepoints)
