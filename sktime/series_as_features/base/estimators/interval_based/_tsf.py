@@ -7,6 +7,8 @@ __author__ = [
     "kanand77",
     "mloning",
     "Oleksii Kachaiev",
+    "CTFallon",
+    "mgazian000",
 ]
 __all__ = [
     "BaseTimeSeriesForest",
@@ -135,6 +137,63 @@ class BaseTimeSeriesForest:
             "intervals": self.intervals_,
             "estimators": self.estimators_,
         }
+
+    def calc_temporal_curves(self, normalize=False):
+        """Create temporal importance curves.
+
+        Creates four curves: three feature temporal importance curves
+        (mean, stdev, slope) and one curve containing the number of times a
+        timestamp appears in a tree's intervals.
+
+        Follows procedure outlined in section 4.4 of [1].
+
+        Parameters
+        ----------
+        normalized : bool
+        `False` (default) follows outline in paper exactly.
+        `True` will split feature importances evenly over the interval which they're
+        associated with. This preserves that the sum of the intergral of all importance
+        curves is equal to the number of trees in the forest.
+
+
+        References
+        ----------
+        .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
+        classification and feature extraction",Information Sciences, 239, 2013
+
+        """
+        self.mean_curve = np.zeros(self.series_length)
+        self.stdev_curve = np.zeros(self.series_length)
+        self.slope_curve = np.zeros(self.series_length)
+        self.n_intervals_wts_curve = np.zeros(self.series_length)
+        # flag for checking normalization status of existsing curves
+        self.tic_norm = normalize
+
+        for estimator, intervals in zip(self.estimators_, self.intervals_):
+            for i_int, interval in enumerate(intervals):
+                interval_mask = np.zeros(self.series_length)
+                np.put(interval_mask, range(interval[0], interval[1]), 1)
+
+                if normalize:
+                    norm_factor = interval[1] - interval[0]
+                else:
+                    norm_factor = 1
+                self.n_intervals_wts_curve += np.where(interval_mask, 1, 0)
+                self.mean_curve += np.where(
+                    interval_mask,
+                    estimator.feature_importances_[3 * i_int] / norm_factor,
+                    0,
+                )
+                self.stdev_curve += np.where(
+                    interval_mask,
+                    estimator.feature_importances_[3 * i_int + 1] / norm_factor,
+                    0,
+                )
+                self.slope_curve += np.where(
+                    interval_mask,
+                    estimator.feature_importances_[3 * i_int + 2] / norm_factor,
+                    0,
+                )
 
 
 def _get_intervals(
