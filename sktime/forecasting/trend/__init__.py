@@ -16,4 +16,4 @@ from sktime.forecasting.trend._polynomial_trend_forecaster import (
 )
 from sktime.forecasting.trend._stl_forecaster import STLForecaster
 from sktime.forecasting.trend._trend_forecaster import TrendForecaster
-from sktime.forecasting.trend._pwl_trend_forecaster import PiecewiseLinearForecaster
+from sktime.forecasting.trend._pwl_trend_forecaster import PiecewiseLinearTrendForecaster

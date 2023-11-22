@@ -43,21 +43,59 @@ Testing - required for sktime test framework and check_estimator usage:
 import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
-from sktime.forecasting.fbprophet import Prophet
 
 class PiecewiseLinearTrendForecaster(_ProphetAdapter):
-    """This is a piecewise linear forecaster. It is bascially a wrapper around the 
-    prophet model with Prophet(growth='linear') and extracts the trend modeling from it. 
+    """
+    Forecast time series data with a piecwise linear trend.
+
+    The forecaster uses Facebook's prophet algorithm [1]_ and extracts the piecewise 
+    linear trend from it. Only hyper-parameters relevant for the trend modelling are 
+    exposed via the constructor.
+
+    Data can be passed in one of the sktime compatible formats,
+    naming a column `ds` such as in the prophet package is not necessary.
+
+    Unlike vanilla `prophet`, also supports integer/range and period index:
+    * integer/range index is interpreted as days since Jan 1, 2000
+    * `PeriodIndex` is converted using the `pandas` method `to_timestamp`
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
+    changepoints: list or None, default=None
+        List of dates at which to include potential changepoints. If
+        not specified, potential changepoints are selected automatically.
+    n_changepoints: int, default=25
+        Number of potential changepoints to include. Not used
+        if input `changepoints` is supplied. If `changepoints` is not supplied,
+        then n_changepoints potential changepoints are selected uniformly from
+        the first `changepoint_range` proportion of the history.
+    changepoint_range: float, default=0.8
+        Proportion of history in which trend changepoints will
+        be estimated. Defaults to 0.8 for the first 80%. Not used if
+        `changepoints` is specified.
+    changepoint_prior_scale: float, default=0.05
+        Parameter modulating the flexibility of the
+        automatic changepoint selection. Large values will allow many
+        changepoints, small values will allow few changepoints. 
+        Recommended to take values within [0.001,0.5]. 
+   
+    References
+    ----------
+    .. [1] https://facebook.github.io/prophet
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.trend import PiecewiseLinearTrendForecaster
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> y =load_airline().to_timestamp(freq='M')
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = ForecastingHorizon(y.index, is_relative=False)
+    >>> forecaster =  PiecewiseLinearTrendForecaster()
+    >>> forecaster.fit(y_train)
+    PiecewiseLinearTrendForecaster()
+    >>> y_pred = forecaster.predict(fh)
     """
 
     # todo: fill in the scitype:y tag for univariate/multivariate
@@ -112,11 +150,7 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
-
         self._ModelClass = _Prophet
-
-        # "changepoint_prior_scale": should be within [0.001,0.5]
-        # "changepoint_range": has to be within [0,1], default = 0.8
 
     def _instantiate_model(self):
         self._forecaster = self._ModelClass(
@@ -140,9 +174,9 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
         return self
     
     # _fit is defined in the superclass and is fine as is. 
-    # here i overwrite the _predict from the superclass to just return the trend. 
+ 
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
+        """Forecast time series trend at future horizon.
 
         private _predict containing the core logic, called from predict
 
@@ -192,44 +226,17 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for forecasters.
+
 
         Returns
         -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+        params : dict or list of dict
         """
+        params0 = {
+                  "changepoint_range":0.8,
+                  "changepoint_prior_scale":0.05,
+                  }
+        
+        params1 = {"changepoints":["2014-01-01"]}
 
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries.
-        # Testing parameter choice should cover internal cases well.
-        #   for "simple" extension, ignore the parameter_set argument.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # A good parameter set should primarily satisfy two criteria,
-        #   1. Chosen set of parameters should have a low testing time,
-        #      ideally in the magnitude of few seconds for the entire test suite.
-        #       This is vital for the cases where default values result in
-        #       "big" models which not only increases test time but also
-        #       run into the risk of test workers crashing.
-        #   2. There should be a minimum two such parameter sets with different
-        #      sets of values to ensure a wide range of code coverage is provided.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        #
-        # return params
+        return [params0,params1]
