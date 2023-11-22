@@ -92,6 +92,7 @@ class BaseForecaster(BaseEstimator):
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+        "X-y-must-have-same-scitype": True, # does estimate require same X-y scitype?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
@@ -361,7 +362,9 @@ class BaseForecaster(BaseEstimator):
                 Exogeneous time series to fit to
             Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
-            there are no restrictions on number of columns (unlike for y)
+                there are no restrictions on number of columns (unlike for y)
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
 
         Returns
         -------
@@ -425,7 +428,9 @@ class BaseForecaster(BaseEstimator):
                 Exogeneous time series to fit to
             Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
-            there are no restrictions on number of columns (unlike for y)
+                there are no restrictions on number of columns (unlike for y)
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
 
         Returns
         -------
@@ -501,6 +506,8 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"),
                 X.index must contain fh.index and y.index both
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
 
         Returns
         -------
@@ -560,6 +567,8 @@ class BaseForecaster(BaseEstimator):
                 Exogeneous time series to fit to
             Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
         alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
 
@@ -634,6 +643,8 @@ class BaseForecaster(BaseEstimator):
                 Exogeneous time series to fit to
             Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
         coverage : float or list of float of unique values, optional (default=0.90)
            nominal coverage(s) of predictive interval(s)
 
@@ -708,6 +719,8 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"),
                 X.index must contain fh.index and y.index both
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
         cov : bool, optional (default=False)
             if True, computes covariance matrix forecast.
             if False, computes marginal variance forecasts.
@@ -779,6 +792,8 @@ class BaseForecaster(BaseEstimator):
                 Exogeneous time series to fit to
             Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"), must contain fh.index
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
 
@@ -861,7 +876,9 @@ class BaseForecaster(BaseEstimator):
                 Exogeneous time series to fit to
             Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
-            there are no restrictions on number of columns (unlike for y)
+                there are no restrictions on number of columns (unlike for y)
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
         update_params : bool, optional (default=True)
             whether model parameters should be updated
 
@@ -951,7 +968,9 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"),
                 X.index must contain y.index and fh.index both
-            there are no restrictions on number of columns (unlike for y)
+                there are no restrictions on number of columns (unlike for y)
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
         update_params : bool, optional (default=True)
             whether model parameters should be updated in each update step
         reset_forecaster : bool, optional (default=True)
@@ -1055,6 +1074,8 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"),
                 X.index must contain y.index and fh.index both
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
         update_params : bool, optional (default=False)
 
         Returns
@@ -1139,7 +1160,8 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series to predict from
             if self.get_tag("X-y-must-have-same-index"),
                 X.index must contain fh.index and y.index both
-
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
         Returns
         -------
         y_res : time series in sktime compatible data container format
@@ -1208,7 +1230,8 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous time series to score
             if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
-
+            if self.get_tag("X-y-must-have-same-scitype"), X-scitype
+                must be equal to y-scitype
         Returns
         -------
         score : float
@@ -1325,7 +1348,8 @@ class BaseForecaster(BaseEstimator):
             if tag value is "both", y can be either
         TypeError if self.get_tag("X-y-must-have-same-index") is True
             and the index set of X is not a super-set of the index set of y
-
+        TypeError if self.get_tag("X-y-must-have-same-scitype") is True
+            and the index set of X scitype is not equal to y
         Writes to self
         --------------
         _y_mtype_last_seen : str, mtype of y
@@ -1478,7 +1502,8 @@ class BaseForecaster(BaseEstimator):
         # end checking X
 
         # compatibility checks between X and y
-        if X is not None and y is not None:
+        if (X is not None and y is not None and 
+        self.get_tag("X-y-must-have-same-scitype")):
             if self.get_tag("X-y-must-have-same-index"):
                 # currently, check_equal_time_index only works for Series
                 # TODO: fix this so the check is general, using get_time_index

@@ -17,6 +17,11 @@ from sktime.utils.validation.series import check_series
 
 class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     """Abstract class for forecasting pipelines."""
+    _tags = {
+        "X-y-must-have-same-scitype": False,
+    }
+    def __init__(self):
+        super(_Pipeline, self).__init__()
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
