@@ -470,6 +470,7 @@ class ConformalIntervals(BaseForecaster):
             for id in y_index
         )
         all_residuals = pd.concat(all_residuals, axis=1, ignore_index=True).T
+        all_residuals.index = y_index
         all_residuals = all_residuals.astype(pd.SparseDtype("float", 0))
         residuals_matrix = all_residuals.combine_first(residuals_matrix)
 
