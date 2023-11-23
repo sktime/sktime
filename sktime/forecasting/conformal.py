@@ -430,9 +430,9 @@ class ConformalIntervals(BaseForecaster):
                 overlapping_index = pd.Index(
                     self.residuals_matrix_.index.intersection(full_y_index)
                 ).sort_values()
-                residuals_matrix.loc[
+                residuals_matrix = self.residuals_matrix_.loc[
                     overlapping_index, overlapping_index
-                ] = self.residuals_matrix_.loc[overlapping_index, overlapping_index]
+                ].combine_first(residuals_matrix)
             else:
                 overlapping_index = None
             y_index = remaining_y_index
