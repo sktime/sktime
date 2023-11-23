@@ -504,7 +504,6 @@ class ConformalIntervals(BaseForecaster):
             extend_residuals = extend_residuals.astype(pd.SparseDtype("float", 0))
             residuals_matrix = extend_residuals.combine_first(residuals_matrix)
 
-
         return residuals_matrix
 
     @classmethod
