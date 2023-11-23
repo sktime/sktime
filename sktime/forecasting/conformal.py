@@ -11,6 +11,7 @@ from math import floor
 
 import numpy as np
 import pandas as pd
+import scipy
 from joblib import Parallel, delayed
 from sklearn.base import clone
 
@@ -417,8 +418,10 @@ class ConformalIntervals(BaseForecaster):
 
         full_y_index = y.iloc[n_initial_window:].index
 
-        residuals_matrix = pd.DataFrame(
-            columns=full_y_index, index=full_y_index, dtype="float"
+        residuals_matrix = pd.DataFrame.sparse.from_spmatrix(
+            scipy.sparse.csr_array((len(full_y_index), len(full_y_index))),
+            index=full_y_index,
+            columns=full_y_index,
         )
 
         if update and hasattr(self, "residuals_matrix_") and not sample_frac:
