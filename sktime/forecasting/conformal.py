@@ -499,9 +499,11 @@ class ConformalIntervals(BaseForecaster):
                 delayed(_extend_residuals_matrix_row)(y, X, id)
                 for id in overlapping_index
             )
+            extend_residuals = pd.concat(extend_residuals, axis=1, ignore_index=True).T
+            extend_residuals.index = overlapping_index
+            extend_residuals = extend_residuals.astype(pd.SparseDtype("float", 0))
+            residuals_matrix = extend_residuals.combine_first(residuals_matrix)
 
-            for idx, id in enumerate(overlapping_index):
-                residuals_matrix.loc[id] = extend_residuals[idx]
 
         return residuals_matrix
 
