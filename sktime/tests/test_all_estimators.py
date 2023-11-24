@@ -1443,29 +1443,40 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         method_nsc = method_nsc_arraylike
         params = estimator_instance.get_params()
 
-        if "n_jobs" in params:
-            # run on a single process
-            # -----------------------
-            estimator = deepcopy(estimator_instance)
-            estimator.set_params(n_jobs=1)
-            set_random_state(estimator)
-            result_single_process = scenario.run(
-                estimator, method_sequence=["fit", method_nsc]
-            )
+        # test runs only if n_jobs is a parameter of the estimator
+        if "n_jobs" not in params:
+            return None
 
-            # run on multiple processes
-            # -------------------------
-            estimator = deepcopy(estimator_instance)
-            estimator.set_params(n_jobs=-1)
-            set_random_state(estimator)
-            result_multiple_process = scenario.run(
-                estimator, method_sequence=["fit", method_nsc]
-            )
-            _assert_array_equal(
-                result_single_process,
-                result_multiple_process,
-                err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
-            )
+        # skip test for predict_proba
+        # this produces a BaseDistribution object, for which no ready
+        # equality check is implemented
+        if method_nsc == "predict_proba":
+            return None
+
+        # run on a single process
+        # -----------------------
+        estimator = deepcopy(estimator_instance)
+        estimator.set_params(n_jobs=1)
+        set_random_state(estimator)
+        result_single_process = scenario.run(
+            estimator, method_sequence=["fit", method_nsc]
+        )
+
+        # run on multiple processes
+        # -------------------------
+        estimator = deepcopy(estimator_instance)
+        estimator.set_params(n_jobs=-1)
+        set_random_state(estimator)
+        result_multiple_process = scenario.run(
+            estimator, method_sequence=["fit", method_nsc]
+        )
+
+        _assert_array_equal(
+            result_single_process,
+            result_multiple_process,
+            err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
+        )
+
 
     def test_dl_constructor_initializes_deeply(self, estimator_class):
         """Test DL estimators that they pass custom parameters to underlying Network."""
