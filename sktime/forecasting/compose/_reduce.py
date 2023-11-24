@@ -1788,7 +1788,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         to obtain a prediction for `y(c+h)`, for each `h` in the forecasting horizon
     if `X_treatment = "shifted":
         applies fitted estimator's predict to
-        features = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(t)`
+        features = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c)`
         to obtain prediction for `y(c+h_1)`, ..., `y(c+h_k)` for `h_j` in forec. horizon
 
     Parameters
