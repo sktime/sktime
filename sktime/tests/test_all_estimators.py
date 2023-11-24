@@ -1476,6 +1476,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         )
 
 
+
     def test_dl_constructor_initializes_deeply(self, estimator_class):
         """Test DL estimators that they pass custom parameters to underlying Network."""
         estimator = estimator_class
