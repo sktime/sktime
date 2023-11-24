@@ -1475,8 +1475,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
         )
 
-
-
     def test_dl_constructor_initializes_deeply(self, estimator_class):
         """Test DL estimators that they pass custom parameters to underlying Network."""
         estimator = estimator_class
