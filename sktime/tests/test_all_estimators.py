@@ -1428,8 +1428,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 err_msg=msg,
             )
 
-    # todo: this needs to be diagnosed and fixed - temporary skip
-    @pytest.mark.skip(reason="hangs on mac and unix remote tests")
     def test_multiprocessing_idempotent(
         self, estimator_instance, scenario, method_nsc_arraylike
     ):
