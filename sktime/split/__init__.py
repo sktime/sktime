@@ -2,6 +2,7 @@
 
 __all__ = [
     "CutoffSplitter",
+    "CutoffFhSplitter",
     "ExpandingGreedySplitter",
     "ExpandingWindowSplitter",
     "SameLocSplitter",
