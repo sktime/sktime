@@ -280,7 +280,7 @@ class CutoffFhSplitter(BaseSplitter):
     def __init__(self, cutoff, fh=None):
         self.cutoff = cutoff
         self.fh = fh
-        super().__init__()
+        super().__init__(fh=fh)
 
     def _split_loc(self, y):
         """Get loc references to train/test splits of `y`.
