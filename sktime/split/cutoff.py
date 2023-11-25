@@ -25,7 +25,6 @@ from sktime.split.base._common import (
     _check_inputs_for_compatibility,
     _get_train_window_via_endpoint,
 )
-from sktime.datatypes._utilities import get_slice
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     array_is_datetime64,
