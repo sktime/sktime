@@ -305,7 +305,7 @@ class CutoffFhSplitter(BaseSplitter):
         if fh is not None:
             from sktime.forecasting.base import ForecastingHorizon
 
-            if fh is not ForecastingHorizon:
+            if not isinstance(fh, ForecastingHorizon):
                 fh = ForecastingHorizon(fh)
 
         for k in cutoff:
