@@ -1,5 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Switch utility for determining whether tests for a class should be run or not."""
+"""Switch utility for determining whether tests for a class should be run or not.
+
+Module does not contain tests, only test utilities.
+"""
 
 __author__ = ["fkiraly"]
 

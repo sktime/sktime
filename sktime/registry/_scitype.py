@@ -40,7 +40,10 @@ def scitype(obj, force_single_scitype=True, coerce_to_list=False):
         else:
             tag_type = obj.get_tag("object_type", None, raise_error=False)
         if tag_type is not None:
-            return tag_type
+            if not isinstance(tag_type, list):
+                return [tag_type]
+            else:
+                return tag_type
 
     # if the tag is not present, determine scitype from legacy base class logic
     if isclass(obj):
