@@ -1,5 +1,7 @@
 """Tests for scitype typipng function."""
 
+import pytest
+
 from sktime.registry._scitype import scitype
 
 
