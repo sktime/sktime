@@ -60,6 +60,7 @@ def get_test_class_registry():
 
     return testclass_dict
 
+
 def get_test_classes_for_obj(obj):
     """Get all test classes relevant for an object or estimator.
 
@@ -72,7 +73,7 @@ def get_test_classes_for_obj(obj):
     -------
     test_classes : list of test classes
         list of test classes relevant for obj
-        these are references to the actual classes, not strings    
+        these are references to the actual classes, not strings
     """
     from sktime.base import BaseEstimator, BaseObject
     from sktime.registry import scitype
@@ -97,7 +98,7 @@ def get_test_classes_for_obj(obj):
             "descendant of sktime BaseObject or BaseEstimator. "
             f"Found obj of type {type(obj).__name__} instead."
         )
- 
+
     testclass_dict = get_test_class_registry()
 
     # we always need to run "object" tests
