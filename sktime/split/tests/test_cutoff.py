@@ -12,7 +12,7 @@ from sktime.forecasting.tests._config import (
     TEST_WINDOW_LENGTHS,
     TEST_YS,
 )
-from sktime.split import CutoffSplitter, CutoffFhSplitter
+from sktime.split import CutoffFhSplitter, CutoffSplitter
 from sktime.split.base._common import _inputs_are_supported
 from sktime.split.tests.test_split import _check_cv
 
