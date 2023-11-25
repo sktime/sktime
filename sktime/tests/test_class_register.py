@@ -60,7 +60,7 @@ def get_test_class_registry():
 
     return testclass_dict
 
-def get_test_classes(obj):
+def get_test_classes_for_obj(obj):
     """Get all test classes relevant for an object or estimator.
 
     Parameters
