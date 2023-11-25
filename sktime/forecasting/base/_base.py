@@ -519,38 +519,20 @@ class BaseForecaster(BaseEstimator):
             y_pred has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
-        # if X_pred is passed, run fit/predict with different X
-        if X_pred is not None:
-            return self.fit(y=y, X=X, fh=fh).predict(X=X_pred)
+        X_pred_must_same_index = self.get_tag("X-y-must-have-same-index")
+
         # otherwise, we use the same X for fit and predict
-        # below code carries out conversion and checks for X only once
+        if X_pred is None and X_pred_must_same_index:
+            # import splitter here to avoid circular imports
+            from sktime.split.cutoff import CutoffFhSplitter
 
-        # if fit is called, fitted state is re-set
-        self._is_fitted = False
-
-        # check and convert X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
-
-        # set internal X/y to the new X/y
-        # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
-
-        fh = self._check_fh(fh)
-
-        # apply fit and then predict
-        vectorization_needed = isinstance(y_inner, VectorizedDF)
-        self._is_vectorized = vectorization_needed
-        # we call the ordinary _fit if no looping/vectorization needed
-        if not vectorization_needed:
-            self._fit(y=y_inner, X=X_inner, fh=fh)
+            splitter = CutoffFhSplitter(cutoff=self.cutoff, fh=fh)
+            X_train, X_pred = splitter.split_series(X)
         else:
-            # otherwise we call the vectorized version of fit
-            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
+            X_train = X
+            X_pred = X
 
-        self._is_fitted = True
-        # call the public predict to avoid duplicating output conversions
-        #  input conversions are skipped since we are using X_inner
-        return self.predict(fh=fh, X=X_inner)
+        return self.fit(y=y, X=X_train, fh=fh).predict(X=X_pred)
 
     def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
