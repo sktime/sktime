@@ -229,7 +229,9 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             # "X may be a sparse graph, in which case only "nonzero" elements
             #   may be considered neighbors."
             X_inner_mtype = self.get_tag("X_inner_mtype")
-            _, _, X_meta = check_is_mtype(X, X_inner_mtype, return_metadata=True)
+            _, _, X_meta = check_is_mtype(
+                X, X_inner_mtype, return_metadata=True, msg_return_dict="list"
+            )
             n = X_meta["n_instances"]
             dist_mat = np.zeros([n, n], dtype="float")
 
