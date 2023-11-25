@@ -74,6 +74,7 @@ def get_test_classes_for_obj(obj):
     test_classes : list of test classes
         list of test classes relevant for obj
         these are references to the actual classes, not strings
+        if obj was not a descendant of BaseObject or BaseEstimator, returns empty list
     """
     from sktime.base import BaseEstimator, BaseObject
     from sktime.registry import scitype
@@ -93,11 +94,7 @@ def get_test_classes_for_obj(obj):
             return isinstance(obj, BaseEstimator)
 
     if not is_object(obj):
-        raise TypeError(
-            "In get_test_classes, obj must be an sktime object or estimator, "
-            "descendant of sktime BaseObject or BaseEstimator. "
-            f"Found obj of type {type(obj).__name__} instead."
-        )
+        return []
 
     testclass_dict = get_test_class_registry()
 
