@@ -6,7 +6,7 @@ Module does not contain tests, only test utilities.
 
 __author__ = ["fkiraly"]
 
-from inspect import getmro, isclass
+from inspect import isclass
 
 
 def get_test_class_registry():

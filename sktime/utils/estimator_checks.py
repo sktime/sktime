@@ -3,8 +3,6 @@
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
-from inspect import isclass
-
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
