@@ -55,6 +55,6 @@ def test_cutoff_fh_splitter():
     assert np.all(spl_train == y.index[:11])
 
     expected_test = pd.DatetimeIndex(
-        ["2000-01-12", "2000-01-13", "2000-01-14"], dtype='datetime64[ns]', freq='D'
+        ["2000-01-12", "2000-01-13", "2000-01-14"], dtype="datetime64[ns]", freq="D"
     )
     assert np.all(spl_test == expected_test)
