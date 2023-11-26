@@ -228,12 +228,20 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
         true_length = 1
     elif iterate_as == "Series":
         _, _, metadata = check_is_mtype(
-            fixture, mtype=mtype, scitype=scitype, return_metadata=True
+            fixture,
+            mtype=mtype,
+            scitype=scitype,
+            return_metadata=True,
+            msg_return_dict="list",
         )
         true_length = metadata["n_instances"]
     elif iterate_as == "Panel":
         _, _, metadata = check_is_mtype(
-            fixture, mtype=mtype, scitype=scitype, return_metadata=True
+            fixture,
+            mtype=mtype,
+            scitype=scitype,
+            return_metadata=True,
+            msg_return_dict="list",
         )
         true_length = metadata["n_panels"]
 
@@ -330,7 +338,10 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
         raise RuntimeError(f"found unexpected iterate_as value: {iterate_as}")
 
     X_list_valid = [
-        check_is_mtype(X, mtype=correct_mtype, scitype=iterate_as) for X in X_list
+        check_is_mtype(
+            X, mtype=correct_mtype, scitype=iterate_as, msg_return_dict="list"
+        )
+        for X in X_list
     ]
 
     assert np.all(

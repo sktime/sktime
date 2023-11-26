@@ -23,7 +23,7 @@ def test_conformal_standard():
     conformal_forecaster.fit(y, fh=[1, 2, 3])
     pred_int = conformal_forecaster.predict_interval()
 
-    assert check_is_mtype(pred_int, "pred_interval", "Proba")
+    assert check_is_mtype(pred_int, "pred_interval", "Proba", msg_return_dict="list")
 
 
 @pytest.mark.skipif(
@@ -60,7 +60,9 @@ def test_conformal_with_gscv():
 
     y_pred_quantiles = gscv_with_conformal.predict_quantiles()
 
-    assert check_is_mtype(y_pred_quantiles, "pred_quantiles", "Proba")
+    assert check_is_mtype(
+        y_pred_quantiles, "pred_quantiles", "Proba", msg_return_dict="list"
+    )
 
 
 @pytest.mark.skipif(

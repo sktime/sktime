@@ -45,7 +45,9 @@ def test_vectorization_series_to_panel(mtype, backend):
     f = ARIMA()
     f.set_config(**{"backend:parallel": backend})
     y_pred = f.fit(y).predict([1, 2, 3])
-    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+    valid, _, metadata = check_is_mtype(
+        y_pred, mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecasters does not work for test example "
@@ -98,7 +100,9 @@ def test_vectorization_series_to_hier(mtype, backend):
     f = ARIMA()
     f.set_config(**{"backend:parallel": backend})
     y_pred = f.fit(y).predict([1, 2, 3])
-    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+    valid, _, metadata = check_is_mtype(
+        y_pred, mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecasters does not work for test example "
@@ -158,7 +162,9 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     else:
         RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
-    valid, _, _ = check_is_mtype(y_pred, expected_mtype, return_metadata=True)
+    valid, _, _ = check_is_mtype(
+        y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecaster method {method} does not work for test example "
@@ -194,7 +200,9 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     else:
         RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
-    valid, _, _ = check_is_mtype(y_pred, expected_mtype, return_metadata=True)
+    valid, _, _ = check_is_mtype(
+        y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecaster method {method} does not work for test example "
@@ -251,7 +259,9 @@ def test_vectorization_multivariate(mtype, exogeneous):
 
     est = ARIMA().fit(y=y_fit, X=X_fit, fh=[1, 2, 3])
     y_pred = est.predict(X=X_pred)
-    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+    valid, _, metadata = check_is_mtype(
+        y_pred, mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecasters does not work for test example "

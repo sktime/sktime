@@ -976,15 +976,27 @@ class _RecursiveReducer(_Reducer):
             fh_max = fh.to_relative(self.cutoff)[-1]
 
             y_pred = np.zeros(fh_max)
+
+            # Array with input data for prediction.
             last = np.zeros((1, n_columns, window_length + fh_max))
 
             # Fill pre-allocated arrays with available data.
             last[:, 0, :window_length] = y_last
             if X is not None:
-                last[:, 1:, :window_length] = X_last.T
-                last[:, 1:, window_length:] = X.iloc[
-                    -(last.shape[2] - window_length) :, :
-                ].T
+                X_to_use = np.concatenate(
+                    [X_last.T, X.iloc[-(last.shape[2] - window_length) :, :].T], axis=1
+                )
+                if X_to_use.shape[1] < window_length + fh_max:
+                    X_to_use = np.pad(
+                        X_to_use,
+                        ((0, 0), (0, window_length + fh_max - X_to_use.shape[1])),
+                        "edge",
+                    )
+                elif X_to_use.shape[1] > window_length + fh_max:
+                    X_to_use = X_to_use[:, : window_length + fh_max]
+                # else X_to_use.shape[1] == window_length + fh_max
+                # and there are no additional steps to take
+                last[:, 1:] = X_to_use
 
             # Recursively generate predictions by iterating over forecasting horizon.
             for i in range(fh_max):
