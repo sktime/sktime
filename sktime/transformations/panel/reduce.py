@@ -11,6 +11,7 @@ import pandas as pd
 
 from sktime.datatypes import convert, convert_to
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.pandas import df_map
 
 
 class Tabularizer(BaseTransformer):
@@ -150,7 +151,7 @@ class TimeBinner(BaseTransformer):
         transformed version of X
         """
         idx = pd.cut(X.iloc[0, 0].index, bins=self.idx, include_lowest=True)
-        Xt = X.map(lambda x: x.groupby(idx).apply(self._aggfunc))
+        Xt = df_map(X)(lambda x: x.groupby(idx).apply(self._aggfunc))
         Xt = convert_to(Xt, to_type="numpyflat", as_scitype="Panel")
         return Xt
 

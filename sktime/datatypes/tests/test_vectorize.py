@@ -11,6 +11,7 @@ from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_is_mtype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
 from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.pandas import df_map
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 SCITYPES = ["Panel", "Hierarchical"]
@@ -492,5 +493,5 @@ def test_vectorize_est(
     n_cols = _len(cols)
     assert isinstance(result, pd.DataFrame)
     assert result.shape == (n_rows, n_cols)
-    is_fcst_frame = result.map(lambda x: isinstance(x, NaiveForecaster))
+    is_fcst_frame = df_map(result)(lambda x: isinstance(x, NaiveForecaster))
     assert is_fcst_frame.all().all()

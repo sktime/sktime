@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseObject
+from sktime.utils.pandas import df_map
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
@@ -225,7 +226,7 @@ class BaseDistribution(BaseObject):
                 "this may be numerically unstable"
             )
             warn(self._method_error_msg("pdf", fill_in=approx_method))
-            return self.log_pdf(x=x).map(np.exp)
+            return df_map(self.log_pdf(x=x))(np.exp)
 
         raise NotImplementedError(self._method_error_msg("pdf", "error"))
 
@@ -265,7 +266,7 @@ class BaseDistribution(BaseObject):
             )
             warn(self._method_error_msg("log_pdf", fill_in=approx_method))
 
-            return self.pdf(x=x).map(np.log)
+            return df_map(self.pdf(x=x))(np.log)
 
         raise NotImplementedError(self._method_error_msg("log_pdf", "error"))
 
