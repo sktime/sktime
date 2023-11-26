@@ -644,7 +644,7 @@ class _DirectReducer(_Reducer):
 
         if self.pooling == "global":
             fh_abs = fh.to_absolute_index(self.cutoff)
-            y_pred = _create_fcst_df(fh_abs, self._y)
+            y_pred = pd.DataFrame()
 
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_last)
