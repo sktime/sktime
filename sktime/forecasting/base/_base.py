@@ -530,7 +530,8 @@ class BaseForecaster(BaseEstimator):
             X_train, X_pred = splitter.split_series(X)
         else:
             X_train = X
-            X_pred = X
+            if X_pred is None:
+                X_pred = X
 
         return self.fit(y=y, X=X_train, fh=fh).predict(X=X_pred)
 
