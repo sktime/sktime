@@ -347,7 +347,7 @@ class Imputer(BaseTransformer):
 
                 self._forecaster.fit(
                     y=self._X[col].ffill().bfill(),
-                    X=self._y[col].ffill().bfill(),
+                    X=self._y[col].ffill().bfill()
                     if self._y is not None
                     else None,
                     fh=fh,
