@@ -7,7 +7,7 @@ __author__ = ["fkiraly"]
 def df_map(x):
     """Access map or applymap, of DataFrame.
 
-    In pandas 2.1.0, applymap was deprecated in favor of map.
+    In pandas 2.1.0, applymap was deprecated in favor of the newly introduced map.
     To ensure compatibility with older versions, we use map if available,
     otherwise applymap.
 
