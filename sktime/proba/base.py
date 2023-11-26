@@ -225,7 +225,7 @@ class BaseDistribution(BaseObject):
                 "this may be numerically unstable"
             )
             warn(self._method_error_msg("pdf", fill_in=approx_method))
-            return self.log_pdf(x=x).applymap(np.exp)
+            return self.log_pdf(x=x).map(np.exp)
 
         raise NotImplementedError(self._method_error_msg("pdf", "error"))
 
@@ -265,7 +265,7 @@ class BaseDistribution(BaseObject):
             )
             warn(self._method_error_msg("log_pdf", fill_in=approx_method))
 
-            return self.pdf(x=x).applymap(np.log)
+            return self.pdf(x=x).map(np.log)
 
         raise NotImplementedError(self._method_error_msg("log_pdf", "error"))
 

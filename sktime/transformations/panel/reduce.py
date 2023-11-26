@@ -150,7 +150,7 @@ class TimeBinner(BaseTransformer):
         transformed version of X
         """
         idx = pd.cut(X.iloc[0, 0].index, bins=self.idx, include_lowest=True)
-        Xt = X.applymap(lambda x: x.groupby(idx).apply(self._aggfunc))
+        Xt = X.map(lambda x: x.groupby(idx).apply(self._aggfunc))
         Xt = convert_to(Xt, to_type="numpyflat", as_scitype="Panel")
         return Xt
 

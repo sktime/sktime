@@ -84,7 +84,7 @@ class TSInterpolator(BaseTransformer):
         pandas DataFrame : Transformed pandas DataFrame of shape [n_samples, n_features]
             follows nested_univ format
         """
-        return X.applymap(self._resize_cell)
+        return X.map(self._resize_cell)
 
     @classmethod
     def get_test_params(cls):

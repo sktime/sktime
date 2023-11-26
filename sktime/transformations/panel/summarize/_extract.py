@@ -103,7 +103,7 @@ class PlateauFinder(BaseTransformer):
         Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
         Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
 
-        Xt = Xt.applymap(lambda x: pd.Series(x))
+        Xt = Xt.map(lambda x: pd.Series(x))
         return Xt
 
 

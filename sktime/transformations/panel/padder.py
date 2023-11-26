@@ -103,7 +103,7 @@ class PaddingTransformer(BaseTransformer):
             )
 
         pad = [pd.Series([self._create_pad(series) for series in out]) for out in arr]
-        Xt = pd.DataFrame(pad).applymap(pd.Series)
+        Xt = pd.DataFrame(pad).map(pd.Series)
 
         return Xt
 

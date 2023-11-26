@@ -492,5 +492,5 @@ def test_vectorize_est(
     n_cols = _len(cols)
     assert isinstance(result, pd.DataFrame)
     assert result.shape == (n_rows, n_cols)
-    is_fcst_frame = result.applymap(lambda x: isinstance(x, NaiveForecaster))
+    is_fcst_frame = result.map(lambda x: isinstance(x, NaiveForecaster))
     assert is_fcst_frame.all().all()
