@@ -350,7 +350,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check expected interval prediction output."""
         # check expected type
         valid, msg, _ = check_is_mtype(
-            pred_ints, mtype="pred_interval", scitype="Proba", return_metadata=True
+            pred_ints,
+            mtype="pred_interval",
+            scitype="Proba",
+            return_metadata=True,
+            msg_return_dict="list",
         )  # type: ignore
         assert valid, msg
 
@@ -436,6 +440,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             mtype="pred_quantiles",
             scitype="Proba",
             return_metadata=True,
+            msg_return_dict="list",
         )  # type: ignore
         assert valid, msg
 
@@ -830,7 +835,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.predict(X=X_test)
 
         assert isinstance(y_pred, pd.DataFrame)
-        assert check_is_mtype(y_pred, "pd_multiindex_hier")
+        assert check_is_mtype(y_pred, "pd_multiindex_hier", msg_return_dict="list")
         msg = (
             "returned columns after predict are not as expected. "
             f"expected: {y_train.columns}. Found: {y_pred.columns}"
@@ -851,7 +856,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_pred_int = estimator_instance.predict_interval(X=X_test)
 
             assert isinstance(y_pred_int, pd.DataFrame)
-            assert check_is_mtype(y_pred_int, "pd_multiindex_hier")
+            assert check_is_mtype(
+                y_pred_int, "pd_multiindex_hier", msg_return_dict="list"
+            )
 
             if len(y_pred_int.index) == len(X_test.index):
                 assert np.all(y_pred_int.index == X_test.index)
@@ -861,7 +868,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_pred_q = estimator_instance.predict_quantiles(X=X_test)
 
             assert isinstance(y_pred_q, pd.DataFrame)
-            assert check_is_mtype(y_pred_q, "pd_multiindex_hier")
+            assert check_is_mtype(
+                y_pred_q, "pd_multiindex_hier", msg_return_dict="list"
+            )
 
             if len(y_pred_q.index) == len(X_test.index):
                 assert np.all(y_pred_q.index == X_test.index)
