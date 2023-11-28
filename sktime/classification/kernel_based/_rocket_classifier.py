@@ -32,13 +32,15 @@ class RocketClassifier(_DelegatedClassifier):
     where `alphas = np.logspace(-3, 3, 10)`, and
     where `rocket` depends on params `rocket_transform`, `use_multivariate` as follows
 
-    | rocket_transform | `use_multivariate` | rocket (class)          |
-    |------------------|--------------------|-------------------------|
-    | "rocket"         | any                | Rocket                  |
-    | "minirocket"     | "yes               | MiniRocketMultivariate  |
-    | "minirocket"     | "no"               | MiniRocket              |
-    | "multirocket"    | "yes"              | MultiRocketMultivariate |
-    | "multirocket"    | "no"               | MultiRocket             |
+    ================ ================== =======================
+    rocket_transform `use_multivariate` rocket (class)
+    ================ ================== =======================
+    "rocket"         any                Rocket
+    "minirocket"     "yes               MiniRocketMultivariate
+    "minirocket"     "no"               MiniRocket
+    "multirocket"    "yes"              MultiRocketMultivariate
+    "multirocket"    "no"               MultiRocket
+    ================ ================== =======================
 
     classes are sktime classes, other parameters are passed on to the rocket class.
 
