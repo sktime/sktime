@@ -36,7 +36,7 @@ class RocketClassifier(_DelegatedClassifier):
     rocket_transform `use_multivariate` rocket (class)
     ================ ================== =======================
     "rocket"         any                Rocket
-    "minirocket"     "yes               MiniRocketMultivariate
+    "minirocket"     "yes"               MiniRocketMultivariate
     "minirocket"     "no"               MiniRocket
     "multirocket"    "yes"              MultiRocketMultivariate
     "multirocket"    "no"               MultiRocket
