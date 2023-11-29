@@ -2470,6 +2470,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "sd2k",
+      "name": "Ben Sully",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5464991?&v=4",
+      "profile": "https://github.com/sd2k",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }
