@@ -2433,7 +2433,7 @@ class BaseForecaster(BaseEstimator):
                     "alpha must be passed to _get_columns for predict_quantiles"
                 )
             return pd.MultiIndex.from_product([varnames, alpha])
-        
+
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions.
