@@ -1577,6 +1577,7 @@ class BaseForecaster(BaseEstimator):
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
+                self._y_varnames = self._get_varnames(y)
             else:
                 self._y = update_data(self._y, y)
 
@@ -2031,14 +2032,9 @@ class BaseForecaster(BaseEstimator):
         # change the column labels (multiindex) to the format for intervals
         # idx returned by _predict_quantiles is
         #   2-level MultiIndex with variable names, alpha
-        idx = pred_int.columns
-        # variable names (unique, in same order)
-        var_names = idx.get_level_values(0).unique()
-
         # idx returned by _predict_interval should be
         #   3-level MultiIndex with variable names, coverage, lower/upper
-        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
-
+        int_idx = self._get_columns(method="predict_interval", coverage=coverage)
         pred_int.columns = int_idx
 
         return pred_int
@@ -2104,14 +2100,9 @@ class BaseForecaster(BaseEstimator):
             # change the column labels (multiindex) to the format for intervals
             # idx returned by _predict_interval is
             #   3-level MultiIndex with variable names, coverage, lower/upper
-            idx = pred_int.columns
-            # variable names (unique, in same order)
-            var_names = idx.get_level_values(0).unique()
-
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
-            int_idx = pd.MultiIndex.from_product([var_names, alpha])
-
+            int_idx = self._get_columns(method="predict_quantiles", alpha=alpha)
             pred_int.columns = int_idx
 
         elif implements_proba:
@@ -2181,8 +2172,9 @@ class BaseForecaster(BaseEstimator):
             if fh.is_relative:
                 fh = fh.to_absolute(self.cutoff)
             pred_var.index = fh.to_pandas()
+
             if isinstance(self._y, pd.DataFrame):
-                pred_var.columns = self._y.columns
+                pred_var.columns = self._get_varnames()
 
             return pred_var
 
@@ -2356,38 +2348,92 @@ class BaseForecaster(BaseEstimator):
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
-    def _get_varnames(self):
+    def _get_varnames(self, y=None):
         """Return variable column for DataFrame-like returns.
 
-        Developer note: currently a helper for predict_interval, predict_quantiles,
-        valid only in the univariate case. Can be extended later.
+        Primarily used as helper for probabilistic predict-like methods.
+
+        Parameter
+        ---------
+        y : pd.Series, pd.DataFrame, np.ndarray, optional (default=None)
+            if None, uses self._y
+
+        Returns
+        -------
+        varnames : iterable of integer or str variable names
+            can be list or pd.Index
+            variable names for DataFrame-like returns
+            identical to self._y_varnames if this attribute exists
         """
-        y = self._y
+        if hasattr(self, "_y_varnames"):
+            return self._y_varnames
+        if y is None:
+            y = self._y
         if isinstance(y, pd.Series):
             var_name = self._y.name
+            if var_name is None:
+                var_name = 0
+            return [var_name]
         elif isinstance(y, pd.DataFrame):
             return y.columns
-        else:
-            var_name = 0
-        if var_name is None:
-            var_name = 0
+        elif isinstance(y, np.ndarray):
+            if y.ndim == 1:
+                return [0]
+            elif y.ndim in [2, 3]:
+                return pd.RangeIndex(y.shape[1])
+            else:
+                raise ValueError(
+                    "error in BaseForecaster._get_varnames, "
+                    f"y must be 1D, 2D or 3D, but found y.ndim={y.ndim} instead."
+                )
 
-        return [var_name]
+        raise ValueError(
+            "error in BaseForecaster._get_varnames, "
+            f"y must be pd.Series, pd.DataFrame, or np.ndarray, but found {type(y)}."
+        )
 
-    def _get_columns(self, method="predict"):
+    def _get_columns(self, method="predict", **kwargs):
         """Return column names for DataFrame-like returns.
+
+        Primarily used as helper for probabilistic predict-like methods.
 
         Parameter
         ---------
         method : str, optional (default="predict")
             method for which to return column names
             one of "predict", "predict_interval", "predict_quantiles", "predict_var"
+        kwargs : dict
+            additional keyword arguments passed to private method
+            important: args to private method, e.g., _predict, _predict_interval
 
         Returns
         -------
         columns : pd.Index
             column names
         """
+        if method in ["predict", "predict_var"]:
+            return self._get_varnames()
+        else:
+            assert method in ["predict_interval", "predict_quantiles"]
+
+        varnames = self._get_varnames()
+
+        if method == "predict_interval":
+            coverage = kwargs.get("coverage", None)
+            if coverage is None:
+                raise ValueError(
+                    "coverage must be passed to _get_columns for predict_interval"
+                )
+            return pd.MultiIndex.from_product([varnames, coverage, ["lower", "upper"]])
+
+        if method == "predict_quantiles":
+            alpha = kwargs.get("alpha", None)
+            if alpha is None:
+                raise ValueError(
+                    "alpha must be passed to _get_columns for predict_quantiles"
+                )
+            return pd.MultiIndex.from_product([varnames, alpha])
+        
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions.
