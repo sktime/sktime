@@ -399,11 +399,7 @@ class BaseForecaster(BaseEstimator):
 
         return self
 
-    def predict(
-        self,
-        fh=None,
-        X=None,
-    ):
+    def predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         State required:
@@ -2378,6 +2374,20 @@ class BaseForecaster(BaseEstimator):
 
         return [var_name]
 
+    def _get_columns(self, method="predict"):
+        """Return column names for DataFrame-like returns.
+
+        Parameter
+        ---------
+        method : str, optional (default="predict")
+            method for which to return column names
+            one of "predict", "predict_interval", "predict_quantiles", "predict_var"
+
+        Returns
+        -------
+        columns : pd.Index
+            column names
+        """
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions.
