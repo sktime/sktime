@@ -1,45 +1,9 @@
+#!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Extension template for forecasters, SIMPLE version.
+"""Implements a piecewise linear trend forecaster by wrapping fbprophet."""
 
-Contains only bare minimum of implementation requirements for a functional forecaster.
-Also assumes *no composition*, i.e., no forecaster or other estimator components.
-Assumes pd.DataFrame used internally, and no hierarchical functionality.
-For advanced cases (probabilistic, composition, hierarchical, etc),
-    see extension templates in forecasting.py or forecasting_simple.py
+__author__ = ["sbuse"]
 
-Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
-
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, cutoff, _fh,
-    _cutoff, _converter_store_y, forecasters_, _tags, _tags_dynamic, _is_vectorized
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
-- once complete: use as a local library, or contribute to sktime via PR
-- more details:
-  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
-
-Mandatory implements:
-    fitting         - _fit(self, y, X=None, fh=None)
-    forecasting     - _predict(self, fh=None, X=None)
-
-Testing - required for sktime test framework and check_estimator usage:
-    get default parameters for test instance(s) - get_test_params()
-"""
-# todo: write an informative docstring for the file or module, remove the above
-# todo: add an appropriate copyright notice for your estimator
-#       estimators contributed to sktime should have the copyright notice at the top
-#       estimators of your own do not need to have permissive or BSD-3 copyright
-
-# todo: uncomment the following line, enter authors' GitHub IDs
-# __author__ = [sbuse]
 import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
@@ -98,17 +62,8 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
     >>> y_pred = forecaster.predict(fh)
     """
 
-    # todo: fill in the scitype:y tag for univariate/multivariate
     _tags = {
-        # scitype:y controls whether internal y can be univariate/multivariate
-        # if multivariate is not valid, applies vectorization over variables
         "scitype:y": "univariate",
-        # fill in "univariate" or "both"
-        #   "univariate": inner _fit, _predict, receives only single-column DataFrame
-        #   "both": inner _predict gets pd.DataFrame series with any number of columns
-        #
-        # do not change these:
-        # (look at advanced templates if you think these should change)
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
@@ -173,7 +128,7 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
         )
         return self
     
-    # _fit is defined in the superclass and is fine as is. 
+    # _fit is defined in the superclass and is fine as it is. 
  
     def _predict(self, fh, X=None):
         """Forecast time series trend at future horizon.
@@ -214,9 +169,6 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
 
         return y_pred
     
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
