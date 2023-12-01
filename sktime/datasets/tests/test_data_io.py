@@ -36,7 +36,9 @@ def test_load_provided_dataset(return_X_y, return_type):
         X = _load_provided_dataset("UnitTest", "TRAIN", return_X_y, return_type)
 
     # Check whether object is same mtype or not, via bool
-    valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
+    valid, check_msg, _ = check_is_mtype(
+        X, return_type, return_metadata=True, msg_return_dict="list"
+    )
     msg = (
         "load_basic_motions return has unexpected type on "
         f"return_X_y = {return_X_y}, return_type = {return_type}. "
@@ -60,7 +62,9 @@ def test_load_basic_motions(return_X_y, return_type):
         X = load_basic_motions("TRAIN", return_X_y, return_type)
 
     # Check whether object is same mtype or not, via bool
-    valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
+    valid, check_msg, _ = check_is_mtype(
+        X, return_type, return_metadata=True, msg_return_dict="list"
+    )
     msg = (
         "load_basic_motions return has unexpected type on "
         f"return_X_y = {return_X_y}, return_type = {return_type}. "

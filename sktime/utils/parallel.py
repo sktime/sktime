@@ -38,6 +38,7 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as ``"dask"``, but returns delayed object instead of list
 
@@ -46,9 +47,16 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
         Valid keys depend on the value of ``backend``:
 
         - "None": no additional parameters, ``backend_params`` is ignored
-        - "loky", "multiprocessing" and "threading":
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
           any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-          with the exception of ``backend`` which is directly controlled by ``backend``
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
     """
     if meta is None:
@@ -72,6 +80,7 @@ backend_dict = {
     "loky": "joblib",
     "multiprocessing": "joblib",
     "threading": "joblib",
+    "joblib": "joblib",
     "dask": "dask",
     "dask_lazy": "dask",
 }
@@ -92,7 +101,29 @@ def _parallelize_joblib(fun, iter, meta, backend, backend_params):
     from joblib import Parallel, delayed
 
     par_params = backend_params.copy()
-    par_params["backend"] = backend
+    if "backend" not in par_params:
+        # if user selects custom joblib backend but does not specify backend explicitly,
+        # raise a ValueError
+        if backend == "joblib":
+            raise ValueError(
+                '"joblib" was selected as first layer parallelization backend, '
+                "but no backend string was "
+                '"passed in the backend parameters dict, e.g., "spark". '
+                "Please specify a backend to joblib as a key-value pair "
+                "in the backend_params arg or the backend:parallel:params config "
+                'when using "joblib". '
+                'For clarity, "joblib" should only be used for two-layer '
+                "backend dispatch, where the first layer is joblib, "
+                "and the second layer is a custom backend of joblib, e.g., spark."
+                "For first-party joblib backends, please use the backend string "
+                'of sktime directly, e.g., by specifying "multiprocessing" or "loky".'
+            )
+        # in all other cases, we ensure the backend parameter is one of
+        # "loky", "multiprocessing" or "threading", as passed via backend
+        else:
+            par_params["backend"] = backend
+    elif backend != "joblib":
+        par_params["backend"] = backend
 
     if "n_jobs" not in par_params:
         par_params["n_jobs"] = -1
