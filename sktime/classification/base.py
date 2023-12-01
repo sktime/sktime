@@ -295,7 +295,9 @@ class BaseClassifier(BaseEstimator, ABC):
             )
         else:
             # otherwise we call the vectorized version
-            pred = self._vectorize("fit_predict", X=X, y=y)
+            pred = self._vectorize(
+                "fit_predict", X=X, y=y, cv=cv, change_state=change_state
+            )
 
         return pred
 
@@ -351,7 +353,9 @@ class BaseClassifier(BaseEstimator, ABC):
             )
         else:
             # otherwise we call the vectorized version
-            pred_dist = self._vectorize("fit_predict_proba", X=X, y=y)
+            pred_dist = self._vectorize(
+                "fit_predict_proba", X=X, y=y, cv=cv, change_state=change_state
+            )
 
         return pred_dist
 
@@ -361,6 +365,7 @@ class BaseClassifier(BaseEstimator, ABC):
         Uses classifiers_ attribute to store one classifier per loop index.
         """
         y = kwargs.get("y")
+        kwargs.pop("y")
         if y is not None:
             self._y_vec = y
         classifiers_ = self._y_vec.vectorize_est(
@@ -383,7 +388,7 @@ class BaseClassifier(BaseEstimator, ABC):
                 method=methodname,
                 # return_type="list",
                 args={"y": y} if y is not None else {},
-                X=kwargs.get("X"),
+                kwargs=kwargs,  # contains X inside
             )
             y_pred = pd.DataFrame(
                 {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}
