@@ -2385,32 +2385,38 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 class YfromX(BaseForecaster, _ReducerMixin):
     """Simple reduction predicting endogeneous from concurrent exogeneous variables.
 
-    Tabulates all seen `X` and `y` by time index and applies
+    Tabulates all seen ``X`` and ``y`` by time index and applies
     tabular supervised regression.
 
-    In `fit`, given endogeneous time series `y` and exogeneous `X`:
-        fits `estimator` to feature-label pairs as defined as follows.
+    In ``fit``, given endogeneous time series ``y`` and exogeneous ``X``:
+    fits ``estimator`` to feature-label pairs as defined as follows.
 
-        features = :math:`y(t)`, labels: :math:`X(t)`
-        ranging over all :math:`t` where the above have been observed (are in the index)
+    features = :math:`y(t)`, labels: :math:`X(t)`
+    ranging over all :math:`t` where the above have been observed (are in the index)
 
-    In `predict`, at a time :math:`t` in the forecasting horizon, uses `estimator`
-        to predict :math:`y(t)`, from labels: :math:`X(t)`
+    In ``predict``, at a time :math:`t` in the forecasting horizon, uses ``estimator``
+    to predict :math:`y(t)`, from labels: :math:`X(t)`
 
-    If no exogeneous data is provided, will predict the mean of `y` seen in `fit`.
+    If regressor is ``skpro`` probabilistic regressor, and has ``predict_interval`` etc,
+    uses ``estimator`` to predict :math:`y(t)`, from labels: :math:`X(t)`,
+    passing on the ``predict_interval`` etc arguments.
+
+    If no exogeneous data is provided, will predict the mean of ``y`` seen in ``fit``.
 
     In order to use a fit not on the entire historical data
-    and update periodically, combine this with `UpdateRefitsEvery`.
+    and update periodically, combine this with ``UpdateRefitsEvery``.
 
-    In order to deal with missing data, combine this with `Imputer`.
+    In order to deal with missing data, combine this with ``Imputer``.
 
     To construct an custom direct reducer,
-    combine with `YtoX`, `Lag`, or `ReducerTransform`.
+    combine with ``YtoX``, ``Lag``, or ``ReducerTransform``.
 
     Parameters
     ----------
-    estimator : sklearn regressor, must be compatible with sklearn interface
+    estimator : sklearn regressor or skpro probabilistic regressor,
+        must be compatible with sklearn or skpro interface
         tabular regression algorithm used in reduction algorithm
+        if skpro regressor, resulting forecaster will have probabilistic capability
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
         "local" = unit/instance level, one reduced model per lowest hierarchy level
