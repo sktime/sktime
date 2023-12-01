@@ -252,8 +252,8 @@ class ARCH(BaseForecaster):
             self._horizon = fh
 
         self._forecaster = _ARCH(
-            y=y,
-            x=X,
+            y=y.copy(deep=True),
+            x=X.copy(deep=True) if X else X,
             mean=self.mean,
             lags=self.lags,
             vol=self.vol,
