@@ -253,7 +253,7 @@ class ARCH(BaseForecaster):
 
         self._forecaster = _ARCH(
             y=y.copy(deep=True),
-            x=X.copy(deep=True) if X else X,
+            x=X.copy(deep=True) if X is not None else X,
             mean=self.mean,
             lags=self.lags,
             vol=self.vol,
@@ -344,7 +344,7 @@ class ARCH(BaseForecaster):
         y_pred = pd.Series(
             ArchResultObject.mean.values[-1],
             index=full_range,
-            name=str(self._y.name),
+            name=self._y.name,
         )
         y_pred = y_pred.loc[abs_idx.to_pandas()]
         y_pred.index = self._horizon.to_absolute_index(self.cutoff)
@@ -389,7 +389,7 @@ class ARCH(BaseForecaster):
         std_err = np.sqrt(np.array(ArchResultObject.variance.values[-1]))
         mean_forecast = np.array(ArchResultObject.mean.values[-1])
 
-        y_col_name = self._y.name
+        y_col_name = self._y.name if self._y.name else 0
         df_list = []
         for confidence in coverage:
             alpha = 1 - confidence
@@ -398,11 +398,11 @@ class ARCH(BaseForecaster):
             upper_int = mean_forecast + (z_critical * std_err)
             lower_df = pd.DataFrame(
                 lower_int,
-                columns=[y_col_name + " " + str(alpha) + " " + "lower"],
+                columns=[str(y_col_name) + " " + str(alpha) + " " + "lower"],
             )
             upper_df = pd.DataFrame(
                 upper_int,
-                columns=[y_col_name + " " + str(alpha) + " " + "upper"],
+                columns=[str(y_col_name) + " " + str(alpha) + " " + "upper"],
             )
             df_list.append(pd.concat((lower_df, upper_df), axis=1))
         concat_df = pd.concat(df_list, axis=1)
@@ -410,7 +410,7 @@ class ARCH(BaseForecaster):
             OrderedDict.fromkeys(
                 [
                     col_df
-                    for col in y_col_name
+                    for col in str(y_col_name)
                     for col_df in concat_df.columns
                     if col in col_df
                 ]
