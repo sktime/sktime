@@ -16,9 +16,11 @@ __all__ = [
 ]
 
 import math
+from typing import Optional
 
 import numpy as np
 from joblib import Parallel, delayed
+from numpy.random import RandomState
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
@@ -35,6 +37,7 @@ class BaseTimeSeriesForest:
         min_interval=3,
         n_estimators=200,
         n_jobs=1,
+        inner_series_length: Optional[int] = None,
         random_state=None,
     ):
         super().__init__(
@@ -46,6 +49,7 @@ class BaseTimeSeriesForest:
         self.n_estimators = n_estimators
         self.min_interval = min_interval
         self.n_jobs = n_jobs
+        self.inner_series_length = inner_series_length
         # The following set in method fit
         self.n_classes = 0
         self.series_length = 0
@@ -105,7 +109,13 @@ class BaseTimeSeriesForest:
             self.min_interval = self.series_length
 
         self.intervals_ = [
-            _get_intervals(self.n_intervals, self.min_interval, self.series_length, rng)
+            _get_intervals(
+                self.n_intervals,
+                self.min_interval,
+                self.series_length,
+                rng,
+                self.inner_series_length,
+            )
             for _ in range(self.n_estimators)
         ]
 
@@ -125,6 +135,102 @@ class BaseTimeSeriesForest:
             "intervals": self.intervals_,
             "estimators": self.estimators_,
         }
+
+
+def _get_intervals(
+    n_intervals: int,
+    min_interval: int,
+    series_length: int,
+    rng: RandomState,
+    inner_series_length: Optional[int] = None,
+) -> np.ndarray:
+    """Generate random intervals for given parameters.
+
+    Parameters
+    ----------
+    n_intervals : int
+        Number of intervals to generate.
+    min_interval : int
+        Minimum length of an interval.
+    series_length : int
+        Length of the series.
+    rng : RandomState
+        Random number generator.
+    inner_series_length : int, optional (default=None)
+        Length of the inner series, define the maximum of an interval
+        and forces intervals to be contained in disjoint segments of
+        length inner_series_length. If None, defaults to series_length.
+
+    Returns
+    -------
+    intervals_starts_and_end_matrix : np.ndarray
+        Matrix of shape (n_intervals, 2) where each row represents an
+        interval and contains its start and end.
+    """
+    interval_max_length = (
+        series_length if inner_series_length is None else inner_series_length
+    )
+    capped_min_interval = (
+        interval_max_length if min_interval >= interval_max_length else min_interval
+    )
+    number_of_inner_intervals = series_length // interval_max_length
+    intervals_starts_and_end_matrix = np.zeros((n_intervals, 2), dtype=int)
+    for interval_index in range(n_intervals):
+        inner_intervals_step = rng.randint(number_of_inner_intervals)
+        current_interval_start = (
+            inner_intervals_step * interval_max_length
+            + rng.randint(max(1, interval_max_length - capped_min_interval))
+        )
+        current_interval_length = compute_interval_length(
+            capped_min_interval,
+            current_interval_start,
+            inner_intervals_step,
+            interval_max_length,
+            rng,
+        )
+        current_interval_end = current_interval_start + current_interval_length
+        intervals_starts_and_end_matrix[interval_index, :] = [
+            current_interval_start,
+            current_interval_end,
+        ]
+    return intervals_starts_and_end_matrix
+
+
+def compute_interval_length(
+    capped_min_interval: int,
+    current_interval_start: int,
+    inner_intervals_step: int,
+    interval_max_length: int,
+    rng: RandomState,
+) -> int:
+    if (
+        capped_min_interval
+        < interval_max_length * (inner_intervals_step + 1) - current_interval_start
+    ):
+        current_interval_length = max(
+            capped_min_interval,
+            rng.randint(
+                interval_max_length * (inner_intervals_step + 1)
+                - current_interval_start
+                - 1,
+            ),
+        )
+    elif (
+        capped_min_interval
+        == interval_max_length * (inner_intervals_step + 1) - current_interval_start
+    ):
+        current_interval_length = capped_min_interval
+    else:
+        highest_possible_interval_length = (
+            interval_max_length * (inner_intervals_step + 1) - current_interval_start
+        )
+        raise ValueError(
+            f"low({capped_min_interval}) > "
+            f"high({highest_possible_interval_length}): "
+            f"Decrease capped_min_interval({capped_min_interval}) "
+            f"or increase interval_max_length({interval_max_length})"
+        )
+    return current_interval_length
 
 
 def _transform(X, intervals):
@@ -157,18 +263,6 @@ def _transform(X, intervals):
         transformed_x[3 * j + 2] = slope
 
     return transformed_x.T
-
-
-def _get_intervals(n_intervals, min_interval, series_length, rng):
-    """Generate random intervals for given parameters."""
-    intervals = np.zeros((n_intervals, 2), dtype=int)
-    for j in range(n_intervals):
-        intervals[j][0] = rng.randint(series_length - min_interval)
-        length = rng.randint(series_length - intervals[j][0] - 1)
-        if length < min_interval:
-            length = min_interval
-        intervals[j][1] = intervals[j][0] + length
-    return intervals
 
 
 def _fit_estimator(estimator, X, y, intervals):

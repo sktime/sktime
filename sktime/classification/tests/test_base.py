@@ -287,9 +287,7 @@ def test__check_classifier_input():
         _check_classifier_input(test_X5, test_y1)
     # 4. Test incorrect data type: y is a List
     test_y3 = [1, 2, 3, 4, 5]
-    with pytest.raises(
-        TypeError, match=r".*X is not of a supported input data " r"type.*"
-    ):
+    with pytest.raises(TypeError, match="must be in an sktime compatible format"):
         _check_classifier_input(test_X1, test_y3)
     # 5. Test incorrect: too few cases or too short a series
     with pytest.raises(ValueError, match=r".*Minimum number of cases required*."):
@@ -508,3 +506,26 @@ def test_deep_estimator_full(optimizer):
 
     # check if components are same
     assert full_dummy.__dict__ == deserialized_full.__dict__
+
+
+DUMMY_EST_PARAMETERS_FOO = [None, 10.3, "string", {"key": "value"}, lambda x: x**2]
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("cloudpickle", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("foo", DUMMY_EST_PARAMETERS_FOO)
+def test_save_estimator_using_cloudpickle(foo):
+    """Check if serialization works with cloudpickle."""
+    from sktime.base._serialize import load
+
+    est = _DummyComposite(foo)
+
+    serialized = est.save(serialization_format="cloudpickle")
+    loaded_est = load(serialized)
+
+    if callable(foo):
+        assert est.foo(2) == loaded_est.foo(2)
+    else:
+        assert est.foo == loaded_est.foo

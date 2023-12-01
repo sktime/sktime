@@ -220,13 +220,13 @@ class Imputer(BaseTransformer):
             X_grouped = X.groupby(level=list(range(index.nlevels - 1)))
 
             if self.method in ["backfill", "bfill"]:
-                X = X_grouped.fillna(method="bfill")
+                X = X_grouped.bfill()
                 # fill trailing NAs of panel instances with reverse method
-                return X.fillna(method="ffill")
+                return X.ffill()
             elif self.method in ["pad", "ffill"]:
-                X = X_grouped.fillna(method="ffill")
+                X = X_grouped.ffill()
                 # fill leading NAs of panel instances with reverse method
-                return X.fillna(method="bfill")
+                return X.bfill()
             elif self.method == "mean":
                 return X_grouped.fillna(value=self._mean)
             elif self.method == "median":
@@ -234,8 +234,10 @@ class Imputer(BaseTransformer):
             else:
                 raise AssertionError("Code should not be reached")
         else:
-            if self.method in ["backfill", "bfill", "pad", "ffill"]:
-                X = X.fillna(method=self.method)
+            if self.method in ["backfill", "bfill"]:
+                X = X.bfill()
+            elif self.method in ["pad", "ffill"]:
+                X = X.ffill()
             elif self.method == "drift":
                 X = self._impute_with_forecaster(X, y)
             elif self.method == "forecaster":
@@ -251,7 +253,7 @@ class Imputer(BaseTransformer):
 
             # fill first/last elements of series,
             # as some methods (e.g. "linear") can't impute those
-            X = X.fillna(method="ffill").fillna(method="backfill")
+            X = X.ffill().bfill()
 
             return X
 
@@ -344,8 +346,8 @@ class Imputer(BaseTransformer):
                 # fill NaN before fitting with ffill and backfill (heuristic)
 
                 self._forecaster.fit(
-                    y=self._X[col].fillna(method="ffill").fillna(method="backfill"),
-                    X=self._y[col].fillna(method="ffill").fillna(method="backfill")
+                    y=self._X[col].ffill().fillna(method="backfill"),
+                    X=self._y[col].ffill().fillna(method="backfill")
                     if self._y is not None
                     else None,
                     fh=fh,

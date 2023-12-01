@@ -21,7 +21,7 @@ from sklearn.ensemble import (
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 
-from sktime.datasets import load_airline
+from sktime.datasets import load_airline, load_solar
 from sktime.datatypes import get_examples
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import make_reduction
@@ -106,6 +106,7 @@ def y_dict():
     # Create integer index data
     y_numeric = y_train.copy()
     y_numeric.index = pd.to_numeric(y_numeric.index)
+    y_numeric.index.names = [None]  # setting None to cover "no index name" case
     y_dict["y_numeric"] = y_numeric
 
     return y_dict
@@ -139,7 +140,7 @@ def check_eval(test_input, expected):
         ),
         (
             "y_train",
-            [None],
+            ["Period"],
         ),
         (
             "y_numeric",
@@ -186,7 +187,7 @@ def test_recursive_reduction(y, index_names, y_dict):
         ),
         (
             "y_train",
-            [None],
+            ["Period"],
         ),
         (
             "y_numeric",
@@ -232,7 +233,7 @@ def test_direct_reduction(y, index_names, y_dict):
         ),
         (
             "y_train",
-            [None],
+            ["Period"],
         ),
         (
             "y_numeric",
@@ -358,3 +359,40 @@ def test_nofreq_pass():
     np.testing.assert_almost_equal(
         y_pred_global["c0"].values, y_pred_nofreq["c0"].values
     )
+
+
+def test_timezoneaware_index():
+    y = load_solar(api_version=None)
+    y_notz = y.copy().tz_localize(None)
+
+    assert y.index.tz is not None
+    assert y_notz.index.tz is None
+
+    window_trafo = WindowSummarizer(n_jobs=1, **{"lag_feature": {"lag": [1, 2, 48]}})
+    regressor = LinearRegression()
+    forecaster = make_reduction(
+        estimator=regressor,
+        strategy="recursive",
+        transformers=[window_trafo],
+        window_length=None,
+        pooling="global",
+    )
+
+    # check coefficients
+    tzaware = forecaster.clone().fit(y)
+    tznaive = forecaster.clone().fit(y_notz)
+    tzaware_coef = tzaware.get_fitted_params()["estimator__coef"]
+    tznaive_coef = tznaive.get_fitted_params()["estimator__coef"]
+
+    np.testing.assert_almost_equal(tzaware_coef, tznaive_coef)
+
+    fh = np.arange(1, 97)
+    pred_tzaware = tzaware.predict(fh=fh)
+    pred_tznaive = tznaive.predict(fh=fh)
+
+    msg = "Time-zone of predictions not consistent with training data."
+    assert pred_tzaware.index.tz == y.index.tz, msg
+    assert pred_tznaive.index.tz == y_notz.index.tz, msg
+
+    # These should give us identical predictions
+    np.testing.assert_almost_equal(pred_tzaware.values, pred_tznaive.values)
