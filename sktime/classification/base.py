@@ -29,12 +29,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import (
-    MTYPE_LIST_PANEL,
-    check_is_error_msg,
-    check_is_scitype,
-    convert_to,
-)
+from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes._vectorize import VectorizedDF
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
@@ -61,6 +57,7 @@ class BaseClassifier(BaseEstimator, ABC):
         "object_type": "classifier",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
+        "capability:multioutput": False,  # whether classifier supports multioutput
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -93,6 +90,8 @@ class BaseClassifier(BaseEstimator, ABC):
         # required for compatibility with some sklearn interfaces
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
+        self._classifiers_ = None
+        self._is_vectorized = False
 
         super().__init__()
         _check_estimator_deps(self)
@@ -136,7 +135,287 @@ class BaseClassifier(BaseEstimator, ABC):
             return NotImplemented
 
     def fit(self, X, y):
-        """Fit time series classifier to training data.
+        """
+        Fit time series classifier to training data.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series)
+                of shape [n_instances, n_dimensions, series_length]
+            or 2D np.array (univariate, equal length series)
+                of shape [n_instances, series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+                (any number of dimensions, equal or unequal length series)
+            or of any other supported Panel mtype
+                for list of mtypes, see datatypes.SCITYPE_REGISTER
+                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 2D np.array of int, of shape [n_instances, n_dimensions] - class labels for
+                fitting indices correspond to instance indices in X
+            or 1D np.array of int, of shape [n_instances] - class labels for fitting
+                indices correspond to instance indices in X
+
+        Returns
+        -------
+        self : Reference to self.
+        """
+        # check and convert X/y
+        y = self._check_y(y)
+
+        self._is_vectorized = isinstance(y, VectorizedDF)
+        # we call the ordinary _fit if no looping/vectorization needed
+        if not self._is_vectorized or self.get_tag("capability:multioutput"):
+            self._fit_instance(X=X, y=y)
+        else:
+            # otherwise we call the vectorized version of fit
+            self._vectorize("fit", X=X, y=y)
+
+        # this should happen last: fitted state is set to True
+        self._is_fitted = True
+
+        return self
+
+    def predict(self, X):
+        """Predicts labels for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series)
+                of shape [n_instances, n_dimensions, series_length]
+            or 2D np.array (univariate, equal length series)
+                of shape [n_instances, series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+                (any number of dimensions, equal or unequal length series)
+            or of any other supported Panel mtype
+                for list of mtypes, see datatypes.SCITYPE_REGISTER
+                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        Returns
+        -------
+        pred : 1D np.array of int, of shape [n_instances] - predicted class labels
+                    indices correspond to instance indices in X
+                or pd.DataFrame with each column a dimension/target, containing class
+                    labels for each instance in X
+        """
+        if not self._is_vectorized or self.get_tag("capability:multioutput"):
+            pred = self._predict_instance(X=X)
+        else:
+            # otherwise we call the vectorized version
+            pred = self._vectorize("predict", X=X)
+
+        return pred
+
+    def predict_proba(self, X):
+        """Predicts labels probabilities for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series)
+                of shape [n_instances, n_dimensions, series_length]
+            or 2D np.array (univariate, equal length series)
+                of shape [n_instances, series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+                (any number of dimensions, equal or unequal length series)
+            or of any other supported Panel mtype
+                for list of mtypes, see datatypes.SCITYPE_REGISTER
+                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        Returns
+        -------
+        pred : 1D np.array of int, of shape [n_instances] - predicted predicted class
+                    probabilities correspond to instance indices in X
+               or pd.DataFrame with each column a dimension/target, containing predicted
+                    class probabilities for each instance in X
+        """
+        # we call the ordinary method if no looping/vectorization needed
+        if not self._is_vectorized or self.get_tag("capability:multioutput"):
+            pred_dist = self._predict_proba_instance(X=X)
+        else:
+            # otherwise we call the vectorized version
+            pred_dist = self._vectorize("predict_proba", X=X)
+
+        return pred_dist
+
+    def fit_predict(self, X, y, cv=None, change_state=True):
+        """Fit and predict labels for sequences in X.
+
+        Convenience method to produce in-sample predictions and
+        cross-validated out-of-sample predictions.
+
+        Writes to self, if change_state=True:
+            Sets self.is_fitted to True.
+            Sets fitted model attributes ending in "_".
+
+        Does not update state if change_state=False.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series)
+                of shape [n_instances, n_dimensions, series_length]
+            or 2D np.array (univariate, equal length series)
+                of shape [n_instances, series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+                (any number of dimensions, equal or unequal length series)
+            or of any other supported Panel mtype
+                for list of mtypes, see datatypes.SCITYPE_REGISTER
+                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 2D np.array of int, of shape [n_instances, n_dimensions] - class labels for
+                fitting indices correspond to instance indices in X
+            or 1D np.array of int, of shape [n_instances] - class labels for fitting
+                indices correspond to instance indices in X
+        cv : None, int, or sklearn cross-validation object, optional, default=None
+            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
+            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
+                where multiple X_train, y_train, X_test are obtained from cv folds
+                returned y is union over all test fold predictions
+                cv test folds must be non-intersecting
+            int : equivalent to cv=KFold(cv, shuffle=True, random_state=x),
+                i.e., k-fold cross-validation predictions out-of-sample
+                random_state x is taken from self if exists, otherwise x=None
+        change_state : bool, optional (default=True)
+            if False, will not change the state of the classifier,
+                i.e., fit/predict sequence is run with a copy, self does not change
+            if True, will fit self to the full X and y,
+                end state will be equivalent to running fit(X, y)
+
+        Returns
+        -------
+        pred :  1D np.array of int, of shape [n_instances] - predicted class labels
+                    indices correspond to instance indices in X
+                or pd.DataFrame with each column a dimension/target, containing class
+                    labels for each instance in X
+        """
+        # check and convert X/y
+        y = self._check_y(y)
+
+        self._is_vectorized = isinstance(y, VectorizedDF)
+        # we call the ordinary method if no looping/vectorization needed
+        if not self._is_vectorized or self.get_tag("capability:multioutput"):
+            pred = self._fit_predict_instance(
+                X=X, y=y, cv=cv, change_state=change_state
+            )
+        else:
+            # otherwise we call the vectorized version
+            pred = self._vectorize("fit_predict", X=X, y=y)
+
+        return pred
+
+    def fit_predict_proba(self, X, y, cv=None, change_state=True):
+        """Fit and predict labels probabilities for sequences in X.
+
+        Convenience method to produce in-sample predictions and
+        cross-validated out-of-sample predictions.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series)
+                of shape [n_instances, n_dimensions, series_length]
+            or 2D np.array (univariate, equal length series)
+                of shape [n_instances, series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+                (any number of dimensions, equal or unequal length series)
+            or of any other supported Panel mtype
+                for list of mtypes, see datatypes.SCITYPE_REGISTER
+                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 2D np.array of int, of shape [n_instances, n_dimensions] - class labels for
+                fitting indices correspond to instance indices in X
+            or 1D np.array of int, of shape [n_instances] - class labels for fitting
+                indices correspond to instance indices in X
+        cv : None, int, or sklearn cross-validation object, optional, default=None
+            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
+            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
+                where multiple X_train, y_train, X_test are obtained from cv folds
+                returned y is union over all test fold predictions
+                cv test folds must be non-intersecting
+            int : equivalent to cv=Kfold(int), i.e., k-fold cross-validation predictions
+        change_state : bool, optional (default=True)
+            if False, will not change the state of the classifier,
+                i.e., fit/predict sequence is run with a copy, self does not change
+            if True, will fit self to the full X and y,
+                end state will be equivalent to running fit(X, y)
+
+        Returns
+        -------
+        pred : 1D np.array of int, of shape [n_instances] - predicted predicted class
+                    probabilities correspond to instance indices in X
+               or pd.DataFrame with each column a dimension/target, containing predicted
+                    class probabilities for each instance in X
+        """
+        # check and convert X/y
+        y = self._check_y(y)
+
+        self._is_vectorized = isinstance(y, VectorizedDF)
+        # we call the ordinary method if no looping/vectorization needed
+        if not self._is_vectorized or self.get_tag("capability:multioutput"):
+            pred_dist = self._fit_predict_proba_instance(
+                X=X, y=y, cv=cv, change_state=change_state
+            )
+        else:
+            # otherwise we call the vectorized version
+            pred_dist = self._vectorize("fit_predict_proba", X=X, y=y)
+
+        return pred_dist
+
+    def _vectorize(self, methodname, **kwargs):
+        """Vectorized/iterated loop over method of BaseClassifier.
+
+        Uses classifiers_ attribute to store one classifier per loop index.
+        """
+        y = kwargs.get("y")
+        if y is not None:
+            self._y_vec = y
+        classifiers_ = self._y_vec.vectorize_est(
+            self,
+            method="clone",
+        )
+        if methodname == "fit":
+            self._classifiers_ = self._y_vec.vectorize_est(
+                classifiers_,
+                method=methodname,
+                args={"y": kwargs.get("y")} if kwargs.get("y") else {},
+                X=kwargs.get("X"),
+            )
+            return self
+        else:
+            if self._classifiers_ is not None:
+                classifiers_ = self._classifiers_
+            y_pred = self._y_vec.vectorize_est(
+                classifiers_,
+                method=methodname,
+                # return_type="list",
+                args={"y": y} if y is not None else {},
+                X=kwargs.get("X"),
+            )
+            y_pred = pd.DataFrame(
+                {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}
+            )
+            return y_pred
+
+    def _check_y(self, y=None):
+        """Check and coerce X/y for fit/transform functions.
+
+        Parameters
+        ----------
+        y : pd.DataFrame, pd.Series or np.ndarray
+
+        Returns
+        -------
+        y : object of sktime compatible time series type
+            can be Series, Panel, Hierarchical
+        """
+        if isinstance(y, pd.DataFrame) and len(y.columns) == 1:
+            return y
+        if isinstance(y, pd.DataFrame):
+            y = VectorizedDF([y], iterate_cols=True)
+            self._is_vectorized = True
+            return y
+        if y.ndim == 1:
+            return y
+        y = VectorizedDF(np.array([y.T]), iterate_cols=True)
+        self._is_vectorized = True
+        return y
+
+    def _fit_instance(self, X, y):
+        """Fit time series classifier to training data (single instance).
 
         Parameters
         ----------
@@ -212,8 +491,8 @@ class BaseClassifier(BaseEstimator, ABC):
         self._is_fitted = True
         return self
 
-    def predict(self, X) -> np.ndarray:
-        """Predicts labels for sequences in X.
+    def _predict_instance(self, X) -> np.ndarray:
+        """Predicts labels for sequences in X (single instance).
 
         Parameters
         ----------
@@ -244,8 +523,8 @@ class BaseClassifier(BaseEstimator, ABC):
         # call internal _predict_proba
         return self._predict(X)
 
-    def predict_proba(self, X) -> np.ndarray:
-        """Predicts labels probabilities for sequences in X.
+    def _predict_proba_instance(self, X) -> np.ndarray:
+        """Predicts labels probabilities for sequences in X (single instance).
 
         Parameters
         ----------
@@ -278,8 +557,8 @@ class BaseClassifier(BaseEstimator, ABC):
         # call internal _predict_proba
         return self._predict_proba(X)
 
-    def fit_predict(self, X, y, cv=None, change_state=True) -> np.ndarray:
-        """Fit and predict labels for sequences in X.
+    def _fit_predict_instance(self, X, y, cv=None, change_state=True) -> np.ndarray:
+        """Fit and predict labels for sequences in X (single instance).
 
         Convenience method to produce in-sample predictions and
         cross-validated out-of-sample predictions.
@@ -400,8 +679,10 @@ class BaseClassifier(BaseEstimator, ABC):
 
         return y_pred
 
-    def fit_predict_proba(self, X, y, cv=None, change_state=True) -> np.ndarray:
-        """Fit and predict labels probabilities for sequences in X.
+    def _fit_predict_proba_instance(
+        self, X, y, cv=None, change_state=True
+    ) -> np.ndarray:
+        """Fit and predict labels probabilities for sequences in X (single instance).
 
         Convenience method to produce in-sample predictions and
         cross-validated out-of-sample predictions.
@@ -719,21 +1000,16 @@ class BaseClassifier(BaseEstimator, ABC):
             If y or X is invalid input data type, or there is not enough data
         """
         # Check X is valid input type and recover the data characteristics
-        X_valid, msg, X_metadata = check_is_scitype(
+        X_valid, _, X_metadata = check_is_scitype(
             X, scitype="Panel", return_metadata=return_metadata
         )
-        # raise informative error message if X is in wrong format
-        allowed_msg = (
-            f"Allowed scitypes for classifiers are Panel mtypes, "
-            f"for instance a pandas.DataFrame with MultiIndex and last(-1) "
-            f"level an sktime compatible time index. "
-            f"Allowed compatible mtype format specifications are: {MTYPE_LIST_PANEL} ."
-        )
         if not X_valid:
-            check_is_error_msg(
-                msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
+            raise TypeError(
+                f"X is not of a supported input data type."
+                f"X must be in a supported mtype format for Panel, found {type(X)}"
+                f"Use datatypes.check_is_mtype to check conformance "
+                "with specifications."
             )
-
         n_cases = X_metadata["n_instances"]
         if n_cases < enforce_min_instances:
             raise ValueError(
@@ -744,7 +1020,7 @@ class BaseClassifier(BaseEstimator, ABC):
         # Check y if passed
         if y is not None:
             # Check y valid input
-            if not isinstance(y, (pd.Series, np.ndarray)):
+            if not isinstance(y, (pd.Series, pd.DataFrame, np.ndarray)):
                 raise ValueError(
                     f"y must be a np.array or a pd.Series, but found type: {type(y)}"
                 )
@@ -755,12 +1031,6 @@ class BaseClassifier(BaseEstimator, ABC):
                     f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "
                     f"{n_labels}"
                 )
-            if isinstance(y, np.ndarray):
-                if y.ndim > 1:
-                    raise ValueError(
-                        f"np.ndarray y must be 1-dimensional, "
-                        f"but found {y.ndim} dimensions"
-                    )
             # warn if only a single class label is seen
             # this should not raise exception since this can occur by train subsampling
             if len(np.unique(y)) == 1:
