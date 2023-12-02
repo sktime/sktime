@@ -117,10 +117,10 @@ class _ProphetAdapter(BaseForecaster):
             df["floor"] = self.growth_floor
 
         if self.verbose:
-            self._forecaster.fit(df=df)
+            self._forecaster.fit(df=df, **self.fit_kwargs)
         else:
             with _suppress_stdout_stderr():
-                self._forecaster.fit(df=df)
+                self._forecaster.fit(df=df, **self.fit_kwargs)
 
         return self
 
