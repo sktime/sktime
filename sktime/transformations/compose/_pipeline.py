@@ -167,7 +167,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", False, True, ests)
 
-        # self can inverse transform if for all est, we either skip or can inv-trasform
+        # self can inverse transform if for all est, we either skip or can inv-transform
         skips = [est.get_tag("skip-inverse-transform") for _, est in ests]
         has_invs = [est.get_tag("capability:inverse_transform") for _, est in ests]
         can_inv = [x or y for x, y in zip(skips, has_invs)]

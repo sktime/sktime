@@ -119,7 +119,7 @@ def all_inputs_are_iloc_like(args: list) -> bool:
 
 
 def all_inputs_are_time_like(args: list) -> bool:
-    """Check if all inputs in teh list are time-like."""
+    """Check if all inputs in the list are time-like."""
     return all([is_time_like(x) if x is not None else True for x in args])
 
 

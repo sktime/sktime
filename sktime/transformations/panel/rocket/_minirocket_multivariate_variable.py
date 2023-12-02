@@ -180,7 +180,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         if lengths_1darray.min() < 9:
             failed_index = np.where(lengths_1darray < 9)[0]
             raise ValueError(
-                f"X must be >= 9 for all samples, but found miniumum to be "
+                f"X must be >= 9 for all samples, but found minimum to be "
                 f"{lengths_1darray.min()}; at index {failed_index}, pad shorter "
                 "series so that n_timepoints >= 9 for all samples."
             )
@@ -238,7 +238,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         X_2d_t, L = _nested_dataframe_to_transposed2D_array_and_len_list(
             X, pad=self.pad_value_short_series
         )
-        # change n_jobs dependend on value and existing cores
+        # change n_jobs depended on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()
@@ -292,14 +292,14 @@ def _nested_dataframe_to_transposed2D_array_and_len_list(
         )
 
     vec = []
-    lenghts = []
+    lengths = []
 
     for _x in X:
         _x_shape = _x.shape
         if _x_shape[0] < 9:
             if pad is not None:
                 # emergency: pad with zeros up to 9.
-                lenghts.append(9)
+                lengths.append(9)
                 vec.append(
                     np.vstack(
                         [_x.values, np.full([9 - _x_shape[0], _x_shape[1]], float(pad))]
@@ -312,11 +312,11 @@ def _nested_dataframe_to_transposed2D_array_and_len_list(
                     " padding, discard, or setting a pad_value_short_series value"
                 )
         else:
-            lenghts.append(_x_shape[0])
+            lengths.append(_x_shape[0])
             vec.append(_x.values)
 
     X_2d_t = np.vstack(vec).T.astype(dtype=np.float32)
-    lengths = np.array(lenghts, dtype=np.int32)
+    lengths = np.array(lengths, dtype=np.int32)
 
     if not lengths.sum() == X_2d_t.shape[1]:
         raise ValueError("X_new and lengths do not match. check input dimension")

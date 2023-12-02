@@ -92,7 +92,7 @@ def test_split_series_hier():
         assert inst_index(test) == inst_index(y)
 
 
-def test_hierachical_singlewindowsplitter():
+def test_hierarchical_singlewindowsplitter():
     """Test broadcasting of window splitters to hierarchical data.
 
     Also certifies for failure cas in bug #4972.

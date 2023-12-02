@@ -36,7 +36,9 @@ def test_load_provided_dataset(return_X_y, return_type):
         X = _load_provided_dataset("UnitTest", "TRAIN", return_X_y, return_type)
 
     # Check whether object is same mtype or not, via bool
-    valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
+    valid, check_msg, _ = check_is_mtype(
+        X, return_type, return_metadata=True, msg_return_dict="list"
+    )
     msg = (
         "load_basic_motions return has unexpected type on "
         f"return_X_y = {return_X_y}, return_type = {return_type}. "
@@ -60,7 +62,9 @@ def test_load_basic_motions(return_X_y, return_type):
         X = load_basic_motions("TRAIN", return_X_y, return_type)
 
     # Check whether object is same mtype or not, via bool
-    valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
+    valid, check_msg, _ = check_is_mtype(
+        X, return_type, return_metadata=True, msg_return_dict="list"
+    )
     msg = (
         "load_basic_motions return has unexpected type on "
         f"return_X_y = {return_X_y}, return_type = {return_type}. "
@@ -103,8 +107,8 @@ def test_data_loaders(dataset):
 
     dataset: dictionary with values to assert against should contain:
         'columns' : list with column names in correct order,
-        'len_y'   : lenght of the y series (int),
-        'len_X'   : lenght of the X series/dataframe (int),
+        'len_y'   : length of the y series (int),
+        'len_X'   : length of the X series/dataframe (int),
         'data_types_X' : dictionary with column name keys and dtype as value,
         'data_type_y'  : dtype if y column (string)
         'data'    : tuple with y series and X series/dataframe if one is not

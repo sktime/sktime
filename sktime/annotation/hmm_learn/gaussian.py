@@ -32,7 +32,7 @@ class GaussianHMM(BaseHMMLearn):
         Floor on the diagonal of the covariance matrix to prevent
         overfitting. Defaults to 1e-3.
     means_prior, means_weight : array, shape (n_mix, ), optional
-        Mean and precision of the Normal prior distribtion for
+        Mean and precision of the Normal prior distribution for
         :attr:`means_`.
     covars_prior, covars_weight : array, shape (n_mix, ), optional
         Parameters of the prior distribution for the covariance matrix
@@ -67,7 +67,7 @@ class GaussianHMM(BaseHMMLearn):
     implementation: string, optional
         Determines if the forward-backward algorithm is implemented with
         logarithms ("log"), or using scaling ("scaling").  The default is
-        to use logarithms for backwards compatability.
+        to use logarithms for backwards compatibility.
 
     Attributes
     ----------

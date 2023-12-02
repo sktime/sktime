@@ -144,8 +144,10 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             self.forecasters = value[0][1]
         else:
             self.forecasters = [
-                (name, forecaster, lvl_nd)
-                for ((name, forecaster), (_, _, lvl_nd)) in zip(value, self.forecasters)
+                (name, forecaster, level_nd)
+                for ((name, forecaster), (_, _, level_nd)) in zip(
+                    value, self.forecasters
+                )
             ]
 
     def _aggregate(self, y):

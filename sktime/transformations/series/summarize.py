@@ -102,7 +102,7 @@ class WindowSummarizer(BaseTransformer):
             The column generated will be named after the key provided, followed by the
             lag parameter and the window_length (if not a lag).
         second value (window): list of integers
-            List containg lag and window_length parameters.
+            List containing lag and window_length parameters.
         truncate: str, optional (default = None)
             Defines how to deal with NAs that were created as a result of applying the
             functions in the lag_feature dict across windows that are longer than
@@ -437,7 +437,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
          or custom function call. See for the native window functions also
          https://pandas.pydata.org/docs/reference/window.html.
     window: list of integers
-        List containg window_length and lag parameters, see WindowSummarizer
+        List containing window_length and lag parameters, see WindowSummarizer
         class description for in-depth explanation.
     """
     lag = window[0]
@@ -455,7 +455,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             else:
                 feat = getattr(
                     Z.shift(lag)
-                    .fillna(method="bfill")
+                    .bfill()
                     .rolling(window=window_length, min_periods=window_length),
                     summarizer,
                 )()
@@ -474,7 +474,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                 feat = Z.apply(
                     lambda x: getattr(
                         x.shift(lag)
-                        .fillna(method="bfill")
+                        .bfill()
                         .rolling(window=window_length, min_periods=window_length),
                         summarizer,
                     )()
@@ -483,7 +483,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         if bfill is False:
             feat = Z.shift(lag)
         else:
-            feat = Z.shift(lag).fillna(method="bfill")
+            feat = Z.shift(lag).bfill()
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
@@ -498,7 +498,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             )
         feat = pd.DataFrame(feat)
     if bfill is True:
-        feat = feat.fillna(method="bfill")
+        feat = feat.bfill()
 
     if callable(summarizer):
         name = summarizer.__name__

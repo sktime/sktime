@@ -6,10 +6,6 @@ Time series transformations
 The :mod:`sktime.transformations` module contains classes for data
 transformations.
 
-.. automodule:: sktime.transformations
-   :no-members:
-   :no-inherited-members:
-
 All (simple) transformers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="regressor"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
@@ -288,6 +284,14 @@ Depending on the transformer, the transformation parameters can be fitted.
     ExponentTransformer
     SqrtTransformer
 
+.. currentmodule:: sktime.transformations.series.scaledasinh
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ScaledAsinhTransformer
+
 Detrending and Decomposition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -406,8 +410,8 @@ Differencing, slope, kinematics
 
     KinematicFeatures
 
-Binning and segmentation
-~~~~~~~~~~~~~~~~~~~~~~~~
+Binning, sampling and segmentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.binning
 
@@ -433,6 +437,14 @@ Binning and segmentation
 
     IntervalSegmenter
     RandomIntervalSegmenter
+
+.. currentmodule:: sktime.transformations.series.dilation_mapping
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DilationMappingTransformer
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~

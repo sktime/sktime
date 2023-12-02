@@ -172,7 +172,7 @@ def write_results_to_uea_format(
     ----------
     estimator_name : str,
         Name of the object that made the predictions, written to file and can
-        deterimine file structure of output_root is True
+        determine file structure of output_root is True
     dataset_name : str
         name of the problem the classifier was built on
     y_pred : np.array
@@ -229,7 +229,7 @@ def write_results_to_uea_format(
         first_line += "," + first_line_comment
     file.write(first_line + "\n")
     # the second line of the output is free form and estimator-specific; usually this
-    # will record info such as build time, paramater options used, any constituent model
+    # will record info such as build time, parameter options used, any constituent model
     # names for ensembles, etc.
     file.write(str(second_line) + "\n")
     # the third line of the file is the accuracy (should be between 0 and 1

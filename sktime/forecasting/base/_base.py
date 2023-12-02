@@ -115,7 +115,8 @@ class BaseForecaster(BaseEstimator):
             backend to use for parallelization when broadcasting/vectorizing, one of
 
             - "None": executes loop sequentally, simple list comprehension
-            - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel``
+            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
             - "dask": uses ``dask``, requires ``dask`` package in environment
         """,
         "backend:parallel:params": """
@@ -124,12 +125,20 @@ class BaseForecaster(BaseEstimator):
             Valid keys depend on the value of ``backend:parallel``:
 
             - "None": no additional parameters, ``backend_params`` is ignored
-            - "loky", "multiprocessing" and "threading":
-              any valid keys for ``joblib.Parallel`` can be passed here,
-              e.g., ``n_jobs``, with the exception of ``backend`` which is directly
-              controlled by ``backend:parallel``
-            - "dask": any valid keys for ``dask.compute``
-              can be passed, e.g., ``scheduler``
+            - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+              any valid keys for ``joblib.Parallel`` can be passed here, e.g.,
+              ``n_jobs``, with the exception of ``backend`` which is directly
+              controlled by ``backend``.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "joblib": custom and 3rd party ``joblib`` backends,
+              e.g., ``spark``. Any valid keys for ``joblib.Parallel``
+              can be passed here, e.g., ``n_jobs``,
+            ``backend`` must be passed as a key of ``backend_params`` in this case.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "dask": any valid keys for ``dask.compute`` can be passed,
+              e.g., ``scheduler``
         """,
     }
 
@@ -964,7 +973,7 @@ class BaseForecaster(BaseEstimator):
             if collection of absolute horizon points is not unique:
                 type is a pandas DataFrame, with row and col index being time stamps
                 row index corresponds to cutoffs that are predicted from
-                column index corresponds to absolut horizons that are predicted
+                column index corresponds to absolute horizons that are predicted
                 entry is the point prediction of col index predicted from row index
                 entry is nan if no prediction is made at that (cutoff, horizon) pair
         """

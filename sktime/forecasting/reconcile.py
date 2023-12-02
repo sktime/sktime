@@ -24,7 +24,7 @@ from sktime.utils.warnings import warn
 
 
 class ReconcilerForecaster(BaseForecaster):
-    """Hierarchical reconcilation forecaster.
+    """Hierarchical reconciliation forecaster.
 
     Reconciliation is applied to make the forecasts in a hierarchy of
     time-series sum together appropriately.
@@ -151,7 +151,7 @@ class ReconcilerForecaster(BaseForecaster):
             if _check_index_no_total(X):
                 X = self._add_totals(X)
 
-        # if transformer just fit pipline and return
+        # if transformer just fit pipeline and return
         if np.isin(self.method, self.TRFORM_LIST):
             self.forecaster_ = self.forecaster.clone() * Reconciler(method=self.method)
             self.forecaster_.fit(y=y, X=X, fh=fh)

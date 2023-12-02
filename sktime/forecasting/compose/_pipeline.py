@@ -174,7 +174,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
-                        #   i.d., special 1st level name of prediction objet
+                        #   i.d., special 1st level name of prediction object
                         #   in the case where there is only one variable
                         if len(yt[ix].columns) == 1:
                             temp = yt[ix].columns
@@ -842,6 +842,21 @@ class TransformedTargetForecaster(_Pipeline):
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
+
+        # above, we cloned the ignores-exogeneous-X tag,
+        # but we also need to check whether X is used as y in some transformer
+        # in this case X is not ignored by the pipe, even if the forecaster ignores it
+        # logic below checks whether there is at least one such transformer
+        # if there is, we override the ignores-exogeneous-X tag to False
+        # also see discussion in bug issue #5518
+        pre_ts = self.transformers_pre_
+        post_ts = self.transformers_post_
+        pre_use_y = [est.get_tag("y_inner_mtype") != "None" for _, est in pre_ts]
+        post_use_y = [est.get_tag("y_inner_mtype") != "None" for _, est in post_ts]
+        any_t_use_y = any(pre_use_y) or any(post_use_y)
+
+        if any_t_use_y:
+            self.set_tags(**{"ignores-exogeneous-X": False})
 
     @property
     def forecaster_(self):

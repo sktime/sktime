@@ -492,10 +492,10 @@ class VectorizedDF:
             method of estimator to call with arguments in `args`, `args_rowvec`
         args : dict, optional, default=empty dict
             arguments to pass to `method` of estimator clones
-            will vectorize/iterater over rows and columns
+            will vectorize/iterator over rows and columns
         args_rowvec : dict, optional, default=empty dict
             arguments to pass to `method` of estimator clones
-            will vectorize/iterater only over rows but not over columns
+            will vectorize/iterator only over rows but not over columns
         return_type : str, one of "pd.DataFrame" or "list"
             the return will be of this type;
             if `pd.DataFrame`, with row/col indices being `self.get_iter_indices()`
@@ -511,6 +511,7 @@ class VectorizedDF:
 
             - "None": executes loop sequentally, simple list comprehension
             - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
             - "dask": uses ``dask``, requires ``dask`` package in environment
             - "dask_lazy": same as "dask", but returns delayed object instead
 
