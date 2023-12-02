@@ -257,6 +257,11 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
         if "scitype" in metadata:
             del metadata["scitype"]
 
+        # remove keys that are not checked
+        for key in EXCLUDE_KEYS:
+            if key in metadata:
+                del metadata[key]
+
         # currently we do not check this field in metadata inference
 
         msg = (
