@@ -39,10 +39,10 @@ X = np.array(
 )
 
 example_dict[("numpy3D", "Panel", 0)] = X
-example_dict_lossy[("numpy3D", "Panel", 0)] = False
+example_dict_lossy[("numpy3D", "Panel", 0)] = True
 
 example_dict[("numpyflat", "Panel", 0)] = None
-example_dict_lossy[("numpyflat", "Panel", 0)] = None
+example_dict_lossy[("numpyflat", "Panel", 0)] = True
 
 cols = [f"var_{i}" for i in range(2)]
 Xlist = [
@@ -114,12 +114,12 @@ X = np.array(
 )
 
 example_dict[("numpy3D", "Panel", 1)] = X
-example_dict_lossy[("numpy3D", "Panel", 1)] = False
+example_dict_lossy[("numpy3D", "Panel", 1)] = True
 
 X = np.array([[4, 5, 6], [4, 55, 6], [42, 5, 6]], dtype=np.int64)
 
 example_dict[("numpyflat", "Panel", 1)] = X
-example_dict_lossy[("numpyflat", "Panel", 1)] = False
+example_dict_lossy[("numpyflat", "Panel", 1)] = True
 
 cols = [f"var_{i}" for i in range(1)]
 Xlist = [
