@@ -237,5 +237,6 @@ class Prophet(_ProphetAdapter):
             "daily_seasonality": False,
             "uncertainty_samples": 10,
             "verbose": False,
+            "fit_kwargs": {"seed": 12345},
         }
         return params
