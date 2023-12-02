@@ -80,6 +80,7 @@ example_dict_metadata[("Series", 0)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 1,
 }
 
 ###
@@ -121,6 +122,7 @@ example_dict_metadata[("Series", 1)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 2,
 }
 
 
@@ -165,6 +167,7 @@ example_dict_metadata[("Series", 2)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 2,
 }
 
 ###
@@ -201,4 +204,5 @@ example_dict_metadata[("Series", 3)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 1,
 }
