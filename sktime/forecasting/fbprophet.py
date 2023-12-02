@@ -41,6 +41,8 @@ class Prophet(_ProphetAdapter):
         Dict with args for Prophet.add_country_holidays().
         Dict can have the following keys/values:
             country_name: Name of the country, like 'UnitedStates' or 'US'
+    fit_kwargs: dict or None, default=None
+        Dict with extra arguments passed to the `Prophet.fit()` method.
     growth: str, default="linear"
         String 'linear' or 'logistic' to specify a linear or logistic
         trend. If 'logistic' specified float for 'growth_cap' must be provided.
