@@ -101,6 +101,8 @@ example_dict_metadata[("Panel", 0)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
+    "n_features": 2,
+    "feature_names": ["var_0", "var_1"],
 }
 
 ###
@@ -173,6 +175,8 @@ example_dict_metadata[("Panel", 1)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
+    "n_features": 1,
+    "feature_names": ["var_0"],
 }
 
 ###
@@ -238,6 +242,8 @@ example_dict_metadata[("Panel", 2)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 1,
+    "n_features": 1,
+    "feature_names": ["var_0"],
 }
 
 ###
@@ -266,4 +272,6 @@ example_dict_metadata[("Panel", 3)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
+    "n_features": 1,
+    "feature_names": ["var_0"],
 }
