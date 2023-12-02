@@ -230,6 +230,14 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
     # is_equal_index is not fully supported yet in inference
     EXCLUDE_KEYS = ["is_equal_index"]
 
+    # metadata keys to ignore for specific mtypes
+    EXCLUDE_KEYS_BY_MTYPE = {
+        "np.ndarray": ["feature_names"],
+    }
+    # if mtype is in the list, add mtype specific keys to exclude
+    if mtype in EXCLUDE_KEYS_BY_MTYPE:
+        EXCLUDE_KEYS += EXCLUDE_KEYS_BY_MTYPE[mtype]
+
     if metadata_provided:
         expected_metadata = expected_metadata.copy()
         subset_keys = set(expected_metadata.keys()).difference(EXCLUDE_KEYS)
