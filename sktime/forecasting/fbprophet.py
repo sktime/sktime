@@ -165,7 +165,7 @@ class Prophet(_ProphetAdapter):
         self.freq = freq
         self.add_seasonality = add_seasonality
         self.add_country_holidays = add_country_holidays
-        self.fit_kwargs = fit_kwargs or {}
+        self.fit_kwargs = fit_kwargs
 
         self.growth = growth
         self.growth_floor = growth_floor
