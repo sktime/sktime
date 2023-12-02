@@ -620,6 +620,21 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         _convert_X = BaseClassifier._convert_X
         return _convert_X(self, X)
 
+    def _check_y(self, y=None):
+        """Check and coerce X/y for fit/transform functions.
+
+        Parameters
+        ----------
+        y : pd.DataFrame, pd.Series or np.ndarray
+
+        Returns
+        -------
+        y : object of sktime compatible time series type
+            can be Series, Panel, Hierarchical
+        """
+        _check_y = BaseClassifier._check_y
+        return _check_y(self, y)
+
     def _check_classifier_input(
         self, X, y=None, enforce_min_instances=1, return_metadata=True
     ):

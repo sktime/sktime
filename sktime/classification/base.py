@@ -163,8 +163,57 @@ class BaseClassifier(BaseEstimator, ABC):
 
         self._is_vectorized = isinstance(y, VectorizedDF)
         # we call the ordinary _fit if no looping/vectorization needed
-        if not self._is_vectorized or self.get_tag("capability:multioutput"):
-            self._fit_instance(X=X, y=y)
+        if (
+            not self._is_vectorized
+            or self.get_tag("capability:multioutput")
+            or not isinstance(self, BaseClassifier)
+        ):
+            # reset estimator at the start of fit
+            self.reset()
+
+            start = int(round(time.time() * 1000))
+            # convenience conversions to allow user flexibility:
+            # if X is 2D array, convert to 3D, if y is Series, convert to numpy
+            X, y = self._internal_convert(X, y)
+            X_metadata = self._check_classifier_input(
+                X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
+            )
+            missing = X_metadata["has_nans"]
+            multivariate = not X_metadata["is_univariate"]
+            unequal = not X_metadata["is_equal_length"]
+            self._X_metadata = X_metadata
+
+            # Check this classifier can handle characteristics
+            self._check_capabilities(missing, multivariate, unequal)
+
+            # remember class labels
+            self.classes_ = np.unique(y)
+            self.n_classes_ = self.classes_.shape[0]
+            self._class_dictionary = {}
+            for index, class_val in enumerate(self.classes_):
+                self._class_dictionary[class_val] = index
+
+            # escape early and do not fit if only one class label has been seen
+            #   in this case, we later predict the single class label seen
+            if len(self.classes_) == 1:
+                self.fit_time_ = int(round(time.time() * 1000)) - start
+                self._is_fitted = True
+                return self
+
+            # Convert data as dictated by the classifier tags
+            X = self._convert_X(X)
+            multithread = self.get_tag("capability:multithreading")
+            if multithread:
+                try:
+                    self._threads_to_use = check_n_jobs(self.n_jobs)
+                except NameError:
+                    raise AttributeError(
+                        "self.n_jobs must be set if capability:multithreading is True"
+                    )
+
+            # pass coerced and checked data to inner _fit
+            self._fit(X, y)
+            self.fit_time_ = int(round(time.time() * 1000)) - start
         else:
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", X=X, y=y)
@@ -197,7 +246,17 @@ class BaseClassifier(BaseEstimator, ABC):
                     labels for each instance in X
         """
         if not self._is_vectorized or self.get_tag("capability:multioutput"):
-            pred = self._predict_instance(X=X)
+            self.check_is_fitted()
+
+            # boilerplate input checks for predict-like methods
+            X = self._check_convert_X_for_predict(X)
+
+            # handle the single-class-label case
+            if len(self._class_dictionary) == 1:
+                return self._single_class_y_pred(X, method="predict")
+
+            # call internal _predict_proba
+            pred = self._predict(X)
         else:
             # otherwise we call the vectorized version
             pred = self._vectorize("predict", X=X)
@@ -228,7 +287,17 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         # we call the ordinary method if no looping/vectorization needed
         if not self._is_vectorized or self.get_tag("capability:multioutput"):
-            pred_dist = self._predict_proba_instance(X=X)
+            self.check_is_fitted()
+
+            # boilerplate input checks for predict-like methods
+            X = self._check_convert_X_for_predict(X)
+
+            # handle the single-class-label case
+            if len(self._class_dictionary) == 1:
+                return self._single_class_y_pred(X, method="predict_proba")
+
+            # call internal _predict_proba
+            pred_dist = self._predict_proba(X)
         else:
             # otherwise we call the vectorized version
             pred_dist = self._vectorize("predict_proba", X=X)
@@ -284,22 +353,9 @@ class BaseClassifier(BaseEstimator, ABC):
                 or pd.DataFrame with each column a dimension/target, containing class
                     labels for each instance in X
         """
-        # check and convert X/y
-        y = self._check_y(y)
-
-        self._is_vectorized = isinstance(y, VectorizedDF)
-        # we call the ordinary method if no looping/vectorization needed
-        if not self._is_vectorized or self.get_tag("capability:multioutput"):
-            pred = self._fit_predict_instance(
-                X=X, y=y, cv=cv, change_state=change_state
-            )
-        else:
-            # otherwise we call the vectorized version
-            pred = self._vectorize(
-                "fit_predict", X=X, y=y, cv=cv, change_state=change_state
-            )
-
-        return pred
+        return self._fit_predict_boilerplate(
+            X=X, y=y, cv=cv, change_state=change_state, method="predict"
+        )
 
     def fit_predict_proba(self, X, y, cv=None, change_state=True):
         """Fit and predict labels probabilities for sequences in X.
@@ -342,22 +398,9 @@ class BaseClassifier(BaseEstimator, ABC):
                or pd.DataFrame with each column a dimension/target, containing predicted
                     class probabilities for each instance in X
         """
-        # check and convert X/y
-        y = self._check_y(y)
-
-        self._is_vectorized = isinstance(y, VectorizedDF)
-        # we call the ordinary method if no looping/vectorization needed
-        if not self._is_vectorized or self.get_tag("capability:multioutput"):
-            pred_dist = self._fit_predict_proba_instance(
-                X=X, y=y, cv=cv, change_state=change_state
-            )
-        else:
-            # otherwise we call the vectorized version
-            pred_dist = self._vectorize(
-                "fit_predict_proba", X=X, y=y, cv=cv, change_state=change_state
-            )
-
-        return pred_dist
+        return self._fit_predict_boilerplate(
+            X=X, y=y, cv=cv, change_state=change_state, method="predict_proba"
+        )
 
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over method of BaseClassifier.
@@ -418,199 +461,6 @@ class BaseClassifier(BaseEstimator, ABC):
         y = VectorizedDF(np.array([y.T]), iterate_cols=True)
         self._is_vectorized = True
         return y
-
-    def _fit_instance(self, X, y):
-        """Fit time series classifier to training data (single instance).
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
-
-        Returns
-        -------
-        self : Reference to self.
-
-        Notes
-        -----
-        Changes state by creating a fitted model that updates attributes
-        ending in "_" and sets is_fitted flag to True.
-        """
-        # reset estimator at the start of fit
-        self.reset()
-
-        start = int(round(time.time() * 1000))
-        # convenience conversions to allow user flexibility:
-        # if X is 2D array, convert to 3D, if y is Series, convert to numpy
-        X, y = self._internal_convert(X, y)
-        X_metadata = self._check_classifier_input(
-            X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
-        )
-        missing = X_metadata["has_nans"]
-        multivariate = not X_metadata["is_univariate"]
-        unequal = not X_metadata["is_equal_length"]
-        self._X_metadata = X_metadata
-
-        # Check this classifier can handle characteristics
-        self._check_capabilities(missing, multivariate, unequal)
-
-        # remember class labels
-        self.classes_ = np.unique(y)
-        self.n_classes_ = self.classes_.shape[0]
-        self._class_dictionary = {}
-        for index, class_val in enumerate(self.classes_):
-            self._class_dictionary[class_val] = index
-
-        # escape early and do not fit if only one class label has been seen
-        #   in this case, we later predict the single class label seen
-        if len(self.classes_) == 1:
-            self.fit_time_ = int(round(time.time() * 1000)) - start
-            self._is_fitted = True
-            return self
-
-        # Convert data as dictated by the classifier tags
-        X = self._convert_X(X)
-        multithread = self.get_tag("capability:multithreading")
-        if multithread:
-            try:
-                self._threads_to_use = check_n_jobs(self.n_jobs)
-            except NameError:
-                raise AttributeError(
-                    "self.n_jobs must be set if capability:multithreading is True"
-                )
-
-        # pass coerced and checked data to inner _fit
-        self._fit(X, y)
-        self.fit_time_ = int(round(time.time() * 1000)) - start
-
-        # this should happen last
-        self._is_fitted = True
-        return self
-
-    def _predict_instance(self, X) -> np.ndarray:
-        """Predicts labels for sequences in X (single instance).
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-
-        Returns
-        -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
-            indices correspond to instance indices in X
-        """
-        self.check_is_fitted()
-
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
-        # handle the single-class-label case
-        if len(self._class_dictionary) == 1:
-            return self._single_class_y_pred(X, method="predict")
-
-        # call internal _predict_proba
-        return self._predict(X)
-
-    def _predict_proba_instance(self, X) -> np.ndarray:
-        """Predicts labels probabilities for sequences in X (single instance).
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-
-        Returns
-        -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
-        """
-        self.check_is_fitted()
-
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
-        # handle the single-class-label case
-        if len(self._class_dictionary) == 1:
-            return self._single_class_y_pred(X, method="predict_proba")
-
-        # call internal _predict_proba
-        return self._predict_proba(X)
-
-    def _fit_predict_instance(self, X, y, cv=None, change_state=True) -> np.ndarray:
-        """Fit and predict labels for sequences in X (single instance).
-
-        Convenience method to produce in-sample predictions and
-        cross-validated out-of-sample predictions.
-
-        Writes to self, if change_state=True:
-            Sets self.is_fitted to True.
-            Sets fitted model attributes ending in "_".
-
-        Does not update state if change_state=False.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
-        cv : None, int, or sklearn cross-validation object, optional, default=None
-            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
-            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
-                where multiple X_train, y_train, X_test are obtained from cv folds
-                returned y is union over all test fold predictions
-                cv test folds must be non-intersecting
-            int : equivalent to cv=KFold(cv, shuffle=True, random_state=x),
-                i.e., k-fold cross-validation predictions out-of-sample
-                random_state x is taken from self if exists, otherwise x=None
-        change_state : bool, optional (default=True)
-            if False, will not change the state of the classifier,
-                i.e., fit/predict sequence is run with a copy, self does not change
-            if True, will fit self to the full X and y,
-                end state will be equivalent to running fit(X, y)
-
-        Returns
-        -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
-            indices correspond to instance indices in X
-            if cv is passed, -1 indicates entries not seen in union of test sets
-        """
-        return self._fit_predict_boilerplate(
-            X=X, y=y, cv=cv, change_state=change_state, method="predict"
-        )
 
     def _fit_predict_boilerplate(self, X, y, cv, change_state, method):
         """Boilerplate logic for fit_predict and fit_predict_proba."""
@@ -683,51 +533,6 @@ class BaseClassifier(BaseEstimator, ABC):
                 y_pred[tt_idx] = getattr(fitted_est, method)(X_test)
 
         return y_pred
-
-    def _fit_predict_proba_instance(
-        self, X, y, cv=None, change_state=True
-    ) -> np.ndarray:
-        """Fit and predict labels probabilities for sequences in X (single instance).
-
-        Convenience method to produce in-sample predictions and
-        cross-validated out-of-sample predictions.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
-        cv : None, int, or sklearn cross-validation object, optional, default=None
-            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
-            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
-                where multiple X_train, y_train, X_test are obtained from cv folds
-                returned y is union over all test fold predictions
-                cv test folds must be non-intersecting
-            int : equivalent to cv=Kfold(int), i.e., k-fold cross-validation predictions
-        change_state : bool, optional (default=True)
-            if False, will not change the state of the classifier,
-                i.e., fit/predict sequence is run with a copy, self does not change
-            if True, will fit self to the full X and y,
-                end state will be equivalent to running fit(X, y)
-
-        Returns
-        -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
-        """
-        return self._fit_predict_boilerplate(
-            X=X, y=y, cv=cv, change_state=change_state, method="predict_proba"
-        )
 
     def _single_class_y_pred(self, X, method="predict"):
         """Handle the prediction case where only single class label was seen in fit."""
