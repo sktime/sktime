@@ -217,7 +217,7 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
     error if check itself raises an error
     """
     # retrieve fixture for checking
-    fixture, _, expected_metadata = get_examples(
+    fixture, lossy, expected_metadata = get_examples(
         mtype=mtype, as_scitype=scitype, return_metadata=True
     ).get(fixture_index)
 
@@ -230,13 +230,14 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
     # is_equal_index is not fully supported yet in inference
     EXCLUDE_KEYS = ["is_equal_index"]
 
-    # metadata keys to ignore for specific mtypes
-    EXCLUDE_KEYS_BY_MTYPE = {
-        "np.ndarray": ["feature_names"],
-    }
+    # metadata keys to ignore if mtype is lossy
+    EXCLUDE_IF_LOSSY = [
+        "feature_names",  # lossy mtypes do not have feature names
+    ]
+
     # if mtype is in the list, add mtype specific keys to exclude
-    if mtype in EXCLUDE_KEYS_BY_MTYPE:
-        EXCLUDE_KEYS += EXCLUDE_KEYS_BY_MTYPE[mtype]
+    if lossy:
+        EXCLUDE_KEYS += EXCLUDE_IF_LOSSY
 
     if metadata_provided:
         expected_metadata = expected_metadata.copy()
