@@ -40,7 +40,7 @@ def _check_soft_dependencies(
         should be provided if import name differs from package name
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
-        "error" - raises a `ModuleNotFoundException` if one of packages is not installed
+        "error" - raises a `ModuleNotFoundError` if one of packages is not installed
         "warning" - raises a warning if one of packages is not installed
             function returns False if one of packages is not installed, otherwise True
         "none" - does not raise exception or warning
@@ -216,7 +216,7 @@ def _check_dl_dependencies(msg=None, severity="error"):
         error message to be returned in the `ModuleNotFoundError`, overrides default
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
-        "error" - raises a ModuleNotFoundException if one of packages is not installed
+        "error" - raises a ModuleNotFoundError if one of packages is not installed
         "warning" - raises a warning if one of packages is not installed
             function returns False if one of packages is not installed, otherwise True
         "none" - does not raise exception or warning
@@ -252,6 +252,49 @@ def _check_dl_dependencies(msg=None, severity="error"):
                 "Error in calling _check_dl_dependencies, severity "
                 f'argument must be "error", "warning", or "none", found "{severity}".'
             )
+
+
+def _check_mlflow_dependencies(
+    msg=None, severity="error", suppress_import_stdout=False
+):
+    """Check if `mlflow` and its dependencies are installed.
+
+    Parameters
+    ----------
+    msg: str, optional, default= default message (msg below)
+        error message to be returned when `ModuleNotFoundError` is raised.
+    severity: str, either of "error", "warning" or "none"
+        behaviour for raising errors or warnings
+        "error" - raises a `ModuleNotFound` if mlflow-related packages are not found.
+        "warning" - raises a warning message if any mlflow-related package is not
+            installed also returns False. In case all packages are present,
+            returns True.
+        "none" - does not raise any exception or warning and simply returns True
+            if all packages are installed otherwise return False.
+
+    Raise
+    -----
+    ModuleNotFoundError
+        User Friendly error with a suggested action to install mlflow dependencies
+
+    Returns
+    -------
+    boolean - whether all mlflow-related packages are installed.
+    """
+    if not isinstance(msg, str):
+        msg = (
+            "`mlflow` is an extra dependency and is not included "
+            "in the base sktime installation. "
+            "Please run `pip install mlflow` "
+            "or `pip install sktime[mlflow]` to install the package."
+        )
+
+    return _check_soft_dependencies(
+        "mlflow",
+        msg=msg,
+        severity=severity,
+        suppress_import_stdout=suppress_import_stdout,
+    )
 
 
 def _check_python_version(obj, package=None, msg=None, severity="error"):
@@ -348,7 +391,7 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         error message to be returned in the `ModuleNotFoundError`, overrides default
     severity : str, "error" (default), "warning", or "none"
         behaviour for raising errors or warnings
-        "error" - raises a ModuleNotFoundException if environment is incompatible
+        "error" - raises a `ModuleNotFoundError` if environment is incompatible
         "warning" - raises a warning if environment is incompatible
             function returns False if environment is incompatible, otherwise True
         "none" - does not raise exception or warning

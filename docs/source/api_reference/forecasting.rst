@@ -337,6 +337,9 @@ Transformer (deep learning) based forecasters
     :template: class.rst
 
     LTSFLinearForecaster
+    LTSFDLinearForecaster
+    LTSFNLinearForecaster
+
 
 Intermittent time series forecasters
 ------------------------------------
@@ -433,25 +436,8 @@ Model Evaluation (Backtesting)
 
     evaluate
 
-Time series splitters
----------------------
+Time index splitters
+--------------------
 
-Time series splitters can be used in both evaluation and tuning.
-
-.. currentmodule:: sktime.forecasting.model_selection
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    CutoffSplitter
-    SingleWindowSplitter
-    SlidingWindowSplitter
-    ExpandingWindowSplitter
-    ExpandingGreedySplitter
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    temporal_train_test_split
+Evaluation and tuning can be customized using time index based splitters,
+for a list of these consult the :ref:`splitter API <split_ref>`

@@ -75,3 +75,9 @@ Stationarity estimators
 
     StationarityADF
     StationarityKPSS
+    StationarityADFArch
+    StationarityDFGLS
+    StationarityPhillipsPerron
+    StationarityKPSSArch
+    StationarityZivotAndrews
+    StationarityVarianceRatio

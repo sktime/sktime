@@ -11,6 +11,7 @@ from math import floor
 
 import numpy as np
 import pandas as pd
+import scipy
 from joblib import Parallel, delayed
 from sklearn.base import clone
 
@@ -417,8 +418,10 @@ class ConformalIntervals(BaseForecaster):
 
         full_y_index = y.iloc[n_initial_window:].index
 
-        residuals_matrix = pd.DataFrame(
-            columns=full_y_index, index=full_y_index, dtype="float"
+        residuals_matrix = pd.DataFrame.sparse.from_spmatrix(
+            scipy.sparse.csr_array((len(full_y_index), len(full_y_index))),
+            index=full_y_index,
+            columns=full_y_index,
         )
 
         if update and hasattr(self, "residuals_matrix_") and not sample_frac:
@@ -427,9 +430,9 @@ class ConformalIntervals(BaseForecaster):
                 overlapping_index = pd.Index(
                     self.residuals_matrix_.index.intersection(full_y_index)
                 ).sort_values()
-                residuals_matrix.loc[
+                residuals_matrix = self.residuals_matrix_.loc[
                     overlapping_index, overlapping_index
-                ] = self.residuals_matrix_.loc[overlapping_index, overlapping_index]
+                ].combine_first(residuals_matrix)
             else:
                 overlapping_index = None
             y_index = remaining_y_index
@@ -466,8 +469,10 @@ class ConformalIntervals(BaseForecaster):
             delayed(_get_residuals_matrix_row)(forecaster.clone(), y, X, id)
             for id in y_index
         )
-        for idx, id in enumerate(y_index):
-            residuals_matrix.loc[id] = all_residuals[idx]
+        all_residuals = pd.concat(all_residuals, axis=1, ignore_index=True).T
+        all_residuals.index = y_index
+        all_residuals = all_residuals.astype(pd.SparseDtype("float", 0))
+        residuals_matrix = all_residuals.combine_first(residuals_matrix)
 
         if overlapping_index is not None:
 
@@ -494,9 +499,10 @@ class ConformalIntervals(BaseForecaster):
                 delayed(_extend_residuals_matrix_row)(y, X, id)
                 for id in overlapping_index
             )
-
-            for idx, id in enumerate(overlapping_index):
-                residuals_matrix.loc[id] = extend_residuals[idx]
+            extend_residuals = pd.concat(extend_residuals, axis=1, ignore_index=True).T
+            extend_residuals.index = overlapping_index
+            extend_residuals = extend_residuals.astype(pd.SparseDtype("float", 0))
+            residuals_matrix = extend_residuals.combine_first(residuals_matrix)
 
         return residuals_matrix
 
