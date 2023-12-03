@@ -140,7 +140,6 @@ class Prophet(_ProphetAdapter):
         freq=None,
         add_seasonality=None,
         add_country_holidays=None,
-        fit_kwargs=None,
         # Args of fbprophet
         growth="linear",
         growth_floor=0.0,
@@ -161,11 +160,11 @@ class Prophet(_ProphetAdapter):
         uncertainty_samples=1000,
         stan_backend=None,
         verbose=0,
+        fit_kwargs=None,
     ):
         self.freq = freq
         self.add_seasonality = add_seasonality
         self.add_country_holidays = add_country_holidays
-        self.fit_kwargs = fit_kwargs
 
         self.growth = growth
         self.growth_floor = growth_floor
@@ -186,6 +185,7 @@ class Prophet(_ProphetAdapter):
         self.uncertainty_samples = uncertainty_samples
         self.stan_backend = stan_backend
         self.verbose = verbose
+        self.fit_kwargs = fit_kwargs
 
         super().__init__()
 
