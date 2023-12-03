@@ -1186,7 +1186,7 @@ def test_load_tsf_to_dataframe(input_path, return_type, output_df):
     assert_frame_equal(df, output_df, check_dtype=False)
     assert metadata == expected_metadata
     if return_type != "default_tsf":
-        assert check_is_mtype(obj=df, mtype=return_type)
+        assert check_is_mtype(obj=df, mtype=return_type, msg_return_dict="list")
 
 
 @pytest.mark.parametrize("freq", [None, "YS"])

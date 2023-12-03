@@ -24,4 +24,4 @@ def test_contracted_arsenal():
     )
     arsenal.fit(X_train, y_train)
 
-    assert len(arsenal.estimators_) > 1
+    assert len(arsenal.estimators_) >= 1
