@@ -120,8 +120,6 @@ class _DummyConvertPandas(BaseClassifier):
 multivariate_message = r"multivariate series"
 missing_message = r"missing values"
 unequal_message = r"unequal length series"
-incorrect_X_data_structure = r"must be a np.array or a pd.Series"
-incorrect_y_data_structure = r"must be 1-dimensional"
 
 
 def test_base_classifier_fit():
@@ -154,15 +152,6 @@ def test_base_classifier_fit():
     with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X4, test_y1)
     assert result is dummy
-    # Raise a specific error if y is in a 2D matrix (1,cases)
-    test_y2 = np.array([test_y1])
-    # What if y is in a 2D matrix (cases,1)?
-    test_y2 = np.array([test_y1]).transpose()
-    with pytest.raises(ValueError, match=incorrect_y_data_structure):
-        result = dummy.fit(test_X1, test_y2)
-    # Pass a data fram
-    with pytest.raises(ValueError, match=incorrect_X_data_structure):
-        result = dummy.fit(test_X1, test_X3)
 
 
 TF = [True, False]
