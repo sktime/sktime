@@ -424,7 +424,7 @@ class BaseClassifier(BaseEstimator, ABC):
             self._classifiers_ = self._y_vec.vectorize_est(
                 classifiers_,
                 method=methodname,
-                args={"y": kwargs.get("y")} if kwargs.get("y") else {},
+                args={"y": y},
                 X=kwargs.get("X"),
             )
             return self
