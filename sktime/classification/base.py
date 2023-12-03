@@ -413,8 +413,11 @@ class BaseClassifier(BaseEstimator, ABC):
         Uses classifiers_ attribute to store one classifier per loop index.
         """
         y = kwargs.get("y")
-        kwargs.pop("y")
+        X = kwargs.get("X")
+        if X is not None:
+            kwargs.pop("X")
         if y is not None:
+            kwargs.pop("y")
             self._y_vec = y
         classifiers_ = self._y_vec.vectorize_est(
             self,
@@ -425,7 +428,7 @@ class BaseClassifier(BaseEstimator, ABC):
                 classifiers_,
                 method=methodname,
                 args={"y": y},
-                X=kwargs.get("X"),
+                X=X,
             )
             return self
         else:
@@ -435,8 +438,9 @@ class BaseClassifier(BaseEstimator, ABC):
                 classifiers_,
                 method=methodname,
                 # return_type="list",
+                X=X,
                 args={"y": y} if y is not None else {},
-                kwargs=kwargs,  # contains X inside
+                *kwargs,  # contains X inside
             )
             y_pred = pd.DataFrame(
                 {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}

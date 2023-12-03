@@ -142,7 +142,10 @@ def test_base_classifier_fit():
     test_X3 = _create_example_dataframe(cases=cases, dimensions=1, length=length)
     test_X4 = _create_example_dataframe(cases=cases, dimensions=3, length=length)
     test_y1 = np.random.randint(0, 2, size=(cases))
+    test_y2 = pd.DataFrame({"0": [1] * cases, "1": [0] * cases})
     result = dummy.fit(test_X1, test_y1)
+    assert result is dummy
+    result = dummy.fit(test_X3, test_y2)
     assert result is dummy
     with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X2, test_y1)
