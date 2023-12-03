@@ -41,14 +41,12 @@ class Prophet(_ProphetAdapter):
         Dict with args for Prophet.add_country_holidays().
         Dict can have the following keys/values:
             country_name: Name of the country, like 'UnitedStates' or 'US'
-    fit_kwargs: dict or None, default=None
-        Dict with args for Prophet.fit().
     growth: str, default="linear"
         String 'linear' or 'logistic' to specify a linear or logistic
         trend. If 'logistic' specified float for 'growth_cap' must be provided.
     growth_floor: float, default=0
         Growth saturation minimum value.
-        Used only if  `growth="logistic"`, has no effect otherwise
+        Used only if `growth="logistic"`, has no effect otherwise
         (if `growth` is not `"logistic"`).
     growth_cap: float, default=None
         Growth saturation maximum aka carrying capacity.
@@ -113,6 +111,10 @@ class Prophet(_ProphetAdapter):
     stan_backend: str or None, default=None
         str as defined in StanBackendEnum. If None, will try to
         iterate over all available backends and find the working one.
+    fit_kwargs: dict or None, default=None
+        Dict with args for Prophet.fit().
+        These are additional arguments passed to the optimizing or sampling
+        functions in Stan.
 
     References
     ----------
