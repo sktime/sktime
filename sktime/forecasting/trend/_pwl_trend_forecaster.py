@@ -5,15 +5,17 @@
 __author__ = ["sbuse"]
 
 import pandas as pd
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
+
 
 class PiecewiseLinearTrendForecaster(_ProphetAdapter):
     """
     Forecast time series data with a piecwise linear trend.
 
-    The forecaster uses Facebook's prophet algorithm [1]_ and extracts the piecewise 
-    linear trend from it. Only hyper-parameters relevant for the trend modelling are 
+    The forecaster uses Facebook's prophet algorithm [1]_ and extracts the piecewise
+    linear trend from it. Only hyper-parameters relevant for the trend modelling are
     exposed via the constructor.
 
     Data can be passed in one of the sktime compatible formats,
@@ -40,9 +42,9 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
     changepoint_prior_scale: float, default=0.05
         Parameter modulating the flexibility of the
         automatic changepoint selection. Large values will allow many
-        changepoints, small values will allow few changepoints. 
-        Recommended to take values within [0.001,0.5]. 
-   
+        changepoints, small values will allow few changepoints.
+        Recommended to take values within [0.001,0.5].
+
     References
     ----------
     .. [1] https://facebook.github.io/prophet
@@ -106,6 +108,7 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
+
         self._ModelClass = _Prophet
 
     def _instantiate_model(self):
@@ -128,9 +131,9 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
             stan_backend=self.stan_backend,
         )
         return self
-    
-    # _fit is defined in the superclass and is fine as it is. 
- 
+
+    # _fit is defined in the superclass and is fine as it is.
+
     def _predict(self, fh, X=None):
         """Forecast time series trend at future horizon.
 
@@ -157,10 +160,10 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
         """
         fh = self._get_prophet_fh()
         future = pd.DataFrame({"ds": fh}, index=fh)
-        
+
         out = self._forecaster.setup_dataframe(future.copy())
         out["trend"] = self._forecaster.predict_trend(out)
-        
+
         y_pred = out.loc[:, "trend"]
         y_pred.index = future.index
         y_pred.name = self._y.columns[0]
@@ -169,7 +172,7 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
             y_pred.index = self.fh.to_absolute_index(cutoff=self.cutoff)
 
         return y_pred
-    
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -186,10 +189,10 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
         params : dict or list of dict
         """
         params0 = {
-                  "changepoint_range":0.8,
-                  "changepoint_prior_scale":0.05,
-                  }
-        
-        params1 = {"changepoints":["2014-01-01"]}
+            "changepoint_range": 0.8,
+            "changepoint_prior_scale": 0.05,
+        }
 
-        return [params0,params1]
+        params1 = {"changepoints": ["2014-01-01"]}
+
+        return [params0, params1]
