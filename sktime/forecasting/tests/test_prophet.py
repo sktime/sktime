@@ -97,7 +97,6 @@ def test_prophet_fit_kwargs_are_passed_down(fit_kwargs: dict):
     with mock.patch("prophet.forecaster.Prophet.fit") as mock_fit:
         forecaster = Prophet(fit_kwargs=fit_kwargs)
         forecaster.fit(y)
-        mock_fit.assert_called_once
         mock_fit.assert_called_once()
         assert mock_fit.call_args.args == ()
         call_kwargs = mock_fit.call_args.kwargs
