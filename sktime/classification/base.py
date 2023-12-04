@@ -440,7 +440,7 @@ class BaseClassifier(BaseEstimator, ABC):
                 # return_type="list",
                 X=X,
                 args={"y": y} if y is not None else {},
-                *kwargs,  # contains X inside
+                **kwargs,  # contains X inside
             )
             y_pred = pd.DataFrame(
                 {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}
@@ -855,6 +855,12 @@ class BaseClassifier(BaseEstimator, ABC):
                     f"Mismatch in number of cases. Number in X = {n_cases} nos in y = "
                     f"{n_labels}"
                 )
+            if isinstance(y, np.ndarray):
+                if y.ndim > 2:
+                    raise ValueError(
+                        f"np.ndarray y must be 1-dimensional or 2-dimensional, "
+                        f"but found {y.ndim} dimensions"
+                    )
             # warn if only a single class label is seen
             # this should not raise exception since this can occur by train subsampling
             if len(np.unique(y)) == 1:
