@@ -569,8 +569,10 @@ class BaseClassifier(BaseEstimator, ABC):
             or of any other supported Panel mtype
                 for list of mtypes, see datatypes.SCITYPE_REGISTER
                 for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.ndarray of int, of shape [n_instances] - class labels (ground truth)
-            indices correspond to instance indices in X
+        y : 2D np.array of int, of shape [n_instances, n_dimensions] - class labels for
+                fitting indices correspond to instance indices in X
+            or 1D np.array of int, of shape [n_instances] - class labels for fitting
+                indices correspond to instance indices in X
 
         Returns
         -------
@@ -846,7 +848,8 @@ class BaseClassifier(BaseEstimator, ABC):
             # Check y valid input
             if not isinstance(y, (pd.Series, pd.DataFrame, np.ndarray)):
                 raise ValueError(
-                    f"y must be a np.array or a pd.Series, but found type: {type(y)}"
+                    "y must be a np.array or a pd.Series or pd.DataFrame, but found ",
+                    f"type: {type(y)}",
                 )
             # Check matching number of labels
             n_labels = y.shape[0]

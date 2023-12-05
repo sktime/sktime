@@ -35,6 +35,7 @@ from sktime.datatypes import (
     check_is_scitype,
     convert_to,
 )
+from sktime.datatypes._vectorize import VectorizedDF
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.warnings import warn
@@ -58,6 +59,7 @@ class BaseRegressor(BaseEstimator, ABC):
         "object_type": "regressor",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
+        "capability:multioutput": False,  # whether classifier supports multioutput
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -84,6 +86,8 @@ class BaseRegressor(BaseEstimator, ABC):
         # required for compatibility with some sklearn interfaces
         # i.e. CalibratedRegressorCV
         self._estimator_type = "regressor"
+        self._regressors_ = None
+        self._is_vectorized = False
 
         super().__init__()
 
@@ -139,8 +143,10 @@ class BaseRegressor(BaseEstimator, ABC):
             or of any other supported Panel mtype
                 for list of mtypes, see datatypes.SCITYPE_REGISTER
                 for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of float, of shape [n_instances] - regression labels for fitting
-            indices correspond to instance indices in X
+        y : 2D np.array of int, of shape [n_instances, n_dimensions] - regression labels
+            for fitting indices correspond to instance indices in X
+            or 1D np.array of int, of shape [n_instances] - regression labels for
+            fitting indices correspond to instance indices in X
 
         Returns
         -------
@@ -151,32 +157,43 @@ class BaseRegressor(BaseEstimator, ABC):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        start = int(round(time.time() * 1000))
-        # convenience conversions to allow user flexibility:
-        # if X is 2D array, convert to 3D, if y is Series, convert to numpy
-        X, y = _internal_convert(X, y)
-        X_metadata = _check_regressor_input(
-            X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
-        )
-        self._X_metadata = X_metadata
-        missing = X_metadata["has_nans"]
-        multivariate = not X_metadata["is_univariate"]
-        unequal = not X_metadata["is_equal_length"]
-        # Check this regressor can handle characteristics
-        self._check_capabilities(missing, multivariate, unequal)
-        # Convert data as dictated by the regressor tags
-        X = self._convert_X(X)
-        multithread = self.get_tag("capability:multithreading")
-        if multithread:
-            try:
-                self._threads_to_use = check_n_jobs(self.n_jobs)
-            except NameError:
-                raise AttributeError(
-                    "self.n_jobs must be set if capability:multithreading is True"
-                )
+        y = self._check_y(y)
 
-        self._fit(X, y)
-        self.fit_time_ = int(round(time.time() * 1000)) - start
+        self._is_vectorized = isinstance(y, VectorizedDF)
+        # we call the ordinary _fit if no looping/vectorization needed
+        if not self._is_vectorized or self.get_tag("capability:multioutput"):
+            # reset estimator at the start of fit
+            self.reset()
+            start = int(round(time.time() * 1000))
+            # convenience conversions to allow user flexibility:
+            # if X is 2D array, convert to 3D, if y is Series, convert to numpy
+            X, y = _internal_convert(X, y)
+            X_metadata = _check_regressor_input(
+                X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
+            )
+            self._X_metadata = X_metadata
+            missing = X_metadata["has_nans"]
+            multivariate = not X_metadata["is_univariate"]
+            unequal = not X_metadata["is_equal_length"]
+            # Check this regressor can handle characteristics
+            self._check_capabilities(missing, multivariate, unequal)
+            # Convert data as dictated by the regressor tags
+            X = self._convert_X(X)
+            multithread = self.get_tag("capability:multithreading")
+            if multithread:
+                try:
+                    self._threads_to_use = check_n_jobs(self.n_jobs)
+                except NameError:
+                    raise AttributeError(
+                        "self.n_jobs must be set if capability:multithreading is True"
+                    )
+
+            self._fit(X, y)
+            self.fit_time_ = int(round(time.time() * 1000)) - start
+        else:
+            # otherwise we call the vectorized version of fit
+            self._vectorize("fit", X=X, y=y)
+
         # this should happen last
         self._is_fitted = True
         return self
@@ -198,17 +215,23 @@ class BaseRegressor(BaseEstimator, ABC):
 
         Returns
         -------
-        y : 1D np.array of float, of shape [n_instances] - predicted regression labels
-            indices correspond to instance indices in X
+        y : 2D np.array of int, of shape [n_instances, n_dimensions] - regression labels
+            for fitting indices correspond to instance indices in X
+            or 1D np.array of int, of shape [n_instances] - regression labels for
+            fitting indices correspond to instance indices in X
         """
-        self.check_is_fitted()
+        if not self._is_vectorized or self.get_tag("capability:multioutput"):
+            self.check_is_fitted()
 
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
+            # boilerplate input checks for predict-like methods
+            X = self._check_convert_X_for_predict(X)
 
-        return self._predict(X)
+            pred = self._predict(X)
+        else:
+            pred = self._vectorize("predict", X=X)
+        return pred
 
-    def score(self, X, y) -> float:
+    def score(self, X, y, multioutput="uniform_average") -> float:
         """Scores predicted labels against ground truth labels on X.
 
         Parameters
@@ -222,8 +245,15 @@ class BaseRegressor(BaseEstimator, ABC):
             or of any other supported Panel mtype
                 for list of mtypes, see datatypes.SCITYPE_REGISTER
                 for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of float, of shape [n_instances] - regression labels (gnr truth)
-            indices correspond to instance indices in X
+        y : 2D np.array of int, of shape [n_instances, n_dimensions] - regression labels
+            for fitting indices correspond to instance indices in X
+            or 1D np.array of int, of shape [n_instances] - regression labels for
+            fitting indices correspond to instance indices in X
+        multioutput : str, optional (default="“uniform_average”")
+            {"raw_values", "uniform_average", "variance_weighted"}, array-like of shape
+            (n_outputs,) or None, default="uniform_average".
+            Defines aggregating of multiple output scores. Array-like value defines
+            weights used to average scores.
 
         Returns
         -------
@@ -233,7 +263,72 @@ class BaseRegressor(BaseEstimator, ABC):
 
         self.check_is_fitted()
 
-        return r2_score(y, self.predict(X), normalize=True)
+        return r2_score(y, self.predict(X), normalize=True, multioutput=multioutput)
+
+    def _vectorize(self, methodname, **kwargs):
+        """Vectorized/iterated loop over method of BaseClassifier.
+
+        Uses classifiers_ attribute to store one classifier per loop index.
+        """
+        y = kwargs.get("y")
+        X = kwargs.get("X")
+        if X is not None:
+            kwargs.pop("X")
+        if y is not None:
+            kwargs.pop("y")
+            self._y_vec = y
+        classifiers_ = self._y_vec.vectorize_est(
+            self,
+            method="clone",
+        )
+        if methodname == "fit":
+            self._classifiers_ = self._y_vec.vectorize_est(
+                classifiers_,
+                method=methodname,
+                args={"y": y},
+                X=X,
+            )
+            return self
+        else:
+            if self._classifiers_ is not None:
+                classifiers_ = self._classifiers_
+            y_pred = self._y_vec.vectorize_est(
+                classifiers_,
+                method=methodname,
+                # return_type="list",
+                X=X,
+                args={"y": y} if y is not None else {},
+                **kwargs,  # contains X inside
+            )
+            y_pred = pd.DataFrame(
+                {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}
+            )
+            return y_pred
+        # add code for score
+
+    def _check_y(self, y=None):
+        """Check and coerce X/y for fit/transform functions.
+
+        Parameters
+        ----------
+        y : pd.DataFrame, pd.Series or np.ndarray
+
+        Returns
+        -------
+        y : object of sktime compatible time series type
+            can be Series, Panel, Hierarchical
+        """
+        if isinstance(y, pd.DataFrame) and len(y.columns) == 1:
+            return y
+        if isinstance(y, pd.DataFrame):
+            y = VectorizedDF([y], iterate_cols=True)
+            self._is_vectorized = True
+            return y
+        if y.ndim == 1:
+            return y
+        y = VectorizedDF(np.array([y.T]), iterate_cols=True)
+        self._is_vectorized = True
+        return y
 
     @abstractmethod
     def _fit(self, X, y):
@@ -421,7 +516,7 @@ def _check_regressor_input(
     )
     # raise informative error message if X is in wrong format
     allowed_msg = (
-        f"Allowed scitypes for classifiers are Panel mtypes, "
+        f"Allowed scitypes for regressors are Panel mtypes, "
         f"for instance a pandas.DataFrame with MultiIndex and last(-1) "
         f"level an sktime compatible time index. "
         f"Allowed compatible mtype format specifications are: {MTYPE_LIST_PANEL} ."
@@ -441,12 +536,10 @@ def _check_regressor_input(
     # Check y if passed
     if y is not None:
         # Check y valid input
-        if not isinstance(y, (pd.Series, np.ndarray)) and not (
-            isinstance(y, pd.DataFrame) and y.shape[1] == 1
-        ):
+        if not isinstance(y, (pd.Series, pd.DataFrame, np.ndarray)):
             raise ValueError(
-                f"y must be a np.array, pd.Series or a 1-D pd.DataFrame,"
-                f"but found type: {type(y)}"
+                "y must be a np.array or a pd.Series or pd.DataFrame, but found ",
+                f"type: {type(y)}",
             )
         # Check matching number of labels
         n_labels = y.shape[0]
@@ -456,9 +549,9 @@ def _check_regressor_input(
                 f"{n_labels}"
             )
         if isinstance(y, np.ndarray):
-            if y.ndim > 1:
+            if y.ndim > 2:
                 raise ValueError(
-                    f"np.ndarray y must be 1-dimensional, "
+                    f"np.ndarray y must be 1-dimensional or 2-dimensional, "
                     f"but found {y.ndim} dimensions"
                 )
     return X_metadata
