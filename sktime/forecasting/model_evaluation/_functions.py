@@ -348,13 +348,13 @@ def evaluate(
     the train/test folds produced by the generator ``cv_X.split_series(X)``
     (if ``X`` is ``None``, consider these to be ``None`` as well).
 
-    1. Set ``i = 1``
-    2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
-       with a ``fh`` to forecast :math:`y_{test, 1}`
-    3. The ``forecaster`` predict with exogeneous data :math:`X_{test, i}`
-       ``y_pred = forecaster.predict`` (or ``predict_proba`` or ``predict_quantiles``,
-       depending on ``scoring``)
-    4. Compute ``scoring`` on ``y_pred`` versus :math:`y_{test, 1}`
+    1. Initialize the counter to ``i = 1``
+    2. Fit the ``forecaster`` to :math:`y_{train, i}`, :math:`X_{train, i}`,
+       (with a gap of ``fh`` steps to :math:`y_{test, i}`).
+    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
+    data :math:`X_{test, i}` (prediction made using either ``predict``,
+    ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``)
+    4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{test, 1}`
     5. If ``i == K``, terminate, otherwise
     6. Set ``i = i + 1``
     7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
