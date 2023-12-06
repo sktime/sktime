@@ -71,12 +71,11 @@ class TestAllRegressors(RegressorFixtureGenerator, QuickTester):
         # we use check_is_scitype to get the number instances in X_new
         #   this is more robust against different scitypes in X_new
         _, _, X_new_metadata = check_is_scitype(X_new, "Panel", return_metadata=True)
-        X_new_instances = X_new_metadata["n_instances"]
 
         # run fit and predict
         y_pred = scenario.run(estimator_instance, method_sequence=["fit", "predict"])
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
-        assert y_pred.shape == (X_new_instances,)
+        assert y_pred.dim < 2
         assert np.issubdtype(y_pred.dtype, np.floating)

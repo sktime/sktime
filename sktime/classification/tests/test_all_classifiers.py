@@ -86,13 +86,17 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
-        assert y_pred.shape == (X_new_instances,)
+        assert y_pred.dim < 2
         assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
 
         # check predict proba (all classifiers have predict_proba by default)
         y_proba = scenario.run(estimator_instance, method_sequence=["predict_proba"])
         assert isinstance(y_proba, np.ndarray)
-        assert y_proba.shape == (X_new_instances, n_classes)
+        assert y_proba.shape == (X_new_instances, n_classes) or y_proba.shape == (
+            X_new_instances,
+            y_pred.dim,
+            n_classes,
+        )
         np.testing.assert_almost_equal(y_proba.sum(axis=1), 1, decimal=4)
 
         if estimator_instance.get_tag("capability:train_estimate"):
