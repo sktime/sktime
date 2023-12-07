@@ -51,7 +51,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
 
     def __init__(
         self,
-        num_epochs=100,
+        n_epochs=100,
         batch_size=1,
         units=6,
         callbacks=None,
@@ -66,7 +66,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
-        self.num_epochs = num_epochs
+        self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -189,7 +189,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             X,
             y_onehot,
             batch_size=self.batch_size,
-            epochs=self.num_epochs,
+            epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks_,
         )
@@ -218,7 +218,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         """
         params1 = {}
         params2 = {
-            "num_epochs": 50,
+            "n_epochs": 50,
             "batch_size": 2,
             "units": 5,
             "use_bias": False,
