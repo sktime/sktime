@@ -86,7 +86,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
-        assert y_pred.dim < 2
+        assert y_pred.ndim < 2
         assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
 
         # check predict proba (all classifiers have predict_proba by default)
