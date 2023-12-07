@@ -77,5 +77,5 @@ class TestAllRegressors(RegressorFixtureGenerator, QuickTester):
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
-        assert y_pred.dim < 2
+        assert y_pred.ndim < 2
         assert np.issubdtype(y_pred.dtype, np.floating)
