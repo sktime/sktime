@@ -256,13 +256,11 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         if fh is None:
             fh = self._fh
         if len(fh) < self.sample_dim:
-            index = list(self._y.index[-self.sample_dim + len(fh) :]) + list(
-                fh.to_absolute(self.cutoff)
-            )
+            index = pd.Index(list(fh.to_absolute(self.cutoff))).union(self._y.index)
         else:
             index = list(fh.to_absolute(self.cutoff))
         if X is not None:
-            X = pd.concat([self._X, X]).loc[index]
+            X = X.combine_first(self._X).loc[index]
         if self.deterministic:
             np.random.seed(42)
         z = np.random.normal(self.z_mean_, self.z_std_, (len(index)))
