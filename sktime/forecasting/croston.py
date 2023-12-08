@@ -167,10 +167,15 @@ class Croston(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        params = [
+        params1 = [
             {},
             {"smoothing": 0},
             {"smoothing": 0.42},
         ]
+        params2 = [
+            {},
+            {"smoothing": 0.3},
+            {"smoothing": 0.33},
+        ]
 
-        return params
+        return [params1,params2]
