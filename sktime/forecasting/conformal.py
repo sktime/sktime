@@ -145,6 +145,7 @@ class ConformalIntervals(BaseForecaster):
         verbose=False,
         n_jobs=None,
     ):
+        self.fit_once = True
         if not isinstance(method, str):
             raise TypeError(f"method must be a str, one of {self.ALLOWED_METHODS}")
 
@@ -361,7 +362,7 @@ class ConformalIntervals(BaseForecaster):
         return n_initial_window
 
     def _compute_sliding_residuals(
-        self, y, X, forecaster, initial_window, sample_frac, update=False
+        self, y, X, forecaster, initial_window, sample_frac, update=False,
     ):
         """Compute sliding residuals used in uncertainty estimates.
 
@@ -409,7 +410,8 @@ class ConformalIntervals(BaseForecaster):
                     X_ix = None
                 y_ix = y.loc[ix]
                 residuals[ix] = self._compute_sliding_residuals(
-                    y_ix, X_ix, forecaster, initial_window, sample_frac, update
+                    y_ix, X_ix, forecaster if not self.fit_once else self.forecaster_
+                    , initial_window, sample_frac, update
                 )
             return residuals
 
@@ -442,13 +444,14 @@ class ConformalIntervals(BaseForecaster):
             if len(y_sample) > 2:
                 y_index = y_sample
 
-        def _get_residuals_matrix_row(forecaster, y, X, id):
+        def _get_residuals_matrix_row(forecaster, y, X, id, fit_once):
             y_train = get_slice(y, start=None, end=id)  # subset on which we fit
             y_test = get_slice(y, start=id, end=None)  # subset on which we predict
 
             X_train = get_slice(X, start=None, end=id)
             X_test = get_slice(X, start=id, end=None)
-            forecaster.fit(y_train, X=X_train, fh=y_test.index)
+            if not fit_once:
+                forecaster.fit(y_train, X=X_train, fh=y_test.index)
             # Append fitted forecaster to list for extending for update
             self.forecasters_.append({"id": str(id), "forecaster": forecaster})
 
@@ -463,7 +466,8 @@ class ConformalIntervals(BaseForecaster):
             return residuals
 
         all_residuals = Parallel(n_jobs=self.n_jobs)(
-            delayed(_get_residuals_matrix_row)(forecaster.clone(), y, X, id)
+            delayed(_get_residuals_matrix_row)(forecaster.clone() if not self.fit_once else self.forecaster_,
+                                               y, X, id, fit_once=self.fit_once)
             for id in y_index
         )
         for idx, id in enumerate(y_index):
