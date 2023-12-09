@@ -131,7 +131,7 @@ class TestPlusTrainSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.model_selection import (
+        from sktime.split import (
             ExpandingWindowSplitter,
             SingleWindowSplitter,
         )

@@ -169,8 +169,8 @@ flexible choice of soft dependencies is unavailable via `conda`)
 ``` python
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.split import temporal_train_test_split
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 
 y = load_airline()
