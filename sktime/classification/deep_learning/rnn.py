@@ -12,7 +12,7 @@ from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-
+#todo: 0.26.0 - parameter num_epochs is deprecated and n_epoches is used instead
 class SimpleRNNClassifier(BaseDeepClassifier):
     """Simple recurrent neural network.
 
@@ -51,6 +51,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
 
     def __init__(
         self,
+        num_epochs = None,
         n_epochs=100,
         batch_size=1,
         units=6,
@@ -66,7 +67,16 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
-        self.n_epochs = n_epochs
+        # Deprecated Parameter Handling
+        if num_epochs is not None:
+            warnings.warn(
+                "The parameter 'num_epochs' is deprecated and will be removed in version 0.26.0. "
+                "Use 'n_epochs' instead. To avoid this warning, update your code to use 'n_epochs'.",
+                DeprecationWarning, stacklevel=2
+            )
+            self.n_epochs = num_epochs
+        else:
+            self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
