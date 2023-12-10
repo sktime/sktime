@@ -318,8 +318,6 @@ def _evaluate_window(x, meta):
         return result
 
 
-# todo 0.25.0: remove compute argument and docstring
-# todo 0.25.0: remove kwargs and docstring
 def evaluate(
     forecaster,
     cv,
@@ -330,7 +328,6 @@ def evaluate(
     return_data: bool = False,
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
-    compute: bool = None,
     cv_X=None,
     backend_params: Optional[dict] = None,
     **kwargs,
@@ -422,9 +419,6 @@ def evaluate(
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
-    compute : bool, default=True, deprecated and will be removed in 0.25.0.
-        If backend="dask", whether returned DataFrame is computed.
-        If set to True, returns `pd.DataFrame`, otherwise `dask.dataframe.DataFrame`.
     cv_X : sktime BaseSplitter descendant, optional
         determines split of ``X`` into test and train folds
         default is ``X`` being split to identical ``loc`` indices as ``y``
@@ -525,10 +519,10 @@ def evaluate(
                 "installed, but dask is not present in the python environment"
             )
 
-    # todo 0.25.0: remove kwargs and this warning
+    # todo 0.26.0: remove kwargs and this warning
     if kwargs != {}:
         warnings.warn(
-            "in evaluate, kwargs will no longer be supported from sktime 0.25.0. "
+            "in evaluate, kwargs are no longer supported. "
             "to pass configuration arguments to the parallelization backend, "
             "use backend_params instead. "
             f"The following kwargs were found: {kwargs.keys()}, pass these as "
@@ -536,20 +530,6 @@ def evaluate(
             DeprecationWarning,
             stacklevel=2,
         )
-
-    # todo 0.25.0: remove compute argument and logic, and remove this warning
-    if compute is not None:
-        warnings.warn(
-            "the compute argument of evaluate is deprecated and will be removed "
-            "in sktime 0.25.0. For the same behaviour in the future, "
-            'use backend="dask_lazy"',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-    if compute is None:
-        compute = True
-    if backend == "dask" and not compute:
-        backend = "dask_lazy"
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
