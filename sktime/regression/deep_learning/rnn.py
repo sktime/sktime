@@ -52,7 +52,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
 
     def __init__(
         self,
-        num_epoches = None,
+        num_epochs = None,
         n_epochs=100,
         batch_size=1,
         units=6,
