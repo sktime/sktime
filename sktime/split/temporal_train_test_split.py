@@ -91,8 +91,8 @@ def temporal_train_test_split(
 
     Examples
     --------
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.datasets import load_airline, load_osuleaf
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.utils._testing.panel import _make_panel
     >>> # univariate time series
     >>> y = load_airline()
