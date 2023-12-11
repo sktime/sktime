@@ -159,9 +159,7 @@ class BaseRegressor(BaseEstimator, ABC):
         ending in "_" and sets is_fitted flag to True.
         """
         y = self._check_y(y)
-        if not self._is_timed:
-            self._start = int(round(time.time() * 1000))
-            self._is_timed = True
+        start = int(round(time.time() * 1000))
         self._is_vectorized = isinstance(y, VectorizedDF)
         # we call the ordinary _fit if no looping/vectorization needed
         if not self._is_vectorized or self.get_tag("capability:multioutput"):
@@ -195,7 +193,7 @@ class BaseRegressor(BaseEstimator, ABC):
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", X=X, y=y)
 
-        self.fit_time_ = int(round(time.time() * 1000)) - self._start
+        self.fit_time_ = int(round(time.time() * 1000)) - start
         # this should happen last
         self._is_fitted = True
         return self
