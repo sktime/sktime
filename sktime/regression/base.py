@@ -88,6 +88,7 @@ class BaseRegressor(BaseEstimator, ABC):
         self._estimator_type = "regressor"
         self._regressors_ = None
         self._is_vectorized = False
+        self._is_timed = False
 
         super().__init__()
 
@@ -158,13 +159,14 @@ class BaseRegressor(BaseEstimator, ABC):
         ending in "_" and sets is_fitted flag to True.
         """
         y = self._check_y(y)
-
+        if not self._is_timed:
+            self._start = int(round(time.time() * 1000))
+            self._is_timed = True
         self._is_vectorized = isinstance(y, VectorizedDF)
         # we call the ordinary _fit if no looping/vectorization needed
         if not self._is_vectorized or self.get_tag("capability:multioutput"):
             # reset estimator at the start of fit
             self.reset()
-            start = int(round(time.time() * 1000))
             # convenience conversions to allow user flexibility:
             # if X is 2D array, convert to 3D, if y is Series, convert to numpy
             X, y = _internal_convert(X, y)
@@ -189,11 +191,11 @@ class BaseRegressor(BaseEstimator, ABC):
                     )
 
             self._fit(X, y)
-            self.fit_time_ = int(round(time.time() * 1000)) - start
         else:
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", X=X, y=y)
 
+        self.fit_time_ = int(round(time.time() * 1000)) - self._start
         # this should happen last
         self._is_fitted = True
         return self
@@ -249,7 +251,7 @@ class BaseRegressor(BaseEstimator, ABC):
             for fitting indices correspond to instance indices in X
             or 1D np.array of int, of shape [n_instances] - regression labels for
             fitting indices correspond to instance indices in X
-        multioutput : str, optional (default="“uniform_average”")
+        multioutput : str, optional (default="uniform_average")
             {"raw_values", "uniform_average", "variance_weighted"}, array-like of shape
             (n_outputs,) or None, default="uniform_average".
             Defines aggregating of multiple output scores. Array-like value defines
