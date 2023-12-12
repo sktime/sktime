@@ -2470,6 +2470,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "wayneadams",
+      "name": "Wayne Adams",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15034841?s=400&u=d717e9945910bcc844c5e64cd56d570c6cc4e8e6&v=4",
+      "profile": "https://github.com/wayneadams",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
