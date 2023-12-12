@@ -12,7 +12,7 @@ from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-#todo: 0.26.0 - parameter num_epochs is deprecated and n_epoches is used instead
+#todo: 0.26.0 - please remove num_epochs parameter and related logic, because parameter num_epochs usage is deprecated and will be renamed to n_epochs
 class SimpleRNNClassifier(BaseDeepClassifier):
     """Simple recurrent neural network.
 
@@ -52,7 +52,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     def __init__(
         self,
         num_epochs = None,
-        n_epochs=100,
         batch_size=1,
         units=6,
         callbacks=None,
@@ -64,19 +63,19 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         activation="sigmoid",
         use_bias=True,
         optimizer=None,
+        n_epochs=100,
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
         # Deprecated Parameter Handling
         if num_epochs is not None:
             warnings.warn(
-                "The parameter 'num_epochs' is deprecated and will be removed in version 0.26.0. "
-                "Use 'n_epochs' instead. To avoid this warning, update your code to use 'n_epochs'.",
+                "In SimpleRNNClassifier, the parameter 'num_epochs' is deprecated and will be removed in version 0.26.0. "
+                "It will be renamed to n_epochs. To avoid this warning, update your code to use 'n_epochs'.",
                 DeprecationWarning, stacklevel=2
             )
             self.n_epochs = num_epochs
-        else:
-            self.n_epochs = n_epochs
+        self.num_epochs = num_epochs    
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -90,6 +89,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.optimizer = optimizer
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
+        self.n_epochs = n_epochs
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
