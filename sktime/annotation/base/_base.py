@@ -55,6 +55,7 @@ class BaseSeriesAnnotator(BaseEstimator):
     """
 
     _tags = {
+        "object_type": "series-annotator",  # type of object
         "distribution_type": "None",  # Tag to determine test in test_all_annotators
     }  # for unit test cases
 

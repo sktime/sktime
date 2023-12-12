@@ -5,8 +5,8 @@ from typing import Callable, Dict, List, Optional, Union
 from sktime.benchmarking.benchmarks import BaseBenchmark
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
+from sktime.split.base import BaseSplitter
 
 
 def forecasting_validation(
@@ -68,7 +68,7 @@ class ForecastingBenchmark(BaseBenchmark):
 
     Parameters
     ----------
-    id_format: str, optional (defualt=None)
+    id_format: str, optional (default=None)
         A regex used to enforce task/estimator ID to match a certain format
 
     """

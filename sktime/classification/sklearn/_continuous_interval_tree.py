@@ -32,7 +32,7 @@ class ContinuousIntervalTree(BaseEstimator):
     max_depth : int, default=sys.maxsize
         Maximum depth for the tree.
     thresholds : int, default=20
-        Number of thresholds to split continous attributes on at tree nodes.
+        Number of thresholds to split continuous attributes on at tree nodes.
     random_state : int, RandomState instance or None, default=None
         If `int`, random_state is the seed used by the random number generator;
         If `RandomState` instance, random_state is the random number generator;

@@ -5,8 +5,6 @@
 
 __author__ = ["mloning", "kejsitake", "fkiraly"]
 
-from inspect import getfullargspec
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -15,11 +13,6 @@ from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    SlidingWindowSplitter,
-    temporal_train_test_split,
-)
 from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
     TEST_FHS,
@@ -29,6 +22,11 @@ from sktime.forecasting.tests._config import (
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+from sktime.split import (
+    ExpandingWindowSplitter,
+    SlidingWindowSplitter,
+    temporal_train_test_split,
+)
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
@@ -348,15 +346,15 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         _assert_correct_columns(y_pred, y_train)
 
-    # todo 0.23.0: remove legacy_interface arg and logic
-    # behaviour should be legacy_interface=False
-    def _check_predict_intervals(
-        self, pred_ints, y_train, fh, coverage, legacy_interface
-    ):
+    def _check_predict_intervals(self, pred_ints, y_train, fh, coverage):
         """Check expected interval prediction output."""
         # check expected type
         valid, msg, _ = check_is_mtype(
-            pred_ints, mtype="pred_interval", scitype="Proba", return_metadata=True
+            pred_ints,
+            mtype="pred_interval",
+            scitype="Proba",
+            return_metadata=True,
+            msg_return_dict="list",
         )  # type: ignore
         assert valid, msg
 
@@ -368,17 +366,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         def get_expected_columns():
             if isinstance(y_train, pd.Series):
-                if legacy_interface:
-                    return ["Coverage"]
-                elif hasattr(y_train, "name") and y_train.name is not None:
+                if hasattr(y_train, "name") and y_train.name is not None:
                     return [y_train.name]
                 else:
                     return [0]
             else:
-                if legacy_interface and len(y_train.columns) == 1:
-                    return ["Coverage"]
-                else:
-                    return y_train.columns
+                return y_train.columns
 
         # Forecasters where name of variables do not exist
         # In this cases y_train is series - the upper level in dataframe == 'Coverage'
@@ -395,24 +388,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             f"found: {found}"
         )
         assert all(expected == found), msg
-
-    # todo 0.23.0: remove this helper function and related logic
-    def _get_pred_int_test_config(self, estimator_instance):
-        """Get value of pred_int:legacy_interface:testcfg config from estimator.
-
-        If "auto", returns [False] if sktime version is 0.22.X,
-        [True] if sktime version is 0.21.X,
-        otherwise [value of the config] - should be True or False.
-        """
-        import sktime
-
-        cfg = estimator_instance.get_config().get(
-            "pred_int:legacy_interface:testcfg", "auto"
-        )
-        if cfg == "auto":
-            return [int(sktime.__version__.split(".")[1]) >= 22]
-        else:
-            return [cfg]
 
     @pytest.mark.parametrize("index_type", [None, "range"])
     @pytest.mark.parametrize(
@@ -444,35 +419,20 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
-            # todo 0.23.0: remove legacy_interface arg and logic
-            # simply remove the arg
-            pi_args = getfullargspec(estimator_instance._predict_interval).args
-            has_li_arg = "legacy_interface" in pi_args
-            if has_li_arg:
-                test_for = [True, False]
-            else:
-                test_for = self._get_pred_int_test_config(estimator_instance)
-
-            for legacy_interface in test_for:
-                pred_ints = estimator_instance.predict_interval(
-                    fh=fh_int_oos, coverage=coverage, legacy_interface=legacy_interface
-                )
-                self._check_predict_intervals(
-                    pred_ints,
-                    y_train,
-                    fh_int_oos,
-                    coverage,
-                    legacy_interface=legacy_interface,
-                )
+            pred_ints = estimator_instance.predict_interval(
+                fh=fh_int_oos, coverage=coverage
+            )
+            self._check_predict_intervals(
+                pred_ints,
+                y_train,
+                fh_int_oos,
+                coverage,
+            )
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
                 estimator_instance.predict_interval(fh_int_oos, coverage=coverage)
 
-    # todo 0.23.0: remove legacy_interface arg and logic
-    # behaviour should be legacy_interface=False
-    def _check_predict_quantiles(
-        self, pred_quantiles, y_train, fh, alpha, legacy_interface
-    ):
+    def _check_predict_quantiles(self, pred_quantiles, y_train, fh, alpha):
         """Check expected quantile prediction output."""
         # check expected type
         valid, msg, _ = check_is_mtype(
@@ -480,6 +440,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             mtype="pred_quantiles",
             scitype="Proba",
             return_metadata=True,
+            msg_return_dict="list",
         )  # type: ignore
         assert valid, msg
 
@@ -491,17 +452,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         def get_expected_columns():
             if isinstance(y_train, pd.Series):
-                if legacy_interface:
-                    return ["Quantiles"]
-                elif hasattr(y_train, "name") and y_train.name is not None:
+                if hasattr(y_train, "name") and y_train.name is not None:
                     return [y_train.name]
                 else:
                     return [0]
             else:
-                if legacy_interface and len(y_train.columns) == 1:
-                    return ["Quantiles"]
-                else:
-                    return y_train.columns
+                return y_train.columns
 
         expected_columns = get_expected_columns()
         expected_quantiles = [alpha] if isinstance(alpha, float) else alpha
@@ -552,34 +508,22 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
-            # todo 0.23.0: remove legacy_interface arg and logic
-            # simply remove the arg
-            pi_args = getfullargspec(estimator_instance._predict_quantiles).args
-            has_li_arg = "legacy_interface" in pi_args
-            if has_li_arg:
-                test_for = [True, False]
-            else:
-                test_for = self._get_pred_int_test_config(estimator_instance)
-
-            for legacy_interface in test_for:
-                quantiles = estimator_instance.predict_quantiles(
-                    fh=fh_int_oos, alpha=alpha, legacy_interface=legacy_interface
-                )
-                self._check_predict_quantiles(
-                    quantiles,
-                    y_train,
-                    fh_int_oos,
-                    alpha,
-                    legacy_interface=legacy_interface,
-                )
+            quantiles = estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
+            self._check_predict_quantiles(
+                quantiles,
+                y_train,
+                fh_int_oos,
+                alpha,
+            )
         else:
             with pytest.raises(NotImplementedError, match="quantile predictions"):
                 estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
 
     def _check_predict_proba(self, pred_dist, y_train, fh_int):
-        from sktime.proba.base import BaseDistribution
+        assert hasattr(pred_dist, "get_tag")
+        obj_type = pred_dist.get_tag("object_type", None, False)
+        assert obj_type == "distribution"
 
-        assert isinstance(pred_dist, BaseDistribution)
         pred_cols = pred_dist.columns
         pred_index = pred_dist.index
 
@@ -589,7 +533,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # check columns
         if isinstance(y_train, pd.Series):
-            assert (pred_cols == pd.Index([0])).all()
+            if y_train.name is not None:
+                assert (pred_cols == y_train.name).all()
+            else:
+                assert (pred_cols == pd.Index([0])).all()
         else:
             assert (pred_cols == y_train.columns).all()
 
@@ -783,7 +730,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_train, fh=FH0)
         estimator_instance.fit(y_train[3:], fh=FH0)
-        # using np.squeeze to make the test flexible to shape differeces like
+        # using np.squeeze to make the test flexible to shape differences like
         # (50,) and (50, 1)
         assert np.all(np.squeeze(estimator_instance._y) == np.squeeze(y_train[3:]))
 
@@ -888,7 +835,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.predict(X=X_test)
 
         assert isinstance(y_pred, pd.DataFrame)
-        assert check_is_mtype(y_pred, "pd_multiindex_hier")
+        assert check_is_mtype(y_pred, "pd_multiindex_hier", msg_return_dict="list")
         msg = (
             "returned columns after predict are not as expected. "
             f"expected: {y_train.columns}. Found: {y_pred.columns}"
@@ -909,7 +856,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_pred_int = estimator_instance.predict_interval(X=X_test)
 
             assert isinstance(y_pred_int, pd.DataFrame)
-            assert check_is_mtype(y_pred_int, "pd_multiindex_hier")
+            assert check_is_mtype(
+                y_pred_int, "pd_multiindex_hier", msg_return_dict="list"
+            )
 
             if len(y_pred_int.index) == len(X_test.index):
                 assert np.all(y_pred_int.index == X_test.index)
@@ -919,7 +868,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_pred_q = estimator_instance.predict_quantiles(X=X_test)
 
             assert isinstance(y_pred_q, pd.DataFrame)
-            assert check_is_mtype(y_pred_q, "pd_multiindex_hier")
+            assert check_is_mtype(
+                y_pred_q, "pd_multiindex_hier", msg_return_dict="list"
+            )
 
             if len(y_pred_q.index) == len(X_test.index):
                 assert np.all(y_pred_q.index == X_test.index)

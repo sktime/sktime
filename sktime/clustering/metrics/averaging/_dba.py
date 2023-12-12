@@ -18,7 +18,7 @@ def dba(
 ) -> np.ndarray:
     """Compute the dtw barycenter average of time series.
 
-    This implements the'petitjean' version (orginal) DBA algorithm [1]_.
+    This implements the'petitjean' version (original) DBA algorithm [1]_.
 
     Parameters
     ----------

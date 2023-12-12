@@ -45,6 +45,7 @@ class _WindowSignatureTransform(BaseTransformer):
         sig_tfm=None,
         sig_depth=None,
         rescaling=None,
+        backend=None,
     ):
         super().__init__()
         self.window_name = window_name
@@ -54,6 +55,7 @@ class _WindowSignatureTransform(BaseTransformer):
         self.sig_tfm = sig_tfm
         self.sig_depth = sig_depth
         self.rescaling = rescaling
+        self.backend = backend
 
         self.window = _window_getter(
             self.window_name, self.window_depth, self.window_length, self.window_step
@@ -61,6 +63,9 @@ class _WindowSignatureTransform(BaseTransformer):
 
     def _transform(self, X, y=None):
         import esig
+
+        if self.backend == "iisignature":
+            esig.set_backend("iisignature")
 
         depth = self.sig_depth
         data = np.swapaxes(X, 1, 2)

@@ -30,8 +30,9 @@ HIER_MTYPES = ["pd_multiindex_hier"]
     not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
+@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
-def test_vectorization_series_to_panel(mtype):
+def test_vectorization_series_to_panel(mtype, backend):
     """Test that forecaster vectorization works for Panel data.
 
     This test passes Panel data to the ARIMA forecaster which internally has an
@@ -42,8 +43,11 @@ def test_vectorization_series_to_panel(mtype):
     y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
     f = ARIMA()
+    f.set_config(**{"backend:parallel": backend})
     y_pred = f.fit(y).predict([1, 2, 3])
-    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+    valid, _, metadata = check_is_mtype(
+        y_pred, mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecasters does not work for test example "
@@ -79,8 +83,9 @@ def test_vectorization_series_to_panel(mtype):
     not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
+@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
-def test_vectorization_series_to_hier(mtype):
+def test_vectorization_series_to_hier(mtype, backend):
     """Test that forecaster vectorization works for Hierarchical data.
 
     This test passes Hierarchical data to the ARIMA forecaster which internally has an
@@ -93,8 +98,11 @@ def test_vectorization_series_to_hier(mtype):
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     f = ARIMA()
+    f.set_config(**{"backend:parallel": backend})
     y_pred = f.fit(y).predict([1, 2, 3])
-    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+    valid, _, metadata = check_is_mtype(
+        y_pred, mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecasters does not work for test example "
@@ -154,7 +162,9 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     else:
         RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
-    valid, _, _ = check_is_mtype(y_pred, expected_mtype, return_metadata=True)
+    valid, _, _ = check_is_mtype(
+        y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecaster method {method} does not work for test example "
@@ -190,7 +200,9 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     else:
         RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
-    valid, _, _ = check_is_mtype(y_pred, expected_mtype, return_metadata=True)
+    valid, _, _ = check_is_mtype(
+        y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecaster method {method} does not work for test example "
@@ -247,7 +259,9 @@ def test_vectorization_multivariate(mtype, exogeneous):
 
     est = ARIMA().fit(y=y_fit, X=X_fit, fh=[1, 2, 3])
     y_pred = est.predict(X=X_pred)
-    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+    valid, _, metadata = check_is_mtype(
+        y_pred, mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecasters does not work for test example "
@@ -357,7 +371,7 @@ def test_dynamic_tags_reset_properly():
 def test_predict_residuals():
     """Test that predict_residuals has no side-effect."""
     from sktime.forecasting.base import ForecastingHorizon
-    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.split import temporal_train_test_split
 
     y = _make_series(n_columns=1)
     y_train, y_test = temporal_train_test_split(y)

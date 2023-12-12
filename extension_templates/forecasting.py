@@ -136,11 +136,21 @@ class MyForecaster(BaseForecaster):
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if y or X passed contain missing data (nans)
         #
+        # capability:insample = can forecaster make in-sample forecasts?
+        "capability:insample": True,
+        # valid values: boolean True (yes), False (no)
+        # if False, exception raised if any forecast method called with in-sample fh
+        #
         # capability:pred_int = does forecaster implement probabilistic forecasts?
         "capability:pred_int": False,
         # valid values: boolean True (yes), False (no)
         # if False, exception raised if proba methods are called (predict_interval etc)
         #
+        # capability:pred_int:insample = can forecaster make in-sample proba forecasts?
+        "capability:pred_int:insample": True,
+        # valid values: boolean True (yes), False (no)
+        # only needs to be set if capability:pred_int is True
+        # if False, exception raised if proba methods are called with in-sample fh
         #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
@@ -148,7 +158,7 @@ class MyForecaster(BaseForecaster):
         # python version requirement
         "python_version": None,
         # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python veresion is incompatible
+        # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
         "python_dependencies": None
@@ -161,7 +171,7 @@ class MyForecaster(BaseForecaster):
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
@@ -230,7 +240,7 @@ class MyForecaster(BaseForecaster):
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
         #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals shoudld be used or fitted if needed
+        #  the clones, not the originals should be used or fitted if needed
         #
         # Note: when interfacing a model that has fit, with parameters
         #   that are not data (y, X) or forecasting-horizon-like,

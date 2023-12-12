@@ -29,7 +29,7 @@ class SeasonalityACF(BaseParamFitter):
         candidate sp to test, and to restrict tests to; ints must be 2 or larger
         if None, will test all integer lags between 2 and `nlags` (inclusive)
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for seasonality
+        significance threshold to apply in testing for seasonality
     adjusted : bool, optional, default=False
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
@@ -227,7 +227,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         candidate sp to test, and to restrict tests to; ints must be 2 or larger
         if None, will test all integer lags between 2 and `nlags` (inclusive)
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for seasonality
+        significance threshold to apply in testing for seasonality
     p_adjust : str, optional, default="fdr_by" (Benjamini/Yekutieli)
         multiple testing correction applied to p-values of candidate sp in acf test
         multiple testing correction is applied to Ljung-Box tests on candidate_sp

@@ -210,7 +210,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         Returns
         -------
         params :dict or list of dict , default = {}
-            arameters to create testing instances of the class
+            parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params

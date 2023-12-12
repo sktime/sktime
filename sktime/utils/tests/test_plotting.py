@@ -244,6 +244,28 @@ def test_plot_series_uniform_treatment_of_int64_range_index_types():
     plt.close()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(plot_series),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="skip test if required soft dependency for matplotlib not available",
+)
+def test_plot_series_interval():
+    """Test prediction interval plotting functionality in plot_series."""
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.naive import NaiveForecaster
+
+    model = NaiveForecaster()
+    y = load_airline()
+    model.fit(y[:-3])
+    fh = ForecastingHorizon(y[-3:].index, is_relative=False)
+    pred = model.predict(fh)
+    interval = model.predict_interval(fh)
+    plot_series(y[:-3], y[-3:], pred, pred_interval=interval)
+
+
 # Generically test whether plots only accepting univariate input run
 @pytest.mark.skipif(
     not run_test_for_class(univariate_plots),

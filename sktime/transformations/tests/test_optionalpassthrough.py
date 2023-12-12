@@ -24,11 +24,9 @@ def test_optionalpassthrough():
 
     from sktime.datasets import load_airline
     from sktime.forecasting.compose import TransformedTargetForecaster
-    from sktime.forecasting.model_selection import (
-        ForecastingGridSearchCV,
-        SlidingWindowSplitter,
-    )
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.forecasting.naive import NaiveForecaster
+    from sktime.split import SlidingWindowSplitter
     from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     from sktime.transformations.series.detrend import Deseasonalizer
 

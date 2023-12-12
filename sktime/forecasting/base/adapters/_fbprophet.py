@@ -116,11 +116,12 @@ class _ProphetAdapter(BaseForecaster):
             df["cap"] = self.growth_cap
             df["floor"] = self.growth_floor
 
+        fit_kwargs = self.fit_kwargs or {}
         if self.verbose:
-            self._forecaster.fit(df=df)
+            self._forecaster.fit(df=df, **fit_kwargs)
         else:
             with _suppress_stdout_stderr():
-                self._forecaster.fit(df=df)
+                self._forecaster.fit(df=df, **fit_kwargs)
 
         return self
 
@@ -205,8 +206,7 @@ class _ProphetAdapter(BaseForecaster):
 
         return y_pred
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -246,9 +246,7 @@ class _ProphetAdapter(BaseForecaster):
         X = self._convert_X_for_exog(X, fh)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = self._get_varnames(
-            default="Coverage", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])

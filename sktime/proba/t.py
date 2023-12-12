@@ -44,7 +44,9 @@ class TDistribution(BaseDistribution):
         self.index = index
         self.columns = columns
 
-        self._mu, self._sigma, self._df = self._get_bc_params()
+        self._mu, self._sigma, self._df = self._get_bc_params(
+            self.mu, self.sigma, self.df
+        )
         shape = self._mu.shape
 
         if index is None:
@@ -54,16 +56,6 @@ class TDistribution(BaseDistribution):
             columns = pd.RangeIndex(shape[1])
 
         super().__init__(index=index, columns=columns)
-
-    def _get_bc_params(self):
-        """Fully broadcast parameters of self, given param shapes and index, columns."""
-        to_broadcast = [self.mu, self.sigma, self.df]
-        if hasattr(self, "index") and self.index is not None:
-            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
-        if hasattr(self, "columns") and self.columns is not None:
-            to_broadcast += [self.columns.to_numpy()]
-        bc = np.broadcast_arrays(*to_broadcast)
-        return bc[0], bc[1], bc[2]
 
     def mean(self):
         r"""Return expected value of the distribution.

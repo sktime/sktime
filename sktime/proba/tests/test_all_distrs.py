@@ -117,7 +117,9 @@ class TestAllDistributions(DistributionFixtureGenerator, QuickTester):
         d = estimator_instance
 
         def _check_quantile_output(obj, q):
-            assert check_is_mtype(obj, "pred_quantiles", "Proba")
+            assert check_is_mtype(
+                obj, "pred_quantiles", "Proba", msg_return_dict="list"
+            )
             assert (obj.index == d.index).all()
 
             if not isinstance(q, list):

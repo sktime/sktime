@@ -44,6 +44,12 @@ import pandas as pd
 
 ESTIMATOR_TAG_REGISTER = [
     (
+        "object_type",
+        "object",
+        "str",
+        "type of object: estimator, transformer, regressor, etc",
+    ),
+    (
         "ignores-exogeneous-X",
         "forecaster",
         "bool",
@@ -412,7 +418,7 @@ ESTIMATOR_TAG_REGISTER = [
         "requires_cython",
         "estimator",
         "bool",
-        "whether the estimator reqires a C compiler present such as libomp, gcc",
+        "whether the estimator requires a C compiler present such as libomp, gcc",
     ),
     (
         "remember_data",
