@@ -1,7 +1,6 @@
 #!/usr/bin/env python3 -u
 """Time Recurrent Neural Network (RNN) for regression."""
 
-
 __author__ = ["mloning"]
 __all__ = ["SimpleRNNRegressor"]
 
@@ -13,7 +12,7 @@ from sktime.networks.rnn import RNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-#todo: 0.26.0 - parameter num_epochs is deprecated and n_epoches is used instead
+#todo: 0.26.0 - please remove num_epochs parameter and related logic, because parameter num_epochs usage is deprecated and will be renamed to n_epochs
 class SimpleRNNRegressor(BaseDeepRegressor):
     """Simple recurrent neural network.
 
@@ -53,7 +52,6 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     def __init__(
         self,
         num_epochs = None,
-        n_epochs=100,
         batch_size=1,
         units=6,
         callbacks=None,
@@ -65,19 +63,19 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         activation="linear",
         use_bias=True,
         optimizer=None,
+        n_epochs=100,
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
         # Deprecated Parameter Handling
         if num_epochs is not None:
             warnings.warn(
-                "The parameter 'num_epochs' is deprecated and will be removed in version 0.26.0. "
-                "Use 'n_epochs' instead. To avoid this warning, update your code to use 'n_epochs'.",
+                "In SimpleRNNRegressor, the parameter 'num_epochs' is deprecated and will be removed in version 0.26.0. "
+                "It will be renamed to n_epochs. To avoid this warning, update your code to use 'n_epochs'.",
                 DeprecationWarning, stacklevel=2
             )
             self.n_epochs = num_epochs
-        else:
-            self.n_epochs = n_epochs
+        self.num_epochs = num_epochs  
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -91,6 +89,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.optimizer = optimizer
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
+        self.n_epochs = n_epochs
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
