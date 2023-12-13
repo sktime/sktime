@@ -98,7 +98,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
                 if value is not None:
                     extraction_params[name] = value
             
-            # Fixes key missmatch between tsfresh and sktime
+            # Fixes key mismatch between tsfresh and sktime
             # tsfresh uses "profile" while sktime uses "profiling"
             # This fix keeps compatibility
             if name == "profile":
