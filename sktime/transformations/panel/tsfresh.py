@@ -97,7 +97,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
                 value = getattr(self, name)
                 if value is not None:
                     extraction_params[name] = value
-            
+
             # Fixes key mismatch between tsfresh and sktime
             # tsfresh uses "profile" while sktime uses "profiling"
             # This fix keeps compatibility
