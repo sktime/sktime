@@ -166,7 +166,11 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
 
         y_pred = out.loc[:, "trend"]
         y_pred.index = future.index
-        y_pred.name = self._y.columns[0]
+
+        if isinstance(self._y.columns[0], str):
+            y_pred.name = self._y.columns[0]
+        else:
+            y_pred.name = None
 
         if self.y_index_was_int_ or self.y_index_was_period_:
             y_pred.index = self.fh.to_absolute_index(cutoff=self.cutoff)
@@ -193,6 +197,4 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
             "changepoint_prior_scale": 0.05,
         }
 
-        params1 = {"changepoints": ["2014-01-01"]}
-
-        return [params0, params1]
+        return params0
