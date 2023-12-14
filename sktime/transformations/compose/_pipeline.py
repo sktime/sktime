@@ -398,7 +398,18 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         return [params1, params2, params3]
 
     def _to_dim(self, x):
-        """Translate scitype:transform-input or output tag to data dimension."""
+        """Translate scitype:transform-input or output tag to data dimension.
+
+        Parameters
+        ----------
+        x : str, one of "Series", "Panel", "Hierarchical"
+            scitype:transform-input or output tag
+
+        Returns
+        -------
+        int
+            data dimension corresponding to x
+        """
         if x == "Series":
             return 1
         elif x == "Panel":
@@ -413,7 +424,18 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         return self._to_dim(out) - self._to_dim(inp)
 
     def _dim_to_sci(self, d):
-        """Translate data dimension to scitype:transform-output tag."""
+        """Translate data dimension to scitype:transform-output tag.
+
+        Parameters
+        ----------
+        d : int
+            data dimension
+
+        Returns
+        -------
+        str
+            scitype:transform-output tag corresponding to data dimension
+        """
         if d <= 1:
             return "Series"
         elif d == 2:
@@ -422,7 +444,10 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
             return "Hierarchical"
 
     def _trafo_out(self):
-        """Utility to correctly infer scitype:transform-output tag."""
+        """Infer scitype:transform-output tag.
+
+        Uses the self.steps_ attribute, assumes it is initialized already.
+        """
         ests = self.steps_
         est_list = [x[1] for x in ests]
         inp_dim = self._to_dim(est_list[0].get_tag("scitype:transform-input"))
