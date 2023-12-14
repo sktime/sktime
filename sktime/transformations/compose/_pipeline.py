@@ -145,7 +145,6 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # abbreviate for readability
         ests = self.steps_
         first_trafo = ests[0][1]
-        last_trafo = ests[-1][1]
 
         # input mtype and input type are as of the first estimator
         self.clone_tags(first_trafo, ["scitype:transform-input"])
