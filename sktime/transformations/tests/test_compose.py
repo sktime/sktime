@@ -276,15 +276,15 @@ def test_input_output_series_panel_chain():
     Failure case of #5624.
     """
     from sktime.datasets import load_airline
-    from sktime.transformations.series.impute import Imputer
     from sktime.transformations.bootstrap import STLBootstrapTransformer
+    from sktime.transformations.series.impute import Imputer
 
     X = load_airline()
-    bootstrap_trafo = STLBootstrapTransformer(4, sp = 4) * Imputer(method="nearest")
+    bootstrap_trafo = STLBootstrapTransformer(4, sp=4) * Imputer(method="nearest")
 
     assert bootstrap_trafo.get_tags()["scitype:transform-input"] == "Series"
     assert bootstrap_trafo.get_tags()["scitype:transform-output"] == "Panel"
 
-    Xt = bootstrap_trafo.fit_transform(y)
+    Xt = bootstrap_trafo.fit_transform(X)
     assert isinstance(Xt, pd.DataFrame)
     assert isinstance(Xt.index, pd.MultiIndex)
