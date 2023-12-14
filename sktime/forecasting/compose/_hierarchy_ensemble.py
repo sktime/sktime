@@ -285,6 +285,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 if counter == 0:
                     nodes = mi
                 else:
+                    # For nlevels = 2, 'nodes' is pd.Index object (L286)
                     nodes = nodes.append(mi)
             else:
                 node_l = []
