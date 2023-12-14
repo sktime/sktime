@@ -116,11 +116,15 @@ class _ProphetAdapter(BaseForecaster):
             df["cap"] = self.growth_cap
             df["floor"] = self.growth_floor
 
+        if hasattr(self, "fit_kwargs") and isinstance(self.fit_kwargs, dict):
+            fit_kwargs = self.fit_kwargs
+        else:
+            fit_kwargs = {}
         if self.verbose:
-            self._forecaster.fit(df=df)
+            self._forecaster.fit(df=df, **fit_kwargs)
         else:
             with _suppress_stdout_stderr():
-                self._forecaster.fit(df=df)
+                self._forecaster.fit(df=df, **fit_kwargs)
 
         return self
 

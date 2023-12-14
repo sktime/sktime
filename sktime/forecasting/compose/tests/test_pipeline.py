@@ -373,7 +373,7 @@ def test_tag_handles_missing_data():
     forecaster.set_tags(**{"handles-missing-data": False})
 
     y = _make_series()
-    y[10] = np.nan
+    y.iloc[10] = np.nan
 
     # test only TransformedTargetForecaster
     y_pipe = TransformedTargetForecaster(
