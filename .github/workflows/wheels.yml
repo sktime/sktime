@@ -22,7 +22,7 @@ jobs:
           python -m build --wheel --sdist --outdir wheelhouse
 
       - name: Store wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: wheelhouse/*
