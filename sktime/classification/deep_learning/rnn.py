@@ -11,8 +11,12 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sklearn.utils.warnings import warn
 
-#todo: 0.26.0 - please remove num_epochs parameter and related logic, because parameter num_epochs usage is deprecated and will be renamed to n_epochs
+# todo: 0.26.0 - please remove num_epochs parameter and related logic,
+# because parameter num_epochs usage is deprecated and will be renamed
+# to n_epochs.  Also n_epochs should be moved to become the first
+# argument in the __init__ and super().__init__.
 class SimpleRNNClassifier(BaseDeepClassifier):
     """Simple recurrent neural network.
 
@@ -51,7 +55,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
 
     def __init__(
         self,
-        num_epochs = None,
+        num_epochs=None,
         batch_size=1,
         units=6,
         callbacks=None,
@@ -65,17 +69,17 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         optimizer=None,
         n_epochs=100,
     ):
-        _check_dl_dependencies(severity="error")
-        super().__init__()
-        # Deprecated Parameter Handling
+       # Deprecated Parameter Handling
         if num_epochs is not None:
-            warnings.warn(
-                "In SimpleRNNClassifier, the parameter 'num_epochs' is deprecated and will be removed in version 0.26.0. "
-                "It will be renamed to n_epochs. To avoid this warning, update your code to use 'n_epochs'.",
-                DeprecationWarning, stacklevel=2
+            warn(
+                "In SimpleRNNClassifier, the parameter 'num_epochs' is deprecated "
+                "and will be removed in v0.26.0. It will be renamed to n_epochs. "
+                "To avoid this warning, update your code to use 'n_epochs'. ",
+                DeprecationWarning,
+                stacklevel=2,
             )
             self.n_epochs = num_epochs
-        self.num_epochs = num_epochs    
+        self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
