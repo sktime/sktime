@@ -21,7 +21,7 @@ from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(Prophet),
+    not run_test_for_class(PiecewiseLinearTrendForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_pred_errors_against_linear():
@@ -53,7 +53,7 @@ def test_pred_errors_against_linear():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(Prophet),
+    not run_test_for_class(PiecewiseLinearTrendForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_pred_with_explicit_changepoints():
@@ -82,7 +82,7 @@ def test_pred_with_explicit_changepoints():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(Prophet),
+    not run_test_for_class(PiecewiseLinearTrendForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("indextype", ["range", "period"])
