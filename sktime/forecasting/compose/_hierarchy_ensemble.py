@@ -285,7 +285,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 if counter == 0:
                     nodes = mi
                 else:
-                    nodes.append(mi)
+                    # For nlevels = 2, 'nodes' is pd.Index object (L286)
+                    nodes = nodes.append(mi)
             else:
                 node_l = []
                 for i in range(len(node)):
@@ -495,6 +496,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     raise ValueError("Nodes cannot be empty.")
                 if z.index.nlevels == 2:
                     nodes_ix = pd.Index(nodes)
+                    nodes_t += nodes
                 else:
                     nodes_l = []
                     for i in range(len(nodes)):
