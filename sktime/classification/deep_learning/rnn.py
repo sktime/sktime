@@ -11,7 +11,8 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-from sklearn.utils.warnings import warn
+from sktime.utils.warnings import warn
+
 
 # todo: 0.26.0 - please remove num_epochs parameter and related logic,
 # because parameter num_epochs usage is deprecated and will be renamed
@@ -69,7 +70,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         optimizer=None,
         n_epochs=100,
     ):
-       # Deprecated Parameter Handling
+        # Deprecated Parameter Handling
         if num_epochs is not None:
             warn(
                 "In SimpleRNNClassifier, the parameter 'num_epochs' is deprecated "
@@ -78,8 +79,10 @@ class SimpleRNNClassifier(BaseDeepClassifier):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            self.n_epochs = num_epochs
-        self.num_epochs = num_epochs
+            self._n_epochs = num_epochs
+        else:
+            self._n_epochs = n_epochs
+        self.num_epochs = self._n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -93,7 +96,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.optimizer = optimizer
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
-        self.n_epochs = n_epochs
+        self.n_epochs = self._n_epochs
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
