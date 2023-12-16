@@ -7,11 +7,13 @@ __all__ = ["SimpleRNNRegressor"]
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
+from sklearn.utils.warnings import warn
 
 from sktime.networks.rnn import RNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-from sklearn.utils.warnings import warn
+from sktime.utils.warnings import warn
+
 
 # todo: 0.26.0 - please remove num_epochs parameter and related logic,
 # because parameter num_epochs usage is deprecated and will be renamed
@@ -80,8 +82,10 @@ class SimpleRNNRegressor(BaseDeepRegressor):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            self.n_epochs = num_epochs
-        self.num_epochs = num_epochs
+            self._n_epochs = num_epochs
+        else:
+            self._n_epochs = n_epochs
+        self.num_epochs = self._n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -95,7 +99,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.optimizer = optimizer
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
-        self.n_epochs = n_epochs
+        self.n_epochs = self._n_epochs
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
