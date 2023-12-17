@@ -1,12 +1,13 @@
 """Composition involving parameter estimators."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.param_est.base import BaseParamFitter
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose import TransformerPipeline
 
 __author__ = ["fkiraly"]
-__all__ = ["ParamFitterPipeline"]
+__all__ = ["ParamFitterPipeline", "FunctionParamFitter"]
 
 
 # we ensure that internally we convert to pandas for now
@@ -300,4 +301,121 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
             # construct without names
             params = params + [{"transformers": [t1, t2], "param_est": p}]
 
+        return params
+
+
+class FunctionParamFitter(BaseParamFitter):
+    r"""Constructs a parameter fitter from an arbitrary callable.
+
+    A FunctionParamFitter forwards its X argument to a user-defined
+    function (or callable object) and sets the result of this function
+    to the ``param`` attribute. This can be useful for stateless
+    estimators such as simple conditional parameter selectors.
+
+    Note: If a lambda function is used as the ``func``, then the
+    resulting estimator will not be pickleable.
+
+    Parameters
+    ----------
+    param : str
+        The name of the parameter to set.
+    func : callable (X: X_type, **kwargs) -> Any
+        The callable to use for the parameter estimation. This will be
+        passed the same arguments as estimator, with args and kwargs
+        forwarded.
+
+    See Also
+    --------
+    sktime.param_est.plugin.PluginParamsForecaster :
+        Plugs parameters from a parameter estimator into a forecaster.
+    sktime.forecasting.compose.MultiplexForecaster :
+        MultiplexForecaster for selecting among different models.
+
+    Examples
+    --------
+    This class could be used to contruct a parameter estimator that
+    selects a forecaster based on the input data's length. The
+    selected forecaster can be stored in the `selected_forecaster_`
+    attribute, which can be then passed down to a
+    ``MultiplexForecaster`` via a ``PluginParamsForecaster``.
+
+    >>> import numpy as np
+    >>> param_est = FunctionParamFitter(
+    ...     param="selected_forecaster",
+    ...     func=(
+    ...         lambda X, threshold: "naive-seasonal"
+    ...         if len(X) >= threshold
+    ...         else "naive-last"
+    ...     ),
+    ...     kw_args={"threshold": 7},
+    ... )
+    >>> param_est.fit(np.asarray([1, 2, 3, 4]))
+    >>> param_est.selected_forecaster_
+    'naive-last'
+    >>> param_est.fit(np.asarray([1, 2, 3, 4, 5, 6, 7]))
+    >>> param_est.selected_forecaster_
+    'naive-seasonal'
+    """
+
+    _tags = {
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "scitype:X": ["Series", "Panel", "Hierarchical"],
+        "capability:missing_values": True,
+        "capability:multivariate": False,
+    }
+
+    def __init__(self, param, func, kw_args=None, X_type=None):
+        self.param = param
+        self.func = func
+        self.kw_args = kw_args
+        self.X_type = X_type
+        super().__init__()
+
+        if X_type is not None:
+            self.set_tags(X_inner_mtype=X_type)
+
+    def _fit(self, X):
+        """Fit estimator and estimate parameters.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Time series to which to fit the estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        param = self.param.rstrip("_") + "_"
+        setattr(self, param, self.func(X, **(self.kw_args or {})))
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are no reserved values for parameter estimators.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = [
+            {"param": "param", "func": lambda X: "foo"},
+            {"param": "param", "func": lambda X, kwarg: "foo", "kw_args": {"kwarg": 1}},
+        ]
         return params
