@@ -870,7 +870,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         _check_cutoff(cutoff, relative)
         is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
-        # remembert timezone to restore it later
+        # remember timezone to restore it later
         if hasattr(cutoff, "tz"):
             old_tz = cutoff.tz
         else:
