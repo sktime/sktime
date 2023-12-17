@@ -503,15 +503,16 @@ def plot_windows(cv, y, title="", ax=None):
     else:
         return ax
 
-def plot_calibration(y_true, y_pred, ax = None):
+
+def plot_calibration(y_true, y_pred, ax=None):
     """Plot the calibration of a probabilistic forecast.
 
     Calculates internally the calibration of the quantile forecast and
-    visualise it. 
+    visualise it.
 
     x-axis: interval from 0 to 1
     y-axis: interval from 0 to 1
-    plot elements: the calibration fo the forecast (blue) and the ideal 
+    plot elements: the calibration fo the forecast (blue) and the ideal
         calibration (orange)
 
     Parameters
@@ -531,6 +532,7 @@ def plot_calibration(y_true, y_pred, ax = None):
         matplotlib axes object with the figure
     """
     import matplotlib.pyplot as plt
+
     series = convert_to(y_true, "pd.Series", "Series")
 
     _ax_kwarg_is_none = True if ax is None else False
@@ -540,24 +542,22 @@ def plot_calibration(y_true, y_pred, ax = None):
 
     result = [0]
     ideal_calibration = [0]
-    
+
     for col in y_pred.columns:
         if isinstance(col, tuple):
             q = col[1]
         else:
             q = col
         pred_q = convert_to(y_pred[[col]], "pd.Series", "Series")
-        result.append(
-            sum(series.values < pred_q.values)
-            /
-            len(pred_q.values)
-        )
+        result.append(sum(series.values < pred_q.values) / len(pred_q.values))
         ideal_calibration.append(q)
     result.append(1)
     ideal_calibration.append(1)
 
-    df = pd.DataFrame({"Forecast's Calibration": result, "Ideal Calibration": ideal_calibration},
-                index=ideal_calibration)
+    df = pd.DataFrame(
+        {"Forecast's Calibration": result, "Ideal Calibration": ideal_calibration},
+        index=ideal_calibration,
+    )
 
     df.plot(ax=ax)
 
