@@ -6,6 +6,7 @@ __author__ = ["khrapovs"]
 
 __all__ = [
     "CutoffSplitter",
+    "CutoffFhSplitter",
 ]
 
 from typing import Optional
@@ -125,7 +126,7 @@ class CutoffSplitter(BaseSplitter):
     relative to the end of the training window.
     It will contain as many indices
     as there are forecasting horizons provided to the `fh` argument.
-    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the test window will
+    For a forecasting horizon :math:`(h_1,\ldots,h_H)`, the test window will
     consist of the indices :math:`(k_n+h_1,\ldots, k_n+h_H)`.
 
     The number of splits returned by `.get_n_splits`
@@ -240,3 +241,117 @@ class CutoffSplitter(BaseSplitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         return [{"cutoffs": np.array([3, 7, 10])}, {"cutoffs": [21, 22]}]
+
+
+class CutoffFhSplitter(BaseSplitter):
+    r"""Temporal train-test splitter, based on cutoff and forecasting horizon.
+
+    Train and test splits are determied as follows:
+
+    for each cutoff point `k=cutoff[i]`, in `split`:
+
+    * training fold is all loc indices up to and including `k`
+    * if `fh` is not passed, test fold is all loc indices strictly after `k`
+    * if `fh is passed`, test fold is all loc indices in `k + fh`, if `fh` is relative.
+      More precisely, `fh.to_absolute_index(cutoff=k)
+      If `fh` is absolute, then the test window is `fh` itself.
+
+    It should be noted that, unlike in `CutoffSplitter`,
+    test folds are not determined by a window length,
+    but by indices of the forecasting horizon `fh`, i.e., test folds can be
+    non-contiguous, even if the data index is regular.
+
+    Parameters
+    ----------
+    cutoff : np.array or pd.Index
+        Cutoff points, positive and integer- or datetime-index like.
+        Type should match the type of `fh` input.
+    fh : None, ForecastingHorizon, int, timedelta, iterable of ints or timedeltas
+        Forecasting horizon, relative or absolute, to determine test folds.
+        Type should match the type of `cutoffs` input.
+        If not ForecastingHorizon, is coerced.
+    """
+
+    _tags = {
+        "split_hierarchical": False,
+        "split_series_uses": "loc",
+    }
+
+    def __init__(self, cutoff, fh=None):
+        self.cutoff = cutoff
+        self.fh = fh
+        super().__init__(fh=fh)
+
+    def _split_loc(self, y):
+        """Get loc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split_loc
+
+        Parameters
+        ----------
+        y : pd.Index
+            index of time series to split
+
+        Yields
+        ------
+        train : pd.Index
+            Training window indices, loc references to training indices in y
+        test : pd.Index
+            Test window indices, loc references to test indices in y
+        """
+        cutoff = self.cutoff
+        fh = self.fh
+
+        if fh is not None:
+            from sktime.forecasting.base import ForecastingHorizon
+
+            if not isinstance(fh, ForecastingHorizon):
+                fh = ForecastingHorizon(fh)
+
+        for k in cutoff:
+            train = y[y <= k]
+            if fh is not None:
+                test = fh.to_absolute_index(cutoff=k)
+            else:
+                test = y[y > k]
+            yield train, test
+
+    def get_n_splits(self, y=None) -> int:
+        """Return the number of splits.
+
+        Since this splitter returns a single train/test split,
+        this number is trivially 1.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
+
+        Returns
+        -------
+        n_splits : int
+            The number of splits.
+        """
+        return len(self.cutoffs)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {"cutoff": 3}
+        params2 = {"cutoff": [3, 4], "fh": [1, 2]}
+        return [params1, params2]

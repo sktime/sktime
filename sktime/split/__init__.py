@@ -2,6 +2,7 @@
 
 __all__ = [
     "CutoffSplitter",
+    "CutoffFhSplitter",
     "ExpandingGreedySplitter",
     "ExpandingWindowSplitter",
     "SameLocSplitter",
@@ -12,7 +13,7 @@ __all__ = [
     "temporal_train_test_split",
 ]
 
-from sktime.split.cutoff import CutoffSplitter
+from sktime.split.cutoff import CutoffFhSplitter, CutoffSplitter
 from sktime.split.expandinggreedy import ExpandingGreedySplitter
 from sktime.split.expandingwindow import ExpandingWindowSplitter
 from sktime.split.sameloc import SameLocSplitter
