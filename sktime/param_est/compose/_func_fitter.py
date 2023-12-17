@@ -60,9 +60,11 @@ class FunctionParamFitter(BaseParamFitter):
     ...     kw_args={"threshold": 7},
     ... )
     >>> param_est.fit(np.asarray([1, 2, 3, 4]))
+    FunctionParamFitter(...)
     >>> param_est.selected_forecaster_
     'naive-last'
     >>> param_est.fit(np.asarray([1, 2, 3, 4, 5, 6, 7]))
+    FunctionParamFitter(...)
     >>> param_est.selected_forecaster_
     'naive-seasonal'
     """
