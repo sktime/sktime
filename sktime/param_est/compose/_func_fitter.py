@@ -61,12 +61,40 @@ class FunctionParamFitter(BaseParamFitter):
     ... )
     >>> param_est.fit(np.asarray([1, 2, 3, 4]))
     FunctionParamFitter(...)
-    >>> param_est.selected_forecaster_
-    'naive-last'
+    >>> param_est.get_fitted_params()
+    {'selected_forecaster': 'naive-last'}
     >>> param_est.fit(np.asarray([1, 2, 3, 4, 5, 6, 7]))
     FunctionParamFitter(...)
-    >>> param_est.selected_forecaster_
-    'naive-seasonal'
+    >>> param_est.get_fitted_params()
+    {'selected_forecaster': 'naive-seasonal'}
+
+    The full conditional forecaster selection pipeline could look
+    like this:
+
+    >>> from sktime.forecasting.compose import MultiplexForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.param_est.plugin import PluginParamsForecaster
+    >>> forecaster = PluginParamsForecaster(
+    ...     param_est=param_est,
+    ...     forecaster=MultiplexForecaster(
+    ...         forecasters=[
+    ...             ("naive-last", NaiveForecaster()),
+    ...             ("naive-seasonal", NaiveForecaster(sp=7)),
+    ...         ]
+    ...     ),
+    ... )
+    >>> forecaster.fit(np.asarray([1, 2, 3, 4]))
+    PluginParamsForecaster(...)
+    >>> forecaster.predict(fh=[1,2,3])
+    array([[4.],
+           [4.],
+           [4.]])
+    >>> forecaster.fit(np.asarray([1, 2, 3, 4, 5, 6, 7]))
+    PluginParamsForecaster(...)
+    >>> forecaster.predict(fh=[1,2,3])
+    array([[1.],
+           [2.],
+           [3.]])
     """
 
     _tags = {
