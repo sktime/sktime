@@ -26,6 +26,13 @@ class FunctionParamFitter(BaseParamFitter):
         The callable to use for the parameter estimation. This will be
         passed the same arguments as estimator, with args and kwargs
         forwarded.
+    kw_args : dict, default=None
+        Dictionary of additional keyword arguments to pass to func.
+    X_type : str, one of "pd.DataFrame, pd.Series, np.ndarray", or list thereof
+        default = ["pd.DataFrame", "pd.Series", "np.ndarray"]
+        list of types that func is assumed to allow for X (see signature above)
+        if X passed to transform/inverse_transform is not on the list,
+            it will be converted to the first list element before passed to funcs
 
     See Also
     --------
