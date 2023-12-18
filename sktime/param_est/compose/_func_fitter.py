@@ -45,9 +45,10 @@ class FunctionParamFitter(BaseParamFitter):
     --------
     This class could be used to contruct a parameter estimator that
     selects a forecaster based on the input data's length. The
-    selected forecaster can be stored in the `selected_forecaster_`
+    selected forecaster can be stored in the ``selected_forecaster_``
     attribute, which can be then passed down to a
-    ``MultiplexForecaster`` via a ``PluginParamsForecaster``.
+    :class:`~sktime.forecasting.compose.MultiplexForecaster` via a
+    :class:`~sktime.param_est.plugin.PluginParamsForecaster`.
 
     >>> import numpy as np
     >>> param_est = FunctionParamFitter(
