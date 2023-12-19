@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for statsmodels forecasters to be used in sktime framework."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "ciaran-g"]
 __all__ = ["_StatsModelsAdapter"]
 
 import inspect
@@ -100,6 +100,8 @@ class _StatsModelsAdapter(BaseForecaster):
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         fh_int = fh.to_absolute_int(self._y.index[0], self.cutoff) - len(self._y)
+        # if start > 1 steps ahead of cutoff
+        fh_int = fh_int - fh_int[0]
 
         # bug fix for evaluate function as test_plus_train indices are passed
         # statsmodels exog must contain test indices only.
@@ -186,7 +188,9 @@ class _StatsModelsAdapter(BaseForecaster):
             return BaseForecaster._predict_interval(self, fh, X=X, coverage=coverage)
 
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        fh_int = fh.to_absolute_int(self._y.index[0], self.cutoff) - len(self._y)
+        # if start > 1 steps ahead of cutoff
+        fh_int = fh_int - fh_int[0]
 
         get_prediction_arguments = {"start": start, "end": end}
 
@@ -205,17 +209,15 @@ class _StatsModelsAdapter(BaseForecaster):
         var_names = self._get_varnames()
         var_name = var_names[0]
         columns = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
-        pred_int = pd.DataFrame(index=valid_indices, columns=columns)
+        preds_index = self._extract_conf_int(prediction_results, (1 - coverage[0]))
+        preds_index = preds_index.iloc[fh_int].index
+        pred_int = pd.DataFrame(index=preds_index, columns=columns)
 
         for c in coverage:
             pred_statsmodels = self._extract_conf_int(prediction_results, (1 - c))
 
-            pred_int[(var_name, c, "lower")] = pred_statsmodels.loc[
-                valid_indices, "lower"
-            ]
-            pred_int[(var_name, c, "upper")] = pred_statsmodels.loc[
-                valid_indices, "upper"
-            ]
+            pred_int[(var_name, c, "lower")] = pred_statsmodels.iloc[fh_int]["lower"]
+            pred_int[(var_name, c, "upper")] = pred_statsmodels.iloc[fh_int]["upper"]
 
         return pred_int
 
