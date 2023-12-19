@@ -517,9 +517,9 @@ def plot_calibration(y_true, y_pred, ax=None):
 
     Parameters
     ----------
-    y_true : pd.Series
+    y_true : pd.Series, single columned pd.DataFrame, or single columned np.array.
         The actual values of the forecast
-    y_pred : sktime splitter object, descendant of BaseSplitter
+    y_pred : pd.DataFrame
         The quantile forecast.
     ax : matplotlib.axes.Axes, optional (default=None)
         Axes on which to plot. If None, axes will be created and returned.
