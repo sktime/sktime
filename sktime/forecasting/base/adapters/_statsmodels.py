@@ -100,8 +100,6 @@ class _StatsModelsAdapter(BaseForecaster):
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         fh_int = fh.to_absolute_int(self._y.index[0], self.cutoff) - len(self._y)
-        # if start > 1 steps ahead of cutoff
-        fh_int = fh_int - fh_int[0]
 
         # bug fix for evaluate function as test_plus_train indices are passed
         # statsmodels exog must contain test indices only.
@@ -110,7 +108,7 @@ class _StatsModelsAdapter(BaseForecaster):
             ind_drop = self._X.index
             X = X.loc[~X.index.isin(ind_drop)]
             # Entire range of the forecast horizon is required
-            X = X.iloc[: (fh_int[-1]) + 1]  # include end point
+            X = X.iloc[: (fh_int[-1] + 1)]  # include end point
 
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
@@ -119,6 +117,8 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
+        # if fh[0] > 1 steps ahead of cutoff then make relative to `start`
+        fh_int = fh_int - fh_int[0]
         y_pred = y_pred.iloc[fh_int]
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
@@ -189,7 +189,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         fh_int = fh.to_absolute_int(self._y.index[0], self.cutoff) - len(self._y)
-        # if start > 1 steps ahead of cutoff
+        # if fh > 1 steps ahead of cutoff
         fh_int = fh_int - fh_int[0]
 
         get_prediction_arguments = {"start": start, "end": end}
