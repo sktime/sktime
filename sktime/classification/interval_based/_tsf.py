@@ -170,7 +170,7 @@ class TimeSeriesForestClassifier(
 
         Returns
         -------
-        output : nd.array of shape = (n_instances, n_classes)
+        output : np.ndarray of shape = (n_instances, n_classes)
             Predicted probabilities
         """
         X = X.squeeze(1)
