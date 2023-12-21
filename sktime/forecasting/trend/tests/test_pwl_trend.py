@@ -19,6 +19,38 @@ from sktime.forecasting.trend import (
 )
 from sktime.tests.test_switch import run_test_for_class
 
+@pytest.mark.skipif(
+    not run_test_for_class(PiecewiseLinearTrendForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_for_changes_in_original():
+    """Check if the original prophet implementation returns the same result as the 
+    sktime wrapper for the airline dataset. 
+
+    Raises
+    ------
+    AssertionError - if the predictions are not exactly the same
+    
+    """
+    from prophet import Prophet
+    from sktime.forecasting.fbprophet import Prophet as skProphet
+    y = load_airline().to_timestamp(freq='M')
+    
+    #------original Prophet---------
+    prophet = Prophet()
+    prophet.fit(pd.DataFrame(data={"ds":y.index,"y":y.values}))
+    future = prophet.make_future_dataframe(periods=12,freq='M',include_history=False)
+    forecast = prophet.predict(future)[['ds', 'yhat']]
+    y_pred_original = forecast["yhat"]
+    y_pred_original.index = forecast["ds"].values
+
+    #------sktime Prophet-----------
+    skprophet = skProphet()
+    y_pred_sktime = skprophet.fit_predict(y,fh=np.arange(1,13))  
+
+    np.testing.assert_array_equal(y_pred_original.values, y_pred_sktime.values) #exact
+
+
 
 @pytest.mark.skipif(
     not run_test_for_class(PiecewiseLinearTrendForecaster),
@@ -28,28 +60,22 @@ def test_pred_errors_against_linear():
     """Check prediction performance on airline dataset.
 
     For a small value of changepoint_prior_scale like 0.001 the
-    PiecewiseLinearTrendForecaster must return a linear trend.
-
-    Arguments
-    ---------
-    fh: ForecastingHorizon, fh at which to test prediction
+    PiecewiseLinearTrendForecaster must return a single straigth trendline.
 
     Raises
     ------
-    AssertionError - if forecast is not compatible with a linear trend.
+    AssertionError - if the trend forecast is not compatible with a linear trend.
     """
     y = load_airline().to_timestamp(freq="M")
-    y_train, y_test = temporal_train_test_split(y)
+    fh = ForecastingHorizon(y.index, is_relative=False)
 
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
-
-    f = PiecewiseLinearTrendForecaster(changepoint_prior_scale=0.001)
-    y_pred_f = f.fit(y_train).predict(fh)
+    pwl = PiecewiseLinearTrendForecaster(changepoint_prior_scale=0.001)
+    y_pred_pwl = pwl.fit(y).predict(fh)
 
     linear = PolynomialTrendForecaster(degree=1)
-    y_pred_linear = linear.fit(y_train).predict(fh)
+    y_pred_linear = linear.fit(y).predict(fh)
 
-    np.testing.assert_allclose(y_pred_f, y_pred_linear, rtol=0.04)
+    np.testing.assert_allclose(y_pred_pwl, y_pred_linear, rtol=0.04)
 
 
 @pytest.mark.skipif(
@@ -65,13 +91,12 @@ def test_pred_with_explicit_changepoints():
 
     Raises
     ------
-    AssertionError - if changepoints have no significant effect on the prediction.
+    AssertionError - if adding a changepoint has no effect on the trend prediction.
     """
     y = load_airline().to_timestamp(freq="M")
     y_train, y_test = temporal_train_test_split(y)
 
     fh = ForecastingHorizon(y_test.index, is_relative=False)
-
     a = PiecewiseLinearTrendForecaster(changepoints=["1953-05-31"])
     b = PiecewiseLinearTrendForecaster()
 
