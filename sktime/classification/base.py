@@ -258,24 +258,22 @@ class BaseClassifier(BaseEstimator, ABC):
             or pd.DataFrame with each column a dimension/target, containing class
             labels for each instance in X
         """
-        if not self._is_vectorized or self.get_tag("capability:multioutput"):
-            self.check_is_fitted()
+        self.check_is_fitted()
 
-            # boilerplate input checks for predict-like methods
-            X = self._check_convert_X_for_predict(X)
+        # enter vectorized mode if needed
+        if self._is_vectorized:
+            return self._vectorize("predict", X=X)
 
-            # handle the single-class-label case
-            if len(self._class_dictionary) == 1:
-                return self._single_class_y_pred(X, method="predict")
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
 
-            # call internal _predict_proba
-            pred = self._predict(X)
-        else:
-            # otherwise we call the vectorized version
-            pred = self._vectorize("predict", X=X)
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X, method="predict")
 
-        return pred
-
+        # call internal _predict_proba
+        return self._predict(X)
+ 
     def predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
@@ -298,24 +296,23 @@ class BaseClassifier(BaseEstimator, ABC):
             or pd.DataFrame with each column a dimension/target, containing predicted
             class probabilities for each instance in X
         """
-        # we call the ordinary method if no looping/vectorization needed
-        if not self._is_vectorized or self.get_tag("capability:multioutput"):
-            self.check_is_fitted()
+        self.check_is_fitted()
 
-            # boilerplate input checks for predict-like methods
-            X = self._check_convert_X_for_predict(X)
+        # enter vectorized mode if needed
+        if self._is_vectorized:
+            return self._vectorize("predict_proba", X=X)
 
-            # handle the single-class-label case
-            if len(self._class_dictionary) == 1:
-                return self._single_class_y_pred(X, method="predict_proba")
+        self.check_is_fitted()
 
-            # call internal _predict_proba
-            pred_dist = self._predict_proba(X)
-        else:
-            # otherwise we call the vectorized version
-            pred_dist = self._vectorize("predict_proba", X=X)
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
 
-        return pred_dist
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X, method="predict_proba")
+
+        # call internal _predict_proba
+        return self._predict_proba(X)
 
     def fit_predict(self, X, y, cv=None, change_state=True):
         """Fit and predict labels for sequences in X.
