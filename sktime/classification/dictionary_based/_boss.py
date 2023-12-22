@@ -7,7 +7,7 @@ BOSS ensemble.
 __author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["BOSSEnsemble", "IndividualBOSS", "pairwise_distances"]
 
-from copy import deepcopy
+from copy import copy
 from itertools import compress
 
 import numpy as np
@@ -649,7 +649,7 @@ class IndividualBOSS(BaseClassifier):
         return self._class_vals[min_pos]
 
     def _shorten_bags(self, word_len, y):
-        new_boss = deepcopy(self)
+        new_boss = copy(self)
 
         # change word length parameter
         new_boss.word_length = word_len
