@@ -220,19 +220,19 @@ def test_convert_input():
     test_X1 = np.random.uniform(-1, 1, size=(cases, length))
     test_X2 = np.random.uniform(-1, 1, size=(cases, 2, length))
     tester = _DummyClassifier()
-    tempX = tester._convert_X(test_X2)
+    tempX = tester._convert_X(test_X2, "numpy3D")
     assert tempX.shape[0] == cases and tempX.shape[1] == 2 and tempX.shape[2] == length
     instance_list = []
     for _ in range(0, cases):
         instance_list.append(pd.Series(np.random.randn(10)))
     test_X3 = _create_example_dataframe(cases=cases, dimensions=1, length=length)
     test_X4 = _create_example_dataframe(cases=cases, dimensions=3, length=length)
-    tempX = tester._convert_X(test_X3)
+    tempX = tester._convert_X(test_X3, "nested_univ")
     assert tempX.shape[0] == cases and tempX.shape[1] == 1 and tempX.shape[2] == length
-    tempX = tester._convert_X(test_X4)
+    tempX = tester._convert_X(test_X4, "nested_univ")
     assert tempX.shape[0] == cases and tempX.shape[1] == 3 and tempX.shape[2] == length
     tester = _DummyConvertPandas()
-    tempX = tester._convert_X(test_X2)
+    tempX = tester._convert_X(test_X2, "numpy3D")
     assert isinstance(tempX, pd.DataFrame)
     assert tempX.shape[0] == cases
     assert tempX.shape[1] == 2

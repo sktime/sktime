@@ -834,8 +834,6 @@ class BaseClassifier(BaseEstimator, ABC):
         y_valid, y_msg, y_metadata = check_is_scitype(
             y, "Table", return_metadata=["is_univariate"]
         )
-        y_nvar = y_metadata["is_univariate"]
-        y_mtype = y_metadata["mtype"]
 
         if not y_valid:
             allowed_msg = (
@@ -847,6 +845,9 @@ class BaseClassifier(BaseEstimator, ABC):
             check_is_error_msg(
                 y_msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
             )
+
+        y_nvar = y_metadata["is_univariate"]
+        y_mtype = y_metadata["mtype"]
 
         requires_vectorization = not capa_multioutput and y_nvar >= 2
 
