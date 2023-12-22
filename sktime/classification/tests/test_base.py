@@ -239,7 +239,7 @@ def test_convert_input():
     test_y1 = np.random.randint(0, 1, size=(cases))
     test_y1 = pd.Series(test_y1)
     tempX, tempY = _internal_convert(test_X1, test_y1)
-    assert isinstance(tempY, np.ndarray)
+    assert isinstance(tempY, pd.Series)
     assert isinstance(tempX, np.ndarray)
     assert tempX.ndim == 3
 
