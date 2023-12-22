@@ -38,17 +38,17 @@ def test_for_changes_in_original():
 
     y = load_airline().to_timestamp(freq="M")
 
-    #------original Prophet---------
+    # ------original Prophet---------
     prophet = Prophet()
-    prophet.fit(pd.DataFrame(data={"ds": y.index,"y": y.values}))
+    prophet.fit(pd.DataFrame(data={"ds": y.index, "y": y.values}))
     future = prophet.make_future_dataframe(periods=12, freq="M", include_history=False)
     forecast = prophet.predict(future)[["ds", "yhat"]]
     y_pred_original = forecast["yhat"]
     y_pred_original.index = forecast["ds"].values
 
-    #------sktime Prophet-----------
+    # ------sktime Prophet-----------
     skprophet = skProphet()
-    y_pred_sktime = skprophet.fit_predict(y, fh=np.arange(1,13))  
+    y_pred_sktime = skprophet.fit_predict(y, fh=np.arange(1, 13))  
 
     np.testing.assert_array_equal(y_pred_original.values, y_pred_sktime.values)  # exact
 
