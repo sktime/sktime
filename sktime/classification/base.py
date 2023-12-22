@@ -273,7 +273,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         # call internal _predict_proba
         return self._predict(X)
- 
+
     def predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
