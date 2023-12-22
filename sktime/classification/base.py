@@ -31,11 +31,12 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     MTYPE_LIST_PANEL,
+    MTYPE_LIST_TABLE,
+    VectorizedDF,
     check_is_error_msg,
     check_is_scitype,
-    convert_to,
+    convert,
 )
-from sktime.datatypes._vectorize import VectorizedDF
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
@@ -61,6 +62,7 @@ class BaseClassifier(BaseEstimator, ABC):
     _tags = {
         "object_type": "classifier",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        "y_inner_mtype": "numpy1D",  # which type do _fit/_predict, support for y?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multioutput": False,  # whether classifier supports multioutput
         "capability:multivariate": False,
@@ -97,6 +99,7 @@ class BaseClassifier(BaseEstimator, ABC):
         self._estimator_type = "classifier"
         self._classifiers_ = None
         self._is_vectorized = False
+        self._converter_store_y = {}
 
         super().__init__()
         _check_estimator_deps(self)
@@ -177,9 +180,8 @@ class BaseClassifier(BaseEstimator, ABC):
         # fit timer start
         start = int(round(time.time() * 1000))
 
-        # check and convert X/y
+        # check and convert y for multioutput vectorization
         y = self._check_y(y)
-        self._is_vectorized = isinstance(y, VectorizedDF)
 
         if self._is_vectorized:
             self._vectorize("fit", X=X, y=y)
@@ -200,6 +202,7 @@ class BaseClassifier(BaseEstimator, ABC):
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
+        X_mtype = X_metadata["mtype"]
         self._X_metadata = X_metadata
 
         # Check this classifier can handle characteristics
@@ -220,7 +223,7 @@ class BaseClassifier(BaseEstimator, ABC):
             return self
 
         # Convert data as dictated by the classifier tags
-        X = self._convert_X(X)
+        X = self._convert_X(X, X_mtype)
         multithread = self.get_tag("capability:multithreading")
         if multithread:
             try:
@@ -274,8 +277,10 @@ class BaseClassifier(BaseEstimator, ABC):
         if len(self._class_dictionary) == 1:
             return self._single_class_y_pred(X, method="predict")
 
-        # call internal _predict_proba
-        return self._predict(X)
+        # call internal _predict, convert output
+        y_pred_inner = self._predict(X)
+        y_pred = self._convert_output_y(y_pred_inner)
+        return y_pred
 
     def predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
@@ -363,7 +368,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        y_pred :  1D np.array of int, of shape [n_instances]
+        y_pred : 1D np.array of int, of shape [n_instances]
             predicted class labels
             indices correspond to instance indices in X
             or pd.DataFrame with each column a dimension/target, containing class
@@ -413,30 +418,6 @@ class BaseClassifier(BaseEstimator, ABC):
             )
             return y_pred
 
-    def _check_y(self, y=None):
-        """Check and coerce X/y for fit/transform functions.
-
-        Parameters
-        ----------
-        y : pd.DataFrame, pd.Series or np.ndarray
-
-        Returns
-        -------
-        y : object of sktime compatible time series type
-            can be Series, Panel, Hierarchical
-        """
-        if isinstance(y, pd.DataFrame) and len(y.columns) == 1:
-            return y
-        if isinstance(y, pd.DataFrame):
-            y = VectorizedDF([y], iterate_cols=True)
-            self._is_vectorized = True
-            return y
-        if y.ndim == 1:
-            return y
-        y = VectorizedDF(np.array([y.T]), iterate_cols=True)
-        self._is_vectorized = True
-        return y
-
     def _fit_predict_boilerplate(self, X, y, cv, change_state, method):
         """Boilerplate logic for fit_predict and fit_predict_proba."""
         from sklearn.model_selection import KFold
@@ -464,6 +445,7 @@ class BaseClassifier(BaseEstimator, ABC):
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
+        X_mtype = X_metadata["mtype"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
 
@@ -473,15 +455,17 @@ class BaseClassifier(BaseEstimator, ABC):
 
         # Convert data to format easily usable for applying cv
         if isinstance(X, np.ndarray):
-            X = convert_to(
+            X = convert(
                 X,
+                from_type=X_mtype,
                 to_type="numpy3D",
                 as_scitype="Panel",
                 store_behaviour="freeze",
             )
         else:
-            X = convert_to(
+            X = convert(
                 X,
+                from_type=X_mtype,
                 to_type="nested_univ",
                 as_scitype="Panel",
                 store_behaviour="freeze",
@@ -751,10 +735,11 @@ class BaseClassifier(BaseEstimator, ABC):
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
+        X_mtype = X_metadata["mtype"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X = self._convert_X(X)
+        X = self._convert_X(X, X_mtype=X_mtype)
 
         return X
 
@@ -804,7 +789,7 @@ class BaseClassifier(BaseEstimator, ABC):
             else:
                 raise ValueError(msg)
 
-    def _convert_X(self, X):
+    def _convert_X(self, X, X_mtype):
         """Convert equal length series from DataFrame to numpy array or vice versa.
 
         Parameters
@@ -820,12 +805,96 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         inner_type = self.get_tag("X_inner_mtype")
         # convert pd.DataFrame
-        X = convert_to(
+        X = convert(
             X,
+            from_type=X_mtype,
             to_type=inner_type,
             as_scitype="Panel",
         )
         return X
+
+    def _check_y(self, y=None):
+        """Check and coerce X/y for fit/transform functions.
+
+        Parameters
+        ----------
+        y : pd.DataFrame, pd.Series or np.ndarray
+
+        Returns
+        -------
+        y : object of sktime compatible time series type
+            can be Series, Panel, Hierarchical
+        """
+        if y is None:
+            return None
+
+        capa_multioutput = self.get_tag("capability:multioutput")
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+
+        y_valid, y_msg, y_metadata = check_is_scitype(
+            y, "Table", return_metadata=["is_univariate"]
+        )
+        y_nvar = y_metadata["is_univariate"]
+        y_mtype = y_metadata["mtype"]
+
+        if not y_valid:
+            allowed_msg = (
+                f"In classification, y must be of a supported type, "
+                f"for instance 1D or 2D numpy arrays, pd.DataFrame, or pd.Series. "
+                f"Allowed compatible mtype format specifications are:"
+                f" {MTYPE_LIST_TABLE} ."
+            )
+            check_is_error_msg(
+                y_msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        requires_vectorization = not capa_multioutput and y_nvar >= 2
+
+        if requires_vectorization:
+            y_df = convert(
+                y,
+                from_type=y_mtype,
+                to_type="pd_DataFrame_Table",
+                as_scitype="Table",
+                store=self._converter_store_y,
+            )
+            y_vec = VectorizedDF([y_df], iterate_cols=True)
+            self._is_vectorized = True
+            self._y_type_in_fit = y_mtype
+            return y_vec
+
+        y_inner = convert(
+            y,
+            from_type=y_inner_mtype,
+            to_type=y_inner_mtype,
+            as_scitype="Table",
+            store=self._converter_store_y,
+        )
+
+        self._is_vectorized = False
+        self._y_type_in_fit = y_mtype
+        return y_inner
+
+    def _convert_output_y(self, y):
+        """Convert output y to original format.
+
+        Parameters
+        ----------
+        y : np.ndarray or pd.DataFrame
+
+        Returns
+        -------
+        y : np.ndarray or pd.DataFrame
+        """
+        y = convert(
+            y,
+            from_type=self.get_tag("y_inner_mtype"),
+            to_type=self._y_type_in_fit,
+            as_scitype="Table",
+            store=self._converter_store_y,
+            store_behaviour="freeze",
+        )
+        return y
 
     def _check_classifier_input(
         self, X, y=None, enforce_min_instances=1, return_metadata=True
@@ -929,9 +998,6 @@ class BaseClassifier(BaseEstimator, ABC):
             # done here, but touches a lot of files, so will get this to work first.
             if X.ndim == 2:
                 X = X.reshape(X.shape[0], 1, X.shape[1])
-        if y is not None and isinstance(y, pd.Series):
-            # y should be a numpy array, although we allow Series for user convenience
-            y = pd.Series.to_numpy(y)
         if y is None:
             return X
         return X, y
