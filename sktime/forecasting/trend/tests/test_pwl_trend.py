@@ -48,7 +48,7 @@ def test_for_changes_in_original():
 
     # ------sktime Prophet-----------
     skprophet = skProphet()
-    y_pred_sktime = skprophet.fit_predict(y, fh=np.arange(1, 13))  
+    y_pred_sktime = skprophet.fit_predict(y, fh=np.arange(1, 13))
 
     np.testing.assert_array_equal(y_pred_original.values, y_pred_sktime.values)  # exact
 
