@@ -383,7 +383,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         found = pred_ints.columns.to_flat_index()
         msg = (
-            "columns of returned prediction interval DataFrame do not"
+            "columns of returned prediction interval DataFrame do not "
             f"match up with expected columns. Expected: {expected},"
             f"found: {found}"
         )

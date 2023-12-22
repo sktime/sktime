@@ -213,7 +213,7 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     # For selected cases, remove a redundant data point by making it NaN
     if window_length > sp:
         # create a trailing NaN value in the training set
-        data[window_length - 1] = np.nan
+        data.iloc[window_length - 1] = np.nan
 
     # Split into train and test data
     train_data = data[:window_length]

@@ -31,6 +31,8 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_equally_spaced": bool, True iff series index is equally spaced
         "is_empty": bool, True iff series has no variables or no instances
         "has_nans": bool, True iff the series contains NaN values
+        "n_features": int, number of variables in series
+        "feature_names": list of int or object, names of variables in series
 """
 
 __author__ = ["fkiraly"]
@@ -67,6 +69,10 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
     if _req("is_univariate", return_metadata):
         metadata["is_univariate"] = len(obj.columns) < 2
+    if _req("n_features", return_metadata):
+        metadata["n_features"] = len(obj.columns)
+    if _req("feature_names", return_metadata):
+        metadata["feature_names"] = obj.columns.to_list()
 
     # check that columns are unique
     if not obj.columns.is_unique:
@@ -125,6 +131,13 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
         metadata["is_empty"] = len(index) < 1
     if _req("is_univariate", return_metadata):
         metadata["is_univariate"] = True
+    if _req("n_features", return_metadata):
+        metadata["n_features"] = 1
+    if _req("feature_names", return_metadata):
+        if not hasattr(obj, "name") or obj.name is None:
+            metadata["feature_names"] = [0]
+        else:
+            metadata["feature_names"] = [obj.name]
 
     # check that dtype is not object
     if "object" == obj.dtypes:
@@ -178,12 +191,20 @@ def check_numpy_series(obj, return_metadata=False, var_name="obj"):
             metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
         if _req("is_univariate", return_metadata):
             metadata["is_univariate"] = obj.shape[1] < 2
+        if _req("n_features", return_metadata):
+            metadata["n_features"] = obj.shape[1]
+        if _req("feature_names", return_metadata):
+            metadata["feature_names"] = list(range(obj.shape[1]))
     elif len(obj.shape) == 1:
         # we now know obj is a 1D np.ndarray
         if _req("is_empty", return_metadata):
             metadata["is_empty"] = len(obj) < 1
         if _req("is_univariate", return_metadata):
             metadata["is_univariate"] = True
+        if _req("n_features", return_metadata):
+            metadata["n_features"] = 1
+        if _req("feature_names", return_metadata):
+            metadata["feature_names"] = [0]
     else:
         msg = f"{var_name} must be 1D or 2D numpy.ndarray, but found {len(obj.shape)}D"
         return ret(False, msg, None, return_metadata)
@@ -271,6 +292,16 @@ if _check_soft_dependencies("xarray", severity="none"):
         # The second dimension is the set of columns
         if _req("is_univariate", return_metadata):
             metadata["is_univariate"] = len(obj.dims) == 1 or len(obj[obj.dims[1]]) < 2
+        if len(obj.dims) == 1:
+            if _req("n_features", return_metadata):
+                metadata["n_features"] = 1
+            if _req("feature_names", return_metadata):
+                metadata["feature_names"] = [0]
+        else:
+            if _req("n_features", return_metadata):
+                metadata["n_features"] = len(obj[obj.dims[1]])
+            if _req("feature_names", return_metadata):
+                metadata["feature_names"] = obj.indexes[obj.dims[1]].to_list()
 
         # check that columns are unique
         if not len(obj.dims) == len(set(obj.dims)):
