@@ -91,6 +91,8 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         """
         self.state_info = None
 
+        self._converter_store_y = {}
+
         super().__init__()
 
     def fit(self, X, y):
