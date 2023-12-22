@@ -2463,6 +2463,15 @@
       ]
     },
     {
+      "login": "rahulporuri",
+      "name": "Poruri Sai Rahul",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1926457?v=4",
+      "profile": "https://github.com/rahulporuri",
+      "contributions": [
+        "doc"
+       ]
+    },
+    {
       "login": "fspinna",
       "name": "Francesco Spinnato",
       "avatar_url": "https://avatars.githubusercontent.com/u/35352023?v=4",
@@ -2478,6 +2487,24 @@
       "profile": "https://github.com/sd2k",
       "contributions": [
         "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "wayneadams",
+      "name": "Wayne Adams",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15034841?s=400&u=d717e9945910bcc844c5e64cd56d570c6cc4e8e6&v=4",
+      "profile": "https://github.com/wayneadams",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "sssilvar",
+      "name": "Santiago Smith Silva",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16252054?v=4",
+      "profile": "https://github.com/sssilvar",
+      "contributions": [
         "code"
       ]
     }

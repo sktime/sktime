@@ -39,10 +39,10 @@ X = np.array(
 )
 
 example_dict[("numpy3D", "Panel", 0)] = X
-example_dict_lossy[("numpy3D", "Panel", 0)] = False
+example_dict_lossy[("numpy3D", "Panel", 0)] = True
 
 example_dict[("numpyflat", "Panel", 0)] = None
-example_dict_lossy[("numpyflat", "Panel", 0)] = None
+example_dict_lossy[("numpyflat", "Panel", 0)] = True
 
 cols = [f"var_{i}" for i in range(2)]
 Xlist = [
@@ -101,6 +101,8 @@ example_dict_metadata[("Panel", 0)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
+    "n_features": 2,
+    "feature_names": ["var_0", "var_1"],
 }
 
 ###
@@ -112,12 +114,12 @@ X = np.array(
 )
 
 example_dict[("numpy3D", "Panel", 1)] = X
-example_dict_lossy[("numpy3D", "Panel", 1)] = False
+example_dict_lossy[("numpy3D", "Panel", 1)] = True
 
 X = np.array([[4, 5, 6], [4, 55, 6], [42, 5, 6]], dtype=np.int64)
 
 example_dict[("numpyflat", "Panel", 1)] = X
-example_dict_lossy[("numpyflat", "Panel", 1)] = False
+example_dict_lossy[("numpyflat", "Panel", 1)] = True
 
 cols = [f"var_{i}" for i in range(1)]
 Xlist = [
@@ -173,6 +175,8 @@ example_dict_metadata[("Panel", 1)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
+    "n_features": 1,
+    "feature_names": ["var_0"],
 }
 
 ###
@@ -184,12 +188,12 @@ X = np.array(
 )
 
 example_dict[("numpy3D", "Panel", 2)] = X
-example_dict_lossy[("numpy3D", "Panel", 2)] = False
+example_dict_lossy[("numpy3D", "Panel", 2)] = True
 
 X = np.array([[4, 5, 6]], dtype=np.int64)
 
 example_dict[("numpyflat", "Panel", 2)] = X
-example_dict_lossy[("numpyflat", "Panel", 2)] = False
+example_dict_lossy[("numpyflat", "Panel", 2)] = True
 
 cols = [f"var_{i}" for i in range(1)]
 Xlist = [
@@ -238,6 +242,8 @@ example_dict_metadata[("Panel", 2)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 1,
+    "n_features": 1,
+    "feature_names": ["var_0"],
 }
 
 ###
@@ -266,4 +272,6 @@ example_dict_metadata[("Panel", 3)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
+    "n_features": 1,
+    "feature_names": ["var_0"],
 }
