@@ -233,7 +233,6 @@ class BaseClassifier(BaseEstimator, ABC):
 
         # this should happen last: fitted state is set to True
         self._is_fitted = True
-
         return self
 
     def predict(self, X):
@@ -366,58 +365,6 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         return self._fit_predict_boilerplate(
             X=X, y=y, cv=cv, change_state=change_state, method="predict"
-        )
-
-    def fit_predict_proba(self, X, y, cv=None, change_state=True):
-        """Fit and predict labels probabilities for sequences in X.
-
-        Convenience method to produce in-sample predictions and
-        cross-validated out-of-sample predictions.
-
-        Writes to self, if change_state=True:
-            Sets self.is_fitted to True.
-            Sets fitted model attributes ending in "_".
-
-        Does not update state if change_state=False.
-
-        Parameters
-        ----------
-        X : sktime compatible time series panel data container, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances]
-            or 2D np.array of int, of shape [n_instances, n_dimensions]
-            class labels for fitting
-            0-th indices correspond to instance indices in X
-            1-st indices (if applicable) correspond to multioutput vector indices in X
-        cv : None, int, or sklearn cross-validation object, optional, default=None
-            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
-            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
-                where multiple X_train, y_train, X_test are obtained from cv folds
-                returned y is union over all test fold predictions
-                cv test folds must be non-intersecting
-            int : equivalent to cv=Kfold(int), i.e., k-fold cross-validation predictions
-        change_state : bool, optional (default=True)
-            if False, will not change the state of the classifier,
-                i.e., fit/predict sequence is run with a copy, self does not change
-            if True, will fit self to the full X and y,
-                end state will be equivalent to running fit(X, y)
-
-        Returns
-        -------
-        pred : 1D np.array of int, of shape [n_instances]
-            predicted predicted class probabilities correspond to instance indices in X
-            or pd.DataFrame with each column a dimension/target, containing predicted
-            class probabilities for each instance in X
-        """
-        return self._fit_predict_boilerplate(
-            X=X, y=y, cv=cv, change_state=change_state, method="predict_proba"
         )
 
     def _vectorize(self, methodname, **kwargs):
@@ -555,6 +502,58 @@ class BaseClassifier(BaseEstimator, ABC):
                 y_pred[tt_idx] = getattr(fitted_est, method)(X_test)
 
         return y_pred
+
+    def fit_predict_proba(self, X, y, cv=None, change_state=True):
+        """Fit and predict labels probabilities for sequences in X.
+
+        Convenience method to produce in-sample predictions and
+        cross-validated out-of-sample predictions.
+
+        Writes to self, if change_state=True:
+            Sets self.is_fitted to True.
+            Sets fitted model attributes ending in "_".
+
+        Does not update state if change_state=False.
+
+        Parameters
+        ----------
+        X : sktime compatible time series panel data container, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
+            or of any other supported Panel mtype
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances]
+            or 2D np.array of int, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+        cv : None, int, or sklearn cross-validation object, optional, default=None
+            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
+            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
+                where multiple X_train, y_train, X_test are obtained from cv folds
+                returned y is union over all test fold predictions
+                cv test folds must be non-intersecting
+            int : equivalent to cv=Kfold(int), i.e., k-fold cross-validation predictions
+        change_state : bool, optional (default=True)
+            if False, will not change the state of the classifier,
+                i.e., fit/predict sequence is run with a copy, self does not change
+            if True, will fit self to the full X and y,
+                end state will be equivalent to running fit(X, y)
+
+        Returns
+        -------
+        pred : 1D np.array of int, of shape [n_instances]
+            predicted predicted class probabilities correspond to instance indices in X
+            or pd.DataFrame with each column a dimension/target, containing predicted
+            class probabilities for each instance in X
+        """
+        return self._fit_predict_boilerplate(
+            X=X, y=y, cv=cv, change_state=change_state, method="predict_proba"
+        )
 
     def _single_class_y_pred(self, X, method="predict"):
         """Handle the prediction case where only single class label was seen in fit."""
