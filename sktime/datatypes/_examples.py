@@ -97,9 +97,9 @@ def get_examples(
     fixtures: dict with integer keys, elements being
         fixture - example for mtype `mtype`, scitype `as_scitype`
         if return_lossy=True, elements are pairs with fixture and
-            lossy: bool - whether the example is a lossy representation
+        lossy: bool - whether the example is a lossy representation
         if return_metadata=True, elements are triples with fixture, lossy, and
-            metadata: dict - metadata dict that would be returned by check_is_mtype
+        metadata: dict - metadata dict that would be returned by check_is_mtype
     """
     # if as_scitype is None, infer from mtype
     if as_scitype is None:
