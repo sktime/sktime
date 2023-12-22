@@ -95,7 +95,7 @@ def auto_arima_model(test_data_airline):
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("tensorflow", severity="none"),
-    reaons="skip test if required soft dependency is not available.",
+    reason="skip test if required soft dependency is not available.",
 )
 @pytest.fixture(scope="module")
 def cnn_model(test_data_arrow_head):

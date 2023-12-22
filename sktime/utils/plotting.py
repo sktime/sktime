@@ -449,7 +449,7 @@ def plot_windows(cv, y, title="", ax=None):
 
     # create figure if no ax provided for plotting
     if _ax_kwarg_is_none:
-        fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
+        fig, ax = plt.subplots(figsize=plt.figaspect(0.3))
 
     train_windows, test_windows = _get_windows(cv, y)
 
@@ -462,8 +462,6 @@ def plot_windows(cv, y, title="", ax=None):
     len_test = len(test_windows[0])
 
     train_color, test_color = sns.color_palette("colorblind")[:2]
-
-    fig, ax = plt.subplots(figsize=plt.figaspect(0.3))
 
     for i in range(n_splits):
         train = train_windows[i]
