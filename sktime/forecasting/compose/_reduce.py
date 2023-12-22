@@ -2525,13 +2525,13 @@ class YfromX(BaseForecaster, _ReducerMixin):
                 dummy = DummyRegressor()
                 estimator = ResidualDouble(dummy)
 
-            X = prep_skl_df(y)
+            X = prep_skl_df(y, copy_df=True)
         else:
-            X = prep_skl_df(X)
+            X = prep_skl_df(X, copy_df=True)
             estimator = clone(self.estimator)
 
         if _est_type == "regressor":
-            y = prep_skl_df(y)
+            y = prep_skl_df(y, copy_df=True)
             y = y.values.flatten()
 
         estimator.fit(X, y)
@@ -2736,7 +2736,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         else:
             X_pool = pd.DataFrame(0, index=fh_idx, columns=y_cols)
 
-        X_pool = prep_skl_df(X_pool)
+        X_pool = prep_skl_df(X_pool, copy_df=True)
 
         X_idx = X_pool.loc[fh_idx]
         return X_idx
