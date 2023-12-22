@@ -850,6 +850,9 @@ class BaseClassifier(BaseEstimator, ABC):
 
         requires_vectorization = not capa_multioutput and y_nvar >= 2
 
+        self._y_type_in_fit = y_mtype
+        self._is_vectorized = requires_vectorization
+
         if requires_vectorization:
             y_df = convert(
                 y,
@@ -859,8 +862,6 @@ class BaseClassifier(BaseEstimator, ABC):
                 store=self._converter_store_y,
             )
             y_vec = VectorizedDF([y_df], iterate_cols=True)
-            self._is_vectorized = True
-            self._y_type_in_fit = y_mtype
             return y_vec
 
         y_inner = convert(
@@ -871,8 +872,6 @@ class BaseClassifier(BaseEstimator, ABC):
             store=self._converter_store_y,
         )
 
-        self._is_vectorized = False
-        self._y_type_in_fit = y_mtype
         return y_inner
 
     def _convert_output_y(self, y):
