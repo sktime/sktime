@@ -97,7 +97,6 @@ class BaseClassifier(BaseEstimator, ABC):
         # required for compatibility with some sklearn interfaces
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
-        self.classifiers_ = None
         self._is_vectorized = False
         self._converter_store_y = {}
 
