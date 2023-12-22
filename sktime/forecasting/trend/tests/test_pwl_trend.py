@@ -19,37 +19,38 @@ from sktime.forecasting.trend import (
 )
 from sktime.tests.test_switch import run_test_for_class
 
+
 @pytest.mark.skipif(
     not run_test_for_class(PiecewiseLinearTrendForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_for_changes_in_original():
-    """Check if the original prophet implementation returns the same result as the 
-    sktime wrapper for the airline dataset. 
+    """Check if the original prophet implementation returns the same result as the
+    sktime wrapper for the airline dataset.
 
     Raises
     ------
     AssertionError - if the predictions are not exactly the same
-    
     """
     from prophet import Prophet
+
     from sktime.forecasting.fbprophet import Prophet as skProphet
-    y = load_airline().to_timestamp(freq='M')
-    
+
+    y = load_airline().to_timestamp(freq="M")
+
     #------original Prophet---------
     prophet = Prophet()
-    prophet.fit(pd.DataFrame(data={"ds":y.index,"y":y.values}))
-    future = prophet.make_future_dataframe(periods=12,freq='M',include_history=False)
-    forecast = prophet.predict(future)[['ds', 'yhat']]
+    prophet.fit(pd.DataFrame(data={"ds": y.index,"y": y.values}))
+    future = prophet.make_future_dataframe(periods=12, freq="M", include_history=False)
+    forecast = prophet.predict(future)[["ds", "yhat"]]
     y_pred_original = forecast["yhat"]
     y_pred_original.index = forecast["ds"].values
 
     #------sktime Prophet-----------
     skprophet = skProphet()
-    y_pred_sktime = skprophet.fit_predict(y,fh=np.arange(1,13))  
+    y_pred_sktime = skprophet.fit_predict(y, fh=np.arange(1,13))  
 
-    np.testing.assert_array_equal(y_pred_original.values, y_pred_sktime.values) #exact
-
+    np.testing.assert_array_equal(y_pred_original.values, y_pred_sktime.values)  # exact
 
 
 @pytest.mark.skipif(
