@@ -97,7 +97,7 @@ class BaseClassifier(BaseEstimator, ABC):
         # required for compatibility with some sklearn interfaces
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
-        self._classifiers_ = None
+        self.classifiers_ = None
         self._is_vectorized = False
         self._converter_store_y = {}
 
@@ -395,7 +395,7 @@ class BaseClassifier(BaseEstimator, ABC):
             method="clone",
         )
         if methodname == "fit":
-            self._classifiers_ = self._y_vec.vectorize_est(
+            self.classifiers_ = self._y_vec.vectorize_est(
                 classifiers_,
                 method=methodname,
                 args={"y": y},
@@ -403,8 +403,8 @@ class BaseClassifier(BaseEstimator, ABC):
             )
             return self
         else:
-            if self._classifiers_ is not None:
-                classifiers_ = self._classifiers_
+            if self.classifiers_ is not None:
+                classifiers_ = self.classifiers_
             y_pred = self._y_vec.vectorize_est(
                 classifiers_,
                 method=methodname,
