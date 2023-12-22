@@ -145,19 +145,20 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 2D np.array of int, of shape [n_instances, n_dimensions] - class labels for
-                fitting indices correspond to instance indices in X
-            or 1D np.array of int, of shape [n_instances] - class labels for fitting
-                indices correspond to instance indices in X
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances]
+            or 2D np.array of int, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
 
         Returns
         -------
@@ -233,22 +234,22 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
         pred : 1D np.array of int, of shape [n_instances] - predicted class labels
-                    indices correspond to instance indices in X
-                or pd.DataFrame with each column a dimension/target, containing class
-                    labels for each instance in X
+            indices correspond to instance indices in X
+            or pd.DataFrame with each column a dimension/target, containing class
+            labels for each instance in X
         """
         if not self._is_vectorized or self.get_tag("capability:multioutput"):
             self.check_is_fitted()
@@ -273,22 +274,22 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
         pred : 1D np.array of int, of shape [n_instances] - predicted predicted class
-                    probabilities correspond to instance indices in X
-               or pd.DataFrame with each column a dimension/target, containing predicted
-                    class probabilities for each instance in X
+            probabilities correspond to instance indices in X
+            or pd.DataFrame with each column a dimension/target, containing predicted
+            class probabilities for each instance in X
         """
         # we call the ordinary method if no looping/vectorization needed
         if not self._is_vectorized or self.get_tag("capability:multioutput"):
@@ -323,19 +324,20 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 2D np.array of int, of shape [n_instances, n_dimensions] - class labels for
-                fitting indices correspond to instance indices in X
-            or 1D np.array of int, of shape [n_instances] - class labels for fitting
-                indices correspond to instance indices in X
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances]
+            or 2D np.array of int, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
         cv : None, int, or sklearn cross-validation object, optional, default=None
             None : predictions are in-sample, equivalent to fit(X, y).predict(X)
             cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
@@ -354,9 +356,9 @@ class BaseClassifier(BaseEstimator, ABC):
         Returns
         -------
         pred :  1D np.array of int, of shape [n_instances] - predicted class labels
-                    indices correspond to instance indices in X
-                or pd.DataFrame with each column a dimension/target, containing class
-                    labels for each instance in X
+            indices correspond to instance indices in X
+            or pd.DataFrame with each column a dimension/target, containing class
+            labels for each instance in X
         """
         return self._fit_predict_boilerplate(
             X=X, y=y, cv=cv, change_state=change_state, method="predict"
@@ -370,19 +372,20 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 2D np.array of int, of shape [n_instances, n_dimensions] - class labels for
-                fitting indices correspond to instance indices in X
-            or 1D np.array of int, of shape [n_instances] - class labels for fitting
-                indices correspond to instance indices in X
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances]
+            or 2D np.array of int, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
         cv : None, int, or sklearn cross-validation object, optional, default=None
             None : predictions are in-sample, equivalent to fit(X, y).predict(X)
             cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
@@ -398,10 +401,10 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        pred : 1D np.array of int, of shape [n_instances] - predicted predicted class
-                    probabilities correspond to instance indices in X
-               or pd.DataFrame with each column a dimension/target, containing predicted
-                    class probabilities for each instance in X
+        pred : 1D np.array of int, of shape [n_instances]
+            predicted predicted class probabilities correspond to instance indices in X
+            or pd.DataFrame with each column a dimension/target, containing predicted
+            class probabilities for each instance in X
         """
         return self._fit_predict_boilerplate(
             X=X, y=y, cv=cv, change_state=change_state, method="predict_proba"
@@ -560,19 +563,20 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 2D np.array of int, of shape [n_instances, n_dimensions] - class labels for
-                fitting indices correspond to instance indices in X
-            or 1D np.array of int, of shape [n_instances] - class labels for fitting
-                indices correspond to instance indices in X
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances]
+            or 2D np.array of int, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
 
         Returns
         -------
@@ -618,13 +622,18 @@ class BaseClassifier(BaseEstimator, ABC):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
+        y : 1D np.array of int, of shape [n_instances]
+            or 2D np.array of int, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
+            if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
 
         Returns
         -------
@@ -647,16 +656,22 @@ class BaseClassifier(BaseEstimator, ABC):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
+        y : 1D np.array of int, of shape [n_instances]
+            or 2D np.array of int, of shape [n_instances, n_dimensions]
+            predicted class labels
             indices correspond to instance indices in X
+            if self.get_tag("capaility:multioutput") = False, should be 1D
+            if self.get_tag("capaility:multioutput") = True, should be 2D
         """
         y_proba = self._predict_proba(X)
         y_pred = y_proba.argmax(axis=1)
@@ -674,9 +689,11 @@ class BaseClassifier(BaseEstimator, ABC):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
