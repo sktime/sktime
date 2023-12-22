@@ -654,6 +654,9 @@ class IndividualBOSS(BaseClassifier):
         # change word length parameter
         new_boss.word_length = word_len
 
+        # copy fitted transformer as reference
+        new_boss._transformer = self._transformer
+
         # update shortened bags
         new_bag = new_boss._transformer._shorten_bags(word_len, y)
         new_boss._transformed_data = new_bag
