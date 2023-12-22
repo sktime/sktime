@@ -55,6 +55,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
     _tags = {
         "object_type": "early_classifier",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        "y_inner_mtype": "numpy1D",  # which type do _fit/_predict, support for y?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multioutput": False,  # whether classifier supports multioutput
         "capability:multivariate": False,
