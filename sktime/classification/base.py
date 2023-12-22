@@ -255,7 +255,8 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        pred : 1D np.array of int, of shape [n_instances] - predicted class labels
+        y_pred : 1D np.array of int, of shape [n_instances]
+            predicted class labels
             indices correspond to instance indices in X
             or pd.DataFrame with each column a dimension/target, containing class
             labels for each instance in X
@@ -293,7 +294,8 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        pred : 1D np.array of int, of shape [n_instances] - predicted predicted class
+        y_pred : 1D np.array of int, of shape [n_instances]
+            predicted predicted class
             probabilities correspond to instance indices in X
             or pd.DataFrame with each column a dimension/target, containing predicted
             class probabilities for each instance in X
@@ -361,7 +363,8 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        pred :  1D np.array of int, of shape [n_instances] - predicted class labels
+        y_pred :  1D np.array of int, of shape [n_instances]
+            predicted class labels
             indices correspond to instance indices in X
             or pd.DataFrame with each column a dimension/target, containing class
             labels for each instance in X
@@ -549,7 +552,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        pred : 1D np.array of int, of shape [n_instances]
+        y_pred : 1D np.array of int, of shape [n_instances]
             predicted predicted class probabilities correspond to instance indices in X
             or pd.DataFrame with each column a dimension/target, containing predicted
             class probabilities for each instance in X
