@@ -143,6 +143,13 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         Fit time series classifier to training data.
 
+        State change:
+            Changes state to "fitted".
+
+        Writes to self:
+            Sets self.is_fitted to True.
+            Sets fitted model attributes ending in "_".
+
         Parameters
         ----------
         X : sktime compatible time series panel data container, e.g.,
@@ -369,6 +376,12 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Convenience method to produce in-sample predictions and
         cross-validated out-of-sample predictions.
+
+        Writes to self, if change_state=True:
+            Sets self.is_fitted to True.
+            Sets fitted model attributes ending in "_".
+
+        Does not update state if change_state=False.
 
         Parameters
         ----------
