@@ -656,6 +656,7 @@ class IndividualBOSS(BaseClassifier):
 
         # update shortened bags
         new_bag = new_boss._transformer._shorten_bags(word_len, y)
+        new_boss._transformed_data = new_bag
 
         return new_boss
 
