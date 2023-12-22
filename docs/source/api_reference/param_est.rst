@@ -32,6 +32,12 @@ Composition
 
     ParamFitterPipeline
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FunctionParamFitter
+
 .. currentmodule:: sktime.param_est.plugin
 
 .. autosummary::

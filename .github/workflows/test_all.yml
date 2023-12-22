@@ -11,7 +11,7 @@ jobs:
       - name: repository checkout step
         uses: actions/checkout@v4
       - name: python environment step
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.8"
       - name: install pre-commit
@@ -109,7 +109,7 @@ jobs:
       - name: update local shallow clone
         run: git fetch --depth 1
       - name: create python virtual environment
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: install core, test and all soft dependencies
