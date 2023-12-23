@@ -11,7 +11,6 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.fbprophet import Prophet
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.trend import (
     PiecewiseLinearTrendForecaster,
