@@ -18,6 +18,7 @@ __all__ = [
     "RecursiveTimeSeriesRegressionForecaster",
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
+    "DirectReductionForecaster",
     "StackingForecaster",
     "MultiplexForecaster",
     "make_reduction",
@@ -45,6 +46,7 @@ from sktime.forecasting.compose._pipeline import (
     TransformedTargetForecaster,
 )
 from sktime.forecasting.compose._reduce import (
+    DirectReductionForecaster,
     DirectTabularRegressionForecaster,
     DirectTimeSeriesRegressionForecaster,
     DirRecTabularRegressionForecaster,

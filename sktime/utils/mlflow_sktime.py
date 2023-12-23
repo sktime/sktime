@@ -33,7 +33,7 @@ mlflow.pyfunc
     `pyfunc.predict()` will return output from sktime `predict()` method.
 """
 
-__author__ = ["benjaminbluhm"]
+__author__ = ["benjaminbluhm", "achieveordie"]
 __all__ = [
     "get_default_pip_requirements",
     "get_default_conda_env",
@@ -44,17 +44,17 @@ __all__ = [
 
 import logging
 import os
-import pickle
 
 import pandas as pd
 import yaml
 
 import sktime
 from sktime import utils
+from sktime.base._serialize import load
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_mlflow_dependencies
 
-if _check_soft_dependencies("mlflow", severity="warning"):
+if _check_mlflow_dependencies(severity="warning"):
     from mlflow import pyfunc
 
 FLAVOR_NAME = "mlflow_sktime"
@@ -93,7 +93,7 @@ def get_default_pip_requirements(include_cloudpickle=False):
     Calls to :func:`save_model()` and :func:`log_model()` produce a pip environment
     that, at a minimum, contains these requirements.
     """
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.utils.requirements_utils import _get_pinned_requirement
 
     pip_deps = [_get_pinned_requirement("sktime")]
@@ -111,7 +111,7 @@ def get_default_conda_env(include_cloudpickle=False):
     The default Conda environment for MLflow Models produced by calls to
     :func:`save_model()` and :func:`log_model()`
     """
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.utils.environment import _mlflow_conda_env
 
     return _mlflow_conda_env(
@@ -211,7 +211,7 @@ def save_model(
     >>> loaded_model = mlflow_sktime.load_model(model_uri=model_path)  # doctest: +SKIP
     >>> loaded_model.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """  # noqa: E501
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.models import Model
     from mlflow.models.model import MLMODEL_FILE_NAME
@@ -258,7 +258,7 @@ def save_model(
     if input_example is not None:
         _save_example(mlflow_model, input_example, path)
 
-    model_data_subpath = "model.pkl"
+    model_data_subpath = "model"
     model_data_path = os.path.join(path, model_data_subpath)
     _save_model(
         sktime_model, model_data_path, serialization_format=serialization_format
@@ -420,7 +420,7 @@ def log_model(
     ...     sktime_model=forecaster,
     ...     artifact_path=artifact_path)  # doctest: +SKIP
     """  # noqa: E501
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.models import Model
 
     if await_registration_for is None:
@@ -493,7 +493,7 @@ def load_model(model_uri, dst_path=None):
     ...     path=model_path)
     >>> loaded_model = mlflow_sktime.load_model(model_uri=model_path)  # doctest: +SKIP
     """  # noqa: E501
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.tracking.artifact_utils import _download_artifact_from_uri
     from mlflow.utils.model_utils import (
         _add_code_from_conf_to_system_path,
@@ -519,30 +519,20 @@ def load_model(model_uri, dst_path=None):
 
 
 def _save_model(model, path, serialization_format):
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.protos.databricks_pb2 import INTERNAL_ERROR
 
-    with open(path, "wb") as out:
-        if serialization_format == SERIALIZATION_FORMAT_PICKLE:
-            pickle.dump(model, out)
-        elif serialization_format == SERIALIZATION_FORMAT_CLOUDPICKLE:
-            _check_soft_dependencies("cloudpickle", severity="error")
-            import cloudpickle
-
-            cloudpickle.dump(model, out)
-        else:
-            raise MlflowException(
-                message="Unrecognized serialization format: "
-                "{serialization_format}".format(
-                    serialization_format=serialization_format
-                ),
-                error_code=INTERNAL_ERROR,
-            )
+    if serialization_format not in SUPPORTED_SERIALIZATION_FORMATS:
+        raise MlflowException(
+            message="Unrecognized serialization format: " f"{serialization_format}.",
+            error_code=INTERNAL_ERROR,
+        )
+    model.save(path=path, serialization_format=serialization_format)
 
 
 def _load_model(path, serialization_format):
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
 
@@ -559,14 +549,7 @@ def _load_model(path, serialization_format):
             error_code=INVALID_PARAMETER_VALUE,
         )
 
-    with open(path, "rb") as pickled_model:
-        if serialization_format == SERIALIZATION_FORMAT_PICKLE:
-            return pickle.load(pickled_model)
-        elif serialization_format == SERIALIZATION_FORMAT_CLOUDPICKLE:
-            _check_soft_dependencies("cloudpickle", severity="error")
-            import cloudpickle
-
-            return cloudpickle.load(pickled_model)
+    return load(path)
 
 
 def _load_pyfunc(path):
@@ -585,7 +568,7 @@ def _load_pyfunc(path):
     ----------
     .. [1] https://www.mlflow.org/docs/latest/python_api/mlflow.pyfunc.html#mlflow.pyfunc.load_model
     """  # noqa: E501
-    _check_soft_dependencies("mlflow", severity="error")
+    _check_mlflow_dependencies(severity="error")
     from mlflow.exceptions import MlflowException
     from mlflow.utils.model_utils import _get_flavor_configuration
 
@@ -621,7 +604,7 @@ def _load_pyfunc(path):
 
 class _SktimeModelWrapper:
     def __init__(self, sktime_model):
-        _check_soft_dependencies("mlflow", severity="error")
+        _check_mlflow_dependencies(severity="error")
         self.sktime_model = sktime_model
 
     def predict(self, X):

@@ -21,8 +21,6 @@ __author__ = ["fkiraly"]
 
 __all__ = ["BaseParamFitter"]
 
-from warnings import warn
-
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
@@ -33,6 +31,7 @@ from sktime.datatypes import (
 )
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.warnings import warn
 
 
 def _coerce_to_list(obj):
@@ -54,6 +53,7 @@ class BaseParamFitter(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        "object_type": "param_est",  # type of object
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -196,7 +196,10 @@ class BaseParamFitter(BaseEstimator):
         self.check_is_fitted()
 
         if X is None or (hasattr(X, "__len__") and len(X) == 0):
-            warn("empty y passed to update, no update was carried out")
+            warn(
+                f"empty y passed to update of {self}, no update was carried out",
+                obj=self,
+            )
             return self
 
         # input checks and minor coercions on X, y
@@ -369,7 +372,8 @@ class BaseParamFitter(BaseEstimator):
             f"NotImplementedWarning: {self.__class__.__name__} "
             f"does not have a custom `update` method implemented. "
             f"{self.__class__.__name__} will be refit each time "
-            f"`update` is called."
+            f"`update` is called.",
+            obj=self,
         )
         # refit with updated data, not only passed data
         self.fit(X=self._X)

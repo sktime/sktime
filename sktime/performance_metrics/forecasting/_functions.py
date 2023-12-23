@@ -229,7 +229,7 @@ def mean_asymmetric_error(
         asymmetric threshold.
     left_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values less than
-        the asymetric threshold.
+        the asymmetric threshold.
     right_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values greater
         than the asymmetric threshold.
@@ -257,7 +257,7 @@ def mean_asymmetric_error(
 
     Notes
     -----
-    Setting `left_error_function` and `right_error_function` to "aboslute", but
+    Setting `left_error_function` and `right_error_function` to "absolute", but
     choosing different values for `left_error_penalty` and `right_error_penalty`
     results in the "lin-lin" error function discussed in [2]_.
 
@@ -587,7 +587,7 @@ def mean_squared_scaled_error(
     `square_root` is True. Both MSSE and RMSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MASE loss metric.  Like MASE and other
+    This is a squared variant of the MASE loss metric.  Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
     forecast methods on a single series or between series.
 
@@ -725,7 +725,7 @@ def median_squared_scaled_error(
     `square_root` is True. Both MdSSE and RMdSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MdASE loss metric. Like MASE and other
+    This is a squared variant of the MdASE loss metric. Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
     forecast methods on a single series or between series.
 
@@ -1223,7 +1223,7 @@ def geometric_mean_absolute_error(
     Like MAE and MdAE, GMAE is measured in the same units as the input data.
     Because GMAE takes the absolute value of the forecast error rather than
     squaring it, MAE penalizes large errors to a lesser degree than squared error
-    varients like MSE, RMSE or GMSE or RGMSE.
+    variants like MSE, RMSE or GMSE or RGMSE.
 
     Parameters
     ----------
@@ -2430,7 +2430,7 @@ def relative_loss(
     comparing the loss of 3rd party forecasts or surveys of professional
     forecasters.
 
-    Only metrics that do not require y_train are curretnly supported.
+    Only metrics that do not require y_train are currently supported.
 
     Parameters
     ----------
@@ -2552,7 +2552,7 @@ def _asymmetric_error(
         asymmetric threshold.
     left_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values less than
-        the asymetric threshold.
+        the asymmetric threshold.
     right_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values greater
         than the asymmetric threshold.
@@ -2560,7 +2560,7 @@ def _asymmetric_error(
     Returns
     -------
     asymmetric_errors : float
-        Array of assymetric errors.
+        Array of asymmetric errors.
 
     References
     ----------

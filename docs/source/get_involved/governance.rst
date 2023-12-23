@@ -98,7 +98,7 @@ algorithm. They have the same voting rights as core developers with
 regard to their algorithm.
 
 In sktime, algorithms are encapsulated in classes with specific
-interface requirements and are called estimators. To faciliate
+interface requirements and are called estimators. To facilitate
 maintainership questions, we try to write algorithms in separate files
 when possible.
 
@@ -397,6 +397,7 @@ observers <https://www.sktime.net/en/stable/about/team.html>`__ .
 
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 CC observers have a full view of reserved CC proceedings, the private CC
 channels and the sktime email account. CC observers can participate in
 discussions on private CC channels to ensure that more members of the community
@@ -410,6 +411,7 @@ CC members.
 
 Eligibility
 ^^^^^^^^^^^
+
 Only core developers are eligible for appointment as CC observers.
 Non-core-developers can be nominated, but this must be accompanied
 by a nomination for core developer, and a core developer appointment vote
@@ -419,12 +421,53 @@ by a nomination for core developer, and a core developer appointment vote
 
 Appointment
 ^^^^^^^^^^^
+
 Membership of the CC observers is by nomination by a core developer and a vote
 by CC members. A nomination will result in a vote by the CC members which will
 stay open for 5 days excluding weekends. CC observer membership votes are
 subject to a simple majority approval of all the current CC committee members.
 
 In case of ties, the CC member with shortest tenure breaks the tie.
+
+.. _treasurer:
+
+Special operational role: treasurer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The treasurer is an appointed role on the ``sktime`` project.
+This is primarily a supportive and transparency enhancing role.
+
+If the treasurer role remains unfilled for longer than a month,
+the CC must exercise the responsibilities of the treasurer role, as a committee.
+
+Rights and responsibilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The treasurer will work closely with the CC to set financial goals, allocate resources, and ensure ethical fiscal management.
+
+Responsibilities include budgeting, fiscal management, financial reporting, internal policy compliance, and cash management.
+
+The treasurer's primary responsibility is to produce the financial statements and budgets for the project in a timely manner.
+
+Eligibility and appointment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The treasurer role is open to core developers of the sktime project.
+
+Non-core developers must be confirmed as core developers before being considered for the treasurer role.
+
+The CC appoints the treasurer through majority vote, among suitable candidates for the role.
+
+The CC should solicit nominations from the community in transparent communication channels, when the role  needs to be filled.
+
+Tenure and removal
+^^^^^^^^^^^^^^^^^^
+
+The treasurer serves a one-year term with the possibility of re-appointment.
+
+Inactivity may result in removal if the treasurer fails to compile budgets or financial statements as required.
+
+Removal for code of conduct violations related to fiscal transparency requires a CoC investigation.
 
 .. _decision-making:
 

@@ -86,7 +86,8 @@ DIST_PARAMS = {
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
 def test_distance_params(dist: MetricInfo):
     """Test parametisation of distance callables."""
-    if not run_test_for_class(dist.dist_func):
+    # skip test if distance function/class have not changed
+    if not run_test_for_class([dist.dist_func, dist.dist_instance.__class__]):
         return None
 
     if dist.canonical_name in DIST_PARAMS:

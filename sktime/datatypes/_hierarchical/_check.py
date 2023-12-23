@@ -36,6 +36,8 @@ metadata: dict - metadata about obj if valid, otherwise None
         "has_nans": bool, True iff the panel contains NaN values
         "n_instances": int, number of instances in the hierarchical panel
         "n_panels": int, number of flat panels in the hierarchical panel
+        "n_features": int, number of variables in series
+        "feature_names": list of int or object, names of variables in series
 """
 
 __author__ = ["fkiraly"]

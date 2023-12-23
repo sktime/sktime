@@ -39,7 +39,7 @@ EXCLUDE_ESTIMATORS = [
     "EditDist",
     "CNNClassifier",
     "FCNClassifier",
-    "InceptionTimeClassifer",
+    "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
     "CNNRegressor",
@@ -177,6 +177,11 @@ EXCLUDED_TESTS = {
     "VECM": [
         "test_hierarchical_with_exogeneous",  # refer to #4743
     ],
+    "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
+    # networks do not support negative fh
+    "LTSFLinearForecaster": ["test_predict_time_index_in_sample_full"],
+    "LTSFDLinearForecaster": ["test_predict_time_index_in_sample_full"],
+    "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

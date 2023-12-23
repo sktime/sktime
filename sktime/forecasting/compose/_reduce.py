@@ -25,8 +25,6 @@ __all__ = [
     "YfromX",
 ]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -42,8 +40,9 @@ from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
-from sktime.utils.sklearn import is_sklearn_regressor
+from sktime.utils.sklearn import is_sklearn_regressor, prep_skl_df
 from sktime.utils.validation import check_window_length
+from sktime.utils.warnings import warn
 
 
 def _concat_y_X(y, X):
@@ -279,13 +278,13 @@ class _Reducer(_BaseWindowForecaster):
 
         In recursive forecasting, the time based features need to be recalculated for
         every time step that is forecast. This is done in an iterative fashion over
-        every forecasting horizon step. Shift specifies the timestemp over which the
+        every forecasting horizon step. Shift specifies the timestamp over which the
         iteration is done, i.e. a shift of 0 will get a window between window_length
         steps in the past and t=0, shift = 1 will be window_length - 1 steps in the past
         and t= 1 etc- up to the forecasting horizon.
 
         Will also apply any transformers passed to the recursive reducer to y. This en
-        bloc approach of directly applying the transformers is more efficient than
+        block approach of directly applying the transformers is more efficient than
         creating all lags first across the window and then applying the transformers
         to the lagged data.
 
@@ -344,6 +343,9 @@ class _Reducer(_BaseWindowForecaster):
         # first observation after the window (this is what the window is summarized to).
 
         index_range = _index_range(relative_int, cutoff)
+        if isinstance(cutoff, pd.DatetimeIndex):
+            if cutoff.tzinfo is not None:
+                index_range = index_range.tz_localize(cutoff.tzinfo)
         # index_range will convert the indices to the date format of cutoff
 
         y_raw = _create_fcst_df(index_range, self._y)
@@ -464,11 +466,11 @@ class _DirectReducer(_Reducer):
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
-                    "Pooling has been changed by default to 'local', which"
+                    "Pooling is by default 'local', which"
                     + " means that separate models will be fit at the level of"
                     + " each instance. If you wish to fit a single model to"
                     + " all instances, please specify pooling = 'global'.",
-                    DeprecationWarning,
+                    obj=self,
                 )
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
@@ -774,11 +776,11 @@ class _RecursiveReducer(_Reducer):
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
-                    "Pooling has been changed by default to 'local', which"
+                    "Pooling is by default 'local', which"
                     + " means that separate models will be fit at the level of"
                     + " each instance. If you wish to fit a single model to"
                     + " all instances, please specify pooling = 'global'.",
-                    DeprecationWarning,
+                    obj=self,
                 )
         if self.transformers is not None:
             self.transformers_ = clone(self.transformers)
@@ -870,6 +872,9 @@ class _RecursiveReducer(_Reducer):
             fh_max = fh.to_relative(self.cutoff)[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
             index_range = _index_range(relative, self.cutoff)
+            if isinstance(self.cutoff, pd.DatetimeIndex):
+                if self.cutoff.tzinfo is not None:
+                    index_range = index_range.tz_localize(self.cutoff.tzinfo)
 
             y_pred = _create_fcst_df(index_range, self._y)
 
@@ -896,15 +901,27 @@ class _RecursiveReducer(_Reducer):
             fh_max = fh.to_relative(self.cutoff)[-1]
 
             y_pred = np.zeros(fh_max)
+
+            # Array with input data for prediction.
             last = np.zeros((1, n_columns, window_length + fh_max))
 
             # Fill pre-allocated arrays with available data.
             last[:, 0, :window_length] = y_last
             if X is not None:
-                last[:, 1:, :window_length] = X_last.T
-                last[:, 1:, window_length:] = X.iloc[
-                    -(last.shape[2] - window_length) :, :
-                ].T
+                X_to_use = np.concatenate(
+                    [X_last.T, X.iloc[-(last.shape[2] - window_length) :, :].T], axis=1
+                )
+                if X_to_use.shape[1] < window_length + fh_max:
+                    X_to_use = np.pad(
+                        X_to_use,
+                        ((0, 0), (0, window_length + fh_max - X_to_use.shape[1])),
+                        "edge",
+                    )
+                elif X_to_use.shape[1] > window_length + fh_max:
+                    X_to_use = X_to_use[:, : window_length + fh_max]
+                # else X_to_use.shape[1] == window_length + fh_max
+                # and there are no additional steps to take
+                last[:, 1:] = X_to_use
 
             # Recursively generate predictions by iterating over forecasting horizon.
             for i in range(fh_max):
@@ -1207,7 +1224,7 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
     For the hybrid dir-rec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the recusrive
+    for training the next forecaster, following the recursive
     strategy.
 
     Parameters
@@ -1286,7 +1303,7 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     For the hybrid dir-rec strategy, a separate forecaster is fitted
     for each step ahead of the forecasting horizon and then
     the previous forecasting horizon is added as an input
-    for training the next forecaster, following the recusrive
+    for training the next forecaster, following the recursive
     strategy.
 
     Parameters
@@ -1488,7 +1505,8 @@ def _infer_scitype(estimator):
             "The `scitype` of the given `estimator` cannot be inferred. "
             'Assuming "tabular-regressor" = scikit-learn regressor interface. '
             "If this warning is followed by an unexpected exception, "
-            "please consider report as a bug on the sktime issue tracker."
+            "please consider report as a bug on the sktime issue tracker.",
+            obj=estimator,
         )
         return "tabular-regressor"
 
@@ -1566,75 +1584,31 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     -------
     A pandas dataframe or series
     """
-    oi = origin_df.index
-    if not isinstance(oi, pd.MultiIndex):
-        if isinstance(origin_df, pd.Series):
-            if fill is None:
-                template = pd.Series(np.zeros(len(target_date)), index=target_date)
-            else:
-                template = pd.Series(fill, index=target_date)
-            template.name = origin_df.name
-            return template
-        else:
-            if fill is None:
-                template = pd.DataFrame(
-                    np.zeros((len(target_date), len(origin_df.columns))),
-                    index=target_date,
-                    columns=origin_df.columns.to_list(),
-                )
-            else:
-                template = pd.DataFrame(
-                    fill, index=target_date, columns=origin_df.columns.to_list()
-                )
-            return template
+    if not isinstance(target_date, ForecastingHorizon):
+        ix = pd.Index(target_date)
+        fh = ForecastingHorizon(ix, is_relative=False)
     else:
-        idx = origin_df.index.to_frame(index=False)
-        instance_names = idx.columns[0:-1].to_list()
-        time_names = idx.columns[-1]
-        idx = idx[instance_names].drop_duplicates()
+        fh = target_date.to_absolute()
 
-        timeframe = pd.DataFrame(target_date, columns=[time_names])
-        target_frame = idx.merge(timeframe, how="cross")
-        if hasattr(target_date, "freq"):
-            freq_inferred = target_date.freq
-            mi = (
-                target_frame.groupby(instance_names, as_index=True)
-                .apply(
-                    lambda df: df.drop(instance_names, axis=1)
-                    .set_index(time_names)
-                    .asfreq(freq_inferred)
-                )
-                .index
-            )
-        else:
-            mi = (
-                target_frame.groupby(instance_names, as_index=True)
-                .apply(lambda df: df.drop(instance_names, axis=1).set_index(time_names))
-                .index
-            )
+    index = fh.get_expected_pred_idx(origin_df)
 
-        if fill is None:
-            template = pd.DataFrame(
-                np.zeros((len(target_date) * idx.shape[0], len(origin_df.columns))),
-                index=mi,
-                columns=origin_df.columns.to_list(),
-            )
-        else:
-            template = pd.DataFrame(
-                fill,
-                index=mi,
-                columns=origin_df.columns.to_list(),
-            )
+    if isinstance(origin_df, pd.Series):
+        columns = [origin_df.name]
+    else:
+        columns = origin_df.columns.to_list()
 
-        template = template.astype(origin_df.dtypes.to_dict())
-        return template
+    if fill is None:
+        values = 0
+    else:
+        values = fill
 
+    res = pd.DataFrame(values, index=index, columns=columns)
 
-def _coerce_col_str(X):
-    """Coerce columns to string, to satisfy sklearn convention."""
-    X = X.copy()
-    X.columns = [str(x) for x in X.columns]
-    return X
+    if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
+        res = res.iloc[:, 0]
+        res.name = origin_df.name
+
+    return res
 
 
 def slice_at_ix(df, ix):
@@ -1685,7 +1659,7 @@ class _ReducerMixin:
 
         Parameters
         ----------
-        fh : ForecastingHorizon, fh of self; or, iterable coercable to pd.Index
+        fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
 
         Returns
         -------
@@ -1744,7 +1718,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         to obtain a prediction for `y(c+h)`, for each `h` in the forecasting horizon
     if `X_treatment = "shifted":
         applies fitted estimator's predict to
-        features = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(t)`
+        features = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c)`
         to obtain prediction for `y(c+h_1)`, ..., `y(c+h_k)` for `h_j` in forec. horizon
 
     Parameters
@@ -1873,8 +1847,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = lagger_y_to_X.fit_transform(X=y, y=X)
         Xt = Xt.loc[y_notna_idx]
 
-        Xt = _coerce_col_str(Xt)
-        yt = _coerce_col_str(yt)
+        Xt = prep_skl_df(Xt)
+        yt = prep_skl_df(yt)
 
         estimator = clone(self.estimator)
         if not estimator._get_tags()["multioutput"]:
@@ -1899,7 +1873,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         Xt = lagger_y_to_X.transform(X=self._y, y=self._X)
         Xt_lastrow = slice_at_ix(Xt, self.cutoff)
-        Xt_lastrow = _coerce_col_str(Xt_lastrow)
+        Xt_lastrow = prep_skl_df(Xt_lastrow)
 
         estimator = self.estimator_
         # 2D numpy array with col index = (fh, var) and 1 row
@@ -1963,8 +1937,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             yt = yt.loc[notna_idx]
             Xtt = Xtt.loc[notna_idx]
 
-            Xtt = _coerce_col_str(Xtt)
-            yt = _coerce_col_str(yt)
+            Xtt = prep_skl_df(Xtt)
+            yt = prep_skl_df(yt)
 
             # we now check whether the set of full lags is empty
             # if yes, we set a flag, since we cannot fit the reducer
@@ -2009,7 +1983,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             Xt = lagger_y_to_X[-lag].transform(X=self._y, y=X_pool)
             Xtt = lag_plus.fit_transform(Xt)
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
-            Xtt_predrow = _coerce_col_str(Xtt_predrow)
+            Xtt_predrow = prep_skl_df(Xtt_predrow)
 
             estimator = self.estimators_[i]
 
@@ -2208,8 +2182,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             if X is not None:
                 Xtt = pd.concat([X.loc[notna_idx], Xtt], axis=1)
 
-            Xtt = _coerce_col_str(Xtt)
-            yt = _coerce_col_str(yt)
+            Xtt = prep_skl_df(Xtt)
+            yt = prep_skl_df(yt)
 
             estimator = clone(self.estimator)
             estimator.fit(Xtt, yt)
@@ -2304,7 +2278,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                     [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
                 )
 
-            Xtt_predrow = _coerce_col_str(Xtt_predrow)
+            Xtt_predrow = prep_skl_df(Xtt_predrow)
 
             estimator = self.estimator_
 
@@ -2355,7 +2329,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 [slice_at_ix(X_pool, fh_abs), Xtt_predrows], axis=1
             )
 
-        Xtt_predrows = _coerce_col_str(Xtt_predrows)
+        Xtt_predrows = prep_skl_df(Xtt_predrows)
 
         estimator = self.estimator_
 
@@ -2404,32 +2378,38 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 class YfromX(BaseForecaster, _ReducerMixin):
     """Simple reduction predicting endogeneous from concurrent exogeneous variables.
 
-    Tabulates all seen `X` and `y` by time index and applies
+    Tabulates all seen ``X`` and ``y`` by time index and applies
     tabular supervised regression.
 
-    In `fit`, given endogeneous time series `y` and exogeneous `X`:
-        fits `estimator` to feature-label pairs as defined as follows.
+    In ``fit``, given endogeneous time series ``y`` and exogeneous ``X``:
+    fits ``estimator`` to feature-label pairs as defined as follows.
 
-        features = :math:`y(t)`, labels: :math:`X(t)`
-        ranging over all :math:`t` where the above have been observed (are in the index)
+    features = :math:`y(t)`, labels: :math:`X(t)`
+    ranging over all :math:`t` where the above have been observed (are in the index)
 
-    In `predict`, at a time :math:`t` in the forecasting horizon, uses `estimator`
-        to predict :math:`y(t)`, from labels: :math:`X(t)`
+    In ``predict``, at a time :math:`t` in the forecasting horizon, uses ``estimator``
+    to predict :math:`y(t)`, from labels: :math:`X(t)`
 
-    If no exogeneous data is provided, will predict the mean of `y` seen in `fit`.
+    If regressor is ``skpro`` probabilistic regressor, and has ``predict_interval`` etc,
+    uses ``estimator`` to predict :math:`y(t)`, from labels: :math:`X(t)`,
+    passing on the ``predict_interval`` etc arguments.
+
+    If no exogeneous data is provided, will predict the mean of ``y`` seen in ``fit``.
 
     In order to use a fit not on the entire historical data
-    and update periodically, combine this with `UpdateRefitsEvery`.
+    and update periodically, combine this with ``UpdateRefitsEvery``.
 
-    In order to deal with missing data, combine this with `Imputer`.
+    In order to deal with missing data, combine this with ``Imputer``.
 
     To construct an custom direct reducer,
-    combine with `YtoX`, `Lag`, or `ReducerTransform`.
+    combine with ``YtoX``, ``Lag``, or ``ReducerTransform``.
 
     Parameters
     ----------
-    estimator : sklearn regressor, must be compatible with sklearn interface
+    estimator : sklearn regressor or skpro probabilistic regressor,
+        must be compatible with sklearn or skpro interface
         tabular regression algorithm used in reduction algorithm
+        if skpro regressor, resulting forecaster will have probabilistic capability
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
         "local" = unit/instance level, one reduced model per lowest hierarchy level
@@ -2441,7 +2421,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     Example
     -------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.compose import YfromX
     >>> from sklearn.linear_model import LinearRegression
     >>>
@@ -2453,6 +2433,15 @@ class YfromX(BaseForecaster, _ReducerMixin):
     >>> f.fit(y=y_train, X=X_train, fh=fh)
     YfromX(...)
     >>> y_pred = f.predict(X=X_test)
+
+    YfromX can also be used with skpro probabilistic regressors,
+    in this case the resulting forecaster will be capable of probabilistic forecasts:
+    >>> from skpro.regression.residual import ResidualDouble  # doctest: +SKIP
+    >>> reg_proba = ResidualDouble(LinearRegression())  # doctest: +SKIP
+    >>> f = YfromX(reg_proba)  # doctest: +SKIP
+    >>> f.fit(y=y_train, X=X_train, fh=fh)  # doctest: +SKIP
+    YfromX(...)
+    >>> y_pred = f.predict_interval(X=X_test)  # doctest: +SKIP
     """
 
     _tags = {
@@ -2461,12 +2450,30 @@ class YfromX(BaseForecaster, _ReducerMixin):
         "handles-missing-data": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "capability:pred_int": True,
     }
 
     def __init__(self, estimator, pooling="local"):
         self.estimator = estimator
         self.pooling = pooling
         super().__init__()
+
+        # self._est_type encodes information what type of estimator is passed
+        if hasattr(estimator, "get_tags"):
+            _est_type = estimator.get_tag("object_type", "regressor", False)
+        else:
+            _est_type = "regressor"
+
+        if _est_type not in ["regressor", "regressor_proba"]:
+            raise TypeError(
+                "error in YfromX, estimator must be either an sklearn compatible "
+                "regressor, or an skpro probabilistic regressor."
+            )
+
+        # has probabilistic mode iff the estimator is of type regressor_proba
+        self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
+
+        self._est_type = _est_type
 
         if pooling == "local":
             mtypes = "pd.DataFrame"
@@ -2505,17 +2512,27 @@ class YfromX(BaseForecaster, _ReducerMixin):
         -------
         self : reference to self
         """
+        _est_type = self._est_type
+
         if X is None:
             from sklearn.dummy import DummyRegressor
 
-            X = _coerce_col_str(y)
-            estimator = DummyRegressor()
+            if _est_type == "regressor":
+                estimator = DummyRegressor()
+            else:  # "proba_regressor"
+                from skpro.regression.residual import ResidualDouble
+
+                dummy = DummyRegressor()
+                estimator = ResidualDouble(dummy)
+
+            X = prep_skl_df(y, copy_df=True)
         else:
-            X = _coerce_col_str(X)
+            X = prep_skl_df(X, copy_df=True)
             estimator = clone(self.estimator)
 
-        y = _coerce_col_str(y)
-        y = y.values.flatten()
+        if _est_type == "regressor":
+            y = prep_skl_df(y, copy_df=True)
+            y = y.values.flatten()
 
         estimator.fit(X, y)
         self.estimator_ = estimator
@@ -2541,7 +2558,173 @@ class YfromX(BaseForecaster, _ReducerMixin):
         y_pred : pd.DataFrame, same type as y in _fit
             Point predictions
         """
+        _est_type = self._est_type
+
         fh_idx = self._get_expected_pred_idx(fh=fh)
+
+        X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
+        y_pred = self.estimator_.predict(X_idx)
+
+        if _est_type == "regressor":
+            y_cols = self._y.columns
+            y_pred = pd.DataFrame(y_pred, index=fh_idx, columns=y_cols)
+
+        return y_pred
+
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
+        y_pred = self.estimator_.predict_quantiles(X_idx, alpha=alpha)
+        return y_pred
+
+    def _predict_interval(self, fh, X, coverage):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
+        y_pred = self.estimator_.predict_interval(X_idx, coverage=coverage)
+        return y_pred
+
+    def _predict_var(self, fh, X=None, cov=False):
+        """Forecast variance at future horizon.
+
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+                Note: no covariance forecasts are returned between different variables.
+        """
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
+        y_pred = self.estimator_.predict_var(X_idx)
+        return y_pred
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : sktime time series object, optional (default=None)
+                Exogeneous time series for the forecast
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain fh.index and y.index both
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+        """
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
+        y_pred = self.estimator_.predict_proba(X_idx)
+        return y_pred
+
+    def _get_pred_X(self, X, fh_idx):
         y_cols = self._y.columns
 
         if X is not None and self._X is not None:
@@ -2553,14 +2736,10 @@ class YfromX(BaseForecaster, _ReducerMixin):
         else:
             X_pool = pd.DataFrame(0, index=fh_idx, columns=y_cols)
 
-        X_pool = _coerce_col_str(X_pool)
+        X_pool = prep_skl_df(X_pool, copy_df=True)
 
         X_idx = X_pool.loc[fh_idx]
-
-        y_pred = self.estimator_.predict(X_idx)
-        y_pred = pd.DataFrame(y_pred, index=fh_idx, columns=y_cols)
-
-        return y_pred
+        return X_idx
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2583,6 +2762,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
 
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         params1 = {
             "estimator": LinearRegression(),
             "pooling": "local",
@@ -2593,4 +2774,15 @@ class YfromX(BaseForecaster, _ReducerMixin):
             "pooling": "global",  # all internal mtypes are tested across scenarios
         }
 
-        return [params1, params2]
+        params = [params1, params2]
+
+        if _check_soft_dependencies("skpro", severity="none"):
+            from skpro.regression.residual import ResidualDouble
+
+            params3 = {
+                "estimator": ResidualDouble.create_test_instance(),
+                "pooling": "global",
+            }
+            params = params + [params3]
+
+        return params

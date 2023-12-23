@@ -6,7 +6,7 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
-All clusterers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
+All forecasters in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="forecaster"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
@@ -149,6 +149,7 @@ Trend forecasters
     TrendForecaster
     PolynomialTrendForecaster
     STLForecaster
+    CurveFitForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
@@ -281,7 +282,7 @@ ARCH models
 
     StatsForecastARCH
     StatsForecastGARCH
-
+    ARCH
 
 Structural time series models
 -----------------------------
@@ -325,6 +326,20 @@ Structural time series models
     :template: class.rst
 
     DynamicFactor
+
+Transformer (deep learning) based forecasters
+---------------------------------------------
+
+.. currentmodule:: sktime.forecasting.ltsf
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LTSFLinearForecaster
+    LTSFDLinearForecaster
+    LTSFNLinearForecaster
+
 
 Intermittent time series forecasters
 ------------------------------------
@@ -421,25 +436,8 @@ Model Evaluation (Backtesting)
 
     evaluate
 
-Time series splitters
----------------------
+Time index splitters
+--------------------
 
-Time series splitters can be used in both evaluation and tuning.
-
-.. currentmodule:: sktime.forecasting.model_selection
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    CutoffSplitter
-    SingleWindowSplitter
-    SlidingWindowSplitter
-    ExpandingWindowSplitter
-    ExpandingGreedySplitter
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    temporal_train_test_split
+Evaluation and tuning can be customized using time index based splitters,
+for a list of these consult the :ref:`splitter API <split_ref>`

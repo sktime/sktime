@@ -58,7 +58,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     def _expected_trafo_output_scitype(self, X_scitype, trafo_input, trafo_output):
         """Return expected output scitype, given X scitype and input/output.
 
-        Paramaters
+        Parameters
         ----------
         X_scitype : str, scitype of the input to transform
         trafo_input : str, scitype of "instance"
@@ -165,6 +165,10 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
         # skip this test if the estimator skips inverse_transform
         if estimator_instance.get_tag("skip-inverse-transform", False):
+            return None
+
+        # skip this test if inverse_transform is not assumed an exact inverse
+        if not estimator_instance.get_tag("capability:inverse_transform:exact", True):
             return None
 
         X = scenario.args["transform"]["X"]

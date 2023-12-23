@@ -6,10 +6,6 @@ Time series transformations
 The :mod:`sktime.transformations` module contains classes for data
 transformations.
 
-.. automodule:: sktime.transformations
-   :no-members:
-   :no-inherited-members:
-
 All (simple) transformers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="regressor"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
@@ -288,8 +284,16 @@ Depending on the transformer, the transformation parameters can be fitted.
     ExponentTransformer
     SqrtTransformer
 
-Detrending
-~~~~~~~~~~
+.. currentmodule:: sktime.transformations.series.scaledasinh
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ScaledAsinhTransformer
+
+Detrending and Decomposition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.detrend
 
@@ -301,6 +305,22 @@ Detrending
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
+
+.. currentmodule:: sktime.transformations.series.detrend.mstl
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MSTL
+
+.. currentmodule:: sktime.transformations.series.vmd
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VmdTransformer
 
 .. currentmodule:: sktime.transformations.series.clear_sky
 
@@ -390,8 +410,8 @@ Differencing, slope, kinematics
 
     KinematicFeatures
 
-Binning and segmentation
-~~~~~~~~~~~~~~~~~~~~~~~~
+Binning, sampling and segmentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.binning
 
@@ -417,6 +437,14 @@ Binning and segmentation
 
     IntervalSegmenter
     RandomIntervalSegmenter
+
+.. currentmodule:: sktime.transformations.series.dilation_mapping
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DilationMappingTransformer
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -474,6 +502,14 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     FourierTransform
+
+.. currentmodule:: sktime.transformations.series.peak
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PeakTimeFeature
 
 Auto-correlation series
 ~~~~~~~~~~~~~~~~~~~~~~~

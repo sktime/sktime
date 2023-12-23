@@ -15,6 +15,7 @@ import pandas as pd
 from sktime.datatypes._check import check_is_scitype, mtype
 from sktime.datatypes._convert import convert_to
 from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.parallel import parallelize
 
 
 class VectorizedDF:
@@ -444,6 +445,8 @@ class VectorizedDF:
         rowname_default="estimators",
         colname_default="estimators",
         varname_of_self=None,
+        backend=None,
+        backend_params=None,
         **kwargs,
     ):
         """Vectorize application of estimator method, return results DataFrame or list.
@@ -489,10 +492,10 @@ class VectorizedDF:
             method of estimator to call with arguments in `args`, `args_rowvec`
         args : dict, optional, default=empty dict
             arguments to pass to `method` of estimator clones
-            will vectorize/iterater over rows and columns
+            will vectorize/iterator over rows and columns
         args_rowvec : dict, optional, default=empty dict
             arguments to pass to `method` of estimator clones
-            will vectorize/iterater only over rows but not over columns
+            will vectorize/iterator only over rows but not over columns
         return_type : str, one of "pd.DataFrame" or "list"
             the return will be of this type;
             if `pd.DataFrame`, with row/col indices being `self.get_iter_indices()`
@@ -503,16 +506,43 @@ class VectorizedDF:
             used as index name of single column if no column vectorization is performed
         varname_of_self : str, optional, default=None
             if not None, self will be passed as kwarg under name "varname_of_self"
-        kwargs : will be passed to invoked methods of estimator(s) in `estimator`
+        backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+            Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+            - "dask": uses ``dask``, requires ``dask`` package in environment
+            - "dask_lazy": same as "dask", but returns delayed object instead
+
+            Parameter is passed to ``utils.parallel.parallelize``.
+
+        backend_params : dict, optional
+            additional parameters passed to the backend as config.
+            Directly passed to ``utils.parallel.parallelize``.
+            Valid keys depend on the value of ``backend``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading":
+              any valid keys for ``joblib.Parallel`` can be passed here,
+              e.g., ``n_jobs``, with the exception of ``backend``
+              which is directly controlled by ``backend``
+            - "dask": any valid keys for ``dask.compute`` can be passed,
+              e.g., ``scheduler``
+
+        kwargs : will be passed to invoked methods of estimator(s) in ``estimator``
 
         Returns
         -------
-        pd.DataFrame, with rows and columns as the return of `get_iter_indices`.
+        pd.DataFrame, with rows and columns as the return of ``get_iter_indices``.
           If rows or columns are not vectorized over, the single index
-          will be `rowname_default` resp `colname_default`.
-          Entries are identity references to entries of `estimator`,
-          after `method` executed with arguments as above.
+          will be ``rowname_default`` resp ``colname_default``.
+          Entries are identity references to entries of ``estimator``,
+          after ``method`` executed with arguments as above.
         """
+        iterate_as = self.iterate_as
+        iterate_cols = self.iterate_cols
+
         if args is None:
             args = kwargs
         else:
@@ -567,28 +597,27 @@ class VectorizedDF:
         else:
             estimators = itertools.cycle([estimator])
 
-        ret = []
-
-        for (group_name, col_name, group), args_i, args_i_rowvec, est_i in zip(
+        vec_zip = zip(
             self.items(),
-            explode(args, iterate_as=self.iterate_as, iterate_cols=self.iterate_cols),
-            explode(args_rowvec, iterate_as=self.iterate_as, iterate_cols=False),
+            explode(args, iterate_as=iterate_as, iterate_cols=iterate_cols),
+            explode(args_rowvec, iterate_as=iterate_as, iterate_cols=False),
             estimators,
-        ):
-            args_i.update(args_i_rowvec)
+        )
 
-            if varname_of_self is not None:
-                args_i[varname_of_self] = group
+        meta = {
+            "method": method,
+            "varname_of_self": varname_of_self,
+            "rowname_default": rowname_default,
+            "colname_default": colname_default,
+        }
 
-            est_i_method = getattr(est_i, method)
-            est_i_result = est_i_method(**args_i)
-
-            if group_name is None:
-                group_name = rowname_default
-            if col_name is None:
-                col_name = colname_default
-
-            ret.append((group_name, col_name, est_i_result))
+        ret = parallelize(
+            fun=self._vectorize_est_single,
+            iter=vec_zip,
+            meta=meta,
+            backend=backend,
+            backend_params=backend_params,
+        )
 
         if return_type == "pd.DataFrame":
             df_long = pd.DataFrame(ret)
@@ -616,6 +645,29 @@ class VectorizedDF:
             return df
         else:  # if return_type == "list"
             return [result for _, _, result in ret]
+
+    def _vectorize_est_single(self, vec_tuple, meta):
+        """Single loop iteration of _vectorize_est_[backend]."""
+        method = meta["method"]
+        varname_of_self = meta["varname_of_self"]
+        rowname_default = meta["rowname_default"]
+        colname_default = meta["colname_default"]
+
+        (group_name, col_name, group), args_i, args_i_rowvec, est_i = vec_tuple
+        args_i.update(args_i_rowvec)
+
+        if varname_of_self is not None:
+            args_i[varname_of_self] = group
+
+        est_i_method = getattr(est_i, method)
+        est_i_result = est_i_method(**args_i)
+
+        if group_name is None:
+            group_name = rowname_default
+        if col_name is None:
+            col_name = colname_default
+
+        return (group_name, col_name, est_i_result)
 
 
 def _enforce_index_freq(item: pd.Series) -> pd.Series:

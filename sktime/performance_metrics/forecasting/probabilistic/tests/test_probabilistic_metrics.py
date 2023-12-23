@@ -5,12 +5,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.performance_metrics.forecasting.probabilistic import (
     ConstraintViolation,
     EmpiricalCoverage,
     PinballLoss,
 )
+from sktime.split import temporal_train_test_split
 from sktime.utils._testing.series import _make_series
 
 warnings.filterwarnings("ignore", category=FutureWarning)

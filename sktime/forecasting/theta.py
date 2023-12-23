@@ -3,8 +3,6 @@
 __all__ = ["ThetaForecaster", "ThetaModularForecaster"]
 __author__ = ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
@@ -20,6 +18,7 @@ from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils.slope_and_trend import _fit_trend
 from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.warnings import warn
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -126,7 +125,10 @@ class ThetaForecaster(ExponentialSmoothing):
         """
         sp = check_sp(self.sp)
         if sp > 1 and not self.deseasonalize:
-            warn("`sp` is ignored when `deseasonalise`=False")
+            warn(
+                "`sp` in ThetaForecaster is ignored when `deseasonalise`=False",
+                obj=self,
+            )
 
         if self.deseasonalize:
             self.deseasonalizer_ = Deseasonalizer(sp=self.sp, model="multiplicative")
@@ -195,8 +197,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -234,14 +235,10 @@ class ThetaForecaster(ExponentialSmoothing):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = BaseForecaster._predict_interval(
-            self, fh, X, coverage, legacy_interface
-        )
-
+        pred_int = BaseForecaster._predict_interval(self, fh, X, coverage)
         return pred_int
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -265,9 +262,7 @@ class ThetaForecaster(ExponentialSmoothing):
                 at quantile probability in second col index, for the row index.
         """
         # prepare return data frame
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
         index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)
@@ -310,7 +305,7 @@ class ThetaForecaster(ExponentialSmoothing):
         Returns
         -------
         params :dict or list of dict , default = {}
-            arameters to create testing instances of the class
+            parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params
@@ -522,7 +517,7 @@ class ThetaModularForecaster(BaseForecaster):
         params1 = {"theta_values": (0, 3)}
         params2 = {"weights": [1.0, 0.8]}
 
-        # params1 and params2 invoke ExpoentialSmoothing which requires statsmodels
+        # params1 and params2 invoke ExponentialSmoothing which requires statsmodels
         if _check_estimator_deps(ExponentialSmoothing, severity="none"):
             params = [params0, params1, params2]
         else:

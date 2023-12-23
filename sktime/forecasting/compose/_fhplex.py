@@ -55,15 +55,29 @@ class FhPlexForecaster(BaseForecaster):
 
     Examples
     --------
+    >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.compose import ForecastByLevel
-    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> y = _make_hierarchical()
-    >>> f = ForecastByLevel(NaiveForecaster(), groupby="local")
-    >>> f.fit(y)
-    ForecastByLevel(...)
-    >>> fitted_forecasters = f.forecasters_
-    >>> fitted_forecasters_alt = f.get_fitted_params()["forecasters"]
+    >>> from sktime.forecasting.compose import FhPlexForecaster
+
+    Simple example - same parameters per fh element
+    >>> y = load_airline()
+    >>> f = FhPlexForecaster(NaiveForecaster())
+    >>> f.fit(y, fh=[1, 2, 3])
+    FhPlexForecaster(...)
+    >>> f.forecasters_  # get individual fitted forecasters
+    {1: NaiveForecaster(), 2: NaiveForecaster(), 3: NaiveForecaster()}
+    >>> fitted_params = f.get_fitted_params()  # or via get_fitted_params
+    >>> y_pred = f.predict()
+
+    Simple example - different parameters per fh element
+    >>> y = load_airline()
+    >>> fh_params = [{}, {"strategy": "last"}, {"strategy": "mean"}]
+    >>> f = FhPlexForecaster(NaiveForecaster(), fh_params=fh_params)
+    >>> f.fit(y, fh=[1, 2, 3])
+    FhPlexForecaster(...)
+    >>> f.forecasters_  # get individual fitted forecasters
+    {1: NaiveForecaster(), 2: NaiveForecaster(), 3: NaiveForecaster(strategy='mean')}
+    >>> y_pred = f.predict()
     """
 
     _tags = {
@@ -288,8 +302,7 @@ class FhPlexForecaster(BaseForecaster):
         )
         return y_pred
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -321,13 +334,10 @@ class FhPlexForecaster(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        y_pred = self._get_preds(
-            fh, "predict_quantiles", X=X, alpha=alpha, legacy_interface=legacy_interface
-        )
+        y_pred = self._get_preds(fh, "predict_quantiles", X=X, alpha=alpha)
         return y_pred
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -363,13 +373,7 @@ class FhPlexForecaster(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        y_pred = self._get_preds(
-            fh,
-            "predict_interval",
-            X=X,
-            coverage=coverage,
-            legacy_interface=legacy_interface,
-        )
+        y_pred = self._get_preds(fh, "predict_interval", X=X, coverage=coverage)
         return y_pred
 
     def _predict_var(self, fh, X=None, cov=False):

@@ -34,7 +34,7 @@ class Shapelet:
         The starting position of the shapelet within the original series
     length: int
         The length of the shapelet
-    info_gain: flaot
+    info_gain: float
         The calculated information gain of this shapelet
     data: array-like
         The (z-normalised) data of this shapelet.
@@ -478,7 +478,7 @@ class ShapeletTransform(BaseTransformer):
                             print(max_time_calc_shapelet)  # noqa
                     time_last_shapelet = time_now
 
-                    # add a little 1% leeway to the timing incase one run was
+                    # add a little 1% leeway to the timing in case one run was
                     # slightly faster than
                     # another based on the CPU.
                     time_in_seconds = self.time_contract_in_mins * 60
@@ -1122,7 +1122,7 @@ class RandomShapeletTransform(BaseTransformer):
         self._batch_size = batch_size
         self._class_counts = []
         self._class_dictionary = {}
-        self._sorted_indicies = []
+        self._sorted_indices = []
 
         super().__init__()
 
@@ -1271,10 +1271,10 @@ class RandomShapeletTransform(BaseTransformer):
         to_keep = _remove_identical_shapelets(List(self.shapelets))
         self.shapelets = [n for (n, b) in zip(self.shapelets, to_keep) if b]
 
-        self._sorted_indicies = []
+        self._sorted_indices = []
         for s in self.shapelets:
             sabs = np.abs(s[6])
-            self._sorted_indicies.append(
+            self._sorted_indices.append(
                 np.array(
                     sorted(range(s[1]), reverse=True, key=lambda j, sabs=sabs: sabs[j])
                 )
@@ -1307,7 +1307,7 @@ class RandomShapeletTransform(BaseTransformer):
                 delayed(_online_shapelet_distance)(
                     series[shapelet[3]],
                     shapelet[6],
-                    self._sorted_indicies[n],
+                    self._sorted_indices[n],
                     shapelet[2],
                     shapelet[1],
                 )
@@ -1369,7 +1369,7 @@ class RandomShapeletTransform(BaseTransformer):
 
         shapelet = z_normalise_series(X[inst_idx, dim, position : position + length])
         sabs = np.abs(shapelet)
-        sorted_indicies = np.array(
+        sorted_indices = np.array(
             sorted(range(length), reverse=True, key=lambda j: sabs[j])
         )
 
@@ -1377,7 +1377,7 @@ class RandomShapeletTransform(BaseTransformer):
             X,
             y,
             shapelet,
-            sorted_indicies,
+            sorted_indices,
             position,
             length,
             dim,

@@ -262,7 +262,7 @@ class SARIMAX(_StatsModelsAdapter):
             {
                 "order": [1, 0, 1],
                 "trend": [1, 1, 0, 1],
-                # It does not work with measurement_errot, not sure why.
+                # It does not work with measurement_error, not sure why.
                 # "measurement_error": True,
                 "seasonal_order": (1, 0, 1, 2),
                 "hamilton_representation": True,
