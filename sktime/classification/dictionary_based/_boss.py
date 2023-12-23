@@ -7,7 +7,6 @@ BOSS ensemble.
 __author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["BOSSEnsemble", "IndividualBOSS", "pairwise_distances"]
 
-from copy import deepcopy
 from itertools import compress
 
 import numpy as np
