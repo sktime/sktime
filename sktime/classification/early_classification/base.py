@@ -607,22 +607,22 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         _check_capabilities = BaseClassifier._check_capabilities
         return _check_capabilities(self, missing, multivariate, unequal)
 
-    def _convert_X(self, X):
+    def _convert_X(self, X, X_mtype):
         """Convert equal length series from DataFrame to numpy array or vice versa.
 
         Parameters
         ----------
-        self : this classifier
-        X : pd.DataFrame or np.ndarray. Input attribute data
+        X : input data for the classifier
+        X_mtype : str, a Panel mtype string, e.g., "pd_multiindex", "numpy3D"
 
         Returns
         -------
         X : input X converted to type in "X_inner_mtype" tag
-                usually a pd.DataFrame (nested) or 3D np.ndarray
+            usually a pd.DataFrame (nested) or 3D np.ndarray
             Checked and possibly converted input data
         """
         _convert_X = BaseClassifier._convert_X
-        return _convert_X(self, X)
+        return _convert_X(self, X, X_mtype)
 
     def _check_y(self, y=None):
         """Check and coerce X/y for fit/transform functions.

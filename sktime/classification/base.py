@@ -793,13 +793,13 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        self : this classifier
-        X : pd.DataFrame or np.ndarray. Input attribute data
+        X : input data for the classifier
+        X_mtype : str, a Panel mtype string, e.g., "pd_multiindex", "numpy3D"
 
         Returns
         -------
         X : input X converted to type in "X_inner_mtype" tag
-                usually a pd.DataFrame (nested) or 3D np.ndarray
+            usually a pd.DataFrame (nested) or 3D np.ndarray
             Checked and possibly converted input data
         """
         inner_type = self.get_tag("X_inner_mtype")
