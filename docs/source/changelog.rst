@@ -37,6 +37,7 @@ Dependency changes
 
 * ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2023.12.2``.
 * ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.40``.
+* ``pycatch22`` (transformations soft dependency) bounds have been updated to ``<0.4.5``.
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -209,6 +210,7 @@ Maintenance
 * [MNT] [Dependabot](deps-dev): Update ``holidays`` requirement from ``<0.38,>=0.29`` to ``>=0.29,<0.40`` (:pr:`5637`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps-dev): Update ``sphinx-gallery`` requirement from ``<0.15.0`` to ``<0.16.0`` (:pr:`5566`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps-dev): Update ``pytest-xdist`` requirement from ``<3.5,>=3.3`` to ``>=3.3,<3.6`` (:pr:`5567`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps-dev): Update ``pycatch22`` requirement from ``<0.4.4`` to ``<0.4.5`` (:pr:`5542`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Bump actions/download-artifact from 3 to 4 (:pr:`5627`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Bump actions/setup-python from 4 to 5 (:pr:`5605`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Bump actions/upload-artifact from 3 to 4 (:pr:`5626`) :user:`dependabot[bot]`
