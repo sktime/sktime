@@ -642,7 +642,7 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
 
             return float(result)
 
-        params2 = {"func": custom_mae, "name": "custom_nmae", "lower_is_better": True}
+        params2 = {"func": custom_mae, "name": "custom_mae", "lower_is_better": True}
 
         return [params1, params2]
 

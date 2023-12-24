@@ -127,7 +127,9 @@ def test_check_positive(scitype, mtype, fixture_index):
 
     # check fixtures that exist against checks that exist, when full metadata is queried
     if fixture is not None and check_is_defined:
-        check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=True)
+        check_result = check_is_mtype(
+            fixture, mtype, scitype, return_metadata=True, msg_return_dict="list"
+        )
         if not check_result[0]:
             msg = (
                 f"check_is_mtype returns False on scitype {scitype}, mtype {mtype} "
@@ -138,7 +140,9 @@ def test_check_positive(scitype, mtype, fixture_index):
 
     # check fixtures that exist against checks that exist, when no metadata is queried
     if fixture is not None and check_is_defined:
-        check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=[])
+        check_result = check_is_mtype(
+            fixture, mtype, scitype, return_metadata=[], msg_return_dict="list"
+        )
         if not check_result[0]:
             msg = (
                 f"check_is_mtype returns False on scitype {scitype}, mtype {mtype} "
@@ -213,7 +217,7 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
     error if check itself raises an error
     """
     # retrieve fixture for checking
-    fixture, _, expected_metadata = get_examples(
+    fixture, lossy, expected_metadata = get_examples(
         mtype=mtype, as_scitype=scitype, return_metadata=True
     ).get(fixture_index)
 
@@ -226,6 +230,15 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
     # is_equal_index is not fully supported yet in inference
     EXCLUDE_KEYS = ["is_equal_index"]
 
+    # metadata keys to ignore if mtype is lossy
+    EXCLUDE_IF_LOSSY = [
+        "feature_names",  # lossy mtypes do not have feature names
+    ]
+
+    # if mtype is in the list, add mtype specific keys to exclude
+    if lossy:
+        EXCLUDE_KEYS += EXCLUDE_IF_LOSSY
+
     if metadata_provided:
         expected_metadata = expected_metadata.copy()
         subset_keys = set(expected_metadata.keys()).difference(EXCLUDE_KEYS)
@@ -233,7 +246,9 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
 
     # check fixtures that exist against checks that exist, full metadata query
     if fixture is not None and check_is_defined and metadata_provided:
-        check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=True)
+        check_result = check_is_mtype(
+            fixture, mtype, scitype, return_metadata=True, msg_return_dict="list"
+        )
         metadata = check_result[2]
 
         # remove mtype & scitype key if exists, since comparison is on scitype level
@@ -241,6 +256,11 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
             del metadata["mtype"]
         if "scitype" in metadata:
             del metadata["scitype"]
+
+        # remove keys that are not checked
+        for key in EXCLUDE_KEYS:
+            if key in metadata:
+                del metadata[key]
 
         # currently we do not check this field in metadata inference
 
@@ -256,7 +276,11 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
     if fixture is not None and check_is_defined and metadata_provided:
         for metadata_key in subset_keys:
             check_result = check_is_mtype(
-                fixture, mtype, scitype, return_metadata=[metadata_key]
+                fixture,
+                mtype,
+                scitype,
+                return_metadata=[metadata_key],
+                msg_return_dict="list",
             )
             metadata = check_result[2]
 
@@ -317,7 +341,9 @@ def test_check_negative(scitype, mtype):
 
             # check fixtures that exist against checks that exist
             if fixture_wrong_type is not None and check_is_defined:
-                assert not check_is_mtype(fixture_wrong_type, mtype, scitype), (
+                assert not check_is_mtype(
+                    fixture_wrong_type, mtype, scitype, msg_return_dict="list"
+                ), (
                     f"check_is_mtype {mtype} returns True "
                     f"on {wrong_mtype} fixture {i}"
                 )
@@ -325,7 +351,11 @@ def test_check_negative(scitype, mtype):
             # check fixtures that exist against checks that exist
             if fixture_wrong_type is not None and check_is_defined:
                 result = check_is_mtype(
-                    fixture_wrong_type, mtype, scitype, return_metadata=[]
+                    fixture_wrong_type,
+                    mtype,
+                    scitype,
+                    return_metadata=[],
+                    msg_return_dict="list",
                 )[0]
                 assert not result, (
                     f"check_is_mtype {mtype} returns True "

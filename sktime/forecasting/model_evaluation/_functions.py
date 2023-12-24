@@ -348,13 +348,13 @@ def evaluate(
     the train/test folds produced by the generator ``cv_X.split_series(X)``
     (if ``X`` is ``None``, consider these to be ``None`` as well).
 
-    1. Set ``i = 1``
+    1. Initialize the counter to ``i = 1``
     2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
-       with a ``fh`` to forecast :math:`y_{test, 1}`
-    3. The ``forecaster`` predict with exogeneous data :math:`X_{test, i}`
-       ``y_pred = forecaster.predict`` (or ``predict_proba`` or ``predict_quantiles``,
-       depending on ``scoring``)
-    4. Compute ``scoring`` on ``y_pred`` versus :math:`y_{test, 1}`
+       with ``fh`` set to the absolute indices of :math:`y_{test, 1}`.
+    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
+      data :math:`X_{test, i}`. Predictions are made using either ``predict``,
+      ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
+    4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{test, i}`
     5. If ``i == K``, terminate, otherwise
     6. Set ``i = i + 1``
     7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
@@ -413,6 +413,7 @@ def evaluate(
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as "dask",
           but changes the return to (lazy) ``dask.dataframe.DataFrame``.
@@ -435,12 +436,18 @@ def evaluate(
         Valid keys depend on the value of ``backend``:
 
         - "None": no additional parameters, ``backend_params`` is ignored
-        - "loky", "multiprocessing" and "threading":
-            any valid keys for ``joblib.Parallel`` can be passed here,
-            e.g., ``n_jobs``, with the exception of ``backend``
-            which is directly controlled by ``backend``
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
-            e.g., ``scheduler``
+          e.g., ``scheduler``
 
     Returns
     -------
@@ -523,11 +530,12 @@ def evaluate(
         warnings.warn(
             "in evaluate, kwargs will no longer be supported from sktime 0.25.0. "
             "to pass configuration arguments to the parallelization backend, "
-            "use backend_params instead.",
+            "use backend_params instead. "
+            f"The following kwargs were found: {kwargs.keys()}, pass these as "
+            "dict elements to backend_params instead.",
             DeprecationWarning,
             stacklevel=2,
         )
-        backend = "dask_lazy"
 
     # todo 0.25.0: remove compute argument and logic, and remove this warning
     if compute is not None:
