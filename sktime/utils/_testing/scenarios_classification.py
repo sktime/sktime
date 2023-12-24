@@ -71,7 +71,7 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
         #   BaseRegressor. currently we test both classifiers and regressors using these
         #   scenarios
-        if not obj.get_tag("object_type") in (
+        if not obj._tags["object_type"] in (
             "classifier",
             "early_classifier",
             "regressor",
