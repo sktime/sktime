@@ -349,12 +349,12 @@ def evaluate(
     (if ``X`` is ``None``, consider these to be ``None`` as well).
 
     1. Initialize the counter to ``i = 1``
-    2. Fit the ``forecaster`` to :math:`y_{train, i}`, :math:`X_{train, i}`,
-       (with a gap of ``fh`` steps to :math:`y_{test, i}`).
+    2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
+       with ``fh`` set to the absolute indices of :math:`y_{test, 1}`.
     3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
-    data :math:`X_{test, i}` (prediction made using either ``predict``,
-    ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``)
-    4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{test, 1}`
+      data :math:`X_{test, i}`. Predictions are made using either ``predict``,
+      ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
+    4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{test, i}`
     5. If ``i == K``, terminate, otherwise
     6. Set ``i = i + 1``
     7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
