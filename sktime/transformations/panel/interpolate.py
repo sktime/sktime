@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.pandas import df_map
 
 __author__ = ["mloning"]
 
@@ -84,7 +85,7 @@ class TSInterpolator(BaseTransformer):
         pandas DataFrame : Transformed pandas DataFrame of shape [n_samples, n_features]
             follows nested_univ format
         """
-        return X.applymap(self._resize_cell)
+        return df_map(X)(self._resize_cell)
 
     @classmethod
     def get_test_params(cls):

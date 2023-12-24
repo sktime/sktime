@@ -1,12 +1,8 @@
 name: datasets validation
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - sktime/datasets/**
   schedule:
     - cron: 0 0 1 * *
+  workflow_call:
   workflow_dispatch:
 jobs:
   test_internal_data:
@@ -35,7 +31,7 @@ jobs:
         run: git fetch --depth 1
         shell: bash
       - name: python environment step
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: dependencies installation step
@@ -70,7 +66,7 @@ jobs:
         run: git fetch --depth 1
         shell: bash
       - name: python environment step
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: dependencies installation step

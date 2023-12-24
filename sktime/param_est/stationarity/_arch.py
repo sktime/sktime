@@ -3,21 +3,24 @@
 
 __author__ = ["Vasudeva-bit"]
 __all__ = [
-    "ArchStationarityADF",
-    "ArchDickeyFullerGLS",
-    "ArchPhillipsPerron",
-    "ArchStationarityKPSS",
-    "ArchZivotAndrews",
-    "ArchVarianceRatio",
+    "StationarityADFArch",
+    "StationarityDFGLS",
+    "StationarityPhillipsPerron",
+    "StationarityKPSSArch",
+    "StationarityZivotAndrews",
+    "StationarityVarianceRatio",
 ]
 
 from sktime.param_est.base import BaseParamFitter
 
 
-class ArchStationarityADF(BaseParamFitter):
+class StationarityADFArch(BaseParamFitter):
     """Test for stationarity via the Augmented Dickey-Fuller Unit Root Test (ADF).
 
-    Uses `arch.unitroot.ADF` as a test for unit roots,
+    Direct interface to ``DFGLS`` test from the ``arch`` package.
+    Does not assume ARCH process, naming is due to the use of the ``arch`` package.
+
+    Uses ``arch.unitroot.ADF`` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
 
     Also returns test results for the unit root test as fitted parameters.
@@ -26,8 +29,8 @@ class ArchStationarityADF(BaseParamFitter):
     ----------
     lags : int, optional
         The number of lags to use in the ADF regression.  If omitted or None,
-        `method` is used to automatically select the lag length with no more
-        than `max_lags` are included.
+        ``method`` is used to automatically select the lag length with no more
+        than ``max_lags`` are included.
     trend : {"n", "c", "ct", "ctt"}, optional
         The trend component to include in the test
 
@@ -55,32 +58,33 @@ class ArchStationarityADF(BaseParamFitter):
 
     Attributes
     ----------
-    stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the ADF test is rejected at `p_threshold`
+    stationary_ : bool
+        whether the series in ``fit`` is stationary according to the test
+        more precisely, whether the null of the ADF test is rejected at ``p_threshold``
     test_statistic_ : float
-        The ADF test statistic, of running `adfuller` on `y` in `fit`
+        The ADF test statistic, of running ``adfuller`` on ``y`` in ``fit``
     pvalue_ : float : float
         MacKinnon's approximate p-value based on MacKinnon (1994, 2010),
-        obtained when running `adfuller` on `y` in `fit`
+        obtained when running ``adfuller`` on ``y`` in ``fit``
     usedlag_ : int
         The number of lags used in the test.
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.stationarity import ArchStationarityADF
+    >>> from sktime.param_est.stationarity import StationarityADFArch
     >>>
     >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = ArchStationarityADF()  # doctest: +SKIP
+    >>> sty_est = StationarityADFArch()  # doctest: +SKIP
     >>> sty_est.fit(X)  # doctest: +SKIP
-    ArchStationarityADF(...)
+    StationarityADFArch(...)
     >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
     False
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "pd.DataFrame", "nd.array"],
-        "scitype:X": ["Series", "Panel"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
+        "scitype:X": "Series",
         "python_dependencies": "arch",
     }
 
@@ -169,10 +173,12 @@ class ArchStationarityADF(BaseParamFitter):
         return [params1, params2]
 
 
-class ArchDickeyFullerGLS(BaseParamFitter):
+class StationarityDFGLS(BaseParamFitter):
     """Test for stationarity via the Dickey-Fuller GLS (DFGLS) Unit Root Test.
 
-    Uses `arch.unitroot.DFGLS` as a test for unit roots,
+    Direct interface to ``DFGLS`` test from the ``arch`` package.
+
+    Uses ``arch.unitroot.DFGLS`` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
 
     Also returns test results for the unit root test as fitted parameters.
@@ -181,8 +187,8 @@ class ArchDickeyFullerGLS(BaseParamFitter):
     ----------
     lags : int, optional
         The number of lags to use in the ADF regression.  If omitted or None,
-        `method` is used to automatically select the lag length with no more
-        than `max_lags` are included.
+        ``method`` is used to automatically select the lag length with no more
+        than ``max_lags`` are included.
     trend : {"c", "ct"}, optional
         The trend component to include in the test
 
@@ -202,33 +208,33 @@ class ArchDickeyFullerGLS(BaseParamFitter):
 
     Attributes
     ----------
-    stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the DickeyFullerGLS test is rejected at
-        `p_threshold`
+    stationary_ : bool
+        whether the series in ``fit`` is stationary according to the test
+        more precisely, whether the null of the Dickey-Fuller-GLS test is rejected at
+        ``p_threshold``
     test_statistic_ : float
-        The ADF test statistic, of running `adfuller` on `y` in `fit`
+        The DFGLS test statistic, of running ``DFGLS`` on ``y`` in ``fit``
     pvalue_ : float : float
-        MacKinnon's approximate p-value based on MacKinnon (1994, 2010),
-        obtained when running `adfuller` on `y` in `fit`
+        p-value obtained when running ``DFGLS`` on ``y`` in ``fit``
     usedlag_ : int
         The number of lags used in the test.
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.stationarity import ArchDickeyFullerGLS
+    >>> from sktime.param_est.stationarity import StationarityDFGLS
     >>>
     >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = ArchDickeyFullerGLS()  # doctest: +SKIP
+    >>> sty_est = StationarityDFGLS()  # doctest: +SKIP
     >>> sty_est.fit(X)  # doctest: +SKIP
-    ArchDickeyFullerGLS(...)
+    StationarityDFGLS(...)
     >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
     False
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "pd.DataFrame", "nd.array"],
-        "scitype:X": ["Series", "Panel"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
+        "scitype:X": "Series",
         "python_dependencies": "arch",
     }
 
@@ -313,10 +319,12 @@ class ArchDickeyFullerGLS(BaseParamFitter):
         return [params1, params2]
 
 
-class ArchPhillipsPerron(BaseParamFitter):
-    """Test for stationarity via the PhillipsPerron Unit Root Test.
+class StationarityPhillipsPerron(BaseParamFitter):
+    """Test for unit root order 1 via the Phillips-Perron Unit Root Test.
 
-    Uses `arch.unitroot.PhillipsPerron` as a test for unit roots,
+    Direct interface to ``PhillipsPerron`` test from the ``arch`` package.
+
+    Uses ``arch.unitroot.PhillipsPerron`` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
 
     Also returns test results for the unit root test as fitted parameters.
@@ -325,8 +333,8 @@ class ArchPhillipsPerron(BaseParamFitter):
     ----------
     lags : int, optional
         The number of lags to use in the Newey-West estimator of the long-run
-        covariance.  If omitted or None, the lag length is set automatically to
-        12 * (nobs/100) ** (1/4)
+        covariance. If omitted or None, the lag length is set automatically to
+        ``12 * (nobs/100) ** (1/4)``
     trend : {"n", "c", "ct"}, optional
         The trend component to include in the test
 
@@ -341,33 +349,33 @@ class ArchPhillipsPerron(BaseParamFitter):
 
     Attributes
     ----------
-    stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the PhillipsPerron test is rejected at
-        `p_threshold`
+    stationary_ : bool
+        whether the series in ``fit`` is integrated of order 1
+        more precisely, whether the null of the Phillips-Perron test is rejected at
+        ``p_threshold``
     test_statistic_ : float
-        The ADF test statistic, of running `adfuller` on `y` in `fit`
+        The PP test statistic, of running ``PhillipsPerron`` on ``y`` in ``fit``
     pvalue_ : float : float
-        MacKinnon's approximate p-value based on MacKinnon (1994, 2010),
-        obtained when running `adfuller` on `y` in `fit`
+        p-value obtained when running ``PhillipsPerron`` on ``y`` in ``fit``
     usedlag_ : int
         The number of lags used in the test.
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.stationarity import ArchPhillipsPerron
+    >>> from sktime.param_est.stationarity import StationarityPhillipsPerron
     >>>
     >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = ArchPhillipsPerron()  # doctest: +SKIP
+    >>> sty_est = StationarityPhillipsPerron()  # doctest: +SKIP
     >>> sty_est.fit(X)  # doctest: +SKIP
-    ArchPhillipsPerron(...)
+    StationarityPhillipsPerron(...)
     >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
     False
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "pd.DataFrame", "nd.array"],
-        "scitype:X": ["Series", "Panel"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
+        "scitype:X": "Series",
         "python_dependencies": "arch",
     }
 
@@ -448,10 +456,13 @@ class ArchPhillipsPerron(BaseParamFitter):
         return [params1, params2]
 
 
-class ArchStationarityKPSS(BaseParamFitter):
+class StationarityKPSSArch(BaseParamFitter):
     """Test for stationarity via the Kwiatkowski-Phillips-Schmidt-Shin Unit Root Test.
 
-    Uses `arch.unitroot.KPSS` as a test for trend-stationairty,
+    Direct interface to ``KPSS`` test from the ``arch`` package.
+    Does not assume ARCH process, naming is due to the use of the ``arch`` package.
+
+    Uses ``arch.unitroot.KPSS`` as a test for trend-stationarity,
     and derives a boolean statement whether a series is (trend-)stationary.
 
     Also returns test results for the unit root test as fitted parameters.
@@ -463,8 +474,8 @@ class ArchStationarityKPSS(BaseParamFitter):
         covariance.  If omitted or None, the number of lags is calculated
         with the data-dependent method of Hobijn et al. (1998). See also
         Andrews (1991), Newey & West (1994), and Schwert (1989).
-        Set lags=-1 to use the old method that only depends on the sample
-        size, 12 * (nobs/100) ** (1/4).
+        Set ``lags=-1`` to use the old method that only depends on the sample
+        size, ``12 * (nobs/100) ** (1/4)``.
     trend : {"c", "ct"}, optional
         The trend component to include in the ADF test
             "c" - Include a constant (Default)
@@ -472,32 +483,32 @@ class ArchStationarityKPSS(BaseParamFitter):
 
     Attributes
     ----------
-    stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the KPSS test is rejected at `p_threshold`
+    stationary_ : bool
+        whether the series in ``fit`` is stationary according to the test
+        more precisely, whether the null of the KPSS test is accepted at ``p_threshold``
     test_statistic_ : float
-        The ADF test statistic, of running `adfuller` on `y` in `fit`
+        The KPSS test statistic, of running ``KPSS`` on ``y`` in ``fit``
     pvalue_ : float : float
-        MacKinnon's approximate p-value based on MacKinnon (1994, 2010),
-        obtained when running `adfuller` on `y` in `fit`
+        p-value obtained when running ``KPSS`` on ``y`` in ``fit``
     usedlag_ : int
         The number of lags used in the test.
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.stationarity import ArchStationarityKPSS
+    >>> from sktime.param_est.stationarity import StationarityKPSSArch
     >>>
     >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = ArchStationarityKPSS()  # doctest: +SKIP
+    >>> sty_est = StationarityKPSSArch()  # doctest: +SKIP
     >>> sty_est.fit(X)  # doctest: +SKIP
-    ArchStationarityKPSS(...)
+    StationarityKPSSArch(...)
     >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
     True
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "pd.DataFrame", "nd.array"],
-        "scitype:X": ["Series", "Panel"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
+        "scitype:X": "Series",
         "python_dependencies": "arch",
     }
 
@@ -540,7 +551,7 @@ class ArchStationarityKPSS(BaseParamFitter):
         )
         self.test_statistic_ = result.stat
         self.pvalue = result.pvalue
-        self.stationary_ = result.pvalue <= p_threshold
+        self.stationary_ = result.pvalue > p_threshold
         self.used_lag_ = result._lags
 
         return self
@@ -574,10 +585,12 @@ class ArchStationarityKPSS(BaseParamFitter):
         return [params1, params2]
 
 
-class ArchZivotAndrews(BaseParamFitter):
-    """Test for stationarity via the ZivotAndrews Unit Root Test.
+class StationarityZivotAndrews(BaseParamFitter):
+    """Test for stationarity via the Zivot-Andrews Unit Root Test.
 
-    Uses `arch.unitroot.ZivotAndrews` as a test for unit roots,
+    Direct interface to ``ZivotAndrews`` test from the `arch` package.
+
+    Uses ``arch.unitroot.ZivotAndrews`` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
 
     Also returns test results for the unit root test as fitted parameters.
@@ -585,8 +598,8 @@ class ArchZivotAndrews(BaseParamFitter):
     Parameters
     ----------
     lags : int, optional
-        The number of lags to use in the ADF regression.  If omitted or None,
-        `method` is used to automatically select the lag length with no more
+        The number of lags to use in the ADF regression. If omitted or None,
+        ``method`` is used to automatically select the lag length with no more
         than `max_lags` are included.
     trend : {"c", "t", "ct"}, optional
         The trend component to include in the test
@@ -609,33 +622,33 @@ class ArchZivotAndrews(BaseParamFitter):
 
     Attributes
     ----------
-    stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the ZivotAndrews test is rejected at
-        `p_threshold`
+    stationary_ : bool, whether the series in `fit` has a unit root
+        (with structural break)
+        more precisely, whether the null of the Zivot-Andrews test is rejected at
+        ``p_threshold``
     test_statistic_ : float
-        The ADF test statistic, of running `adfuller` on `y` in `fit`
+        The ZA test statistic, of running ``ZivotAndrews`` on ``y`` in ``fit``
     pvalue_ : float : float
-        MacKinnon's approximate p-value based on MacKinnon (1994, 2010),
-        obtained when running `adfuller` on `y` in `fit`
+        p-value obtained when running ``ZivotAndrews`` on ``y`` in ``fit``
     usedlag_ : int
         The number of lags used in the test.
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.stationarity import ArchZivotAndrews
+    >>> from sktime.param_est.stationarity import StationarityZivotAndrews
     >>>
     >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = ArchZivotAndrews()  # doctest: +SKIP
+    >>> sty_est = StationarityZivotAndrews()  # doctest: +SKIP
     >>> sty_est.fit(X)  # doctest: +SKIP
-    ArchZivotAndrews(...)
+    StationarityZivotAndrews(...)
     >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
     False
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "pd.DataFrame", "nd.array"],
-        "scitype:X": ["Series", "Panel"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
+        "scitype:X": "Series",
         "python_dependencies": "arch",
     }
 
@@ -724,10 +737,12 @@ class ArchZivotAndrews(BaseParamFitter):
         return [params1, params2]
 
 
-class ArchVarianceRatio(BaseParamFitter):
-    """Test for stationarity via the VarianceRatio Unit Root Test.
+class StationarityVarianceRatio(BaseParamFitter):
+    """Test for stationarity via the variance ratio test for random walks.
 
-    Uses `arch.unitroot.VarianceRatio` as a test for unit roots,
+    Direct interface to ``VarianceRatio`` test from the `arch` package.
+
+    Uses ``arch.unitroot.VarianceRatio`` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
 
     Also returns test results for the unit root test as fitted parameters.
@@ -754,33 +769,33 @@ class ArchVarianceRatio(BaseParamFitter):
 
     Attributes
     ----------
-    stationary_ : bool, whether the series in `fit` is stationary according to the test
-        more precisely, whether the null of the VarianceRatio test is rejected at
-        `p_threshold`
+    stationary_ : bool
+        whether the series in ``fit`` is stationary according to the test
+        more precisely, whether the null of the variance ratio test is accepted at
+        ``p_threshold``
     test_statistic_ : float
-        The ADF test statistic, of running `adfuller` on `y` in `fit`
+        The VR test statistic, of running ``VarianceRatio`` on ``y`` in ``fit``
     pvalue_ : float : float
-        MacKinnon's approximate p-value based on MacKinnon (1994, 2010),
-        obtained when running `adfuller` on `y` in `fit`
+        p-value obtained when running ``VarianceRatio`` on ``y`` in ``fit``
     usedlag_ : int
         The number of lags used in the test.
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.stationarity import ArchVarianceRatio
+    >>> from sktime.param_est.stationarity import StationarityVarianceRatio
     >>>
     >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = ArchVarianceRatio()  # doctest: +SKIP
+    >>> sty_est = StationarityVarianceRatio()  # doctest: +SKIP
     >>> sty_est.fit(X)  # doctest: +SKIP
-    ArchVarianceRatio(...)
+    StationarityVarianceRatio(...)
     >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
     True
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "pd.DataFrame", "nd.array"],
-        "scitype:X": ["Series", "Panel"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
+        "scitype:X": "Series",
         "python_dependencies": "arch",
     }
 
@@ -832,7 +847,7 @@ class ArchVarianceRatio(BaseParamFitter):
         )
         self.test_statistic_ = result.stat
         self.pvalue = result.pvalue
-        self.stationary_ = result.pvalue <= p_threshold
+        self.stationary_ = result.pvalue > p_threshold
         self.used_lag_ = result._lags
 
         return self
