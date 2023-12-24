@@ -63,7 +63,7 @@ Time series classification
   renamed to ``n_epochs``. ``num_epochs`` can be used until ``sktime`` 0.25.last,
   but will be removed in ``sktime`` 0.26.0. A deprecation warning is raised if
   ``num_epochs`` is used.
-  
+
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 
