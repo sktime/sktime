@@ -224,6 +224,7 @@ Documentation
 * [DOC] Remove extra parameter in docstring with incorrect definition (:pr:`5617`) :user:`wayneadams`
 * [DOC] fix and complete ``YfromX`` docstring (:pr:`5593`) :user:`fkiraly`
 * [DOC] fix typo in ``AA_datatypes_and_datasets.ipynb`` panel data loading example (:pr:`5594`) :user:`fkiraly`
+* [DOC] forecasting ``evaluate`` utility - improved algorithm description in docstring #5603  (:pr:`5603`) :user:`adamkells`
 * [DOC] add explanation about fit/transform instance linking behaviour of rocket transformers (:pr:`5621`) :user:`fkiraly`
 * [DOC] Adjust ``FunctionTransformer``'s docstring (:pr:`5634`) :user:`tpvasconcelos`
 * [DOC] fixed typo in ``pytest.mark.skipif`` (:pr:`5640`) :user:`yarnabrina`
@@ -231,6 +232,7 @@ Documentation
 Contributors
 ~~~~~~~~~~~~
 
+:user:`adamkells`,
 :user:`aeyazadil`,
 :user:`Alex-JG3`,
 :user:`benHeid`,
