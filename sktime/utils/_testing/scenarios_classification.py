@@ -71,12 +71,10 @@ class ClassifierTestScenario(TestScenario, BaseObject):
             else:
                 return obj.get_tag(tag_name)
 
-        regr_or_classf = (BaseClassifier, BaseEarlyClassifier, BaseRegressor)
-
         # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
         #   BaseRegressor. currently we test both classifiers and regressors using these
         #   scenarios
-        if not isinstance(obj, regr_or_classf) and not issubclass(obj, regr_or_classf):
+        if not obj.get_tag("object_type") in ("classifier", "early_classifier", "regressor"):
             return False
 
         # if X is multivariate, applicable only if can handle multivariate
