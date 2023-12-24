@@ -403,9 +403,7 @@ class Catch22(BaseTransformer):
         return c22
 
     def _transform_single_feature(self, X, feature, case_id=None):
-        if isinstance(feature, (int, np.integer)) or isinstance(
-            feature, (float, float)
-        ):
+        if isinstance(feature, (int, np.integer)) or isinstance(feature, float):
             if feature > 21 or feature < 0:
                 raise ValueError("Invalid catch22 feature ID")
         elif isinstance(feature, str):

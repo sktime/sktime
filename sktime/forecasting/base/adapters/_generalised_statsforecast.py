@@ -504,7 +504,7 @@ class StatsForecastBackAdapter:
             self.prediction_intervals = ConformalIntervals(h=h)
 
         level = sorted(level)
-        coverage = [round(1 - (_l / 100), 2) for _l in level]
+        coverage = [round(_l / 100, 2) for _l in level]
 
         pred_int = self.estimator.predict_interval(
             fh=range(1, h + 1), X=X, coverage=coverage
@@ -532,7 +532,7 @@ class StatsForecastBackAdapter:
             return {"fitted": fitted}
 
         level = sorted(level)
-        coverage = [round(1 - (_l / 100), 2) for _l in level]
+        coverage = [round(_l / 100, 2) for _l in level]
         pred_int = self.estimator.predict_interval(
             fh=self.estimator._y.index, X=self.estimator._X, coverage=coverage
         )
