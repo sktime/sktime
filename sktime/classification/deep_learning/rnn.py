@@ -70,6 +70,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         optimizer=None,
         n_epochs=100,
     ):
+        # todo: 0.26.0 - remove this, replace by
+        # self._n_epochs = n_epochs
         # Deprecated Parameter Handling
         if num_epochs is not None:
             warn(
@@ -82,7 +84,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             self._n_epochs = num_epochs
         else:
             self._n_epochs = n_epochs
-        self.num_epochs = self._n_epochs
+        self.num_epochs = num_epochs
+        # end remove
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -96,7 +99,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.optimizer = optimizer
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
-        self.n_epochs = self._n_epochs
+        self.n_epochs = n_epochs
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -206,7 +209,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             X,
             y_onehot,
             batch_size=self.batch_size,
-            epochs=self.n_epochs,
+            epochs=self._n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks_,
         )
