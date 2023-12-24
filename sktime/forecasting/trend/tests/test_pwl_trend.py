@@ -13,14 +13,14 @@ from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.trend import (
-    PiecewiseLinearTrendForecaster,
+    ProphetPiecewiseLinearTrendForecaster,
     PolynomialTrendForecaster,
 )
 from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(PiecewiseLinearTrendForecaster),
+    not run_test_for_class(ProphetPiecewiseLinearTrendForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_for_changes_in_original():
@@ -53,14 +53,14 @@ def test_for_changes_in_original():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(PiecewiseLinearTrendForecaster),
+    not run_test_for_class(ProphetPiecewiseLinearTrendForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_pred_errors_against_linear():
     """Check prediction performance on airline dataset.
 
     For a small value of changepoint_prior_scale like 0.001 the
-    PiecewiseLinearTrendForecaster must return a single straigth trendline.
+    ProphetPiecewiseLinearTrendForecaster must return a single straigth trendline.
 
     Raises
     ------
@@ -69,7 +69,7 @@ def test_pred_errors_against_linear():
     y = load_airline().to_timestamp(freq="M")
     fh = ForecastingHorizon(y.index, is_relative=False)
 
-    pwl = PiecewiseLinearTrendForecaster(changepoint_prior_scale=0.001)
+    pwl = ProphetPiecewiseLinearTrendForecaster(changepoint_prior_scale=0.001)
     y_pred_pwl = pwl.fit(y).predict(fh)
 
     linear = PolynomialTrendForecaster(degree=1)
@@ -79,13 +79,13 @@ def test_pred_errors_against_linear():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(PiecewiseLinearTrendForecaster),
+    not run_test_for_class(ProphetPiecewiseLinearTrendForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_pred_with_explicit_changepoints():
     """Check functionality with explicit changepoints.
 
-    When changepoints are passed to the PiecewiseLinearTrendForecaster
+    When changepoints are passed to the ProphetPiecewiseLinearTrendForecaster
     the prediction has to be different then the automatic detection because the
     changepoints are forcefully added.
 
@@ -97,8 +97,8 @@ def test_pred_with_explicit_changepoints():
     y_train, y_test = temporal_train_test_split(y)
 
     fh = ForecastingHorizon(y_test.index, is_relative=False)
-    a = PiecewiseLinearTrendForecaster(changepoints=["1953-05-31"])
-    b = PiecewiseLinearTrendForecaster()
+    a = ProphetPiecewiseLinearTrendForecaster(changepoints=["1953-05-31"])
+    b = ProphetPiecewiseLinearTrendForecaster()
 
     slope_a = a.fit(y_train).predict(fh).diff().mean()
     slope_b = b.fit(y_train).predict(fh).diff().mean()
@@ -107,7 +107,7 @@ def test_pred_with_explicit_changepoints():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(PiecewiseLinearTrendForecaster),
+    not run_test_for_class(ProphetPiecewiseLinearTrendForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("indextype", ["range", "period"])
@@ -120,7 +120,7 @@ def test_pwl_trend_nonnative_index(indextype):
 
     fh = [1, 2]
 
-    f = PiecewiseLinearTrendForecaster()
+    f = ProphetPiecewiseLinearTrendForecaster()
     f.fit(y)
     y_pred = f.predict(fh=fh)
 

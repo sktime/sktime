@@ -10,13 +10,20 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
 
 
-class PiecewiseLinearTrendForecaster(_ProphetAdapter):
+class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
     """
-    Forecast time series data with a piecwise linear trend.
+    Forecast time series data with a piecwise linear trend, fitted via prophet.
 
     The forecaster uses Facebook's prophet algorithm [1]_ and extracts the piecewise
     linear trend from it. Only hyper-parameters relevant for the trend modelling are
     exposed via the constructor.
+
+    Seasonalities are set to additive and "auto" detection in prophet,
+    which means that yearly, weekly and daily seasonality are automatically detected,
+    and included in the model if present, using prophet's default settings.
+
+    For more granular control of components or seasonality, use
+    ``sktime.forecasting.fbprophet.Prophet`` directly.
 
     Data can be passed in one of the sktime compatible formats,
     naming a column `ds` such as in the prophet package is not necessary.
@@ -52,15 +59,15 @@ class PiecewiseLinearTrendForecaster(_ProphetAdapter):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.trend import PiecewiseLinearTrendForecaster
+    >>> from sktime.forecasting.trend import ProphetPiecewiseLinearTrendForecaster
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y =load_airline().to_timestamp(freq='M')
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = ForecastingHorizon(y.index, is_relative=False)
-    >>> forecaster =  PiecewiseLinearTrendForecaster() # doctest: +SKIP
+    >>> forecaster =  ProphetPiecewiseLinearTrendForecaster() # doctest: +SKIP
     >>> forecaster.fit(y_train) # doctest: +SKIP
-    PiecewiseLinearTrendForecaster(...)
+    ProphetPiecewiseLinearTrendForecaster(...)
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
