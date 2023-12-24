@@ -150,6 +150,7 @@ Trend forecasters
     PolynomialTrendForecaster
     STLForecaster
     CurveFitForecaster
+    ProphetPiecewiseLinearTrendForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
