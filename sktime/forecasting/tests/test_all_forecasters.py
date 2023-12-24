@@ -13,6 +13,7 @@ from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
     TEST_FHS,
@@ -383,7 +384,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         found = pred_ints.columns.to_flat_index()
         msg = (
-            "columns of returned prediction interval DataFrame do not"
+            "columns of returned prediction interval DataFrame do not "
             f"match up with expected columns. Expected: {expected},"
             f"found: {found}"
         )
@@ -876,3 +877,24 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 assert np.all(y_pred_q.index == X_test.index)
             else:
                 assert set(X_test.index).issubset(y_pred_q.index)
+
+    def test_fit_predict(self, estimator_instance, n_columns):
+        """Check fit_predict method against interface expectations.
+
+        Does not check directly against fit and predict, as either may
+        be stochastic and not return the same result each time.
+        """
+        y = _make_series(n_columns=n_columns)
+        X = _make_series(n_columns=3)
+
+        fh = ForecastingHorizon([1, 2, 3])
+
+        y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
+
+        y_pred = estimator_instance.fit_predict(
+            y=y_train, X=X_train, fh=fh, X_pred=X_test
+        )
+
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_train)
