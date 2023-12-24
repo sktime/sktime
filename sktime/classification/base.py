@@ -885,12 +885,21 @@ class BaseClassifier(BaseEstimator, ABC):
         -------
         y : np.ndarray or pd.DataFrame
         """
+        # for consistency with legacy behaviour:
+        # output is coerced to numpy1D in case of univariate output
+        if self._is_vectorized:
+            output_mtype = self._y_type_in_fit
+            converter_store = self._converter_store_y
+        else:
+            output_mtype = "numpy1D"
+            converter_store = None
+
         y = convert(
             y,
             from_type=self.get_tag("y_inner_mtype"),
-            to_type=self._y_type_in_fit,
+            to_type=output_mtype,
             as_scitype="Table",
-            store=self._converter_store_y,
+            store=converter_store,
             store_behaviour="freeze",
         )
         return y
