@@ -13,8 +13,8 @@ from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.trend import (
-    ProphetPiecewiseLinearTrendForecaster,
     PolynomialTrendForecaster,
+    ProphetPiecewiseLinearTrendForecaster,
 )
 from sktime.tests.test_switch import run_test_for_class
 
