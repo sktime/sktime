@@ -70,6 +70,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         optimizer=None,
         n_epochs=100,
     ):
+        _check_dl_dependencies(severity="error")
+        super().__init__()
         # todo: 0.26.0 - remove this, replace by
         # self._n_epochs = n_epochs
         # Deprecated Parameter Handling
