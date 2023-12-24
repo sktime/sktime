@@ -216,7 +216,10 @@ def _has_capability(est, method: str) -> bool:
             return True
         return get_tag(est, "capability:pred_int", False)
     # skip transform for forecasters that have it - pipelines
-    if method == "transform" and est.get_tag("object_type") in ("classifier", "forecaster"):
+    if method == "transform" and est.get_tag("object_type") in (
+        "classifier",
+        "forecaster",
+    ):
         return False
     if method == "predict" and est.get_tag("object_type") == "transformer":
         return False
