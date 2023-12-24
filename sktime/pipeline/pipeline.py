@@ -183,6 +183,17 @@ class Pipeline(BaseEstimator):
         self.steps = steps
         self._steps = steps if steps is not None else []
 
+        object_types = [step["skobject"].get_tag("object_type") for step in self._steps]
+        if len(set(object_types)) == 1:
+            self.set_tags(**{"object_type": object_types[0]})
+        elif len(set(object_types) - {"transformer"}) == 1:
+            self.set_tags(
+                **{"object_type": list(set(object_types) - {"transformer"})[0]}
+            )
+        else:
+            # Mixture of different object types
+            pass
+
         for step_information in self._steps:
             if "method" not in step_information:
                 step_information["method"] = None
@@ -358,7 +369,7 @@ class Pipeline(BaseEstimator):
             self._last_step_name = name
         self._assembled = True
 
-    def fit(self, X, y=None, **kwargs):
+    def fit(self, X=None, y=None, **kwargs):
         """Fit graph pipeline to training data.
 
         Parameters
@@ -377,6 +388,8 @@ class Pipeline(BaseEstimator):
         """
         self._assembled = False
         self._initiate_call(X, y, kwargs)
+
+        assert (X is not None) or (y is not None), "Either X or y must be provided."
         self._y = y
         self._X = X
 
@@ -620,3 +633,72 @@ class Pipeline(BaseEstimator):
             params={},
         )
         self.assembled_steps[edg] = step
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
+
+        return [
+            {
+                "steps": [
+                    {
+                        "skobject": ExponentTransformer(),
+                        "name": "exp",
+                        "edges": {"X": "X"},
+                    },
+                    {
+                        "skobject": BoxCoxTransformer(),
+                        "name": "box",
+                        "edges": {"X": "exp"},
+                    },
+                ]
+            },
+            {
+                "steps": [
+                    {
+                        "skobject": ExponentTransformer(),
+                        "name": "exp",
+                        "edges": {"X": "X"},
+                    },
+                    {
+                        "skobject": KNeighborsTimeSeriesClassifier(),
+                        "name": "knnclassifier",
+                        "edges": {"X": "exp", "y": "y"},
+                    },
+                ]
+            },
+            {
+                "steps": [
+                    {
+                        "skobject": ExponentTransformer(),
+                        "name": "exp",
+                        "edges": {"X": "X"},
+                    },
+                    {
+                        "skobject": NaiveForecaster(),
+                        "name": "SARIMAX",
+                        "edges": {"X": "exp", "y": "y"},
+                    },
+                ]
+            },
+        ]
