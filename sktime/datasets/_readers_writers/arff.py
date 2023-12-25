@@ -202,7 +202,7 @@ def write_tabular_transformation_to_arff(
     dirt = f"{str(path)}/{str(problem_name)}-{type(transformation).__name__}/"
     try:
         os.makedirs(dirt)
-    except os.error:
+    except OSError:
         pass  # raises os.error if path already exists
     # create arff file in the path
     file = open(

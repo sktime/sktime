@@ -122,7 +122,7 @@ jobs:
       - name: update local shallow clone
         run: git fetch --depth 1
       - name: create python virtual environment
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: install core, test and all soft dependencies

@@ -774,3 +774,14 @@ def test_fh_expected_pred():
         [("a", 3, 6), ("a", 3, 7), ("b", 5, 7), ("a", 3, 8), ("b", 5, 8), ("b", 5, 9)]
     )
     assert y_pred_idx.equals(y_pred_idx_expected)
+
+
+def test_tz_preserved():
+    """Test that time zone information is preserved in to_absolute.
+
+    Failure case in issue #5584.
+    """
+    cutoff = pd.Timestamp("2020-01-01", tz="utc")
+    fh_absolute = ForecastingHorizon(range(100), freq="h").to_absolute(cutoff)
+
+    assert fh_absolute[0].tz == cutoff.tz
