@@ -154,7 +154,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, e.g.,
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
             pd-multiindex: pd.DataFrame with columns = variables,
             index = pd.MultiIndex with first level = instance indices,
             second level = time indices
@@ -163,11 +163,13 @@ class BaseClassifier(BaseEstimator, ABC):
             or of any other supported Panel mtype
             for list of mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances]
-            or 2D np.array of int, of shape [n_instances, n_dimensions]
+        y : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
             class labels for fitting
             0-th indices correspond to instance indices in X
             1-st indices (if applicable) correspond to multioutput vector indices in X
+            supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
 
         Returns
         -------
@@ -247,7 +249,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, e.g.,
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
             pd-multiindex: pd.DataFrame with columns = variables,
             index = pd.MultiIndex with first level = instance indices,
             second level = time indices
@@ -259,11 +261,14 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        y_pred : 1D np.array of int, of shape [n_instances]
+        y_pred : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
             predicted class labels
-            indices correspond to instance indices in X
-            or pd.DataFrame with each column a dimension/target, containing class
-            labels for each instance in X
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+            1D np.npdarray, if y univariate (one dimension)
+            otherwise, same type as y passed in fit
         """
         self.check_is_fitted()
 
@@ -288,7 +293,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, e.g.,
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
             pd-multiindex: pd.DataFrame with columns = variables,
             index = pd.MultiIndex with first level = instance indices,
             second level = time indices
@@ -300,11 +305,11 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        y_pred : 1D np.array of int, of shape [n_instances]
-            predicted predicted class
-            probabilities correspond to instance indices in X
-            or pd.DataFrame with each column a dimension/target, containing predicted
-            class probabilities for each instance in X
+        y_pred : 2D np.array of int, of shape [n_instances, n_classes]
+            predicted class label probabilities
+            0-th indices correspond to instance indices in X
+            1-st indices correspond to class index, in same order as in self.classes_
+            entries are predictive class probabilities, summing to 1
         """
         self.check_is_fitted()
 
@@ -338,7 +343,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, e.g.,
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
             pd-multiindex: pd.DataFrame with columns = variables,
             index = pd.MultiIndex with first level = instance indices,
             second level = time indices
@@ -347,11 +352,13 @@ class BaseClassifier(BaseEstimator, ABC):
             or of any other supported Panel mtype
             for list of mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances]
-            or 2D np.array of int, of shape [n_instances, n_dimensions]
+        y : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
             class labels for fitting
             0-th indices correspond to instance indices in X
             1-st indices (if applicable) correspond to multioutput vector indices in X
+            supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
         cv : None, int, or sklearn cross-validation object, optional, default=None
             None : predictions are in-sample, equivalent to fit(X, y).predict(X)
             cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
@@ -369,11 +376,14 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        y_pred : 1D np.array of int, of shape [n_instances]
+        y_pred : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
             predicted class labels
-            indices correspond to instance indices in X
-            or pd.DataFrame with each column a dimension/target, containing class
-            labels for each instance in X
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+            1D np.npdarray, if y univariate (one dimension)
+            otherwise, same type as y passed in fit
         """
         return self._fit_predict_boilerplate(
             X=X, y=y, cv=cv, change_state=change_state, method="predict"
@@ -508,7 +518,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, e.g.,
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
             pd-multiindex: pd.DataFrame with columns = variables,
             index = pd.MultiIndex with first level = instance indices,
             second level = time indices
@@ -517,11 +527,13 @@ class BaseClassifier(BaseEstimator, ABC):
             or of any other supported Panel mtype
             for list of mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances]
-            or 2D np.array of int, of shape [n_instances, n_dimensions]
+        y : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
             class labels for fitting
             0-th indices correspond to instance indices in X
             1-st indices (if applicable) correspond to multioutput vector indices in X
+            supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
         cv : None, int, or sklearn cross-validation object, optional, default=None
             None : predictions are in-sample, equivalent to fit(X, y).predict(X)
             cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
@@ -537,10 +549,11 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        y_pred : 1D np.array of int, of shape [n_instances]
-            predicted predicted class probabilities correspond to instance indices in X
-            or pd.DataFrame with each column a dimension/target, containing predicted
-            class probabilities for each instance in X
+        y_pred : 2D np.array of int, of shape [n_instances, n_classes]
+            predicted class label probabilities
+            0-th indices correspond to instance indices in X
+            1-st indices correspond to class index, in same order as in self.classes_
+            entries are predictive class probabilities, summing to 1
         """
         return self._fit_predict_boilerplate(
             X=X, y=y, cv=cv, change_state=change_state, method="predict_proba"
@@ -572,12 +585,14 @@ class BaseClassifier(BaseEstimator, ABC):
             or of any other supported Panel mtype
             for list of mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances]
-            or 2D np.array of int, of shape [n_instances, n_dimensions]
+        y : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
             class labels for fitting
             0-th indices correspond to instance indices in X
             1-st indices (if applicable) correspond to multioutput vector indices in X
-
+            supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
+    
         Returns
         -------
         float, accuracy score of predict(X) vs y
@@ -629,8 +644,9 @@ class BaseClassifier(BaseEstimator, ABC):
             second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances]
-            or 2D np.array of int, of shape [n_instances, n_dimensions]
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
             class labels for fitting
             if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
             if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
@@ -666,8 +682,9 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        y : 1D np.array of int, of shape [n_instances]
-            or 2D np.array of int, of shape [n_instances, n_dimensions]
+        y : should be of mtype in self.get_tag("y_inner_mtype")
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
             predicted class labels
             indices correspond to instance indices in X
             if self.get_tag("capaility:multioutput") = False, should be 1D
