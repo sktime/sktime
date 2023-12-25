@@ -23,24 +23,18 @@ __all__ = [
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
-from abc import ABC, abstractmethod
 
 import numpy as np
-import pandas as pd
 
 from sktime.base import BasePanelMixin
 from sktime.datatypes import (
-    MTYPE_LIST_PANEL,
-    MTYPE_LIST_TABLE,
     VectorizedDF,
-    check_is_error_msg,
     check_is_scitype,
     convert,
 )
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
-from sktime.utils.warnings import warn
 
 
 class BaseClassifier(BasePanelMixin):
