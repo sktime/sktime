@@ -633,6 +633,9 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Abstract method, must be implemented.
 
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -653,13 +656,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        self :
-            Reference to self.
-
-        Notes
-        -----
-        Changes state by creating a fitted model that updates attributes
-        ending in "_" and sets is_fitted flag to True.
+        self : Reference to self.
         """
         ...
 
