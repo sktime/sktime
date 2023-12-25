@@ -65,10 +65,7 @@ class CNNClassifier(BaseDeepClassifier):
     CNNClassifier(...)
     """
 
-    _tags = {
-        "python_dependencies": "tensorflow",
-        "capability:multioutput": True,
-    }
+    _tags = {"python_dependencies": "tensorflow"}
 
     def __init__(
         self,
