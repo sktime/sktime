@@ -14,6 +14,7 @@ __all__ = [
 from inspect import isclass
 
 from sktime.base import BaseObject
+from sktime.registry import scitype
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
@@ -71,7 +72,7 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
         #   BaseRegressor. currently we test both classifiers and regressors using these
         #   scenarios
-        if not obj._tags["object_type"] in (
+        if not scitype(obj) in (
             "classifier",
             "early_classifier",
             "regressor",
