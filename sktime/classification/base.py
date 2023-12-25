@@ -180,7 +180,9 @@ class BaseClassifier(BaseEstimator, ABC):
         start = int(round(time.time() * 1000))
 
         # check and convert y for multioutput vectorization
-        y = self._check_y(y)
+        y, y_metadata = self._check_y(y)
+        self._y_metadata = y_metadata
+        self._is_vectorized = isinstance(y, VectorizedDF)
 
         if self._is_vectorized:
             self._vectorize("fit", X=X, y=y)
@@ -823,6 +825,8 @@ class BaseClassifier(BaseEstimator, ABC):
         -------
         y : object of sktime compatible time series type
             can be Series, Panel, Hierarchical
+        y_metadata : dict
+            metadata of y, retured by check_is_scitype
         """
         if y is None:
             return None
@@ -845,13 +849,10 @@ class BaseClassifier(BaseEstimator, ABC):
                 y_msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
             )
 
-        y_nvar = y_metadata["is_univariate"]
+        y_uni = y_metadata["is_univariate"]
         y_mtype = y_metadata["mtype"]
 
-        requires_vectorization = not capa_multioutput and y_nvar >= 2
-
-        self._y_mtype_in_fit = y_mtype
-        self._is_vectorized = requires_vectorization
+        requires_vectorization = not capa_multioutput and not y_uni
 
         if requires_vectorization:
             y_df = convert(
@@ -862,7 +863,7 @@ class BaseClassifier(BaseEstimator, ABC):
                 store=self._converter_store_y,
             )
             y_vec = VectorizedDF([y_df], iterate_cols=True)
-            return y_vec
+            return y_vec, y_metadata
 
         y_inner = convert(
             y,
@@ -872,7 +873,7 @@ class BaseClassifier(BaseEstimator, ABC):
             store=self._converter_store_y,
         )
 
-        return y_inner
+        return y_inner, y_metadata
 
     def _convert_output_y(self, y):
         """Convert output y to original format.
@@ -887,8 +888,8 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         # for consistency with legacy behaviour:
         # output is coerced to numpy1D in case of univariate output
-        if self._is_vectorized:
-            output_mtype = self._y_mtype_in_fit
+        if not self._y_metadata["is_univariate"]:
+            output_mtype = self._y_metadata["mtype"]
             converter_store = self._converter_store_y
         else:
             output_mtype = "numpy1D"
