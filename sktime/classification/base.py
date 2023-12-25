@@ -27,11 +27,7 @@ import time
 import numpy as np
 
 from sktime.base import BasePanelMixin
-from sktime.datatypes import (
-    VectorizedDF,
-    check_is_scitype,
-    convert,
-)
+from sktime.datatypes import VectorizedDF, check_is_scitype, convert
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
