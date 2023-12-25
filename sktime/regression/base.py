@@ -90,6 +90,7 @@ class BaseRegressor(BaseEstimator, ABC):
         self._estimator_type = "regressor"
         self._is_vectorized = False
         self._is_timed = False
+        self._converter_store_y = {}
 
         super().__init__()
 
