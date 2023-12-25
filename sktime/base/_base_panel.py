@@ -116,7 +116,7 @@ class BasePanelMixin(BaseEstimator):
         unequal = not X_metadata["is_equal_length"]
         X_mtype = X_metadata["mtype"]
         # Check this estimator can handle characteristics
-        self._check_capabilities(missing, multivariate, unequal)
+        self._check_capabilities(X_metadata)
 
         # handle single class case
         if len(self._class_dictionary) == 1:
