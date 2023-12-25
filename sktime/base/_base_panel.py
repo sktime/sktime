@@ -111,9 +111,6 @@ class BasePanelMixin(BaseEstimator):
         X_metadata = self._check_input(
             X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
         )
-        missing = X_metadata["has_nans"]
-        multivariate = not X_metadata["is_univariate"]
-        unequal = not X_metadata["is_equal_length"]
         X_mtype = X_metadata["mtype"]
         # Check this estimator can handle characteristics
         self._check_capabilities(X_metadata)
