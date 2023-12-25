@@ -324,7 +324,7 @@ class BasePanelMixin(BaseEstimator):
 
         y_inner = convert(
             y,
-            from_type=y_inner_mtype,
+            from_type=y_mtype,
             to_type=y_inner_mtype,
             as_scitype="Table",
             store=self._converter_store_y,
