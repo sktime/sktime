@@ -193,11 +193,7 @@ class BaseRegressor(BasePanelMixin):
             X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
         )
         self._X_metadata = X_metadata
-        missing = X_metadata["has_nans"]
-        multivariate = not X_metadata["is_univariate"]
-        unequal = not X_metadata["is_equal_length"]
         X_mtype = X_metadata["mtype"]
-        self._X_metadata = X_metadata
 
         # Check this regressor can handle characteristics
         self._check_capabilities(X_metadata)
