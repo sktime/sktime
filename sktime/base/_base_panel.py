@@ -11,9 +11,6 @@ __author__ = ["fkiraly"]
 __all__ = ["BasePanelMixin"]
 
 
-import time
-from abc import ABC, abstractmethod
-
 import numpy as np
 import pandas as pd
 
