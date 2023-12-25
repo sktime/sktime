@@ -132,21 +132,31 @@ class BaseRegressor(BasePanelMixin):
     def fit(self, X, y):
         """Fit time series regressor to training data.
 
+        State change:
+            Changes state to "fitted".
+
+        Writes to self:
+            Sets self.is_fitted to True.
+            Sets fitted model attributes ending in "_".
+
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 2D np.array of int, of shape [n_instances, n_dimensions] - regression labels
-            for fitting indices correspond to instance indices in X
-            or 1D np.array of int, of shape [n_instances] - regression labels for
-            fitting indices correspond to instance indices in X
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+            supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
 
         Returns
         -------
@@ -212,22 +222,26 @@ class BaseRegressor(BasePanelMixin):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : 2D np.array of int, of shape [n_instances, n_dimensions] - regression labels
-            for fitting indices correspond to instance indices in X
-            or 1D np.array of int, of shape [n_instances] - regression labels for
-            fitting indices correspond to instance indices in X
+        y_pred : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            predicted class labels
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+            1D np.npdarray, if y univariate (one dimension)
+            otherwise, same type as y passed in fit
         """
         self.check_is_fitted()
 
@@ -248,15 +262,15 @@ class BaseRegressor(BasePanelMixin):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
         y : 2D np.array of int, of shape [n_instances, n_dimensions] - regression labels
             for fitting indices correspond to instance indices in X
             or 1D np.array of int, of shape [n_instances] - regression labels for
@@ -286,13 +300,21 @@ class BaseRegressor(BasePanelMixin):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            pd.DataFrame with each column a dimension, each cell a pd.Series
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of float, of shape [n_instances] - regression labels for fitting
-            indices correspond to instance indices in X
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
+            if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
 
         Returns
         -------
