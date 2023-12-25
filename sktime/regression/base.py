@@ -191,6 +191,12 @@ class BaseRegressor(BasePanelMixin):
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
         X, y = self._internal_convert(X, y)
+
+        # y float coercion
+        if y is not None and isinstance(y, np.ndarray):
+            y = y.astype("float")
+
+        # input checks
         X_metadata = self._check_input(
             X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
         )
