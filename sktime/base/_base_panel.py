@@ -54,7 +54,7 @@ class BasePanelMixin(BaseEstimator):
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over methods of BaseClassifier, BaseRegressor.
 
-        Uses classifiers_ attribute to store one estimator per loop index.
+        Stores one estimator per loop index.
         """
         y = kwargs.get("y")
         X = kwargs.get("X")
@@ -72,6 +72,8 @@ class BasePanelMixin(BaseEstimator):
                 X=X,
                 rowname_default=self.EST_TYPE_PLURAL,
                 colname_default=self.EST_TYPE_PLURAL,
+                backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
             )
             setattr(self, self.VECTORIZATION_ATTR, ests_fit)
             return self
@@ -84,6 +86,8 @@ class BasePanelMixin(BaseEstimator):
                 X=X,
                 args={"y": y} if y is not None else {},
                 **kwargs,  # contains X inside
+                backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
             )
             y_pred = pd.DataFrame(
                 {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}

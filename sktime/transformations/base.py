@@ -138,7 +138,15 @@ class BaseTransformer(BaseEstimator):
     }
 
     # default config values
+    # see set_config documentation for details
     _config = {
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
+        #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend
         "input_conversion": "on",
         # controls input checks and conversions,
         #  for _fit, _transform, _inverse_transform, _update

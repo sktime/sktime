@@ -99,6 +99,18 @@ class BaseForecaster(BaseEstimator):
         "python_dependencies": None,  # str or list of str, package soft dependencies
     }
 
+    # configs and default config values
+    # see set_config documentation for details
+    _config = {
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
+        #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend
+    }
+
     def __init__(self):
         self._is_fitted = False
 
