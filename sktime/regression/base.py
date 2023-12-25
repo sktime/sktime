@@ -75,6 +75,7 @@ class BaseRegressor(BasePanelMixin):
     # used in error messages
     TASK = "regression"  # e.g., classification, regression
     EST_TYPE = "regressor"  # e.g., classifier, regressor
+    EST_TYPE_PLURAL = "regressors"  # e.g., classifiers, regressors
 
     def __init__(self):
         self.fit_time_ = 0

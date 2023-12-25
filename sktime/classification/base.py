@@ -81,6 +81,7 @@ class BaseClassifier(BasePanelMixin):
     # used in error messages
     TASK = "classification"  # e.g., classification, regression
     EST_TYPE = "classifier"  # e.g., classifier, regressor
+    EST_TYPE_PLURAL = "classifiers"  # e.g., classifiers, regressors
 
     def __init__(self):
         # reserved attributes written to in fit

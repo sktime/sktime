@@ -49,6 +49,7 @@ class BasePanelMixin(BaseEstimator):
     # used in error messages
     TASK = "panel data tasks"  # e.g., classification, regression
     EST_TYPE = "estimator"  # e.g., classifier, regressor
+    EST_TYPE_PLURAL = "estimators"  # e.g., classifiers, regressors
 
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over methods of BaseClassifier, BaseRegressor.
@@ -69,6 +70,8 @@ class BasePanelMixin(BaseEstimator):
                 method=methodname,
                 args={"y": y},
                 X=X,
+                rowname_default=self.EST_TYPE_PLURAL,
+                colname_default=self.EST_TYPE_PLURAL,
             )
             setattr(self, self.VECTORIZATION_ATTR, ests_fit)
             return self
@@ -380,7 +383,7 @@ class BasePanelMixin(BaseEstimator):
         )
         # raise informative error message if X is in wrong format
         allowed_msg = (
-            f"Allowed scitypes for {self.EST_TYPE} are Panel mtypes, "
+            f"Allowed scitypes for {self.EST_TYPE_PLURAL} are Panel mtypes, "
             f"for instance a pandas.DataFrame with MultiIndex and last(-1) "
             f"level an sktime compatible time index. "
             f"Allowed compatible mtype format specifications are: {MTYPE_LIST_PANEL} ."
