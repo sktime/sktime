@@ -25,7 +25,6 @@ __author__ = ["mloning", "fkiraly"]
 import time
 
 import numpy as np
-import pandas as pd
 
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF
