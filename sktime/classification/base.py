@@ -31,9 +31,11 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     MTYPE_LIST_PANEL,
+    MTYPE_LIST_TABLE,
+    VectorizedDF,
     check_is_error_msg,
     check_is_scitype,
-    convert_to,
+    convert,
 )
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
@@ -60,7 +62,9 @@ class BaseClassifier(BaseEstimator, ABC):
     _tags = {
         "object_type": "classifier",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        "y_inner_mtype": "numpy1D",  # which type do _fit/_predict, support for y?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
+        "capability:multioutput": False,  # whether classifier supports multioutput
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -93,6 +97,8 @@ class BaseClassifier(BaseEstimator, ABC):
         # required for compatibility with some sklearn interfaces
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
+        self._is_vectorized = False
+        self._converter_store_y = {}
 
         super().__init__()
         _check_estimator_deps(self)
@@ -136,35 +142,60 @@ class BaseClassifier(BaseEstimator, ABC):
             return NotImplemented
 
     def fit(self, X, y):
-        """Fit time series classifier to training data.
+        """
+        Fit time series classifier to training data.
+
+        State change:
+            Changes state to "fitted".
+
+        Writes to self:
+            Sets self.is_fitted to True.
+            Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+            supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
 
         Returns
         -------
         self : Reference to self.
-
-        Notes
-        -----
-        Changes state by creating a fitted model that updates attributes
-        ending in "_" and sets is_fitted flag to True.
         """
         # reset estimator at the start of fit
         self.reset()
 
+        # fit timer start
         start = int(round(time.time() * 1000))
+
+        # check and convert y for multioutput vectorization
+        y, y_metadata = self._check_y(y)
+        self._y_metadata = y_metadata
+        self._is_vectorized = isinstance(y, VectorizedDF)
+
+        if self._is_vectorized:
+            self._vectorize("fit", X=X, y=y)
+            # fit timer end
+            self.fit_time_ = int(round(time.time() * 1000)) - start
+            # this should happen last: fitted state is set to True
+            self._is_fitted = True
+            return self
+
+        # no vectorization needed, proceed with normal fit
+
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
         X, y = self._internal_convert(X, y)
@@ -174,6 +205,7 @@ class BaseClassifier(BaseEstimator, ABC):
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
+        X_mtype = X_metadata["mtype"]
         self._X_metadata = X_metadata
 
         # Check this classifier can handle characteristics
@@ -194,7 +226,7 @@ class BaseClassifier(BaseEstimator, ABC):
             return self
 
         # Convert data as dictated by the classifier tags
-        X = self._convert_X(X)
+        X = self._convert_X(X, X_mtype)
         multithread = self.get_tag("capability:multithreading")
         if multithread:
             try:
@@ -208,31 +240,41 @@ class BaseClassifier(BaseEstimator, ABC):
         self._fit(X, y)
         self.fit_time_ = int(round(time.time() * 1000)) - start
 
-        # this should happen last
+        # this should happen last: fitted state is set to True
         self._is_fitted = True
         return self
 
-    def predict(self, X) -> np.ndarray:
+    def predict(self, X):
         """Predicts labels for sequences in X.
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
-            indices correspond to instance indices in X
+        y_pred : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            predicted class labels
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+            1D np.npdarray, if y univariate (one dimension)
+            otherwise, same type as y passed in fit
         """
         self.check_is_fitted()
+
+        # enter vectorized mode if needed
+        if self._is_vectorized:
+            return self._vectorize("predict", X=X)
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
@@ -241,31 +283,40 @@ class BaseClassifier(BaseEstimator, ABC):
         if len(self._class_dictionary) == 1:
             return self._single_class_y_pred(X, method="predict")
 
-        # call internal _predict_proba
-        return self._predict(X)
+        # call internal _predict, convert output
+        y_pred_inner = self._predict(X)
+        y_pred = self._convert_output_y(y_pred_inner)
+        return y_pred
 
-    def predict_proba(self, X) -> np.ndarray:
+    def predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
+        y_pred : 2D np.array of int, of shape [n_instances, n_classes]
+            predicted class label probabilities
+            0-th indices correspond to instance indices in X
+            1-st indices correspond to class index, in same order as in self.classes_
+            entries are predictive class probabilities, summing to 1
         """
+        self.check_is_fitted()
+
+        # enter vectorized mode if needed
+        if self._is_vectorized:
+            return self._vectorize("predict_proba", X=X)
+
         self.check_is_fitted()
 
         # boilerplate input checks for predict-like methods
@@ -278,7 +329,7 @@ class BaseClassifier(BaseEstimator, ABC):
         # call internal _predict_proba
         return self._predict_proba(X)
 
-    def fit_predict(self, X, y, cv=None, change_state=True) -> np.ndarray:
+    def fit_predict(self, X, y, cv=None, change_state=True):
         """Fit and predict labels for sequences in X.
 
         Convenience method to produce in-sample predictions and
@@ -292,17 +343,22 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+            supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
         cv : None, int, or sklearn cross-validation object, optional, default=None
             None : predictions are in-sample, equivalent to fit(X, y).predict(X)
             cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
@@ -320,13 +376,58 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
-            indices correspond to instance indices in X
-            if cv is passed, -1 indicates entries not seen in union of test sets
+        y_pred : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            predicted class labels
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+            1D np.npdarray, if y univariate (one dimension)
+            otherwise, same type as y passed in fit
         """
         return self._fit_predict_boilerplate(
             X=X, y=y, cv=cv, change_state=change_state, method="predict"
         )
+
+    def _vectorize(self, methodname, **kwargs):
+        """Vectorized/iterated loop over method of BaseClassifier.
+
+        Uses classifiers_ attribute to store one classifier per loop index.
+        """
+        y = kwargs.get("y")
+        X = kwargs.get("X")
+        if X is not None:
+            kwargs.pop("X")
+        if y is not None:
+            kwargs.pop("y")
+            self._y_vec = y
+        classifiers_ = self._y_vec.vectorize_est(
+            self,
+            method="clone",
+        )
+        if methodname == "fit":
+            self.classifiers_ = self._y_vec.vectorize_est(
+                classifiers_,
+                method=methodname,
+                args={"y": y},
+                X=X,
+            )
+            return self
+        else:
+            if self.classifiers_ is not None:
+                classifiers_ = self.classifiers_
+            y_pred = self._y_vec.vectorize_est(
+                classifiers_,
+                method=methodname,
+                # return_type="list",
+                X=X,
+                args={"y": y} if y is not None else {},
+                **kwargs,  # contains X inside
+            )
+            y_pred = pd.DataFrame(
+                {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}
+            )
+            return y_pred
 
     def _fit_predict_boilerplate(self, X, y, cv, change_state, method):
         """Boilerplate logic for fit_predict and fit_predict_proba."""
@@ -355,6 +456,7 @@ class BaseClassifier(BaseEstimator, ABC):
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
+        X_mtype = X_metadata["mtype"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
 
@@ -364,15 +466,17 @@ class BaseClassifier(BaseEstimator, ABC):
 
         # Convert data to format easily usable for applying cv
         if isinstance(X, np.ndarray):
-            X = convert_to(
+            X = convert(
                 X,
+                from_type=X_mtype,
                 to_type="numpy3D",
                 as_scitype="Panel",
                 store_behaviour="freeze",
             )
         else:
-            X = convert_to(
+            X = convert(
                 X,
+                from_type=X_mtype,
                 to_type="nested_univ",
                 as_scitype="Panel",
                 store_behaviour="freeze",
@@ -400,25 +504,36 @@ class BaseClassifier(BaseEstimator, ABC):
 
         return y_pred
 
-    def fit_predict_proba(self, X, y, cv=None, change_state=True) -> np.ndarray:
+    def fit_predict_proba(self, X, y, cv=None, change_state=True):
         """Fit and predict labels probabilities for sequences in X.
 
         Convenience method to produce in-sample predictions and
         cross-validated out-of-sample predictions.
 
+        Writes to self, if change_state=True:
+            Sets self.is_fitted to True.
+            Sets fitted model attributes ending in "_".
+
+        Does not update state if change_state=False.
+
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+            supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
         cv : None, int, or sklearn cross-validation object, optional, default=None
             None : predictions are in-sample, equivalent to fit(X, y).predict(X)
             cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
@@ -434,10 +549,11 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
+        y_pred : 2D np.array of int, of shape [n_instances, n_classes]
+            predicted class label probabilities
+            0-th indices correspond to instance indices in X
+            1-st indices correspond to class index, in same order as in self.classes_
+            entries are predictive class probabilities, summing to 1
         """
         return self._fit_predict_boilerplate(
             X=X, y=y, cv=cv, change_state=change_state, method="predict_proba"
@@ -460,17 +576,22 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
+        X : sktime compatible time series panel data container, e.g.,
+            pd-multiindex: pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
+            numpy3D: 3D np.array (any number of dimensions, equal length series)
+            of shape [n_instances, n_dimensions, series_length]
             or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.ndarray of int, of shape [n_instances] - class labels (ground truth)
-            indices correspond to instance indices in X
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : sktime compatible tabular data container, Table scitype
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            0-th indices correspond to instance indices in X
+            1-st indices (if applicable) correspond to multioutput vector indices in X
+            supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
 
         Returns
         -------
@@ -512,27 +633,30 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Abstract method, must be implemented.
 
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
+            if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
 
         Returns
         -------
-        self :
-            Reference to self.
-
-        Notes
-        -----
-        Changes state by creating a fitted model that updates attributes
-        ending in "_" and sets is_fitted flag to True.
+        self : Reference to self.
         """
         ...
 
@@ -545,16 +669,23 @@ class BaseClassifier(BaseEstimator, ABC):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
+        y : should be of mtype in self.get_tag("y_inner_mtype")
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            predicted class labels
             indices correspond to instance indices in X
+            if self.get_tag("capaility:multioutput") = False, should be 1D
+            if self.get_tag("capaility:multioutput") = True, should be 2D
         """
         y_proba = self._predict_proba(X)
         y_pred = y_proba.argmax(axis=1)
@@ -572,9 +703,11 @@ class BaseClassifier(BaseEstimator, ABC):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
@@ -617,10 +750,11 @@ class BaseClassifier(BaseEstimator, ABC):
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
+        X_mtype = X_metadata["mtype"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
-        X = self._convert_X(X)
+        X = self._convert_X(X, X_mtype=X_mtype)
 
         return X
 
@@ -670,28 +804,120 @@ class BaseClassifier(BaseEstimator, ABC):
             else:
                 raise ValueError(msg)
 
-    def _convert_X(self, X):
+    def _convert_X(self, X, X_mtype):
         """Convert equal length series from DataFrame to numpy array or vice versa.
 
         Parameters
         ----------
-        self : this classifier
-        X : pd.DataFrame or np.ndarray. Input attribute data
+        X : input data for the classifier
+        X_mtype : str, a Panel mtype string, e.g., "pd_multiindex", "numpy3D"
 
         Returns
         -------
         X : input X converted to type in "X_inner_mtype" tag
-                usually a pd.DataFrame (nested) or 3D np.ndarray
+            usually a pd.DataFrame (nested) or 3D np.ndarray
             Checked and possibly converted input data
         """
         inner_type = self.get_tag("X_inner_mtype")
         # convert pd.DataFrame
-        X = convert_to(
+        X = convert(
             X,
+            from_type=X_mtype,
             to_type=inner_type,
             as_scitype="Panel",
         )
         return X
+
+    def _check_y(self, y=None):
+        """Check and coerce X/y for fit/transform functions.
+
+        Parameters
+        ----------
+        y : pd.DataFrame, pd.Series or np.ndarray
+
+        Returns
+        -------
+        y : object of sktime compatible time series type
+            can be Series, Panel, Hierarchical
+        y_metadata : dict
+            metadata of y, retured by check_is_scitype
+        """
+        if y is None:
+            return None
+
+        capa_multioutput = self.get_tag("capability:multioutput")
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+
+        y_valid, y_msg, y_metadata = check_is_scitype(
+            y, "Table", return_metadata=["is_univariate"]
+        )
+
+        if not y_valid:
+            allowed_msg = (
+                f"In classification, y must be of a supported type, "
+                f"for instance 1D or 2D numpy arrays, pd.DataFrame, or pd.Series. "
+                f"Allowed compatible mtype format specifications are:"
+                f" {MTYPE_LIST_TABLE} ."
+            )
+            check_is_error_msg(
+                y_msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        y_uni = y_metadata["is_univariate"]
+        y_mtype = y_metadata["mtype"]
+
+        requires_vectorization = not capa_multioutput and not y_uni
+
+        if requires_vectorization:
+            y_df = convert(
+                y,
+                from_type=y_mtype,
+                to_type="pd_DataFrame_Table",
+                as_scitype="Table",
+                store=self._converter_store_y,
+            )
+            y_vec = VectorizedDF([y_df], iterate_cols=True)
+            return y_vec, y_metadata
+
+        y_inner = convert(
+            y,
+            from_type=y_mtype,
+            to_type=y_inner_mtype,
+            as_scitype="Table",
+            store=self._converter_store_y,
+        )
+
+        return y_inner, y_metadata
+
+    def _convert_output_y(self, y):
+        """Convert output y to original format.
+
+        Parameters
+        ----------
+        y : np.ndarray or pd.DataFrame
+
+        Returns
+        -------
+        y : np.ndarray or pd.DataFrame
+        """
+        # for consistency with legacy behaviour:
+        # output is coerced to numpy1D in case of univariate output
+        if not self._y_metadata["is_univariate"]:
+            output_mtype = self._y_metadata["mtype"]
+            converter_store = self._converter_store_y
+        else:
+            output_mtype = "numpy1D"
+            converter_store = None
+
+        y = convert(
+            y,
+            from_type=self.get_tag("y_inner_mtype"),
+            to_type=output_mtype,
+            as_scitype="Table",
+            store=converter_store,
+            store_behaviour="freeze",
+        )
+        return y
 
     def _check_classifier_input(
         self, X, y=None, enforce_min_instances=1, return_metadata=True
@@ -744,9 +970,10 @@ class BaseClassifier(BaseEstimator, ABC):
         # Check y if passed
         if y is not None:
             # Check y valid input
-            if not isinstance(y, (pd.Series, np.ndarray)):
+            if not isinstance(y, (pd.Series, pd.DataFrame, np.ndarray)):
                 raise ValueError(
-                    f"y must be a np.array or a pd.Series, but found type: {type(y)}"
+                    "y must be a np.array or a pd.Series or pd.DataFrame, but found ",
+                    f"type: {type(y)}",
                 )
             # Check matching number of labels
             n_labels = y.shape[0]
@@ -756,9 +983,9 @@ class BaseClassifier(BaseEstimator, ABC):
                     f"{n_labels}"
                 )
             if isinstance(y, np.ndarray):
-                if y.ndim > 1:
+                if y.ndim > 2:
                     raise ValueError(
-                        f"np.ndarray y must be 1-dimensional, "
+                        f"np.ndarray y must be 1-dimensional or 2-dimensional, "
                         f"but found {y.ndim} dimensions"
                     )
             # warn if only a single class label is seen
@@ -794,9 +1021,6 @@ class BaseClassifier(BaseEstimator, ABC):
             # done here, but touches a lot of files, so will get this to work first.
             if X.ndim == 2:
                 X = X.reshape(X.shape[0], 1, X.shape[1])
-        if y is not None and isinstance(y, pd.Series):
-            # y should be a numpy array, although we allow Series for user convenience
-            y = pd.Series.to_numpy(y)
         if y is None:
             return X
         return X, y

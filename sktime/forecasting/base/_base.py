@@ -459,8 +459,12 @@ class BaseForecaster(BaseEstimator):
 
         return y_out
 
-    def fit_predict(self, y, X=None, fh=None):
+    def fit_predict(self, y, X=None, fh=None, X_pred=None):
         """Fit and forecast time series at future horizon.
+
+        Same as ``fit(y, X, fh).predict(X_pred)``.
+        If ``X_pred`` is not passed, same as
+        ``fit(y, fh, X).predict(X)``.
 
         State change:
             Changes state to "fitted".
@@ -475,32 +479,38 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         y : time series in sktime compatible data container format
-                Time series to which to fit the forecaster.
+            Time series to which to fit the forecaster.
             y can be in one of the following formats:
             Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                for vanilla forecasting, one time series
+            for vanilla forecasting, one time series
             Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-                for global or panel forecasting
+            3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            for global or panel forecasting
             Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-                for hierarchical forecasting
+            for hierarchical forecasting
             Number of columns admissible depend on the "scitype:y" tag:
-                if self.get_tag("scitype:y")=="univariate":
-                    y must have a single column/variable
-                if self.get_tag("scitype:y")=="multivariate":
-                    y must have 2 or more columns
-                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            if self.get_tag("scitype:y")=="univariate":
+            y must have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+            y must have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions on columns apply
             For further details:
-                on usage, see forecasting tutorial examples/01_forecasting.ipynb
-                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+            on usage, see forecasting tutorial examples/01_forecasting.ipynb
+            on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         fh : int, list, np.array or ForecastingHorizon (not optional)
             The forecasting horizon encoding the time stamps to forecast at.
             if has not been passed in fit, must be passed, not optional
         X : time series in sktime compatible format, optional (default=None)
-                Exogeneous time series to fit to
+            Exogeneous time series to fit to
             Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
-            if self.get_tag("X-y-must-have-same-index"),
-                X.index must contain fh.index and y.index both
+            If ``self.get_tag("X-y-must-have-same-index")`` is True,
+            X.index must contain y.index.
+            If, in addition, X_pred is not passed, X must also contain fh.index.
+        X_pred : time series in sktime compatible format, optional (default=None)
+            Exogeneous time series to use in predict
+            If passed, will be used in predict instead of X.
+            If ``self.get_tag("X-y-must-have-same-index")`` is True,
+            X_pred.index must contain fh.index.
 
         Returns
         -------
@@ -509,6 +519,12 @@ class BaseForecaster(BaseEstimator):
             y_pred has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
+        # if X_pred is passed, run fit/predict with different X
+        if X_pred is not None:
+            return self.fit(y=y, X=X, fh=fh).predict(X=X_pred)
+        # otherwise, we use the same X for fit and predict
+        # below code carries out conversion and checks for X only once
+
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 

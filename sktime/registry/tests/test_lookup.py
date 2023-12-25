@@ -21,9 +21,7 @@ VALID_SCITYPES_SET = set(
 # some scitypes have no associated tags yet
 SCITYPES_WITHOUT_TAGS = [
     "series-annotator",
-    "clusterer",
     "object",
-    "splitter",
     "network",
 ]
 

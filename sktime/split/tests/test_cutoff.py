@@ -2,6 +2,7 @@
 """Tests for cutoff splitter."""
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.forecasting.tests._config import (
@@ -11,7 +12,7 @@ from sktime.forecasting.tests._config import (
     TEST_WINDOW_LENGTHS,
     TEST_YS,
 )
-from sktime.split import CutoffSplitter
+from sktime.split import CutoffFhSplitter, CutoffSplitter
 from sktime.split.base._common import _inputs_are_supported
 from sktime.split.tests.test_split import _check_cv
 
@@ -30,3 +31,30 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
         match = "Unsupported combination of types"
         with pytest.raises(TypeError, match=match):
             CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
+
+
+def test_cutoff_fh_splitter():
+    """Test CutoffFhSplitter."""
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.utils._testing.series import _make_series
+
+    y = _make_series()
+    cutoff = y.index[[10]]
+    cutoff.freq = y.index.freq
+    fh = ForecastingHorizon([1, 2, 3], freq=y.index.freq)
+
+    spl = CutoffFhSplitter(cutoff, fh)
+
+    spl_tt = list(spl.split_loc(y))[0]
+    spl_train = spl_tt[0]
+    spl_test = spl_tt[1]
+
+    assert isinstance(spl_train, pd.DatetimeIndex)
+    assert isinstance(spl_test, pd.DatetimeIndex)
+
+    assert np.all(spl_train == y.index[:11])
+
+    expected_test = pd.DatetimeIndex(
+        ["2000-01-12", "2000-01-13", "2000-01-14"], dtype="datetime64[ns]", freq="D"
+    )
+    assert np.all(spl_test == expected_test)
