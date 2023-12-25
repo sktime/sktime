@@ -850,7 +850,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         requires_vectorization = not capa_multioutput and y_nvar >= 2
 
-        self._y_type_in_fit = y_mtype
+        self._y_mtype_in_fit = y_mtype
         self._is_vectorized = requires_vectorization
 
         if requires_vectorization:
@@ -888,7 +888,7 @@ class BaseClassifier(BaseEstimator, ABC):
         # for consistency with legacy behaviour:
         # output is coerced to numpy1D in case of univariate output
         if self._is_vectorized:
-            output_mtype = self._y_type_in_fit
+            output_mtype = self._y_mtype_in_fit
             converter_store = self._converter_store_y
         else:
             output_mtype = "numpy1D"
