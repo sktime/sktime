@@ -637,9 +637,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         _check_y = BaseClassifier._check_y
         return _check_y(self, y)
 
-    def _check_input(
-        self, X, y=None, enforce_min_instances=1, return_metadata=True
-    ):
+    def _check_input(self, X, y=None, enforce_min_instances=1, return_metadata=True):
         """Check whether input X and y are valid formats with minimum data.
 
         Raises a ValueError if the input is not valid.
@@ -663,9 +661,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             If y or X is invalid input data type, or there is not enough data
         """
         _check_input = BaseClassifier._check_input
-        return _check_input(
-            self, X, y, enforce_min_instances, return_metadata
-        )
+        return _check_input(self, X, y, enforce_min_instances, return_metadata)
 
     def _internal_convert(self, X, y=None):
         """Convert X and y if necessary as a user convenience.
