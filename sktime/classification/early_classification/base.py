@@ -662,7 +662,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         ValueError
             If y or X is invalid input data type, or there is not enough data
         """
-        _check_classifier_input = BaseClassifier._check_classifier_input
+        _check_classifier_input = BaseClassifier._check_input
         return _check_classifier_input(
             self, X, y, enforce_min_instances, return_metadata
         )
