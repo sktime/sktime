@@ -188,8 +188,8 @@ class BaseRegressor(BasePanelMixin):
 
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
-        X, y = _internal_convert(X, y)
-        X_metadata = _check_input(
+        X, y = self._internal_convert(X, y)
+        X_metadata = self._check_input(
             X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
         )
         self._X_metadata = X_metadata
