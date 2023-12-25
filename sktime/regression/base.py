@@ -301,7 +301,7 @@ class BaseRegressor(BaseEstimator, ABC):
             method="clone",
         )
         if methodname == "fit":
-            self.regressor_ = self._y_vec.vectorize_est(
+            self.regressors_ = self._y_vec.vectorize_est(
                 regressors_,
                 method=methodname,
                 args={"y": y},
