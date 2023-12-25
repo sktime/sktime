@@ -384,6 +384,46 @@ class BaseClassifier(BasePanelMixin):
             X=X, y=y, cv=cv, change_state=change_state, method="predict"
         )
 
+    def _vectorize(self, methodname, **kwargs):
+        """Vectorized/iterated loop over method of BaseClassifier.
+
+        Uses classifiers_ attribute to store one classifier per loop index.
+        """
+        y = kwargs.get("y")
+        X = kwargs.get("X")
+        if X is not None:
+            kwargs.pop("X")
+        if y is not None:
+            kwargs.pop("y")
+            self._y_vec = y
+        classifiers_ = self._y_vec.vectorize_est(
+            self,
+            method="clone",
+        )
+        if methodname == "fit":
+            self.classifiers_ = self._y_vec.vectorize_est(
+                classifiers_,
+                method=methodname,
+                args={"y": y},
+                X=X,
+            )
+            return self
+        else:
+            if self.classifiers_ is not None:
+                classifiers_ = self.classifiers_
+            y_pred = self._y_vec.vectorize_est(
+                classifiers_,
+                method=methodname,
+                # return_type="list",
+                X=X,
+                args={"y": y} if y is not None else {},
+                **kwargs,  # contains X inside
+            )
+            y_pred = pd.DataFrame(
+                {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}
+            )
+            return y_pred
+
     def _fit_predict_boilerplate(self, X, y, cv, change_state, method):
         """Boilerplate logic for fit_predict and fit_predict_proba."""
         from sklearn.model_selection import KFold
