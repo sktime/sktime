@@ -120,8 +120,6 @@ class _DummyConvertPandas(BaseClassifier):
 multivariate_message = r"multivariate series"
 missing_message = r"missing values"
 unequal_message = r"unequal length series"
-incorrect_X_data_structure = r"must be a np.array or a pd.Series"
-incorrect_y_data_structure = r"must be 1-dimensional"
 
 
 def test_base_classifier_fit():
@@ -144,7 +142,10 @@ def test_base_classifier_fit():
     test_X3 = _create_example_dataframe(cases=cases, dimensions=1, length=length)
     test_X4 = _create_example_dataframe(cases=cases, dimensions=3, length=length)
     test_y1 = np.random.randint(0, 2, size=(cases))
+    test_y2 = pd.DataFrame({"0": [1] * cases, "1": [0] * cases})
     result = dummy.fit(test_X1, test_y1)
+    assert result is dummy
+    result = dummy.fit(test_X3, test_y2)
     assert result is dummy
     with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X2, test_y1)
@@ -154,15 +155,6 @@ def test_base_classifier_fit():
     with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X4, test_y1)
     assert result is dummy
-    # Raise a specific error if y is in a 2D matrix (1,cases)
-    test_y2 = np.array([test_y1])
-    # What if y is in a 2D matrix (cases,1)?
-    test_y2 = np.array([test_y1]).transpose()
-    with pytest.raises(ValueError, match=incorrect_y_data_structure):
-        result = dummy.fit(test_X1, test_y2)
-    # Pass a data fram
-    with pytest.raises(ValueError, match=incorrect_X_data_structure):
-        result = dummy.fit(test_X1, test_X3)
 
 
 TF = [True, False]
@@ -228,26 +220,26 @@ def test_convert_input():
     test_X1 = np.random.uniform(-1, 1, size=(cases, length))
     test_X2 = np.random.uniform(-1, 1, size=(cases, 2, length))
     tester = _DummyClassifier()
-    tempX = tester._convert_X(test_X2)
+    tempX = tester._convert_X(test_X2, "numpy3D")
     assert tempX.shape[0] == cases and tempX.shape[1] == 2 and tempX.shape[2] == length
     instance_list = []
     for _ in range(0, cases):
         instance_list.append(pd.Series(np.random.randn(10)))
     test_X3 = _create_example_dataframe(cases=cases, dimensions=1, length=length)
     test_X4 = _create_example_dataframe(cases=cases, dimensions=3, length=length)
-    tempX = tester._convert_X(test_X3)
+    tempX = tester._convert_X(test_X3, "nested_univ")
     assert tempX.shape[0] == cases and tempX.shape[1] == 1 and tempX.shape[2] == length
-    tempX = tester._convert_X(test_X4)
+    tempX = tester._convert_X(test_X4, "nested_univ")
     assert tempX.shape[0] == cases and tempX.shape[1] == 3 and tempX.shape[2] == length
     tester = _DummyConvertPandas()
-    tempX = tester._convert_X(test_X2)
+    tempX = tester._convert_X(test_X2, "numpy3D")
     assert isinstance(tempX, pd.DataFrame)
     assert tempX.shape[0] == cases
     assert tempX.shape[1] == 2
     test_y1 = np.random.randint(0, 1, size=(cases))
     test_y1 = pd.Series(test_y1)
     tempX, tempY = _internal_convert(test_X1, test_y1)
-    assert isinstance(tempY, np.ndarray)
+    assert isinstance(tempY, pd.Series)
     assert isinstance(tempX, np.ndarray)
     assert tempX.ndim == 3
 

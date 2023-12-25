@@ -492,6 +492,12 @@ ESTIMATOR_TAG_REGISTER = [
         "int",
         "sample size used in approximating other statistics if not available",
     ),
+    (
+        "capability:multioutput",
+        ["classifier", "regressor"],  # might need to add "early_classifier" here
+        "bool",
+        "can the estimator handle multioutput data?",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
