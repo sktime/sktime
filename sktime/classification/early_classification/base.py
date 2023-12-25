@@ -73,6 +73,14 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         "is_equal_length",
     ]
 
+    # attribute name where vectorized estimators are stored
+    VECTORIZATION_ATTR = "classifiers_"  # e.g., classifiers_, regressors_
+
+    # used in error messages
+    TASK = "early classification"  # e.g., classification, regression
+    EST_TYPE = "early classifier"  # e.g., classifier, regressor
+    EST_TYPE_PLURAL = "early classifiers"  # e.g., classifiers, regressors
+
     def __init__(self):
         self.classes_ = []
         self.n_classes_ = 0
