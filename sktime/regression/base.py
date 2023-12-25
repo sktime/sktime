@@ -58,6 +58,7 @@ class BaseRegressor(BaseEstimator, ABC):
     _tags = {
         "object_type": "regressor",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        "y_inner_mtype": "numpy1D",  # which type do _fit/_predict, support for y?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multioutput": False,  # whether classifier supports multioutput
         "capability:multivariate": False,
@@ -86,7 +87,6 @@ class BaseRegressor(BaseEstimator, ABC):
         # required for compatibility with some sklearn interfaces
         # i.e. CalibratedRegressorCV
         self._estimator_type = "regressor"
-        self._regressors_ = None
         self._is_vectorized = False
         self._is_timed = False
 
@@ -158,43 +158,53 @@ class BaseRegressor(BaseEstimator, ABC):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        y = self._check_y(y)
+        self.reset()
+
+        # fit timer start
         start = int(round(time.time() * 1000))
+
+        # check and convert y for multioutput vectorization
+        y, y_metadata = self._check_y(y)
+        self._y_metadata = y_metadata
         self._is_vectorized = isinstance(y, VectorizedDF)
-        # we call the ordinary _fit if no looping/vectorization needed
-        if not self._is_vectorized or self.get_tag("capability:multioutput"):
-            # reset estimator at the start of fit
-            self.reset()
-            # convenience conversions to allow user flexibility:
-            # if X is 2D array, convert to 3D, if y is Series, convert to numpy
-            X, y = _internal_convert(X, y)
-            X_metadata = _check_regressor_input(
-                X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
-            )
-            self._X_metadata = X_metadata
-            missing = X_metadata["has_nans"]
-            multivariate = not X_metadata["is_univariate"]
-            unequal = not X_metadata["is_equal_length"]
-            # Check this regressor can handle characteristics
-            self._check_capabilities(missing, multivariate, unequal)
-            # Convert data as dictated by the regressor tags
-            X = self._convert_X(X)
-            multithread = self.get_tag("capability:multithreading")
-            if multithread:
-                try:
-                    self._threads_to_use = check_n_jobs(self.n_jobs)
-                except NameError:
-                    raise AttributeError(
-                        "self.n_jobs must be set if capability:multithreading is True"
-                    )
 
-            self._fit(X, y)
-        else:
-            # otherwise we call the vectorized version of fit
+        if self._is_vectorized:
             self._vectorize("fit", X=X, y=y)
+            # fit timer end
+            self.fit_time_ = int(round(time.time() * 1000)) - start
+            # this should happen last: fitted state is set to True
+            self._is_fitted = True
+            return self
 
+        # no vectorization needed, proceed with normal fit
+
+        # convenience conversions to allow user flexibility:
+        # if X is 2D array, convert to 3D, if y is Series, convert to numpy
+        X, y = _internal_convert(X, y)
+        X_metadata = _check_regressor_input(
+            X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
+        )
+        self._X_metadata = X_metadata
+        missing = X_metadata["has_nans"]
+        multivariate = not X_metadata["is_univariate"]
+        unequal = not X_metadata["is_equal_length"]
+        # Check this regressor can handle characteristics
+        self._check_capabilities(missing, multivariate, unequal)
+        # Convert data as dictated by the regressor tags
+        X = self._convert_X(X)
+        multithread = self.get_tag("capability:multithreading")
+        if multithread:
+            try:
+                self._threads_to_use = check_n_jobs(self.n_jobs)
+            except NameError:
+                raise AttributeError(
+                    "self.n_jobs must be set if capability:multithreading is True"
+                )
+
+        self._fit(X, y)
         self.fit_time_ = int(round(time.time() * 1000)) - start
-        # this should happen last
+
+        # this should happen last: fitted state is set to True
         self._is_fitted = True
         return self
 
