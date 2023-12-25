@@ -591,21 +591,19 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         _check_convert_X_for_predict = BaseClassifier._check_convert_X_for_predict
         return _check_convert_X_for_predict(self, X)
 
-    def _check_capabilities(self, missing, multivariate, unequal):
+    def _check_capabilities(self, X_metadata):
         """Check whether this classifier can handle the data characteristics.
 
         Parameters
         ----------
-        missing : boolean, does the data passed to fit contain missing values?
-        multivariate : boolean, does the data passed to fit contain missing values?
-        unequal : boolea, do the time series passed to fit have variable lengths?
+        X_metadata : dict with metadata for X returned by datatypes.check_is_scitype
 
         Raises
         ------
         ValueError if the capabilities in self._tags do not handle the data.
         """
         _check_capabilities = BaseClassifier._check_capabilities
-        return _check_capabilities(self, missing, multivariate, unequal)
+        return _check_capabilities(self, X_metadata)
 
     def _convert_X(self, X, X_mtype):
         """Convert equal length series from DataFrame to numpy array or vice versa.
