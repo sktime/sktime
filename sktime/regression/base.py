@@ -568,6 +568,7 @@ class BaseRegressor(BaseEstimator, ABC):
         )
         return X
 
+
 def _check_regressor_input(
     X,
     y=None,
