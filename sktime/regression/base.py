@@ -37,7 +37,6 @@ from sktime.datatypes import (
     check_is_scitype,
     convert,
 )
-from sktime.datatypes._vectorize import VectorizedDF
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.warnings import warn
