@@ -28,17 +28,9 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BasePanelMixin
-from sktime.datatypes import (
-    MTYPE_LIST_PANEL,
-    MTYPE_LIST_TABLE,
-    VectorizedDF,
-    check_is_error_msg,
-    check_is_scitype,
-    convert,
-)
+from sktime.datatypes import VectorizedDF
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.warnings import warn
 
 
 class BaseRegressor(BasePanelMixin):
