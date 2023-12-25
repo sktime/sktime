@@ -36,7 +36,6 @@ from sktime.datatypes import (
     check_is_scitype,
     convert,
 )
-from sktime.datatypes._vectorize import VectorizedDF
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.warnings import warn
@@ -97,6 +96,7 @@ class BaseRegressor(BasePanelMixin):
         self._estimator_type = "regressor"
         self._is_vectorized = False
         self._is_timed = False
+        self._converter_store_y = {}
 
         super().__init__()
 
