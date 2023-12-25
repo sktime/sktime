@@ -60,8 +60,8 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import ProphetPiecewiseLinearTrendForecaster
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.split import temporal_train_test_split
     >>> y =load_airline().to_timestamp(freq='M')
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = ForecastingHorizon(y.index, is_relative=False)
