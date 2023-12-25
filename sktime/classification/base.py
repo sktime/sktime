@@ -592,7 +592,7 @@ class BaseClassifier(BaseEstimator, ABC):
             0-th indices correspond to instance indices in X
             1-st indices (if applicable) correspond to multioutput vector indices in X
             supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
-    
+
         Returns
         -------
         float, accuracy score of predict(X) vs y
