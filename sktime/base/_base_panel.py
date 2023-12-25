@@ -26,9 +26,6 @@ from sktime.datatypes import (
     check_is_scitype,
     convert,
 )
-from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.warnings import warn
 
 
@@ -186,9 +183,7 @@ class BasePanelMixin(BaseEstimator):
         ValueError if the capabilities in self._tags do not handle the data.
         """
         X = self._internal_convert(X)
-        X_metadata = self._check_input(
-            X, return_metadata=self.METADATA_REQ_IN_CHECKS
-        )
+        X_metadata = self._check_input(X, return_metadata=self.METADATA_REQ_IN_CHECKS)
         X_mtype = X_metadata["mtype"]
         # Check that estimator can handle characteristics
         self._check_capabilities(X_metadata)
@@ -362,9 +357,7 @@ class BasePanelMixin(BaseEstimator):
         )
         return y
 
-    def _check_input(
-        self, X, y=None, enforce_min_instances=1, return_metadata=True
-    ):
+    def _check_input(self, X, y=None, enforce_min_instances=1, return_metadata=True):
         """Check whether input X and y are valid formats with minimum data.
 
         Raises a ValueError if the input is not valid.
