@@ -22,7 +22,70 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.25.0 - 2023-12-26
 ---------------------------
 
+Release with base class updates and scheduled deprecations:
 
+* framework support for multioutput classifiers, regressors
+  (:pr:`5408`, :pr:`5651`) :user:`Vasudeva-bit`, :user:`fkiraly`
+* framework support for panel-to-series transformers (:pr:`5351`) :user:`benHeid`
+* scheduled deprecations
+
+For last larger feature update, see 0.24.2.
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Time series classification and regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* the framework now supports transformations that aggregate ``Panel`` data
+  to ``Series`` data, i.e., panel-to-series transformers, e.g., averaging.
+  For such transformers, the tags ``scitype:
+
+
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* time series splitters, i.e., descendants of ``BaseSplitter``, have moved from
+  ``sktime.forecasting.model_selection`` to ``sktime.split``.
+  The old location ``model_selection`` has been removed in 0.25.0.
+
+* in forecasting ``evaluate``, the order of columns in the return data frame
+  has changed. Users should consult the docstring of ``evaluate`` for details.
+
+* in forecasting ``evaluate``, the ``compute`` argument was removed,
+  after deprecation in 0.24.0.
+  Its purpose was to distinguish lazy or eager evaluation in
+  the ``dask`` parallelization backend.
+  To switch between lazy and eager evaluation, users should instead
+  select ``dask`` or ``dask_lazy`` via the ``backend`` parameter.
+
+* in forecasting ``evaluate``, ``kwargs`` are deprecated, removal has been
+  moved to 0.26.0. Users should pass backend parameters via the ``backend_params``
+  parameter instead.
+
+
+Contents
+~~~~~~~~
+
+* [ENH] Multioutput capability for all time series classifiers and regressors, broadcasting and tag (:pr:`5408`) :user:`Vasudeva-bit`
+* [ENH] Support for panel-to-series transformers, merger transformation (:pr:`5351`) :user:`benHeid`
+* [ENH] allow object ``dtype``-s in ``pandas`` based ``Table`` mtype-s (:pr:`5651`) :user:`fkiraly`
+* [MNT] 0.25.0 deprecations and change actions (:pr:`5613`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`benHeid`,
+:user:`fkiraly`,
+:user:`Vasudeva-bit`
 
 Version 0.24.2 - 2023-12-24
 ---------------------------
@@ -42,7 +105,6 @@ Dependency changes
 
 * ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2023.12.2``.
 * ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.40``.
-* ``pycatch22`` (transformations soft dependency) bounds have been updated to ``<0.4.5``.
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -581,7 +643,7 @@ Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * time series splitters, i.e., descendants of ``BaseSplitter``, have moved from
-  ``sktime.forecasting.model_selection`` to ``sktime.`split``.
+  ``sktime.forecasting.model_selection`` to ``sktime.split``.
   The old location ``model_selection`` is deprecated and will be removed in 0.25.0.
   Until 0.25.0, it is still available but will raise an informative warning message.
 
