@@ -107,6 +107,7 @@ Contents
 * [ENH] Support for panel-to-series transformers, merger transformation (:pr:`5351`) :user:`benHeid`
 * [ENH] allow object ``dtype``-s in ``pandas`` based ``Table`` mtype-s (:pr:`5651`) :user:`fkiraly`
 * [ENH] intermediate base class for panel tasks - classification, regression (:pr:`5662`) :user:`fkiraly`
+* [MNT] CI element to test blogpost notebooks (:pr:`5663`) :user:`fkiraly`, :user:`yarnabrina`
 * [MNT] 0.25.0 deprecations and change actions (:pr:`5613`) :user:`fkiraly`
 
 Contributors
@@ -114,7 +115,8 @@ Contributors
 
 :user:`benHeid`,
 :user:`fkiraly`,
-:user:`Vasudeva-bit`
+:user:`Vasudeva-bit`,
+:user:`yarnabrina`
 
 Version 0.24.2 - 2023-12-24
 ---------------------------
