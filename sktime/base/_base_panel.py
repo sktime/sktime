@@ -61,7 +61,6 @@ class BasePanelMixin(BaseEstimator):
         y = kwargs.pop("y", None)
 
         # add some common arguments to kwargs
-        kwargs["methodname"] = methodname
         kwargs["rowname_default"] = self.EST_TYPE_PLURAL
         kwargs["colname_default"] = self.EST_TYPE_PLURAL
         kwargs["backend"] = self.get_config()["backend:parallel"]
@@ -73,6 +72,7 @@ class BasePanelMixin(BaseEstimator):
             ests_ = self._yvec.vectorize_est(self, method="clone", **kwargs)
             ests_fit = self._yvec.vectorize_est(
                 ests_,
+                method=methodname,
                 args={"y": y},
                 X=X,
                 **kwargs,
@@ -83,6 +83,7 @@ class BasePanelMixin(BaseEstimator):
             ests_ = getattr(self, self.VECTORIZATION_ATTR)
             y_pred = self._yvec.vectorize_est(
                 ests_,
+                method=methodname,
                 X=X,
                 **kwargs,
             )
