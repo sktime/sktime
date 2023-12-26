@@ -208,7 +208,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         X, y = make_classification_problem()
         y[:] = 42
 
-        error_msg = "single class label"
+        error_msg = "single label"
 
         with pytest.warns(UserWarning, match=error_msg):
             estimator_instance.fit(X, y)

@@ -73,6 +73,14 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         "is_equal_length",
     ]
 
+    # attribute name where vectorized estimators are stored
+    VECTORIZATION_ATTR = "classifiers_"  # e.g., classifiers_, regressors_
+
+    # used in error messages
+    TASK = "early classification"  # e.g., classification, regression
+    EST_TYPE = "early classifier"  # e.g., classifier, regressor
+    EST_TYPE_PLURAL = "early classifiers"  # e.g., classifiers, regressors
+
     def __init__(self):
         self.classes_ = []
         self.n_classes_ = 0
@@ -591,21 +599,19 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         _check_convert_X_for_predict = BaseClassifier._check_convert_X_for_predict
         return _check_convert_X_for_predict(self, X)
 
-    def _check_capabilities(self, missing, multivariate, unequal):
+    def _check_capabilities(self, X_metadata):
         """Check whether this classifier can handle the data characteristics.
 
         Parameters
         ----------
-        missing : boolean, does the data passed to fit contain missing values?
-        multivariate : boolean, does the data passed to fit contain missing values?
-        unequal : boolea, do the time series passed to fit have variable lengths?
+        X_metadata : dict with metadata for X returned by datatypes.check_is_scitype
 
         Raises
         ------
         ValueError if the capabilities in self._tags do not handle the data.
         """
         _check_capabilities = BaseClassifier._check_capabilities
-        return _check_capabilities(self, missing, multivariate, unequal)
+        return _check_capabilities(self, X_metadata)
 
     def _convert_X(self, X, X_mtype):
         """Convert equal length series from DataFrame to numpy array or vice versa.
@@ -639,9 +645,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         _check_y = BaseClassifier._check_y
         return _check_y(self, y)
 
-    def _check_classifier_input(
-        self, X, y=None, enforce_min_instances=1, return_metadata=True
-    ):
+    def _check_input(self, X, y=None, enforce_min_instances=1, return_metadata=True):
         """Check whether input X and y are valid formats with minimum data.
 
         Raises a ValueError if the input is not valid.
@@ -664,10 +668,8 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         ValueError
             If y or X is invalid input data type, or there is not enough data
         """
-        _check_classifier_input = BaseClassifier._check_classifier_input
-        return _check_classifier_input(
-            self, X, y, enforce_min_instances, return_metadata
-        )
+        _check_input = BaseClassifier._check_input
+        return _check_input(self, X, y, enforce_min_instances, return_metadata)
 
     def _internal_convert(self, X, y=None):
         """Convert X and y if necessary as a user convenience.
