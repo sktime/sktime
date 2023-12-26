@@ -15,9 +15,10 @@ from sktime.forecasting.model_selection._tune import (
     ForecastingSkoptSearchCV,
 )
 
+
 # todo 0.26.0 - check whether we should remove, otherwise bump
 def temporal_train_test_split(
-        y, X=None, test_size=None, train_size=None, fh=None, anchor="start"
+    y, X=None, test_size=None, train_size=None, fh=None, anchor="start"
 ):
     """Split time series data into temporal train and test sets."""
     from warnings import warn
