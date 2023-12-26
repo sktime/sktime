@@ -48,7 +48,7 @@ def temporal_train_test_split(
 # todo 0.26.0 - check whether we should remove, otherwise bump
 # still used in blog posts and old tutorials
 def ExpandingWindowSplitter(fh, initial_window, step_length):
-    """Expanding window splitter.
+    """Legacy export of Expanding window splitter.
 
     DEPRECATED - use sktime.split.ExpandingWindowSplitter instead.
     """
@@ -73,7 +73,7 @@ def ExpandingWindowSplitter(fh, initial_window, step_length):
 def SlidingWindowSplitter(
     fh, window_length, step_length, initial_window, start_with_window
 ):
-    """Sliding window splitter.
+    """Legacy export of Sliding window splitter.
 
     DEPRECATED - use sktime.split.ExpandingWindowSplitter instead.
     """
