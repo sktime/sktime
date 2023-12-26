@@ -170,36 +170,41 @@ def test_check_capabilities(missing, multivariate, unequal):
     handle it and that cannot. Obvs could loop, but I think its clearer to just
     explicitly test;
     """
+    X_metadata = {
+        "has_nans": missing,
+        "is_univariate": not multivariate,
+        "is_equal_length": not unequal,
+    }
     handles_none = _DummyClassifier()
     handles_none_composite = _DummyComposite(_DummyClassifier())
 
     # checks that errors are raised
     if missing:
         with pytest.raises(ValueError, match=missing_message):
-            handles_none._check_capabilities(missing, multivariate, unequal)
+            handles_none._check_capabilities(X_metadata)
     if multivariate:
         with pytest.raises(ValueError, match=multivariate_message):
-            handles_none._check_capabilities(missing, multivariate, unequal)
+            handles_none._check_capabilities(X_metadata)
     if unequal:
         with pytest.raises(ValueError, match=unequal_message):
-            handles_none._check_capabilities(missing, multivariate, unequal)
+            handles_none._check_capabilities(X_metadata)
     if not missing and not multivariate and not unequal:
-        handles_none._check_capabilities(missing, multivariate, unequal)
+        handles_none._check_capabilities(X_metadata)
 
     if missing:
         with pytest.warns(UserWarning, match=missing_message):
-            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+            handles_none_composite._check_capabilities(X_metadata)
     if multivariate:
         with pytest.warns(UserWarning, match=multivariate_message):
-            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+            handles_none_composite._check_capabilities(X_metadata)
     if unequal:
         with pytest.warns(UserWarning, match=unequal_message):
-            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+            handles_none_composite._check_capabilities(X_metadata)
     if not missing and not multivariate and not unequal:
-        handles_none_composite._check_capabilities(missing, multivariate, unequal)
+        handles_none_composite._check_capabilities(X_metadata)
 
     handles_all = _DummyHandlesAllInput()
-    handles_all._check_capabilities(missing, multivariate, unequal)
+    handles_all._check_capabilities(X_metadata)
 
 
 def test_convert_input():
@@ -253,9 +258,10 @@ def test__check_classifier_input():
     4. Test incorrect: y as a list
     5. Test incorrect: too few cases or too short a series
     """
+    clf = _DummyClassifier()
 
     def _check_classifier_input(X, y=None, enforce_min_instances=1):
-        return BaseClassifier._check_classifier_input(None, X, y, enforce_min_instances)
+        return clf._check_input(X, y, enforce_min_instances)
 
     # 1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
     test_X1 = np.random.uniform(-1, 1, size=(5, 10))
