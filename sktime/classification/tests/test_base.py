@@ -258,9 +258,10 @@ def test__check_classifier_input():
     4. Test incorrect: y as a list
     5. Test incorrect: too few cases or too short a series
     """
+    clf = _DummyClassifier()
 
     def _check_classifier_input(X, y=None, enforce_min_instances=1):
-        return BaseClassifier._check_input(BaseClassifier, X, y, enforce_min_instances)
+        return clf._check_input(X, y, enforce_min_instances)
 
     # 1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
     test_X1 = np.random.uniform(-1, 1, size=(5, 10))
