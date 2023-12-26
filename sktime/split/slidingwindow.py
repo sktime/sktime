@@ -51,9 +51,9 @@ class SlidingWindowSplitter(BaseWindowSplitter):
 
     Parameters
     ----------
-    fh : int, list or np.array
+    fh : int, list or np.array, optional (default=1)
         Forecasting horizon
-    window_length : int or timedelta or pd.DateOffset
+    window_length : int or timedelta or pd.DateOffset, optional (default=10)
         Window length
     step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
