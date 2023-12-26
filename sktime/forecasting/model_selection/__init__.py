@@ -26,7 +26,7 @@ def temporal_train_test_split(
 
     warn(
         "WARNING - the old location of temporal_train_test_split in "
-        "sktime.forecasting.model_selection is deprecated and is scheduled "
+        "sktime.forecasting.model_selection is deprecated and is scheduled for "
         "imminent removal in a MINOR version. "
         "Please update any import statements to "
         "from sktime.split import temporal_train_test_split.",
