@@ -665,6 +665,19 @@ Bootstrap transformations
     SplitterBootstrapTransformer
     STLBootstrapTransformer
 
+Panel-to-Series transformers
+----------------------------
+
+These transformers create a single series from a panel.
+
+.. currentmodule:: sktime.transformations.merger
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Merger
+
 Outlier detection, changepoint detection
 ----------------------------------------
 
