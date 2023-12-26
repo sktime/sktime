@@ -77,6 +77,7 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
+        "test_multiprocessing_idempotent",  # see 5658
     ],
     "ProximityForest": [
         "test_persistence_via_pickle",
@@ -182,6 +183,7 @@ EXCLUDED_TESTS = {
     "LTSFLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "LTSFDLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
+    "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

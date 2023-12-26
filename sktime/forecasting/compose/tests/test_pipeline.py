@@ -485,7 +485,7 @@ def test_forecastx_logic():
 )
 def test_forecastx_fit_behavior():
     from sktime.forecasting.compose import ForecastX
-    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.split import temporal_train_test_split
 
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
