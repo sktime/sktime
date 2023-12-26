@@ -83,7 +83,10 @@ Benchmarking, Metrics, Splitters
 
 * time series splitters, i.e., descendants of ``BaseSplitter``, have moved from
   ``sktime.forecasting.model_selection`` to ``sktime.split``.
-  The old location ``model_selection`` has been removed in 0.25.0.
+  They are no longer available in the old location
+  ``sktime.forecasting.model_selection``, since 0.25.0.
+  Forecasting tuners are still present in ``sktime.forecasting.model_selection``,
+  and their locationn is not subject to deprecation.
 
 * in forecasting ``evaluate``, the order of columns in the return data frame
   has changed. Users should consult the docstring of ``evaluate`` for details.
