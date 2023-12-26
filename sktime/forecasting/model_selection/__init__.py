@@ -71,7 +71,7 @@ def ExpandingWindowSplitter(fh=1, initial_window=10, step_length=1):
 # todo 0.26.0 - check whether we should remove, otherwise bump
 # still used in blog posts and old tutorials
 def SlidingWindowSplitter(
-    fh, window_length, step_length=1, initial_window=None, start_with_window=True
+    fh=1, window_length=10, step_length=1, initial_window=None, start_with_window=True
 ):
     """Legacy export of Sliding window splitter.
 
