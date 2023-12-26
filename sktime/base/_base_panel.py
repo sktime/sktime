@@ -70,8 +70,8 @@ class BasePanelMixin(BaseEstimator):
         if methodname == "fit":
             self._yvec = y
 
-            ests_ = self._y_vec.vectorize_est(self, method="clone", **kwargs)
-            ests_fit = self._y_vec.vectorize_est(
+            ests_ = self._yvec.vectorize_est(self, method="clone", **kwargs)
+            ests_fit = self._yvec.vectorize_est(
                 ests_,
                 args={"y": y},
                 X=X,
@@ -81,7 +81,7 @@ class BasePanelMixin(BaseEstimator):
             return self
         else:  # methodname == "predict" or methodname == "predict_proba":
             ests_ = getattr(self, self.VECTORIZATION_ATTR)
-            y_pred = self._y_vec.vectorize_est(
+            y_pred = self._yvec.vectorize_est(
                 ests_,
                 X=X,
                 **kwargs,
