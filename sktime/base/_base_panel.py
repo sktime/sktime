@@ -56,38 +56,36 @@ class BasePanelMixin(BaseEstimator):
 
         Stores one estimator per loop index.
         """
-        y = kwargs.get("y")
-        X = kwargs.get("X")
-        if X is not None:
-            kwargs.pop("X")
-        if y is not None:
-            kwargs.pop("y")
-            self._y_vec = y
-        ests_ = self._y_vec.vectorize_est(self, method="clone")
+        # retrieve data arguments
+        X = kwargs.pop("X", None)
+        y = kwargs.pop("y", None)
+
+        # add some common arguments to kwargs
+        kwargs["rowname_default"] = self.EST_TYPE_PLURAL
+        kwargs["colname_default"] = self.EST_TYPE_PLURAL
+        kwargs["backend"] = self.get_config()["backend:parallel"]
+        kwargs["backend_params"] = self.get_config()["backend:parallel:params"]
+
         if methodname == "fit":
-            ests_fit = self._y_vec.vectorize_est(
+            self._yvec = y
+
+            ests_ = self._yvec.vectorize_est(self, method="clone", **kwargs)
+            ests_fit = self._yvec.vectorize_est(
                 ests_,
                 method=methodname,
                 args={"y": y},
                 X=X,
-                rowname_default=self.EST_TYPE_PLURAL,
-                colname_default=self.EST_TYPE_PLURAL,
-                backend=self.get_config()["backend:parallel"],
-                backend_params=self.get_config()["backend:parallel:params"],
+                **kwargs,
             )
             setattr(self, self.VECTORIZATION_ATTR, ests_fit)
             return self
-        else:
+        else:  # methodname == "predict" or methodname == "predict_proba":
             ests_ = getattr(self, self.VECTORIZATION_ATTR)
-            y_pred = self._y_vec.vectorize_est(
+            y_pred = self._yvec.vectorize_est(
                 ests_,
                 method=methodname,
-                # return_type="list",
                 X=X,
-                args={"y": y} if y is not None else {},
-                **kwargs,  # contains X inside
-                backend=self.get_config()["backend:parallel"],
-                backend_params=self.get_config()["backend:parallel:params"],
+                **kwargs,
             )
             y_pred = pd.DataFrame(
                 {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}
