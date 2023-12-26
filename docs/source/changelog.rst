@@ -25,7 +25,7 @@ Version 0.25.0 - 2023-12-26
 Release with base class updates and scheduled deprecations:
 
 * framework support for multioutput classifiers, regressors
-  (:pr:`5408`, :pr:`5651`) :user:`Vasudeva-bit`, :user:`fkiraly`
+  (:pr:`5408`, :pr:`5651`, :pr:`5662`) :user:`Vasudeva-bit`, :user:`fkiraly`
 * framework support for panel-to-series transformers (:pr:`5351`) :user:`benHeid`
 * scheduled deprecations
 
@@ -37,15 +37,43 @@ Core interface changes
 Time series classification and regression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* the base class framework now supports multioutput classifiers or regressors.
+  All classifiers and regressors are now able to make multioutput predictions,
+  including all third party classifiers and regressors.
+  A multioutput ``y`` can now be passed, in the form of a 2D ``np.ndarray`` or
+  ``pd.DataFrame``, with one column per output.
+  The ``predict`` method will then return a predicted output of the same type.
+  To retain downwards compatibility, ``predict`` will always return a 1D ``np.ndarray``
+  for univariate outputs, this is currently not subject to deprecation.
+
+* Genuinely multioutput classifiers and regressors are labelled with the new
+  tag ``capability:multioutput`` being ``True``.
+  All other classifiers and regressors broadcast by column of ``y``,
+  and a parallelization backend can be selected via ``set_config``,
+  by setting the ``backend:parallel`` and ``backend:parallel:params`` configuration
+  flags, see the ``set_config`` docstring for details.
+  Broadcasting extends automatically to all existing third party classifiers
+  and regressors via base class inheritance once ``sktime`` is updated,
+  the estimator classes themselves do not need to be updated.
+
+* classifiers and regressors now have a tag ``y_inner_mtype``, this allows extenders
+  to specify an internal ``mtype``, of ``Table`` scitype.
+  The mtype specified i the tag is the guaranteed
+  mtype of ``y`` seen in the private ``_fit`` method.
+  The default is the same as previously
+  implicit, the ``numpy1D`` mtype.
+  Therefore, third party classifiers and regressors do not need to be updated,
+  and should be fully upwards compatible.
 
 Transformations
 ^^^^^^^^^^^^^^^
 
-* the framework now supports transformations that aggregate ``Panel`` data
+* the base class framework now supports transformations that aggregate ``Panel`` data
   to ``Series`` data, i.e., panel-to-series transformers, e.g., averaging.
-  For such transformers, the tags ``scitype:
-
-
+  Such transformers are identified by the tags
+  ``scitype:transform-input`` being ``"Panel"``,
+  and ``scitype:transform-output`` being ``"Series"``.
+  An example is ``Merger``.
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,6 +106,7 @@ Contents
 * [ENH] Multioutput capability for all time series classifiers and regressors, broadcasting and tag (:pr:`5408`) :user:`Vasudeva-bit`
 * [ENH] Support for panel-to-series transformers, merger transformation (:pr:`5351`) :user:`benHeid`
 * [ENH] allow object ``dtype``-s in ``pandas`` based ``Table`` mtype-s (:pr:`5651`) :user:`fkiraly`
+* [ENH] intermediate base class for panel tasks - classification, regression (:pr:`5662`) :user:`fkiraly`
 * [MNT] 0.25.0 deprecations and change actions (:pr:`5613`) :user:`fkiraly`
 
 Contributors
