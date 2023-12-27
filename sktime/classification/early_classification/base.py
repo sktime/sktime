@@ -644,7 +644,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         y_inner : object of sktime compatible time series type
             can be Series, Panel, Hierarchical
         y_metadata : dict
-            metadata of y, retured by check_is_scitype
+            metadata of y, returned by check_is_scitype
         y_mtype : str, only returned if return_to_mtype=True
             mtype of y_inner, after convert
         """
