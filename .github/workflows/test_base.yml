@@ -1,9 +1,9 @@
-name: test base module
+name: test base component
 on:
   workflow_call:
 jobs:
   detect:
-    name: check for changes in base module
+    name: detect changes in base component
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -18,7 +18,7 @@ jobs:
               - sktime/base/**
   test:
     needs: detect
-    name: test base module
+    name: test base component
     if: ${{ needs.detect.outputs.base == 'true' }}
     strategy:
       fail-fast: false
@@ -43,3 +43,7 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "True"
           test-affected-estimators: "True"
+      - name: upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,incomplete
