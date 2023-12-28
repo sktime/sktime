@@ -204,7 +204,7 @@ class Pipeline(BaseEstimator):
         self.counter += 1
         # Check if not already an skobject cloned from the provided
         # skobject is part of the pipeline
-        if (id(skobject) not in self.id_to_obj):
+        if id(skobject) not in self.id_to_obj:
             # In this case store that skobject to id_to_obj to prevent that
             # the garbage collector reassigns the id.
             self.id_to_obj[id(skobject)] = skobject
