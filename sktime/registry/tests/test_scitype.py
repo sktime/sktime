@@ -35,3 +35,45 @@ def test_scitype(coerce_to_list):
         assert "transformer" == result_transformer[0]
     else:
         assert "transformer" == result_transformer
+
+
+
+@pytest.mark.parametrize("force_single_scitype", [True, False])
+@pytest.mark.parametrize("coerce_to_list", [True, False])
+def test_scitype(force_single_scitype, coerce_to_list):
+    """Test that the scitype function recovers the correct scitype(s)."""
+    from sktime.base import BaseObject
+
+    class _DummyClass(BaseObject):
+        _tags = {"object_type": ["foo", "bar"]}
+
+    scitype_inferred = scitype(
+        _DummyClass(),
+        force_single_scitype=force_single_scitype,
+        coerce_to_list=coerce_to_list,
+    )
+
+    if force_single_scitype and coerce_to_list:
+        expected = ["foo"]
+    if force_single_scitype and not coerce_to_list:
+        expected = "foo"
+    if not force_single_scitype:
+        expected = ["foo", "bar"]
+
+    assert scitype_inferred == expected
+
+    class _DummyClass2(BaseObject):
+        _tags = {"object_type": "foo"}
+
+    scitype_inferred = scitype(
+        _DummyClass2(),
+        force_single_scitype=force_single_scitype,
+        coerce_to_list=coerce_to_list,
+    )
+
+    if force_single_scitype and coerce_to_list:
+        expected = ["foo"]
+    if not coerce_to_list:
+        expected = "foo"
+
+    assert scitype_inferred == expected
