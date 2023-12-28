@@ -77,3 +77,19 @@ def test_scitype(force_single_scitype, coerce_to_list):
         expected = "foo"
 
     assert scitype_inferred == expected
+
+    class _DummyClass3(BaseObject):
+        _tags = {"object_type": ["foo"]}
+
+    scitype_inferred = scitype(
+        _DummyClass3(),
+        force_single_scitype=force_single_scitype,
+        coerce_to_list=coerce_to_list,
+    )
+
+    if coerce_to_list:
+        expected = ["foo"]
+    if not coerce_to_list:
+        expected = "foo"
+
+    assert scitype_inferred == expected
