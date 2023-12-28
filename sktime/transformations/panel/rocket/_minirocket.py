@@ -20,6 +20,14 @@ class MiniRocket(BaseTransformer):
     MiniRocket is for unviariate time series only.  Use class MiniRocketMultivariate
     for multivariate time series.
 
+    This transformer fits one set of paramereters per individual series,
+    and applies them to series of the same number in the test set.
+
+    To fit and transform at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
+
     Parameters
     ----------
     num_kernels : int, default=10,000

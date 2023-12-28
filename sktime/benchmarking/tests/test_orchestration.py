@@ -193,8 +193,8 @@ def test_stat():
     _, sign_test_df = analyse.sign_test()
 
     sign_array = [
-        [sign_test_df["pf"][0], sign_test_df["pf"][1]],
-        [sign_test_df["tsf"][0], sign_test_df["tsf"][1]],
+        [sign_test_df["pf"].iloc[0], sign_test_df["pf"].iloc[1]],
+        [sign_test_df["tsf"].iloc[0], sign_test_df["tsf"].iloc[1]],
     ]
     sign_array_test = [[1, 1], [1, 1]]
     np.testing.assert_equal(

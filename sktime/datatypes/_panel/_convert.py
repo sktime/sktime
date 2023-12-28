@@ -36,6 +36,7 @@ __all__ = [
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
+from sktime.utils.pandas import df_map
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # dictionary indexed by triples of types
@@ -71,7 +72,7 @@ def _cell_is_series_or_array(cell):
 
 
 def _nested_cell_mask(X):
-    return X.applymap(_cell_is_series_or_array)
+    return df_map(X)(_cell_is_series_or_array)
 
 
 def are_columns_nested(X):
@@ -820,7 +821,7 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
         X_col = X_col.infer_objects()
 
         # create the right MultiIndex and assign to X_mi
-        idx_df = X[[c]].applymap(lambda x: x.index).explode(c)
+        idx_df = df_map(X[[c]])(lambda x: x.index).explode(c)
         index = pd.MultiIndex.from_arrays([idx_df.index, idx_df[c].values])
         index = index.set_names([instance_index, time_index])
         X_col.index = index
@@ -886,7 +887,7 @@ def from_nested_to_3d_numpy(X):
     # If all the columns are nested in structure
     if nested_col_mask.count(True) == len(nested_col_mask):
         X_3d = np.stack(
-            X.applymap(_convert_series_cell_to_numpy)
+            df_map(X)(_convert_series_cell_to_numpy)
             .apply(lambda row: np.stack(row), axis=1)
             .to_numpy()
         )

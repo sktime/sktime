@@ -806,7 +806,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        # TODO: 0.25.0:
+        # TODO: 0.26.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #
@@ -870,6 +870,12 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         _check_cutoff(cutoff, relative)
         is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
+        # remember timezone to restore it later
+        if hasattr(cutoff, "tz"):
+            old_tz = cutoff.tz
+        else:
+            old_tz = None
+
         if is_timestamp:
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
@@ -883,6 +889,9 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
             absolute = absolute.to_timestamp(fh.freq)
+
+        if old_tz is not None:
+            absolute = absolute.tz_localize(old_tz)
 
         return fh._new(absolute, is_relative=False, freq=fh.freq)
 
