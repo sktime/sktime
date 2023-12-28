@@ -18,15 +18,16 @@ def scitype(obj, force_single_scitype=True, coerce_to_list=False):
         if True, only the *first* scitype found will be returned
         order is determined by the order in BASE_CLASS_REGISTER
     coerce_to_list : bool, optional, default = False
-        whether return should be coerced to list, even if only one scitype is identified
+        determines the return type: if True, returns a single str,
+        if False, returns a list of str
 
     Returns
     -------
     scitype : str, or list of str of sktime scitype strings from BASE_CLASS_REGISTER
         str, sktime scitype string, if exactly one scitype can be determined for obj
-            or force_single_scitype is True, and if coerce_to_list is False
+        or force_single_scitype is True, and if coerce_to_list is False
         list of str, of scitype strings, if more than one scitype are determined,
-            or if coerce_to_list is True
+        or if coerce_to_list is True
         obj has scitype if it inherits from class in same row of BASE_CLASS_REGISTER
 
     Raises
