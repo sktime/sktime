@@ -108,7 +108,7 @@ all_extras = [
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
   'tensorflow; python_version < "3.12"',
-  'tsfresh>=0.17',
+  'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
@@ -143,7 +143,7 @@ all_extras_pandas2 = [
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
   'tensorflow; python_version < "3.12"',
-  'tsfresh>=0.17',
+  'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
@@ -170,7 +170,7 @@ classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   'numba<0.59,>=0.53; python_version < "3.12"',
   'tensorflow<=2.14,>=2; python_version < "3.12"',
-  'tsfresh<0.21,>=0.17',
+  'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
   'numba<0.59,>=0.53; python_version < "3.12"',
@@ -207,7 +207,7 @@ transformations = [
   "pykalman-bardo<0.10,>=0.9.7",
   "statsmodels<0.15,>=0.12.1",
   'stumpy<1.13,>=1.5.1; python_version < "3.12"',
-  'tsfresh<0.21,>=0.17',
+  'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 
 # dev - the developer dependency set, for contributors to sktime
