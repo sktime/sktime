@@ -2332,10 +2332,31 @@ class BaseForecaster(BaseEstimator):
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
+    def _get_varnames(self, y=None):
+        """Return variable column for DataFrame-like returns.
+
+        Primarily used as helper for probabilistic predict-like methods.
+        Assumes that _check_X_y has been called, and self._y_metadata set.
+
+        Parameter
+        ---------
+        y : ignored, present for downwards compatibility
+
+        Returns
+        -------
+        varnames : iterable of integer or str variable names
+            can be list or pd.Index
+            variable names for DataFrame-like returns
+            identical to self._y_varnames if this attribute exists
+        """
+        featnames = self._y_metadata["feature_names"]
+        return featnames
+
     def _get_columns(self, method="predict", **kwargs):
         """Return column names for DataFrame-like returns.
 
         Primarily used as helper for probabilistic predict-like methods.
+        Assumes that _check_X_y has been called, and self._y_metadata set.
 
         Parameter
         ---------
@@ -2351,7 +2372,7 @@ class BaseForecaster(BaseEstimator):
         columns : pd.Index
             column names
         """
-        featnames = self._y_metadata["feature_names"]
+        featnames = self._get_varnames()
 
         if method in ["predict", "predict_var"]:
             return featnames
