@@ -1,6 +1,5 @@
 """class that implements a graph pipeline."""
 import warnings
-import weakref
 from copy import copy, deepcopy
 
 from sktime.base import BaseEstimator
@@ -208,9 +207,9 @@ class Pipeline(BaseEstimator):
         if (id(skobject) not in self.id_to_obj) or self.id_to_obj[
             id(skobject)
         ]() is None:
-            # In this case set a weakref of that skobject to id_to_obj to prevent that
+            # In this case store that skobject to id_to_obj to prevent that
             # the garbage collector reassigns the id.
-            self.id_to_obj[id(skobject)] = weakref.ref(skobject)
+            self.id_to_obj[id(skobject)] = skobject
             self.id_to_true_id[id(skobject)] = self.counter
         return self.id_to_true_id[id(skobject)]
 
@@ -465,7 +464,7 @@ class Pipeline(BaseEstimator):
             .result
         )
 
-    def predict(self, X, y=None, **kwargs):
+    def predict(self, X=None, y=None, **kwargs):
         """Perform a prediction.
 
         I.e. calls predict or transform on each element in the  graph pipeline.
@@ -692,11 +691,11 @@ class Pipeline(BaseEstimator):
                     {
                         "skobject": ExponentTransformer(),
                         "name": "exp",
-                        "edges": {"X": "X"},
+                        "edges": {"X": "y"},
                     },
                     {
                         "skobject": NaiveForecaster(),
-                        "name": "SARIMAX",
+                        "name": "naive",
                         "edges": {"X": "exp", "y": "y"},
                     },
                 ]
