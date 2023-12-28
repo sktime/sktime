@@ -877,6 +877,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 f"is not a sub-class of BaseEstimator."
             )
         from sktime.pipeline import Pipeline
+
         if issubclass(estimator_class, Pipeline):
             return
 
