@@ -185,7 +185,7 @@ class TSFreshClassifier(BaseClassifier):
 
         X_t = self._transformer.transform(X)
         X_t = X_t.reindex(self._Xt_colnames, axis=1, fill_value=0)
-        return self._estimator.predict()
+        return self._estimator.predict(X_t)
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
