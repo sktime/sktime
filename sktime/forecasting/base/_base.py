@@ -1389,6 +1389,7 @@ class BaseForecaster(BaseEstimator):
 
             y_scitype = y_metadata["scitype"]
             self._y_metadata = y_metadata
+            self._y_mtype_last_seen = y_metadata["mtype"]
 
             req_vec_because_rows = y_scitype not in y_inner_scitype
             req_vec_because_cols = (
