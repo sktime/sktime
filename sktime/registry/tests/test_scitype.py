@@ -39,7 +39,7 @@ def test_scitype(coerce_to_list):
 
 @pytest.mark.parametrize("force_single_scitype", [True, False])
 @pytest.mark.parametrize("coerce_to_list", [True, False])
-def test_scitype(force_single_scitype, coerce_to_list):
+def test_scitype_generic(force_single_scitype, coerce_to_list):
     """Test that the scitype function recovers the correct scitype(s)."""
     from sktime.base import BaseObject
 
