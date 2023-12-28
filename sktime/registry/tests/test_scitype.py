@@ -37,7 +37,6 @@ def test_scitype(coerce_to_list):
         assert "transformer" == result_transformer
 
 
-
 @pytest.mark.parametrize("force_single_scitype", [True, False])
 @pytest.mark.parametrize("coerce_to_list", [True, False])
 def test_scitype(force_single_scitype, coerce_to_list):
