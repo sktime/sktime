@@ -1303,9 +1303,19 @@ class BaseTransformer(BaseEstimator):
                 n_fit = n * m
                 if n_trafos != n_fit:
                     raise RuntimeError(
+                        f"{type(self).__name__} is a transformer that applies per "
+                        "individual time series, and broadcasts across instances. "
+                        f"In fit, {type(self).__name__} makes one fit per instance, "
+                        "and applies that fit to the instance with the same index in "
+                        "transform. Vanilla use therefore requires the same number "
+                        "of instances in fit and transform, but"
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
-                        f"number of instances seen in transform: {n_trafos}"
+                        f"number of instances seen in transform: {n_trafos}. "
+                        "For fit/transforming per instance, e.g., for pre-processinng "
+                        "in a time series classification, regression or clustering "
+                        "pipeline, wrap this transformer in "
+                        "FitInTransform, from sktime.transformations.compose."
                     )
 
                 transformers_ = self.transformers_
