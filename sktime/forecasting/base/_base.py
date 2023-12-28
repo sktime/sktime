@@ -417,7 +417,7 @@ class BaseForecaster(BaseEstimator):
         # convert to output mtype, identical with last y mtype seen
         y_out = convert_to(
             y_pred,
-            self._y_mtype_last_seen,
+            self._y_metadata["mtype"],
             store=self._converter_store_y,
             store_behaviour="freeze",
         )
@@ -1081,7 +1081,7 @@ class BaseForecaster(BaseEstimator):
         # convert to output mtype, identical with last y mtype seen
         y_pred = convert_to(
             y_pred,
-            self._y_mtype_last_seen,
+            self._y_metadata["mtype"],
             store=self._converter_store_y,
             store_behaviour="freeze",
         )
@@ -1162,7 +1162,7 @@ class BaseForecaster(BaseEstimator):
         y_pred = self.predict(fh=fh, X=X)
 
         if not type(y_pred) is type(y):
-            y = convert_to(y, self._y_mtype_last_seen)
+            y = convert_to(y, self._y_metadata["mtype"])
 
         y_res = y - y_pred
 
@@ -1309,7 +1309,7 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self
         --------------
-        _y_mtype_last_seen : str, mtype of y
+        _y_metadata : dict with str keys, metadata from checking y
         _converter_store_y : dict, metadata from conversion for back-conversion
         """
         if X is None and y is None:
@@ -1360,7 +1360,7 @@ class BaseForecaster(BaseEstimator):
         # checking y
         if y is not None:
             # request only required metadata from checks
-            y_metadata_required = []
+            y_metadata_required = ["n_features", "feature_names"]
             if self.get_tag("scitype:y") != "both":
                 y_metadata_required += ["is_univariate"]
             if not self.get_tag("handles-missing-data"):
@@ -1388,7 +1388,7 @@ class BaseForecaster(BaseEstimator):
                 raise TypeError(msg + ", ".join(mtypes_messages))
 
             y_scitype = y_metadata["scitype"]
-            self._y_mtype_last_seen = y_metadata["mtype"]
+            self._y_metadata = y_metadata
 
             req_vec_because_rows = y_scitype not in y_inner_scitype
             req_vec_because_cols = (
@@ -1562,7 +1562,6 @@ class BaseForecaster(BaseEstimator):
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
-                self._y_varnames = self._get_varnames(y)
             else:
                 self._y = update_data(self._y, y)
 
@@ -1918,13 +1917,13 @@ class BaseForecaster(BaseEstimator):
             )
             # we need to overwrite the mtype last seen and converter store, since the _y
             #    may have been converted
-            mtype_last_seen = self._y_mtype_last_seen
+            y_metadata = self._y_metadata
             _converter_store_y = self._converter_store_y
             # refit with updated data, not only passed data
             self.fit(y=self._y, X=self._X, fh=self._fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
-            self._y_mtype_last_seen = mtype_last_seen
+            self._y_metadata = y_metadata
             self._converter_store_y = _converter_store_y
 
         # if update_params=False, and there are no components, do nothing
@@ -2159,7 +2158,7 @@ class BaseForecaster(BaseEstimator):
             pred_var.index = fh.to_pandas()
 
             if isinstance(self._y, pd.DataFrame):
-                pred_var.columns = self._get_varnames()
+                pred_var.columns = self._get_columns(method="predict_var")
 
             return pred_var
 
@@ -2327,55 +2326,11 @@ class BaseForecaster(BaseEstimator):
             for i in range(len(y_preds)):
                 y_preds[i] = convert_to(
                     y_preds[i],
-                    self._y_mtype_last_seen,
+                    self._y_metadata["mtype"],
                     store=self._converter_store_y,
                     store_behaviour="freeze",
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
-
-    def _get_varnames(self, y=None):
-        """Return variable column for DataFrame-like returns.
-
-        Primarily used as helper for probabilistic predict-like methods.
-
-        Parameter
-        ---------
-        y : pd.Series, pd.DataFrame, np.ndarray, optional (default=None)
-            if None, uses self._y
-
-        Returns
-        -------
-        varnames : iterable of integer or str variable names
-            can be list or pd.Index
-            variable names for DataFrame-like returns
-            identical to self._y_varnames if this attribute exists
-        """
-        if hasattr(self, "_y_varnames"):
-            return self._y_varnames
-        if y is None:
-            y = self._y
-        if isinstance(y, pd.Series):
-            var_name = self._y.name
-            if var_name is None:
-                var_name = 0
-            return [var_name]
-        elif isinstance(y, pd.DataFrame):
-            return y.columns
-        elif isinstance(y, np.ndarray):
-            if y.ndim == 1:
-                return [0]
-            elif y.ndim in [2, 3]:
-                return pd.RangeIndex(y.shape[1])
-            else:
-                raise ValueError(
-                    "error in BaseForecaster._get_varnames, "
-                    f"y must be 1D, 2D or 3D, but found y.ndim={y.ndim} instead."
-                )
-
-        raise ValueError(
-            "error in BaseForecaster._get_varnames, "
-            f"y must be pd.Series, pd.DataFrame, or np.ndarray, but found {type(y)}."
-        )
 
     def _get_columns(self, method="predict", **kwargs):
         """Return column names for DataFrame-like returns.
@@ -2396,12 +2351,12 @@ class BaseForecaster(BaseEstimator):
         columns : pd.Index
             column names
         """
+        featnames = self._y_metadata["feature_names"]
+
         if method in ["predict", "predict_var"]:
-            return self._get_varnames()
+            return featnames
         else:
             assert method in ["predict_interval", "predict_quantiles"]
-
-        varnames = self._get_varnames()
 
         if method == "predict_interval":
             coverage = kwargs.get("coverage", None)
@@ -2409,7 +2364,7 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "coverage must be passed to _get_columns for predict_interval"
                 )
-            return pd.MultiIndex.from_product([varnames, coverage, ["lower", "upper"]])
+            return pd.MultiIndex.from_product([featnames, coverage, ["lower", "upper"]])
 
         if method == "predict_quantiles":
             alpha = kwargs.get("alpha", None)
@@ -2417,7 +2372,7 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "alpha must be passed to _get_columns for predict_quantiles"
                 )
-            return pd.MultiIndex.from_product([varnames, alpha])
+            return pd.MultiIndex.from_product([featnames, alpha])
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
