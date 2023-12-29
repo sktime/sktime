@@ -368,11 +368,7 @@ class BaseForecaster(BaseEstimator):
 
         return self
 
-    def predict(
-        self,
-        fh=None,
-        X=None,
-    ):
+    def predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         State required:
@@ -421,7 +417,7 @@ class BaseForecaster(BaseEstimator):
         # convert to output mtype, identical with last y mtype seen
         y_out = convert_to(
             y_pred,
-            self._y_mtype_last_seen,
+            self._y_metadata["mtype"],
             store=self._converter_store_y,
             store_behaviour="freeze",
         )
@@ -1085,7 +1081,7 @@ class BaseForecaster(BaseEstimator):
         # convert to output mtype, identical with last y mtype seen
         y_pred = convert_to(
             y_pred,
-            self._y_mtype_last_seen,
+            self._y_metadata["mtype"],
             store=self._converter_store_y,
             store_behaviour="freeze",
         )
@@ -1166,7 +1162,7 @@ class BaseForecaster(BaseEstimator):
         y_pred = self.predict(fh=fh, X=X)
 
         if not type(y_pred) is type(y):
-            y = convert_to(y, self._y_mtype_last_seen)
+            y = convert_to(y, self._y_metadata["mtype"])
 
         y_res = y - y_pred
 
@@ -1313,7 +1309,7 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self
         --------------
-        _y_mtype_last_seen : str, mtype of y
+        _y_metadata : dict with str keys, metadata from checking y
         _converter_store_y : dict, metadata from conversion for back-conversion
         """
         if X is None and y is None:
@@ -1364,7 +1360,7 @@ class BaseForecaster(BaseEstimator):
         # checking y
         if y is not None:
             # request only required metadata from checks
-            y_metadata_required = []
+            y_metadata_required = ["n_features", "feature_names"]
             if self.get_tag("scitype:y") != "both":
                 y_metadata_required += ["is_univariate"]
             if not self.get_tag("handles-missing-data"):
@@ -1392,6 +1388,7 @@ class BaseForecaster(BaseEstimator):
                 raise TypeError(msg + ", ".join(mtypes_messages))
 
             y_scitype = y_metadata["scitype"]
+            self._y_metadata = y_metadata
             self._y_mtype_last_seen = y_metadata["mtype"]
 
             req_vec_because_rows = y_scitype not in y_inner_scitype
@@ -1921,13 +1918,13 @@ class BaseForecaster(BaseEstimator):
             )
             # we need to overwrite the mtype last seen and converter store, since the _y
             #    may have been converted
-            mtype_last_seen = self._y_mtype_last_seen
+            y_metadata = self._y_metadata
             _converter_store_y = self._converter_store_y
             # refit with updated data, not only passed data
             self.fit(y=self._y, X=self._X, fh=self._fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
-            self._y_mtype_last_seen = mtype_last_seen
+            self._y_metadata = y_metadata
             self._converter_store_y = _converter_store_y
 
         # if update_params=False, and there are no components, do nothing
@@ -2020,14 +2017,9 @@ class BaseForecaster(BaseEstimator):
         # change the column labels (multiindex) to the format for intervals
         # idx returned by _predict_quantiles is
         #   2-level MultiIndex with variable names, alpha
-        idx = pred_int.columns
-        # variable names (unique, in same order)
-        var_names = idx.get_level_values(0).unique()
-
         # idx returned by _predict_interval should be
         #   3-level MultiIndex with variable names, coverage, lower/upper
-        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
-
+        int_idx = self._get_columns(method="predict_interval", coverage=coverage)
         pred_int.columns = int_idx
 
         return pred_int
@@ -2093,14 +2085,9 @@ class BaseForecaster(BaseEstimator):
             # change the column labels (multiindex) to the format for intervals
             # idx returned by _predict_interval is
             #   3-level MultiIndex with variable names, coverage, lower/upper
-            idx = pred_int.columns
-            # variable names (unique, in same order)
-            var_names = idx.get_level_values(0).unique()
-
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
-            int_idx = pd.MultiIndex.from_product([var_names, alpha])
-
+            int_idx = self._get_columns(method="predict_quantiles", alpha=alpha)
             pred_int.columns = int_idx
 
         elif implements_proba:
@@ -2170,8 +2157,9 @@ class BaseForecaster(BaseEstimator):
             if fh.is_relative:
                 fh = fh.to_absolute(self.cutoff)
             pred_var.index = fh.to_pandas()
+
             if isinstance(self._y, pd.DataFrame):
-                pred_var.columns = self._y.columns
+                pred_var.columns = self._get_columns(method="predict_var")
 
             return pred_var
 
@@ -2339,29 +2327,74 @@ class BaseForecaster(BaseEstimator):
             for i in range(len(y_preds)):
                 y_preds[i] = convert_to(
                     y_preds[i],
-                    self._y_mtype_last_seen,
+                    self._y_metadata["mtype"],
                     store=self._converter_store_y,
                     store_behaviour="freeze",
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
-    def _get_varnames(self):
+    def _get_varnames(self, y=None):
         """Return variable column for DataFrame-like returns.
 
-        Developer note: currently a helper for predict_interval, predict_quantiles,
-        valid only in the univariate case. Can be extended later.
-        """
-        y = self._y
-        if isinstance(y, pd.Series):
-            var_name = self._y.name
-        elif isinstance(y, pd.DataFrame):
-            return y.columns
-        else:
-            var_name = 0
-        if var_name is None:
-            var_name = 0
+        Primarily used as helper for probabilistic predict-like methods.
+        Assumes that _check_X_y has been called, and self._y_metadata set.
 
-        return [var_name]
+        Parameter
+        ---------
+        y : ignored, present for downwards compatibility
+
+        Returns
+        -------
+        varnames : iterable of integer or str variable names
+            can be list or pd.Index
+            variable names for DataFrame-like returns
+            identical to self._y_varnames if this attribute exists
+        """
+        featnames = self._y_metadata["feature_names"]
+        return featnames
+
+    def _get_columns(self, method="predict", **kwargs):
+        """Return column names for DataFrame-like returns.
+
+        Primarily used as helper for probabilistic predict-like methods.
+        Assumes that _check_X_y has been called, and self._y_metadata set.
+
+        Parameter
+        ---------
+        method : str, optional (default="predict")
+            method for which to return column names
+            one of "predict", "predict_interval", "predict_quantiles", "predict_var"
+        kwargs : dict
+            additional keyword arguments passed to private method
+            important: args to private method, e.g., _predict, _predict_interval
+
+        Returns
+        -------
+        columns : pd.Index
+            column names
+        """
+        featnames = self._get_varnames()
+
+        if method in ["predict", "predict_var"]:
+            return featnames
+        else:
+            assert method in ["predict_interval", "predict_quantiles"]
+
+        if method == "predict_interval":
+            coverage = kwargs.get("coverage", None)
+            if coverage is None:
+                raise ValueError(
+                    "coverage must be passed to _get_columns for predict_interval"
+                )
+            return pd.MultiIndex.from_product([featnames, coverage, ["lower", "upper"]])
+
+        if method == "predict_quantiles":
+            alpha = kwargs.get("alpha", None)
+            if alpha is None:
+                raise ValueError(
+                    "alpha must be passed to _get_columns for predict_quantiles"
+                )
+            return pd.MultiIndex.from_product([featnames, alpha])
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
