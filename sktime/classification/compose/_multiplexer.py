@@ -4,9 +4,9 @@
 # based on MultiplexForecaster
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.datatypes import ALL_TIME_SERIES_MTYPES, MTYPE_LIST_TABLE
 from sktime.classification._delegate import _DelegatedClassifier
 from sktime.classification.base import BaseClassifier
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES, MTYPE_LIST_TABLE
 
 __author__ = ["fkiraly"]
 __all__ = ["MultiplexClassifier"]
@@ -198,7 +198,7 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         -------
         params : dict or list of dict
         """
-        from sktime.classification. dummy import DummyClassifier
+        from sktime.classification.dummy import DummyClassifier
 
         params1 = {
             "classifiers": [
