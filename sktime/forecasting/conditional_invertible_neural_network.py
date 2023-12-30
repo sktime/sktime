@@ -41,7 +41,15 @@ def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
 
 class cINNForecaster(BaseDeepNetworkPyTorch):
     """
-    Conditional Invertible Neural Network Forecaster.
+    Conditional Invertible Neural Network (cINN) Forecaster.
+
+    This forecaster uses a cINN to forecast the time series. The cINN learns a
+    bijective mapping between the time series and a normal distributed latent
+    space. The latent space is then sampled and transformed back to the time
+    series space. The cINN is conditioned on statistical and fourier term based
+    features of the time series and the provided exogenous features. This 
+    forecaster was applied in the BigDEAL challenge by the KIT-IAI team 
+    and is described in [1]_.
 
     Parameters
     ----------
@@ -82,7 +90,9 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
     References
     ----------
-    ..[1] TODO
+    ..[1] Heidrich, B., Hertel, M., Neumann, O., Hagenmeyer, V., & Mikut, R.
+          (2023). Using conditional Invertible Neural Networks to Perform Mid-
+          Term Peak Load Forecasting. IET Smart Grid, Under Review
 
     Examples
     --------
