@@ -109,6 +109,19 @@ class BaseForecaster(BaseEstimator):
         #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
         #  "dask": uses `dask`, requires `dask` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
+        "remember_data": True,  # whether to remember data in fit - self._X, self._y
+    }
+
+    _config_doc = {
+        "remember_data": """
+        remember_data : bool, default=True
+            whether self._X and self._y are stored in fit, and updated
+            in update. If True, self._X and self._y are stored and updated.
+            If False, self._X and self._y are not stored and updated.
+            This reduces serialization size when using save,
+            but the update will default to "do nothing" rather than
+            "refit to all data seen".
+        """,
     }
 
     def __init__(self):
@@ -1138,7 +1151,7 @@ class BaseForecaster(BaseEstimator):
             fh_orig = None
 
         # if no y is passed, the so far observed y is used
-        if y is None:
+        if y is None and self.get_config()["remember_data"]:
             y = self._y
 
         # we want residuals, so fh must be the index of y
@@ -1524,7 +1537,7 @@ class BaseForecaster(BaseEstimator):
         return self._check_X_y(X=X)[0]
 
     def _update_X(self, X, enforce_index_type=None):
-        if X is not None:
+        if X is not None and self.get_config()["remember_data"]:
             X = check_X(X, enforce_index_type=enforce_index_type)
             if X is len(X) > 0:
                 self._X = X.combine_first(self._X)
@@ -1556,7 +1569,7 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
             Exogeneous time series
         """
-        if y is not None:
+        if y is not None and self.get_config()["remember_data"]:
             # unwrap y if VectorizedDF
             if isinstance(y, VectorizedDF):
                 y = y.X_multiindex
@@ -1569,7 +1582,7 @@ class BaseForecaster(BaseEstimator):
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
 
-        if X is not None:
+        if X is not None and self.get_config()["remember_data"]:
             # unwrap X if VectorizedDF
             if isinstance(X, VectorizedDF):
                 X = X.X_multiindex
@@ -1905,7 +1918,7 @@ class BaseForecaster(BaseEstimator):
         -------
         self : reference to self
         """
-        if update_params:
+        if update_params and self.get_config()["remember_data"]:
             # default to re-fitting if update is not implemented
             warn(
                 f"NotImplementedWarning: {self.__class__.__name__} "
@@ -1918,12 +1931,14 @@ class BaseForecaster(BaseEstimator):
             )
             # we need to overwrite the mtype last seen and converter store, since the _y
             #    may have been converted
+            mtype_last_seen = self._y_mtype_last_seen
             y_metadata = self._y_metadata
             _converter_store_y = self._converter_store_y
             # refit with updated data, not only passed data
             self.fit(y=self._y, X=self._X, fh=self._fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
+            self._y_mtype_last_seen = mtype_last_seen
             self._y_metadata = y_metadata
             self._converter_store_y = _converter_store_y
 
@@ -2158,7 +2173,7 @@ class BaseForecaster(BaseEstimator):
                 fh = fh.to_absolute(self.cutoff)
             pred_var.index = fh.to_pandas()
 
-            if isinstance(self._y, pd.DataFrame):
+            if isinstance(pred_var, pd.DataFrame):
                 pred_var.columns = self._get_columns(method="predict_var")
 
             return pred_var
