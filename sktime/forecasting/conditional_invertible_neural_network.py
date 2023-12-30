@@ -47,8 +47,8 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     bijective mapping between the time series and a normal distributed latent
     space. The latent space is then sampled and transformed back to the time
     series space. The cINN is conditioned on statistical and fourier term based
-    features of the time series and the provided exogenous features. This 
-    forecaster was applied in the BigDEAL challenge by the KIT-IAI team 
+    features of the time series and the provided exogenous features. This
+    forecaster was applied in the BigDEAL challenge by the KIT-IAI team
     and is described in [1]_.
 
     Parameters
