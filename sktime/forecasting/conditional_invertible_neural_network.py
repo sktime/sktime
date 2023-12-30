@@ -18,7 +18,13 @@ from sktime.transformations.series.summarize import WindowSummarizer
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
-    from torch.utils.data import DataLoader
+    from torch.utils.data import DataLoader, Dataset
+else:
+
+    class Dataset:
+        """Dummy class if torch is unavailable."""
+
+        pass
 
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
@@ -58,13 +64,16 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     fourier_terms_list : list of int, optional (default=[1, 1])
         List of number of Fourier terms to use for the Fourier features.
     window_size : int, optional (default=24*30)
-        Window size for the rolling mean transformer.
+        Window size for calculating the rolling statistics using the
+        WindowSummarizer.
+    lag_feature: str, optional (default="mean")
+        The rolling statistic that the WindowSummarizer should calculate.
     num_epochs : int, optional (default=50)
         Number of epochs to train the cINN.
     verbose : bool, optional (default=False)
         Whether to print the training progress.
     f_statistic : function, optional (default=default_sine)
-        Function to use for the rolling mean transformer.
+        Function to use for forecasting the rolling statistic.
     init_param_f_statistic : list of float, optional (default=[1, 0, 0, 10, 1, 1])
         Initial parameters for the f_statistic function.
     deterministic : bool, optional (default=False)
@@ -119,6 +128,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         f_statistic=None,
         init_param_f_statistic=None,
         deterministic=False,
+        lag_feature="mean",
     ):
         self.n_coupling_layers = n_coupling_layers
         self.hidden_dim_size = hidden_dim_size
@@ -140,6 +150,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self.fourier_terms_list = fourier_terms_list
         self._fourier_terms_list = fourier_terms_list if fourier_terms_list else [1]
         self.deterministic = deterministic
+        self.lag_feature = lag_feature
         super().__init__(num_epochs, batch_size, lr=lr)
 
     def _fit(self, y, fh, X=None):
@@ -173,7 +184,9 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         """
         # Fit the rolling mean forecaster
         rolling_mean = WindowSummarizer(
-            lag_feature={"mean": [[-self.window_size // 2, self.window_size // 2]]},
+            lag_feature={
+                self.lag_feature: [[-self.window_size // 2, self.window_size // 2]]
+            },
             truncate="fill",
         ).fit_transform(y)
 
@@ -199,8 +212,13 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, data_loader)
 
-        self.z_mean_ = 0
-        self.z_std_ = 0.3
+        dataset = self._prepare_data(y, X)
+        X, z = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(y))))
+
+        res = self.network(z, c=X.reshape((-1, self.sample_dim * self.n_cond_features)))
+        self.z_ = res[0].detach().numpy()
+        self.z_mean_ = res[0].detach().numpy().mean(axis=0)
+        self.z_std_ = res[0].detach().numpy().std()
 
     def _build_network(self, fh):
         return cINNNetwork(
@@ -212,7 +230,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
     def _run_epoch(self, epoch, data_loader):
         nll = None
-        for _input in data_loader:
+        for i, _input in enumerate(data_loader):
             (c, x) = _input
 
             z, log_j = self.network(x, c)  # torch.cat([c, w], axis=-1))
@@ -222,9 +240,8 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             torch.nn.utils.clip_grad_norm_(self.network.trainable_parameters, 1.0)
             self.optimizer.step()
             self.optimizer.zero_grad()
-        #            if not i % 100 and self.verbose:
-        #                print(epoch, i, nll.detach().numpy())
-        #                pass
+            if i % 100 == 0 and self.verbose:
+                print(epoch, i, nll.detach().numpy())  # noqa
         return nll.detach().numpy()
 
     def _predict(self, X=None, fh=None):
@@ -263,10 +280,10 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             X = X.combine_first(self._X).loc[index]
         if self.deterministic:
             np.random.seed(42)
-        z = np.random.normal(self.z_mean_, self.z_std_, (len(index)))
-        z = pd.Series(z, index=index)
+        z = np.random.normal(self.z_mean_, self.z_std_, (len(index), self.sample_dim))
+        z = pd.DataFrame(z, index=index)
 
-        dataset = self._prepare_data(z, X)
+        dataset = self._prepare_data(yz=z, X=X, z=z)
         X, z = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(index))))
 
         res = self.network.reverse_sample(
@@ -281,7 +298,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             list(fh.to_absolute(self.cutoff))
         ]
 
-    def _prepare_data(self, yz, X):
+    def _prepare_data(self, yz, X, z=None):
         cal_features = self.fourier_features.transform(yz)
         statistics = self.function.predict(
             fh=ForecastingHorizon(yz.index, is_relative=False)
@@ -299,8 +316,10 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             index=yz.index,
         )
         self.n_cond_features = len(X.columns)
-
-        dataset = PyTorchTrainDataset(yz, 0, fh=self.sample_dim, X=X)
+        if z is None:
+            dataset = PyTorchTrainDataset(yz, 0, fh=self.sample_dim, X=X)
+        else:
+            dataset = PyTorchCinnTestDataset(z, 0, fh=self.sample_dim, X=X)
         return dataset
 
     @classmethod
@@ -330,7 +349,12 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
                 "f_statistic": _test_function,
                 "init_param_f_statistic": [1, 1],
                 "deterministic": True,
-            }
+            },
+            {
+                "f_statistic": _test_function,
+                "init_param_f_statistic": [0, 0],
+                "deterministic": True,
+            },
         ]
         return params
 
@@ -441,3 +465,32 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
 def _test_function(x, a, b):
     return a * x + b
+
+
+class PyTorchCinnTestDataset(Dataset):
+    """Dataset for use in sktime deep learning forecasters."""
+
+    def __init__(self, y, seq_len, fh=None, X=None):
+        self.y = y.values
+        self.X = X.values if X is not None else X
+        self.seq_len = seq_len
+        self.fh = fh
+
+    def __len__(self):
+        """Return length of dataset."""
+        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+
+    def __getitem__(self, i):
+        """Return data point."""
+        from torch import from_numpy, tensor
+
+        if self.X is not None:
+            exog_data = tensor(
+                self.X[i + self.seq_len : i + self.seq_len + self.fh]
+            ).float()
+        else:
+            exog_data = tensor([])
+        return (
+            exog_data,
+            from_numpy(self.y[i]).float(),
+        )
