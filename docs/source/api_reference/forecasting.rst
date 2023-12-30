@@ -341,6 +341,17 @@ Transformer (deep learning) based forecasters
     LTSFDLinearForecaster
     LTSFNLinearForecaster
 
+Deep generative model based forecasters
+---------------------------------------
+
+.. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CINNForecaster
+
 
 Intermittent time series forecasters
 ------------------------------------
