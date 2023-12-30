@@ -362,6 +362,10 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             },
             {
                 "f_statistic": _test_function,
+                "window_size": 4,
+                "sample_dim": 4,
+                "hidden_dim_size": 512,
+                "n_coupling_layers": 1,
                 "init_param_f_statistic": [0, 0],
                 "deterministic": True,
             },
