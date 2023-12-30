@@ -6,7 +6,7 @@
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification._delegate import _DelegatedClassifier
 from sktime.classification.base import BaseClassifier
-from sktime.datatypes import ALL_TIME_SERIES_MTYPES, MTYPE_LIST_TABLE
+from sktime.datatypes import MTYPE_LIST_PANEL, MTYPE_LIST_TABLE
 
 __author__ = ["fkiraly"]
 __all__ = ["MultiplexClassifier"]
@@ -60,7 +60,7 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "capability:predict_proba": True,
-        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": MTYPE_LIST_PANEL,
         "y_inner_mtype": MTYPE_LIST_TABLE,
         "fit_is_empty": False,
     }
@@ -101,7 +101,7 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         self.clone_tags(self.classifier_)
         self.set_tags(**{"fit_is_empty": False})
         # this ensures that we convert in the inner estimator, not in the multiplexer
-        self.set_tags(**{"X_inner_mtype": ALL_TIME_SERIES_MTYPES})
+        self.set_tags(**{"X_inner_mtype": MTYPE_LIST_PANEL})
         self.set_tags(**{"y_inner_mtype": MTYPE_LIST_TABLE})
 
     @property
