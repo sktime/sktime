@@ -61,16 +61,9 @@ class VectorizedDF:
     SERIES_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
     def __init__(
-        self,
-        X,
-        y=None,
-        iterate_as="Series",
-        is_scitype="Panel",
-        iterate_cols=False,
-        remember_data=True,
+        self, X, y=None, iterate_as="Series", is_scitype="Panel", iterate_cols=False
     ):
-        if remember_data:
-            self.X = X
+        self.X = X
 
         if is_scitype is None:
             _, _, metadata = check_is_scitype(
@@ -96,15 +89,9 @@ class VectorizedDF:
         self._check_iterate_cols(iterate_cols)
         self.iterate_cols = iterate_cols
 
-        self.remember_data = remember_data
-
         self.converter_store = dict()
 
-        X_multiindex = self._init_conversion(X)
-        self.X_mi_columns = X_multiindex.columns
-        self.X_mi_index = X_multiindex.index
-        if remember_data:
-            self.X_multiindex = X_multiindex
+        self.X_multiindex = self._init_conversion(X)
         self.iter_indices = self._init_iter_indices()
 
         self.shape = self._iter_shape()
@@ -161,14 +148,14 @@ class VectorizedDF:
         iterate_as = self.iterate_as
         is_scitype = self.is_scitype
         iterate_cols = self.iterate_cols
-        X_ix = self.X_mi_index
+        X = self.X_multiindex
 
         if iterate_as == is_scitype:
             row_ix = None
         elif iterate_as == "Series":
-            row_ix = X_ix.droplevel(-1).unique()
+            row_ix = X.index.droplevel(-1).unique()
         elif iterate_as == "Panel":
-            row_ix = X_ix.droplevel([-1, -2]).unique()
+            row_ix = X.index.droplevel([-1, -2]).unique()
         else:
             raise RuntimeError(
                 f"unexpected value found for attribute self.iterate_as: {iterate_as}"
@@ -176,7 +163,7 @@ class VectorizedDF:
             )
 
         if iterate_cols:
-            col_ix = self.X_mi_columns
+            col_ix = X.columns
         else:
             col_ix = None
 
@@ -185,7 +172,7 @@ class VectorizedDF:
     @property
     def index(self):
         """Defaults to pandas index of X converted to pandas type."""
-        return self.X_mi_index
+        return self.X_multiindex.index
 
     def get_iter_indices(self):
         """Get indices that are iterated over in vectorization.
@@ -270,7 +257,7 @@ class VectorizedDF:
                 yield group_name, None, _enforce_index_freq(inst)
 
         iter_levels = self._iter_levels(iterate_as)
-        is_self_iter = len(iter_levels) == self.X_mi_index.nlevels
+        is_self_iter = len(iter_levels) == self.X_multiindex.index.nlevels
 
         if is_self_iter:
             yield from _iter_cols(self.X_multiindex)
@@ -298,7 +285,7 @@ class VectorizedDF:
                 iter_levels = 2
             elif iterate_as == "Series":
                 iter_levels = 1
-        return list(range(self.X_mi_index.nlevels - iter_levels))
+        return list(range(self.X_multiindex.index.nlevels - iter_levels))
 
     def _iter_shape(self, iterate_as=None, iterate_cols=None):
         """Get the number of groups and columns to iterate over.
@@ -319,11 +306,11 @@ class VectorizedDF:
             iterate_cols = self.iterate_cols
 
         iter_levels = self._iter_levels(iterate_as)
-        is_self_iter = len(iter_levels) == self.X_mi_index.nlevels
+        is_self_iter = len(iter_levels) == self.X_multiindex.index.nlevels
 
         return (
             1 if is_self_iter else self.X_multiindex.groupby(level=iter_levels).ngroups,
-            len(self.X_mi_columns) if iterate_cols else 1,
+            len(self.X_multiindex.columns) if iterate_cols else 1,
         )
 
     def as_list(self):
@@ -396,7 +383,7 @@ class VectorizedDF:
         row_ix, col_ix = self.get_iter_indices()
         force_flat = False
         if row_ix is None and col_ix is None:
-            X_mi_reconstructed = pd.DataFrame(df_list)[0]
+            X_mi_reconstructed = self.X_multiindex
         elif col_ix is None:
             X_mi_reconstructed = pd.concat(df_list, keys=row_ix, axis=0)
         elif row_ix is None:
@@ -422,7 +409,7 @@ class VectorizedDF:
             X_mi_reconstructed = pd.concat(col_concats, keys=row_ix, axis=0)
 
         X_mi_index = X_mi_reconstructed.index
-        X_orig_row_index = self.X_mi_index
+        X_orig_row_index = self.X_multiindex.index
 
         flatten = col_multiindex == "flat" or (col_multiindex == "none" and force_flat)
         if flatten and isinstance(X_mi_reconstructed.columns, pd.MultiIndex):
