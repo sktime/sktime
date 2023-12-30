@@ -56,6 +56,7 @@ class Merger(BaseTransformer):
 
     _tags = {
         "scitype:transform-input": "Panel",
+        "scitype:transform-output": "Series",
         "X_inner_mtype": "numpy3D",
         "fit_is_empty": True,
     }
@@ -87,6 +88,10 @@ class Merger(BaseTransformer):
             result = np.nanmean(self._align_temporal(horizon, X), axis=0)
         elif self.method == "median":
             result = np.nanmedian(self._align_temporal(horizon, X), axis=0)
+        elif isinstance(self.method, float):
+            result = np.nanquantile(
+                self._align_temporal(horizon, X), self.method, axis=0
+            )
         else:
             raise ValueError(f"{self.method} must be 'mean' or 'median'.")
         return result
