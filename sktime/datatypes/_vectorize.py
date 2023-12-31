@@ -396,7 +396,7 @@ class VectorizedDF:
         row_ix, col_ix = self.get_iter_indices()
         force_flat = False
         if row_ix is None and col_ix is None:
-            X_mi_reconstructed = pd.DataFrame(df_list)[0]
+            X_mi_reconstructed = pd.DataFrame(df_list[0])
         elif col_ix is None:
             X_mi_reconstructed = pd.concat(df_list, keys=row_ix, axis=0)
         elif row_ix is None:
