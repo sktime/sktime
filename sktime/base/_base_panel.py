@@ -284,7 +284,10 @@ class BasePanelMixin(BaseEstimator):
             mtype of y_inner, after convert
         """
         if y is None:
-            return None
+            if return_to_mtype:
+                return None, None, None
+            else:
+                return None, None
 
         capa_multioutput = self.get_tag("capability:multioutput")
         y_inner_mtype = self.get_tag("y_inner_mtype")
@@ -318,7 +321,10 @@ class BasePanelMixin(BaseEstimator):
                 store=self._converter_store_y,
             )
             y_vec = VectorizedDF([y_df], iterate_cols=True)
-            return y_vec, y_metadata
+            if return_to_mtype
+                return y_vec, y_metadata, "pd_DataFrame_Table"
+            else:
+                return y_vec, y_metadata
 
         y_inner, y_inner_mtype = convert(
             y,
