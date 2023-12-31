@@ -40,6 +40,10 @@ jobs:
       - name: unit test step
         run: python3 -m pytest -m "not datadownload" sktime/datasets
         shell: bash
+      - name: upload coverage step
+        uses: codecov/codecov-action@v3
+        with:
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets
   test_external_data:
     name: test data downloaded from external sources
     strategy:
@@ -75,3 +79,7 @@ jobs:
       - name: unit test step
         run: python3 -m pytest -m "datadownload" sktime/datasets
         shell: bash
+      - name: upload coverage step
+        uses: codecov/codecov-action@v3
+        with:
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets

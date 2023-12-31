@@ -30,7 +30,8 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      components: ${{ steps.filter.outputs.changes }}
+      datasets: ${{ steps.filter.outputs.datasets }}
+      pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
       - uses: dorny/paths-filter@v2
         id: filter
@@ -50,10 +51,14 @@ jobs:
     needs: code_quality
     name: run unit tests for base framework
     uses: ./.github/workflows/test_base.yml
-  unit_test_components:
+  unit_test_components_with_extras:
     needs: code_quality
-    name: run unit tests for individual components
-    uses: ./.github/workflows/test_components.yml
+    name: run unit tests for individual components with extras
+    uses: ./.github/workflows/test_components_with_extras.yml
+  unit_test_components_without_extras:
+    needs: code_quality
+    name: run unit tests for individual components without extras
+    uses: ./.github/workflows/test_components_without_extras.yml
   unit_test_datasets:
     needs: detect
     name: run unit tests for datasets
