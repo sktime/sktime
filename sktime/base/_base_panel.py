@@ -321,7 +321,7 @@ class BasePanelMixin(BaseEstimator):
                 store=self._converter_store_y,
             )
             y_vec = VectorizedDF([y_df], iterate_cols=True)
-            if return_to_mtype
+            if return_to_mtype:
                 return y_vec, y_metadata, "pd_DataFrame_Table"
             else:
                 return y_vec, y_metadata
