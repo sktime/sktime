@@ -265,19 +265,23 @@ class BasePanelMixin(BaseEstimator):
         )
         return X
 
-    def _check_y(self, y=None):
+    def _check_y(self, y=None, return_to_mtype=False):
         """Check and coerce X/y for fit/transform functions.
 
         Parameters
         ----------
         y : pd.DataFrame, pd.Series or np.ndarray
+        return_to_mtype : bool
+            whether to return the mtype of y output
 
         Returns
         -------
-        y : object of sktime compatible time series type
+        y_inner : object of sktime compatible time series type
             can be Series, Panel, Hierarchical
         y_metadata : dict
             metadata of y, retured by check_is_scitype
+        y_mtype : str, only returned if return_to_mtype=True
+            mtype of y_inner, after convert
         """
         if y is None:
             return None
@@ -316,15 +320,19 @@ class BasePanelMixin(BaseEstimator):
             y_vec = VectorizedDF([y_df], iterate_cols=True)
             return y_vec, y_metadata
 
-        y_inner = convert(
+        y_inner, y_inner_mtype = convert(
             y,
             from_type=y_mtype,
             to_type=y_inner_mtype,
             as_scitype="Table",
             store=self._converter_store_y,
+            return_to_mtype=True,
         )
 
-        return y_inner, y_metadata
+        if return_to_mtype:
+            return y_inner, y_metadata, y_inner_mtype
+        else:
+            return y_inner, y_metadata
 
     def _convert_output_y(self, y):
         """Convert output y to original format.
@@ -332,6 +340,7 @@ class BasePanelMixin(BaseEstimator):
         Parameters
         ----------
         y : np.ndarray or pd.DataFrame
+            output to convert
 
         Returns
         -------
@@ -348,7 +357,7 @@ class BasePanelMixin(BaseEstimator):
 
         y = convert(
             y,
-            from_type=self.get_tag("y_inner_mtype"),
+            from_type=self._y_inner_mtype,
             to_type=output_mtype,
             as_scitype="Table",
             store=converter_store,
