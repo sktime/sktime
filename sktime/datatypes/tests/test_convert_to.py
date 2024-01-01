@@ -1,4 +1,4 @@
-"""Testing machine type converters for scitypes - covert_to utility."""
+"""Testing machine type converters for scitypes - convert_to utility."""
 
 __author__ = ["fkiraly"]
 

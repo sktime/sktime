@@ -11,6 +11,7 @@ from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_is_mtype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
 from sktime.utils.deep_equals import deep_equals
+from sktime.utils.pandas import df_map
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 SCITYPES = ["Panel", "Hierarchical"]
@@ -228,12 +229,20 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
         true_length = 1
     elif iterate_as == "Series":
         _, _, metadata = check_is_mtype(
-            fixture, mtype=mtype, scitype=scitype, return_metadata=True
+            fixture,
+            mtype=mtype,
+            scitype=scitype,
+            return_metadata=True,
+            msg_return_dict="list",
         )
         true_length = metadata["n_instances"]
     elif iterate_as == "Panel":
         _, _, metadata = check_is_mtype(
-            fixture, mtype=mtype, scitype=scitype, return_metadata=True
+            fixture,
+            mtype=mtype,
+            scitype=scitype,
+            return_metadata=True,
+            msg_return_dict="list",
         )
         true_length = metadata["n_panels"]
 
@@ -330,7 +339,10 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
         raise RuntimeError(f"found unexpected iterate_as value: {iterate_as}")
 
     X_list_valid = [
-        check_is_mtype(X, mtype=correct_mtype, scitype=iterate_as) for X in X_list
+        check_is_mtype(
+            X, mtype=correct_mtype, scitype=iterate_as, msg_return_dict="list"
+        )
+        for X in X_list
     ]
 
     assert np.all(
@@ -481,5 +493,5 @@ def test_vectorize_est(
     n_cols = _len(cols)
     assert isinstance(result, pd.DataFrame)
     assert result.shape == (n_rows, n_cols)
-    is_fcst_frame = result.applymap(lambda x: isinstance(x, NaiveForecaster))
+    is_fcst_frame = df_map(result)(lambda x: isinstance(x, NaiveForecaster))
     assert is_fcst_frame.all().all()

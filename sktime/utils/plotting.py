@@ -2,8 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common timeseries plotting functionality."""
 
-__all__ = ["plot_series", "plot_correlations", "plot_windows"]
-__author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro"]
+__all__ = ["plot_series", "plot_correlations", "plot_windows", "plot_calibration"]
+__author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro", "benheid"]
 
 import math
 from warnings import simplefilter, warn
@@ -176,20 +176,23 @@ def plot_series(
         ax.legend()
     if pred_interval is not None:
         check_interval_df(pred_interval, series[-1].index)
-        ax = plot_interval(ax, pred_interval)
+        ax = plot_interval(ax, pred_interval, index)
     if _ax_kwarg_is_none:
         return fig, ax
     else:
         return ax
 
 
-def plot_interval(ax, interval_df):
+def plot_interval(ax, interval_df, ix=None):
     cov = interval_df.columns.levels[1][0]
     var_name = interval_df.columns.levels[0][0]
+    x_ix = np.argwhere(ix.isin(interval_df.index)).ravel()
+    x_ix = np.array(x_ix)
+
     ax.fill_between(
-        ax.get_lines()[-1].get_xdata(),
-        interval_df[var_name][cov]["lower"].astype("float64"),
-        interval_df[var_name][cov]["upper"].astype("float64"),
+        x_ix,
+        interval_df[var_name][cov]["lower"].astype("float64").to_numpy(),
+        interval_df[var_name][cov]["upper"].astype("float64").to_numpy(),
         alpha=0.2,
         color=ax.get_lines()[-1].get_c(),
         label=f"{int(cov * 100)}% prediction interval",
@@ -446,7 +449,7 @@ def plot_windows(cv, y, title="", ax=None):
 
     # create figure if no ax provided for plotting
     if _ax_kwarg_is_none:
-        fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
+        fig, ax = plt.subplots(figsize=plt.figaspect(0.3))
 
     train_windows, test_windows = _get_windows(cv, y)
 
@@ -459,8 +462,6 @@ def plot_windows(cv, y, title="", ax=None):
     len_test = len(test_windows[0])
 
     train_color, test_color = sns.color_palette("colorblind")[:2]
-
-    fig, ax = plt.subplots(figsize=plt.figaspect(0.3))
 
     for i in range(n_splits):
         train = train_windows[i]
@@ -496,6 +497,69 @@ def plot_windows(cv, y, title="", ax=None):
     # remove duplicate labels/handles
     handles, labels = ((leg[:2]) for leg in ax.get_legend_handles_labels())
     ax.legend(handles, labels)
+
+    if _ax_kwarg_is_none:
+        return fig, ax
+    else:
+        return ax
+
+
+def plot_calibration(y_true, y_pred, ax=None):
+    """Plot the calibration of a probabilistic forecast.
+
+    Calculates internally the calibration of the quantile forecast and
+    visualise it.
+
+    x-axis: interval from 0 to 1
+    y-axis: interval from 0 to 1
+    plot elements: the calibration fo the forecast (blue) and the ideal
+        calibration (orange)
+
+    Parameters
+    ----------
+    y_true : pd.Series, single columned pd.DataFrame, or single columned np.array.
+        The actual values of the forecast
+    y_pred : pd.DataFrame
+        The quantile forecast.
+    ax : matplotlib.axes.Axes, optional (default=None)
+        Axes on which to plot. If None, axes will be created and returned.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure, returned only if ax is None
+        matplotlib figure object
+    ax : matplotlib.axes.Axes
+        matplotlib axes object with the figure
+    """
+    import matplotlib.pyplot as plt
+
+    series = convert_to(y_true, "pd.Series", "Series")
+
+    _ax_kwarg_is_none = True if ax is None else False
+
+    if _ax_kwarg_is_none:
+        fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
+
+    result = [0]
+    ideal_calibration = [0]
+
+    for col in y_pred.columns:
+        if isinstance(col, tuple):
+            q = col[1]
+        else:
+            q = col
+        pred_q = convert_to(y_pred[[col]], "pd.Series", "Series")
+        result.append(sum(series.values < pred_q.values) / len(pred_q.values))
+        ideal_calibration.append(q)
+    result.append(1)
+    ideal_calibration.append(1)
+
+    df = pd.DataFrame(
+        {"Forecast's Calibration": result, "Ideal Calibration": ideal_calibration},
+        index=ideal_calibration,
+    )
+
+    df.plot(ax=ax)
 
     if _ax_kwarg_is_none:
         return fig, ax

@@ -588,3 +588,28 @@ def test_direct_vs_recursive():
     assert pred_dir_max.head(1).equals(pred_rec_max.head(1))
     assert pred_dir_max.head(1).equals(pred_rec_spec.head(1))
     assert not pred_dir_max.head(1).equals(pred_dir_spec.head(1))
+
+
+def test_recursive_reducer_X_not_fit_to_fh():
+    """Test recursive reducer with X that do not fit the fh.
+
+    I.e., either X is longer or smaller than max_fh
+    """
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y)
+    X_train = y_train
+    X_test = y_test
+
+    forecaster = make_reduction(
+        LinearRegression(), window_length=2, strategy="recursive"
+    )
+    forecaster.fit(y_train, X_train)
+
+    pred1 = forecaster.predict(X=X_test[:1], fh=[1, 2, 3])
+    assert pred1.shape == (3,)
+    pred2 = forecaster.predict(X=X_test[:2], fh=[1, 2, 3])
+    assert pred2.shape == (3,)
+    pred3 = forecaster.predict(X=X_test[:3], fh=[1, 2, 3])
+    assert pred3.shape == (3,)
+    pred4 = forecaster.predict(X=X_test, fh=[1])
+    assert pred4.shape == (1,)

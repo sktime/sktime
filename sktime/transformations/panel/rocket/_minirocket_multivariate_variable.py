@@ -25,6 +25,15 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     performance, use the sktime class MiniRocket for univariate input,
     and MiniRocketMultivariate to equal length multivariate input.
 
+    This transformer fits one set of paramereters per individual series,
+    and applies the transform with fitted parameter i to the i-th series in transform.
+    Vanilla use requies same number of series in fit and transform.
+
+    To fit and transform series at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
+
     Parameters
     ----------
     num_kernels : int, default=10,000

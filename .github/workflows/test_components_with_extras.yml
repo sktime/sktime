@@ -1,40 +1,49 @@
-name: test individual components workflow
+name: test components with extras
 on:
   workflow_call:
 jobs:
   detect:
-    name: check for changes in individual components
+    name: detect changes in components with extras
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
     outputs:
-      components: ${{ steps.filter.outputs.changes }}
+      components_with_extras: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: dorny/paths-filter@v2
         id: filter
         with:
           filters: |
             alignment:
+              - sktime/base/**
               - sktime/alignment/**
             annotation:
+              - sktime/base/**
               - sktime/annotation/**
             classification:
+              - sktime/base/**
               - sktime/classification/**
             clustering:
+              - sktime/base/**
               - sktime/clustering/**
             forecasting:
+              - sktime/base/**
               - sktime/forecasting/**
             networks:
+              - sktime/base/**
               - sktime/networks/**
             param_est:
+              - sktime/base/**
               - sktime/param_est/**
             regression:
+              - sktime/base/**
               - sktime/regression/**
             transformations:
+              - sktime/base/**
               - sktime/transformations/**
   test:
     needs: detect
-    name: test specific component
+    name: test components with extras
     strategy:
       fail-fast: false
       matrix:
@@ -48,7 +57,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        sktime-component: ${{ fromJSON(needs.detect.outputs.components) }}
+        sktime-component: ${{ fromJSON(needs.detect.outputs.components_with_extras) }}
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
@@ -60,3 +69,7 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "True"
           test-affected-estimators: "True"
+      - name: upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},incomplete

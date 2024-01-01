@@ -34,6 +34,8 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_one_series": bool, True iff there is only one series in the panel
         "has_nans": bool, True iff the panel contains NaN values
         "n_instances": int, number of instances in the panel
+        "n_features": int, number of variables in series
+        "feature_names": list of int or object, names of variables in series
 """
 
 __author__ = ["fkiraly", "TonyBagnall"]
@@ -124,6 +126,10 @@ def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
         metadata["is_one_panel"] = True
     if _req("n_instances", return_metadata):
         metadata["n_instances"] = n
+    if _req("n_features", return_metadata):
+        metadata["n_features"] = len(obj[0].columns)
+    if _req("feature_names", return_metadata):
+        metadata["feature_names"] = obj[0].columns.to_list()
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -160,6 +166,10 @@ def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
         metadata["n_panels"] = 1
     if _req("is_one_panel", return_metadata):
         metadata["is_one_panel"] = True
+    if _req("n_features", return_metadata):
+        metadata["n_features"] = obj.shape[1]
+    if _req("feature_names", return_metadata):
+        metadata["feature_names"] = list(range(obj.shape[1]))
 
     # check whether there any nans; only if requested
     if _req("has_nans", return_metadata):
@@ -233,7 +243,8 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         ):
             msg = (
                 f"The (time) index of {var_name} must be sorted monotonically "
-                f"increasing, but found: {index}"
+                f"increasing. Use {var_name}.sort_index() to sort the index, or "
+                f"{var_name}.duplicated() to find duplicates."
             )
             return _ret(False, msg, None, return_metadata)
 
@@ -245,6 +256,10 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
     if _req("has_nans", return_metadata):
         metadata["has_nans"] = obj.isna().values.any()
+    if _req("n_features", return_metadata):
+        metadata["n_features"] = len(obj.columns)
+    if _req("feature_names", return_metadata):
+        metadata["feature_names"] = obj.columns.to_list()
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
@@ -396,10 +411,10 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
 
     # Check instance index is unique
     if not obj.index.is_unique:
-        duplicates = obj.index[obj.index.duplicated()].unique().to_list()
         msg = (
             f"The instance index of {var_name} must be unique, "
-            f"but found duplicates: {duplicates}"
+            f"but found duplicates. Use {var_name}.duplicated() "
+            f"to find the duplicates."
         )
         return _ret(False, msg, None, return_metadata)
 
@@ -418,6 +433,10 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
         metadata["has_nans"] = _nested_dataframe_has_nans(obj)
     if _req("is_equal_length", return_metadata):
         metadata["is_equal_length"] = not _nested_dataframe_has_unequal(obj)
+    if _req("n_features", return_metadata):
+        metadata["n_features"] = len(obj.columns)
+    if _req("feature_names", return_metadata):
+        metadata["feature_names"] = obj.columns.to_list()
 
     # todo: this is temporary override, proper is_empty logic needs to be added
     if _req("is_empty", return_metadata):
@@ -447,6 +466,10 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
         metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
     if _req("is_univariate", return_metadata):
         metadata["is_univariate"] = True
+    if _req("n_features", return_metadata):
+        metadata["n_features"] = 1
+    if _req("feature_names", return_metadata):
+        metadata["feature_names"] = [0]
     # np.arrays are considered equally spaced, equal length, by assumption
     if _req("is_equally_spaced", return_metadata):
         metadata["is_equally_spaced"] = True

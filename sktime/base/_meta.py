@@ -97,29 +97,31 @@ class _HeterogenousMetaEstimator:
 
     def _get_params(self, attr, deep=True, fitted=False):
         if fitted:
-            method = "_get_fitted_params"
-            methodd = "get_fitted_params"
+            private_method = "_get_fitted_params"
+            public_method = "get_fitted_params"
             deepkw = {}
         else:
-            method = "get_params"
-            methodd = "get_params"
+            private_method = "get_params"
+            public_method = "get_params"
             deepkw = {"deep": deep}
 
-        out = getattr(super(), method)(**deepkw)
+        out = getattr(super(), private_method)(**deepkw)
         if deep and hasattr(self, attr):
             estimators = getattr(self, attr)
             estimators = [(x[0], x[1]) for x in estimators]
             out.update(estimators)
             for name, estimator in estimators:
                 # checks estimator has the method we want to call
-                cond1 = hasattr(estimator, methodd)
+                cond1 = hasattr(estimator, public_method)
                 # checks estimator is fitted if calling get_fitted_params
                 is_fitted = hasattr(estimator, "is_fitted") and estimator.is_fitted
                 # if we call get_params and not get_fitted_params, this is True
                 cond2 = not fitted or is_fitted
                 # check both conditions together
                 if cond1 and cond2:
-                    for key, value in getattr(estimator, methodd)(**deepkw).items():
+                    for key, value in getattr(estimator, public_method)(
+                        **deepkw
+                    ).items():
                         out[f"{name}__{key}"] = value
         return out
 

@@ -280,7 +280,9 @@ def test_get_window_output_type(scitype, mtype, window_length, lag):
     # retrieve example fixture
     fixture = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)[0]
     X = get_window(fixture, window_length=window_length, lag=lag)
-    valid, err, _ = check_is_mtype(X, mtype=mtype, return_metadata=True)
+    valid, err, _ = check_is_mtype(
+        X, mtype=mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"get_window should return an output of mtype {mtype} for that type of input, "
@@ -352,7 +354,9 @@ def test_get_slice_output_type(scitype, mtype):
     # retrieve example fixture
     fixture = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)[0]
     X = get_slice(fixture)
-    valid, err, _ = check_is_mtype(X, mtype=mtype, return_metadata=True)
+    valid, err, _ = check_is_mtype(
+        X, mtype=mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"get_slice should return an output of mtype {mtype} for that type of input, "

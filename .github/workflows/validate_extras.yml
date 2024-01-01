@@ -1,12 +1,8 @@
 name: extras validation
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - pyproject.toml
   schedule:
     - cron: 0 0 1 * *
+  workflow_call:
   workflow_dispatch:
 jobs:
   test_installations:
@@ -25,6 +21,7 @@ jobs:
           - ubuntu-latest
           - windows-latest
         sktime-extra:
+          - all_extras_pandas2
           - alignment
           - annotation
           - classification

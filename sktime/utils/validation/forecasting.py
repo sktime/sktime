@@ -511,7 +511,9 @@ def check_interval_df(interval_df, index_to_match):
     """
     from sktime.datatypes import check_is_mtype
 
-    checked = check_is_mtype(interval_df, "pred_interval", return_metadata=True)
+    checked = check_is_mtype(
+        interval_df, "pred_interval", return_metadata=True, msg_return_dict="list"
+    )
     if not checked[0]:
         raise ValueError(checked[1])
     df_idx = interval_df.index

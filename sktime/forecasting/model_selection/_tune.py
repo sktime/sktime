@@ -464,6 +464,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
@@ -498,10 +499,16 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Valid keys depend on the value of ``backend``:
 
         - "None": no additional parameters, ``backend_params`` is ignored
-        - "loky", "multiprocessing" and "threading":
-            any valid keys for ``joblib.Parallel`` can be passed here,
-            e.g., ``n_jobs``, with the exception of ``backend``
-            which is directly controlled by ``backend``
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
 
     Attributes
@@ -537,9 +544,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     --------
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
-    >>> from sktime.split import (
-    ...     ExpandingWindowSplitter,
-    ...     ExpandingWindowSplitter)
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
     >>> fh = [1,2,3]
@@ -796,6 +801,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
@@ -830,10 +836,16 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Valid keys depend on the value of ``backend``:
 
         - "None": no additional parameters, ``backend_params`` is ignored
-        - "loky", "multiprocessing" and "threading":
-            any valid keys for ``joblib.Parallel`` can be passed here,
-            e.g., ``n_jobs``, with the exception of ``backend``
-            which is directly controlled by ``backend``
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
 
     Attributes
@@ -1055,6 +1067,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
@@ -1085,10 +1098,16 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         Valid keys depend on the value of ``backend``:
 
         - "None": no additional parameters, ``backend_params`` is ignored
-        - "loky", "multiprocessing" and "threading":
-            any valid keys for ``joblib.Parallel`` can be passed here,
-            e.g., ``n_jobs``, with the exception of ``backend``
-            which is directly controlled by ``backend``
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
 
     Attributes
