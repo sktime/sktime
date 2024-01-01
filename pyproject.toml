@@ -109,7 +109,7 @@ all_extras = [
   'tbats>=1.1; python_version < "3.12"',
   'tensorflow; python_version < "3.12"',
   'tsfresh>=0.17; python_version < "3.12"',
-  'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
 all_extras_pandas2 = [
@@ -144,7 +144,7 @@ all_extras_pandas2 = [
   'tbats>=1.1; python_version < "3.12"',
   'tensorflow; python_version < "3.12"',
   'tsfresh>=0.17; python_version < "3.12"',
-  'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
 
