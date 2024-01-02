@@ -109,7 +109,7 @@ all_extras = [
   'tbats>=1.1; python_version < "3.12"',
   'tensorflow; python_version < "3.12"',
   'tsfresh>=0.17; python_version < "3.12"',
-  'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
 all_extras_pandas2 = [
@@ -144,7 +144,7 @@ all_extras_pandas2 = [
   'tbats>=1.1; python_version < "3.12"',
   'tensorflow; python_version < "3.12"',
   'tsfresh>=0.17; python_version < "3.12"',
-  'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
 
@@ -174,7 +174,7 @@ classification = [
 ]
 clustering = [
   'numba<0.59,>=0.53; python_version < "3.12"',
-  'tslearn<0.6.3,>=0.5.2; python_version < "3.12"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
 ]
 forecasting = [
   "arch<6.3,>=5.6",
