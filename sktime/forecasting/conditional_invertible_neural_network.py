@@ -372,6 +372,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         ]
         return params
 
+
 def _test_function(x, a, b):
     return a * x + b
 
