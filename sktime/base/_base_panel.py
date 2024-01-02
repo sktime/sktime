@@ -361,9 +361,18 @@ class BasePanelMixin(BaseEstimator):
             output_mtype = "numpy1D"
             converter_store = None
 
+        # inner return mtype is what we convert from
+        # special treatment for 1D numpy array
+        # this can be returned in composites due to
+        # current downwards compatible choice "1D return is always numpy"
+        if isinstance(y, np.ndarray) and y.ndim == 1:
+            inner_return_mtype = "numpy1D"
+        else:
+            inner_return_mtype = self._y_inner_mtype
+
         y = convert(
             y,
-            from_type=self._y_inner_mtype,
+            from_type=inner_return_mtype,
             to_type=output_mtype,
             as_scitype="Table",
             store=converter_store,
