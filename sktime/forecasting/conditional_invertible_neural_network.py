@@ -216,7 +216,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
         self.network = self._build_network(None)
 
-        self.optimizer = self._instatiate_optimizer()
+        self.optimizer = self._instantiate_optimizer()
 
         # Fit the cINN
         for epoch in range(self.num_epochs):
