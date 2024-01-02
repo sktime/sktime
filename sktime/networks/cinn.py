@@ -8,10 +8,10 @@ if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
 
-    nn_module = nn.Module
+    NNModule = nn.Module
 else:
 
-    class nn_module:
+    class NNModule:
         """Dummy class if torch is unavailable."""
 
         pass
@@ -42,7 +42,7 @@ class cINNNetwork:
         Activation function to use in the subnet.
     """
 
-    class _cINNNetwork(nn_module):
+    class _cINNNetwork(NNModule):
         def __init__(
             self,
             horizon,

@@ -328,7 +328,7 @@ Structural time series models
 
     DynamicFactor
 
-Transformer (deep learning) based forecasters
+Deep learning based forecasters
 ---------------------------------------------
 
 .. currentmodule:: sktime.forecasting.ltsf
@@ -340,9 +340,6 @@ Transformer (deep learning) based forecasters
     LTSFLinearForecaster
     LTSFDLinearForecaster
     LTSFNLinearForecaster
-
-Deep generative model based forecasters
----------------------------------------
 
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
