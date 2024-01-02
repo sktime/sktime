@@ -72,7 +72,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         self.network = self._build_network(list(fh)[-1])
 
         self._criterion = self._instantiate_criterion()
-        self._optimizer = self._instatiate_optimizer()
+        self._optimizer = self._instantiate_optimizer()
 
         dataloader = self.build_pytorch_train_dataloader(y)
         self.network.train()
