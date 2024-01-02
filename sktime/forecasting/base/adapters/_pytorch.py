@@ -4,7 +4,7 @@ from abc import ABC
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -63,18 +63,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         X : iterable-style or map-style dataset
             see (https://pytorch.org/docs/stable/data.html) for more information
         """
-        # save fh and y for prediction later
-        if fh.is_relative:
-            self._fh = fh
-        else:
-            fh = fh.to_relative(self.cutoff)
-            self._fh = fh
-
-        self._y = y
-        if isinstance(self.fh, ForecastingHorizon):
-            self.network = self._build_network(self.fh._values[-1])
-        else:
-            self.network = self._build_network(self.fh)
+        self.network = self._build_network(list(self.fh)[-1])
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instatiate_optimizer()
@@ -93,7 +82,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
             loss.backward()
             self._optimizer.step()
 
-    def _instatiate_optimizer(self):
+    def _instantiate_optimizer(self):
         if self.optimizer:
             if self.optimizer in self.optimizers.keys():
                 if self.optimizer_kwargs:
@@ -132,7 +121,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         from torch import cat
 
         if fh is None:
-            fh = self._fh
+            fh = self.fh
 
         if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
             raise ValueError(
