@@ -67,7 +67,13 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X", copy=T
     """
     from sktime.datatypes import check_is_mtype
 
-    check_is_mtype(align, "alignment", scitype="Alignment", var_name=align_name)
+    check_is_mtype(
+        align,
+        "alignment",
+        scitype="Alignment",
+        var_name=align_name,
+        msg_return_dict="list",
+    )
 
     if not isinstance(X, list):
         raise ValueError(f"{df_name} must be a list of pandas.DataFrame")

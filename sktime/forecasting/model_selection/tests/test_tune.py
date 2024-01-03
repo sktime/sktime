@@ -17,8 +17,6 @@ from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
-    SingleWindowSplitter,
-    SlidingWindowSplitter,
 )
 from sktime.forecasting.model_selection._tune import BaseGridSearch
 from sktime.forecasting.naive import NaiveForecaster
@@ -34,10 +32,12 @@ from sktime.performance_metrics.forecasting import (
     MeanSquaredError,
 )
 from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
+from sktime.split import SingleWindowSplitter, SlidingWindowSplitter
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.parallel import _get_parallel_test_fixtures
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 TEST_METRICS_PROBA = [CRPS(), PinballLoss()]
@@ -143,10 +143,6 @@ def test_gscv(forecaster, param_grid, cv, scoring, error_score, multivariate):
         cv=cv,
         scoring=scoring,
         error_score=error_score,
-        # todo 0.24.0: remove this
-        # and/or add a test for tune_by_variable=True
-        # in this case, the forecaster is expeceted to vectorize over columns
-        tune_by_variable=False,
     )
     gscv.fit(y, X)
 
@@ -212,10 +208,6 @@ def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score, n_c
         cv=cv,
         scoring=scoring,
         error_score=error_score,
-        # todo 0.24.0: remove this
-        # and/or add a test for tune_by_variable=True
-        # in this case, the forecaster is expeceted to vectorize over columns
-        tune_by_variable=False,
     )
     gscv.fit(y, X)
 
@@ -331,3 +323,30 @@ def test_skoptcv_multiple_forecaster():
     )
     sscv.fit(y, X)
     assert len(sscv.cv_results_) == 5
+
+
+BACKEND_TEST = _get_parallel_test_fixtures()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastingGridSearchCV),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("backend_set", BACKEND_TEST)
+def test_gscv_backends(backend_set):
+    """Test ForecastingGridSearchCV."""
+    backend = backend_set["backend"]
+    backend_params = backend_set["backend_params"]
+
+    y, X = load_longley()
+
+    gscv = ForecastingGridSearchCV(
+        PIPE,
+        param_grid=PIPE_GRID,
+        cv=CVs[0],
+        scoring=TEST_METRICS[0],
+        error_score=ERROR_SCORES[0],
+        backend=backend,
+        backend_params=backend_params,
+    )
+    gscv.fit(y, X)

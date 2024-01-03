@@ -5,12 +5,11 @@
 __author__ = ["RNKuhns"]
 __all__ = ["ExponentTransformer", "SqrtTransformer"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.warnings import warn
 
 
 class ExponentTransformer(BaseTransformer):
@@ -106,7 +105,8 @@ class ExponentTransformer(BaseTransformer):
             warn(
                 "power close to zero passed to ExponentTransformer, "
                 "inverse_transform will default to identity "
-                "if called, in order to avoid division by zero"
+                "if called, in order to avoid division by zero",
+                obj=self,
             )
             self.set_tags(**{"skip-inverse-transform": True})
 
@@ -189,7 +189,7 @@ class ExponentTransformer(BaseTransformer):
 
 
 class SqrtTransformer(ExponentTransformer):
-    """Apply element-sise square root transformation to a time series.
+    """Apply elementwise square root transformation to a time series.
 
     Transformation performs the following operations element-wise:
         * adds the constant `offset` (shift)

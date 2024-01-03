@@ -29,7 +29,7 @@ class Pipeline(BaseEstimator):
     This class is a generalized graph pipeline. Generalized means that it can
     contain forecasters, classifiers, etc. The graph pipeline mean that the structure
     is not linear. I.e., the each element of the pipeline can be the input of multiple
-    other steps and not only one sucessors.
+    other steps and not only one successors.
 
     `fit(y, X, *args)` - changes state by running `fit` on all sktime estimators and
         transformers in the pipeline. Note that depending on the sktime estimators and
@@ -46,8 +46,8 @@ class Pipeline(BaseEstimator):
     `get_params`, `set_params` uses `sklearn` compatible nesting interface
     `add_step(skobject, name, edges, method, **kwargs)` - adds a skobject to the
         pipeline and setting the name as identifier and the steps specified with
-        edges as input steps (predecessors). Therby the method that should be
-        called can be overriden using the method kwarg. Further provided kwargs
+        edges as input steps (predecessors). Thereby the method that should be
+        called can be overridden using the method kwarg. Further provided kwargs
         are directly provided to the skobject if it is called.
 
     Parameters
@@ -60,8 +60,8 @@ class Pipeline(BaseEstimator):
             * name: str, the name of the step that is created
             * edges: dict, a dict with string keys to string values. Identifying the
                  predcessors.  The keys of the edges dict specify to which argument
-                 of fit/predict/.. the output of the predessors (the value of the
-                 dict specifies the predessors name) shuold be passed.
+                 of fit/predict/.. the output of the predecessors (the value of the
+                 dict specifies the predecessors name) should be passed.
             * method: str, an optional argument allowing to determine the method that
                 should be executed when the pipeline calls the provided skobject.
                 If not specified, the pipeline selects the method based on the method
@@ -91,7 +91,7 @@ class Pipeline(BaseEstimator):
     --------
     >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
     >>> from sktime.datasets import load_arrow_head, load_longley
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.pipeline import Pipeline
     >>> from sktime.transformations.compose import Id
@@ -287,8 +287,8 @@ class Pipeline(BaseEstimator):
         name: str, the name of the step that is created
         edges: dict, a dict with string keys to string values. Identifying the
             predcessors.  The keys of the edges dict specify to which argument
-             of fit/predict/.. the output of the predessors (the value of the
-             dict specifies the predessors name) shuold be passed.
+             of fit/predict/.. the output of the predecessors (the value of the
+             dict specifies the predecessors name) should be passed.
         method: str, an optional argument allowing to determine the method that
             should be executed when the pipeline calls the provided skobject.
             If not specified, the pipeline selects the method based on the method

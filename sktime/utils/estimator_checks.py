@@ -3,8 +3,6 @@
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
-from inspect import isclass
-
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
@@ -108,54 +106,14 @@ def check_estimator(
     )
     _check_soft_dependencies("pytest", msg=msg)
 
-    from sktime.alignment.tests.test_all_aligners import TestAllAligners
-    from sktime.base import BaseEstimator
-    from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
-        TestAllEarlyClassifiers,
-    )
-    from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
-    from sktime.dists_kernels.tests.test_all_dist_kernels import (
-        TestAllPairwiseTransformers,
-        TestAllPanelTransformers,
-    )
-    from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
-    from sktime.param_est.tests.test_all_param_est import TestAllParamFitters
-    from sktime.proba.tests.test_all_distrs import TestAllDistributions
-    from sktime.registry import scitype
-    from sktime.regression.tests.test_all_regressors import TestAllRegressors
-    from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
-    from sktime.transformations.tests.test_all_transformers import TestAllTransformers
+    from sktime.tests.test_class_register import get_test_classes_for_obj
 
-    testclass_dict = dict()
-    testclass_dict["aligner"] = TestAllAligners
-    testclass_dict["classifier"] = TestAllClassifiers
-    testclass_dict["distribution"] = TestAllDistributions
-    testclass_dict["early_classifier"] = TestAllEarlyClassifiers
-    testclass_dict["forecaster"] = TestAllForecasters
-    testclass_dict["param_est"] = TestAllParamFitters
-    testclass_dict["regressor"] = TestAllRegressors
-    testclass_dict["transformer"] = TestAllTransformers
-    testclass_dict["transformer-pairwise"] = TestAllPairwiseTransformers
-    testclass_dict["transformer-pairwise-panel"] = TestAllPanelTransformers
+    test_clss_for_est = get_test_classes_for_obj(estimator)
 
-    results = TestAllObjects().run_tests(
-        estimator=estimator,
-        raise_exceptions=raise_exceptions,
-        tests_to_run=tests_to_run,
-        fixtures_to_run=fixtures_to_run,
-        tests_to_exclude=tests_to_exclude,
-        fixtures_to_exclude=fixtures_to_exclude,
-    )
+    results = {}
 
-    def is_estimator(obj):
-        """Return whether obj is an estimator class or estimator object."""
-        if isclass(obj):
-            return issubclass(obj, BaseEstimator)
-        else:
-            return isinstance(obj, BaseEstimator)
-
-    if is_estimator(estimator):
-        results_estimator = TestAllEstimators().run_tests(
+    for test_cls in test_clss_for_est:
+        test_cls_results = test_cls().run_tests(
             estimator=estimator,
             raise_exceptions=raise_exceptions,
             tests_to_run=tests_to_run,
@@ -163,23 +121,7 @@ def check_estimator(
             tests_to_exclude=tests_to_exclude,
             fixtures_to_exclude=fixtures_to_exclude,
         )
-        results.update(results_estimator)
-
-    try:
-        scitype_of_estimator = scitype(estimator)
-    except Exception:
-        scitype_of_estimator = ""
-
-    if scitype_of_estimator in testclass_dict.keys():
-        results_scitype = testclass_dict[scitype_of_estimator]().run_tests(
-            estimator=estimator,
-            raise_exceptions=raise_exceptions,
-            tests_to_run=tests_to_run,
-            fixtures_to_run=fixtures_to_run,
-            tests_to_exclude=tests_to_exclude,
-            fixtures_to_exclude=fixtures_to_exclude,
-        )
-        results.update(results_scitype)
+        results.update(test_cls_results)
 
     failed_tests = [key for key in results.keys() if results[key] != "PASSED"]
     if len(failed_tests) > 0:

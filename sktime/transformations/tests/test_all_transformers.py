@@ -58,7 +58,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     def _expected_trafo_output_scitype(self, X_scitype, trafo_input, trafo_output):
         """Return expected output scitype, given X scitype and input/output.
 
-        Paramaters
+        Parameters
         ----------
         X_scitype : str, scitype of the input to transform
         trafo_input : str, scitype of "instance"
@@ -78,6 +78,8 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
                 return "Panel"
             if X_scitype in ["Panel", "Hierarchical"]:
                 return "Hierarchical"
+        if trafo_input == "Panel" and trafo_output == "Series":
+            return "Series"
 
     def test_fit_transform_output(self, estimator_instance, scenario):
         """Test that transform output is of expected scitype."""

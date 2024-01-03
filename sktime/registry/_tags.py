@@ -44,6 +44,12 @@ import pandas as pd
 
 ESTIMATOR_TAG_REGISTER = [
     (
+        "object_type",
+        "object",
+        "str",
+        "type of object: estimator, transformer, regressor, etc",
+    ),
+    (
         "ignores-exogeneous-X",
         "forecaster",
         "bool",
@@ -129,7 +135,7 @@ ESTIMATOR_TAG_REGISTER = [
             [
                 "pd.Series",
                 "pd.DataFrame",
-                "np.array",
+                "np.ndarray",
                 "nested_univ",
                 "pd-multiindex",
                 "numpy3D",
@@ -152,7 +158,7 @@ ESTIMATOR_TAG_REGISTER = [
             [
                 "pd.Series",
                 "pd.DataFrame",
-                "np.array",
+                "np.ndarray",
                 "nested_univ",
                 "pd-multiindex",
                 "numpy3D",
@@ -412,7 +418,7 @@ ESTIMATOR_TAG_REGISTER = [
         "requires_cython",
         "estimator",
         "bool",
-        "whether the estimator reqires a C compiler present such as libomp, gcc",
+        "whether the estimator requires a C compiler present such as libomp, gcc",
     ),
     (
         "remember_data",
@@ -485,6 +491,12 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         "int",
         "sample size used in approximating other statistics if not available",
+    ),
+    (
+        "capability:multioutput",
+        ["classifier", "regressor"],  # might need to add "early_classifier" here
+        "bool",
+        "can the estimator handle multioutput data?",
     ),
 ]
 

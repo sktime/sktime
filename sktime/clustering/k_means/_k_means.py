@@ -52,9 +52,9 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         strings are valid: ['mean', 'dba']. If a Callable is provided must take the form
         Callable[[np.ndarray], np.ndarray].
     average_params: dict, defaults = None = no parameters
-        Dictonary containing kwargs for averaging_method.
+        Dictionary containing kwargs for averaging_method.
     distance_params: dict, defaults = None = no parameters
-        Dictonary containing kwargs for the distance metric being used.
+        Dictionary containing kwargs for the distance metric being used.
 
     Attributes
     ----------

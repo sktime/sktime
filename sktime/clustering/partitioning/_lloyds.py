@@ -155,7 +155,7 @@ def _kmeans_plus_plus(
 
 
 class TimeSeriesLloyds(BaseClusterer, ABC):
-    """Abstact class that implements time series Lloyds algorithm.
+    """Abstract class that implements time series Lloyds algorithm.
 
     Parameters
     ----------
@@ -186,7 +186,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
     distance_params: dict, defaults = None
-        Dictonary containing kwargs for the distance metric being used.
+        Dictionary containing kwargs for the distance metric being used.
 
     Attributes
     ----------
@@ -377,7 +377,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
 
         This is done because the initial center assignment greatly effects the final
         result so we perform multiple passes at kmeans with different initial center
-        assignments and keep the best results going froward.
+        assignments and keep the best results going forward.
 
         Parameters
         ----------

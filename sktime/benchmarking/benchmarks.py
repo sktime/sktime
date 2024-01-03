@@ -10,6 +10,8 @@ from sktime.base import BaseEstimator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+# TODO: typo but need to be deprecated
+# See https://www.sktime.net/en/stable/developer_guide/deprecation.html
 def is_initalised_estimator(estimator: BaseEstimator) -> bool:
     """Check if estimator is initialised BaseEstimator object."""
     if isinstance(estimator, BaseEstimator):
@@ -73,7 +75,7 @@ class BaseBenchmark:
 
     Parameters
     ----------
-    id_format: str, optional (defualt=None)
+    id_format: str, optional (default=None)
         A regex used to enforce task/estimator ID to match a certain format
         if None, no format is enforced on task/estimator ID
 

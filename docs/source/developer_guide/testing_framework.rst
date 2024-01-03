@@ -299,12 +299,12 @@ This base class defines generics such as ``is_applicable``, or tag handling, for
 Scenarios should usually define:
 
 * an ``args`` parameter: a dictionary, with arbitrary keys (usually names of methods).
-* The ``args`` parameter may be set as a class variable, or set by the contructor.
+* The ``args`` parameter may be set as a class variable, or set by the constructor.
 * optionally, a ``default_method_sequence`` and a ``default_arg_sequence``, lists of strings.
   These define the sequence in which methods are called, with which argument set,
   if ``run`` is called. Both may be class variables, or object variable set in the constructor.
 * side note: a ``method_sequence`` and ``arg_sequence`` can also be specified in ``run``.
-  If not passed, defaulting will take place (first to each other, then to the ``detault_etc`` variables)
+  If not passed, defaulting will take place (first to each other, then to the ``default_etc`` variables)
 * optionally, a ``_tags`` dictionary, which is a ``BaseObject`` tags dictionary and behaves exactly like that of estimators.
 * optionally, a ``get_args`` method which allows to override key retrieval from ``args``.
   For instance, to specify rules such as "if the key starts with ``predict_``, always return ..."

@@ -45,7 +45,7 @@ def test_metric_output_direct(metric, multioutput, n_columns):
     y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
     y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
 
-    # coerce to DataFrame since _make_series does not return consisten output type
+    # coerce to DataFrame since _make_series does not return consistent output type
     y_pred = pd.DataFrame(y_pred)
     y_true = pd.DataFrame(y_true)
 
@@ -163,7 +163,7 @@ def test_metric_output_by_instance(metric, multioutput, n_columns):
     y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
     y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
 
-    # coerce to DataFrame since _make_series does not return consisten output type
+    # coerce to DataFrame since _make_series does not return consistent output type
     y_pred = pd.DataFrame(y_pred)
     y_true = pd.DataFrame(y_true)
 

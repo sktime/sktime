@@ -232,7 +232,7 @@ class TimeSince(BaseTransformer):
                     # (e.g., "MS" -> "M"). We must strip the freq str of any
                     # integer multiplier (e.g., "15T" -> "T"). This is needed so that
                     # `get_period_alias` returns the correct result.
-                    # If `get_period_alias` recieves a freq str with a multiplier
+                    # If `get_period_alias` receives a freq str with a multiplier
                     # (e.g., "15T") it returns `None` which causes errors downstream.
                     freq_ = _remove_digits_from_str(self.freq_)
                     freq_period = get_period_alias(freq_)
