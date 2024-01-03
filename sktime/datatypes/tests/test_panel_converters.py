@@ -167,7 +167,7 @@ def test_from_nested_to_multi_index(n_instances, n_columns, n_timepoints):
         nested, instance_index="case_id", time_index="reading_id"
     )
 
-    # n_timepoints_max = nested.applymap(_nested_cell_timepoints).sum().max()
+    # n_timepoints_max = nested.map(_nested_cell_timepoints).sum().max()
 
     assert isinstance(mi_df, pd.DataFrame)
     assert mi_df.shape == (n_instances * n_timepoints, n_columns)

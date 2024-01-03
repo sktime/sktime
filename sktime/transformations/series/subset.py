@@ -160,6 +160,7 @@ class ColumnSelect(BaseTransformer):
         "fit_is_empty": True,
         "univariate-only": False,
         "capability:inverse_transform": False,
+        "skip-inverse-transform": True,
     }
 
     def __init__(self, columns=None, integer_treatment="col", index_treatment="remove"):

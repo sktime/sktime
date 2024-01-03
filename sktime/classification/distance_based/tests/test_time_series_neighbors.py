@@ -92,7 +92,7 @@ def test_knn_bounding_matrix(distance_key):
     reason="skip test if required soft dependencies not available",
 )
 def test_knn_with_aligner():
-    """Tests KNN classifer with alignment distance on unequal length data."""
+    """Tests KNN classifier with alignment distance on unequal length data."""
     from sktime.dists_kernels.compose_from_align import DistFromAligner
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
@@ -106,7 +106,7 @@ def test_knn_with_aligner():
 
 
 def test_knn_with_aggrdistance():
-    """Tests KNN classifer with alignment distance on unequal length data."""
+    """Tests KNN classifier with alignment distance on unequal length data."""
     from sktime.dists_kernels import AggrDist, ScipyDist
     from sktime.utils._testing.hierarchical import _make_hierarchical
 

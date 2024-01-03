@@ -4,10 +4,12 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
@@ -80,3 +82,25 @@ class TestAllRegressors(RegressorFixtureGenerator, QuickTester):
         assert isinstance(y_pred, np.ndarray)
         assert y_pred.shape == (X_new_instances,)
         assert np.issubdtype(y_pred.dtype, np.floating)
+
+    def test_multioutput(self, estimator_instance):
+        """Test multioutput regression for all classifiers.
+
+        All classifiers should follow the same interface,
+        those that do not genuinely should vectorize/broadcast over y.
+        """
+        n_instances = 20
+        X, y = make_regression_problem(n_instances=n_instances)
+        y_mult = pd.DataFrame({"a": y, "b": y})
+
+        estimator_instance.fit(X, y_mult)
+        y_pred = estimator_instance.predict(X)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert y_pred.shape == y_mult.shape
+
+        vectorized = estimator_instance.get_tag("capability:multioutput")
+        if vectorized:
+            assert hasattr(estimator_instance, "regressors_")
+            assert isinstance(estimator_instance.regressors_, pd.DataFrame)
+            assert estimator_instance.regressors_.shape == (1, 2)

@@ -7,7 +7,8 @@ import pytest
 
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.summarize import WindowSummarizer
 
 
@@ -86,6 +87,10 @@ Xtmvar = Xtmvar + ["GNPDEFL", "UNEMP", "ARMED"]
 Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "kwargs, column_names, y, target_cols, truncate",
     [

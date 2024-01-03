@@ -666,6 +666,7 @@ class IndividualBOSS(BaseClassifier):
         new_boss.n_classes_ = self.n_classes_
         new_boss.classes_ = self.classes_
         new_boss._class_dictionary = self._class_dictionary
+        new_boss._y_metadata = self._y_metadata
         new_boss._is_fitted = True
 
         return new_boss
@@ -723,11 +724,11 @@ def boss_distance(X, Y, i, XX_all=None, XY_all=None):
     """Find the distance between two histograms.
 
     This returns the distance between first and second dictionaries, using a non-
-    symmetric distance measure. It is used to find the distance between historgrams
+    symmetric distance measure. It is used to find the distance between histograms
     of words.
 
     This distance function is designed for sparse matrix, represented as either a
-    dictionary or an arrray. It only measures the distance between counts present in
+    dictionary or an array. It only measures the distance between counts present in
     the first dictionary and the second. Hence dist(a,b) does not necessarily equal
     dist(b,a).
 

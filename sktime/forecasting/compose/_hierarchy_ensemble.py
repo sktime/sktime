@@ -5,14 +5,13 @@ __author__ = ["VyomkeshVyas"]
 __all__ = ["HierarchyEnsembleForecaster"]
 
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+from sktime.utils.warnings import warn
 
 
 class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
@@ -145,8 +144,10 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             self.forecasters = value[0][1]
         else:
             self.forecasters = [
-                (name, forecaster, lvl_nd)
-                for ((name, forecaster), (_, _, lvl_nd)) in zip(value, self.forecasters)
+                (name, forecaster, level_nd)
+                for ((name, forecaster), (_, _, level_nd)) in zip(
+                    value, self.forecasters
+                )
             ]
 
     def _aggregate(self, y):
@@ -284,7 +285,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 if counter == 0:
                     nodes = mi
                 else:
-                    nodes.append(mi)
+                    # For nlevels = 2, 'nodes' is pd.Index object (L286)
+                    nodes = nodes.append(mi)
             else:
                 node_l = []
                 for i in range(len(node)):
@@ -494,6 +496,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     raise ValueError("Nodes cannot be empty.")
                 if z.index.nlevels == 2:
                     nodes_ix = pd.Index(nodes)
+                    nodes_t += nodes
                 else:
                     nodes_l = []
                     for i in range(len(nodes)):
@@ -531,11 +534,13 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                             else:
                                 nodes_l += inds
                                 warn(
-                                    f"Ideally, length of individual node should be "
+                                    f"Ideally, length of individual node "
+                                    f"in HierarchyEnsembleForecaster should be "
                                     f"equal to N-1 (where N is number of levels in "
                                     f"multi-index) and must not exceed N-1. The "
                                     f"forecaster will now be fitted to the "
-                                    f"following nodes : {list(inds)}"
+                                    f"following nodes : {list(inds)}",
+                                    obj=self,
                                 )
                         elif (
                             isinstance(nodes[i], tuple)

@@ -51,6 +51,7 @@ Deep learning
     MACNNClassifier
     MLPClassifier
     MCDCNNClassifier
+    ResNetClassifier
     SimpleRNNClassifier
     TapNetClassifier
 
@@ -177,6 +178,7 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
+    MrSEQL
     MrSQM
 
 sklearn

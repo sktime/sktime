@@ -38,6 +38,7 @@ sktime/classification/sklearn/_continuous_interval_tree.py @MatthewMiddlehurst
 sktime/classification/sklearn/_rotation_forest.py @MatthewMiddlehurst
 
 sktime/forecasting/adapters/_hcrystalball.py @MichalChromcak
+sktime/forecasting/arch/_uarch.py @Vasudeva-bit
 sktime/forecasting/arima.py @HYang1996
 sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
 sktime/forecasting/bats.py @aiwalter
@@ -83,5 +84,6 @@ sktime/transformations/series/outlier_detection.py @aiwalter
 sktime/transformations/series/scaledlogit.py @ltsaprounis
 sktime/transformations/series/time_since.py @KishManani
 sktime/transformations/series/theta.py @GuzalBulatova
+sktime/transformations/series/scaledasinh.py @ali-parizad
 
 sktime/utils/mlflow_sktime.py @benjaminbluhm

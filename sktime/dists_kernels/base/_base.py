@@ -48,6 +48,7 @@ class BasePairwiseTransformer(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        "object_type": "transformer-pairwise",  # type of object
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "X_inner_mtype": "numpy2D",  # which mtype is used internally in _transform?
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
@@ -182,6 +183,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        "object_type": "transformer-pairwise-panel",  # type of object
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "X_inner_mtype": "df-list",  # which mtype is used internally in _transform?
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms

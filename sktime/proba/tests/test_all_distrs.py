@@ -72,7 +72,7 @@ class TestAllDistributions(DistributionFixtureGenerator, QuickTester):
         assert (res_panel.index == dummy_panel.index).all()
         assert (res_panel.columns == dummy_panel.columns).all()
 
-    @pytest.mark.parametrize("method", METHODS_SCALAR)
+    @pytest.mark.parametrize("method", METHODS_SCALAR, ids=METHODS_SCALAR)
     def test_methods_scalar(self, estimator_instance, method):
         """Test expected return of scalar methods."""
         if not _has_capability(estimator_instance, method):
@@ -83,7 +83,7 @@ class TestAllDistributions(DistributionFixtureGenerator, QuickTester):
 
         _check_output_format(res, d, method)
 
-    @pytest.mark.parametrize("method", METHODS_X)
+    @pytest.mark.parametrize("method", METHODS_X, ids=METHODS_X)
     def test_methods_x(self, estimator_instance, method):
         """Test expected return of methods that take sample-like argument."""
         if not _has_capability(estimator_instance, method):
@@ -95,7 +95,7 @@ class TestAllDistributions(DistributionFixtureGenerator, QuickTester):
 
         _check_output_format(res, d, method)
 
-    @pytest.mark.parametrize("method", METHODS_P)
+    @pytest.mark.parametrize("method", METHODS_P, ids=METHODS_P)
     def test_methods_p(self, estimator_instance, method):
         """Test expected return of methods that take percentage-like argument."""
         if not _has_capability(estimator_instance, method):
@@ -117,7 +117,9 @@ class TestAllDistributions(DistributionFixtureGenerator, QuickTester):
         d = estimator_instance
 
         def _check_quantile_output(obj, q):
-            assert check_is_mtype(obj, "pred_quantiles", "Proba")
+            assert check_is_mtype(
+                obj, "pred_quantiles", "Proba", msg_return_dict="list"
+            )
             assert (obj.index == d.index).all()
 
             if not isinstance(q, list):

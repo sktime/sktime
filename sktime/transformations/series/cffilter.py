@@ -32,7 +32,7 @@ class CFFilter(BaseTransformer):
         8 year periodicity.
 
     drift : bool, optional, default = True
-        Whether or not to substract a trend from the data.
+        Whether or not to subtract a trend from the data.
         The trend is estimated as np.arange(nobs)*(x[-1] -x[0])/(len(x)-1).
         > X : argument of CFFilter._transform()
         > x : If X is 1d, X=x. If 2d, x is assumed to be in columns.

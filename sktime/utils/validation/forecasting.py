@@ -166,7 +166,7 @@ def check_cv(cv, enforce_start_with_window=False):
     ValueError
         if cv does not have the required attributes.
     """
-    from sktime.forecasting.model_selection._split import BaseSplitter
+    from sktime.split.base import BaseSplitter
 
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
@@ -270,7 +270,7 @@ def check_fh(fh, enforce_relative: bool = False, freq=None):
         If True, checks if fh is relative.
     freq : str, or pd.Index, optional (default=None)
         object carrying frequency information on values
-        ignored unless values is without inferrable freq
+        ignored unless values is without inferable freq
         Frequency string or pd.Index
 
     Returns
@@ -511,7 +511,9 @@ def check_interval_df(interval_df, index_to_match):
     """
     from sktime.datatypes import check_is_mtype
 
-    checked = check_is_mtype(interval_df, "pred_interval", return_metadata=True)
+    checked = check_is_mtype(
+        interval_df, "pred_interval", return_metadata=True, msg_return_dict="list"
+    )
     if not checked[0]:
         raise ValueError(checked[1])
     df_idx = interval_df.index

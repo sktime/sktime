@@ -58,12 +58,12 @@ class VECM(_StatsModelsAdapter):
         Deterministic terms inside the cointegration relation.
     exog_coint_fc : optional, a scalar (float), 1D ndarray of size nobs,
         2D ndarray/pd.DataFrame of size (any, neqs)
-        Forcasted value of exog_coint
+        Forecasted value of exog_coint
 
     Example
     -------
     >>> from sktime.forecasting.vecm import VECM
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> index = pd.date_range(start="2005", end="2006-12", freq="M")
     >>> df = pd.DataFrame(np.random.randint(0, 100, size=(23, 2)),
@@ -210,8 +210,7 @@ class VECM(_StatsModelsAdapter):
 
         return y_pred
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

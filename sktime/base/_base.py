@@ -66,12 +66,84 @@ from sklearn.base import BaseEstimator as _BaseEstimator
 from sktime.exceptions import NotFittedError
 from sktime.utils.random_state import set_random_state
 
+SERIALIZATION_FORMATS = {
+    "pickle",
+    "cloudpickle",
+}
+
 
 class BaseObject(_BaseObject):
     """Base class for parametric objects with tags in sktime.
 
     Extends skbase BaseObject with additional features.
     """
+
+    _config = {
+        "warnings": "on",
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend,
+    }
+
+    _config_doc = {
+        "display": """
+        display : str, "diagram" (default), or "text"
+            how jupyter kernels display instances of self
+
+            * "diagram" = html box diagram representation
+            * "text" = string printout
+        """,
+        "print_changed_only": """
+        print_changed_only : bool, default=True
+            whether printing of self lists only self-parameters that differ
+            from defaults (False), or all parameter names and values (False)
+            does not nest, i.e., only affects self and not component estimators
+        """,
+        "warnings": """
+        warnings : str, "on" (default), or "off"
+            whether to raise warnings, affects warnings from sktime only
+
+            * "on" = will raise warnings from sktime
+            * "off" = will not raise warnings from sktime
+        """,
+        "backend:parallel": """
+        backend:parallel : str, optional, default="None"
+            backend to use for parallelization when broadcasting/vectorizing, one of
+
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+            - "dask": uses ``dask``, requires ``dask`` package in environment
+        """,
+        "backend:parallel:params": """
+        backend:parallel:params : dict, optional, default={} (no parameters passed)
+            additional parameters passed to the parallelization backend as config.
+            Valid keys depend on the value of ``backend:parallel``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+              any valid keys for ``joblib.Parallel`` can be passed here, e.g.,
+              ``n_jobs``, with the exception of ``backend`` which is directly
+              controlled by ``backend``.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "joblib": custom and 3rd party ``joblib`` backends,
+              e.g., ``spark``. Any valid keys for ``joblib.Parallel``
+              can be passed here, e.g., ``n_jobs``,
+              ``backend`` must be passed as a key of ``backend_params`` in this case.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "dask": any valid keys for ``dask.compute`` can be passed,
+              e.g., ``scheduler``
+        """,
+    }
+
+    def __init__(self):
+        super().__init__()
+        self.__class__.set_config.__doc__ = self._get_set_config_doc()
 
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
@@ -91,7 +163,44 @@ class BaseObject(_BaseObject):
 
         return deep_equals(self_params, other_params)
 
-    def save(self, path=None):
+    @classmethod
+    def _get_set_config_doc(cls):
+        """Create docstring for set_config from self._config_doc.
+
+        Returns
+        -------
+        collected_config_docs : dict
+            Dictionary of doc name: docstring part.
+            Collected from _config_doc class attribute via nested inheritance.
+        """
+        cfgs_dict = cls._get_class_flags(flag_attr_name="_config_doc")
+
+        doc_start = """Set config flags to given values.
+
+        Parameters
+        ----------
+        config_dict : dict
+            Dictionary of config name : config value pairs.
+            Valid configs, values, and their meaning is listed below:
+        """
+
+        doc_end = """
+        Returns
+        -------
+        self : reference to self.
+
+        Notes
+        -----
+        Changes object state, copies configs in config_dict to self._config_dynamic.
+        """
+
+        doc = doc_start
+        for _, cfg_doc in cfgs_dict.items():
+            doc += cfg_doc
+        doc += doc_end
+        return doc
+
+    def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
@@ -111,6 +220,12 @@ class BaseObject(_BaseObject):
                 path="/home/stored/estimator" then a zip file `estimator.zip` will be
                 stored in `/home/stored/`.
 
+        serialization_format: str, default = "pickle"
+            Module to use for serialization.
+            The available options are "pickle" and "cloudpickle".
+            Note that non-default formats might require
+            installation of other soft dependencies.
+
         Returns
         -------
         if `path` is None - in-memory serialized self
@@ -121,21 +236,44 @@ class BaseObject(_BaseObject):
         from pathlib import Path
         from zipfile import ZipFile
 
-        if path is None:
-            return (type(self), pickle.dumps(self))
-        if not isinstance(path, (str, Path)):
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        if serialization_format not in SERIALIZATION_FORMATS:
+            raise ValueError(
+                f"The provided `serialization_format`='{serialization_format}' "
+                "is not yet supported. The possible formats are: "
+                f"{SERIALIZATION_FORMATS}."
+            )
+
+        if path is not None and not isinstance(path, (str, Path)):
             raise TypeError(
                 "`path` is expected to either be a string or a Path object "
                 f"but found of type:{type(path)}."
             )
+        if path is not None:
+            path = Path(path) if isinstance(path, str) else path
+            path.mkdir()
 
-        path = Path(path) if isinstance(path, str) else path
-        path.mkdir()
+        if serialization_format == "cloudpickle":
+            _check_soft_dependencies("cloudpickle", severity="error")
+            import cloudpickle
 
-        with open(path / "_metadata", "wb") as file:
-            pickle.dump(type(self), file)
-        with open(path / "_obj", "wb") as file:
-            pickle.dump(self, file)
+            if path is None:
+                return (type(self), cloudpickle.dumps(self))
+
+            with open(path / "_metadata", "wb") as file:
+                cloudpickle.dump(type(self), file)
+            with open(path / "_obj", "wb") as file:
+                cloudpickle.dump(self, file)
+
+        elif serialization_format == "pickle":
+            if path is None:
+                return (type(self), pickle.dumps(self))
+
+            with open(path / "_metadata", "wb") as file:
+                pickle.dump(type(self), file)
+            with open(path / "_obj", "wb") as file:
+                pickle.dump(self, file)
 
         shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
@@ -295,7 +433,7 @@ class TagAliaserMixin:
 
         Notes
         -----
-        Changes object state by settting tag values in tag_dict as dynamic tags
+        Changes object state by setting tag values in tag_dict as dynamic tags
         in self.
         """
         self._deprecate_tag_warn(tag_dict.keys())

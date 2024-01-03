@@ -8,16 +8,13 @@ __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 import pandas as pd
 from joblib import Parallel, delayed
 
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    SlidingWindowSplitter,
-)
+from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
 
 
 class WindowSummarizer(BaseTransformer):
-    """Transformer for extracting time series features.
+    r"""Transformer for extracting time series features.
 
     The WindowSummarizer transforms input series to features based
     on a provided dictionary of window summarizer, window shifts
@@ -45,9 +42,12 @@ class WindowSummarizer(BaseTransformer):
         symbols:
 
         ``z`` = time stamp that the window is summarized *to*.
+
         Part of the window if `lag` is between 0 and `1-window_length`, otherwise
         not part of the window.
+
         ``x`` = (other) time stamps in the window which is summarized
+
         ``*`` = observations, past or future, not part of the window
 
         The summarization function is applied to the window consisting of x and
@@ -55,35 +55,37 @@ class WindowSummarizer(BaseTransformer):
 
         For `window = [1, 3]`, we have a `lag` of 1 and
         `window_length` of 3 to target the three last days (exclusive z) that were
-        observed. Summarization is done across windows like this:
-        |-------------------------- |
+        observed. Summarization is done across windows like this::
+
+        |---------------------------|
         | * * * * * * * * x x x z * |
         |---------------------------|
 
         For `window = [0, 3]`, we have a `lag` of 0 and
         `window_length` of 3 to target the three last days (inclusive z) that
-        were observed. Summarization is done across windows like this:
-        |-------------------------- |
+        were observed. Summarization is done across windows like this::
+
+        |---------------------------|
         | * * * * * * * * x x z * * |
         |---------------------------|
 
 
-        Special case ´lag´: Since lags are frequently used and window length is
+        Special case ``lag``: Since lags are frequently used and window length is
         redundant, you only need to provide a list of `lag` values.
-        So `window = [1]` will result in the first lag:
+        So `window = [1]` will result in the first lag::
 
-        |-------------------------- |
+        |---------------------------|
         | * * * * * * * * * * x z * |
         |---------------------------|
 
-        And `window = [1, 4]` will result in the first and fourth lag:
+        And `window = [1, 4]` will result in the first and fourth lag::
 
-        |-------------------------- |
+        |---------------------------|
         | * * * * * * * x * * x z * |
         |---------------------------|
 
-        key: either custom function call (to be
-                provided by user) or str corresponding to native pandas window function:
+        key: either custom function call (to be provided by user) or
+            str corresponding to native pandas window function:
                 * "sum",
                 * "mean",
                 * "median",
@@ -100,7 +102,7 @@ class WindowSummarizer(BaseTransformer):
             The column generated will be named after the key provided, followed by the
             lag parameter and the window_length (if not a lag).
         second value (window): list of integers
-            List containg lag and window_length parameters.
+            List containing lag and window_length parameters.
         truncate: str, optional (default = None)
             Defines how to deal with NAs that were created as a result of applying the
             functions in the lag_feature dict across windows that are longer than
@@ -110,8 +112,10 @@ class WindowSummarizer(BaseTransformer):
             A lag_feature of [[8, 14], [1, 28]] cannot be correctly applied for the
             first 21 resp. 28 observations of the targeted column. Possible values
             to deal with those NAs:
-                * None
-                * "bfill"
+
+            - None
+            - "bfill"
+
             None will keep the NAs generated, and would leave it for the user to choose
             an estimator that can correctly deal with observations with missing values,
             "bfill" will fill the NAs by carrying the first observation backwards.
@@ -140,7 +144,7 @@ class WindowSummarizer(BaseTransformer):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()
     >>> kwargs = {
     ...     "lag_feature": {
@@ -152,7 +156,7 @@ class WindowSummarizer(BaseTransformer):
     >>> transformer = WindowSummarizer(**kwargs)
     >>> y_transformed = transformer.fit_transform(y)
 
-        Example with transforming multiple columns of exogeneous features
+    Example with transforming multiple columns of exogeneous features
 
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
@@ -168,8 +172,8 @@ class WindowSummarizer(BaseTransformer):
     >>> pipe_return = pipe.fit(y_train, X_train)
     >>> y_pred1 = pipe_return.predict(fh=fh, X=X_test)
 
-        Example with transforming multiple columns of exogeneous features
-        as well as the y column
+    Example with transforming multiple columns of exogeneous features
+    as well as the y column
 
     >>> Z_train = pd.concat([X_train, y_train], axis=1)
     >>> Z_test = pd.concat([X_test, y_test], axis=1)
@@ -284,6 +288,7 @@ class WindowSummarizer(BaseTransformer):
         lags = func_dict["summarizer"] == "lag"
         # Convert lags to default list notation with window_length 1
         boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
+        func_dict.loc[:, "window"] = func_dict["window"].astype("object")
         func_dict.loc[lags, "window"] = boost_lag
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
@@ -432,7 +437,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
          or custom function call. See for the native window functions also
          https://pandas.pydata.org/docs/reference/window.html.
     window: list of integers
-        List containg window_length and lag parameters, see WindowSummarizer
+        List containing window_length and lag parameters, see WindowSummarizer
         class description for in-depth explanation.
     """
     lag = window[0]
@@ -450,7 +455,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             else:
                 feat = getattr(
                     Z.shift(lag)
-                    .fillna(method="bfill")
+                    .bfill()
                     .rolling(window=window_length, min_periods=window_length),
                     summarizer,
                 )()
@@ -469,7 +474,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                 feat = Z.apply(
                     lambda x: getattr(
                         x.shift(lag)
-                        .fillna(method="bfill")
+                        .bfill()
                         .rolling(window=window_length, min_periods=window_length),
                         summarizer,
                     )()
@@ -478,7 +483,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         if bfill is False:
             feat = Z.shift(lag)
         else:
-            feat = Z.shift(lag).fillna(method="bfill")
+            feat = Z.shift(lag).bfill()
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
@@ -493,7 +498,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             )
         feat = pd.DataFrame(feat)
     if bfill is True:
-        feat = feat.fillna(method="bfill")
+        feat = feat.bfill()
 
     if callable(summarizer):
         name = summarizer.__name__
@@ -804,7 +809,7 @@ class SplitterSummarizer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.summarize import SplitterSummarizer
     >>> from sktime.transformations.series.summarize import SummaryTransformer
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = SplitterSummarizer(

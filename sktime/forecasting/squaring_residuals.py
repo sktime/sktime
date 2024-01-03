@@ -4,14 +4,13 @@
 __all__ = ["SquaringResiduals"]
 __author__ = ["kcc-lion"]
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.datatypes._convert import convert_to
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingWindowSplitter
+from sktime.utils.warnings import warn
 
 
 class SquaringResiduals(BaseForecaster):
@@ -269,8 +268,7 @@ class SquaringResiduals(BaseForecaster):
             forecaster.update(X=X, y=y, update_params=update_params)
         return self
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=False):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -314,9 +312,7 @@ class SquaringResiduals(BaseForecaster):
 
         errors = [pred_var * z for z in z_scores]
 
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         index = pd.MultiIndex.from_product([var_names, alpha])
@@ -352,7 +348,11 @@ class SquaringResiduals(BaseForecaster):
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
         if cov:
-            warn(f"cov={cov} is not supported. Defaulting to cov=False instead.")
+            warn(
+                f"cov={cov} is not supported in SquaringResiduals. "
+                "Defaulting to cov=False instead.",
+                obj=self,
+            )
         fh_abs = fh.to_absolute(self.cutoff)
         fh_rel = fh.to_relative(self.cutoff)
         fh_rel_index = fh_rel.to_pandas()

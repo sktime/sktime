@@ -32,6 +32,12 @@ Composition
 
     ParamFitterPipeline
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FunctionParamFitter
+
 .. currentmodule:: sktime.param_est.plugin
 
 .. autosummary::
@@ -75,3 +81,9 @@ Stationarity estimators
 
     StationarityADF
     StationarityKPSS
+    StationarityADFArch
+    StationarityDFGLS
+    StationarityPhillipsPerron
+    StationarityKPSSArch
+    StationarityZivotAndrews
+    StationarityVarianceRatio
