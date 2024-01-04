@@ -8,7 +8,6 @@ import pandas as pd
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
-
 __author__ = ["ChangWeiTan", "fstinner", "angus924"]
 
 
