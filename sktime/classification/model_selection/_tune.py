@@ -234,6 +234,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
     _tags = {
         "X_inner_mtype": ["nested_univ", "numpy3D"],
+        "y_inner_mtype": ["numpy1D", "numpy2D"],
         "capability:multivariate": True,
         "capability:multioutput": True,
         "capability:unequal_length": True,
