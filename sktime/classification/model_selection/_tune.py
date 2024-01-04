@@ -330,6 +330,24 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
         return self
 
+    # the delegate is an sklearn estimator and it does not have get_fitted_params
+    # therefore we have to override _get_fitted_params from the delegator,
+    # which would otherwise call it
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+    
+        private _get_fitted_params, called from get_fitted_params
+    
+        State required:
+            Requires state to be "fitted".
+    
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        return {}
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
