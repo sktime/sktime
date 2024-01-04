@@ -301,8 +301,8 @@ def _get_first_mtype_of_same_scitype(from_mtype, to_mtypes, varname="to_mtypes")
     ]
     if len(same_scitype_mtypes) == 0:
         raise TypeError(
-            f"{varname} contains no mtype compatible with the scitype of obj,"
-            f"which is {scitype}"
+            f"{varname} contains no mtype compatible with the scitype of obj, "
+            f"which is {scitype}. Value of {varname} is: {to_mtypes}"
         )
     to_type = same_scitype_mtypes[0]
     return to_type
