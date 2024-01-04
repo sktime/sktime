@@ -335,12 +335,12 @@ class TSCGridSearchCV(_DelegatedClassifier):
     # which would otherwise call it
     def _get_fitted_params(self):
         """Get fitted parameters.
-    
+
         private _get_fitted_params, called from get_fitted_params
-    
+
         State required:
             Requires state to be "fitted".
-    
+
         Returns
         -------
         fitted_params : dict with str keys
