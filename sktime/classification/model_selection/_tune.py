@@ -234,7 +234,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
     _tags = {
         "X_inner_mtype": ["nested_univ", "numpy3D"],
-        "y_inner_mtype": ["numpy1D", "numpy2D"],
+        "y_inner_mtype": ["numpy2D"],
         "capability:multivariate": True,
         "capability:multioutput": True,
         "capability:unequal_length": True,
@@ -321,6 +321,9 @@ class TSCGridSearchCV(_DelegatedClassifier):
         -------
         self : Reference to self.
         """
+        if y.shape[1] == 1:
+            y = y.flatten()
+
         estimator = self._get_delegate()
         estimator.fit(X=X, y=y)
 
