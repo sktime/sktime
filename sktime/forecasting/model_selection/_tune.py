@@ -403,6 +403,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ----------
     forecaster : sktime forecaster, BaseForecaster instance or interface compatible
         The forecaster to tune, must implement the sktime forecaster interface.
+        sklearn regressors can be used, but must first be converted to forecasters
+        via one of the reduction compositors, e.g., via ``make_reduction``
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
@@ -728,6 +730,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     ----------
     forecaster : sktime forecaster, BaseForecaster instance or interface compatible
         The forecaster to tune, must implement the sktime forecaster interface.
+        sklearn regressors can be used, but must first be converted to forecasters
+        via one of the reduction compositors, e.g., via ``make_reduction``
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
@@ -971,6 +975,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     ----------
     forecaster : sktime forecaster, BaseForecaster instance or interface compatible
         The forecaster to tune, must implement the sktime forecaster interface.
+        sklearn regressors can be used, but must first be converted to forecasters
+        via one of the reduction compositors, e.g., via ``make_reduction``
     cv : cross-validation generator or an iterable
         Splitter used for generating validation folds.
         e.g. SlidingWindowSplitter()
