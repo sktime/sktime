@@ -136,6 +136,15 @@ class TSCGridSearchCV(_DelegatedClassifier):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+    tune_by_variable : bool, optional (default=False)
+        Whether to tune parameter by each time series variable separately,
+        in case of multivariate data passed to the tuning estimator.
+        Only applies if time series passed are strictly multivariate.
+        If True, clones of the estimator will be fit to each variable separately,
+        and are available in fields of the classifiers_ attribute.
+        Has the same effect as applying ColumnEnsembleClassifier wrapper to self.
+        If False, the same best parameter is selected for all variables.
+
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
@@ -226,6 +235,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
     _tags = {
         "X_inner_mtype": ["nested_univ", "numpy3D"],
         "capability:multivariate": True,
+        "capability:multioutput": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "capability:multithreading": True,
@@ -244,6 +254,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
         pre_dispatch="2*n_jobs",
         error_score=np.nan,
         return_train_score=False,
+        tune_by_variable=False,
     ):
         self.estimator = estimator
         self.param_grid = param_grid
@@ -255,12 +266,16 @@ class TSCGridSearchCV(_DelegatedClassifier):
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
         self.return_train_score = return_train_score
+        self.tune_by_variable = tune_by_variable
 
         super().__init__()
 
         gcsvargs = {k: getattr(self, k) for k in self.get_param_names()}
 
         self.estimator_ = GridSearchCV(**gcsvargs)
+
+        if self.tune_by_variable:
+            self.set_tags(**{"capability:multioutput": False})
 
     def _fit(self, X, y):
         """Fit time series classifier to training data.
@@ -274,13 +289,19 @@ class TSCGridSearchCV(_DelegatedClassifier):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
+            if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
 
         Returns
         -------
