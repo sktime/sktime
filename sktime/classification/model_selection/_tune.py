@@ -270,7 +270,20 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
         super().__init__()
 
-        gcsvargs = {k: getattr(self, k) for k in self.get_param_names()}
+        DELEGATED_PARAMS = [
+            "estimator",
+            "param_grid",
+            "scoring",
+            "n_jobs",
+            "refit",
+            "cv",
+            "verbose",
+            "pre_dispatch",
+            "error_score",
+            "return_train_score",
+        ]
+
+        gcsvargs = {k: getattr(self, k) for k in DELEGATED_PARAMS}
 
         self.estimator_ = GridSearchCV(**gcsvargs)
 
