@@ -60,7 +60,7 @@ def test_pred_errors_against_linear():
     """Check prediction performance on airline dataset.
 
     For a small value of changepoint_prior_scale like 0.001 the
-    ProphetPiecewiseLinearTrendForecaster must return a single straigth trendline.
+    ProphetPiecewiseLinearTrendForecaster must return a single straight trendline.
 
     Raises
     ------
