@@ -410,7 +410,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         data ingestion strategy in fitting cv, passed to `evaluate` internally
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
+        "refit" = a new copy of the forecaster is fitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
     update_behaviour : str, optional, default = "full_refit"
@@ -737,7 +737,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         data ingestion strategy in fitting cv, passed to `evaluate` internally
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
+        "refit" = a new copy of the forecaster is fitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
     update_behaviour: str, optional, default = "full_refit"
@@ -1034,7 +1034,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         data ingestion strategy in fitting cv, passed to `evaluate` internally
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
+        "refit" = a new copy of the forecaster is fitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
     update_behaviour: str, optional, default = "full_refit"
