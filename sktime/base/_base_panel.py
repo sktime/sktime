@@ -265,22 +265,29 @@ class BasePanelMixin(BaseEstimator):
         )
         return X
 
-    def _check_y(self, y=None):
+    def _check_y(self, y=None, return_to_mtype=False):
         """Check and coerce X/y for fit/transform functions.
 
         Parameters
         ----------
         y : pd.DataFrame, pd.Series or np.ndarray
+        return_to_mtype : bool
+            whether to return the mtype of y output
 
         Returns
         -------
-        y : object of sktime compatible time series type
+        y_inner : object of sktime compatible time series type
             can be Series, Panel, Hierarchical
         y_metadata : dict
-            metadata of y, retured by check_is_scitype
+            metadata of y, returned by check_is_scitype
+        y_mtype : str, only returned if return_to_mtype=True
+            mtype of y_inner, after convert
         """
         if y is None:
-            return None
+            if return_to_mtype:
+                return None, None, None
+            else:
+                return None, None
 
         capa_multioutput = self.get_tag("capability:multioutput")
         y_inner_mtype = self.get_tag("y_inner_mtype")
@@ -314,17 +321,24 @@ class BasePanelMixin(BaseEstimator):
                 store=self._converter_store_y,
             )
             y_vec = VectorizedDF([y_df], iterate_cols=True)
-            return y_vec, y_metadata
+            if return_to_mtype:
+                return y_vec, y_metadata, "pd_DataFrame_Table"
+            else:
+                return y_vec, y_metadata
 
-        y_inner = convert(
+        y_inner, y_inner_mtype = convert(
             y,
             from_type=y_mtype,
             to_type=y_inner_mtype,
             as_scitype="Table",
             store=self._converter_store_y,
+            return_to_mtype=True,
         )
 
-        return y_inner, y_metadata
+        if return_to_mtype:
+            return y_inner, y_metadata, y_inner_mtype
+        else:
+            return y_inner, y_metadata
 
     def _convert_output_y(self, y):
         """Convert output y to original format.
@@ -332,6 +346,7 @@ class BasePanelMixin(BaseEstimator):
         Parameters
         ----------
         y : np.ndarray or pd.DataFrame
+            output to convert
 
         Returns
         -------
@@ -346,9 +361,18 @@ class BasePanelMixin(BaseEstimator):
             output_mtype = "numpy1D"
             converter_store = None
 
+        # inner return mtype is what we convert from
+        # special treatment for 1D numpy array
+        # this can be returned in composites due to
+        # current downwards compatible choice "1D return is always numpy"
+        if isinstance(y, np.ndarray) and y.ndim == 1:
+            inner_return_mtype = "numpy1D"
+        else:
+            inner_return_mtype = self._y_inner_mtype
+
         y = convert(
             y,
-            from_type=self.get_tag("y_inner_mtype"),
+            from_type=inner_return_mtype,
             to_type=output_mtype,
             as_scitype="Table",
             store=converter_store,

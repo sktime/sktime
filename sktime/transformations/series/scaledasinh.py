@@ -16,7 +16,7 @@ class ScaledAsinhTransformer(BaseTransformer):
 
     Known as variance stabilizing transformation,
     Combined with an sktime.forecasting.compose.TransformedTargetForecaster,
-    can be usefull in time series that exhibit spikes [1]_, [2]_
+    can be useful in time series that exhibit spikes [1]_, [2]_
 
     Parameters
     ----------
