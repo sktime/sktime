@@ -132,7 +132,32 @@ class _BaseWindowForecaster(BaseForecaster):
 
         return y, X
 
-    @staticmethod
-    def _predict_nan(fh):
-        """Predict nan if predictions are not possible."""
-        return np.full(len(fh), np.nan)
+    def _predict_nan(self, fh=None, method="predict", **kwargs):
+        """Create a return DataFrame for predict-like method, with all np.nan entries.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon of self, optional (default=None)
+            retrieved from self.fh if None
+        method : str, optional (default="predict")
+            method name to generate return DataFrame for
+            name of one of the BaseForecaster predict-like methods
+        **kwargs : optional
+            further kwargs to predict-like methods, e.g., coverage for predict_interval
+            passed to self._get_columns
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+            return DataFrame
+            index, columns are as expected
+            all entries are np.nan
+        """
+        if fh is None:
+            fh = self.fh
+
+        index = fh.get_expected_pred_idx(y=None, cutoff=self.cutoff)
+        columns = self._get_columns(method=method, **kwargs)
+
+        y_pred = pd.DataFrame(np.nan, index=index, columns=columns)
+        return y_pred

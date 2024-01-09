@@ -631,11 +631,11 @@ class _DirectReducer(_Reducer):
             y_last, X_last = self._get_shifted_window(X_update=X)
             ys = np.array(y_last)
             if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
-                return self._predict_nan(fh)
+                return self._predict_nan(fh, method=method, **kwargs)
         else:
             y_last, X_last = self._get_last_window()
             if not self._is_predictable(y_last):
-                return self._predict_nan(fh)
+                return self._predict_nan(fh, method=method, **kwargs)
         # Get last window of available data.
         # If we cannot generate a prediction from the available data, return nan.
 
