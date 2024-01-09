@@ -1477,9 +1477,13 @@ def make_reduction(
 
     Parameters
     ----------
-    estimator : an estimator instance
-        Either a tabular regressor from scikit-learn or a time series regressor from
-        sktime.
+    estimator : an estimator instance, can be:
+
+        * scikit-learn regressor or interface compatible
+        * sktime time series regressor
+        * skpro tabular probabilistic supervised regressor, only for direct reduction
+          this will result in a probabilistic forecaster
+
     strategy : str, optional (default="recursive")
         The strategy to generate forecasts. Must be one of "direct", "recursive" or
         "multioutput".
