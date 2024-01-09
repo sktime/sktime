@@ -325,6 +325,7 @@ class _Reducer(_BaseWindowForecaster):
             params_proba = {
                 "estimator": ResidualDouble.create_test_instance(),
                 "pooling": "global",
+                "window_length": 4,
             }
             params = params + [params_proba]
 
@@ -1648,11 +1649,11 @@ def _cut_df(X, n_obs=1, type="tail"):
     if n_obs == 0:
         return X.copy()
     if isinstance(X.index, pd.MultiIndex):
-        Xi_grp = X.index.names[0:-1]
+        levels = list(range(X.index.nlevels - 1))
         if type == "tail":
-            X = X.groupby(Xi_grp, as_index=False).tail(n_obs)
+            X = X.groupby(level=levels, as_index=False).tail(n_obs)
         elif type == "head":
-            X = X.groupby(Xi_grp, as_index=False).head(n_obs)
+            X = X.groupby(level=levels, as_index=False).head(n_obs)
     else:
         if type == "tail":
             X = X.tail(n_obs)
