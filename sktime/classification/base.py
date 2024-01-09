@@ -180,8 +180,9 @@ class BaseClassifier(BasePanelMixin):
         start = int(round(time.time() * 1000))
 
         # check and convert y for multioutput vectorization
-        y, y_metadata = self._check_y(y)
+        y, y_metadata, y_inner_mtype = self._check_y(y, return_to_mtype=True)
         self._y_metadata = y_metadata
+        self._y_inner_mtype = y_inner_mtype
         self._is_vectorized = isinstance(y, VectorizedDF)
 
         if self._is_vectorized:

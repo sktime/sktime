@@ -2516,6 +2516,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "DManowitz",
+      "name": "David Manowitz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66927103?v=4",
+      "profile": "https://github.com/DManowitz",
+      "contributions": [
+        "bug",
+        "maintenance"
+      ]
     }
   ]
 }

@@ -242,6 +242,7 @@ Lagging
     :template: class.rst
 
     Lag
+    ReducerTransform
 
 Element-wise transforms
 ~~~~~~~~~~~~~~~~~~~~~~~
