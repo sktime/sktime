@@ -614,7 +614,7 @@ class _DirectReducer(_Reducer):
         y_return = pd.Series or pd.DataFrame
         """
         if "method" in kwargs:
-            method = kwargs["method"]
+            method = kwargs.pop("method")
         else:
             method = "predict"
 
@@ -647,13 +647,13 @@ class _DirectReducer(_Reducer):
             y_pred = pd.DataFrame()
 
             for i, estimator in enumerate(self.estimators_):
-                y_pred_est = getattr(estimator, method)(X_last)
+                y_pred_est = getattr(estimator, method)(X_last, **kwargs)
                 if est_type == "regressor":
                     y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_est)
                 else:  # est_type == "regressor_proba"
                     y_pred_v = y_pred_est.values
                     y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
-                y_pred.update(y_pred_i)
+                y_pred = y_pred.combine_first(y_pred_i)
         else:
             # Pre-allocate arrays.
             if self._X is None:
@@ -684,13 +684,13 @@ class _DirectReducer(_Reducer):
 
             # Iterate over estimators/forecast horizon
             for i, estimator in enumerate(self.estimators_):
-                y_pred_est = getattr(estimator, method)(X_pred)
+                y_pred_est = getattr(estimator, method)(X_pred, **kwargs)
                 if est_type == "regressor":
                     y_pred[i] = y_pred_est
                 else:  # est_type == "regressor_proba"
                     y_pred_v = y_pred_est.values
                     y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
-                    y_pred.update(y_pred_i)
+                    y_pred = y_pred.combine_first(y_pred_i)
 
         return y_pred
 
