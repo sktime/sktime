@@ -3,7 +3,7 @@ on:
   workflow_call:
 jobs:
   detect:
-    name: detect changes in base component
+    name: detect
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -18,7 +18,7 @@ jobs:
               - sktime/base/**
   test:
     needs: detect
-    name: test base component
+    name: test
     if: ${{ needs.detect.outputs.base == 'true' }}
     strategy:
       fail-fast: false
