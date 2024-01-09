@@ -3,7 +3,7 @@ on:
   workflow_call:
 jobs:
   detect:
-    name: detect changes in module
+    name: detect
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read

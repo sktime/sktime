@@ -1,9 +1,9 @@
-name: test components with extras
+name: test all_extras
 on:
   workflow_call:
 jobs:
   detect:
-    name: detect changes in components with extras
+    name: detect
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -43,7 +43,7 @@ jobs:
               - sktime/transformations/**
   test:
     needs: detect
-    name: test components with extras
+    name: test
     strategy:
       fail-fast: false
       matrix:
@@ -62,7 +62,7 @@ jobs:
     steps:
       - name: checkout pull request branch
         uses: actions/checkout@v4
-      - name: run tests for component ${{ matrix.sktime-component }} on python ${{ matrix.python-version }}
+      - name: ${{ matrix.sktime-component }}, ${{ matrix.python-version }}
         uses: ./.github/actions/test-component
         with:
           sktime-component-identifier: ${{ matrix.sktime-component }}
