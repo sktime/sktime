@@ -642,9 +642,22 @@ class _DirectReducer(_Reducer):
         if isinstance(X_last, pd.DataFrame):
             X_last = prep_skl_df(X_last)
 
+        def pool_preds(y_preds):
+            """Pool predictions from different estimators.
+
+            Parameters
+            ----------
+            y_preds : list of pd.DataFrame
+                List of predictions from different estimators.
+            """
+            y_pred = y_preds.pop(0)
+            for y_pred_i in y_preds:
+                y_pred = y_pred.combine_first(y_pred_i)
+            return y_pred
+
         if self.pooling == "global":
             fh_abs = fh.to_absolute_index(self.cutoff)
-            y_pred = pd.DataFrame()
+            y_preds = []
 
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_last, **kwargs)
@@ -653,7 +666,8 @@ class _DirectReducer(_Reducer):
                 else:  # est_type == "regressor_proba"
                     y_pred_v = y_pred_est.values
                     y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
-                y_pred = y_pred.combine_first(y_pred_i)
+                y_preds.append(y_pred_i)
+            y_pred = pool_preds(y_preds)
 
             # for proba predictionns, coerce columns to pd.MultiIndex
             if method not in ["predict", "predict_var"]:
@@ -684,7 +698,7 @@ class _DirectReducer(_Reducer):
             if est_type == "regressor":
                 y_pred = np.zeros(len(fh))
             else:  # est_type == "regressor_proba"
-                y_pred = pd.DataFrame()
+                y_preds = []
 
             # Iterate over estimators/forecast horizon
             for i, estimator in enumerate(self.estimators_):
@@ -694,7 +708,10 @@ class _DirectReducer(_Reducer):
                 else:  # est_type == "regressor_proba"
                     y_pred_v = y_pred_est.values
                     y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
-                    y_pred = y_pred.combine_first(y_pred_i)
+                    y_preds.append(y_pred_i)
+
+            if est_type != "regressor":
+                y_pred = pool_preds(y_preds)
 
         return y_pred
 
