@@ -19,15 +19,14 @@ How to use this implementation template to implement a new estimator:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
-    fitting                 - _fit(self, X)
+    splitting (iloc reference)            - _split(self, y)
 
 Optional implements:
-    updating                              - _update(self, X)
-    data conversion and capabilities tags - _tags
-    fitted parameter inspection           - _get_fitted_params()
+    splitting (loc reference)             - _split_loc(self, y)
+    get number of splits                  - get_n_splits(self, y)
 
 Testing - required for sktime test framework and check_estimator usage:
-    get default parameters for test instance(s) - get_test_params()
+    get default parameters for test instance(s) - get_test_params(cls)
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
