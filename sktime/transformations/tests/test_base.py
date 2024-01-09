@@ -40,6 +40,11 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 # other scenarios that might be needed later in development:
 # TransformerFitTransformPanelUnivariateWithClassY,
 
+# list of parallelization backends to test
+BACKENDS = [None, "multiprocessing", "loky", "threading"]
+if _check_soft_dependencies("dask", severity="none"):
+    BACKENDS.append("dask")
+
 
 def inner_X_scitypes(est):
     """Return list of scitypes supported by class est, as list of str."""
@@ -183,7 +188,7 @@ def test_panel_in_panel_out_supported():
     # todo: possibly, add mtype check, use metadata return
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_panel_in_panel_out_not_supported_but_series(backend):
     """Test that fit/transform runs and returns the correct output type.
 
@@ -253,7 +258,7 @@ def test_series_in_primitives_out_supported_fit_in_transform():
     assert len(Xt) == 1
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_panel_in_primitives_out_not_supported_fit_in_transform(backend):
     """Test that fit/transform runs and returns the correct output type.
 
@@ -370,7 +375,7 @@ def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     assert len(Xt) == 7
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_hierarchical_in_hierarchical_out_not_supported_but_series(backend):
     """Test that fit/transform runs and returns the correct output type.
 
@@ -444,7 +449,7 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transf
     assert len(Xt) == 2 * 4 * 12
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_no_row_vectorization(backend):
     """Test that multivariate vectorization of univariate transformers works.
 
@@ -485,7 +490,7 @@ def test_vectorization_multivariate_no_row_vectorization(backend):
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_and_hierarchical(backend):
     """Test that fit/transform runs and returns the correct output type.
 
@@ -528,7 +533,7 @@ def test_vectorization_multivariate_and_hierarchical(backend):
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     """Test that multivariate vectorization of univariate transformers works.
 
@@ -569,7 +574,7 @@ def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_and_hierarchical_empty_fit(backend):
     """Test that fit/transform runs and returns the correct output type.
 
