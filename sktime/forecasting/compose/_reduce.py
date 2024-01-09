@@ -640,7 +640,7 @@ class _DirectReducer(_Reducer):
         # If we cannot generate a prediction from the available data, return nan.
 
         if isinstance(X_last, pd.DataFrame):
-            X_last = _coerce_col_str(X_last)
+            X_last = prep_skl_df(X_last)
 
         if self.pooling == "global":
             fh_abs = fh.to_absolute_index(self.cutoff)
@@ -1680,17 +1680,6 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         res.name = origin_df.name
 
     return res
-
-
-def _coerce_col_str(X):
-    """Coerce columns to string, to satisfy sklearn convention."""
-    X_col_str = X.columns.astype(str)
-
-    if not np.all(X_col_str == X.columns):
-        X = X.copy()
-        X.columns = [str(x) for x in X.columns]
-
-    return X
 
 
 def slice_at_ix(df, ix):
