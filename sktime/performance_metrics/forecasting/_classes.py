@@ -573,7 +573,7 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         else:
             func = self.func
 
-        self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
+        return self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
 
     def _evaluate_func(self, func, y_true, y_pred, **params):
         """Call func with kwargs subset to func parameters."""
@@ -630,7 +630,7 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
 
         func = self.func
 
-        self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
+        return self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
