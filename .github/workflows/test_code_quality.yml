@@ -42,11 +42,6 @@ jobs:
               - sktime/datasets/**
             pyproject:
               - pyproject.toml
-  test_install_extras:
-    needs: detect
-    name: validate extra installs
-    if: ${{ needs.detect.outputs.pyproject == 'true' }}
-    uses: ./.github/workflows/validate_extras.yml
   unit_test_base:
     needs: code_quality
     name: run unit tests for base framework
