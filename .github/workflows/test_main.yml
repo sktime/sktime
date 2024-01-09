@@ -54,11 +54,11 @@ jobs:
   unit_test_all_extras:
     needs: code_quality
     name: all_extras
-    uses: ./.github/workflows/test_all_extras.yml
+    uses: ./.github/workflows/test_module.yml
   unit_test_module:
     needs: code_quality
     name: module
-    uses: ./.github/workflows/test_module.yml
+    uses: ./.github/workflows/test_other.yml
   unit_test_datasets:
     needs: detect
     name: datasets
