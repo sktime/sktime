@@ -221,11 +221,6 @@ class _Reducer(_BaseWindowForecaster):
         # therefore this is commented out until sktime and sklearn are better aligned
         # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
 
-        # it seems that the sklearn tags are not fully reliable
-        # see discussion in PR #3405 and issue #3402
-        # therefore this is commented out until sktime and sklearn are better aligned
-        # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
-
         # for dealing with probabilistic regressors:
         # self._est_type encodes information what type of estimator is passed
         if hasattr(estimator, "get_tags"):
