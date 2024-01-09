@@ -1,4 +1,4 @@
-name: datasets CRON
+name: datasets
 on:
   schedule:
     - cron: 0 0 1 * *
