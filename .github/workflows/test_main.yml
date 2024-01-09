@@ -1,11 +1,11 @@
-name: validate code quality workflow
+name: test
 on:
   pull_request:
     branches:
       - main
 jobs:
   code_quality:
-    name: test code quality
+    name: code quality
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
@@ -49,18 +49,18 @@ jobs:
     uses: ./.github/workflows/validate_extras.yml
   unit_test_base:
     needs: code_quality
-    name: run unit tests for base framework
+    name: base
     uses: ./.github/workflows/test_base.yml
-  unit_test_components_with_extras:
+  unit_test_all_extras:
     needs: code_quality
-    name: run unit tests for individual components with extras
-    uses: ./.github/workflows/test_components_with_extras.yml
-  unit_test_components_without_extras:
+    name: all_extras
+    uses: ./.github/workflows/test_all_extras.yml
+  unit_test_module:
     needs: code_quality
-    name: run unit tests for individual components without extras
-    uses: ./.github/workflows/test_components_without_extras.yml
+    name: module
+    uses: ./.github/workflows/test_module.yml
   unit_test_datasets:
     needs: detect
-    name: run unit tests for datasets
+    name: datasets
     if: ${{ needs.detect.outputs.datasets == 'true' }}
     uses: ./.github/workflows/validate_datasets.yml

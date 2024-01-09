@@ -1,9 +1,9 @@
-name: test components without extras
+name: test module
 on:
   workflow_call:
 jobs:
   detect:
-    name: detect changes in components without extras
+    name: detect changes in module
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -29,9 +29,9 @@ jobs:
               - sktime/split/**
               - sktime/tests/**
               - sktime/utils/**
-  test_components_without_extras:
+  test_module:
     needs: detect
-    name: test components without extras
+    name: test module
     if: ${{ needs.detect.outputs.components_without_extras == 'true' }}
     strategy:
       fail-fast: false

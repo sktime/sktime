@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   code_quality:
-    name: validate code quality
+    name: code quality
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
@@ -51,9 +51,9 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
-  test_components_with_extras:
+  test_all_extras:
     needs: code_quality
-    name: test components with extras
+    name: all_extras
     strategy:
       fail-fast: false
       matrix:
@@ -92,9 +92,9 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
-  test_components_without_extras:
+  test_module:
     needs: code_quality
-    name: test components without extras
+    name: module
     strategy:
       fail-fast: false
       matrix:

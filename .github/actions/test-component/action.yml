@@ -1,5 +1,5 @@
-name: test specific sktime component
-description: run unit tests on individual component of sktime framework
+name: ${{ inputs.sktime-component-identifier }}
+description: run unit tests on ${{ inputs.python-version-identifier }}
 inputs:
   sktime-component-identifier:
     description: name of sktime component
