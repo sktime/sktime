@@ -156,7 +156,7 @@ class _BaseWindowForecaster(BaseForecaster):
         if fh is None:
             fh = self.fh
 
-        index = fh.get_expected_pred_idx(y=None, cutoff=self.cutoff)
+        index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
         columns = self._get_columns(method=method, **kwargs)
 
         y_pred = pd.DataFrame(np.nan, index=index, columns=columns)
