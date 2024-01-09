@@ -25,6 +25,7 @@ jobs:
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
   detect:
+    needs: code_quality
     name: detect changes
     runs-on: ubuntu-latest
     permissions:
