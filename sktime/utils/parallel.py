@@ -169,7 +169,7 @@ def _get_parallel_test_fixtures(naming="estimator"):
     -------
     fixtures : list of dict
         list of backend parameter fixtures
-        keys are "backend" and "backend_params"
+        keys depend on ``naming`` parameter, see above
         values are backend strings and backend parameter dicts
         only backends that are available in the environment are included
     """
