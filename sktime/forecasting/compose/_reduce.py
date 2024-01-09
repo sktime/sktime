@@ -669,9 +669,6 @@ class _DirectReducer(_Reducer):
                 y_preds.append(y_pred_i)
             y_pred = pool_preds(y_preds)
 
-            # for proba predictionns, coerce columns to pd.MultiIndex
-            if method not in ["predict", "predict_var"]:
-                y_pred.columns = self._get_columns(method=method, **kwargs)
         else:
             # Pre-allocate arrays.
             if self._X is None:
@@ -712,6 +709,10 @@ class _DirectReducer(_Reducer):
 
             if est_type != "regressor":
                 y_pred = pool_preds(y_preds)
+
+        # for proba predictionns, coerce columns to pd.MultiIndex
+        if method not in ["predict", "predict_var"]:
+            y_pred.columns = self._get_columns(method=method, **kwargs)
 
         return y_pred
 
