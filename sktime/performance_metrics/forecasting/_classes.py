@@ -626,6 +626,8 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         """Evaluate the desired metric on given inputs."""
         # this dict should contain all parameters
         params = kwargs
+        params.update({"multioutput": self.multioutput, "multilevel": self.multilevel})
+
         func = self.func
 
         self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
