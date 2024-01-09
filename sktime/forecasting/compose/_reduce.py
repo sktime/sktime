@@ -654,6 +654,10 @@ class _DirectReducer(_Reducer):
                     y_pred_v = y_pred_est.values
                     y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
                 y_pred = y_pred.combine_first(y_pred_i)
+
+            # for proba predictionns, coerce columns to pd.MultiIndex
+            if method not in ["predict", "predict_var"]:
+                y_pred.columns = self._get_columns(method=method, **kwargs)
         else:
             # Pre-allocate arrays.
             if self._X is None:
