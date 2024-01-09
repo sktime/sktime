@@ -102,7 +102,6 @@ class MySplitter(BaseSplitter):
         # raises exception at construction if modules at strings cannot be imported
     }
 
-
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
