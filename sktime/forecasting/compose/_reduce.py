@@ -1487,14 +1487,17 @@ def make_reduction(
     strategy : str, optional (default="recursive")
         The strategy to generate forecasts. Must be one of "direct", "recursive" or
         "multioutput".
+
     window_length : int, optional (default=10)
         Window length used in sliding window transformation.
+
     scitype : str, optional (default="infer")
         Legacy argument for downwards compatibility, should not be used.
         `make_reduction` will automatically infer the correct type of `estimator`.
         This internal inference can be force-overridden by the `scitype` argument.
         Must be one of "infer", "tabular-regressor" or "time-series-regressor".
         If the scitype cannot be inferred, this is a bug and should be reported.
+
     transformers: list of transformers (default = None)
         A suitable list of transformers that allows for using an en-bloc approach with
         make_reduction. This means that instead of using the raw past observations of
@@ -1502,10 +1505,12 @@ def make_reduction(
         the past raw observations. Currently only supports WindowSummarizer (or a list
         of WindowSummarizers) to generate features e.g. the mean of the past 7
         observations. Currently only works for RecursiveTimeSeriesRegressionForecaster.
+
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
         Currently only works for RecursiveTimeSeriesRegressionForecaster.
+
     windows_identical: bool, (default = True)
         Direct forecasting only.
         Specifies whether all direct models use the same X windows from y (True: Number
@@ -1516,8 +1521,9 @@ def make_reduction(
 
     Returns
     -------
-    estimator : an Estimator instance
-        A reduction forecaster
+    forecaster : an sktime forecaster object
+        the reduction forecaster, wrapping ``estimator``
+        class is determined by the ``strategy`` argument and type of ``estimator``.
 
     Examples
     --------
