@@ -589,7 +589,7 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
             params = {key: params[key] for key in func_params}
 
         # deal with sklearn specific parameter constraints
-        # as these are a signature, they obfuscate python native inspection
+        # as these are a decorator, they obfuscate python native inspection
         # via signature, so have to be dealt with separately
         if hasattr(func, "_skl_parameter_constraints"):
             constr = func._skl_parameter_constraints
