@@ -175,6 +175,10 @@ def check_dask_frame(
         metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
     if _req("is_univariate", return_metadata):
         metadata["is_univariate"] = len(obj.columns) == 1
+    if _req("n_features", return_metadata):
+        metadata["n_features"] = len(obj.columns)
+    if _req("feature_names", return_metadata):
+        metadata["feature_names"] = obj.columns.to_list()
 
     # check that columns are unique
     if not obj.columns.is_unique:

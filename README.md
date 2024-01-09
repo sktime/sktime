@@ -4,7 +4,7 @@
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.24.1 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
+:rocket: **Version 0.25.0 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation, and forecasting. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
 
@@ -65,8 +65,6 @@ Questions and feedback are extremely welcome! We strongly believe in the value o
 Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__  such as pipelining, ensembling, tuning, and reduction, empowering users to apply an algorithm designed for one task to another.
 
 sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD], and [fbprophet], among others.
-
-For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
 
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
@@ -169,8 +167,8 @@ flexible choice of soft dependencies is unavailable via `conda`)
 ``` python
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.split import temporal_train_test_split
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 
 y = load_airline()

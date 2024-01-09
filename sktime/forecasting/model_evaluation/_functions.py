@@ -318,8 +318,6 @@ def _evaluate_window(x, meta):
         return result
 
 
-# todo 0.25.0: remove compute argument and docstring
-# todo 0.25.0: remove kwargs and docstring
 def evaluate(
     forecaster,
     cv,
@@ -330,7 +328,6 @@ def evaluate(
     return_data: bool = False,
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
-    compute: bool = None,
     cv_X=None,
     backend_params: Optional[dict] = None,
     **kwargs,
@@ -348,13 +345,13 @@ def evaluate(
     the train/test folds produced by the generator ``cv_X.split_series(X)``
     (if ``X`` is ``None``, consider these to be ``None`` as well).
 
-    1. Set ``i = 1``
+    1. Initialize the counter to ``i = 1``
     2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
-       with a ``fh`` to forecast :math:`y_{test, 1}`
-    3. The ``forecaster`` predict with exogeneous data :math:`X_{test, i}`
-       ``y_pred = forecaster.predict`` (or ``predict_proba`` or ``predict_quantiles``,
-       depending on ``scoring``)
-    4. Compute ``scoring`` on ``y_pred`` versus :math:`y_{test, 1}`
+       with ``fh`` set to the absolute indices of :math:`y_{test, 1}`.
+    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
+      data :math:`X_{test, i}`. Predictions are made using either ``predict``,
+      ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
+    4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{test, i}`
     5. If ``i == K``, terminate, otherwise
     6. Set ``i = i + 1``
     7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
@@ -422,9 +419,6 @@ def evaluate(
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
-    compute : bool, default=True, deprecated and will be removed in 0.25.0.
-        If backend="dask", whether returned DataFrame is computed.
-        If set to True, returns `pd.DataFrame`, otherwise `dask.dataframe.DataFrame`.
     cv_X : sktime BaseSplitter descendant, optional
         determines split of ``X`` into test and train folds
         default is ``X`` being split to identical ``loc`` indices as ``y``
@@ -525,10 +519,10 @@ def evaluate(
                 "installed, but dask is not present in the python environment"
             )
 
-    # todo 0.25.0: remove kwargs and this warning
+    # todo 0.26.0: remove kwargs and this warning
     if kwargs != {}:
         warnings.warn(
-            "in evaluate, kwargs will no longer be supported from sktime 0.25.0. "
+            "in evaluate, kwargs are no longer supported. "
             "to pass configuration arguments to the parallelization backend, "
             "use backend_params instead. "
             f"The following kwargs were found: {kwargs.keys()}, pass these as "
@@ -537,28 +531,8 @@ def evaluate(
             stacklevel=2,
         )
 
-    # todo 0.25.0: remove compute argument and logic, and remove this warning
-    if compute is not None:
-        warnings.warn(
-            "the compute argument of evaluate is deprecated and will be removed "
-            "in sktime 0.25.0. For the same behaviour in the future, "
-            'use backend="dask_lazy"',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-    if compute is None:
-        compute = True
-    if backend == "dask" and not compute:
-        backend = "dask_lazy"
-
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
-    # TODO: remove lines(four lines below) and 599-612 in v0.25.0
-    if isinstance(scoring, list):
-        raise_warn, num = True, len(scoring)
-    else:
-        raise_warn, num = False, 1
-    # removal until here
     scoring = _check_scores(scoring)
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
@@ -669,21 +643,4 @@ def evaluate(
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
 
-    # TODO: remove 16 lines below and 451-455 in v0.25.0
-    if raise_warn:
-        warnings.warn(
-            "Starting v0.25.0 model_evaluation.evaluate module will rearrange "
-            "all metric columns to the left of its output result DataFrame. "
-            "Please use loc references when addressing the columns. You can "
-            "safely ignore this warning if you don't use evaluate function directly.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        columns = results.columns.to_list()
-        non_first_metrics = []
-        for _ in range(1, num):
-            metric = columns.pop(1)
-            non_first_metrics.append(metric)
-        results = results.reindex(columns=columns + non_first_metrics)
-    #  removal until here
     return results

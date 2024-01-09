@@ -666,6 +666,8 @@ class IndividualBOSS(BaseClassifier):
         new_boss.n_classes_ = self.n_classes_
         new_boss.classes_ = self.classes_
         new_boss._class_dictionary = self._class_dictionary
+        new_boss._y_metadata = self._y_metadata
+        new_boss._y_inner_mtype = self._y_inner_mtype
         new_boss._is_fitted = True
 
         return new_boss

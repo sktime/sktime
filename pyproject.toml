@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.24.1"
+version = "0.25.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -109,14 +109,14 @@ all_extras = [
   'tbats>=1.1; python_version < "3.12"',
   'tensorflow; python_version < "3.12"',
   'tsfresh>=0.17; python_version < "3.12"',
-  'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
 all_extras_pandas2 = [
   "arch<6.3.0,>=5.6",
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2023.7.1",
+  "dask<2023.12.2",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
   'filterpy>=1.4.5; python_version < "3.11"',
@@ -144,12 +144,12 @@ all_extras_pandas2 = [
   'tbats>=1.1; python_version < "3.12"',
   'tensorflow; python_version < "3.12"',
   'tsfresh>=0.17; python_version < "3.12"',
-  'tslearn<0.6.0,>=0.5.2; python_version < "3.11"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
 
 # single-task dependencies, e.g., forecasting, classification, etc.
-# manually curated and intentionally smaller to avoid dependeny conflicts
+# manually curated and intentionally smaller to avoid dependency conflicts
 # names are identical with the names of the modules and estimator type strings
 # dependency sets are selected to cover the most popular estimators in each module
 # (this is a subjective choice, and may change over time as the ecosystem evolves,
@@ -174,7 +174,7 @@ classification = [
 ]
 clustering = [
   'numba<0.59,>=0.53; python_version < "3.12"',
-  'tslearn<0.6.3,>=0.5.2; python_version < "3.12"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
 ]
 forecasting = [
   "arch<6.3,>=5.6",
@@ -200,10 +200,10 @@ regression = [
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   "filterpy<1.5,>=1.4.5",
-  "holidays>=0.29,<0.37",
+  "holidays>=0.29,<0.40",
   "mne<1.6,>=1.5",
   'numba<0.59,>=0.53; python_version < "3.12"',
-  "pycatch22<0.4.4,>=0.4",
+  "pycatch22>=0.4,<0.4.4",
   "pykalman-bardo<0.10,>=0.9.7",
   "statsmodels<0.15,>=0.12.1",
   'stumpy<1.13,>=1.5.1; python_version < "3.12"',
@@ -236,7 +236,7 @@ docs = [
   "Sphinx!=7.2.0,<8.0.0",
   "sphinx-copybutton",
   "sphinx-design<0.6.0",
-  "sphinx-gallery<0.15.0",
+  "sphinx-gallery<0.16.0",
   "sphinx-issues<4.0.0",
   "tabulate",
 ]
@@ -245,7 +245,7 @@ tests = [
   "pytest-cov<4.2,>=4.1",
   "pytest-randomly<3.16,>=3.15",
   "pytest-timeout>=2.1,<2.3",
-  "pytest-xdist>=3.3,<3.5",
+  "pytest-xdist>=3.3,<3.6",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers

@@ -18,6 +18,14 @@ class Rocket(BaseTransformer):
     dilation. It transforms the time series with two features per kernel. The first
     feature is global max pooling and the second is proportion of positive values.
 
+    This transformer fits one set of paramereters per individual series,
+    and applies the transform with fitted parameter i to the i-th series in transform.
+    Vanilla use requires same number of series in fit and transform.
+
+    To fit and transform series at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
 
     Parameters
     ----------
