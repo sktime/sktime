@@ -1,4 +1,4 @@
-name: test everything
+name: test all
 on:
   schedule:
     - cron: 0 0 * * 0
@@ -23,7 +23,7 @@ jobs:
         shell: bash
   test_base:
     needs: code_quality
-    name: test base component
+    name: base
     strategy:
       fail-fast: false
       matrix:
@@ -51,9 +51,9 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
-  test_all_extras:
+  test_module:
     needs: code_quality
-    name: all_extras
+    name: module
     strategy:
       fail-fast: false
       matrix:
@@ -92,9 +92,9 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
-  test_module:
+  test_other:
     needs: code_quality
-    name: module
+    name: other
     strategy:
       fail-fast: false
       matrix:
