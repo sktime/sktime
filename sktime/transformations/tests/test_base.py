@@ -42,7 +42,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 # TransformerFitTransformPanelUnivariateWithClassY,
 
 # list of parallelization backends to test
-BACKENDS = _get_parallel_test_fixtures()
+BACKENDS = _get_parallel_test_fixtures("config")
 
 
 def inner_X_scitypes(est):
