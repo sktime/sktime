@@ -573,6 +573,10 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         else:
             func = self.func
 
+        self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
+
+    def _evaluate_func(self, func, y_true, y_pred, **params):
+        """Call func with kwargs subset to func parameters."""
         # import here for now to avoid interaction with getmembers in tests
         # todo: clean up ancient getmembers in test_metrics_classes
         from functools import partial
@@ -583,6 +587,15 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
             func_params = set(func_params).difference(["y_true", "y_pred"])
             func_params = func_params.intersection(params.keys())
             params = {key: params[key] for key in func_params}
+
+        # deal with sklearn specific parameter constraints
+        # as these are a signature, they obfuscate python native inspection
+        # via signature, so have to be dealt with separately
+        if hasattr(func, "_skl_parameter_constraints"):
+            constr = func._skl_parameter_constraints
+            if isinstance(constr, dict):
+                constr_params = set(constr.keys()).intersection(params.keys())
+                params = {key: params[key] for key in constr_params}
 
         res = func(y_true=y_true, y_pred=y_pred, **params)
         return res
@@ -608,6 +621,14 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
         self.set_tags(**{"lower_is_better": lower_is_better})
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs."""
+        # this dict should contain all parameters
+        params = kwargs
+        func = self.func
+
+        self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
