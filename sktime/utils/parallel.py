@@ -154,6 +154,14 @@ def _get_parallel_test_fixtures():
 
     Returns a list of parameter fixtures, where each fixture
     is a dict with keys "backend" and "backend_params".
+
+    Returns
+    -------
+    fixtures : list of dict
+        list of backend parameter fixtures
+        keys are "backend" and "backend_params"
+        values are backend strings and backend parameter dicts
+        only backends that are available in the environment are included
     """
     from sktime.utils.validation._dependencies import _check_soft_dependencies
 

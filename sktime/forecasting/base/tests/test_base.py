@@ -20,6 +20,7 @@ from sktime.forecasting.var import VAR
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
+from sktime.utils.parallel import _get_parallel_test_fixtures
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
@@ -30,7 +31,7 @@ HIER_MTYPES = ["pd_multiindex_hier"]
     not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", _get_parallel_test_fixtures())
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
 def test_vectorization_series_to_panel(mtype, backend):
     """Test that forecaster vectorization works for Panel data.
@@ -43,7 +44,7 @@ def test_vectorization_series_to_panel(mtype, backend):
     y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
     f = ARIMA()
-    f.set_config(**{"backend:parallel": backend})
+    f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(
         y_pred, mtype, return_metadata=True, msg_return_dict="list"
