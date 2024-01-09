@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   test_installations:
-    name: extras installation
+    name: install
     strategy:
       fail-fast: false
       matrix:
