@@ -1,4 +1,4 @@
-name: ${{ inputs.sktime-extra-identifier }}
+name: test install
 description: install individual extra of sktime
 inputs:
   sktime-extra-identifier:
