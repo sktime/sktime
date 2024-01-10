@@ -229,6 +229,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         assert isinstance(y_pred, pd.DataFrame)
         assert y_pred.shape == y_mult.shape
 
+        # the estimator vectorizes iff it does not have the multioutput capability
         vectorized = not estimator_instance.get_tag("capability:multioutput")
         if vectorized:
             assert hasattr(estimator_instance, "classifiers_")

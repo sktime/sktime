@@ -12,7 +12,7 @@ from sktime.forecasting.base.adapters import _ProphetAdapter
 
 class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
     """
-    Forecast time series data with a piecwise linear trend, fitted via prophet.
+    Forecast time series data with a piecewise linear trend, fitted via prophet.
 
     The forecaster uses Facebook's prophet algorithm [1]_ and extracts the piecewise
     linear trend from it. Only hyper-parameters relevant for the trend modelling are
