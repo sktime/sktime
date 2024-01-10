@@ -183,13 +183,14 @@ def _sliding_window_transform(
         Xt = Zt[:, :, :window_length]
     # Pre-allocate array for sliding windows.
     # If the scitype is tabular regression, we have to convert X into a 2d array.
-    if scitype == "tabular-regressor":
-        if transformers is not None:
-            return yt, Xt
-        else:
-            return yt, Xt.reshape(Xt.shape[0], -1)
-    else:
-        return yt, Xt
+    if scitype == "tabular-regressor" and transformers is None:
+        Xt = Xt.reshape(Xt.shape[0], -1)
+
+    assert Xt.ndim == 2 or Xt.ndim == 3
+    assert yt.ndim == 2
+
+    return yt, Xt
+
 
 
 class _Reducer(_BaseWindowForecaster):
@@ -580,21 +581,23 @@ class _DirectReducer(_Reducer):
 
             if self.transformers_ is not None:
                 fh_rel = fh.to_relative(self.cutoff)
-                yt = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
-                Xt = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
+                yt_cut = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
+                Xt_cut = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
             elif self.windows_identical is True or (fh_rel[i] - 1) == 0:
-                yt = yt[:, i]
+                print(yt.shape)
+                yt_cut = yt[:, i]
+                Xt_cut = Xt
             else:
-                Xt = Xt[: -(fh_rel[i] - 1)]
-                yt = yt[: -(fh_rel[i] - 1), i]
+                Xt_cut = Xt[: -(fh_rel[i] - 1)]
+                yt_cut = yt[: -(fh_rel[i] - 1), i]
 
             # coercion to pandas for skpro proba regressors
             if self._est_type != "regressor" and not isinstance(Xt, pd.DataFrame):
-                Xt = pd.DataFrame(Xt)
+                Xt_cut = pd.DataFrame(Xt_cut)
             if self._est_type != "regressor" and not isinstance(yt, pd.DataFrame):
-                yt = pd.DataFrame(yt)
+                yt_cut = pd.DataFrame(yt_cut)
 
-            estimator.fit(Xt, yt)
+            estimator.fit(Xt_cut, yt_cut)
             self.estimators_.append(estimator)
         return self
 
