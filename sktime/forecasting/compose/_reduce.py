@@ -665,7 +665,8 @@ class _DirectReducer(_Reducer):
                 if est_type == "regressor":
                     y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_est)
                 else:  # est_type == "regressor_proba"
-                    y_pred_v = y_pred_est.values
+                    if not isinstance(y_pred_est, np.ndarray):
+                        y_pred_v = y_pred_est.values
                     y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
                 y_preds.append(y_pred_i)
             y_pred = pool_preds(y_preds)
@@ -704,16 +705,17 @@ class _DirectReducer(_Reducer):
                 if est_type == "regressor":
                     y_pred[i] = y_pred_est
                 else:  # est_type == "regressor_proba"
-                    y_pred_v = y_pred_est.values
+                    if not isinstance(y_pred_est, np.ndarray):
+                        y_pred_v = y_pred_est.values
                     y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
                     y_preds.append(y_pred_i)
 
             if est_type != "regressor":
                 y_pred = pool_preds(y_preds)
 
-        # for proba predictionns, coerce columns to pd.MultiIndex
-        if method not in ["predict", "predict_var"]:
-            y_pred.columns = self._get_columns(method=method, **kwargs)
+        # coerce index and columns to expected
+        y_pred.index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+        y_pred.columns = self._get_columns(method=method, **kwargs)
 
         return y_pred
 
