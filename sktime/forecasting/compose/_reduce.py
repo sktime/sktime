@@ -317,12 +317,17 @@ class _Reducer(_BaseWindowForecaster):
         if _check_soft_dependencies("skpro", severity="none") and self_supports_proba:
             from skpro.regression.residual import ResidualDouble
 
-            params_proba = {
+            params_proba_local = {
+                "estimator": ResidualDouble.create_test_instance(),
+                "pooling": "local",
+                "window_length": 3,
+            }
+            params_proba_global = {
                 "estimator": ResidualDouble.create_test_instance(),
                 "pooling": "global",
                 "window_length": 4,
             }
-            params = params + [params_proba]
+            params = params + [params_proba_local, params_proba_global]
 
         return params
 
