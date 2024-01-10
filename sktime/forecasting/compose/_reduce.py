@@ -656,6 +656,13 @@ class _DirectReducer(_Reducer):
                 y_pred = y_pred.combine_first(y_pred_i)
             return y_pred
 
+        def _coerce_to_numpy(y_pred):
+            """Coerce predictions to numpy array, assumes pd.DataFram or numpy."""
+            if isinstance(y_pred, pd.DataFrame):
+                return y_pred.values
+            else:
+                return y_pred
+
         if self.pooling == "global":
             fh_abs = fh.to_absolute_index(self.cutoff)
             y_preds = []
@@ -665,8 +672,7 @@ class _DirectReducer(_Reducer):
                 if est_type == "regressor":
                     y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_est)
                 else:  # est_type == "regressor_proba"
-                    if not isinstance(y_pred_est, np.ndarray):
-                        y_pred_v = y_pred_est.values
+                    y_pred_v = _coerce_to_numpy(y_pred_est)
                     y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
                 y_preds.append(y_pred_i)
             y_pred = pool_preds(y_preds)
@@ -705,10 +711,7 @@ class _DirectReducer(_Reducer):
                 if est_type == "regressor":
                     y_pred[i] = y_pred_est
                 else:  # est_type == "regressor_proba"
-                    if not isinstance(y_pred_est, np.ndarray):
-                        y_pred_v = y_pred_est.values
-                    else:
-                        y_pred_v = y_pred_est
+                    y_pred_v = _coerce_to_numpy(y_pred_est)
                     y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
                     y_preds.append(y_pred_i)
 
