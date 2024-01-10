@@ -707,6 +707,8 @@ class _DirectReducer(_Reducer):
                 else:  # est_type == "regressor_proba"
                     if not isinstance(y_pred_est, np.ndarray):
                         y_pred_v = y_pred_est.values
+                    else:
+                        y_pred_v = y_pred_est
                     y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
                     y_preds.append(y_pred_i)
 
