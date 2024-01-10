@@ -184,13 +184,13 @@ def _sliding_window_transform(
         Xt = Zt[:, :, :window_length]
     # Pre-allocate array for sliding windows.
     # If the scitype is tabular regression, we have to convert X into a 2d array.
-    if scitype == "tabular-regressor":
-        if transformers is not None:
-            return yt, Xt
-        else:
-            return yt, Xt.reshape(Xt.shape[0], -1)
-    else:
-        return yt, Xt
+    if scitype == "tabular-regressor" and transformers is None:
+        Xt = Xt.reshape(Xt.shape[0], -1)
+
+    assert Xt.ndim == 2 or Xt.ndim == 3
+    assert yt.ndim == 2
+
+    return yt, Xt
 
 
 class _Reducer(_BaseWindowForecaster):
