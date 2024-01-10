@@ -582,15 +582,19 @@ class _DirectReducer(_Reducer):
                 fh_rel = fh.to_relative(self.cutoff)
                 yt = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
                 Xt = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
-                estimator.fit(Xt, yt)
+            elif self.windows_identical is True or (fh_rel[i] - 1) == 0:
+                yt = yt[:, i]
             else:
-                if self.windows_identical is True:
-                    estimator.fit(Xt, yt[:, i])
-                else:
-                    if (fh_rel[i] - 1) == 0:
-                        estimator.fit(Xt, yt[:, i])
-                    else:
-                        estimator.fit(Xt[: -(fh_rel[i] - 1)], yt[: -(fh_rel[i] - 1), i])
+                Xt = Xt[: -(fh_rel[i] - 1)]
+                yt = yt[: -(fh_rel[i] - 1), i]
+
+            # coercion to pandas for skpro proba regressors
+            if self._est_type != "regressor" and not isinstance(Xt, pd.DataFrame):
+                Xt = pd.DataFrame(Xt)
+            if self._est_type != "regressor" and not isinstance(yt, pd.DataFrame):
+                yt = pd.DataFrame(yt)
+
+            estimator.fit(Xt, yt)
             self.estimators_.append(estimator)
         return self
 
@@ -722,6 +726,8 @@ class _DirectReducer(_Reducer):
         if isinstance(y_pred, pd.DataFrame):
             y_pred.index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
             y_pred.columns = self._get_columns(method=method, **kwargs)
+
+        print(y_pred)
 
         return y_pred
 
