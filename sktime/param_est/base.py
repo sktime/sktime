@@ -381,23 +381,3 @@ class BaseParamFitter(BaseEstimator):
         # but looping to self.fit for now to avoid interface break
 
         return self
-
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        # default retrieves all self attributes ending in "_"
-        # and returns them with keys that have the "_" removed
-        return {
-            attr[:-1]: getattr(self, attr)
-            for attr in dir(self)
-            if attr.endswith("_") and not attr.startswith("_")
-        }

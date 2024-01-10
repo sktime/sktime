@@ -584,12 +584,12 @@ class BaseEstimator(BaseObject):
 
         # default retrieves all self attributes ending in "_"
         # and returns them with keys that have the "_" removed
-        fitted_params = [attr for attr in dir(obj) if attr.endswith("_")]
-        fitted_params = [x for x in fitted_params if not x.startswith("_")]
-        fitted_params = [x for x in fitted_params if hasattr(obj, x)]
-        fitted_param_dict = {p[:-1]: getattr(obj, p) for p in fitted_params}
-
-        return fitted_param_dict
+        fitted_params = {
+            attr[:-1]: getattr(self, attr)
+            for attr in dir(self)
+            if attr.endswith("_") and not attr.startswith("_") and hasattr(obj, attr)
+        }
+        return fitted_params
 
     def _get_fitted_params(self):
         """Get fitted parameters.
