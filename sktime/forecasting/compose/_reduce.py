@@ -270,8 +270,9 @@ class _Reducer(_BaseWindowForecaster):
         if "TimeSeries" in cls.__name__:
             est = make_pipeline(Tabularizer(), est)
 
-        params = {"estimator": est, "window_length": 3}
-        return params
+        params_local = {"estimator": est, "window_length": 3}
+        params_global = {"estimator": est, "window_length": 4, "pooling": "global"}
+        return [params_local, params_global]
 
     def _get_shifted_window(self, shift=0, y_update=None, X_update=None):
         """Get the start and end points of a shifted window.
