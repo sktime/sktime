@@ -72,6 +72,7 @@ Use ``make_reduction`` for easy specification.
 
     DirectTabularRegressionForecaster
     DirectTimeSeriesRegressionForecaster
+    DirectReductionForecaster
     MultioutputTabularRegressionForecaster
     MultioutputTimeSeriesRegressionForecaster
     RecursiveTabularRegressionForecaster

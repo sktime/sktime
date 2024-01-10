@@ -28,6 +28,10 @@ EXAMPLES = [
     {"foo": [42], "bar": pd.Series([1, 2])},
     {"bar": [42], "foo": pd.Series([1, 2])},
     csr_matrix((3, 4), dtype=np.int8),
+    pd.Index([1, 2, 3]),
+    pd.Index([2, 3, 4]),
+    np.array([0.1, 1], dtype="object"),
+    np.array([0.2, 1], dtype="object"),
 ]
 
 

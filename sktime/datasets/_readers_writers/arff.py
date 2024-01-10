@@ -17,7 +17,7 @@ from sktime.transformations.base import BaseTransformer
 # ==================================================================================================
 
 
-# TODO: original author didnt add test for this function
+# TODO: original author didn't add test for this function
 # Refactor the nested loops
 def load_from_arff_to_dataframe(
     full_file_path_and_name,

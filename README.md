@@ -66,8 +66,6 @@ Our objective is to enhance the interoperability and usability of the time serie
 
 sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD], and [fbprophet], among others.
 
-For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
-
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
 [pyod]: https://pyod.readthedocs.io/en/latest/

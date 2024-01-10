@@ -21,6 +21,7 @@ Composition
     ClassifierPipeline
     ColumnEnsembleClassifier
     SklearnClassifierPipeline
+    MultiplexClassifier
 
 Ensembles
 ---------

@@ -29,7 +29,7 @@ def _convert_tsf_to_hierarchical(
         tsf file metadata
     freq : str, optional
         pandas compatible time frequency, by default None
-        if not speciffied it's automatically mapped from the tsf frequency to a pandas
+        if not specified it's automatically mapped from the tsf frequency to a pandas
         frequency
     value_column_name: str, optional
         The name of the column that contains the values, by default "series_value"
