@@ -108,13 +108,13 @@ def _parallelize_joblib(fun, iter, meta, backend, backend_params):
             raise ValueError(
                 '"joblib" was selected as first layer parallelization backend, '
                 "but no backend string was "
-                '"passed in the backend parameters dict, e.g., "spark". '
+                'passed in the backend parameters dict, e.g., "spark". '
                 "Please specify a backend to joblib as a key-value pair "
                 "in the backend_params arg or the backend:parallel:params config "
                 'when using "joblib". '
                 'For clarity, "joblib" should only be used for two-layer '
                 "backend dispatch, where the first layer is joblib, "
-                "and the second layer is a custom backend of joblib, e.g., spark."
+                "and the second layer is a custom backend of joblib, e.g., spark. "
                 "For first-party joblib backends, please use the backend string "
                 'of sktime directly, e.g., by specifying "multiprocessing" or "loky".'
             )
