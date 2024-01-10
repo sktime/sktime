@@ -520,15 +520,16 @@ class _DirectReducer(_Reducer):
 
             if self.transformers_ is not None:
                 fh_rel = fh.to_relative(self.cutoff)
-                yt = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
-                Xt = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
+                Xt_cut = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
+                yt_cut = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
             elif self.windows_identical is True or (fh_rel[i] - 1) == 0:
-                yt = yt[:, i]
+                Xt_cut = Xt
+                yt_cut = yt[:, i]
             else:
-                Xt = Xt[: -(fh_rel[i] - 1)]
-                yt = yt[: -(fh_rel[i] - 1), i]
+                Xt_cut = Xt[: -(fh_rel[i] - 1)]
+                yt_cut = yt[: -(fh_rel[i] - 1), i]
 
-            estimator.fit(Xt, yt)
+            estimator.fit(Xt_cut, yt_cut)
             self.estimators_.append(estimator)
         return self
 
