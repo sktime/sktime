@@ -727,8 +727,6 @@ class _DirectReducer(_Reducer):
             y_pred.index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
             y_pred.columns = self._get_columns(method=method, **kwargs)
 
-        print(y_pred)
-
         return y_pred
 
 
