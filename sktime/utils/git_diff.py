@@ -95,13 +95,13 @@ def get_changed_lines(file_path):
     try:
         # Run 'git diff' command to get the changes in the specified file
         result = subprocess.run(
-            ['git', 'diff', file_path], capture_output=True, text=True, check=True
+            ["git", "diff", file_path], capture_output=True, text=True, check=True
         )
 
         # Extract the changed or new lines and return as a list of strings
         diff_output = result.stdout
         changed_lines = [
-            line.strip() for line in diff_output.split('\n') if line.startswith('+ ')
+            line.strip() for line in diff_output.split("\n") if line.startswith("+ ")
         ]
         # remove first character ('+') from each line
         changed_lines = [line[1:] for line in changed_lines]
