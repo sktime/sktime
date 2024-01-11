@@ -726,7 +726,7 @@ class ForecastingHorizon:
             elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
                 fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
             elif sort_by_time:  # and not isinstance(y_inst_idx, pd.MultiIndex):
-                fh_list = [(x, y) for y in fh_idx for x in y_inst_idx] 
+                fh_list = [(x, y) for y in fh_idx for x in y_inst_idx]
             else:  # not sort_by_time and not isinstance(y_inst_idx, pd.MultiIndex):
                 fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
 
