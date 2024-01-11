@@ -192,7 +192,6 @@ def _sliding_window_transform(
     return yt, Xt
 
 
-
 class _Reducer(_BaseWindowForecaster):
     """Base class for reducing forecasting to regression."""
 
