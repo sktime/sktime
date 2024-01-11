@@ -95,7 +95,7 @@ def run_test_for_class(cls):
         if not isclass(cls) or not hasattr(cls, "get_class_tags"):
             return False
 
-        cls_reqs = cls.get_class_tags("python_dependencies")
+        cls_reqs = cls.get_class_tag("python_dependencies", [])
         if not isinstance(cls_reqs, list):
             cls_reqs = [cls_reqs]
         package_deps = [Requirement(req).name for req in cls_reqs]
