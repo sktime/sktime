@@ -110,8 +110,7 @@ def get_changed_lines(file_path):
 
     except subprocess.CalledProcessError as e:
         # Handle errors, if any
-        print(f"Error while running git diff: {e}")
-        return []
+        raise e
 
 
 def get_packages_with_changed_specs():
