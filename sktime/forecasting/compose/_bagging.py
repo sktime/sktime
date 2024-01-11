@@ -159,7 +159,7 @@ class BaggingForecaster(BaseForecaster):
             self.bootstrap_transformer_ = self.bootstrap_transformer.clone()
         else:
             from sklearn import clone
- 
+
             self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
 
         if self.forecaster is None:
