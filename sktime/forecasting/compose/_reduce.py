@@ -725,9 +725,13 @@ class _DirectReducer(_Reducer):
                 y_pred = pool_preds(y_preds)
 
         # coerce index and columns to expected
+        index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+        columns = self._get_columns(method=method, **kwargs)
         if isinstance(y_pred, pd.DataFrame):
-            y_pred.index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
-            y_pred.columns = self._get_columns(method=method, **kwargs)
+            y_pred.index = index
+            y_pred.columns = columns
+        else:
+            y_pred = pd.DataFrame(y_pred, index=index, columns=columns)
 
         return y_pred
 
