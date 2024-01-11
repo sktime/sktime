@@ -121,8 +121,7 @@ def get_packages_with_changed_specs():
     -------
     list of str : packages with changed or added specs
     """
-    from packaging.requirements import InvalidRequirement, Requirement
-    from packaging.specifiers import InvalidSpecifier, SpecifierSet
+    from packaging.requirements import Requirement
 
     changed_lines = get_changed_lines("pyproject.toml")
 
