@@ -720,15 +720,15 @@ class ForecastingHorizon:
             fh_idx = pd.Index(self.to_absolute_index(_cutoff))
 
         if cutoff is not None and isinstance(y_index, pd.MultiIndex):
-            y_inst_idx = y_index.droplevel(-1).unique()
+            y_inst_idx = y_index.droplevel(-1).unique().sort_values()
             if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
-                fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
-            elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
                 fh_list = [x + (y,) for y in fh_idx for x in y_inst_idx]
+            elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
+                fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
             elif sort_by_time:  # and not isinstance(y_inst_idx, pd.MultiIndex):
-                fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
+                fh_list = [(x, y) for y in fh_idx for x in y_inst_idx] 
             else:  # not sort_by_time and not isinstance(y_inst_idx, pd.MultiIndex):
-                fh_list = [(x, y) for y in fh_idx for x in y_inst_idx]
+                fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
 
             fh_idx = pd.Index(fh_list)
 
