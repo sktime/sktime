@@ -125,5 +125,5 @@ def run_test_for_class(cls):
     # the package requirements for any dependency in pyproject.toml have changed
     cond4 = any(_is_impacted_by_pyproject_change(x) for x in cls)
 
-    # run the test if and only if at least one of the conditions 2, 3 are met
+    # run the test if and only if at least one of the conditions 2-4 are met
     return cond2 or cond3 or cond4
