@@ -730,7 +730,7 @@ class _DirectReducer(_Reducer):
         if isinstance(y_pred, pd.DataFrame):
             y_pred.index = index
             y_pred.columns = columns
-        elif isinstance(y_pred, pd.Series):
+        elif isinstance(y_pred, pd.Series) and hasattr(self._y, "name"):
             y_pred.name = self._y.name
         else:
             y_pred = pd.DataFrame(y_pred, index=index, columns=columns)
