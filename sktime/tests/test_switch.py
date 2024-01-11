@@ -96,6 +96,8 @@ def run_test_for_class(cls):
             return False
 
         cls_reqs = cls.get_class_tag("python_dependencies", [])
+        if cls_reqs is None:
+            cls_reqs = []
         if not isinstance(cls_reqs, list):
             cls_reqs = [cls_reqs]
         package_deps = [Requirement(req).name for req in cls_reqs]
