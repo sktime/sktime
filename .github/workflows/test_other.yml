@@ -8,13 +8,14 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      components_without_extras: ${{ steps.filter.outputs.components_without_extras }}
+      other_change: ${{ steps.filter.outputs.components_without_extras }}
     steps:
       - uses: dorny/paths-filter@v2
         id: filter
         with:
           filters: |
-            components_without_extras:
+            other_change:
+              - pyproject.toml
               - sktime/base/**
               - sktime/_contrib/**
               - sktime/benchmarking/**
@@ -32,7 +33,7 @@ jobs:
   test_module:
     needs: detect
     name: test
-    if: ${{ needs.detect.outputs.components_without_extras == 'true' }}
+    if: ${{ needs.detect.outputs.other_change == 'true' }}
     strategy:
       fail-fast: false
       matrix:

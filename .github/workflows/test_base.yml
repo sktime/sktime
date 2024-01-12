@@ -15,6 +15,7 @@ jobs:
         with:
           filters: |
             base:
+              - pyproject.toml
               - sktime/base/**
   test:
     needs: detect

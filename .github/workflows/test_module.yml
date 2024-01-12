@@ -8,37 +8,46 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      components_with_extras: ${{ steps.filter.outputs.changes }}
+      module_changes: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: dorny/paths-filter@v2
         id: filter
         with:
           filters: |
             alignment:
+              - pyproject.toml
               - sktime/base/**
               - sktime/alignment/**
             annotation:
+              - pyproject.toml
               - sktime/base/**
               - sktime/annotation/**
             classification:
+              - pyproject.toml
               - sktime/base/**
               - sktime/classification/**
             clustering:
+              - pyproject.toml
               - sktime/base/**
               - sktime/clustering/**
             forecasting:
+              - pyproject.toml
               - sktime/base/**
               - sktime/forecasting/**
             networks:
+              - pyproject.toml
               - sktime/base/**
               - sktime/networks/**
             param_est:
+              - pyproject.toml
               - sktime/base/**
               - sktime/param_est/**
             regression:
+              - pyproject.toml
               - sktime/base/**
               - sktime/regression/**
             transformations:
+              - pyproject.toml
               - sktime/base/**
               - sktime/transformations/**
   test:
@@ -57,12 +66,12 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        sktime-component: ${{ fromJSON(needs.detect.outputs.components_with_extras) }}
+        sktime-component: ${{ fromJSON(needs.detect.outputs.module_changes) }}
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
         uses: actions/checkout@v4
-      - name: ${{ matrix.sktime-component }}, ${{ matrix.python-version }}
+      - name: ${{ matrix.sktime-component }}, ${{ matrix.operating-system }}, ${{ matrix.python-version }}
         uses: ./.github/actions/test-component
         with:
           sktime-component-identifier: ${{ matrix.sktime-component }}
