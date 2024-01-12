@@ -31,6 +31,7 @@ runs:
 
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
+      shell: bash
 
     - name: Install sktime and dependencies
       run: python3 -m pip install .[tests]
@@ -38,9 +39,11 @@ runs:
 
     - name: Show dependencies
       run: python -m pip list
+      shell: bash
 
     - name: Show available branches
       run: git branch -a
+      shell: bash
 
     - name: unit test step
       run: >-
