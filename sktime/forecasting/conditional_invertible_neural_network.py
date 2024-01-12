@@ -372,6 +372,105 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         ]
         return params
 
+    # Serialization methods are overridden since FrEIA is using 
+    # non pickable objects. Thus, we extract the parameters 
+    # of the network and store it with the hyperparameters of the
+    # cINNForecaster.
+    def save(self, path=None, serialization_format="pickle"):
+        """Save serialized self to bytes-like object or to (.zip) file.
+        Behaviour:
+        if `path` is None, returns an in-memory serialized self
+        if `path` is a file, stores the zip with that name at the location.
+        The contents of the zip file are:
+        _metadata - contains class of self, i.e., type(self).
+        _obj - serialized self. This class uses the default serialization (pickle).
+        keras/ - model, optimizer and state stored inside this directory.
+        history - serialized history object.
+        Parameters
+        ----------
+        path : None or file location (str or Path)
+            if None, self is saved to an in-memory object
+            if file location, self is saved to that file location. For eg:
+                path="estimator" then a zip file `estimator.zip` will be made at cwd.
+                path="/home/stored/estimator" then a zip file `estimator.zip` will be
+                stored in `/home/stored/`.
+        serialization_format: str, default = "pickle"
+            Module to use for serialization.
+            The available options are present under
+            `sktime.base._base.SERIALIZATION_FORMATS`. Note that non-default formats
+            might require installation of other soft dependencies.
+        Returns
+        -------
+        if `path` is None - in-memory serialized self
+        if `path` is file location - ZipFile with reference to the file
+        """
+        tmp_network = None
+        tmp_forecasters = None
+        if hasattr(self, "network"):
+            self._state_dict = self.network.state_dict()
+            tmp_network = self.network
+            del self.network
+        if hasattr(self, "forecasters_"):
+            self._stored_forecasters = []
+            for forecaster in self.forecasters_.values[0, :]:
+                self._stored_forecasters.append(
+                    forecaster.save(serialization_format=serialization_format)
+                )
+            tmp_forecasters = self.forecasters_
+            del self.forecasters_
+        serial = super().save(path, serialization_format)
+        if tmp_network is not None:
+            self.network = tmp_network
+        if tmp_forecasters is not None:
+            self.forecasters_ = tmp_forecasters
+        return serial
+
+    @classmethod
+    def load_from_serial(cls, serial):
+        """Load object from serialized memory container.
+        Parameters
+        ----------
+        serial : 1st element of output of `cls.save(None)`
+        Returns
+        -------
+        deserialized self resulting in output `serial`, of `cls.save(None)`
+        """
+        import pickle
+
+        cinn_forecaster = pickle.loads(serial)
+        if hasattr(cinn_forecaster, "_state_dict"):
+            cinn_forecaster.network = cINNNetwork(
+                horizon=cinn_forecaster.sample_dim,
+                cond_features=cinn_forecaster.n_cond_features,
+                encoded_cond_size=cinn_forecaster.encoded_cond_size,
+                num_coupling_layers=cinn_forecaster.n_coupling_layers,
+            ).build()
+            cinn_forecaster.network.load_state_dict(cinn_forecaster._state_dict)
+        if hasattr(cinn_forecaster, "_stored_forecasters"):
+            forecasters = []
+            for forecaster in cinn_forecaster._stored_forecasters:
+                forecasters.append(forecaster[0].load_from_serial(forecaster[1]))
+            cinn_forecaster.forecasters_ = pd.DataFrame([forecasters])
+            cinn_forecaster.stored_forecasters = None
+        cinn_forecaster._state_dict = None
+        return cinn_forecaster
+    
+    @classmethod
+    def load_from_path(cls, path):
+        """Load object from file location.
+        Parameters
+        ----------
+        serial : result of ZipFile(path).open("object)
+        Returns
+        -------
+        deserialized self resulting in output at `path`, of `cls.save(path)`
+        """
+        from zipfile import ZipFile
+
+        with ZipFile(path, "r") as file:
+            cinn_forecaster = cls.load_from_serial(file.open("_obj").read())
+        return cinn_forecaster
+
 
 def _test_function(x, a, b):
     return a * x + b
