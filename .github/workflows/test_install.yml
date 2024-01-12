@@ -1,4 +1,4 @@
-name: extras validation
+name: test softdep set install
 on:
   schedule:
     - cron: 0 0 1 * *
