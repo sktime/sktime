@@ -1,5 +1,5 @@
-name: ${{ inputs.sktime-component-identifier }}, ${{ inputs.python-version-identifier }}
-description: ${{ inputs.sktime-component-identifier }}, ${{ inputs.python-version-identifier }}
+name: test
+description: test
 inputs:
   sktime-component-identifier:
     description: name of sktime component
