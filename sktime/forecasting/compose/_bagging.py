@@ -165,7 +165,7 @@ class BaggingForecaster(BaseForecaster):
         if self.forecaster is None:
             self.forecaster_ = AutoETS(sp=self.sp)
         else:
-            self.forecaster_ = clone(self.forecaster)
+            self.forecaster_ = self.forecaster.clone()
 
         if (
             self.bootstrap_transformer_.get_tag(
