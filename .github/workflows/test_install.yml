@@ -36,7 +36,7 @@ jobs:
       - name: checkout pull request branch
         uses: actions/checkout@v4
       - name: install ${{ matrix.sktime-extra }} extra on python ${{ matrix.python-version }}
-        uses: ./.github/actions/test_install
+        uses: ./.github/actions/test-install
         with:
           sktime-extra-identifier: ${{ matrix.sktime-extra }}
           python-version-identifier: ${{ matrix.python-version }}

@@ -47,7 +47,7 @@ jobs:
     needs: detect
     name: install
     if: ${{ needs.detect.outputs.pyproject == 'true' }}
-    uses: ./.github/workflows/validate_extras.yml
+    uses: ./.github/workflows/test_install.yml
   unit_test_base:
     needs: code_quality
     name: base
