@@ -52,7 +52,7 @@ jobs:
               - sktime/transformations/**
   test:
     needs: detect
-    name: test
+    name:
     strategy:
       fail-fast: false
       matrix:
@@ -71,6 +71,7 @@ jobs:
     steps:
       - name: checkout pull request branch
         uses: actions/checkout@v4
+
       - name: ${{ matrix.sktime-component }}, ${{ matrix.operating-system }}, ${{ matrix.python-version }}
         uses: ./.github/actions/test-component
         with:
@@ -78,6 +79,7 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "True"
           test-affected-estimators: "True"
+
       - name: upload coverage
         uses: codecov/codecov-action@v3
         with:

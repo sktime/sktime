@@ -19,7 +19,7 @@ jobs:
               - sktime/base/**
   test:
     needs: detect
-    name: test
+    name:
     if: ${{ needs.detect.outputs.base == 'true' }}
     strategy:
       fail-fast: false

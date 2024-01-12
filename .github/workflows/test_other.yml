@@ -32,7 +32,7 @@ jobs:
               - sktime/utils/**
   test_module:
     needs: detect
-    name: test
+    name:
     if: ${{ needs.detect.outputs.other_change == 'true' }}
     strategy:
       fail-fast: false
