@@ -12,10 +12,12 @@ runs:
   steps:
     - name: repository checkout step
       uses: actions/checkout@v4
+
     - name: python environment step
       uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version-identifier }}
+
     - name: extra installation step
       run: python3 -m pip install .[${{ inputs.sktime-extra-identifier }}]
       shell: bash
