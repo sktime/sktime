@@ -184,13 +184,13 @@ def _sliding_window_transform(
         Xt = Zt[:, :, :window_length]
     # Pre-allocate array for sliding windows.
     # If the scitype is tabular regression, we have to convert X into a 2d array.
-    if scitype == "tabular-regressor":
-        if transformers is not None:
-            return yt, Xt
-        else:
-            return yt, Xt.reshape(Xt.shape[0], -1)
-    else:
-        return yt, Xt
+    if scitype == "tabular-regressor" and transformers is None:
+        Xt = Xt.reshape(Xt.shape[0], -1)
+
+    assert Xt.ndim == 2 or Xt.ndim == 3
+    assert yt.ndim == 2
+
+    return yt, Xt
 
 
 class _Reducer(_BaseWindowForecaster):
@@ -520,17 +520,16 @@ class _DirectReducer(_Reducer):
 
             if self.transformers_ is not None:
                 fh_rel = fh.to_relative(self.cutoff)
-                yt = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
-                Xt = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
-                estimator.fit(Xt, yt)
+                Xt_cut = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
+                yt_cut = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
+            elif self.windows_identical is True or (fh_rel[i] - 1) == 0:
+                Xt_cut = Xt
+                yt_cut = yt[:, i]
             else:
-                if self.windows_identical is True:
-                    estimator.fit(Xt, yt[:, i])
-                else:
-                    if (fh_rel[i] - 1) == 0:
-                        estimator.fit(Xt, yt[:, i])
-                    else:
-                        estimator.fit(Xt[: -(fh_rel[i] - 1)], yt[: -(fh_rel[i] - 1), i])
+                Xt_cut = Xt[: -(fh_rel[i] - 1)]
+                yt_cut = yt[: -(fh_rel[i] - 1), i]
+
+            estimator.fit(Xt_cut, yt_cut)
             self.estimators_.append(estimator)
         return self
 
