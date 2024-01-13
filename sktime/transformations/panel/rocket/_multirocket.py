@@ -8,6 +8,8 @@ import pandas as pd
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
+__author__ = ["ChangWeiTan", "fstinner", "angus924"]
+
 
 class MultiRocket(BaseTransformer):
     """Multi RandOm Convolutional KErnel Transform (MultiRocket).
