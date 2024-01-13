@@ -319,7 +319,7 @@ def test_get_duration(n_timepoints, index_type):
             _make_index(n_timepoints, index_type)
 
 
-FIXED_FREQUENCY_STRINGS = ["10T", "H", "D", "2D"]
+FIXED_FREQUENCY_STRINGS = ["10H", "H", "D", "2D"]
 NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
 FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
