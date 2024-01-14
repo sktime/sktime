@@ -682,12 +682,13 @@ class ForecastingHorizon:
         y : pd.DataFrame, pd.Series, pd.Index, or None
             data to compute fh relative to,
             assumed in sktime pandas based mtype or index thereof
-        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+            if None, assumes no MultiIndex
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional (default=None)
             Cutoff value to use in computing resulting index.
             If cutoff is not provided, is computed from ``y`` via ``get_cutoff``.
         sort_by_time : bool, optional (default=False)
             for MultiIndex returns, whether to sort by time index (level -1)
-            - If True, result Index is sorted sort by time index (level -1)
+            - If True, result Index is sorted by time index (level -1)
             - If False, result Index is sorted overall
 
         Returns
@@ -707,9 +708,11 @@ class ForecastingHorizon:
         elif isinstance(y, pd.Index):
             y_index = y
             y = pd.DataFrame(index=y_index)
-        else:
+        elif cutoff is None:
             y_index = pd.Index(y)
             y = pd.DataFrame(index=y_index)
+        else:
+            y_index = None
 
         if cutoff is None and not isinstance(y_index, pd.MultiIndex):
             _cutoff = get_cutoff(y)
