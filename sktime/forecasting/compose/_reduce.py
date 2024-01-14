@@ -319,6 +319,7 @@ class _Reducer(_BaseWindowForecaster):
         assert X.ndim == 2
         assert isinstance(y, np.ndarray)
         assert y.ndim == 1
+        assert len(X) == len(y)
 
         return X, y
 
