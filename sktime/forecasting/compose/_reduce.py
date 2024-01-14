@@ -1195,6 +1195,8 @@ class _DirRecReducer(_Reducer):
             if self._estimator_scitype == "tabular-regressor":
                 # coerce to sklearn expectations
                 X_inner, y_inner = self._coerce_skl_input(X_fit, yt[:, i])
+            else:
+                X_inner, y_inner = X_fit, yt[:, i]
 
             estimator.fit(X_inner, y_inner)
             self.estimators_.append(estimator)
