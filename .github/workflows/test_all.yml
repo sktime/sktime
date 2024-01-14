@@ -1,4 +1,4 @@
-name: weekly test all estimators
+name: test everything
 on:
   schedule:
     - cron: 0 0 * * 0
@@ -23,7 +23,7 @@ jobs:
         shell: bash
   test_base:
     needs: code_quality
-    name: test base module
+    name: test base component
     strategy:
       fail-fast: false
       matrix:
@@ -47,9 +47,13 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
+      - name: upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
   test_components_with_extras:
     needs: code_quality
-    name: test module
+    name: test components with extras
     strategy:
       fail-fast: false
       matrix:
@@ -84,9 +88,13 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
+      - name: upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
   test_components_without_extras:
     needs: code_quality
-    name: test all components without extras
+    name: test components without extras
     strategy:
       fail-fast: false
       matrix:
@@ -115,8 +123,24 @@ jobs:
       - name: install core, test and all soft dependencies
         run: python3 -m pip install .[all_extras_pandas2,tests]
       - name: run unit tests
-        run: python3 -m pytest sktime --ignore sktime/alignment --ignore sktime/annotation --ignore sktime/classification --ignore sktime/clustering --ignore sktime/datasets --ignore sktime/forecasting --ignore sktime/networks --ignore sktime/param_est --ignore sktime/regression --ignore sktime/transformations --matrixdesign False --only_changed_modules False
-      - name: test coverage
+        run: >-
+          python3
+          -m pytest
+          sktime
+          --ignore sktime/base
+          --ignore sktime/datasets
+          --ignore sktime/alignment
+          --ignore sktime/annotation
+          --ignore sktime/classification
+          --ignore sktime/clustering
+          --ignore sktime/forecasting
+          --ignore sktime/networks
+          --ignore sktime/param_est
+          --ignore sktime/regression
+          --ignore sktime/transformations
+          --matrixdesign False
+          --only_changed_modules False
+      - name: upload coverage
         uses: codecov/codecov-action@v3
         with:
-          flags: ${{ matrix.python-version }},components_without_extras
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},components_without_extras,complete

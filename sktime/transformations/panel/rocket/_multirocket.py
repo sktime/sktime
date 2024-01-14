@@ -8,6 +8,8 @@ import pandas as pd
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
+__author__ = ["ChangWeiTan", "fstinner", "angus924"]
+
 
 class MultiRocket(BaseTransformer):
     """Multi RandOm Convolutional KErnel Transform (MultiRocket).
@@ -22,7 +24,7 @@ class MultiRocket(BaseTransformer):
 
     This transformer fits one set of paramereters per individual series,
     and applies the transform with fitted parameter i to the i-th series in transform.
-    Vanilla use requies same number of series in fit and transform.
+    Vanilla use requires same number of series in fit and transform.
 
     To fit and transform series at the same time,
     without an identification of fit/transform instances,

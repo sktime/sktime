@@ -72,6 +72,7 @@ Use ``make_reduction`` for easy specification.
 
     DirectTabularRegressionForecaster
     DirectTimeSeriesRegressionForecaster
+    DirectReductionForecaster
     MultioutputTabularRegressionForecaster
     MultioutputTimeSeriesRegressionForecaster
     RecursiveTabularRegressionForecaster
@@ -150,6 +151,7 @@ Trend forecasters
     PolynomialTrendForecaster
     STLForecaster
     CurveFitForecaster
+    ProphetPiecewiseLinearTrendForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 

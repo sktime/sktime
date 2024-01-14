@@ -135,7 +135,7 @@ ESTIMATOR_TAG_REGISTER = [
             [
                 "pd.Series",
                 "pd.DataFrame",
-                "np.array",
+                "np.ndarray",
                 "nested_univ",
                 "pd-multiindex",
                 "numpy3D",
@@ -158,7 +158,7 @@ ESTIMATOR_TAG_REGISTER = [
             [
                 "pd.Series",
                 "pd.DataFrame",
-                "np.array",
+                "np.ndarray",
                 "nested_univ",
                 "pd-multiindex",
                 "numpy3D",
@@ -491,6 +491,18 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         "int",
         "sample size used in approximating other statistics if not available",
+    ),
+    (
+        "bisect_iter",
+        "distribution",
+        "int",
+        "max iters for bisection method in ppf",
+    ),
+    (
+        "capability:multioutput",
+        ["classifier", "regressor"],  # might need to add "early_classifier" here
+        "bool",
+        "can the estimator handle multioutput data?",
     ),
 ]
 

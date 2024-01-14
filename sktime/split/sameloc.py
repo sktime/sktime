@@ -141,10 +141,7 @@ class SameLocSplitter(BaseSplitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.datasets import load_airline
-        from sktime.forecasting.model_selection import (
-            ExpandingWindowSplitter,
-            SingleWindowSplitter,
-        )
+        from sktime.split import ExpandingWindowSplitter, SingleWindowSplitter
 
         y = load_airline()
         y_temp = y[:60]

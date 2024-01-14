@@ -8,7 +8,7 @@ import pandas as pd
 from sktime.datatypes._panel._convert import from_long_to_nested
 
 
-# TODO: original author didnt add test for this function, for research purposes?
+# TODO: original author didn't add test for this function, for research purposes?
 def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
     """Load data from a long format file into a Pandas DataFrame.
 

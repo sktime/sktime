@@ -32,9 +32,10 @@ runs:
       run: python3 -m pip install .[${{ inputs.sktime-component-identifier }},tests]
       shell: bash
     - name: unit test step
-      run: python3 -m pytest sktime/${{ inputs.sktime-component-identifier }} --matrixdesign ${{ inputs.sub-sample-estimators }} --only_changed_modules ${{ inputs.test-affected-estimators }}
+      run: >-
+        python3
+        -m pytest
+        sktime/${{ inputs.sktime-component-identifier }}
+        --matrixdesign ${{ inputs.sub-sample-estimators }}
+        --only_changed_modules ${{ inputs.test-affected-estimators }}
       shell: bash
-    - name: test coverage step
-      uses: codecov/codecov-action@v3
-      with:
-        flags: ${{ inputs.python-version-identifier }},${{ inputs.sktime-component-identifier }}

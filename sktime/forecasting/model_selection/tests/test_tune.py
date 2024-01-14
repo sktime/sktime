@@ -325,7 +325,7 @@ def test_skoptcv_multiple_forecaster():
     assert len(sscv.cv_results_) == 5
 
 
-BACKEND_TEST = _get_parallel_test_fixtures()
+BACKEND_TEST = _get_parallel_test_fixtures("estimator")
 
 
 @pytest.mark.skipif(

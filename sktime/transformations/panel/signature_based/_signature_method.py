@@ -44,7 +44,7 @@ class SignatureTransformer(BaseTransformer):
         "post": Rescales the output signature by multiplying the depth-d term by d!.
             Aim is that every term becomes ~O(1).
     sig_tfm: str, one of ``['signature', 'logsignature']``. default: ``'signature'``
-        The type of signature transform to use, plain or logaritmic.
+        The type of signature transform to use, plain or logarithmic.
     depth: int, default=4
         Signature truncation depth.
     backend: str, one of: ``'esig'`` (default), or ``'iisignature'``.

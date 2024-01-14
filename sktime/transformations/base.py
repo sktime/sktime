@@ -138,6 +138,7 @@ class BaseTransformer(BaseEstimator):
     }
 
     # default config values
+    # see set_config documentation for details
     _config = {
         "input_conversion": "on",
         # controls input checks and conversions,
@@ -156,41 +157,12 @@ class BaseTransformer(BaseEstimator):
         #  {None, "dask", "loky", "multiprocessing", "threading"}
         #  None: no parallelization
         #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
         #  "dask": uses `dask`, requires `dask` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
     }
 
     _config_doc = {
-        "backend:parallel": """
-        backend:parallel : str, optional, default="None"
-            backend to use for parallelization when broadcasting/vectorizing, one of
-
-            - "None": executes loop sequentally, simple list comprehension
-            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
-            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
-            - "dask": uses ``dask``, requires ``dask`` package in environment
-        """,
-        "backend:parallel:params": """
-        backend:parallel:params : dict, optional, default={} (no parameters passed)
-            additional parameters passed to the parallelization backend as config.
-            Valid keys depend on the value of ``backend:parallel``:
-
-            - "None": no additional parameters, ``backend_params`` is ignored
-            - "loky", "multiprocessing" and "threading": default ``joblib`` backends
-              any valid keys for ``joblib.Parallel`` can be passed here, e.g.,
-              ``n_jobs``, with the exception of ``backend`` which is directly
-              controlled by ``backend``.
-              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-              will default to ``joblib`` defaults.
-            - "joblib": custom and 3rd party ``joblib`` backends,
-              e.g., ``spark``. Any valid keys for ``joblib.Parallel``
-              can be passed here, e.g., ``n_jobs``,
-            ``backend`` must be passed as a key of ``backend_params`` in this case.
-              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-              will default to ``joblib`` defaults.
-            - "dask": any valid keys for ``dask.compute``
-              can be passed, e.g., ``scheduler``
-        """,
         "input_conversion": """
         input_conversion : str, one of "on", "off", valid mtype string
             controls input checks and conversions,
@@ -1186,10 +1158,20 @@ class BaseTransformer(BaseEstimator):
         #   skipped for output_scitype = "Primitives"
         #       since then the output always is a pd.DataFrame
         if case == "case 2: higher scitype supported" and output_scitype == "Series":
-            Xt = convert_to(
-                Xt,
-                to_type=["pd-multiindex", "numpy3D", "df-list", "pd_multiindex_hier"],
-            )
+            if self.get_tags()["scitype:transform-input"] == "Panel":
+                # Conversion from Series to Panel done for being compatible with
+                # algorithm. Thus, the returned Series should stay a Series.
+                pass
+            else:
+                Xt = convert_to(
+                    Xt,
+                    to_type=[
+                        "pd-multiindex",
+                        "numpy3D",
+                        "df-list",
+                        "pd_multiindex_hier",
+                    ],
+                )
             Xt = convert_to_scitype(Xt, to_scitype=X_input_scitype)
 
         # now, in all cases, Xt is in the right scitype,
@@ -1203,7 +1185,6 @@ class BaseTransformer(BaseEstimator):
         if output_scitype == "Series":
             # output mtype is input mtype
             X_output_mtype = X_input_mtype
-
             # exception to this: if the transformer outputs multivariate series,
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
             #   this happens only for Series, not Panel
@@ -1229,6 +1210,13 @@ class BaseTransformer(BaseEstimator):
                     )
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
+            elif self.get_tags()["scitype:transform-input"] == "Panel":
+                # Input has always to be Panel
+                X_output_mtype = "pd.DataFrame"
+            else:
+                # Input can be Panel or Hierarchical, since it is supported
+                # by the used mtype
+                output_scitype = X_input_scitype
                 # Xt_mtype = metadata["mtype"]
             # else:
             #     Xt_mtype = X_input_mtype
@@ -1241,10 +1229,10 @@ class BaseTransformer(BaseEstimator):
             #     store=_converter_store_X,
             #     store_behaviour="freeze",
             # )
-            Xt = convert_to(
+            return convert_to(
                 Xt,
                 to_type=X_output_mtype,
-                as_scitype=X_input_scitype,
+                as_scitype=output_scitype,
                 store=_converter_store_X,
                 store_behaviour="freeze",
             )
@@ -1260,7 +1248,7 @@ class BaseTransformer(BaseEstimator):
                 # else this is only zeros and should be reset to RangeIndex
                 else:
                     Xt = Xt.reset_index(drop=True)
-            Xt = convert_to(
+            return convert_to(
                 Xt,
                 to_type="pd_DataFrame_Table",
                 as_scitype="Table",
@@ -1315,9 +1303,19 @@ class BaseTransformer(BaseEstimator):
                 n_fit = n * m
                 if n_trafos != n_fit:
                     raise RuntimeError(
+                        f"{type(self).__name__} is a transformer that applies per "
+                        "individual time series, and broadcasts across instances. "
+                        f"In fit, {type(self).__name__} makes one fit per instance, "
+                        "and applies that fit to the instance with the same index in "
+                        "transform. Vanilla use therefore requires the same number "
+                        "of instances in fit and transform, but"
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
-                        f"number of instances seen in transform: {n_trafos}"
+                        f"number of instances seen in transform: {n_trafos}. "
+                        "For fit/transforming per instance, e.g., for pre-processinng "
+                        "in a time series classification, regression or clustering "
+                        "pipeline, wrap this transformer in "
+                        "FitInTransform, from sktime.transformations.compose."
                     )
 
                 transformers_ = self.transformers_
