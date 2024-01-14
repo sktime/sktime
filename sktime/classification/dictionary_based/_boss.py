@@ -654,6 +654,11 @@ class IndividualBOSS(BaseClassifier):
         # change word length parameter
         new_boss.word_length = word_len
 
+        # reset internal variables
+        new_boss._accuracy = 0
+        new_boss._subsample = []
+        new_boss._train_predictions = []
+
         # copy fitted transformer as reference
         new_boss._transformer = self._transformer
 
