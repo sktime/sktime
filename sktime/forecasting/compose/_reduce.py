@@ -985,8 +985,9 @@ class _RecursiveReducer(_Reducer):
 
         yt, Xt = self._transform(y, X)
 
-        # coerce to sklearn expectations
-        Xt, yt = self._coerce_skl_input(Xt, yt)
+        if self._estimator_scitype == "tabular-regressor":
+            # coerce to sklearn expectations
+            Xt, yt = self._coerce_skl_input(Xt, yt)
 
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
