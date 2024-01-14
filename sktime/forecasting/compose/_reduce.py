@@ -280,7 +280,7 @@ class _Reducer(_BaseWindowForecaster):
             f"implemented for {self.__class__.__name__}."
         )
 
-    def _coerce_skl_input(self, X, y):
+    def _coerce_skl_input(self, X, y=None):
         """Coerce input to sklearn format.
 
         Output X is either pd.DataFrame or 2D np.ndarray
@@ -295,7 +295,7 @@ class _Reducer(_BaseWindowForecaster):
         ----------
         X : pd.DataFrame or np.ndarray
             Exogenous time series
-        y : pd.Series or np.ndarray
+        y : pd.Series or np.ndarray, optional
             Endogenous time series
 
         Returns
@@ -305,8 +305,22 @@ class _Reducer(_BaseWindowForecaster):
             Exogenous time series
         y : 1D np.array if y was np.ndarray or coercible with shape[1] == 1
             2D np.array if y was np.ndarray or coercible with shape[1] > 1
+            only returned if y is not None
             Endogenous time series
         """
+        # handle X
+        if isinstance(X, pd.DataFrame):
+            X = prep_skl_df(X)
+        if isinstance(X, np.ndarray):
+            X = X.reshape(X.shape[0], -1)
+
+        assert isinstance(X, (pd.DataFrame, np.ndarray))
+        assert X.ndim == 2
+
+        if y is None:
+            return X
+
+        # handle y
         if y.ndim > 1 and y.shape[1] == 1:
             expected_y_dim = 1
         elif y.ndim == 1:
@@ -314,19 +328,13 @@ class _Reducer(_BaseWindowForecaster):
         else:
             expected_y_dim = 2
 
-        if isinstance(X, pd.DataFrame):
-            X = prep_skl_df(X)
         if isinstance(y, (pd.Series, pd.DataFrame)):
             y = y.to_numpy()
-        if isinstance(X, np.ndarray):
-            X = X.reshape(X.shape[0], -1)
         if expected_y_dim == 1:
             y = y.flatten()
         else:
             y = y.reshape(X.shape[0], -1)
 
-        assert isinstance(X, (pd.DataFrame, np.ndarray))
-        assert X.ndim == 2
         assert isinstance(y, np.ndarray)
         assert y.ndim == expected_y_dim
         assert len(X) == len(y)
@@ -363,8 +371,10 @@ class _Reducer(_BaseWindowForecaster):
         #       e.g., pipeline of Tabularizer and Linear Regression
         # which of these is the case, we check by checking substring in the class name
         est = LinearRegression()
+
         if "TimeSeries" in cls.__name__:
-            est = make_pipeline(Tabularizer(), est)
+            from sktime.transformations.series.summarize import SummaryTransformer
+            est = SummaryTransformer() * est
 
         params_local = {"estimator": est, "window_length": 3}
         params_global = {"estimator": est, "window_length": 4, "pooling": "global"}
