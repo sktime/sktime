@@ -295,9 +295,7 @@ class _Reducer(_BaseWindowForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sklearn.linear_model import LinearRegression
-        from sklearn.pipeline import make_pipeline
 
-        from sktime.transformations.panel.reduce import Tabularizer
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
@@ -306,10 +304,15 @@ class _Reducer(_BaseWindowForecaster):
         #       e.g., pipeline of Tabularizer and Linear Regression
         # which of these is the case, we check by checking substring in the class name
         est = LinearRegression()
-        if "TimeSeries" in cls.__name__:
-            est = make_pipeline(Tabularizer(), est)
 
-        params = [{"estimator": est, "window_length": 3}]
+        if "TimeSeries" in cls.__name__:
+            from sktime.transformations.series.summarize import SummaryTransformer
+
+            est = SummaryTransformer() * est
+
+        params_local = {"estimator": est, "window_length": 3}
+        params_global = {"estimator": est, "window_length": 4, "pooling": "global"}
+        params = [params_local, params_global]
 
         PROBA_IMPLEMENTED = ["DirectTabularRegressionForecaster"]
         self_supports_proba = cls.__name__ in PROBA_IMPLEMENTED
