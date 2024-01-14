@@ -828,8 +828,9 @@ class _MultioutputReducer(_Reducer):
 
         yt, Xt = self._transform(y, X)
 
-        # coerce to sklearn expectations
-        Xt, yt = self._coerce_skl_input(Xt, yt)
+        if self._estimator_scitype == "tabular-regressor":
+            # coerce to sklearn expectations
+            Xt, yt = self._coerce_skl_input(Xt, yt)
 
         # Fit a multi-output estimator to the transformed data.
         self.estimator_ = clone(self.estimator)
@@ -1191,8 +1192,9 @@ class _DirRecReducer(_Reducer):
             # Slice data using expanding window.
             X_fit = X_full[:, :, : n_timepoints + i]
 
-            # coerce to sklearn expectations
-            X_inner, y_inner = self._coerce_skl_input(X_fit, yt[:, i])
+            if self._estimator_scitype == "tabular-regressor":
+                # coerce to sklearn expectations
+                X_inner, y_inner = self._coerce_skl_input(X_fit, yt[:, i])
 
             estimator.fit(X_inner, y_inner)
             self.estimators_.append(estimator)
