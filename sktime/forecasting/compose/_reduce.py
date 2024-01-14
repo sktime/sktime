@@ -303,22 +303,32 @@ class _Reducer(_BaseWindowForecaster):
         X : 2D np.array if X was np.ndarray
             pd.DataFrame with str index if X was pd.DataFrame
             Exogenous time series
-        y : 1D np.array if y was np.ndarray
+        y : 1D np.array if y was np.ndarray or coercible with shape[1] == 1
+            2D np.array if y was np.ndarray or coercible with shape[1] > 1
             Endogenous time series
         """
+        if y.ndim > 1 and y.shape[1] == 1:
+            expected_y_dim = 1
+        elif y.ndim == 1:
+            expected_y_dim = 1
+        else:
+            expected_y_dim = 2
+
         if isinstance(X, pd.DataFrame):
             X = prep_skl_df(X)
         if isinstance(y, (pd.Series, pd.DataFrame)):
             y = y.to_numpy()
         if isinstance(X, np.ndarray):
             X = X.reshape(X.shape[0], -1)
-        if isinstance(y, np.ndarray):
+        if expected_y_dim == 1:
             y = y.flatten()
+        else:
+            y = y.reshape(X.shape[0], -1)
 
         assert isinstance(X, (pd.DataFrame, np.ndarray))
         assert X.ndim == 2
         assert isinstance(y, np.ndarray)
-        assert y.ndim == 1
+        assert y.ndim == expected_y_dim
         assert len(X) == len(y)
 
         return X, y
