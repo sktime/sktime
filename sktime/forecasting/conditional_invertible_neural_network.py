@@ -371,7 +371,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             },
         ]
         return params
-    
+
     # Serialization methods is required since FrEIA is using non-picklable objects
     def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
