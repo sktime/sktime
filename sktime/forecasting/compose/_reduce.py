@@ -280,6 +280,48 @@ class _Reducer(_BaseWindowForecaster):
             f"implemented for {self.__class__.__name__}."
         )
 
+    def _coerce_skl_input(self, X, y):
+        """Coerce input to sklearn format.
+
+        Output X is either pd.DataFrame or 2D np.ndarray
+        Output y is alwayws 1D np.ndarray
+
+        X : np.ndarray is coerced to 2D with same shape[0] via rehsape(shape[0], -1)
+        X : pd.DataFrame is guaranteed to have str column names
+        y : np.ndarray is guaranteed to be 1D via flatten
+        y : other is coerced to np.ndarray
+
+        Parameters
+        ----------
+        X : pd.DataFrame or np.ndarray
+            Exogenous time series
+        y : pd.Series or np.ndarray
+            Endogenous time series
+
+        Returns
+        -------
+        X : 2D np.array if X was np.ndarray
+            pd.DataFrame with str index if X was pd.DataFrame
+            Exogenous time series
+        y : 1D np.array if y was np.ndarray
+            Endogenous time series
+        """
+        if isinstance(X, pd.DataFrame):
+            X = prep_skl_df(X)
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            y = y.to_numpy()
+        if isinstance(X, np.ndarray):
+            X = X.reshape(X.shape[0], -1)
+        if isinstance(y, np.ndarray):
+            y = y.flatten()
+
+        assert isinstance(X, (pd.DataFrame, np.ndarray))
+        assert X.ndim == 2
+        assert isinstance(y, np.ndarray)
+        assert y.ndim == 1
+
+        return X, y
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -785,6 +827,9 @@ class _MultioutputReducer(_Reducer):
 
         yt, Xt = self._transform(y, X)
 
+        # coerce to sklearn expectations
+        Xt, yt = self._coerce_skl_input(Xt, yt)
+
         # Fit a multi-output estimator to the transformed data.
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
@@ -939,14 +984,10 @@ class _RecursiveReducer(_Reducer):
 
         yt, Xt = self._transform(y, X)
 
-        # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
-        if self.transformers_ is not None:
-            yt = yt.to_numpy().ravel()
-        else:
-            yt = yt.ravel()
+        # coerce to sklearn expectations
+        Xt, yt = self._coerce_skl_input(Xt, yt)
 
         self.estimator_ = clone(self.estimator)
-        Xt = prep_skl_df(Xt)
         self.estimator_.fit(Xt, yt)
         return self
 
@@ -1148,11 +1189,10 @@ class _DirRecReducer(_Reducer):
             # Slice data using expanding window.
             X_fit = X_full[:, :, : n_timepoints + i]
 
-            # Convert to 2d tabular array for reduction to tabular regression.
-            if self._estimator_scitype == "tabular-regressor":
-                X_fit = X_fit.reshape(X_fit.shape[0], -1)
+            # coerce to sklearn expectations
+            X_inner, y_inner = self._coerce_skl_input(X_fit, yt[:, i])
 
-            estimator.fit(X_fit, yt[:, i])
+            estimator.fit(X_inner, y_inner)
             self.estimators_.append(estimator)
         return self
 
