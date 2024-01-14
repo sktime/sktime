@@ -374,6 +374,7 @@ class _Reducer(_BaseWindowForecaster):
 
         if "TimeSeries" in cls.__name__:
             from sktime.transformations.series.summarize import SummaryTransformer
+
             est = SummaryTransformer() * est
 
         params_local = {"estimator": est, "window_length": 3}
