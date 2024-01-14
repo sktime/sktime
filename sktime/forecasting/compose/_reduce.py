@@ -186,8 +186,12 @@ def _sliding_window_transform(
     if scitype == "tabular-regressor" and transformers is None:
         Xt = Xt.reshape(Xt.shape[0], -1)
 
+    # these are strange conditions, depending on pooling mostly
+    # but they document the status quo
+    # the code should be refactored so all auxiliary functions
+    # return consistent types
     assert Xt.ndim == 2 or Xt.ndim == 3
-    assert yt.ndim == 2
+    assert yt.ndim == 2 or isinstance(yt, pd.Series)
 
     return yt, Xt
 
@@ -942,6 +946,7 @@ class _RecursiveReducer(_Reducer):
             yt = yt.ravel()
 
         self.estimator_ = clone(self.estimator)
+        Xt = prep_skl_df(Xt)
         self.estimator_.fit(Xt, yt)
         return self
 
