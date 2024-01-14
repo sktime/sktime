@@ -360,9 +360,7 @@ class _Reducer(_BaseWindowForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sklearn.linear_model import LinearRegression
-        from sklearn.pipeline import make_pipeline
 
-        from sktime.transformations.panel.reduce import Tabularizer
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
