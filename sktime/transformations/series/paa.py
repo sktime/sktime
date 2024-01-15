@@ -5,7 +5,7 @@ import numpy as np
 from sktime.transformations.base import BaseTransformer
 
 
-class PAA(BaseTransformer):
+class PAA2(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
     PAA [1] is a dimensionality reduction technique that divides a time series
@@ -32,13 +32,13 @@ class PAA(BaseTransformer):
     Examples
     --------
     >>> from numpy import arange
-    >>> from sktime.transformations.series.paa import PAA
+    >>> from sktime.transformations.series.paa import PAA2
 
     >>> X = arange(10)
-    >>> paa = PAA(frames=3)
-    >>>paa.fit_transform(X)
+    >>> paa = PAA2(frames=3)
+    >>> paa.fit_transform(X)
     array([1.2, 4.5, 7.8])
-    >>>paa = PAA(frame_size=3)
+    >>> paa = PAA2(frame_size=3)
     array([1, 4, 7, 9])
     """
 

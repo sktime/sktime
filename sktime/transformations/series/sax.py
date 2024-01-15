@@ -4,10 +4,10 @@ import numpy as np
 from scipy.stats import norm, zscore
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.paa import PAA
+from sktime.transformations.series.paa import PAA2
 
 
-class SAX(BaseTransformer):
+class SAX2(BaseTransformer):
     """Symbolic Aggregate approXimation Transformer (SAX).
 
     SAX [2] is a dimensionality reduction technique that z-normalises a time
@@ -43,13 +43,13 @@ class SAX(BaseTransformer):
     Examples
     --------
     >>> from numpy import arange
-    >>> from sktime.transformations.series.sax import SAX
+    >>> from sktime.transformations.series.sax import SAX2
 
     >>> X = arange(10)
-    >>> sax = SAX(word_size=3, alphabet_size=5)
-    >>>sax.fit_transform(X)
+    >>> sax = SAX2(word_size=3, alphabet_size=5)
+    >>> sax.fit_transform(X)
     array([0, 2, 4])
-    >>>sax = SAX(frame_size=2, alphabet_size=5)
+    >>> sax = SAX2(frame_size=2, alphabet_size=5)
     array([0, 1, 2, 3, 4])
     """
 
@@ -94,7 +94,7 @@ class SAX(BaseTransformer):
             transformed version of X
         """
         X_transformed = zscore(X)
-        paa = PAA(self.word_size, self.frame_size)
+        paa = PAA2(self.word_size, self.frame_size)
         X_transformed = paa.fit_transform(X_transformed)
         X_transformed = np.digitize(X_transformed, self._get_breakpoints())
         return X_transformed
