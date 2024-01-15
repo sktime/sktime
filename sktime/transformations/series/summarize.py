@@ -11,6 +11,7 @@ from joblib import Parallel, delayed
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.warnings import warn
 
 
 class WindowSummarizer(BaseTransformer):
@@ -818,8 +819,8 @@ class SplitterSummarizer(BaseTransformer):
         deprecated, will be removed in 0.27.0.
         If set, overrides ``fit_on`` and ``transform_on``:
 
-        * True: ``fit_on="all"``, ``transform_on="all_train"``
-        * False: ``fit_on="transform"``, ``transform_on="transform_train"``
+        * True: ``fit_on="all_train"``, ``transform_on="all_train"``
+        * False: ``fit_on="transform_train"``, ``transform_on="transform_train"``
 
     Methods
     -------
@@ -889,12 +890,30 @@ class SplitterSummarizer(BaseTransformer):
                 "should be an BaseSplitter descendant with a split_series method"
             )
 
+        #TODO 0.27.0: remove remember_data and related logic
+        # remove next lie
         need_to_remember_data = remember_data is not None and remember_data
-        need_to_remember_data = need_to_remember_data or fit_on == "all"
+        # replace next two lines by
+        # need_to_remember_data = fit_on.startswith("all")
+        # or transform_on.startswith("all")
+        need_to_remember_data = need_to_remember_data or fit_on.startswith("all")
         need_to_remember_data = need_to_remember_data or transform_on.startswith("all")
 
-        if remember_data:
+        if need_to_remember_data:
             self.set_tags(**{"remember_data": True, "fit_is_empty": False})
+
+        #TODO 0.27.0: remove remember_data and related logic
+        if remember_data is not None:
+            warn(
+                "remember_data is deprecated and will be removed in 0.27.0. "
+                "Use fit_on and transform_on instead. "
+                "Replace remember_data=True with fit_on='all_train' and "
+                "transform_on='all_train'. Replace remember_data=False with "
+                "fit_on='transform_train' and transform_on='transform_train'.",
+                DeprecationWarning,
+                obj=self,
+                stacklevel=2,
+            )
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
