@@ -780,21 +780,46 @@ class SplitterSummarizer(BaseTransformer):
     Parameters
     ----------
     transformer : `sktime` transformer inheriting from `BaseTransformer`
-    series-to-primitives transformer used to convert series to primitives.
+        series-to-primitives transformer used to convert series to primitives.
 
     splitter : `sktime` splitter inheriting from `BaseSplitter`, optional (default=None)
-    splitter used to divide the series.
-    If None, it takes `ExpandingWindowSplitter` with `start_with_window=False`
-    and otherwise default parameters.
+        splitter used to divide the series.
+        If None, it takes `ExpandingWindowSplitter` with `start_with_window=False`
+        and otherwise default parameters.
 
     index : str, optional (default="last")
-    Determines the indexing approach for the resulting series.
-    If "last", the latest index of the split is used.
-    If anything else, the row's number becomes the index.
+        Determines the indexing approach for the resulting series.
+        If "last", the latest index of the split is used.
+        If anything else, the row's number becomes the index.
 
-    remember_data : bool, optional (default=True)
-    if True, memorizes data seen in ``fit``, ``update``, uses it in ``transform``
-    if False, only uses data seen in ``transform`` for splits and summaries.
+    fit_on : str, optional (default="transform_train")
+        What data to fit ``transformer`` on, for the ``i``-th row
+        of the resulting series.
+
+        * "all_train" : transform the ``i``-th train split obtained from
+          ``splitter.split_series``, called on
+          all data seen in ``fit`` and ``update`` calls,
+          plus all data seen in ``transform``.
+        * "all_test" : transform the ``i``-th test split obtained from
+          ``splitter.split_series``, called on
+          all data seen in ``fit`` and ``update`` calls,
+          plus all data seen in ``transform``.
+        * "transform_train" : transform the ``i``-th train split obtained from
+          ``splitter.split_series``, called on the data seen in ``transform``.
+        * "transform_test" : transform the ``i``-th test split obtained from
+          ``splitter.split_series``, called on the data seen in ``transform``.
+
+    transform_on : str, optional (default="transform_train")
+        What data to transform with ``transformer``, for the ``i``-th row
+        of the resulting series.
+        Values and meaning same as for ``fit_on``.
+
+    remember_data : bool, optional (default=False)
+        deprecated, will be removed in 0.27.0.
+        If set, overrides ``fit_on`` and ``transform_on``:
+
+        * True: ``fit_on="all"``, ``transform_on="all_train"``
+        * False: ``fit_on="transform"``, ``transform_on="transform_train"``
 
     Methods
     -------
@@ -830,11 +855,21 @@ class SplitterSummarizer(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    def __init__(self, transformer, splitter=None, index="last", remember_data=False):
+    def __init__(
+        self,
+        transformer,
+        splitter=None,
+        index="last",
+        remember_data=None,
+        fit_on="transform_train",
+        transform_on="transform_train",
+    ):
         self.transformer = transformer
         self.index = index
         self.splitter = splitter
         self.remember_data = remember_data
+        self.fit_on = fit_on
+        self.transform_on = transform_on
 
         if splitter is None:
             self._splitter = SlidingWindowSplitter(start_with_window=False)
@@ -851,8 +886,12 @@ class SplitterSummarizer(BaseTransformer):
         if not hasattr(self._splitter, "split_series"):
             raise ValueError(
                 f"Error in {self.__class__.__name__}, splitter parameter, if passed, "
-                "should be an BaseSplitter descendant with a seplit_series method"
+                "should be an BaseSplitter descendant with a split_series method"
             )
+
+        need_to_remember_data = remember_data is not None and remember_data
+        need_to_remember_data = need_to_remember_data or fit_on == "all"
+        need_to_remember_data = need_to_remember_data or transform_on.startswith("all")
 
         if remember_data:
             self.set_tags(**{"remember_data": True, "fit_is_empty": False})
@@ -874,16 +913,38 @@ class SplitterSummarizer(BaseTransformer):
         Xt : pd.DataFrame
             The transformed Data
         """
-        if self.remember_data:
-            X = X.combine_first(self._X)
+        fit_on = self.fit_on
+        transform_on = self.transform_on
+
+        if self.remember_data is not None:
+            if self.remember_data:
+                fit_on = "all_train"
+                transform_on = "all_train"
+            else:
+                fit_on = "transform_train"
+                transform_on = "transform_train"
+
+        X_dict = {"transform": X}
+
+        if fit_on.startswith("all") or transform_on.startswith("all"):
+            X_all = X.combine_first(self._X)
+            X_dict["all"] = X_all
+
+        fit_on_data = fit_on.split("_")[0]
+        transform_on_data = transform_on.split("_")[0]
+        fit_on_ix = int(fit_on.split("_")[1] == "test")
+        transform_on_ix = int(transform_on.split("_")[1] == "test")
 
         transformed_series = []
-        splits = self._splitter.split_series(X)
+        splits_fit = self._splitter.split_series(X_dict[fit_on_data])
+        splits_transform = self._splitter.split_series(X_dict[transform_on_data])
 
-        for split in splits:
+        for split_fit, split_transform in zip(splits_fit, splits_transform):
             tf = self.transformer.clone()
-            transformed_split = tf.fit_transform(split[0])
-            transformed_split.index = [split[0].index[-1]]
+            X_fit = split_fit[fit_on_ix]
+            X_transform = split_transform[transform_on_ix]
+            transformed_split = tf.fit(X_fit).transform(X_transform)
+            transformed_split.index = [X_transform[0].index[-1]]
             transformed_series.append(transformed_split)
 
         Xt = pd.concat(transformed_series)
@@ -927,7 +988,8 @@ class SplitterSummarizer(BaseTransformer):
         params3 = {
             "transformer": SummaryTransformer(),
             "splitter": SlidingWindowSplitter(window_length=3, step_length=2),
-            "remember_data": True,
+            "fit_on": "all_train",
+            "transform_on": "all_train",
         }
 
         params4 = {
@@ -936,6 +998,8 @@ class SplitterSummarizer(BaseTransformer):
                 window_length=3, step_length=2, fh=1, start_with_window=True
             ),
             "index": "last",
+            "fit_on": "all_test",
+            "transform_on": "transform_test",
         }
 
         return [params1, params2, params3, params4]
