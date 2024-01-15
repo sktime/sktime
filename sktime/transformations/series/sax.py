@@ -10,8 +10,8 @@ from sktime.transformations.series.paa import PAA2
 class SAX2(BaseTransformer):
     """Symbolic Aggregate approXimation Transformer (SAX).
 
-    SAX [2] is a dimensionality reduction technique that z-normalises a time
-    series, applies Piecewise Aggregate Approximation (PAA) [1], and bins the
+    SAX [2]_ is a dimensionality reduction technique that z-normalises a time
+    series, applies Piecewise Aggregate Approximation (PAA) [1]_, and bins the
     mean of each PAA frame to a discrete value, resulting in a SAX word.
 
     This implementation offers two variants:
@@ -22,23 +22,26 @@ class SAX2(BaseTransformer):
      size of the last frame to support cases where the time series is not
      evenly divisible into frames.
 
-    [1] Keogh, E., Chakrabarti, K., Pazzani, M., and Mehrotra, S.
-    Dimensionality Reduction for Fast Similarity Search in Large Time Series Databases.
-    Knowledge and Information Systems 3, 263–286 (2001).
-    https://doi.org/10.1007/PL00011669
-    [2] Lin, J., Keogh, E., Wei, L., and Lonardi, S.
-    Experiencing SAX: A Novel Symbolic Representation of Time Series.
-    Data Mining and Knowledge Discovery 15, 107–144 (2007).
-    https://doi.org/10.1007/s10618-007-0064-z
-
     Parameters
     ----------
-    word_size : int, optional (default=8)
+    word_size : int, optional (default=8, greater equal 1 if frame_size=0)
         length of transformed time series. Ignored if `frame_size` is set.
-    alphabet_size : int, optional (default=5)
+    alphabet_size : int, optional (default=5, greater equal 2)
         number of discrete values transformed time series is binned to.
-    frame_size : int, optional (default=0)
-        length of the frames over which the mean is taken. Overrides `frames`.
+    frame_size : int, optional (default=0, greater equal 0)
+        length of the frames over which the mean is taken. Overrides `frames` if > 0.
+
+    References
+    ----------
+    .. [1] Keogh, E., Chakrabarti, K., Pazzani, M., and Mehrotra, S.
+        Dimensionality Reduction for Fast Similarity Search
+        in Large Time Series Databases.
+        Knowledge and Information Systems 3, 263–286 (2001).
+        https://doi.org/10.1007/PL00011669
+    .. [2] Lin, J., Keogh, E., Wei, L., and Lonardi, S.
+        Experiencing SAX: A Novel Symbolic Representation of Time Series.
+        Data Mining and Knowledge Discovery 15, 107–144 (2007).
+        https://doi.org/10.1007/s10618-007-0064-z
 
     Examples
     --------
