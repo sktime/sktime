@@ -232,7 +232,7 @@ class Prophet(_ProphetAdapter):
         -------
         params : dict or list of dict
         """
-        params = {
+        params1 = {
             "n_changepoints": 0,
             "yearly_seasonality": False,
             "weekly_seasonality": False,
@@ -241,4 +241,15 @@ class Prophet(_ProphetAdapter):
             "verbose": False,
             "fit_kwargs": {"seed": 12345},
         }
-        return params
+        
+        params2 = {
+            "n_changepoints": 2,
+            "yearly_seasonality": True,
+            "weekly_seasonality": True,
+            "daily_seasonality": False,
+            "uncertainty_samples": 11,
+            "verbose": True,
+            "fit_kwargs": {"seed": 12345},
+        }
+        
+        return [params1, params2]
