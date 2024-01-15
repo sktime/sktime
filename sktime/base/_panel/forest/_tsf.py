@@ -1,4 +1,4 @@
-"""Time Series Forest (TSF) Classifier."""
+"""Time Series Forest (TSF) classifier base class."""
 
 __author__ = [
     "TonyBagnall",
