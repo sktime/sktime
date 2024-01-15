@@ -14,11 +14,11 @@ from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.classification.base import BaseClassifier
 from sktime.base._panel.forest._tsf import (
     _transform,
     BaseTimeSeriesForest,
 )
+from sktime.classification.base import BaseClassifier
 
 
 class TimeSeriesForestClassifier(
