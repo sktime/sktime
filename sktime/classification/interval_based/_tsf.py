@@ -29,20 +29,30 @@ class TimeSeriesForestClassifier(
     A time series forest is an ensemble of decision trees built on random intervals.
     Overview: Input n series length m.
     For each tree
-        - sample sqrt(m) intervals,
-        - find mean, std and slope for each interval, concatenate to form new
-        data set, if inner series length is set, then intervals are sampled
-        within bins of length inner_series_length.
-        - build decision tree on new data set.
+
+    - sample sqrt(m) intervals,
+    - find mean, std and slope for each interval, concatenate to form new
+    data set, if inner series length is set, then intervals are sampled
+    within bins of length inner_series_length.
+    - build decision tree on new data set.
+
     Ensemble the trees with averaged probability estimates.
 
     This implementation deviates from the original in minor ways. It samples
     intervals with replacement and does not use the splitting criteria tiny
     refinement described in [1].
 
-    This is an intentionally stripped down, non
-    configurable version for use as a hive-cote component. For a configurable
-    tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
+    This classifier is intentionally written with low configurability,
+    for performace reasons.
+
+    * for a more configurable tree based ensemble,
+      use ``sktime.classifiers.ensemble.ComposableTimeSeriesForestClassifier``,
+      which also allows switching the base estimator.
+    * to build a a time series forest with configurable ensembling, base estimator,
+      and/or feature extraction, fully from composable blocks,
+      combine ``sktime.transformers.ensemble.BaggingClassifier`` with
+      any classifier pipeline, e.g., pipelining any ``sklearn`` classifier
+      with any time series feature extraction, e.g., ``Summarizer``
 
     Parameters
     ----------
