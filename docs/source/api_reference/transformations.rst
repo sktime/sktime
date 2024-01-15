@@ -447,6 +447,22 @@ Binning, sampling and segmentation
 
     DilationMappingTransformer
 
+.. currentmodule:: sktime.transformations.series.paa
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAA
+
+.. currentmodule:: sktime.transformations.series.sax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SAX
+
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
