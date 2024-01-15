@@ -764,6 +764,7 @@ class SummaryTransformer(BaseTransformer):
         return [params1, params2, params3, params4]
 
 
+# TODO 0.27.0: remove remember_data from docstring and __init__
 class SplitterSummarizer(BaseTransformer):
     """Create summary values of a time series' splits.
 
@@ -890,7 +891,7 @@ class SplitterSummarizer(BaseTransformer):
                 "should be an BaseSplitter descendant with a split_series method"
             )
 
-        #TODO 0.27.0: remove remember_data and related logic
+        # TODO 0.27.0: remove remember_data and related logic
         # remove next lie
         need_to_remember_data = remember_data is not None and remember_data
         # replace next two lines by
@@ -902,7 +903,7 @@ class SplitterSummarizer(BaseTransformer):
         if need_to_remember_data:
             self.set_tags(**{"remember_data": True, "fit_is_empty": False})
 
-        #TODO 0.27.0: remove remember_data and related logic
+        # TODO 0.27.0: remove remember_data and related logic
         if remember_data is not None:
             warn(
                 "remember_data is deprecated and will be removed in 0.27.0. "
