@@ -33,12 +33,24 @@ class SAX(BaseTransformer):
 
     Parameters
     ----------
-    frames : int, optional (default=8)
+    word_size : int, optional (default=8)
         length of transformed time series. Ignored if `frame_size` is set.
     alphabet_size : int, optional (default=5)
         number of discrete values transformed time series is binned to.
     frame_size : int, optional (default=0)
         length of the frames over which the mean is taken. Overrides `frames`.
+
+    Examples
+    --------
+    >>> from numpy import arange
+    >>> from sktime.transformations.series.sax import SAX
+
+    >>> X = arange(10)
+    >>> sax = SAX(word_size=3, alphabet_size=5)
+    >>>sax.fit_transform(X)
+    array([0, 2, 4])
+    >>>sax = SAX(frame_size=2, alphabet_size=5)
+    array([0, 1, 2, 3, 4])
     """
 
     _tags = {

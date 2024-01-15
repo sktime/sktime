@@ -28,6 +28,18 @@ class PAA(BaseTransformer):
         length of transformed time series. Ignored if `frame_size` is set.
     frame_size : int, optional (default=0)
         length of the frames over which the mean is taken. Overrides `frames`.
+
+    Examples
+    --------
+    >>> from numpy import arange
+    >>> from sktime.transformations.series.paa import PAA
+
+    >>> X = arange(10)
+    >>> paa = PAA(frames=3)
+    >>>paa.fit_transform(X)
+    array([1.2, 4.5, 7.8])
+    >>>paa = PAA(frame_size=3)
+    array([1, 4, 7, 9])
     """
 
     _tags = {
@@ -84,10 +96,6 @@ class PAA(BaseTransformer):
             raise ValueError(
                 "Series length cannot be shorter than the desired number of frames."
             )
-        elif self.frames == X.shape[0]:
-            return X
-        elif self.frames == 1:
-            return np.mean(X).T
         elif not X.shape[0] % self.frames:
             return X.reshape(self.frames, -1).mean(axis=1).T
 
@@ -99,10 +107,6 @@ class PAA(BaseTransformer):
             raise ValueError(
                 "Series length cannot be shorter than the desired frame size."
             )
-        elif self.frame_size == X.shape[0]:
-            return np.mean(X).T
-        elif self.frame_size == 1:
-            return X
         elif last_frame_length := (X.shape[0] % self.frame_size):
             last_frame_mean = np.mean(X[-last_frame_length:])
             last_frame_fill = [last_frame_mean] * (self.frame_size - last_frame_length)

@@ -25,10 +25,14 @@ def test_bad_input_args(bad_frames):
 @pytest.mark.parametrize(
     "frames,frame_size,expected",
     [
+        (1, 0, [4.5]),
         (2, 0, [2, 7]),
         (3, 0, [1.2, 4.5, 7.8]),
+        (10, 0, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        (0, 1, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
         (0, 2, [0.5, 2.5, 4.5, 6.5, 8.5]),
         (0, 3, [1, 4, 7, 9]),
+        (0, 10, [4.5]),
     ],
 )
 def test_output_of_transformer(frames, frame_size, expected):

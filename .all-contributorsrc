@@ -2526,6 +2526,15 @@
         "bug",
         "maintenance"
       ]
+    },
+    {
+      "login": "steenrotsman",
+      "name": "Stijn J. Rotman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66927103?v=4",
+      "profile": "https://github.com/steenrotsman",
+      "contributions": [
+        "code",
+      ]
     }
   ]
 }
