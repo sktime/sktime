@@ -18,28 +18,33 @@ from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
 class PolynomialTrendForecaster(BaseForecaster):
     r"""Forecast time series data with a polynomial trend.
 
-    Uses a `sklearn` regressor specified by the `regressor` parameter
+    Uses an ``sklearn`` regressor specified by the ``regressor`` parameter
     to perform regression on time series values against their corresponding indices,
     after extraction of polynomial features.
-    Same as `TrendForecaster` where `regressor` is pipelined with transformation step
-    `PolynomialFeatures(degree, with_intercept)` applied to time index, at the start.
+    Same as ``TrendForecaster`` where ``regressor`` is pipelined with transformation
+    step ``PolynomialFeatures(degree, with_intercept)`` applied to time index,
+    at the start.
 
-    In `fit`, for input time series :math:`(v_i, p(t_i)), i = 1, \dots, T`,
+    In ``fit``, for input time series :math:`(v_i, p(t_i)), i = 1, \dots, T`,
     where :math:`v_i` are values, :math:`t_i` are time stamps,
     and :math:`p` is the polynomial feature transform with degree `degree`,
     and with/without intercept depending on `with_intercept`,
-    fits an `sklearn` model :math:`v_i = f(p(t_i)) + \epsilon_i`, where `f` is
-    the model fitted when `regressor.fit` is passed `X` = vector of :math:`p(t_i)`,
-    and `y` = vector of :math:`v_i`.
+    fits an `sklearn` model :math:`v_i = f(p(t_i)) + \epsilon_i`, where :math:`f` is
+    the model fitted when ``regressor.fit`` is passed ``X`` = vector of :math:`p(t_i)`,
+    and ``y`` = vector of :math:`v_i`.
 
-    In `predict`, for a new time point :math:`t_*`, predicts :math:`f(p(t_*))`,
-    where :math:`f` is the function as fitted above in `fit`,
+    In ``predict``, for a new time point :math:`t_*`, predicts :math:`f(p(t_*))`,
+    where :math:`f` is the function as fitted above in ``fit``,
     and :math:`p` is the same polynomial feature transform as above.
 
-    Default for `regressor` is linear regression = `sklearn` `LinearRegression` default.
+    Default for ``regressor`` is linear regression = ``sklearn`` ``LinearRegression``,
+    with default parameters. Default for `degree` is 1.
+
+    is polynomial regression, obtained as
+    ``sklearn`` ``LinearRegression`` default.
 
     If time stamps are `pd.DatetimeIndex`, fitted coefficients are in units
-    of days since start of 1970. If time stamps are `pd.PeriodIndex`,
+    of days since start of 1970. If time stamps are ``pd.PeriodIndex``,
     coefficients are in units of (full) periods since start of 1970.
 
     Parameters
@@ -53,6 +58,14 @@ class PolynomialTrendForecaster(BaseForecaster):
         If true, then include a feature in which all polynomial powers are
         zero. (i.e. a column of ones, acts as an intercept term in a linear
         model)
+
+    Attributes
+    ----------
+    regressor_ : sklearn regressor estimator object
+        The fitted regressor object.
+        This is a fitted ``sklearn`` pipeline with steps
+        ``PolynomialFeatures(degree, with_intercept)``,
+        followed by a clone of ``regressor``.
 
     Examples
     --------
