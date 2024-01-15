@@ -964,7 +964,7 @@ class SplitterSummarizer(BaseTransformer):
             X_fit = split_fit[fit_on_ix]
             X_transform = split_transform[transform_on_ix]
             transformed_split = tf.fit(X_fit).transform(X_transform)
-            transformed_split.index = [X_transform[0].index[-1]]
+            transformed_split.index = [X_transform.index[-1]]
             transformed_series.append(transformed_split)
 
         Xt = pd.concat(transformed_series)
