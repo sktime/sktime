@@ -54,7 +54,7 @@ Estimators with a soft dependency need to ensure the following:
    consider exposing the doctest example as a pytest test function instead, see below how to handle soft dependencies in pytest functions.
 *  Decorate all ``pytest`` tests that import soft dependencies with a ``@pytest.mark.skipif(...)`` conditional on a soft dependency check.
    If the test is specific to a single estimator or object, use ``run_test_for_class`` from ``sktime.tests.test_switch``
-   to mediate the condition through the class tags. 
+   to mediate the condition through the class tags.
    Otherwise, use ``_check_soft_dependencies`` for your new soft dependency, with ``severity="none"``.
    Be sure that all soft dependencies imported for testing are imported within the test function itself,
    rather than at root level (at the top) of the module.
