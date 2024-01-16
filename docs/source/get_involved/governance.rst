@@ -672,7 +672,7 @@ the guide for implmenting compatible estimators (see :ref:`developer_guide_add_e
 We are happy to list any compatible open source project under `related
 software <https://github.com/sktime/sktime/wiki/related-software>`__.
 Contributions are also welcome to any one of `our companion
-repositories <https://github.com/sktime>`__ on GitHub. 
+repositories <https://github.com/sktime>`__ on GitHub.
 
 Dependencies are managed on the level of estimators, hence it is entirely possible
 to maintain an algorithm primarily in a third or second party package, and add a
