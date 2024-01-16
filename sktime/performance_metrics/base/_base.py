@@ -15,8 +15,8 @@ class BaseMetric(BaseObject):
 
     _tags = {
         "object_type": "metric",
-        "author": "sktime developers",  # author(s) of the object
-        "maintainer": "sktime developers",  # current maintainer(s) of the object
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(self):

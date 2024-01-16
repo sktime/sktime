@@ -76,8 +76,8 @@ class MyTransformer(BaseTransformer):
         #   False: inner _predict gets pd.DataFrame series with any number of columns
         #
         # specify one or multiple authors and maintainers, only for sktime contribution
-        "author": ["author1", "author2"],  # authors, GitHub handles
-        "maintainer": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
         # author = significant contribution to code at some point
         # maintainer = algorithm maintainer role, "owner"
         # remove maintainer tag if maintained by sktime core team

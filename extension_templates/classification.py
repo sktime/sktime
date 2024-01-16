@@ -83,8 +83,8 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:multithreading": False,
         "python_version": None,  # PEP 440 python version specifier to limit versions
         # specify one or multiple authors and maintainers, only for sktime contribution
-        "author": ["author1", "author2"],  # authors, GitHub handles
-        "maintainer": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
         # author = significant contribution to code at some point
         # maintainer = algorithm maintainer role, "owner"
         # remove maintainer tag if maintained by sktime core team

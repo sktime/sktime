@@ -135,8 +135,8 @@ class BaseTransformer(BaseEstimator):
         # is transform result always guaranteed to contain no missing values?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
-        "author": "sktime developers",  # author(s) of the object
-        "maintainer": "sktime developers",  # current maintainer(s) of the object
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     # default config values

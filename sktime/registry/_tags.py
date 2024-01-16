@@ -505,13 +505,13 @@ ESTIMATOR_TAG_REGISTER = [
         "can the estimator handle multioutput data?",
     ),
     (
-        "maintainer",
+        "maintainers",
         "object",
         ("list", "str"),
         "list of current maintainers of the object, each maintainer a GitHub handle",
     ),
     (
-        "author",
+        "authors",
         "object",
         ("list", "str"),
         "list of authors of the object, each author a GitHub handle",

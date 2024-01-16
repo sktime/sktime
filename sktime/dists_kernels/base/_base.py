@@ -55,8 +55,8 @@ class BasePairwiseTransformer(BaseEstimator):
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
-        "author": "sktime developers",  # author(s) of the object
-        "maintainer": "sktime developers",  # current maintainer(s) of the object
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(self):
@@ -193,8 +193,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
         "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
-        "author": "sktime developers",  # author(s) of the object
-        "maintainer": "sktime developers",  # current maintainer(s) of the object
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(self):
