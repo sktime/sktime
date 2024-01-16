@@ -241,6 +241,8 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     if extract_path is None:
         # default for first check is sktime/datasets/data
         check_path = os.path.join(MODULE, "data")
+    else:
+        check_path = extract_path
 
     def _get_data_from(path):
         return _load_provided_dataset(name, split, return_X_y, return_type, path)
