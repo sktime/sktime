@@ -665,7 +665,7 @@ We have the following guidelines:
    `decision making process <#Decision-making>`__ for major changes.
 
 Note that an algorithm need not be in sktime to be fully compatible with
-sktime intefaces. You can implement your favorite algorithm in a sktime
+sktime interfaces. You can implement your favorite algorithm in a sktime
 compatible way in a third party codebase - open or closed - following
 the guide for implmenting compatible estimators (see :ref:`developer_guide_add_estimators:`).
 
