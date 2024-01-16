@@ -24,7 +24,6 @@ from numpy.random import RandomState
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
-from sktime.base._base import _clone_estimator
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation import check_n_jobs
 
@@ -92,6 +91,8 @@ class BaseTimeSeriesForest:
         self : object
             An fitted instance of the classifier
         """
+        from sktime.base._base import _clone_estimator
+
         X = X.squeeze(1)
         n_instances, self.series_length = X.shape
 
