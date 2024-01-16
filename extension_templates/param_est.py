@@ -112,7 +112,7 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
+        "python_dependencies": None,
         # valid values: str or list of str
         # raises exception at construction if modules at strings cannot be imported
         #
