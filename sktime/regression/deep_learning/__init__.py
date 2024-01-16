@@ -1,6 +1,9 @@
 """Deep learning based regressors."""
 __all__ = [
     "CNNRegressor",
+    "MCDCNNRegressor",
+    "ResNetRegressor",
+    "SimpleRNNRegressor",
     "TapNetRegressor",
 ]
 
