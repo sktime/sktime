@@ -258,7 +258,7 @@ class MyTransformer(BaseTransformer):
         #
         # author = author(s) of th estimator
         # an author is anyon with significant contribution to the code at some point
-        "author": ["author1", "author2"]
+        "author": ["author1", "author2"],
         # valid values: str or list of str, should be GitHub handles
         # this should follow best scientific contribution practices
         # scope is the code, not the methodology (method is per paper citation)
@@ -266,7 +266,7 @@ class MyTransformer(BaseTransformer):
         # maintainer = current maintainer(s) of the estimator
         # per algorithm maintainer role, see governance document
         # this is an "owner" type role, with rights and maintenance duties
-        "maintainer": ["maintainer1", "maintainer2"]
+        "maintainer": ["maintainer1", "maintainer2"],
         # valid values: str or list of str, should be GitHub handles
         # remove tag if maintained by sktime core team
     }
