@@ -78,6 +78,11 @@ class BaseObject(_BaseObject):
     Extends skbase BaseObject with additional features.
     """
 
+    _tags = {
+        "author": "sktime developers",  # author(s) of the object
+        "maintainer": "sktime developers",  # current maintainer(s) of the object
+    }
+
     _config = {
         "warnings": "on",
         "backend:parallel": None,  # parallelization backend for broadcasting

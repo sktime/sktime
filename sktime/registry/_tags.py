@@ -504,6 +504,18 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "can the estimator handle multioutput data?",
     ),
+    (
+        "maintainer",
+        "object",
+        ("list", "str"),
+        "list of current maintainers of the object, each maintainer a GitHub handle",
+    ),
+    (
+        "author",
+        "object",
+        ("list", "str"),
+        "list of authors of the object, each author a GitHub handle",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
