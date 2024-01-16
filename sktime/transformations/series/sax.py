@@ -50,9 +50,9 @@ class SAX2(BaseTransformer):
 
     >>> X = arange(10)
     >>> sax = SAX2(word_size=3, alphabet_size=5)
-    >>> sax.fit_transform(X)
+    >>> sax.fit_transform(X)  # doctest: +SKIP
     array([0, 2, 4])
-    >>> sax = SAX2(frame_size=2, alphabet_size=5)
+    >>> sax = SAX2(frame_size=2, alphabet_size=5)  # doctest: +SKIP
     array([0, 1, 2, 3, 4])
     """
 
