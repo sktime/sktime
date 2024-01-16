@@ -12,9 +12,12 @@ from sktime.datatypes._examples import get_examples
 from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils.pandas import df_map
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.parallel import _get_parallel_test_fixtures
 
 SCITYPES = ["Panel", "Hierarchical"]
+
+# list of parallelization backends to test
+BACKENDS = _get_parallel_test_fixtures("estimator")
 
 
 def _get_all_mtypes_for_scitype(scitype):
@@ -433,7 +436,7 @@ def test_enforce_index_freq(item, freq):
     assert item.index.freq == freq
 
 
-@pytest.mark.parametrize("backend", [None, "loky", "threading", "dask"])
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("varname_used", [True, False])
 def test_vectorize_est(
     scitype, mtype, fixture_index, iterate_as, iterate_cols, varname_used, backend
@@ -460,10 +463,6 @@ def test_vectorize_est(
     if not _is_valid_iterate_as(scitype, iterate_as):
         return None
 
-    # escape test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
-
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
     X_vect = VectorizedDF(
@@ -477,8 +476,10 @@ def test_vectorize_est(
     else:
         kwargs["y"] = X_vect
 
+    kwargs.update(backend)
+
     est_clones = X_vect.vectorize_est(NaiveForecaster(), method="clone")
-    result = X_vect.vectorize_est(est_clones, method="fit", backend=backend, **kwargs)
+    result = X_vect.vectorize_est(est_clones, method="fit", **kwargs)
 
     def _len(x):
         if x is None:
