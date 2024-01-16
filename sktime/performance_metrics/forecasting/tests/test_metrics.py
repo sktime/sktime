@@ -129,3 +129,18 @@ def test_make_scorer():
     scorer = make_forecasting_scorer(rmsle, name="RMSLE")
 
     scorer.evaluate(pd.Series([1, 2, 3]), pd.Series([1, 2, 4]))
+
+
+def test_make_scorer_sklearn():
+    """Test make_forecasting_scorer and the failure case in #5715.
+
+    Naive adaptation fails on newer sklearn versions due to
+    decoration with sklearn's custom input constraint wrapper.
+    """
+    from sklearn.metrics import mean_absolute_error
+
+    from sktime.performance_metrics.forecasting import make_forecasting_scorer
+
+    scorer = make_forecasting_scorer(mean_absolute_error, name="RMSLE")
+
+    scorer.evaluate(pd.Series([1, 2, 3]), pd.Series([1, 2, 4]))
