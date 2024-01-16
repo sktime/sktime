@@ -97,6 +97,8 @@ class BaseForecaster(BaseEstimator):
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # str or list of str, package soft dependencies
+        "author": "sktime developers",  # author(s) of the object
+        "maintainer": "sktime developers",  # current maintainer(s) of the object
     }
 
     # configs and default config values

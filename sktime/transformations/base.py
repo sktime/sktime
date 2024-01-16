@@ -133,8 +133,10 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
-        "python_version": None,  # PEP 440 python version specifier to limit versions
         "remember_data": False,  # whether all data seen is remembered as self._X
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "author": "sktime developers",  # author(s) of the object
+        "maintainer": "sktime developers",  # current maintainer(s) of the object
     }
 
     # default config values
