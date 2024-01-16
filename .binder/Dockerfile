@@ -1,7 +1,7 @@
 # This Dockerfile is used to build sktime when launching binder.
 # Find out more at: https://mybinder.readthedocs.io/en/latest/index.html
 
-FROM  jupyter/scipy-notebook:python-3.11.7
+FROM  jupyter/scipy-notebook:python-3.11.6
 # Set up user to avoid running as root
 ARG NB_USER
 ARG NB_UID
