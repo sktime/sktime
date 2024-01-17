@@ -33,12 +33,9 @@ def _resolve_param_map(param_est, estimator, params=None):
     """
     fitted_params = param_est.get_fitted_params()
 
-    # obtain the mapping restricted to param names that are available
-    fc_par_names = estimator.get_params().keys()
-    pe_par_names = fitted_params.keys()
-
+    # normalize params to a dict with str keys and str values
     if params is None:
-        param_map = {x: x for x in fitted_params.keys()}
+        param_map = {x: x for x in fitted_params}
     elif isinstance(params, str):
         param_map = {params: params}
     elif isinstance(params, list):
@@ -48,8 +45,8 @@ def _resolve_param_map(param_est, estimator, params=None):
     else:
         raise TypeError("params must be None, a str, a list of str, or a dict")
 
-    param_map = {x: param_map[x] for x in param_map.keys() if x in fc_par_names}
-    param_map = {
-        x: param_map[x] for x in param_map.keys() if param_map[x] in pe_par_names
-    }
+    # obtain the mapping restricted to param names that are available in both
+    param_map = {x: param_map[x] for x in param_map if x in estimator.get_params()}
+    param_map = {x: param_map[x] for x in param_map if param_map[x] in fitted_params}
+
     return param_map
