@@ -65,4 +65,4 @@ class IgnoreX(_DelegatedForecaster):
         params1 = {"forecaster": f}
         params2 = {"forecaster": f, "ignore_x": False}
 
-        return params
+        return [params1, params2]
