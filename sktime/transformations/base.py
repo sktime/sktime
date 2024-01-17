@@ -573,7 +573,7 @@ class BaseTransformer(BaseEstimator):
         output_conv = configs["output_conversion"]
 
         # convert to output mtype
-        if X is None:
+        if X is None or Xt is None:
             X_out = Xt
         elif input_conv and output_conv:
             X_out = self._convert_output(Xt, metadata=metadata)
