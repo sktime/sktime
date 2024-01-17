@@ -58,6 +58,24 @@ class PluginParamsTransformer(_DelegatedTransformer):
     param_map_ : dict
         mapping of parameters from `param_est_` to `transformer_` used in `fit`,
         after filtering for parameters present in both
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.param_est.plugin import PluginParamsTransformer
+    >>> from sktime.param_est.seasonality import SeasonalityACF
+    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.series.difference import Differencer
+    >>>
+    >>> X = load_airline()  # doctest: +SKIP
+    >>> sp_est = Differencer() * SeasonalityACF()  # doctest: +SKIP
+    >>> trafo = Deseasonalizer()  # doctest: +SKIP
+    >>> sp_auto = PluginParamsTransformer(sp_est, fcst)  # doctest: +SKIP
+    >>> sp_auto.fit(X)  # doctest: +SKIP
+    PluginParamsTransformer(...)
+    >>> Xt= sp_auto.transform(X)  # doctest: +SKIP
+    >>> sp_auto.transfomer_.get_params()["sp"]  # doctest: +SKIP
+    12
     """
 
     _tags = {
@@ -179,7 +197,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
         """
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
-        from sktime.transformations.series.deseasonalize import Deseasonalizer
+        from sktime.transformations.series.detrend import Deseasonalizer
         from sktime.transformations.series.exponent import ExponentTransformer
         from sktime.utils.validation._dependencies import _check_estimator_deps
 
