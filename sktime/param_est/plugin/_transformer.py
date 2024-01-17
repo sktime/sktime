@@ -6,6 +6,7 @@ __all__ = ["PluginParamsTransformerr"]
 
 from inspect import signature
 
+from sktime.param_est.plugin._common import _resolve_param_map
 from sktime.transformations._delegate import _DelegatedTransformer
 
 

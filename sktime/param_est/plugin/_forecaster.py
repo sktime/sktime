@@ -7,6 +7,7 @@ __all__ = ["PluginParamsForecaster"]
 from inspect import signature
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.param_est.plugin._common import _resolve_param_map
 
 
 class PluginParamsForecaster(_DelegatedForecaster):
@@ -167,26 +168,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         param_est.fit(y, **fit_kwargs)
         fitted_params = param_est.get_fitted_params()
 
-        # obtain the mapping restricted to param names that are available
-        fc_par_names = forecaster.get_params().keys()
-        pe_par_names = fitted_params.keys()
-
-        params = self.params
-        if params is None:
-            param_map = {x: x for x in fitted_params.keys()}
-        elif isinstance(params, str):
-            param_map = {params: params}
-        elif isinstance(params, list):
-            param_map = {x: x for x in params}
-        elif isinstance(params, dict):
-            param_map = params
-        else:
-            raise TypeError("params must be None, a str, a list of str, or a dict")
-
-        param_map = {x: param_map[x] for x in param_map.keys() if x in fc_par_names}
-        param_map = {
-            x: param_map[x] for x in param_map.keys() if param_map[x] in pe_par_names
-        }
+        param_map = _resolve_param_map(param_est, forecaster, self.params)
         self.param_map_ = param_map
 
         # obtain the values of fitted params, and set forecaster to those
