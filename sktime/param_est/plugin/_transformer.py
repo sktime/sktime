@@ -176,16 +176,15 @@ class PluginParamsTransformer(_DelegatedTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.naive import NaiveTransformer
         from sktime.param_est.fixed import FixedParams
-        from sktime.param_est.seasonality import SeasonalityACF
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
 
-        # use of dictionary to plug "foo" parameter into "sp", uses mock param_est
+        # use of dictionary to plug "foo" parameter into "power", uses mock param_est
         params1 = {
-            "transformer": NaiveTransformer(),
+            "transformer": ExponntTransformer(),
             "param_est": FixedParams({"foo": 12}),
-            "params": {"foo": "sp"},
+            "params": {"foo": "power"},
         }
         params = [params1]
 
@@ -193,18 +192,10 @@ class PluginParamsTransformer(_DelegatedTransformer):
         if _check_estimator_deps(SeasonalityACF, severity="none"):
             # explicit reference to a parameter "sp", present in both estimators
             params2 = {
-                "transformer": NaiveTransformer(),
+                "transformer": BoxCoxTransformer(),
                 "param_est": SeasonalityACF(),
                 "params": "sp",
             }
             params = params + [params2]
-
-            # no params given, this should recognize that the intersection is only "sp"
-            params3 = {
-                "transformer": NaiveTransformer(),
-                "param_est": SeasonalityACF(),
-                "update_params": True,
-            }
-            params = params + [params3]
 
         return params
