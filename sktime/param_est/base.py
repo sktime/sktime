@@ -90,14 +90,16 @@ class BaseParamFitter(BaseEstimator):
         one of the plugin estimator objects,
         concatenation of `self` (first) with `other` (last).
         """
+        from sktime.forecasting.base import BaseForecaster
         from sktime.param_est.plugin import (
             PluginParamsForecaster,
             PluginParamsTransformer,
         )
+        from sktime.transformations.base import BaseTransformer
 
         if isinstance(other, BaseForecaster):
             return PluginParamsForecaster(param_est=self, forecaster=other)
-        elif isinstance(other, BaseParamFitter):
+        elif isinstance(other, BaseTransformer):
             return PluginParamsTransformer(param_est=self, transformer=other)
         else:
             return NotImplemented

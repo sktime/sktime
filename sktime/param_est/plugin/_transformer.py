@@ -2,7 +2,7 @@
 """Plugin composite for substituting parameter estimator fit into transformers."""
 
 __author__ = ["fkiraly"]
-__all__ = ["PluginParamsTransformerr"]
+__all__ = ["PluginParamsTransformer"]
 
 from inspect import signature
 
@@ -178,8 +178,10 @@ class PluginParamsTransformer(_DelegatedTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.param_est.fixed import FixedParams
+        from sktime.param_est.seasonality import SeasonalityACF
         from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.utils.validation._dependencies import _check_estimator_deps
 
         # use of dictionary to plug "foo" parameter into "power", uses mock param_est
         params1 = {
