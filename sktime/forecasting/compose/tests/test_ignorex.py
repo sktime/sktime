@@ -1,6 +1,5 @@
-#!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for Bagging Forecasters."""
+"""Tests for IgnoreX."""
 
 from unittest.mock import MagicMock
 
