@@ -149,11 +149,31 @@ def _parallelize_dask(fun, iter, meta, backend, backend_params):
 para_dict["dask"] = _parallelize_dask
 
 
-def _get_parallel_test_fixtures():
+def _get_parallel_test_fixtures(naming="estimator"):
     """Return fixtures for parallelization tests.
 
     Returns a list of parameter fixtures, where each fixture
     is a dict with keys "backend" and "backend_params".
+
+    Parameters
+    ----------
+    naming : str, optional
+        naming convention for the parameters, one of
+
+        "estimator": for use in estimator constructors,
+        ``backend`` and ``backend_params``
+        "config": for use in ``set_config``,
+        ``backend:parallel`` and ``backend:parallel:params``
+
+    Returns
+    -------
+    fixtures : list of dict
+        list of backend parameter fixtures
+        keys depend on ``naming`` parameter, see above
+        either ``backend`` and ``backend_params`` (``naming="estimator"``),
+        or ``backend:parallel`` and ``backend:parallel:params`` (``naming="config"``)
+        values are backend strings and backend parameter dicts
+        only backends that are available in the environment are included
     """
     from sktime.utils.validation._dependencies import _check_soft_dependencies
 
