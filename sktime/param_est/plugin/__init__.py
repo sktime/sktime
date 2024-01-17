@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Plugin composits for parameter estimators."""
+"""Plugin composites for parameter estimators."""
 
 __all__ = [
     "PluginParamsForecaster",

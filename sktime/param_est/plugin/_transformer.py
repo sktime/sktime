@@ -80,13 +80,20 @@ class PluginParamsTransformer(_DelegatedTransformer):
     >>> # fit sp_auto to data, transform, and inspect the tuned sp parameter
     >>> sp_auto.fit(X)  # doctest: +SKIP
     PluginParamsTransformer(...)
-    >>> Xt= sp_auto.transform(X)  # doctest: +SKIP
+    >>> Xt = sp_auto.transform(X)  # doctest: +SKIP
     >>> sp_auto.transfomer_.get_params()["sp"]  # doctest: +SKIP
     12
     >>> # shorthand ways to specify sp_auto, via dunder, does the same
     >>> sp_auto = sp_est * trafo  # doctest: +SKIP
     >>> # or entire pipeline in one go
     >>> sp_auto = Differencer() * SeasonalityACF() * Deseasonalizer()  # doctest: +SKIP
+
+    using dictionary to plug "foo" parameter into "sp"
+
+    >>> from sktime.param_est.fixed import FixedParams
+    >>> sp_plugin = PluginParamsTransformer(
+    ...     FixedParams({"foo": 12}), Deseasonalizer(), params={"foo": "sp"}
+    ... )  # doctest: +SKIP
     """
 
     _tags = {
