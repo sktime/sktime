@@ -192,7 +192,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
         if _check_estimator_deps(SeasonalityACF, severity="none"):
             # explicit reference to a parameter "sp", present in both estimators
             params2 = {
-                "transformer": BoxCoxTransformer(),
+                "transformer": BoxCoxTransformer(method="guerrero"),
                 "param_est": SeasonalityACF(),
                 "params": "sp",
             }
