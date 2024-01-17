@@ -451,7 +451,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
+    PAA2
 
 .. currentmodule:: sktime.transformations.series.sax
 
@@ -459,7 +459,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    SAX
+    SAX2
 
 .. currentmodule:: sktime.transformations.panel.dictionary_based
 
