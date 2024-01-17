@@ -37,7 +37,6 @@ def _resolve_param_map(param_est, estimator, params=None):
     fc_par_names = estimator.get_params().keys()
     pe_par_names = fitted_params.keys()
 
-    params = self.params
     if params is None:
         param_map = {x: x for x in fitted_params.keys()}
     elif isinstance(params, str):
