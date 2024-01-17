@@ -528,7 +528,8 @@ def _guerrero(x, sp, bounds=None):
 
     if sp is None or not is_int(sp) or sp < 2:
         raise ValueError(
-            "Guerrero method requires an integer seasonal periodicity (sp) value >= 2."
+            "In BoxCoxTransformer, method='guerrero' requires an integer seasonal "
+            f"periodicity (sp) value >= 2, but found {sp}"
         )
 
     x = np.asarray(x)
