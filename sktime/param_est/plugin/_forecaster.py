@@ -100,7 +100,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
     >>> from sktime.param_est.fixed import FixedParams
     >>> sp_plugin = PluginParamsForecaster(
-    ...     FixedParams({"foo": 12}), NaiveForecaster(), params={"foo": "sp"}
+    ...     FixedParams({"foo": 12}), NaiveForecaster(), params={"sp": "foo"}
     ... )  # doctest: +SKIP
     """
 

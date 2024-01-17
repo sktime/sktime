@@ -86,7 +86,7 @@ def test_plugin_trafo():
 
     Xt = sp_auto.transform(X)
     assert isinstance(Xt, pd.Series)
-    assert sp_auto.transfomer_.get_params()["sp"] == 12
+    assert sp_auto.transformer_.get_params()["sp"] == 12
 
     # shorthand ways to specify sp_auto, via dunder, does the same
     sp_auto2 = sp_est * trafo
@@ -104,4 +104,4 @@ def test_plugin_trafo():
     )
 
     sp_plugin.fit(X)
-    assert sp_plugin.transformr_.get_params()["sp"] == 42
+    assert sp_plugin.transformer_.get_params()["sp"] == 42

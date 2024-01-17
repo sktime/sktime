@@ -81,7 +81,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
     >>> sp_auto.fit(X)  # doctest: +SKIP
     PluginParamsTransformer(...)
     >>> Xt = sp_auto.transform(X)  # doctest: +SKIP
-    >>> sp_auto.transfomer_.get_params()["sp"]  # doctest: +SKIP
+    >>> sp_auto.transformer_.get_params()["sp"]  # doctest: +SKIP
     12
     >>> # shorthand ways to specify sp_auto, via dunder, does the same
     >>> sp_auto = sp_est * trafo  # doctest: +SKIP
@@ -92,7 +92,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
 
     >>> from sktime.param_est.fixed import FixedParams
     >>> sp_plugin = PluginParamsTransformer(
-    ...     FixedParams({"foo": 12}), Deseasonalizer(), params={"foo": "sp"}
+    ...     FixedParams({"foo": 12}), Deseasonalizer(), params={"sp": "foo"}
     ... )  # doctest: +SKIP
     """
 
