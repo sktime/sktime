@@ -3,11 +3,11 @@
 
 from unittest.mock import MagicMock
 
-import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.compose import IgnoreX
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
