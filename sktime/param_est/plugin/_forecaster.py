@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Parameter estimators for seasonality."""
+"""Plugin composite for substituting parameter estimator fit into forecasters."""
 
 __author__ = ["fkiraly"]
 __all__ = ["PluginParamsForecaster"]
@@ -12,17 +12,19 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 class PluginParamsForecaster(_DelegatedForecaster):
     """Plugs parameters from a parameter estimator into a forecaster.
 
-    In `fit`, first fits `param_est` to data passed:
+    In ``fit``, first fits ``param_est`` to data passed:
 
-    * `y` of `fit` is passed as the first arg to `param_est.fit`
-    * `X` of `fit` is passed as the second arg, if `param_est.fit` has a second arg
-    * `fh` of `fit` is passed as `fh`, if any remaining arg of `param_est.fit` is `fh`
+    * ``y`` of ``fit`` is passed as the first arg to ``param_est.fit``
+    * ``X`` of ``fit`` is passed as the second arg,
+      if ``param_est.fit`` has a second arg
+    * ``fh`` of ``fit`` is passed as ``fh``,
+      if any remaining arg of ``param_est.fit`` is ``fh``
 
-    Then, does `forecaster.set_params` with desired/selected parameters.
-    Parameters of the fitted `param_est` are passed on to `forecaster`,
-    from/to pairs are as specified by the `params` parameter of `self`, see below.
+    Then, does ``forecaster.set_params`` with desired/selected parameters.
+    Parameters of the fitted ``param_est`` are passed on to ``forecaster``,
+    from/to pairs are as specified by the ``params`` parameter of ``self``, see below.
 
-    Then, fits `forecaster` to the data passed in `fit`.
+    Then, fits ``forecaster`` to the data passed in ``fit``.
 
     After that, behaves identically to `forecaster` with those parameters set.
     `update` behaviour is controlled by the `update_params` parameter.
@@ -35,28 +37,31 @@ class PluginParamsForecaster(_DelegatedForecaster):
     param_est : sktime estimator object with a fit method, inheriting from BaseEstimator
         e.g., estimator inheriting from BaseParamFitter or forecaster
         this is a "blueprint" estimator, state does not change when `fit` is called
+
     forecaster : sktime forecaster, i.e., estimator inheriting from BaseForecaster
         this is a "blueprint" estimator, state does not change when `fit` is called
+
     params : None, str, list of str, dict with str values/keys, optional, default=None
-        determines which parameters from param_est are plugged into forecaster and where
+        determines which parameters from ``param_est`` are plugged into forecaster where
         None: all parameters of param_est are plugged into forecaster
-            only parameters present in both `forecaster` and `param_est` are plugged in
+        only parameters present in both ``forecaster`` and ``param_est`` are plugged in
         list of str: parameters in the list are plugged into parameters of the same name
-            only parameters present in both `forecaster` and `param_est` are plugged in
+        only parameters present in both ``forecaster`` and ``param_est`` are plugged in
         str: considered as a one-element list of str with the string as single element
         dict: parameter with name of value is plugged into parameter with name of key
-            only keys present in `param_est` and values in `forecaster` are plugged in
+        only keys present in ``param_est`` and values in ``forecaster`` are plugged in
+
     update_params : bool, optional, default=False
         whether fitted parameters by param_est_ are to be updated in self.update
 
     Attributes
     ----------
-    param_est_ : sktime parameter estimator, clone of estimator in `param_est`
-        this clone is fitted in the pipeline when `fit` is called
-    forecaster_ : sktime forecaster, clone of forecaster in `forecaster`
-        this clone is fitted in the pipeline when `fit` is called
+    param_est_ : sktime parameter estimator, clone of estimator in ``param_est``
+        this clone is fitted in the pipeline when ``fit`` is called
+    forecaster_ : sktime forecaster, clone of ``forecaster``
+        this clone is fitted in the pipeline when ``fit`` is called
     param_map_ : dict
-        mapping of parameters from `param_est_` to `forecaster_` used in `fit`,
+        mapping of parameters from ``param_est_`` to ``forecaster_`` used in ``fit``,
         after filtering for parameters present in both
 
     Examples
@@ -259,7 +264,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for transformers.
+            There are currently no reserved values for forecasters.
 
         Returns
         -------
