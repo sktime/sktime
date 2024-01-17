@@ -279,7 +279,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         params1 = {
             "forecaster": NaiveForecaster(),
             "param_est": FixedParams({"foo": 12}),
-            "params": {"foo": "sp"},
+            "params": {"sp": "foo"},
         }
         params = [params1]
 

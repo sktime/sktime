@@ -223,7 +223,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
         params1 = {
             "transformer": ExponentTransformer(),
             "param_est": FixedParams({"foo": 12}),
-            "params": {"foo": "power"},
+            "params": {"power": "foo"},
         }
         params = [params1]
 

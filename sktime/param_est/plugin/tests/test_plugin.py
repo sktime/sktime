@@ -51,7 +51,7 @@ def test_plugin_fcst():
 
     # plugin with dict
     sp_plugin = PluginParamsForecaster(
-        FixedParams({"foo": 42}), NaiveForecaster(), params={"foo": "sp"}
+        FixedParams({"foo": 42}), NaiveForecaster(), params={"sp": "foo"}
     )
 
     sp_plugin.fit(y, fh=[1, 2, 3])
@@ -100,7 +100,7 @@ def test_plugin_trafo():
 
     # plugin with dict
     sp_plugin = PluginParamsTransformer(
-        FixedParams({"foo": 42}), Deseasonalizer(), params={"foo": "sp"}
+        FixedParams({"foo": 42}), Deseasonalizer(), params={"sp": "foo"}
     )
 
     sp_plugin.fit(X)
