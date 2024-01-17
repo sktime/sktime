@@ -19,8 +19,8 @@ class IgnoreX(_DelegatedForecaster):
         The forecaster to wrap.
     ignore_x : bool, optional (default=True)
         Whether to ignore exogenous data or not, this parameter is useful for tuning.
-        True: ignore exogenous data, X is not passed on to forecastere
-        False: use exogenous data, X is passed on to forecasters
+        True: ignore exogenous data, X is not passed on to ``forecaster``
+        False: use exogenous data, X is passed on to ``forecaster``
 
     Attributes
     ----------
