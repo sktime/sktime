@@ -68,14 +68,25 @@ class PluginParamsTransformer(_DelegatedTransformer):
     >>> from sktime.transformations.series.difference import Differencer
     >>>
     >>> X = load_airline()  # doctest: +SKIP
+    >>>
+    >>> # sp_est is a seasonality estimator
+    >>> # ACF assumes stationarity so we concat with differencing first
     >>> sp_est = Differencer() * SeasonalityACF()  # doctest: +SKIP
+
+    >>> # trafo is a forecaster with a "sp" parameter which we want to tune
     >>> trafo = Deseasonalizer()  # doctest: +SKIP
     >>> sp_auto = PluginParamsTransformer(sp_est, fcst)  # doctest: +SKIP
+    >>>
+    >>> # fit sp_auto to data, transform, and inspect the tuned sp parameter
     >>> sp_auto.fit(X)  # doctest: +SKIP
     PluginParamsTransformer(...)
     >>> Xt= sp_auto.transform(X)  # doctest: +SKIP
     >>> sp_auto.transfomer_.get_params()["sp"]  # doctest: +SKIP
     12
+    >>> # shorthand ways to specify sp_auto, via dunder, does the same
+    >>> sp_auto = sp_est * trafo  # doctest: +SKIP
+    >>> # or entire pipeline in one go
+    >>> sp_auto = Differencer() * SeasonalityACF() * Deseasonalizer()  # doctest: +SKIP
     """
 
     _tags = {
