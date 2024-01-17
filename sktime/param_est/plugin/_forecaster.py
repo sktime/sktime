@@ -30,8 +30,9 @@ class PluginParamsForecaster(_DelegatedForecaster):
     After that, behaves identically to `forecaster` with those parameters set.
     `update` behaviour is controlled by the `update_params` parameter.
 
-    Example: `param_est` seasonality test to determine `sp` parameter;
-        `forecaster` being any forecaster with an `sp` parameter.
+    Example: ``param_est`` seasonality test to determine ``sp`` parameter;
+    ``forecaster`` a forecaster with an ``sp`` parameter,
+    e.g., ``ExponentialSmoothing``.
 
     Parameters
     ----------

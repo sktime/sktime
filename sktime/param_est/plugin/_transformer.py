@@ -28,7 +28,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
     After that, behaves identically to ``transformer`` with those parameters set.
 
     Example: ``param_est`` seasonality test to determine ``sp`` parameter;
-        ``transformer`` being any transformer with an ``sp`` parameter.
+    ``transformer`` a transformer with an ``sp`` parameter, e.g., ``Deseasonalizer``.
 
     Parameters
     ----------
