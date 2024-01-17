@@ -30,8 +30,8 @@ def test_ignoreX(ignore_x):
 
     mock_fitted = igx.forecaster_.fit
     call_args_list = mock_fitted.call_args_list
-    all_calls_X_none = all(call_args[1]['X'] is None for call_args in call_args_list)
-    any_calls_X_none = any(call_args[1]['X'] is None for call_args in call_args_list)
+    all_calls_X_none = all(call_args[1]["X"] is None for call_args in call_args_list)
+    any_calls_X_none = any(call_args[1]["X"] is None for call_args in call_args_list)
 
     if ignore_x in [True, None]:
         assert all_calls_X_none
