@@ -102,7 +102,7 @@ def test_vectorization_series_to_hier(mtype, backend):
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     f = ARIMA()
-    f.set_config(**{"backend:parallel": backend})
+    f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(
         y_pred, mtype, return_metadata=True, msg_return_dict="list"
