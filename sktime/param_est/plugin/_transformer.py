@@ -185,7 +185,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
 
         # use of dictionary to plug "foo" parameter into "power", uses mock param_est
         params1 = {
-            "transformer": ExponntTransformer(),
+            "transformer": ExponentTransformer(),
             "param_est": FixedParams({"foo": 12}),
             "params": {"foo": "power"},
         }
