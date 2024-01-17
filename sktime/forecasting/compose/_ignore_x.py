@@ -18,7 +18,7 @@ class IgnoreX(_DelegatedForecaster):
     forecaster : sktime forecaster, BaseForecaster descendant instance
         The forecaster to wrap.
     ignore_x : bool, optional (default=True)
-        Whether to ignore exogenous data or not, useful for tuning.
+        Whether to ignore exogenous data or not, this parameter is useful for tuning.
         True: ignore exogenous data, X is not passed on to forecastere
         False: use exogenous data, X is passed on to forecasters
 
