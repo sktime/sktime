@@ -28,7 +28,9 @@ class IgnoreX(_DelegatedForecaster):
         The fitted forecaster.
     """
 
-    _tags = {"ignores-exogeneous-X": True,}
+    _tags = {
+        "ignores-exogeneous-X": True,
+    }
 
     def __init__(self, forecaster, ignore_x=True):
         self.forecaster = forecaster
