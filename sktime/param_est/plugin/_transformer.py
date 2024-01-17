@@ -26,7 +26,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
     Then, fits ``transformer`` to the data passed in ``fit``.
 
     After that, behaves identically to ``transformer`` with those parameters set.
- 
+
     Example: ``param_est`` seasonality test to determine ``sp`` parameter;
         ``transformer`` being any transformer with an ``sp`` parameter.
 
@@ -102,7 +102,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
             "handles-missing-data",
             "capability:missing_values:removes",
         ]
-            
+
         self.clone_tags(self.transformer_, TAGS_TO_CLONE)
 
         # todo: only works for single series now
