@@ -3,10 +3,6 @@
 
 __author__ = ["fkiraly"]
 
-from inspect import signature
-
-from sktime.forecasting.base._delegate import _DelegatedForecaster
-
 
 def _resolve_param_map(param_est, estimator, params=None):
     """Resolve parameter map from params for parameter plugin compositors.
