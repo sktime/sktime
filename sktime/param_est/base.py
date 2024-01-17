@@ -70,11 +70,44 @@ class BaseParamFitter(BaseEstimator):
         super().__init__()
         _check_estimator_deps(self)
 
+    def __mul__(self, other):
+        """Magic * method, for estimators on the right.
+
+        Overloaded multiplication operation for parameter fitters.
+        Implemented for ``other`` being:
+
+        * a forecaster, results in ``PluginParamsForecaster``
+        * a transformer, results in ``PluginParamsTransformer``
+        * otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` estimator, must be one of the types specified above
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        one of the plugin estimator objects,
+        concatenation of `self` (first) with `other` (last).
+        """
+        from sktime.param_est.plugin import (
+            PluginParamsForecaster,
+            PluginParamsTransformer,
+        )
+
+        if isinstance(other, BaseForecaster):
+            return PluginParamsForecaster(param_est=self, forecaster=other)
+        elif isinstance(other, BaseParamFitter):
+            return PluginParamsTransformer(param_est=self, transformer=other)
+        else:
+            return NotImplemented
+
     def __rmul__(self, other):
         """Magic * method, return concatenated ParamFitterPipeline, trafos on left.
 
-        Overloaded multiplication operation for classifiers. Implemented for `other`
-        being a transformer, otherwise returns `NotImplemented`.
+        Overloaded multiplication operation for parameter fitters.
+        Implemented for ``other`` being a transformer,
+        otherwise returns `NotImplemented`.
 
         Parameters
         ----------
