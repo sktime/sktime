@@ -179,7 +179,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
         """
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.deseasonalize import Deseasonalizer
         from sktime.transformations.series.exponent import ExponentTransformer
         from sktime.utils.validation._dependencies import _check_estimator_deps
 
@@ -195,7 +195,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
         if _check_estimator_deps(SeasonalityACF, severity="none"):
             # explicit reference to a parameter "sp", present in both estimators
             params2 = {
-                "transformer": BoxCoxTransformer(method="guerrero", sp=2),
+                "transformer": Desasonalizer(),
                 "param_est": SeasonalityACF(),
                 "params": "sp",
             }
