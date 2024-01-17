@@ -75,7 +75,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
 
     >>> # trafo is a forecaster with a "sp" parameter which we want to tune
     >>> trafo = Deseasonalizer()  # doctest: +SKIP
-    >>> sp_auto = PluginParamsTransformer(sp_est, fcst)  # doctest: +SKIP
+    >>> sp_auto = PluginParamsTransformer(sp_est, trafo)  # doctest: +SKIP
     >>>
     >>> # fit sp_auto to data, transform, and inspect the tuned sp parameter
     >>> sp_auto.fit(X)  # doctest: +SKIP

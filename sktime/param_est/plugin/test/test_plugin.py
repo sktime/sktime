@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from sktime.param_est.seasonality import SeasonalityACF
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(
@@ -64,6 +65,7 @@ def test_plugin_fcst():
 def test_plugin_trafo():
     """Test PluginParamsTransformer - same as docstring."""
     from sktime.datasets import load_airline
+    from sktime.param_est.fixed import FixedParams
     from sktime.param_est.plugin import PluginParamsTransformer
     from sktime.param_est.seasonality import SeasonalityACF
     from sktime.transformations.series.detrend import Deseasonalizer
@@ -77,7 +79,7 @@ def test_plugin_trafo():
 
     # trafo is a forecaster with a "sp" parameter which we want to tune
     trafo = Deseasonalizer()
-    sp_auto = PluginParamsTransformer(sp_est, fcst)
+    sp_auto = PluginParamsTransformer(sp_est, trafo)
 
     # fit sp_auto to data, transform, and inspect the tuned sp parameter
     sp_auto.fit(X)
