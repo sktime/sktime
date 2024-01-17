@@ -188,9 +188,7 @@ Dictionary-based features
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
     SFA
-    SAX
 
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
@@ -461,6 +459,15 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
+    SAX
+
+.. currentmodule:: sktime.transformations.panel.dictionary_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAA
     SAX
 
 Missing value treatment

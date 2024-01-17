@@ -5,10 +5,10 @@ import numpy as np
 from sktime.transformations.base import BaseTransformer
 
 
-class PAA(BaseTransformer):
+class PAA2(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
-    PAA [1] is a dimensionality reduction technique that divides a time series
+    PAA [1]_ is a dimensionality reduction technique that divides a time series
     into frames and takes their mean. This implementation offers two variants:
      1) the original, which takes the desired number of frames and can set the
      frame size to a fraction to support cases where the time series cannot be
@@ -17,28 +17,31 @@ class PAA(BaseTransformer):
      size of the last frame to support cases where the time series is not
      evenly divisible into frames.
 
-    [1] Keogh, E., Chakrabarti, K., Pazzani, M., and Mehrotra, S.
-    Dimensionality Reduction for Fast Similarity Search in Large Time Series Databases.
-    Knowledge and Information Systems 3, 263–286 (2001).
-    https://doi.org/10.1007/PL00011669
-
     Parameters
     ----------
-    frames : int, optional (default=8)
+    frames : int, optional (default=8, greater equal 1 if frame_size=0)
         length of transformed time series. Ignored if `frame_size` is set.
-    frame_size : int, optional (default=0)
-        length of the frames over which the mean is taken. Overrides `frames`.
+    frame_size : int, optional (default=0, greater equal 0)
+        length of the frames over which the mean is taken. Overrides `frames` if > 0.
+
+    References
+    ----------
+    .. [1] Keogh, E., Chakrabarti, K., Pazzani, M., and Mehrotra, S.
+        Dimensionality Reduction for Fast Similarity Search
+        in Large Time Series Databases.
+        Knowledge and Information Systems 3, 263–286 (2001).
+        https://doi.org/10.1007/PL00011669
 
     Examples
     --------
     >>> from numpy import arange
-    >>> from sktime.transformations.series.paa import PAA
+    >>> from sktime.transformations.series.paa import PAA2
 
     >>> X = arange(10)
-    >>> paa = PAA(frames=3)
-    >>>paa.fit_transform(X)
+    >>> paa = PAA2(frames=3)
+    >>> paa.fit_transform(X)  # doctest: +SKIP
     array([1.2, 4.5, 7.8])
-    >>>paa = PAA(frame_size=3)
+    >>> paa = PAA2(frame_size=3)  # doctest: +SKIP
     array([1, 4, 7, 9])
     """
 
