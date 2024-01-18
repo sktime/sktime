@@ -752,7 +752,7 @@ def test_exogenousx_ignore_tag_set():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
+    not _check_soft_dependencies("pmdarima", severity="none"),
     reason="skip test if required soft dependency is not available",
 )
 def test_pipeline_exogenous_none():
