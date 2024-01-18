@@ -16,8 +16,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
-    """
-    Forecaster that sequentially tries a list of forecasting models.
+    """Forecaster that sequentially tries a list of forecasting models.
 
     Attempts to fit the provided forecasters in the order they are given. If a forecaster fails during fitting or
     prediction, it proceeds to the next one. This class is useful in scenarios where the reliability of individual
@@ -29,6 +28,31 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         Forecasters to be tried sequentially.
     warn : bool, default=False
         If True, raises warnings when a forecaster fails to fit or predict.
+    Examples
+    --------
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.compose import FallbackForecaster
+    >>> from sktime.forecasting.compose import EnsembleForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecasters = [
+    ...     (
+    ...         "ensemble",
+    ...         EnsembleForecaster(
+    ...             [
+    ...                 ("trend", PolynomialTrendForecaster()),
+    ...                 ("polynomial", NaiveForecaster())
+    ...             ]
+    ...         )
+    ...     ),
+    ...     ("naive", NaiveForecaster())
+    ... ]
+    >>> forecaster = FallbackForecaster(forecasters=forecasters)
+    >>> forecaster.fit(y=y, fh=[1, 2, 3])
+    FallbackForecaster(...)
+    >>> y_pred = forecaster.predict()
+
     """
 
     def __init__(self, forecasters, warn=False):
