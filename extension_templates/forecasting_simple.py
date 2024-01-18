@@ -112,7 +112,7 @@ class MyForecaster(BaseForecaster):
         # -------------------------------
         #
         # author = author(s) of th estimator
-        # an author is anyon with significant contribution to the code at some point
+        # an author is anyone with significant contribution to the code at some point
         "authors": ["author1", "author2"],
         # valid values: str or list of str, should be GitHub handles
         # this should follow best scientific contribution practices
