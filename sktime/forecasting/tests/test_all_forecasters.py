@@ -210,9 +210,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         Tests predicted time index for predict and predict_residuals.
         """
-        if type(estimator_instance).__name__ == "BATS":
-            raise ValueError("Oh no! A wild error appeared!")
-
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
             return None
