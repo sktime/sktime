@@ -117,8 +117,6 @@ class BATS(_TbatsAdapter):
 
         self._ModelClass = _BATS
 
-        raise ValueError("Oh no! A wild error appeared!")
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
