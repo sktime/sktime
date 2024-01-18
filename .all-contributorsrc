@@ -2526,6 +2526,15 @@
         "bug",
         "maintenance"
       ]
+    },
+    {
+      "login": "tvdboom",
+      "name": "Mavs",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32366550?v=4",
+      "profile": "https://github.com/tvdboom",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }

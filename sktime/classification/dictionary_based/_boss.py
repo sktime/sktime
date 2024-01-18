@@ -7,6 +7,7 @@ BOSS ensemble.
 __author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["BOSSEnsemble", "IndividualBOSS", "pairwise_distances"]
 
+from copy import copy
 from itertools import compress
 
 import numpy as np
@@ -648,27 +649,22 @@ class IndividualBOSS(BaseClassifier):
         return self._class_vals[min_pos]
 
     def _shorten_bags(self, word_len, y):
-        new_boss = IndividualBOSS(
-            self.window_size,
-            word_len,
-            self.norm,
-            self.alphabet_size,
-            save_words=self.save_words,
-            use_boss_distance=self.use_boss_distance,
-            feature_selection=self.feature_selection,
-            n_jobs=self.n_jobs,
-            random_state=self.random_state,
-        )
+        new_boss = copy(self)
+
+        # change word length parameter
+        new_boss.word_length = word_len
+
+        # reset internal variables
+        new_boss._accuracy = 0
+        new_boss._subsample = []
+        new_boss._train_predictions = []
+
+        # copy fitted transformer as reference
         new_boss._transformer = self._transformer
+
+        # update shortened bags
         new_bag = new_boss._transformer._shorten_bags(word_len, y)
         new_boss._transformed_data = new_bag
-        new_boss._class_vals = self._class_vals
-        new_boss.n_classes_ = self.n_classes_
-        new_boss.classes_ = self.classes_
-        new_boss._class_dictionary = self._class_dictionary
-        new_boss._y_metadata = self._y_metadata
-        new_boss._y_inner_mtype = self._y_inner_mtype
-        new_boss._is_fitted = True
 
         return new_boss
 
