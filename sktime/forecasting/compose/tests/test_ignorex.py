@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from sktime.datasets import load_airline
+from sktime.datasets import load_longley
 from sktime.forecasting.compose import IgnoreX
 from sktime.tests.test_switch import run_test_for_class
 
@@ -17,7 +17,7 @@ from sktime.tests.test_switch import run_test_for_class
 @pytest.mark.parametrize("ignore_x", [True, False, None])
 def test_ignoreX(ignore_x):
     """Test that indeed X=None is passed iff the args of IgnoreX claim to do so."""
-    y = load_airline()
+    y, X = load_longley()
 
     fcst = MagicMock()
 
@@ -26,7 +26,7 @@ def test_ignoreX(ignore_x):
     else:
         igx = IgnoreX(forecaster=fcst, ignore_x=ignore_x)
 
-    igx.fit(y, fh=[1, 2, 3])
+    igx.fit(y, fh=[1, 2, 3], X=X)
 
     mock_fitted = igx.forecaster_.fit
     call_args_list = mock_fitted.call_args_list
