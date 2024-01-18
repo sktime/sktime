@@ -158,7 +158,7 @@ class StationarityADF(BaseParamFitter):
 class StationarityKPSS(BaseParamFitter):
     """Test for stationarity via the Kwiatkowski-Phillips-Schmidt-Shin Test.
 
-    Uses ``statsmodels.tsa.stattools.kpss`` as a test for trend-stationairty,
+    Uses ``statsmodels.tsa.stattools.kpss`` as a test for trend-stationarity,
     and derives a boolean statement whether a series is (trend-)stationary.
 
     Also returns test results for the trend-stationarity test as fitted parameters.

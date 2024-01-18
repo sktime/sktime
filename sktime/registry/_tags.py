@@ -493,6 +493,12 @@ ESTIMATOR_TAG_REGISTER = [
         "sample size used in approximating other statistics if not available",
     ),
     (
+        "bisect_iter",
+        "distribution",
+        "int",
+        "max iters for bisection method in ppf",
+    ),
+    (
         "capability:multioutput",
         ["classifier", "regressor"],  # might need to add "early_classifier" here
         "bool",

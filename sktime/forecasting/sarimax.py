@@ -85,7 +85,9 @@ class SARIMAX(_StatsModelsAdapter):
         Whether or not to use exact diffuse initialization for non-stationary
         states. Default is False (in which case approximate diffuse
         initialization is used).
-    random_state : int, RandomState instance or None, optional ,
+    disp : bool, optional, default=False
+        Set to True to print convergence messages.
+    random_state : int, RandomState instance or None, optional, default=None
         default=None – If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
@@ -140,6 +142,7 @@ class SARIMAX(_StatsModelsAdapter):
         freq=None,
         missing="none",
         validate_specification=True,
+        disp=False,
         random_state=None,
     ):
         self.order = order
@@ -159,6 +162,9 @@ class SARIMAX(_StatsModelsAdapter):
         self.freq = freq
         self.missing = missing
         self.validate_specification = validate_specification
+
+        # Fit params
+        self.disp = disp
 
         super().__init__(random_state=random_state)
 
@@ -186,7 +192,7 @@ class SARIMAX(_StatsModelsAdapter):
             missing=self.missing,
             validate_specification=self.validate_specification,
         )
-        self._fitted_forecaster = self._forecaster.fit()
+        self._fitted_forecaster = self._forecaster.fit(disp=self.disp)
 
     def summary(self):
         """Get a summary of the fitted forecaster.
