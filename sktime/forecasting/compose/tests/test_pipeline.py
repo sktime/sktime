@@ -770,5 +770,5 @@ def test_pipeline_exogenous_none():
     )
 
     pipe.fit(y_train, X_train, fh=[1, 2, 3])
-	y_pred = pipe.predict(X_test)
+    y_pred = pipe.predict(X_test)
     assert np.all(y_pred.index == y_test.index)
