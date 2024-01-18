@@ -2526,6 +2526,17 @@
         "bug",
         "maintenance"
       ]
+    },
+    {
+      "login": "ninedigits",
+      "name": "Maxfield Frohlich",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16393653?v=4",
+      "profile": "https://www.linkedin.com/in/maxfrohlich/",
+      "contributions": [
+        "maintenance",
+        "ideas",
+        "code"
+      ]
     }
   ]
 }

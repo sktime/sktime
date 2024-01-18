@@ -6,6 +6,7 @@ __all__ = [
     "HierarchyEnsembleForecaster",
     "ColumnEnsembleForecaster",
     "EnsembleForecaster",
+    "FallbackForecaster",
     "AutoEnsembleForecaster",
     "TransformedTargetForecaster",
     "ForecastingPipeline",
@@ -35,6 +36,7 @@ from sktime.forecasting.compose._ensemble import (
     AutoEnsembleForecaster,
     EnsembleForecaster,
 )
+from sktime.forecasting.compose._fallback import FallbackForecaster
 from sktime.forecasting.compose._fhplex import FhPlexForecaster
 from sktime.forecasting.compose._grouped import ForecastByLevel
 from sktime.forecasting.compose._hierarchy_ensemble import HierarchyEnsembleForecaster
