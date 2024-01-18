@@ -122,6 +122,7 @@ def run_test_for_class(cls):
     # if the object is an sktime BaseObject, and one of the test classes
     # covering the class have changed, then run the test
     cond3 = any(_tests_covering_class_changed(x) for x in cls)
+    cond3 = cond3 and cond2
 
     # Condition 4:
     # the package requirements for any dependency in pyproject.toml have changed
@@ -129,4 +130,4 @@ def run_test_for_class(cls):
 
     # run the test if and only if at least one of the conditions 2-4 are met
     # removing cond3 for diagnostic purposes
-    return cond2 or cond4
+    return cond2 or cond4 
