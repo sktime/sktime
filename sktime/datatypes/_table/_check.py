@@ -72,11 +72,6 @@ def check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
 
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
-        return _ret(False, msg, None, return_metadata)
-
     return _ret(True, None, metadata, return_metadata)
 
 
@@ -105,11 +100,6 @@ def check_pdseries_table(obj, return_metadata=False, var_name="obj"):
             metadata["feature_names"] = [0]
         else:
             metadata["feature_names"] = [obj.name]
-
-    # check that dtype is not object
-    if "object" == obj.dtypes:
-        msg = f"{var_name} should not be of 'object' dtype"
-        return _ret(False, msg, None, return_metadata)
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
