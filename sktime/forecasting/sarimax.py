@@ -408,4 +408,5 @@ class SARIMAX(_StatsModelsAdapter):
                 "hamilton_representation": True,
                 "simple_differencing": True,
             },
+            {"cov_type": "robust", "method": "bfgs", "maxiter": 5},
         ]
