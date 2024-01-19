@@ -180,7 +180,15 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
 
         Output can also be a pd.Series which is actually a 1D
         """
-        pass
+        names = [
+            name for name, _, _, _ in self._iter(fitted=True, replace_strings=True)
+        ]
+        for Xs, name in zip(result, names):
+            if not (getattr(Xs, "ndim", 0) == 2 or isinstance(Xs, pd.Series)):
+                raise ValueError(
+                    "The output of the '{}' transformer should be 2D (scipy "
+                    "matrix, array, or pandas DataFrame).".format(name)
+                )
 
     @classmethod
     def get_test_params(cls):
