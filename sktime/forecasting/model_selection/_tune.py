@@ -220,6 +220,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 )
 
             # Set meta variables for parallelization.
+            meta = {}
             meta["forecaster"] = self.forecaster
             meta["y"] = y
             meta["X"] = X
@@ -227,6 +228,7 @@ class BaseGridSearch(_DelegatedForecaster):
             meta["strategy"] = self.strategy
             meta["scoring"] = scoring
             meta["error_score"] = self.error_score
+            meta["scoring_name"] = scoring_name
 
             out = parallelize(
                 fun=_fit_and_score,
@@ -373,6 +375,8 @@ def _fit_and_score(params, meta):
     Root level function for parallelization, called from
     BaseGridSearchCV._fit, evaluate_candidates, within parallelize.
     """
+    scoring_name = meta.pop("scoring_name")
+
     # Set parameters.
     forecaster = meta.pop("forecaster").clone()
     forecaster.set_params(**params)
