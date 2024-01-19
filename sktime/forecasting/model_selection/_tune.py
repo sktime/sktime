@@ -206,36 +206,6 @@ class BaseGridSearch(_DelegatedForecaster):
                     stacklevel=2,
                 )
 
-        def _fit_and_score(params, meta):
-            # Clone forecaster.
-            forecaster = self.forecaster.clone()
-
-            # Set parameters.
-            forecaster.set_params(**params)
-
-            # Evaluate.
-            out = evaluate(
-                forecaster,
-                cv,
-                y,
-                X,
-                strategy=self.strategy,
-                scoring=scoring,
-                error_score=self.error_score,
-            )
-
-            # Filter columns.
-            out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
-
-            # Aggregate results.
-            out = out.mean()
-            out = out.add_prefix("mean_")
-
-            # Add parameters to output table.
-            out["params"] = params
-
-            return out
-
         def evaluate_candidates(candidate_params):
             candidate_params = list(candidate_params)
 
@@ -248,6 +218,15 @@ class BaseGridSearch(_DelegatedForecaster):
                         n_splits, n_candidates, n_candidates * n_splits
                     )
                 )
+
+            # Set meta variables for parallelization.
+            meta["forecaster"] = self.forecaster
+            meta["y"] = y
+            meta["X"] = X
+            meta["cv"] = cv
+            meta["strategy"] = self.strategy
+            meta["scoring"] = scoring
+            meta["error_score"] = self.error_score
 
             out = parallelize(
                 fun=_fit_and_score,
@@ -386,6 +365,32 @@ class BaseGridSearch(_DelegatedForecaster):
                 f' or "no_update", but found {update_behaviour}'
             )
         return self
+
+
+def _fit_and_score(params, meta):
+    """Fit and score forecaster with given parameters.
+
+    Root level function for parallelization, called from
+    BaseGridSearchCV._fit, evaluate_candidates, within parallelize.
+    """
+    # Set parameters.
+    forecaster = meta.pop("forecaster").clone()
+    forecaster.set_params(**params)
+
+    # Evaluate.
+    out = evaluate(forecaster, **meta)
+
+    # Filter columns.
+    out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
+
+    # Aggregate results.
+    out = out.mean()
+    out = out.add_prefix("mean_")
+
+    # Add parameters to output table.
+    out["params"] = params
+
+    return out
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
