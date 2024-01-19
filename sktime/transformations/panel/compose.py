@@ -118,6 +118,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         transformer_weights=None,
         preserve_dataframe=True,
     ):
+        self.preserve_dataframe = preserve_dataframe
+
         warn(
             "ColumnTransformer is not fully compliant with the sktime interface "
             "and will be replaced by sktime.transformations.ColumnEnsembleTransformer "
@@ -147,7 +149,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             transformer_weights=transformer_weights,
         )
         BaseTransformer.__init__(self)
-        self.preserve_dataframe = preserve_dataframe
+
         self._is_fitted = False
 
     def _hstack(self, Xs):
