@@ -131,8 +131,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         if not _check_soft_dependencies("sklearn<1.5", severity="none"):
             raise ModuleNotFoundError(
                 "ColumnTransformer is not fully compliant with the sktime interface "
-                "and distributed only for rasons of downwards compatibility.
-                "It requires scikit-learn<1.5 due to reliance "
+                "and distributed only for reasons of downwards compatibility. "
+                "ColumnTransformer requires scikit-learn<1.5 due to reliance "
                 "on sklearn.compose.ColumnTransformer, and is not compatible with "
                 "scikit-learn>=1.5. "
                 "Please use sktime.transformations.ColumnEnsembleTransformer instead, "
