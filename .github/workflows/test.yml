@@ -9,21 +9,24 @@ on:
       - main
 
 jobs:
-  code-quality:
+  code_quality:
+    name: code quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-      - id: file_changes
-        uses: trilom/file-changes-action@v1.2.4
+      - name: repository checkout step
+        uses: actions/checkout@v4
+      - name: python environment step
+        uses: actions/setup-python@v5
         with:
-          output: " "
-      - name: List changed files
-        run: echo '${{ steps.file_changes.outputs.files}}'
-      - uses: pre-commit/action@v3.0.0
-        with:
-          extra_args: --files ${{ steps.file_changes.outputs.files}}
-      - name: Check for missing init files
+          python-version: "3.8"
+      - name: install pre-commit
+        run: python3 -m pip install pre-commit
+      - id: changed-files
+        name: identify modified files
+        uses: tj-actions/changed-files@v41
+      - name: run pre-commit hooks on modified files
+        run: pre-commit run --color always --files ${{ steps.changed-files.outputs.all_changed_files }} --show-diff-on-failure
+      - name: check missing __init__ files
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
 
@@ -103,34 +106,6 @@ jobs:
       - name: Run tests
         run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps
 
-  test-nosoftdeps-full:
-    needs: test-nosoftdeps
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - run: git remote set-branches origin 'main'
-
-      - run: git fetch --depth 1
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.9
-
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[dev]
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps_full
-
   test-mlflow:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
@@ -185,6 +160,47 @@ jobs:
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
+
+  detect:
+    needs: code_quality
+    name: detect changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      datasets: ${{ steps.filter.outputs.datasets }}
+      pyproject: ${{ steps.filter.outputs.pyproject }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            datasets:
+              - sktime/base/**
+              - sktime/datasets/**
+            pyproject:
+              - pyproject.toml
+
+  test_base:
+    needs: code_quality
+    name: base
+    uses: ./.github/workflows/test_base.yml
+
+  test_module:
+    needs: code_quality
+    name: module
+    uses: ./.github/workflows/test_module.yml
+
+  test_other:
+    needs: code_quality
+    name: other
+    uses: ./.github/workflows/test_other.yml
+
+  test_datasets:
+    needs: detect
+    name: datasets
+    if: ${{ needs.detect.outputs.datasets == 'true' }}
+    uses: ./.github/workflows/test_datasets.yml
 
   test-full:
     needs: test-nosoftdeps
