@@ -12,7 +12,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("scikit<1.4", severity="none"),
+    not _check_soft_dependencies("sklearn<1.4", severity="none"),
     reason="ColumnTransformer requires sklearn<1.4 due to reliance on private methods",
 )
 def test_ColumnTransformer_pipeline():
