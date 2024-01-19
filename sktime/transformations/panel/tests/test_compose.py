@@ -13,7 +13,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("scikit<1.5", severity="none"),
-    reason="ColumnTransformer requires scikit<1.5 due to reliance on private methods
+    reason="ColumnTransformer requires scikit<1.5 due to reliance on private methods",
 )
 def test_ColumnTransformer_pipeline():
     """Test pipeline with ColumnTransformer."""
