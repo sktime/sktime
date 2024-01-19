@@ -237,7 +237,7 @@ docs = [
   "sphinx-copybutton",
   "sphinx-design<0.6.0",
   "sphinx-gallery<0.16.0",
-  "sphinx-issues<4.0.0",
+  "sphinx-issues<5.0.0",
   "tabulate",
 ]
 tests = [
