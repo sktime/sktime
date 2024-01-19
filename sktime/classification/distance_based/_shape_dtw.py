@@ -443,7 +443,7 @@ class ShapeDTW(BaseClassifier):
         names = list(parameters.keys())
 
         for x in names:
-            if not (x in valid_metric_params):
+            if x not in valid_metric_params:
                 raise ValueError(
                     x
                     + " is not a valid metric parameter."
