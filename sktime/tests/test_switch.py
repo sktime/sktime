@@ -130,4 +130,4 @@ def run_test_for_class(cls):
 
     # run the test if and only if at least one of the conditions 2-4 are met
     # removing cond3 for diagnostic purposes
-    return cond2 or cond4 
+    return cond2 or cond4
