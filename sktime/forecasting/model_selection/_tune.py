@@ -38,7 +38,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "capability:pred_int:insample": True,
     }
 
-    # todo 0.26.0: remove n_jobs, pre_dispatch parameters and all related logic
+    # todo 0.27.0: remove n_jobs, pre_dispatch parameters and all related logic
     def __init__(
         self,
         forecaster,
@@ -186,18 +186,20 @@ class BaseGridSearch(_DelegatedForecaster):
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
-        # todo 0.26.0: remove this logic and only use backend_params
+        # todo 0.27.0: remove this logic and only use backend_params
         backend = self.backend
         backend_params = self.backend_params if self.backend_params else {}
         if backend in ["threading", "multiprocessing", "loky"]:
             n_jobs = self.n_jobs
             pre_dispatch = self.pre_dispatch
-            backend_params["n_jobs"] = n_jobs
-            backend_params["pre_dispatch"] = pre_dispatch
+            if n_jobs is not None:
+                backend_params["n_jobs"] = n_jobs
+            if pre_dispatch is not None:
+                backend_params["pre_dispatch"] = pre_dispatch
             if n_jobs is not None or pre_dispatch is not None:
                 warn(
                     f"in {self.__class__.__name__}, n_jobs and pre_dispatch "
-                    "parameters are deprecated and will be removed in 0.26.0. "
+                    "parameters are deprecated and will be removed in 0.27.0. "
                     "Please use n_jobs and pre_dispatch directly in the backend_params "
                     "argument instead.",
                     obj=self,
