@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  code_quality:
+  code-quality:
     name: code quality
     runs-on: ubuntu-latest
     steps:
@@ -162,7 +162,7 @@ jobs:
         uses: codecov/codecov-action@v3
 
   detect:
-    needs: code_quality
+    needs: code-quality
     name: detect changes
     runs-on: ubuntu-latest
     permissions:
@@ -181,22 +181,22 @@ jobs:
             pyproject:
               - pyproject.toml
 
-  test_base:
-    needs: code_quality
+  test-base:
+    needs: code-quality
     name: base
     uses: ./.github/workflows/test_base.yml
 
-  test_module:
-    needs: code_quality
+  test-module:
+    needs: code-quality
     name: module
     uses: ./.github/workflows/test_module.yml
 
-  test_other:
-    needs: code_quality
+  test-other:
+    needs: code-quality
     name: other
     uses: ./.github/workflows/test_other.yml
 
-  test_datasets:
+  test-datasets:
     needs: detect
     name: datasets
     if: ${{ needs.detect.outputs.datasets == 'true' }}
