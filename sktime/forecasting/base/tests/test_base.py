@@ -26,12 +26,15 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
 
+# list of parallelization backends to test
+BACKENDS = _get_parallel_test_fixtures("config")
+
 
 @pytest.mark.skipif(
     not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
-@pytest.mark.parametrize("backend", _get_parallel_test_fixtures("config"))
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
 def test_vectorization_series_to_panel(mtype, backend):
     """Test that forecaster vectorization works for Panel data.
@@ -84,7 +87,7 @@ def test_vectorization_series_to_panel(mtype, backend):
     not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
 def test_vectorization_series_to_hier(mtype, backend):
     """Test that forecaster vectorization works for Hierarchical data.
@@ -99,7 +102,7 @@ def test_vectorization_series_to_hier(mtype, backend):
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     f = ARIMA()
-    f.set_config(**{"backend:parallel": backend})
+    f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(
         y_pred, mtype, return_metadata=True, msg_return_dict="list"
