@@ -15,6 +15,7 @@ from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
 from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X
 
 
@@ -106,7 +107,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         of the individual transformations and the `sparse_threshold` keyword.
     """
 
-    _tags = {"python_dependencies": ["scipy", "sklearn<1.5"],}
+    _tags = {"python_dependencies": ["scipy", "sklearn<1.5"]}
 
     def __init__(
         self,
