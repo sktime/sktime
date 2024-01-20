@@ -134,9 +134,10 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             raise ModuleNotFoundError(
                 "ColumnTransformer is not fully compliant with the sktime interface "
                 "and distributed only for reasons of downwards compatibility. "
-                "ColumnTransformer requires scikit-learn<1.4 due to reliance "
-                "on sklearn.compose.ColumnTransformer, and is not compatible with "
-                "scikit-learn>=1.4. "
+                "ColumnTransformer requires scikit-learn<1.4 "
+                "to be present in the python environment, with version, "
+                "due to reliance on sklearn.compose.ColumnTransformer, "
+                "and is not compatible with scikit-learn>=1.4. "
                 "Please use sktime.transformations.ColumnEnsembleTransformer instead, "
                 "if you have scikit-learn>=1.4 installed."
             )
