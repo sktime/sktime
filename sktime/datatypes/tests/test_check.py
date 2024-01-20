@@ -270,7 +270,9 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
             f"returned: {metadata}; expected: {expected_metadata}"
         )
 
-        assert metadata == expected_metadata, msg
+        for k, v in metadata.items():
+            if v != "NA":  # NA means "cannot be determined", e.g., for lazy containers
+                assert v == expected_metadata[k], msg
 
     # check fixtures that exist against checks that exist
     if fixture is not None and check_is_defined and metadata_provided:
