@@ -375,6 +375,7 @@ def _fit_and_score(params, meta):
     Root level function for parallelization, called from
     BaseGridSearchCV._fit, evaluate_candidates, within parallelize.
     """
+    meta = meta.copy()
     scoring_name = meta.pop("scoring_name")
 
     # Set parameters.
