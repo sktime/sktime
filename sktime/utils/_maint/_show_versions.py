@@ -75,7 +75,7 @@ def _get_deps_info(deps=None):
         deps = ["sktime"]
 
     def get_version(module):
-        return module.__version__
+        return getattr(module, "__version__", None)
 
     deps_info = {}
 
