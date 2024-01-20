@@ -346,7 +346,11 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
 
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
-    assert converted_abs_fh._values.freqstr == freqstr
+    fh_freqstr = converted_abs_fh._values.freqstr
+    # special case for 10min, T is being deprecated and replaced by min
+    if "T" in freqstr:
+        fh_freqstr = fh_freqstr.replace("T", "min")
+    assert fh_freqstr == freqstr
 
 
 @pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
