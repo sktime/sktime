@@ -2516,6 +2516,35 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "DManowitz",
+      "name": "David Manowitz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66927103?v=4",
+      "profile": "https://github.com/DManowitz",
+      "contributions": [
+        "bug",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "steenrotsman",
+      "name": "Stijn J. Rotman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78110080?s=400&v=4",
+      "profile": "https://github.com/steenrotsman",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "tvdboom",
+      "name": "Mavs",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32366550?v=4",
+      "profile": "https://github.com/tvdboom",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }

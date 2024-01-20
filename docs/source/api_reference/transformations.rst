@@ -188,9 +188,7 @@ Dictionary-based features
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
     SFA
-    SAX
 
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
@@ -242,6 +240,7 @@ Lagging
     :template: class.rst
 
     Lag
+    ReducerTransform
 
 Element-wise transforms
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -445,6 +444,31 @@ Binning, sampling and segmentation
     :template: class.rst
 
     DilationMappingTransformer
+
+.. currentmodule:: sktime.transformations.series.paa
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAA2
+
+.. currentmodule:: sktime.transformations.series.sax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SAX2
+
+.. currentmodule:: sktime.transformations.panel.dictionary_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAA
+    SAX
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~

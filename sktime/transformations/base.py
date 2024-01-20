@@ -1214,7 +1214,7 @@ class BaseTransformer(BaseEstimator):
                 # Input has always to be Panel
                 X_output_mtype = "pd.DataFrame"
             else:
-                # Input can be Panel or Hierachical, since it is supported
+                # Input can be Panel or Hierarchical, since it is supported
                 # by the used mtype
                 output_scitype = X_input_scitype
                 # Xt_mtype = metadata["mtype"]

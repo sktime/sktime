@@ -630,20 +630,26 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         _convert_X = BaseClassifier._convert_X
         return _convert_X(self, X, X_mtype)
 
-    def _check_y(self, y=None):
+    def _check_y(self, y=None, return_to_mtype=False):
         """Check and coerce X/y for fit/transform functions.
 
         Parameters
         ----------
         y : pd.DataFrame, pd.Series or np.ndarray
+        return_to_mtype : bool
+            whether to return the mtype of y output
 
         Returns
         -------
-        y : object of sktime compatible time series type
+        y_inner : object of sktime compatible time series type
             can be Series, Panel, Hierarchical
+        y_metadata : dict
+            metadata of y, returned by check_is_scitype
+        y_mtype : str, only returned if return_to_mtype=True
+            mtype of y_inner, after convert
         """
         _check_y = BaseClassifier._check_y
-        return _check_y(self, y)
+        return _check_y(self, y, return_to_mtype=return_to_mtype)
 
     def _check_input(self, X, y=None, enforce_min_instances=1, return_metadata=True):
         """Check whether input X and y are valid formats with minimum data.
