@@ -77,7 +77,7 @@ dependencies = [
 # or "pip install sktime[all_extras_pandas2]", to install only pandas 2 compatible deps
 #
 all_extras = [
-  "arch<6.3.0,>=5.6",
+  "arch>=5.6,<6.4.0",
   "cloudpickle",
   "dash!=2.9.0",
   "dask",
@@ -113,7 +113,7 @@ all_extras = [
   "xarray",
 ]
 all_extras_pandas2 = [
-  "arch<6.3.0,>=5.6",
+  "arch>=5.6,<6.4.0",
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2023.12.2",
