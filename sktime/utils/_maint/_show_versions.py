@@ -85,10 +85,11 @@ def _get_deps_info(deps=None):
                 mod = sys.modules[modname]
             else:
                 mod = importlib.import_module(modname)
-            ver = get_version(mod)
-            deps_info[modname] = ver
         except ImportError:
             deps_info[modname] = None
+        else:
+            ver = get_version(mod)
+            deps_info[modname] = ver
 
     return deps_info
 
