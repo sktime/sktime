@@ -14,7 +14,7 @@ from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.deep_equals import deep_equals
 
 
 class AggrDist(BasePairwiseTransformerPanel):

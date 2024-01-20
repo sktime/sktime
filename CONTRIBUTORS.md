@@ -1,6 +1,10 @@
 Contributors
 ============
 
+<!-- IMPORTANT - DO NOT MODIFY THIS FILE DIRECTLY. -->
+<!-- This file is updated automatically from .all-contributorsrc -->
+<!-- Please add your badges to .all-contibutorsrc -->
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-249-orange.svg)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
