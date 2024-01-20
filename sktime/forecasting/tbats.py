@@ -119,6 +119,8 @@ class TBATS(_TbatsAdapter):
 
         self._ModelClass = _TBATS
 
+        raise ValueError("Oh no! A wild error appeared!")
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
