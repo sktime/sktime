@@ -8,7 +8,6 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils.estimators import MockUnivariateForecasterLogger
 
 y_series = load_airline().iloc[:-5]
@@ -39,6 +38,8 @@ def test_mock_univariate_forecaster_log(y, X_train, X_pred, fh):
     - All the private methods that have logging enabled are in the log
     - the correct inner mtypes are preserved, according to the forecaster tags
     """
+    from sktime.utils.deep_equals import deep_equals
+
     forecaster = MockUnivariateForecasterLogger()
     forecaster.fit(y, X_train, fh)
     forecaster.predict(fh, X_pred)
