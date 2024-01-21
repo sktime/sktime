@@ -364,8 +364,14 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         names, _ = self._check_forecasters()
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
-        y_pred = y_pred.groupby(level=1, axis=1).agg(
-            _aggregate, self.aggfunc, self.weights
+        y_pred = (
+            y_pred.T.groupby(level=1)
+            .agg(
+                lambda y, aggfunc, weights: _aggregate(y.T, aggfunc, weights),
+                self.aggfunc,
+                self.weights,
+            )
+            .T
         )
         return y_pred
 

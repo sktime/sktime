@@ -5,6 +5,8 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 
+__author__ = ["ChangWeiTan", "fstinner", "angus924"]
+
 
 class MultiRocketMultivariate(BaseTransformer):
     """Multi RandOm Convolutional KErnel Transform (MultiRocket).
@@ -197,6 +199,9 @@ class MultiRocketMultivariate(BaseTransformer):
             _fit_dilations,
             _quantiles,
         )
+
+        if self.random_state is not None:
+            np.random.seed(self.random_state)
 
         _, num_channels, input_length = X.shape
 
