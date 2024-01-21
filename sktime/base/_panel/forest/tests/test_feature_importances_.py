@@ -14,8 +14,6 @@ from sktime.transformations.panel.summarize._extract import (
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils._testing.panel import make_classification_problem
 
-X_train, y_train = make_classification_problem()
-
 
 @pytest.mark.xfail(reason="array dimension mismatch since 1.2.0, see #3930")
 def test_feature_importances_single_feature_interval_and_estimator():
@@ -41,6 +39,8 @@ def test_feature_importances_single_feature_interval_and_estimator():
     clf1 = ComposableTimeSeriesForestClassifier(
         estimator=base_estimator, random_state=random_state, n_estimators=1
     )
+
+    X_train, y_train = make_classification_problem()
     clf1.fit(X_train, y_train)
 
     # Extract the interval and the estimator, and compute using pipelines
@@ -100,6 +100,8 @@ def test_feature_importances_multi_intervals_estimators(n_intervals, n_estimator
     clf1 = ComposableTimeSeriesForestClassifier(
         estimator=base_estimator, random_state=random_state, n_estimators=n_estimators
     )
+
+    X_train, y_train = make_classification_problem()
     clf1.fit(X_train, y_train)
 
     fi_expected = np.zeros([n_estimators, n_intervals * n_features])
