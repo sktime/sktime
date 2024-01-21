@@ -58,6 +58,8 @@ class FitInTransform(BaseTransformer):
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
     """
 
+    _tags = {"authors": ["aiwalter", "fkiraly"]}
+
     def __init__(self, transformer, skip_inverse_transform=True):
         self.transformer = transformer
         self.skip_inverse_transform = skip_inverse_transform

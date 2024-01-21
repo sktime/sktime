@@ -78,6 +78,7 @@ class DOBIN(BaseTransformer):
     """
 
     _tags = {
+        "authors": "KatieBuc",
         "X_inner_mtype": "pd.DataFrame",
         "fit_is_empty": False,
         "skip-inverse-transform": True,

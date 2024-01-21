@@ -101,6 +101,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

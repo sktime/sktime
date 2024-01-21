@@ -169,6 +169,8 @@ class DateTimeFeatures(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["danbartl", "KishManani", "VyomkeshVyas"],
+        "maintainers": ["VyomkeshVyas"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

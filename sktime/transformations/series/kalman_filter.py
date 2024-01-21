@@ -271,6 +271,8 @@ class BaseKalmanFilter:
            https://www.stat.pitt.edu/stoffer/dss_files/em.pdf
     """
 
+    _tags = {"authors": ["NoaBenAmi", "lielleravid"], "maintainers": ["NoaBenAmi"]}
+
     def __init__(
         self,
         state_dim,

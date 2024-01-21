@@ -57,6 +57,8 @@ class SAX2(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["steenrotsman"],
+        "maintainers": ["steenrotsman"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,

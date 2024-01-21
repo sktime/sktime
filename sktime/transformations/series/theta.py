@@ -60,6 +60,7 @@ class ThetaLinesTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["GuzalBulatova", "mloning"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

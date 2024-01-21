@@ -73,6 +73,8 @@ class TimeSince(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["KishManani"],
+        "maintainers": ["KishManani"],
         # what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
         # what scitype is returned: Primitives, Series, Panel

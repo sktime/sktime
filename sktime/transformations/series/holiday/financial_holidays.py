@@ -67,6 +67,8 @@ class FinancialHolidaysTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": "yarnabrina",
+        "maintainers": "yarnabrina",
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,

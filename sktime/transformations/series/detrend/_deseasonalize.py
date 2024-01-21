@@ -63,6 +63,7 @@ class Deseasonalizer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning", "eyalshafran", "aiwalter"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

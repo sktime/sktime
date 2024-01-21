@@ -190,6 +190,8 @@ class WindowSummarizer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["danbartl", "grzegorzrut", "ltsaprounis"],
+        "maintainers": ["danbartl"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
@@ -646,6 +648,7 @@ class SummaryTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["RNKuhns", "fkiraly"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -846,6 +849,7 @@ class SplitterSummarizer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["BensHamza", "fkiraly"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

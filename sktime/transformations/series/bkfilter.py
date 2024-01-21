@@ -63,6 +63,8 @@ class BKFilter(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["klam-data", "pyyim", "mgorlin"],
+        "maintainers": "klam-data",
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

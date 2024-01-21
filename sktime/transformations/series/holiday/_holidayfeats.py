@@ -88,6 +88,8 @@ class HolidayFeatures(BaseTransformer):
 
     _required_parameters = ["calendar"]
     _tags = {
+        "authors": ["mloning", "VyomkeshVyas"],
+        "maintainers": "VyomkeshVyas",
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",

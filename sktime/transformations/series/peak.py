@@ -176,6 +176,8 @@ class PeakTimeFeature(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["ali-parizad"],
+        "maintainers": ["ali-parizad"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

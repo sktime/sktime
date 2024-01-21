@@ -68,6 +68,7 @@ class Detrender(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning", "SveaMeyer13", "KishManani", "fkiraly"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

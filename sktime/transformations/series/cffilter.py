@@ -51,6 +51,8 @@ class CFFilter(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["ken-maeda"],
+        "maintainers": ["ken-maeda"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

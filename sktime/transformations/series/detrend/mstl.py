@@ -99,6 +99,8 @@ class MSTL(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["luca-miniati"],
+        "maintainers": ["luca-miniati"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,

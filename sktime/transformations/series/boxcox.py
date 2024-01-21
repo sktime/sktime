@@ -158,6 +158,7 @@ class BoxCoxTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning", "aiwalter", "fkiraly"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

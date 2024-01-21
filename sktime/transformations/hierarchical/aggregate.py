@@ -49,6 +49,8 @@ class Aggregator(BaseTransformer):
     """
 
     _tags = {
+        "authors": "ciaran-g",
+        "maintainers": "ciaran-g",
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",

@@ -19,6 +19,8 @@ from sktime.transformations.base import BaseTransformer
 
 class _AugmenterTags:
     _tags = {
+        "authors": ["MrPr3ntice", "MFehsenfeld", "iljamaurer"],
+        "maintainers": ["MrPr3ntice", "MFehsenfeld", "iljamaurer"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
