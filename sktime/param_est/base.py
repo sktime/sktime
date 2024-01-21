@@ -60,6 +60,8 @@ class BaseParamFitter(BaseEstimator):
         "capability:multivariate": False,  # can estimator handle multivariate data?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(self):

@@ -30,6 +30,8 @@ class BaseDistribution(BaseObject):
         "approx_energy_spl": 1000,  # sample size used in MC estimates of energy
         "approx_spl": 1000,  # sample size used in other MC estimates
         "bisect_iter": 1000,  # max iters for bisection method in ppf
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(self, index=None, columns=None):
