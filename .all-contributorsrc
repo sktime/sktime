@@ -2533,8 +2533,27 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/16393653?v=4",
       "profile": "https://www.linkedin.com/in/maxfrohlich/",
       "contributions": [
-        "maintenance",
+        "code",
         "ideas",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "steenrotsman",
+      "name": "Stijn J. Rotman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78110080?s=400&v=4",
+      "profile": "https://github.com/steenrotsman",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "tvdboom",
+      "name": "Mavs",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32366550?v=4",
+      "profile": "https://github.com/tvdboom",
+      "contributions": [
         "code"
       ]
     }
