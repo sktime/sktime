@@ -903,7 +903,11 @@ class SignatureKernel(BasePairwiseTransformerPanel):
         Journal of Machine Learning Research.
     """
 
-    _tags = {"X_inner_mtype": "numpy3D", "pwtrafo_type": "kernel"}
+    _tags = {
+        "authors": "fkiraly",
+        "X_inner_mtype": "numpy3D",
+        "pwtrafo_type": "kernel",
+    }
 
     def __init__(
         self,

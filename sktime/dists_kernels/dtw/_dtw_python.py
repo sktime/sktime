@@ -38,6 +38,7 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
         "symmetric": True,  # all the distances are symmetric
         "capability:multivariate": True,  # can estimator handle multivariate data?

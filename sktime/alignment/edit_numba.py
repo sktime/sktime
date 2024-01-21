@@ -112,6 +112,7 @@ class AlignerEditNumba(BaseAligner):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "symmetric": True,  # all the distances are symmetric
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?

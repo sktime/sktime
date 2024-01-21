@@ -25,6 +25,7 @@ class AlignerNaive(BaseAligner):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "capability:multiple-alignment": True,  # can align more than two sequences?
     }
 

@@ -50,7 +50,11 @@ class DtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
            Signal Processing, vol. 26(1), pp. 43--49, 1978.
     """
 
-    _tags = {"symmetric": True, "pwtrafo_type": "distance"}
+    _tags = {
+        "authors": ["fkiraly"],
+        "symmetric": True,
+        "pwtrafo_type": "distance",
+    }
 
     def __init__(
         self,
