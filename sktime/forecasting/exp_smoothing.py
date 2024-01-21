@@ -234,7 +234,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
                 "damped_trend": False,
                 "seasonal": "add",
                 "sp": 2,
-                "use_boxcox": True,
+                "use_boxcox": False,
                 "initialization_method": "estimated",
                 "smoothing_level": 0.3,
                 "smoothing_trend": 0.5,
