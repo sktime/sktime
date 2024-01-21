@@ -22,7 +22,6 @@ from sklearn.ensemble._forest import (
 from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array, check_random_state, compute_sample_weight
 
-from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.random_state import set_random_state
 from sktime.utils.warnings import warn
 
@@ -292,6 +291,9 @@ class BaseTimeSeriesForest(BaseForest):
         # assumes particular structure of clf,
         # with each tree consisting of a particular pipeline,
         # as in modular tsf
+        from sktime.transformations.panel.summarize import (
+            RandomIntervalFeatureExtractor,
+        )
 
         if not isinstance(
             self.estimators_[0].steps[0][1], RandomIntervalFeatureExtractor
