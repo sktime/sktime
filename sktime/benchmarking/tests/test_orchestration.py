@@ -81,6 +81,7 @@ def test_automated_orchestration_vs_manual(data_loader):
 
 
 # extensive tests of orchestration and metric evaluation against sklearn
+@pytest.mark.skip(reason="failures since sklearn 1.4.0, see #5797")
 @pytest.mark.parametrize(
     "dataset",
     [
