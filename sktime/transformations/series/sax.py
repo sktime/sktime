@@ -4,9 +4,11 @@ import numpy as np
 from scipy.stats import norm, zscore
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.paa import PAA2
+from sktime.transformations.series.paa import PAA
+from sktime.utils.warnings import warn
 
 
+#TODO 0.27.0: rename the class SAX2 to SAX
 class SAX2(BaseTransformer):
     """Symbolic Aggregate approXimation Transformer (SAX).
 
@@ -77,6 +79,19 @@ class SAX2(BaseTransformer):
 
         super().__init__()
 
+        warn(
+            "In sktime 0.27.0, SAX2 will become the primary SAX implementation in "
+            "sktime, and will be renamed to SAX. "
+            "SAX2 is available under both its current and future name at its "
+            "current location, imports under the deprecated name SAX2 will be possible"
+            "until 0.28.0. "
+            "To prepare for the name change, replace imports of SAX2 from "
+            "sktime.transformations.series.sax by imports of SAX from the same "
+            "module.",
+            DeprecationWarning,
+            obj=self,
+        )
+
         self._check_params()
 
     def _transform(self, X, y=None):
@@ -97,7 +112,7 @@ class SAX2(BaseTransformer):
             transformed version of X
         """
         X_transformed = zscore(X)
-        paa = PAA2(self.word_size, self.frame_size)
+        paa = PAA(self.word_size, self.frame_size)
         X_transformed = paa.fit_transform(X_transformed)
         X_transformed = np.digitize(X_transformed, self._get_breakpoints())
         return X_transformed
@@ -139,3 +154,8 @@ class SAX2(BaseTransformer):
             raise ValueError("alphabet_size must be at least 2.")
         if self.frame_size < 0:
             raise ValueError("frame_size must be at least 0.")
+
+
+#TODO 0.27.0: switch to SAX2 = SAX
+#TODO 0.28.0: remove the alias line altogether
+SAX = SAX2
