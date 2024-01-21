@@ -313,7 +313,6 @@ def all_tags(
     """
 
     def is_tag_for_type(tag, estimator_types):
-        """"""
         tag_types = tag[1]
         tag_types = _check_list_of_str_or_error(tag_types, "tag_types")
 
