@@ -92,16 +92,15 @@ def get_changed_lines(file_path):
     -------
     list of str : changed lines
     """
+    cmd = f"git diff remotes/origin/main -- {file_path}"
+
     try:
         # Run 'git diff' command to get the changes in the specified file
-        result = subprocess.run(
-            ["git", "diff", file_path], capture_output=True, text=True, check=True
-        )
+        result = subprocess.check_output(cmd, shell=True, text=True)
 
         # Extract the changed or new lines and return as a list of strings
-        diff_output = result.stdout
         changed_lines = [
-            line.strip() for line in diff_output.split("\n") if line.startswith("+ ")
+            line.strip() for line in result.split("\n") if line.startswith("+ ")
         ]
         # remove first character ('+') from each line
         changed_lines = [line[1:] for line in changed_lines]
@@ -118,7 +117,7 @@ def get_packages_with_changed_specs():
 
     Returns
     -------
-    list of str : packages with changed or added specs
+    list of str : names of packages with changed or added specs
     """
     from packaging.requirements import Requirement
 
@@ -141,5 +140,8 @@ def get_packages_with_changed_specs():
 
         pkg = Requirement(req).name
         packages.append(pkg)
+
+    # make unique
+    packages = list(set(packages))
 
     return packages
