@@ -108,8 +108,7 @@ def get_changed_lines(file_path):
         return changed_lines
 
     except subprocess.CalledProcessError as e:
-        # Handle errors, if any
-        raise e
+        return []
 
 
 def get_packages_with_changed_specs():
