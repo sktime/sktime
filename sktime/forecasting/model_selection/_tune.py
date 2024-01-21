@@ -233,6 +233,7 @@ class BaseGridSearch(_DelegatedForecaster):
             out = parallelize(
                 fun=_fit_and_score,
                 iter=candidate_params,
+                meta=meta,
                 backend=backend,
                 backend_params=backend_params,
             )
