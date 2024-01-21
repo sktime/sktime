@@ -159,6 +159,7 @@ class Catch22(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
