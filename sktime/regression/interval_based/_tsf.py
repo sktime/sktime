@@ -8,11 +8,8 @@ from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
+from sktime.base._panel.forest._tsf import BaseTimeSeriesForest, _transform
 from sktime.regression.base import BaseRegressor
-from sktime.series_as_features.base.estimators.interval_based._tsf import (
-    BaseTimeSeriesForest,
-    _transform,
-)
 
 
 class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegressor):

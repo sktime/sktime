@@ -200,6 +200,9 @@ class MultiRocketMultivariate(BaseTransformer):
             _quantiles,
         )
 
+        if self.random_state is not None:
+            np.random.seed(self.random_state)
+
         _, num_channels, input_length = X.shape
 
         num_kernels = 84

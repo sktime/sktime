@@ -1,4 +1,6 @@
 """Tests for the show_versions utility."""
+import pathlib
+import uuid
 
 from sktime.utils._maint._show_versions import (
     DEFAULT_DEPS_TO_SHOW,
@@ -31,3 +33,15 @@ def test_deps_info():
             assert _check_soft_dependencies(f"{key}=={deps_info_default[key]}")
         deps_single_key = _get_deps_info([key])
         assert set(deps_single_key.keys()) == {key}
+
+
+def test_deps_info_deps_missing_package_present_directory():
+    """Test that _get_deps_info does not fail if a dependency is missing."""
+    dummy_package_name = uuid.uuid4().hex
+
+    dummy_folder_path = pathlib.Path(dummy_package_name)
+    dummy_folder_path.mkdir()
+
+    assert _get_deps_info([dummy_package_name]) == {dummy_package_name: None}
+
+    dummy_folder_path.rmdir()

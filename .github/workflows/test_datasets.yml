@@ -1,4 +1,4 @@
-name: datasets validation
+name: datasets
 on:
   schedule:
     - cron: 0 0 1 * *
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   test_internal_data:
-    name: test data shipped with sktime
+    name: onboard
     strategy:
       fail-fast: false
       matrix:
@@ -45,7 +45,7 @@ jobs:
         with:
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets
   test_external_data:
-    name: test data downloaded from external sources
+    name: downloads
     strategy:
       fail-fast: false
       matrix:
