@@ -1,8 +1,6 @@
 name: validate code quality workflow
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 jobs:
   code_quality:
     name: test code quality
