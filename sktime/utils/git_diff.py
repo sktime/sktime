@@ -107,7 +107,7 @@ def get_changed_lines(file_path):
 
         return changed_lines
 
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         return []
 
 
