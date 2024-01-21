@@ -13,7 +13,7 @@ from sktime.utils.warnings import warn
 __author__ = ["MatthewMiddlehurst"]
 
 
-#TODO 0.27.0: rename the class SAX to SAXlegacy
+# TODO 0.27.0: rename the class SAX to SAXlegacy
 class SAX(BaseTransformer):
     """Symbolic Aggregate approXimation (SAX) transformer.
 
@@ -235,6 +235,6 @@ class SAX(BaseTransformer):
         return params
 
 
-#TODO 0.27.0: switch the line to SAX = SAXlegacy
-#TODO 0.28.0: remove this alias altogether
+# TODO 0.27.0: switch the line to SAX = SAXlegacy
+# TODO 0.28.0: remove this alias altogether
 SAXlegacy = SAX

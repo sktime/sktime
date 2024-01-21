@@ -8,7 +8,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.warnings import warn
 
 
-#TODO 0.27.0: rename the class PAA2 to PAA
+# TODO 0.27.0: rename the class PAA2 to PAA
 class PAA2(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
@@ -166,6 +166,6 @@ class PAA2(BaseTransformer):
             raise ValueError("frames must be at least 1.")
 
 
-#TODO 0.27.0: switch to PAA2 = PAA
-#TODO 0.28.0: remove the alias line altogether
+# TODO 0.27.0: switch to PAA2 = PAA
+# TODO 0.28.0: remove the alias line altogether
 PAA = PAA2

@@ -8,7 +8,7 @@ from sktime.utils.warnings import warn
 __author__ = ["MatthewMiddlehurst"]
 
 
-#TODO 0.27.0: rename the class PAA to PAAlegacy
+# TODO 0.27.0: rename the class PAA to PAAlegacy
 class PAA(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
@@ -173,6 +173,6 @@ class PAA(BaseTransformer):
             )
 
 
-#TODO 0.27.0: switch the line to PAA = PAAlegacy
-#TODO 0.28.0: remove this alias altogether
+# TODO 0.27.0: switch the line to PAA = PAAlegacy
+# TODO 0.28.0: remove this alias altogether
 PAAlegacy = PAA
