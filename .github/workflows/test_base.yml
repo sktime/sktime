@@ -1,9 +1,9 @@
-name: test base component
+name: base
 on:
   workflow_call:
 jobs:
   detect:
-    name: detect changes in base component
+    name: detect
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -15,10 +15,11 @@ jobs:
         with:
           filters: |
             base:
+              - pyproject.toml
               - sktime/base/**
   test:
     needs: detect
-    name: test base component
+    name:
     if: ${{ needs.detect.outputs.base == 'true' }}
     strategy:
       fail-fast: false
@@ -37,12 +38,14 @@ jobs:
     steps:
       - name: checkout pull request branch
         uses: actions/checkout@v4
+
       - name: run tests on python ${{ matrix.python-version }}
         uses: ./.github/actions/test-base
         with:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "True"
           test-affected-estimators: "True"
+
       - name: upload coverage
         uses: codecov/codecov-action@v3
         with:

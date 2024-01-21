@@ -18,8 +18,8 @@ from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
 
+from sktime.base._panel.forest._composable import BaseTimeSeriesForest
 from sktime.regression.base import BaseRegressor
-from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
