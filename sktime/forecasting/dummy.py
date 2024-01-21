@@ -56,6 +56,7 @@ class ForecastKnownValues(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "both",

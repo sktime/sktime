@@ -93,6 +93,8 @@ class AutoREG(_StatsModelsAdapter):
     """
 
     _tags = {
+        "authors": ["jonathanbechtel", "mgazian000", "CTFallon"],
+        "maintainers": ["jonathanbechtel", "mgazian000", "CTFallon"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",

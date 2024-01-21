@@ -19,6 +19,8 @@ class _StatsModelsAdapter(BaseForecaster):
 
     _fitted_param_names = ()
     _tags = {
+        "authors": ["mloning", "ciaran-g"],
+        "maintainers": ["ciaran-g"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

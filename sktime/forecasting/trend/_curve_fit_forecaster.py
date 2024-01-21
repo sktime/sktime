@@ -74,6 +74,8 @@ class CurveFitForecaster(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["benheid"],
+        "maintainers": ["benheid"],
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",

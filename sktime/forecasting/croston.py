@@ -70,6 +70,7 @@ class Croston(BaseForecaster):
     """
 
     _tags = {
+        "authors": "Riyabelle25",
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
     }
 

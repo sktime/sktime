@@ -119,6 +119,7 @@ class ConformalIntervals(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["fkiraly", "bethrice44"],
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
