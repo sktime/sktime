@@ -14,11 +14,8 @@ from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
+from sktime.base._panel.forest._tsf import BaseTimeSeriesForest, _transform
 from sktime.classification.base import BaseClassifier
-from sktime.series_as_features.base.estimators.interval_based import (
-    BaseTimeSeriesForest,
-)
-from sktime.series_as_features.base.estimators.interval_based._tsf import _transform
 
 
 class TimeSeriesForestClassifier(
@@ -262,13 +259,13 @@ class TimeSeriesForestClassifier(
         """Return the temporal feature importances.
 
         There is an implementation of temporal feature importance in
-        BaseTimeSeriesForest in sktime.series_as_features.base.estimators
+        BaseTimeSeriesForest in sktime.base._panel.forest._composable
         but TimeseriesForestClassifier is inheriting from
-        sktime.series_as_features.base.estimators.interval_base._tsf.py
+        sktime.base._panel.forest._tsf.py
         which does not have feature_importance_.
 
         Other feature importance methods implementation:
-        >>> from sktime.series_as_features.base.estimators import BaseTimeSeriesForest
+        >>> from sktime.base._panel.forest._composable import BaseTimeSeriesForest
 
         Returns
         -------
