@@ -1,11 +1,9 @@
-name: validate code quality workflow
+name: CI
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 jobs:
   code_quality:
-    name: test code quality
+    name: code quality
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
@@ -25,6 +23,7 @@ jobs:
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
   detect:
+    needs: code_quality
     name: detect changes
     runs-on: ubuntu-latest
     permissions:
@@ -42,25 +41,25 @@ jobs:
               - sktime/datasets/**
             pyproject:
               - pyproject.toml
-  test_install_extras:
+  test:
     needs: detect
-    name: validate extra installs
+    name: install
     if: ${{ needs.detect.outputs.pyproject == 'true' }}
-    uses: ./.github/workflows/validate_extras.yml
+    uses: ./.github/workflows/test_install.yml
   unit_test_base:
     needs: code_quality
-    name: run unit tests for base framework
+    name: base
     uses: ./.github/workflows/test_base.yml
-  unit_test_components_with_extras:
+  unit_test_module:
     needs: code_quality
-    name: run unit tests for individual components with extras
-    uses: ./.github/workflows/test_components_with_extras.yml
-  unit_test_components_without_extras:
+    name: module
+    uses: ./.github/workflows/test_module.yml
+  unit_test_other:
     needs: code_quality
-    name: run unit tests for individual components without extras
-    uses: ./.github/workflows/test_components_without_extras.yml
+    name: other
+    uses: ./.github/workflows/test_other.yml
   unit_test_datasets:
     needs: detect
-    name: run unit tests for datasets
+    name: datasets
     if: ${{ needs.detect.outputs.datasets == 'true' }}
-    uses: ./.github/workflows/validate_datasets.yml
+    uses: ./.github/workflows/test_datasets.yml
