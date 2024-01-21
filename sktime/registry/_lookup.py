@@ -302,11 +302,13 @@ def all_tags(
         must be in _base_classes.BASE_CLASS_SCITYPE_LIST
         c : string - expected type of the tag value
         should be one of:
-            "bool" - valid values are True/False
-            "int" - valid values are all integers
-            "str" - valid values are all strings
-            ("str", list_of_string) - any string in list_of_string is valid
-            ("list", list_of_string) - any individual string and sub-list is valid
+
+            * ``"bool"`` - valid values are True/False
+            * ``"int"`` - valid values are all integers
+            * ``"str"`` - valid values are all strings
+            * ``("str", "list_of_string")`` - any string in ``list_of_string`` is valid
+            * ``("list", "list_of_string")`` - any string element or sub-list is valid
+
         d : string - plain English description of the tag
     """
 
