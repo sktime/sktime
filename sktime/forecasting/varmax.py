@@ -208,7 +208,7 @@ class VARMAX(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "author": "KatieBuc",
+        "authors": "KatieBuc",
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
