@@ -749,3 +749,26 @@ def test_exogenousx_ignore_tag_set():
     assert not pipe8.get_tag("ignores-exogeneous-X")
     assert not pipe9.get_tag("ignores-exogeneous-X")
     assert pipe10.get_tag("ignores-exogeneous-X")
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_pipeline_exogenous_none():
+    """Test ForecastingPipeline works with a transformer returning None."""
+    from sktime.transformations.series.feature_selection import FeatureSelection
+
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
+
+    pipe = ForecastingPipeline(
+        [
+            ("select_X", FeatureSelection(method="none")),
+            ("arima", ARIMA()),
+        ]
+    )
+
+    pipe.fit(y_train, X_train, fh=[1, 2, 3])
+    y_pred = pipe.predict(X=X_test)
+    assert np.all(y_pred.index == y_test.index)

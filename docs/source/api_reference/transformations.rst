@@ -7,7 +7,7 @@ The :mod:`sktime.transformations` module contains classes for data
 transformations.
 
 All (simple) transformers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
-using ``estimator_types="regressor"``, optionally filtered by tags.
+using ``estimator_types="transformer"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
 For pairwise transformers (time series distances, kernels), instead see :ref:`_transformations_pairwise_ref`.
@@ -188,9 +188,7 @@ Dictionary-based features
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
     SFA
-    SAX
 
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
@@ -446,6 +444,31 @@ Binning, sampling and segmentation
     :template: class.rst
 
     DilationMappingTransformer
+
+.. currentmodule:: sktime.transformations.series.paa
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAA2
+
+.. currentmodule:: sktime.transformations.series.sax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SAX2
+
+.. currentmodule:: sktime.transformations.panel.dictionary_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAA
+    SAX
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~

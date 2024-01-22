@@ -133,8 +133,10 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
-        "python_version": None,  # PEP 440 python version specifier to limit versions
         "remember_data": False,  # whether all data seen is remembered as self._X
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     # default config values
@@ -573,7 +575,7 @@ class BaseTransformer(BaseEstimator):
         output_conv = configs["output_conversion"]
 
         # convert to output mtype
-        if X is None:
+        if X is None or Xt is None:
             X_out = Xt
         elif input_conv and output_conv:
             X_out = self._convert_output(Xt, metadata=metadata)
