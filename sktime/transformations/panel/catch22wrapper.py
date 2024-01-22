@@ -72,7 +72,7 @@ class Catch22Wrapper(BaseTransformer):
 
     _tags = {
         "authors": ["MatthewMiddlehurst"],
-        "maintainer": "benfulcher",
+        "maintainers": "benfulcher",
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
