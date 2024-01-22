@@ -82,7 +82,7 @@ if _check_soft_dependencies("numba", severity="none"):
             ]
         ),
         CalibratedClassifierCV(
-            base_estimator=CanonicalIntervalForest.create_test_instance(),
+            estimator=CanonicalIntervalForest.create_test_instance(),
             cv=3,
         ),
     ]
