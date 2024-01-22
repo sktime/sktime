@@ -86,9 +86,12 @@ class TapNetClassifier(BaseDeepClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["jnrusson1", "TonyBagnall", "achieveordie"],
         "maintainers": ["jnrusson1", "achieveordie"],
         "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
     }
 
     def __init__(

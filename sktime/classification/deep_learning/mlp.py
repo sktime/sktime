@@ -61,8 +61,11 @@ class MLPClassifier(BaseDeepClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["James-Large", "AurumnPegasus"],
         "maintainers": ["James-Large", "AurumnPegasus"],
+        # estimator type handled by parent class
     }
 
     def __init__(

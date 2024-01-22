@@ -55,9 +55,12 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["jnrusson1", "solen0id"],
         "maintainers": ["jnrusson1", "solen0id"],
         "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
     }
 
     def __init__(

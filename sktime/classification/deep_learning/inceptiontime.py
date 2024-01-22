@@ -44,8 +44,11 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["james-large"],
         "maintainers": ["james-large"],
+        # estimator type handled by parent class
     }
 
     def __init__(

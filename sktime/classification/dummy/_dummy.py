@@ -60,6 +60,12 @@ class DummyClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ZiyaoWei"],
+        "maintainers": ["ZiyaoWei"],
+        # estimator type
+        # --------------
         "X_inner_mtype": "nested_univ",
         "capability:missing_values": True,
         "capability:unequal_length": True,

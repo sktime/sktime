@@ -66,9 +66,12 @@ class CNNClassifier(BaseDeepClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["James-Large", "TonyBagnall"],
         "maintainers": ["James-Large"],
         "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
     }
 
     def __init__(

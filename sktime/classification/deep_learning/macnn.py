@@ -78,9 +78,12 @@ class MACNNClassifier(BaseDeepClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["jnrusson1"],
         "maintainers": "jnrusson1",
         "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
     }
 
     def __init__(

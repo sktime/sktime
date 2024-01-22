@@ -126,11 +126,16 @@ class BOSSEnsemble(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "author": ["MatthewMiddlehurst", "patrickzib"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:train_estimate": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
         "capability:predict_proba": True,
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -529,8 +534,13 @@ class IndividualBOSS(BaseClassifier):
     """
 
     _tags = {
-        "capability:multithreading": True,
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "patrickzib"],
         "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:multithreading": True,
     }
 
     def __init__(
