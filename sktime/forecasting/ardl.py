@@ -196,7 +196,7 @@ class ARDL(_StatsModelsAdapter):
         # packaging info
         # --------------
         "authors": "kcc-lion",
-        "maintainer": "kcc-lion",
+        "maintainers": "kcc-lion",
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type
         # --------------
