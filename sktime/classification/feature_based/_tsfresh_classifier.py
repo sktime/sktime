@@ -65,12 +65,17 @@ class TSFreshClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_version": "<3.10",
+        "python_dependencies": "tsfresh",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
-        "python_version": "<3.10",
-        "python_dependencies": "tsfresh",
     }
 
     def __init__(

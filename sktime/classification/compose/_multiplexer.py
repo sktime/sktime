@@ -55,6 +55,7 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "capability:multioutput": True,
         "capability:multivariate": True,
         "capability:unequal_length": True,

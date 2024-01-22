@@ -1,8 +1,6 @@
 """Multi Channel Deep Convolutional Neural Regressor (MCDCNN)."""
 
-__author__ = [
-    "JamesLarge",
-]
+__author__ = ["James-Large"]
 
 from copy import deepcopy
 
@@ -79,7 +77,13 @@ class MCDCNNRegressor(BaseDeepRegressor):
     MCDCNRegressor(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["James-Large"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
