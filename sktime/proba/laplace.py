@@ -29,6 +29,7 @@ class Laplace(BaseDistribution):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "capabilities:approx": ["pdfnorm"],
         "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
         "distr:measuretype": "continuous",

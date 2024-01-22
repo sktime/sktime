@@ -32,6 +32,8 @@ class TDistribution(BaseDistribution):
     """
 
     _tags = {
+        "authors": ["Alex-JG3"],
+        "maintainers": ["Alex-JG3"],
         "capabilities:approx": ["pdfnorm", "energy"],
         "capabilities:exact": ["mean", "var", "pdf", "log_pdf", "cdf", "ppf"],
         "distr:measuretype": "continuous",
