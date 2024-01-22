@@ -36,6 +36,8 @@ class BaseClusterer(BaseEstimator):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:multithreading": False,
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(self, n_clusters: int = None):

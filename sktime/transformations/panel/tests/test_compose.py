@@ -1,5 +1,6 @@
 """Tests for panel compositors."""
 import numpy as np
+import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -7,8 +8,13 @@ from sklearn.preprocessing import FunctionTransformer
 from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.reduce import Tabularizer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("sklearn<1.4", severity="none"),
+    reason="ColumnTransformer requires sklearn<1.4 due to reliance on private methods",
+)
 def test_ColumnTransformer_pipeline():
     """Test pipeline with ColumnTransformer."""
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)

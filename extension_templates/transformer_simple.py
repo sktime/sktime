@@ -172,6 +172,23 @@ class MyTransformer(BaseTransformer):
         "handles-missing-data": False,  # can estimator handle missing data?
         # valid values: boolean True (yes), False (no)
         # if False, may raise exception when passed time series with missing values
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
     }
 
     # todo: add any hyper-parameters and components to constructor

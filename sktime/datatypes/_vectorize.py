@@ -275,6 +275,9 @@ class VectorizedDF:
         if is_self_iter:
             yield from _iter_cols(self.X_multiindex)
         else:
+            if isinstance(iter_levels, (list, tuple)) and len(iter_levels) == 1:
+                # single level, groupby expects scalar
+                iter_levels = iter_levels[0]
             for name, group in self.X_multiindex.groupby(level=iter_levels, sort=False):
                 yield from _iter_cols(group.droplevel(iter_levels), group_name=name)
 

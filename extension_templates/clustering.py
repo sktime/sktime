@@ -72,6 +72,12 @@ class MyClusterer(BaseClusterer):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:multithreading": False,
+        # specify one or multiple authors and maintainers, only for sktime contribution
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        # maintainer = algorithm maintainer role, "owner"
+        # remove maintainer tag if maintained by sktime core team
     }
 
     # todo: add any hyper-parameters and components to constructor
