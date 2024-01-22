@@ -128,7 +128,7 @@ class BOSSEnsemble(BaseClassifier):
     _tags = {
         # packaging info
         # --------------
-        "author": ["MatthewMiddlehurst", "patrickzib"],
+        "authors": ["MatthewMiddlehurst", "patrickzib"],
         "python_dependencies": "numba",
         # estimator type
         # --------------

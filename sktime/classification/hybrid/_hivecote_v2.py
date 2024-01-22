@@ -92,7 +92,7 @@ class HIVECOTEV2(BaseClassifier):
     _tags = {
         # packaging info
         # --------------
-        "author": "MatthewMiddlehurst",
+        "authors": "MatthewMiddlehurst",
         "python_dependencies": "numba",
         # estimator type
         # --------------
