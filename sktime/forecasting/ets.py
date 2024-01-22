@@ -174,8 +174,13 @@ class AutoETS(_StatsModelsAdapter):
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["hyang1996"],
         "maintainers": ["hyang1996"],
+        # "python_dependencies": "statmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

@@ -19,12 +19,16 @@ class _StatsModelsAdapter(BaseForecaster):
 
     _fitted_param_names = ()
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "ciaran-g"],
         "maintainers": ["ciaran-g"],
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, random_state=None):

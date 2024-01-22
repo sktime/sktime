@@ -176,8 +176,14 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["FedericoGarza", "yarnabrina"],
         "maintainers": ["FedericoGarza"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -358,6 +364,14 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["yarnabrina"],
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -454,6 +468,14 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["yarnabrina"],
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -538,6 +560,14 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["yarnabrina"],
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -631,10 +661,17 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "luca-miniati",
+        "maintainers": "luca-miniati",
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast"],
     }
 
     def __init__(

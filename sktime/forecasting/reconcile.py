@@ -80,8 +80,12 @@ class ReconcilerForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "ciaran-g",
         "maintainers": "ciaran-g",
+        # estimator type
+        # --------------
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?

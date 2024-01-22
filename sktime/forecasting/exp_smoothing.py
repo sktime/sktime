@@ -109,7 +109,13 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     ExponentialSmoothing(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
-    _tags = {"authors": ["mloning", "big-o"]}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "big-o"],
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type tags inherited from _StatsModelsAdapter
+    }
 
     _fitted_param_names = (
         "initial_level",

@@ -65,8 +65,12 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["luca-miniati"],
         "maintainers": ["luca-miniati"],
+        # "python_dependencis": "pytorch" - inherited from BaseDeepNetworkPyTorch
+        # estimator type vars inherited from BaseDeepNetworkPyTorch
     }
 
     def __init__(

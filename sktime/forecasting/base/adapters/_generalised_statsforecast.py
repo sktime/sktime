@@ -16,8 +16,14 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     """Base adapter class for StatsForecast models."""
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["yarnabrina"],
         "maintainers": ["yarnabrina"],
+        "python_version": ">=3.8",
+        "python_dependencies": ["statsforecast"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -25,8 +31,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
         "handles-missing-data": False,
-        "python_version": ">=3.8",
-        "python_dependencies": ["statsforecast"],
     }
 
     def __init__(self):
