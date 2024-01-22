@@ -102,19 +102,9 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if X passed has more than one variable
         #
-        #
-        # dependency tags: python version and soft dependencies
-        # -----------------------------------------------------
-        #
-        # python version requirement
-        "python_version": None,
-        # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python version is incompatible
-        #
-        # soft dependency requirement
-        "python_dependencies": None,
-        # valid values: str or list of str
-        # raises exception at construction if modules at strings cannot be imported
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
         #
         # ownership and contribution tags
         # -------------------------------
@@ -132,6 +122,19 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         "maintainers": ["maintainer1", "maintainer2"],
         # valid values: str or list of str, should be GitHub handles
         # remove tag if maintained by sktime core team
+        #
+        # dependency tags: python version and soft dependencies
+        # -----------------------------------------------------
+        #
+        # python version requirement
+        "python_version": None,
+        # valid values: str, PEP 440 valid python version specifiers
+        # raises exception at construction if local python version is incompatible
+        #
+        # soft dependency requirement
+        "python_dependencies": None,
+        # valid values: str or list of str
+        # raises exception at construction if modules at strings cannot be imported
     }
     #  in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
