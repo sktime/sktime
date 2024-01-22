@@ -88,6 +88,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": SUPPORTED_MTYPES,
         # which types do _fit/_predict, support for X?
         "scitype:X": ["Series", "Panel", "Hierarchical"],

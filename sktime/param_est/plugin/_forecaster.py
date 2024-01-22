@@ -106,6 +106,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "scitype:y": "both",
