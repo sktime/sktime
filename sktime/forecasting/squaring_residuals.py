@@ -80,6 +80,8 @@ class SquaringResiduals(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["kcc-lion", "fkiraly"],
+        "maintainers": ["kcc-lion"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?

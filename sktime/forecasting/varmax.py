@@ -206,6 +206,7 @@ class VARMAX(_StatsModelsAdapter):
     """
 
     _tags = {
+        "author": "KatieBuc",
         "scitype:y": "multivariate",
         "ignores-exogeneous-X": False,
         "handles-missing-data": False,

@@ -64,6 +64,11 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     Freq: M, Name: Number of airline passengers, dtype: float32
     """
 
+    _tags = {
+        "authors": ["luca-miniati"],
+        "maintainers": ["luca-miniati"],
+    }
+
     def __init__(
         self,
         seq_len,

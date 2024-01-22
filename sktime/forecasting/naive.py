@@ -108,6 +108,16 @@ class NaiveForecaster(_BaseWindowForecaster):
     """
 
     _tags = {
+        "authors": [
+            "mloning",
+            "piyush1729",
+            "sri1419",
+            "Flix6x",
+            "aiwalter",
+            "IlyasMoutawwakil",
+            "fkiraly",
+            "bethrice44",
+        ],
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
@@ -654,6 +664,7 @@ class NaiveVariance(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["fkiraly", "bethrice44"],
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

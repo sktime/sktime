@@ -198,6 +198,8 @@ class UnobservedComponents(_StatsModelsAdapter):
     """
 
     _tags = {
+        "authors": ["juanitorduz"],
+        "maintainers": ["juanitorduz"],
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "handles-missing-data": False,

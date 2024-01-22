@@ -121,6 +121,8 @@ class DynamicFactor(_StatsModelsAdapter):
     """
 
     _tags = {
+        "authors": ["Ris-Bali", "lbventura"],
+        "maintainers": ["Ris-Bali", "lbventura"],
         "scitype:y": "multivariate",
         "ignores-exogeneous-X": False,
         "handles-missing-data": True,

@@ -208,6 +208,8 @@ class SARIMAX(_StatsModelsAdapter):
     """
 
     _tags = {
+        "authors": ["TNTran92", "yarnabrina"],
+        "maintainers": ["TNTran92", "yarnabrina"],
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

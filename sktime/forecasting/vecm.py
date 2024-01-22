@@ -77,6 +77,7 @@ class VECM(_StatsModelsAdapter):
     """
 
     _tags = {
+        "authors": ["thayeylolu", "AurumnPegasus"],
         "scitype:y": "multivariate",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",

@@ -135,7 +135,7 @@ class STLForecaster(BaseForecaster):
 
     _tags = {
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
-        "maintainers": ["tensorflow-as-tf"]
+        "maintainers": ["tensorflow-as-tf"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?

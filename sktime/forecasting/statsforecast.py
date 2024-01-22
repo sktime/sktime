@@ -176,6 +176,8 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        "authors": ["FedericoGarza", "yarnabrina"],
+        "maintainers": ["FedericoGarza"],
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

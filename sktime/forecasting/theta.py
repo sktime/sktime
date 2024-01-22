@@ -89,6 +89,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
+        "authors": ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"],
         "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
@@ -411,6 +412,7 @@ class ThetaModularForecaster(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["GuzalBulatova", "fkiraly"],
         "univariate-only": False,
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
