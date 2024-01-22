@@ -47,12 +47,17 @@ class AlignerDTW(BaseAligner):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        "python_dependencies": "dtw-python",
+        "python_dependencies_alias": {"dtw-python": "dtw"},
+        # estimator type
+        # --------------
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "alignment_type": "partial",
-        "python_dependencies": "dtw-python",
-        "python_dependencies_alias": {"dtw-python": "dtw"},
     }
 
     def __init__(

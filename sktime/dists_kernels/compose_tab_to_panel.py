@@ -64,6 +64,8 @@ class AggrDist(BasePairwiseTransformerPanel):
     >>> mean_gaussian_tskernel = AggrDist(RBF())
     """
 
+    _tags = {"authors": "fkiraly"}
+
     def __init__(
         self,
         transformer,
@@ -195,6 +197,7 @@ class FlatDist(BasePairwiseTransformerPanel):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "numpy3D",  # which mtype is used internally in _transform?
         "capability:unequal_length": False,
     }

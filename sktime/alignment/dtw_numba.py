@@ -117,11 +117,16 @@ class AlignerDtwNumba(BaseAligner):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["chrisholder", "TonyBagnall", "fkiraly"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "X_inner_mtype": "numpy3D",
-        "python_dependencies": "numba",
     }
 
     def __init__(
