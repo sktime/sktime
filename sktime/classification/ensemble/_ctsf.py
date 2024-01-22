@@ -174,6 +174,12 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "AyushmaanSeth"],
+        "maintainers": ["AyushmaanSeth"],
+        # estimator type
+        # --------------
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
     }
 

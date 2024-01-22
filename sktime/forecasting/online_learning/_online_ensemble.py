@@ -24,6 +24,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["magittan", "mloning"],
+        "maintainers": ["magittan"],
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

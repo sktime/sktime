@@ -50,7 +50,16 @@ class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
        human behavior". NIPS 2009.
     """
 
-    _tags = {"symmetric": True, "pwtrafo_type": "distance"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        "python_dependencies": ["tslearn"],
+        # estimator type
+        # --------------
+        "symmetric": True,
+        "pwtrafo_type": "distance",
+    }
 
     def __init__(
         self,

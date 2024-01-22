@@ -104,7 +104,15 @@ class TimeSeriesForestClassifier(
     _feature_types = ["mean", "std", "slope"]
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
-    _tags = {"capability:predict_proba": True}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["kkoziara", "luiszugasti", "kanand77"],
+        "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        # estimator type
+        # --------------
+        "capability:predict_proba": True,
+    }
 
     def __init__(
         self,

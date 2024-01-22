@@ -111,6 +111,12 @@ class ShapeDTW(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["vincent-nich12"],
+        "maintainers": ["vincent-nich12"],
+        # estimator type
+        # --------------
         "capability:predict_proba": True,
         "classifier_type": "distance",
     }

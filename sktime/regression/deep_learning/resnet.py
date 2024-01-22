@@ -59,7 +59,14 @@ class ResNetRegressor(BaseDeepRegressor):
     ResNetRegressor(...)
     """
 
-    _tags = {"python_dependencies": ["tensorflow"]}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["James-Large", "Withington"],
+        "maintainers": ["Withington"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,

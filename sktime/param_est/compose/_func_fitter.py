@@ -99,6 +99,8 @@ class FunctionParamFitter(BaseParamFitter):
     """
 
     _tags = {
+        "authors": ["tpvasconcelos"],
+        "maintainers": ["tpvasconcelos"],
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "scitype:X": ["Series", "Panel", "Hierarchical"],
         "capability:missing_values": True,
