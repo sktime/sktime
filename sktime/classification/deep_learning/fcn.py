@@ -60,6 +60,11 @@ class FCNClassifier(BaseDeepClassifier):
     FCNClassifier(...)
     """
 
+    _tags = {
+        "authors": ["James-Large", "AurumnPegasus"],
+        "maintainers": ["James-Large", "AurumnPegasus"],
+    }
+
     def __init__(
         self,
         n_epochs=2000,

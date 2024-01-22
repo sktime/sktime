@@ -54,6 +54,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     https://github.com/Mcompetitions/M4-methods
     """
 
+    _tags = {"authors": ["mloning"]}
+
     def __init__(
         self,
         num_epochs=None,

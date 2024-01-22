@@ -65,7 +65,11 @@ class CNNClassifier(BaseDeepClassifier):
     CNNClassifier(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["James-Large", "TonyBagnall"],
+        "maintainers": ["James-Large"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,

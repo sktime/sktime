@@ -43,6 +43,11 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
     """
 
+    _tags = {
+        "authors": ["james-large"],
+        "maintainers": ["james-large"],
+    }
+
     def __init__(
         self,
         n_epochs=1500,

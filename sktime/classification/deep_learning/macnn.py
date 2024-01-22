@@ -77,7 +77,11 @@ class MACNNClassifier(BaseDeepClassifier):
     MACNNClassifier(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["jnrusson1"],
+        "maintainers": "jnrusson1",
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,
