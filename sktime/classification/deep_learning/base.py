@@ -116,7 +116,14 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         self.classes_ = self.label_encoder.classes_
         self.n_classes_ = len(self.classes_)
         y = y.reshape(len(y), 1)
-        self.onehot_encoder = OneHotEncoder(sparse=False, categories="auto")
+
+        # in sklearn 1.2, sparse was renamed to sparse_output
+        if _check_soft_dependencies("sklearn>=1.2", severity="none"):
+            sparse_kw = {"sparse_output": False}
+        else:
+            sparse_kw = {"sparse": False}
+
+        self.onehot_encoder = OneHotEncoder(categories="auto", **sparse_kw)
         # categories='auto' to get rid of FutureWarning
         y = self.onehot_encoder.fit_transform(y)
         return y
