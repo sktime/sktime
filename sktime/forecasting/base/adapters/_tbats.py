@@ -17,6 +17,7 @@ class _TbatsAdapter(BaseForecaster):
     """Base class for interfacing tbats forecasting algorithms."""
 
     _tags = {
+        "authors": ["mloning", "aiwalter", "k1m190r", "fkiraly"],
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

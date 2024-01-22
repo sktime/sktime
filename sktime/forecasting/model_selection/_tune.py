@@ -30,6 +30,7 @@ from sktime.utils.warnings import warn
 
 class BaseGridSearch(_DelegatedForecaster):
     _tags = {
+        "authors": ["mloning", "fkiraly", "aiwalter"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -1173,6 +1174,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     """
 
     _tags = {
+        "authors": ["HazrulAkmal"],
+        "maintainers": ["HazrulAkmal"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
