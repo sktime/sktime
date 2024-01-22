@@ -28,6 +28,11 @@ class _TslearnPwTrafoAdapter:
     """Base adapter mixin for tslearn distances and kernels."""
 
     _tags = {
+        # packaging info
+        # --------------
+        "python_dependencies": ["tslearn"],
+        # estimator type
+        # --------------
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "X_inner_mtype": "df-list",
         # which mtype is used internally in _transform?
@@ -35,7 +40,6 @@ class _TslearnPwTrafoAdapter:
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
-        "python_dependencies": ["tslearn"],
     }
 
     # parameters to pass to the inner tslearn estimator, list of str

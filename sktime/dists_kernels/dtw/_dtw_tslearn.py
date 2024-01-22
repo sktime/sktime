@@ -51,7 +51,12 @@ class DtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["fkiraly"],
+        "python_dependencies": ["tslearn"],
+        # estimator type
+        # --------------
         "symmetric": True,
         "pwtrafo_type": "distance",
     }
