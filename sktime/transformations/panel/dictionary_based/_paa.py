@@ -61,7 +61,6 @@ class PAA(BaseTransformer):
             obj=self,
         )
 
-
     def set_num_intervals(self, n):
         """Set self.num_intervals to n."""
         self.num_intervals = n
