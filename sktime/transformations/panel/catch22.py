@@ -159,14 +159,18 @@ class Catch22(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
         "X_inner_mtype": "nested_univ",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
-        "python_dependencies": "numba",
     }
 
     def __init__(

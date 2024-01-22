@@ -60,6 +60,7 @@ class SAX(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst"],
         "univariate-only": True,
         "fit_is_empty": True,
         "scitype:transform-input": "Series",

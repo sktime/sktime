@@ -56,8 +56,12 @@ class DilationMappingTransformer(BaseTransformer):
     """  # noqa: E501
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["fspinna"],
         "maintainers": ["fspinna"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,

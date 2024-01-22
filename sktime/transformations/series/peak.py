@@ -176,8 +176,13 @@ class PeakTimeFeature(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["ali-parizad"],
         "maintainers": ["ali-parizad"],
+        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -196,7 +201,6 @@ class PeakTimeFeature(BaseTransformer):
         "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "skip-inverse-transform": True,
-        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
     }
 
     def __init__(

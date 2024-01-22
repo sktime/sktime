@@ -82,8 +82,12 @@ class ScaledAsinhTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["ali-parizad"],
         "maintainers": ["ali-parizad"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
