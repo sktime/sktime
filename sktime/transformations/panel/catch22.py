@@ -328,7 +328,7 @@ class Catch22(BaseTransformer):
 
         f_count = -1
         for i in range(len(X)):
-            series = np.array(X[i])
+            series = np.array(X.iloc[i])
             dim = i * len(f_idx)
             outlier_series = None
             smin = None
