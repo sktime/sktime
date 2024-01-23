@@ -15,7 +15,7 @@ from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datatypes import convert
-from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dictionary_based._paa import PAAlegacy as PAA
 from sktime.transformations.panel.dwt import DWTTransformer
 from sktime.transformations.panel.hog1d import HOG1DTransformer
 
