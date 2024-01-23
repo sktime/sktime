@@ -72,6 +72,13 @@ class MyForecaster(BaseForecaster):
         #   "univariate": inner _fit, _predict, receives only single-column DataFrame
         #   "both": inner _predict gets pd.DataFrame series with any number of columns
         #
+        # specify one or multiple authors and maintainers, only for sktime contribution
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        # maintainer = algorithm maintainer role, "owner"
+        # remove maintainer tag if maintained by sktime core team
+        #
         # do not change these:
         # (look at advanced templates if you think these should change)
         "y_inner_mtype": "pd.DataFrame",

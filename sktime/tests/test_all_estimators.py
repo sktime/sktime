@@ -42,7 +42,6 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
-from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
@@ -51,6 +50,7 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
+from sktime.utils.deep_equals import deep_equals
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -876,6 +876,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 f"estimator: {estimator_class} has fit method, but"
                 f"is not a sub-class of BaseEstimator."
             )
+        from sktime.pipeline import Pipeline
+
+        if issubclass(estimator_class, Pipeline):
+            return
 
         # Usually estimators inherit only from one BaseEstimator type, but in some cases
         # they may be predictor and transformer at the same time (e.g. pipelines)

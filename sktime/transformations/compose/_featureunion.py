@@ -42,6 +42,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     """
 
     _tags = {
+        "authors": ["fkiraly", "mloning"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",

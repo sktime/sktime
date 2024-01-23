@@ -19,7 +19,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
      Combines an LSTM arm with a CNN arm. Optionally uses an attention mechanism in the
      LSTM which the author indicates provides improved performance.
 
-
     Parameters
     ----------
     n_epochs: int, default=2000
@@ -49,19 +48,20 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     random_state : int or None, default=None
         Seed for random, integer.
 
-
-    Notes
-    -----
-    Ported from sktime-dl source code
-    https://github.com/sktime/sktime-dl/blob/master/sktime_dl/classification/_lstmfcn.py
-
     References
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
     https://arxiv.org/pdf/1801.04503.pdf
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jnrusson1", "solen0id"],
+        "maintainers": ["jnrusson1", "solen0id"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,

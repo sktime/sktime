@@ -55,6 +55,12 @@ class Merger(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "benHeid",
+        "maintainers": "benHeid",
+        # estimator type
+        # ---------------
         "scitype:transform-input": "Panel",
         "scitype:transform-output": "Series",
         "X_inner_mtype": "numpy3D",

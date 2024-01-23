@@ -43,7 +43,7 @@ class FunctionParamFitter(BaseParamFitter):
 
     Examples
     --------
-    This class could be used to contruct a parameter estimator that
+    This class could be used to construct a parameter estimator that
     selects a forecaster based on the input data's length. The
     selected forecaster can be stored in the ``selected_forecaster_``
     attribute, which can be then passed down to a
@@ -99,6 +99,8 @@ class FunctionParamFitter(BaseParamFitter):
     """
 
     _tags = {
+        "authors": ["tpvasconcelos"],
+        "maintainers": ["tpvasconcelos"],
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "scitype:X": ["Series", "Panel", "Hierarchical"],
         "capability:missing_values": True,

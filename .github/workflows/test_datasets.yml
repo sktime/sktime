@@ -1,4 +1,4 @@
-name: datasets validation
+name: datasets
 on:
   schedule:
     - cron: 0 0 1 * *
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   test_internal_data:
-    name: test data shipped with sktime
+    name: onboard
     strategy:
       fail-fast: false
       matrix:
@@ -40,8 +40,12 @@ jobs:
       - name: unit test step
         run: python3 -m pytest -m "not datadownload" sktime/datasets
         shell: bash
+      - name: upload coverage step
+        uses: codecov/codecov-action@v3
+        with:
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets
   test_external_data:
-    name: test data downloaded from external sources
+    name: downloads
     strategy:
       fail-fast: false
       matrix:
@@ -75,3 +79,7 @@ jobs:
       - name: unit test step
         run: python3 -m pytest -m "datadownload" sktime/datasets
         shell: bash
+      - name: upload coverage step
+        uses: codecov/codecov-action@v3
+        with:
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets

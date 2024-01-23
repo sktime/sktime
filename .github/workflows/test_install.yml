@@ -1,4 +1,4 @@
-name: extras validation
+name: test softdep set install
 on:
   schedule:
     - cron: 0 0 1 * *
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   test_installations:
-    name: extras installation
+    name: install
     strategy:
       fail-fast: false
       matrix:
@@ -21,6 +21,7 @@ jobs:
           - ubuntu-latest
           - windows-latest
         sktime-extra:
+          - all_extras_pandas2
           - alignment
           - annotation
           - classification
@@ -35,7 +36,7 @@ jobs:
       - name: checkout pull request branch
         uses: actions/checkout@v4
       - name: install ${{ matrix.sktime-extra }} extra on python ${{ matrix.python-version }}
-        uses: ./.github/actions/validate-extra
+        uses: ./.github/actions/test-install
         with:
           sktime-extra-identifier: ${{ matrix.sktime-extra }}
           python-version-identifier: ${{ matrix.python-version }}

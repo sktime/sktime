@@ -391,6 +391,7 @@ class ForecastingPipeline(_Pipeline):
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "aiwalter"],
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
@@ -814,6 +815,7 @@ class TransformedTargetForecaster(_Pipeline):
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "aiwalter"],
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
@@ -1274,6 +1276,7 @@ class ForecastX(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["fkiraly", "benheid", "yarnabrina"],
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
         "scitype:y": "both",
@@ -1707,6 +1710,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     """
 
     _tags = {
+        "authors": "aiwalter",
         "scitype:y": "both",
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,

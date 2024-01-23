@@ -16,6 +16,8 @@ class _PmdArimaAdapter(BaseForecaster):
     """Base class for interfacing pmdarima."""
 
     _tags = {
+        "authors": ["mloning", "hyang1996", "kejsitake", "fkiraly"],
+        "maintainers": "hyang1996",
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

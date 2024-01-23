@@ -107,10 +107,16 @@ class RocketClassifier(_DelegatedClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "victordremov", "fkiraly"],
+        "maintainers": ["victordremov"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "kernel",
-        "python_dependencies": "numba",
     }
 
     # valid rocket strings for input validity checking

@@ -76,7 +76,12 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
     """
 
-    _tags = {"python_dependencies": "numba"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["chrisholder", "TonyBagnall"],
+        "python_dependencies": "numba",
+    }
 
     def __init__(
         self,

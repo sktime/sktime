@@ -82,6 +82,14 @@ class BaseForecaster(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     # for more extensive documentation, see extension_templates/forecasting.py
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # str or list of str, package soft dependencies
+        # estimator type
+        # --------------
         "object_type": "forecaster",  # type of object
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
@@ -95,8 +103,6 @@ class BaseForecaster(BaseEstimator):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
-        "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": None,  # str or list of str, package soft dependencies
     }
 
     # configs and default config values
@@ -1174,7 +1180,7 @@ class BaseForecaster(BaseEstimator):
 
         y_pred = self.predict(fh=fh, X=X)
 
-        if not type(y_pred) is type(y):
+        if type(y_pred) is not type(y):
             y = convert_to(y, self._y_metadata["mtype"])
 
         y_res = y - y_pred

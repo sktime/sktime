@@ -63,6 +63,12 @@ class Deseasonalizer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "eyalshafran", "aiwalter"],
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -75,7 +81,6 @@ class Deseasonalizer(BaseTransformer):
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
         "univariate-only": True,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, sp=1, model="additive"):

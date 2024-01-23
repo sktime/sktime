@@ -15,23 +15,41 @@ runs:
   steps:
     - name: repository checkout step
       uses: actions/checkout@v4
+
     - name: update tracking reference step
       run: git remote set-branches origin main
       shell: bash
+
     - name: shallow clone update step
       run: git fetch --depth 1
       shell: bash
+
     - name: python environment step
       uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version-identifier }}
-    - name: dependencies installation step
+
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+      shell: bash
+
+    - name: Install sktime and dependencies
       run: python3 -m pip install .[tests]
       shell: bash
-    - name: unit test step
-      run: python3 -m pytest sktime/base --matrixdesign ${{ inputs.sub-sample-estimators }} --only_changed_modules ${{ inputs.test-affected-estimators }}
+
+    - name: Show dependencies
+      run: python -m pip list
       shell: bash
-    - name: test coverage step
-      uses: codecov/codecov-action@v3
-      with:
-        flags: ${{ inputs.python-version-identifier }},base
+
+    - name: Show available branches
+      run: git branch -a
+      shell: bash
+
+    - name: unit test step
+      run: >-
+        python3
+        -m pytest
+        sktime/base
+        --matrixdesign ${{ inputs.sub-sample-estimators }}
+        --only_changed_modules ${{ inputs.test-affected-estimators }}
+      shell: bash

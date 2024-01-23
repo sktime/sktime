@@ -71,6 +71,7 @@ class StationarityADF(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -158,7 +159,7 @@ class StationarityADF(BaseParamFitter):
 class StationarityKPSS(BaseParamFitter):
     """Test for stationarity via the Kwiatkowski-Phillips-Schmidt-Shin Test.
 
-    Uses ``statsmodels.tsa.stattools.kpss`` as a test for trend-stationairty,
+    Uses ``statsmodels.tsa.stattools.kpss`` as a test for trend-stationarity,
     and derives a boolean statement whether a series is (trend-)stationary.
 
     Also returns test results for the trend-stationarity test as fitted parameters.
@@ -211,6 +212,7 @@ class StationarityKPSS(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": False,  # can estimator handle missing data?

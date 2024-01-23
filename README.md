@@ -66,8 +66,6 @@ Our objective is to enhance the interoperability and usability of the time serie
 
 sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD], and [fbprophet], among others.
 
-For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
-
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
 [pyod]: https://pyod.readthedocs.io/en/latest/
@@ -84,6 +82,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 | **[Time Series Distances/Kernels]** | maturing | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/03_transformers.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference/dists_kernels.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/dist_kern_panel.py) |
 | **[Time Series Alignment]** | experimental | [API Reference](https://www.sktime.net/en/latest/api_reference/alignment.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/alignment.py) |
 | **[Annotation]** | experimental | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/annotation.py) |
+| **[Time Series Splitters]** | maturing | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/split.py) | |
 | **[Distributions and simulation]** | experimental |  |
 
 [forecasting]: https://github.com/sktime/sktime/tree/main/sktime/forecasting
@@ -95,6 +94,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [time series alignment]: https://github.com/sktime/sktime/tree/main/sktime/alignment
 [transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
 [distributions and simulation]: https://github.com/sktime/sktime/tree/main/sktime/proba
+[time series splitters]: https://github.com/sktime/sktime/tree/main/sktime/split
 [parameter fitting]: https://github.com/sktime/sktime/tree/main/sktime/param_est
 
 

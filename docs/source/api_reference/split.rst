@@ -21,6 +21,8 @@ Forecasting users interested in performance evaluation are advised
 to use full backtesting instead of a single split, e.g., via ``evaluate``,
 see :ref:`forecasting API reference <forecasting_ref>`.
 
+.. currentmodule:: sktime.split
+
 .. autosummary::
     :toctree: auto_generated/
     :template: function.rst

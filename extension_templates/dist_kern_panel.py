@@ -57,9 +57,14 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
 
     # todo: fill out transformer tags here
     #  delete the tags that you *didn't* change - these defaults are inherited
-    # _tags = {
-    #   currently there are no tags for pairwise transformers
-    # }
+    _tags = {
+        # specify one or multiple authors and maintainers, only for sktime contribution
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        # maintainer = algorithm maintainer role, "owner"
+        # remove maintainer tag if maintained by sktime core team
+    }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
