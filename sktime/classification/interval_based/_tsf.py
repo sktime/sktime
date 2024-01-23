@@ -114,6 +114,9 @@ class TimeSeriesForestClassifier(
         n_jobs=1,
         random_state=None,
     ):
+        self.criterion = "gini"  # needed for BaseForest in sklearn > 1.4.0,
+        # because sklearn tag logic looks at this attribute
+
         super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,
