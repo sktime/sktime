@@ -116,8 +116,8 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             name, forecaster = self.forecasters[self.first_nonfailing_forecaster_index_]
             try:
                 self.current_name = name
-                self.current_forecaster = forecaster
-                forecaster.fit(self._y, X=self._X, fh=self._fh)
+                self.current_forecaster = forecaster.clone()
+                self.current_forecaster.fit(self._y, X=self._X, fh=self._fh)
                 return self
             except Exception as e:
                 self.exceptions_raised_[self.first_nonfailing_forecaster_index_] = {
