@@ -73,7 +73,6 @@ class CNTCNetwork(BaseDeepNetwork):
         lstm_size=8,
         dense_size=64,
     ):
-
         _check_dl_dependencies(severity="error")
         _check_soft_dependencies(
             package_import_alias={"keras-self-attention": "keras_self_attention"},

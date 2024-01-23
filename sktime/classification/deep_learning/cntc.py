@@ -77,7 +77,7 @@ class CNTCClassifier(BaseDeepClassifier):
     _tags = {
         "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
-    }   
+    }
 
     def __init__(
         self,
