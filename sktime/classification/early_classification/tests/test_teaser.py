@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """TEASER test code."""
 import numpy as np
 import pytest
@@ -9,6 +8,7 @@ from sktime.classification.early_classification._teaser import TEASER
 from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
+from sktime.tests.test_switch import run_test_for_class
 
 
 def load_unit_data():
@@ -19,6 +19,10 @@ def load_unit_data():
     return X_train, y_train, X_test, y_test, indices
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TEASER),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_teaser_on_unit_test_data():
     """Test of TEASER on unit test data."""
     X_train, y_train, X_test, y_test, indices = load_unit_data()
@@ -45,6 +49,10 @@ def test_teaser_on_unit_test_data():
     testing.assert_array_equal(final_probas, teaser_unit_test_probas)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TEASER),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_teaser_with_different_decision_maker():
     """Test of TEASER with different One-Class-Classifier."""
     X_train, y_train, X_test, y_test, indices = load_unit_data()
@@ -73,6 +81,10 @@ def test_teaser_with_different_decision_maker():
     testing.assert_array_equal(final_probas, teaser_if_unit_test_probas)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TEASER),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_teaser_near_classification_points():
     """Test of TEASER with incremental time stamps outside defined class points."""
     X_train, y_train, X_test, y_test, indices = load_unit_data()
@@ -103,6 +115,10 @@ def test_teaser_near_classification_points():
             _, decisions = teaser.update_predict_proba(X)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TEASER),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_teaser_full_length():
     """Test of TEASER on the full data with the default estimator."""
     X_train, y_train, X_test, y_test, indices = load_unit_data()

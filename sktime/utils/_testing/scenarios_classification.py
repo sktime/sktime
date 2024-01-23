@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for classification and regression.
 
 Contains TestScenario concrete children to run in tests for classifiers/regressirs.
@@ -15,9 +14,7 @@ __all__ = [
 from inspect import isclass
 
 from sktime.base import BaseObject
-from sktime.classification.base import BaseClassifier
-from sktime.classification.early_classification import BaseEarlyClassifier
-from sktime.regression.base import BaseRegressor
+from sktime.registry import scitype
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
@@ -51,9 +48,7 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         if key in ["predict_proba", "decision_function"]:
             key = "predict"
 
-        return super(ClassifierTestScenario, self).get_args(
-            key=key, obj=obj, deepcopy_args=deepcopy_args
-        )
+        return super().get_args(key=key, obj=obj, deepcopy_args=deepcopy_args)
 
     def is_applicable(self, obj):
         """Check whether scenario is applicable to obj.
@@ -74,12 +69,14 @@ class ClassifierTestScenario(TestScenario, BaseObject):
             else:
                 return obj.get_tag(tag_name)
 
-        regr_or_classf = (BaseClassifier, BaseEarlyClassifier, BaseRegressor)
-
         # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
         #   BaseRegressor. currently we test both classifiers and regressors using these
         #   scenarios
-        if not isinstance(obj, regr_or_classf) and not issubclass(obj, regr_or_classf):
+        if scitype(obj) not in (
+            "classifier",
+            "early_classifier",
+            "regressor",
+        ):
             return False
 
         # if X is multivariate, applicable only if can handle multivariate

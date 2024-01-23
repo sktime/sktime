@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Croston's Forecasting Method."""
@@ -71,6 +70,12 @@ class Croston(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Riyabelle25",
+        "maintainers": "Riyabelle25",
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
     }
 
@@ -78,9 +83,9 @@ class Croston(BaseForecaster):
         # hyperparameter
         self.smoothing = smoothing
         self._f = None
-        super(Croston, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -151,7 +156,7 @@ class Croston(BaseForecaster):
         # Predicting future forecasts:to_numpy()
         y_pred = np.full(len_fh, f[-1])
 
-        index = self.fh.to_absolute(self.cutoff)
+        index = self.fh.to_absolute_index(self.cutoff)
         return pd.Series(y_pred, index=index, name=self._y.name)
 
     @classmethod
@@ -168,7 +173,11 @@ class Croston(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        params1 = {}
-        params2 = {"smoothing": 0.42}
+        params = [
+            {},
+            {"smoothing": 0},
+            {"smoothing": 0.42},
+            {"smoothing": 2},
+        ]
 
-        return [params1, params2]
+        return params

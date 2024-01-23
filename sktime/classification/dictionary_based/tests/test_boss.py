@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
 """BOSS test code."""
 import numpy as np
 import pytest
 
 from sktime.classification.dictionary_based import BOSSEnsemble, IndividualBOSS
 from sktime.datasets import load_unit_test
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.fixture
 def dataset():
-    """
-    Load unit_test train and test data set from sktime.
+    """Load unit_test train and test data set from sktime.
 
     :return: tuple, (X_train, y_train, X_test, y_test).
     """
@@ -19,6 +18,10 @@ def dataset():
     return (X_train, y_train, X_test, y_test)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(IndividualBOSS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "new_class,expected_dtype",
     [
@@ -46,6 +49,10 @@ def test_individual_boss_classes(dataset, new_class, expected_dtype):
     assert set(y_pred) == set(y_train)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(BOSSEnsemble),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "new_class,expected_dtype",
     [

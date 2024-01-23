@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Random Interval Classifier.
 
 Pipeline classifier using summary statistics extracted from random intervals and an
@@ -53,8 +52,14 @@ class RandomIntervalClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "interval",
     }
 
@@ -76,7 +81,7 @@ class RandomIntervalClassifier(BaseClassifier):
         self._transformer = None
         self._estimator = None
 
-        super(RandomIntervalClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.

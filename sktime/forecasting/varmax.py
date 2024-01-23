@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Vector Autoregressive Moving Average with eXogenous regressors model (VARMAX)."""
 __all__ = ["VARMAX"]
 __author__ = ["KatieBuc"]
@@ -198,7 +197,7 @@ class VARMAX(_StatsModelsAdapter):
     --------
     >>> from sktime.forecasting.varmax import VARMAX
     >>> from sktime.datasets import load_macroeconomic
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_macroeconomic()  # doctest: +SKIP
     >>> forecaster = VARMAX(suppress_warnings=True)  # doctest: +SKIP
     >>> forecaster.fit(y[['realgdp', 'unemp']])  # doctest: +SKIP
@@ -207,6 +206,12 @@ class VARMAX(_StatsModelsAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "KatieBuc",
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "scitype:y": "multivariate",
         "ignores-exogeneous-X": False,
         "handles-missing-data": False,
@@ -216,6 +221,7 @@ class VARMAX(_StatsModelsAdapter):
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:pred_int": False,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
@@ -277,7 +283,7 @@ class VARMAX(_StatsModelsAdapter):
         self.signal_only = signal_only
         self.suppress_warnings = suppress_warnings
 
-        super(VARMAX, self).__init__()
+        super().__init__()
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
@@ -336,9 +342,8 @@ class VARMAX(_StatsModelsAdapter):
     # for two reasons:
     # 1. to pass in `dynamic`, `information_set` and `signal_only`
     # 2. to deal with statsmodel integer indexing issue
-    def _predict(self, fh, X=None):
-        """
-        Wrap Statmodel's VARMAX forecast method.
+    def _predict(self, fh, X):
+        """Wrap Statmodel's VARMAX forecast method.
 
         Parameters
         ----------
@@ -354,7 +359,9 @@ class VARMAX(_StatsModelsAdapter):
         y_pred : np.ndarray
             Returns series of predicted values.
         """
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        abs_idx = fh.to_absolute_int(self._y.index[0], self.cutoff)
+        start, end = abs_idx[[0, -1]]
+        full_range = pd.RangeIndex(start=start, stop=end + 1)
 
         y_pred = self._fitted_forecaster.predict(
             start=start,
@@ -365,18 +372,11 @@ class VARMAX(_StatsModelsAdapter):
             exog=X,
         )
 
-        # statsmodel returns zero-based index when index is of type int with the
-        # following warning
-        # ValueWarning: No supported index is available. Prediction results will be
-        # given with an integer index beginning at `start`...
-        # but only when out-of-sample forecasting, i.e. when forecasting horizon is
-        # greater than zero
-        if (type(self._y.index) == pd.core.indexes.numeric.Int64Index) & (
-            any(fh.to_relative(self.cutoff) > 0)
-        ):
-            y_pred.index = y_pred.index + self._y.index[0]
+        y_pred.index = full_range
+        y_pred = y_pred.loc[abs_idx.to_pandas()]
+        y_pred.index = fh.to_absolute_index(self.cutoff)
 
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for pairwise panel transformer dunders."""
 
 __author__ = ["fkiraly"]
@@ -113,7 +112,7 @@ def test_mixed_algebra_dunders():
 
 
 def test_pw_trafo_pipeline_mul_dunder():
-    """Tests creation of pairwise panel trafo pipeliens using mul dunder."""
+    """Tests creation of pairwise panel trafo pipelines using mul dunder."""
     from sktime.transformations.series.exponent import ExponentTransformer
 
     t3 = EditDist()
@@ -143,7 +142,7 @@ def test_pw_trafo_pipeline_mul_dunder():
 
 @pytest.mark.parametrize("constant", [0, 1, -0.25])
 def test_dunders_with_constants(constant):
-    """Tests creation of pairwise panel trafo pipeliens using mul dunder."""
+    """Tests creation of pairwise panel trafo pipelines using mul dunder."""
     t = EditDist()
 
     m = t.transform(X1, X2)
@@ -165,3 +164,28 @@ def test_dunders_with_constants(constant):
 
     mtimesc = ttimesc.transform(X1, X2)
     assert np.allclose(m * constant, mtimesc)
+
+
+def test_getitem_dunder():
+    """Tests creation of pairwise panel trafo pipelines using mul dunder."""
+    t = EditDist()
+
+    idx_sub = ["var_1", "var_2"]
+
+    X1_sub = X1.loc[:, idx_sub]
+    X2_sub = X2.loc[:, idx_sub]
+
+    # compare manual subsetting with dunder subsetting
+    t_sub = t[idx_sub]
+
+    # manual: subset then transform
+    m_manual = t.transform(X1_sub, X2_sub)
+
+    # dunder: apply the subsetted transformer
+    m_dunder = t_sub.transform(X1, X2)
+
+    assert np.allclose(m_manual, m_dunder)
+
+    # this should not be the same as distance on all columns
+    m = t.transform(X1, X2)
+    assert not np.allclose(m_dunder, m)

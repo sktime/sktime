@@ -99,8 +99,8 @@ Again developers are encouraged to add important content to the user guide and l
 See Also
 ~~~~~~~~
 
-This section should reference other ``sktime`` code artifcats related to the code artifact being documented by the docstring. Developers should use
-judgement in determining related code artifcats. For example, rather than listin all other performance metrics, a percentage error based performance metric
+This section should reference other ``sktime`` code artifacts related to the code artifact being documented by the docstring. Developers should use
+judgement in determining related code artifacts. For example, rather than listin all other performance metrics, a percentage error based performance metric
 might only list other percentage error based performance metrics.  Likewise, a distance based classifier might list other distance based classifiers but
 not include other types of time series classifiers.
 
@@ -149,7 +149,7 @@ Examples
 
 Most code artifacts in sktime should include an examples section. At a minimum this should include a single example that illustrates basic functionality.
 The examples should use either a built-in sktime dataset or other simple data (e.g. randomly generated data, etc) generated using an sktime dependency
-(e.g. NumPy, pandas, etc) and whereever possible only depend on sktime or its core dependencies. Examples should also be designed to run quickly where possible.
+(e.g. NumPy, pandas, etc) and wherever possible only depend on sktime or its core dependencies. Examples should also be designed to run quickly where possible.
 For quick running code artifacts, additional examples can be included to illustrate the affect of different parameter settings.
 
 Examples of Good sktime Docstrings
@@ -171,9 +171,9 @@ MeanAbsoluteScaledError_
 
 .. _numpydoc: https://numpydoc.readthedocs.io/en/latest/index.html
 .. _pydocstyle: http://www.pydocstyle.org/en/stable/
-.. _BOSSEnsemble: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.BOSSEnsemble.html#sktime.classification.dictionary_based.BOSSEnsemble
-.. _ContractableBOSS: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.ContractableBOSS.html#sktime.classification.dictionary_based.ContractableBOSS
-.. _MeanAbsoluteScaledError: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.performance_metrics.forecasting.MeanAbsoluteScaledError.html
+.. _BOSSEnsemble: https://www.sktime.net/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.BOSSEnsemble.html#sktime.classification.dictionary_based.BOSSEnsemble
+.. _ContractableBOSS: https://www.sktime.net/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.ContractableBOSS.html#sktime.classification.dictionary_based.ContractableBOSS
+.. _MeanAbsoluteScaledError: https://www.sktime.net/en/latest/api_reference/auto_generated/sktime.performance_metrics.forecasting.MeanAbsoluteScaledError.html
 
 .. _sphinx: https://www.sphinx-doc.org/
 .. _readthedocs: https://readthedocs.org/projects/sktime/
@@ -182,7 +182,7 @@ Documentation Build
 -------------------
 
 We use `sphinx`_ to build our documentation and `readthedocs`_ to host it.
-You can find our latest documentation `here <https://www.sktime.org/en/latest/>`_.
+You can find our latest documentation `here <https://www.sktime.net/en/latest/>`_.
 
 The source files can be found
 in `docs/source/ <https://github.com/sktime/sktime/tree/main/docs/source>`_.

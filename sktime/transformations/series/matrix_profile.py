@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements matrix profile transformation."""
 
@@ -7,9 +6,6 @@ __author__ = ["mloning"]
 __all__ = ["MatrixProfileTransformer"]
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("stumpy", severity="warning")
 
 
 class MatrixProfileTransformer(BaseTransformer):
@@ -43,6 +39,12 @@ class MatrixProfileTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning"],
+        "python_dependencies": "stumpy",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -53,12 +55,11 @@ class MatrixProfileTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?,
         "univariate-only": True,
         "fit_is_empty": True,  # for unit test cases
-        "python_dependencies": "stumpy",
     }
 
     def __init__(self, window_length=3):
         self.window_length = window_length
-        super(MatrixProfileTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

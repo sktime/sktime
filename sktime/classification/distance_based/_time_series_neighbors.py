@@ -1,19 +1,17 @@
-# -*- coding: utf-8 -*-
 """KNN time series classification.
 
-This class is a KNN classifier which supports time series distance measures.
-The class has hardcoded string references to numba based distances in sktime.distances.
-It can also be used with callables, or sktime (pairwise transformer) estimators.
+This class is a KNN classifier which supports time series distance measures. The class
+has hardcoded string references to numba based distances in sktime.distances. It can
+also be used with callables, or sktime (pairwise transformer) estimators.
 
-This is a direct wrap or sklearn KNeighbors, with added functionality that allows
-time series distances to be passed, and the sktime time series classifier interface.
+This is a direct wrap or sklearn KNeighbors, with added functionality that allows time
+series distances to be passed, and the sktime time series classifier interface.
 
-todo: add a utility method to set keyword args for distance measure parameters.
-(e.g.  handle the parameter name(s) that are passed as metric_params automatically,
-depending on what distance measure is used in the classifier (e.g. know that it is w
-for dtw, c for msm, etc.). Also allow long-format specification for
-non-standard/user-defined measures e.g. set_distance_params(measure_type=None,
-param_values_to_set=None,
+todo: add a utility method to set keyword args for distance measure parameters. (e.g.
+handle the parameter name(s) that are passed as metric_params automatically, depending
+on what distance measure is used in the classifier (e.g. know that it is w for dtw, c
+for msm, etc.). Also allow long-format specification for non-standard/user-defined
+measures e.g. set_distance_params(measure_type=None, param_values_to_set=None,
 param_names=None)
 """
 
@@ -70,7 +68,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
           containing the weights.
     algorithm : str, optional. default = 'brute'
         search method for neighbours
-        one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
+        one of {'auto', 'ball_tree', 'kd_tree', 'brute'}
     distance : str or callable, optional. default ='dtw'
         distance measure between time series
         if str, must be one of the following strings:
@@ -118,9 +116,15 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jasonlines", "TonyBagnall", "chrisholder", "fkiraly"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
         "classifier_type": "distance",
     }
@@ -147,14 +151,14 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
 
-        super(KNeighborsTimeSeriesClassifier, self).__init__()
+        super().__init__()
 
         # input check for supported distance strings
         if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
             raise ValueError(
                 f"Unrecognised distance measure string: {distance}. "
                 f"Allowed values for string codes are: {DISTANCES_SUPPORTED}. "
-                "Alternatively, pass a callable distance measure into the constuctor."
+                "Alternatively, pass a callable distance measure into the constructor."
             )
 
         self.knn_estimator_ = KNeighborsClassifier(
@@ -213,8 +217,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime comatible Panel data container, of mtype X_inner_mtype, with n series
-            data to fit the estimator to
+        X : sktime compatible Panel data container, of mtype X_inner_mtype,
+            with n time series to fit the estimator to
         y : {array-like, sparse matrix}
             Target values of shape = [n]
         """
@@ -227,10 +231,12 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             # if we do not want/need to pass train-train distances,
             #   we still need to pass a zeros matrix, this means "do not consider"
             # citing the sklearn KNeighborsClassifier docs on distance matrix input:
-            # "X may be a sparse graph, in which case only “nonzero” elements
+            # "X may be a sparse graph, in which case only "nonzero" elements
             #   may be considered neighbors."
             X_inner_mtype = self.get_tag("X_inner_mtype")
-            _, _, X_meta = check_is_mtype(X, X_inner_mtype, return_metadata=True)
+            _, _, X_meta = check_is_mtype(
+                X, X_inner_mtype, return_metadata=True, msg_return_dict="list"
+            )
             n = X_meta["n_instances"]
             dist_mat = np.zeros([n, n], dtype="float")
 

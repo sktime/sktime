@@ -34,7 +34,7 @@ sktime is a community-oriented and -led project.
 We value the involvement of everyone in the community, and strive to be an open
 community. We commit to provide fair and rewarding opportunities for everyone without
 restriction, to participate, learn, and become leaders of the community. We expect from
-leaders of our community to create such opportunities for others, and we stronly encourage
+leaders of our community to create such opportunities for others, and we strongly encourage
 all members of our community to create opportunities as have been created for them.
 
 We are committed to scientific quality and strive to be an open forum on matters
@@ -121,11 +121,11 @@ hope you will consider to be appropriate community guidelines:
    unsure whether your behaviour towards another person is welcome, ask
    them. If someone tells you to stop, do so.
 -  **Respect the privacy and safety of others**. Do not take photographs
-   of others without their permission. Do not share other participant’s
+   of others without their permission. Do not share other participant's
    personal experiences without their express permission. Note that
    posting (or threatening to post) personally identifying information
    of others without their consent ("doxing") is a form of harassment.
--  **Be considerate of others’ participation**. Everyone should have an
+-  **Be considerate of others' participation**. Everyone should have an
    opportunity to be heard. In update sessions, please keep comments
    succinct so as to allow maximum engagement by all participants. Do
    not interrupt others on the basis of disagreement; hold such comments
@@ -135,7 +135,7 @@ hope you will consider to be appropriate community guidelines:
    crucial for fairness and diversity of our community, as well as its scientific quality.
    Free speech and constant scrutiny directed at those in power is also essential to ensure
    accountability and fair operations of our community, and to prevent groupthink or in-group dynamics.
--  **Don’t be a bystander**. If you see something inappropriate
+-  **Don't be a bystander**. If you see something inappropriate
    happening, speak up. If you don't feel comfortable intervening but
    feel someone should, please feel free to ask a member of the Code of
    Conduct response team for support.
@@ -212,9 +212,8 @@ Please contact the current chair of the Code of Conduct Committee directly by em
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In case of conflict of interest of sktime CoC Committee members, you can report
-through the `NumFOCUS CoC process <https://numfocus.org/code-of-conduct>`__,
-or, in case of events, to the organisation at which the event is taking place (e.g., a university).
+In case of conflict of interest of sktime CoC Committee members, you can report,
+in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 3.3 What to do if someone is in physical danger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -245,9 +244,6 @@ The sktime Code of Conduct committee currently consists of:
 Dr Franz Király (f.kiraly@ucl.ac.uk)
 
 We encourage community members to step up to become a member of the committee.
-
-You can use the `NumFOCUS CoC process <https://numfocus.org/code-of-conduct>`__ as an alternative entry point
-for reporting, see 3.2.
 
 4.2 Urgent Situations: Acting Unilaterally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -345,9 +341,8 @@ committee is not required to act on this feedback.
 4.5 Conflicts of Interest
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In case of conflict of interest of sktime CoC committee members, you can report
-through the `NumFOCUS CoC process <https://numfocus.org/code-of-conduct>`__,
-or, in case of events, to the organisation at which the event is taking place (e.g., a university).
+In case of conflict of interest of sktime CoC committee members, you can report,
+in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 4.6 Audit of Investigation Process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -502,7 +497,7 @@ Examples for in-scope:
 * hiring decisions for roles that are advertised with a primary ``sktime`` branding
 * spending decisions from ``sktime`` community administered accounts
 * decisions arising from academic collaboration or commercial requests directed to the ``sktime`` community,
-  e.g., via official email, or via digital ``sktime`` discussion tools (slack, GitHub discussion etc)
+  e.g., via official email, or via digital ``sktime`` discussion tools (slack, discord, GitHub discussion etc)
 
 "resources" in the above context are to be interpreted in the usual sense of the word,
 i.e., valuable possessions, opportunities, qualities, that can be accessed and allocated.
@@ -525,7 +520,7 @@ To ensure decision making in line with the code of conduct, decision making must
 * by the ``sktime`` community, through ``sktime`` community decision making mechanisms.
   E.g., following decision making outlined in the ``sktime`` governance document.
 * in communication transparent to the ``sktime`` community, following communication requirements outlined in the ``sktime`` governance document.
-* pursuant of and in line with the charitable mission of ``sktime`` and NumFOCUS.
+* pursuant of and in line with the charitable mission of ``sktime``.
 
 Adherence to widely accepted guidelines of anti-corruption and anti-bribery practice
 (e.g., United Nations Anti-Corruption Guidelines) is strictly expected,

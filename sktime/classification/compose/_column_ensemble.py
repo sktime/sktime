@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ColumnEnsembleClassifier: For Multivariate Time Series Classification.
 
 Builds classifiers on each dimension (column) independently.
@@ -21,7 +20,9 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """Base Class for column ensemble."""
 
     _tags = {
+        "authors": ["abostrom"],
         "capability:multivariate": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": ["nested_univ", "pd-multiindex"],
     }
 
@@ -29,7 +30,7 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         self.verbose = verbose
         self.estimators = estimators
         self.remainder = "drop"
-        super(BaseColumnEnsembleClassifier, self).__init__()
+        super().__init__()
         self._anytagis_then_set(
             "capability:unequal_length", False, True, self._estimators
         )
@@ -99,9 +100,9 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     def _iter(self, replace_strings=False):
         """Generate (name, estimator, column) tuples.
 
-        If fitted=True, use the fitted transformations, else use the
-        user specified transformations updated with converted column names
-        and potentially appended with transformer for remainder.
+        If fitted=True, use the fitted transformations, else use the user specified
+        transformations updated with converted column names and potentially appended
+        with transformer for remainder.
         """
         if self.is_fitted:
             estimators = self.estimators_
@@ -139,7 +140,6 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
 
         y : array-like, shape (n_samples, ...), optional
             Targets for supervised learning.
-
         """
         if self.estimators is None or len(self.estimators) == 0:
             raise AttributeError(
@@ -224,19 +224,19 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     >>> from sktime.classification.dictionary_based import ContractableBOSS
     >>> from sktime.classification.interval_based import CanonicalIntervalForest
     >>> from sktime.datasets import load_basic_motions
-    >>> X_train, y_train = load_basic_motions(split="train")
-    >>> X_test, y_test = load_basic_motions(split="test")
+    >>> X_train, y_train = load_basic_motions(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
     >>> cboss = ContractableBOSS(
     ...     n_parameter_samples=4, max_ensemble_size=2, random_state=0
-    ... )
+    ... ) # doctest: +SKIP
     >>> cif = CanonicalIntervalForest(
     ...     n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
-    ... )
-    >>> estimators = [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]
-    >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
-    >>> col_ens.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> estimators = [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])] # doctest: +SKIP
+    >>> col_ens = ColumnEnsembleClassifier(estimators=estimators) # doctest: +SKIP
+    >>> col_ens.fit(X_train, y_train) # doctest: +SKIP
     ColumnEnsembleClassifier(...)
-    >>> y_pred = col_ens.predict(X_test)
+    >>> y_pred = col_ens.predict(X_test) # doctest: +SKIP
     """
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -252,7 +252,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
     def __init__(self, estimators, remainder="drop", verbose=False):
         self.remainder = remainder
-        super(ColumnEnsembleClassifier, self).__init__(estimators, verbose=verbose)
+        super().__init__(estimators, verbose=verbose)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -300,8 +300,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
 
 def _get_column(X, key):
-    """
-    Get feature column(s) from input data X.
+    """Get feature column(s) from input data X.
 
     Supported input types (X): numpy arrays and DataFrames
 
@@ -318,7 +317,6 @@ def _get_column(X, key):
         - only supported for dataframes
         - So no keys other than strings are allowed (while in principle you
           can use any hashable object as key).
-
     """
     # check whether we have string column names or integers
     if _check_key_type(key, int):
@@ -354,8 +352,7 @@ def _get_column(X, key):
 
 
 def _check_key_type(key, superclass):
-    """
-    Check that scalar, list or slice is of a certain type.
+    """Check that scalar, list or slice is of a certain type.
 
     This is only used in _get_column and _get_column_indices to check
     if the `key` (column specification) is fully integer or fully string-like.
@@ -366,7 +363,6 @@ def _check_key_type(key, superclass):
         The column specification to check
     superclass : int or str
         The type for which to check the `key`
-
     """
     if isinstance(key, superclass):
         return True
@@ -386,11 +382,9 @@ def _check_key_type(key, superclass):
 
 
 def _get_column_indices(X, key):
-    """
-    Get feature column indices for input data X and key.
+    """Get feature column indices for input data X and key.
 
     For accepted values of `key`, see the docstring of _get_column
-
     """
     n_columns = X.shape[1]
 

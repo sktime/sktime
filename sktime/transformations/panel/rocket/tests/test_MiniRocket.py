@@ -1,15 +1,20 @@
-# -*- coding: utf-8 -*-
 """MiniRocket test code."""
 import numpy as np
+import pytest
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_gunpoint
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.rocket import MiniRocket
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(MiniRocket),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_minirocket_on_gunpoint():
     """Test of MiniRocket on gun point."""
     # load training data

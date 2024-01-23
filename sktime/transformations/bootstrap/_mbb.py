@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Bootstrapping methods for time series."""
 
@@ -41,7 +40,7 @@ class STLBootstrapTransformer(BaseTransformer):
     Parameters
     ----------
     n_series : int, optional
-        The number of bootstraped time series that will be generated, by default 10.
+        The number of bootstrapped time series that will be generated, by default 10.
     sp : int, optional
         Seasonal periodicity of the data in integer form, by default 12.
         Must be an integer >= 2
@@ -124,7 +123,7 @@ class STLBootstrapTransformer(BaseTransformer):
     See Also
     --------
     sktime.transformations.bootstrap.MovingBlockBootstrapTransformer :
-        Transofrmer that applies the Moving Block Bootstrapping method to create
+        Transformer that applies the Moving Block Bootstrapping method to create
         a panel of synthetic time series.
 
     References
@@ -166,6 +165,7 @@ class STLBootstrapTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": "ltsaprounis",
         # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
         # todo: what scitype is returned: Primitives, Series, Panel
@@ -231,7 +231,7 @@ class STLBootstrapTransformer(BaseTransformer):
         self.outer_iter = outer_iter
         self.random_state = random_state
 
-        super(STLBootstrapTransformer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -423,7 +423,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     Parameters
     ----------
     n_series : int, optional
-        The number of bootstraped time series that will be generated, by default 10
+        The number of bootstrapped time series that will be generated, by default 10
     block_length : int, optional
         The length of the block in the MBB method, by default None.
         If not provided, the following heuristic is used, the block length will the
@@ -439,7 +439,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     See Also
     --------
     sktime.transformations.bootstrap.STLBootstrapTransformer :
-        Transofrmer that utilises BoxCox, STL and Moving Block Bootstrapping to create
+        Transformer that utilises BoxCox, STL and Moving Block Bootstrapping to create
         a panel of similar time series.
 
     References
@@ -514,7 +514,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         self.return_actual = return_actual
         self.random_state = random_state
 
-        super(MovingBlockBootstrapTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

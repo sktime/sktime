@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ProbabilityThresholdEarlyClassifier test code."""
 import numpy as np
 from numpy import testing

@@ -1,6 +1,6 @@
 .. _testing_framework:
 
-``Sktime`` testing framework overview
+``sktime`` testing framework overview
 =====================================
 
 ``sktime`` uses ``pytest`` for testing interface compliance of estimators, and correctness of code.
@@ -155,6 +155,33 @@ Further, scenarios inherit from ``BaseObject``, which allows to use the ``sktime
 
 For further details on scenarios, inspect the docstring of ``BaseScenario``.
 
+Remote CI set-up
+~~~~~~~~~~~~~~~~
+
+The remote CI runs all package level tests, module level tests, and low-level tests
+for all combinations of supported operating systems (OS) and python versions.
+
+The estimators package and module level are distributed across OS and
+python version combinations so that:
+
+* only about a third of estimators are run per combination
+* a given estimator runs at least once for a given OS
+* a given estimator runs at least once for a python version
+
+This is for reducing runtime and memory requirements for each CI element.
+
+The precise logic maps estimators, OS and python versions on integers,
+and matches estimators with the sum of OS and python version modulo 3.
+
+This logic located in ``subsample_by_version_os`` in ``tests.test_all_estimators``,
+which is called in ``pytest_generate_tests`` of ``BaseFixtureGenerator``, which
+is inherited by all the ``TestAll[estimator_type]`` classes.
+
+By default, the subsetting by OS and python version is switched off,
+but can be turned on by setting the ``pytest`` flag ``matrixdesign`` to ``True``
+(see ``conftest.py``)
+
+
 Extending the testing module
 ----------------------------
 
@@ -272,12 +299,12 @@ This base class defines generics such as ``is_applicable``, or tag handling, for
 Scenarios should usually define:
 
 * an ``args`` parameter: a dictionary, with arbitrary keys (usually names of methods).
-* The ``args`` parameter may be set as a class variable, or set by the contructor.
+* The ``args`` parameter may be set as a class variable, or set by the constructor.
 * optionally, a ``default_method_sequence`` and a ``default_arg_sequence``, lists of strings.
   These define the sequence in which methods are called, with which argument set,
   if ``run`` is called. Both may be class variables, or object variable set in the constructor.
 * side note: a ``method_sequence`` and ``arg_sequence`` can also be specified in ``run``.
-  If not passed, defaulting will take place (first to each other, then to the ``detault_etc`` variables)
+  If not passed, defaulting will take place (first to each other, then to the ``default_etc`` variables)
 * optionally, a ``_tags`` dictionary, which is a ``BaseObject`` tags dictionary and behaves exactly like that of estimators.
 * optionally, a ``get_args`` method which allows to override key retrieval from ``args``.
   For instance, to specify rules such as "if the key starts with ``predict_``, always return ..."

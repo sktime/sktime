@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Supervised Time Series Forest Classifier (STSF).
 
 Interval based STSF classifier extracting summary features from intervals selected
@@ -59,7 +58,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         The classes labels.
     intervals : array-like of shape [n_estimators][3][7][n_intervals][2]
         Stores indexes of all start and end points for all estimators. Each estimator
-        contains indexes for each representaion and feature combination.
+        contains indexes for each representation and feature combination.
     estimators_ : list of shape (n_estimators) of DecisionTreeClassifier
         The collections of estimators trained in fit.
 
@@ -82,12 +81,18 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = SupervisedTimeSeriesForest(n_estimators=5)
     >>> clf.fit(X_train, y_train)
-    SupervisedTimeSeriesForest(...)
+    SupervisedTimeSeriesForest(n_estimators=5)
     >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MatthewMiddlehurst",
+        # estimator type
+        # --------------
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "interval",
     }
 
@@ -110,7 +115,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         self._base_estimator = DecisionTreeClassifier(criterion="entropy")
         self._stats = [np.mean, np.median, np.std, _slope, stats.iqr, np.min, np.max]
 
-        super(SupervisedTimeSeriesForest, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
@@ -205,7 +210,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
 
         Returns
         -------
-        output : nd.array of shape = (n_instances, n_classes)
+        output : np.ndarray of shape = (n_instances, n_classes)
             Predicted probabilities
         """
         X = X.squeeze(1)
@@ -299,9 +304,9 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     ):
         """Recursive function for finding intervals for a feature using fisher score.
 
-        Given a start and end point the series is split in half and both intervals
-        are evaluated. The half with the higher score is retained and used as the new
-        start and end for a recursive call.
+        Given a start and end point the series is split in half and both intervals are
+        evaluated. The half with the higher score is retained and used as the new start
+        and end for a recursive call.
         """
         series_length = end - start
         if series_length < 4:

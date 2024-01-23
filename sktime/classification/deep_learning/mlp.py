@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multi Layer Perceptron Network (MLP) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus"]
@@ -11,8 +10,6 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mlp import MLPNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class MLPClassifier(BaseDeepClassifier):
@@ -63,6 +60,14 @@ class MLPClassifier(BaseDeepClassifier):
     MLPClassifier(...)
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["James-Large", "AurumnPegasus"],
+        "maintainers": ["James-Large", "AurumnPegasus"],
+        # estimator type handled by parent class
+    }
+
     def __init__(
         self,
         n_epochs=2000,
@@ -77,7 +82,7 @@ class MLPClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(MLPClassifier, self).__init__()
+        super().__init__()
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size

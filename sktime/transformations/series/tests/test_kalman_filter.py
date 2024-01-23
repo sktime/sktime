@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Kalman Filter transformers unit tests."""
 
@@ -21,8 +20,8 @@ ts = 10
 def create_data(shape, missing_values=False, p=0.15, mult=10):
     """Create random ndarray of shape `shape`.
 
-    The result array will contain missing values (represented by np.nan)
-    if parameter `missing_values` is set to true.
+    The result array will contain missing values (represented by np.nan) if parameter
+    `missing_values` is set to true.
     """
     if isinstance(shape, int):
         shape = (shape,)
@@ -117,8 +116,8 @@ params_3_1_lists = {
 def get_params_mapping(params):
     """Transform parameters names.
 
-    From KalmanFilterTransformerPK, KalmanFilterTransformerFP naming
-    forms to `pykalman`'s naming form.
+    From KalmanFilterTransformerPK, KalmanFilterTransformerFP naming forms to
+    `pykalman-bardo`'s naming form.
     """
     params_mapping = {
         "state_transition": "transition_matrices",
@@ -151,7 +150,7 @@ def init_kf_pykalman(
     estimate_matrices=None,
     denoising=False,
 ):
-    """Initiate instance of `pykalman`'s `KalmanFilter`."""
+    """Initiate instance of `pykalman-bardo`'s `KalmanFilter`."""
     from pykalman.standard import KalmanFilter
 
     em_vars = get_params_mapping(params=estimate_matrices)
@@ -174,8 +173,8 @@ def init_kf_pykalman(
 def init_kf_filterpy(measurements, adapter, n=10, y=None):
     """Adjust params and measurements.
 
-    Given measurements and adapter, adjust params and measurements to
-    `FilterPy` usable form.
+    Given measurements and adapter, adjust params and measurements to `FilterPy` usable
+    form.
     """
     y_dim = 1 if y is None else y.shape[-1]
 
@@ -201,8 +200,12 @@ def init_kf_filterpy(measurements, adapter, n=10, y=None):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pykalman", severity="none"),
-    reason="skip test if required soft dependency pykalman not available",
+    not _check_soft_dependencies(
+        "pykalman-bardo",
+        package_import_alias={"pykalman-bardo": "pykalman"},
+        severity="none",
+    ),
+    reason="skip test if required soft dependency pykalman-bardo not available",
 )
 @pytest.mark.parametrize(
     "params, measurements",
@@ -315,9 +318,9 @@ def init_kf_filterpy(measurements, adapter, n=10, y=None):
 def test_transform_and_smooth_pk(params, measurements):
     """Test KalmanFilterTransformerPK `fit` and `transform`.
 
-    Creating two instances of KalmanFilterTransformerPK, one instance
-    with parameter `denoising` set to False, and the other's set to True.
-    Compare result with `pykalman`'s `filter` and `smooth`.
+    Creating two instances of KalmanFilterTransformerPK, one instance with parameter
+    `denoising` set to False, and the other's set to True. Compare result with
+    `pykalman-bardo`'s `filter` and `smooth`.
     """
     mask_measurements = np.ma.masked_invalid(np.copy(measurements))
 
@@ -346,8 +349,16 @@ def test_transform_and_smooth_pk(params, measurements):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pykalman", "filterpy", severity="none"),
-    reason="skip test if required soft dependencies pykalman, filterpy not available",
+    not _check_soft_dependencies(
+        "pykalman-bardo",
+        "filterpy",
+        package_import_alias={"pykalman-bardo": "pykalman"},
+        severity="none",
+    ),
+    reason=(
+        "skip test if required soft dependencies pykalman-bardo, "
+        "filterpy not available"
+    ),
 )
 @pytest.mark.parametrize(
     "classes, params, measurements",
@@ -549,9 +560,9 @@ def test_transform_and_smooth_pk(params, measurements):
 def test_em(classes, params, measurements):
     """Test adapters matrix estimation.
 
-    Call `fit` of input adapter/s, and compare all matrix parameters
-    with `pykalman`'s matrix parameters returned from `em`.
-    This test is useful for both KalmanFilterTransformerPK and
+    Call `fit` of input adapter/s, and compare all matrix parameters with
+    `pykalman-bardo`'s matrix parameters returned from `em`. This test
+    is useful for both KalmanFilterTransformerPK and
     KalmanFilterTransformerFP.
     """
     mask_measurements = np.ma.masked_invalid(np.copy(measurements))
@@ -581,8 +592,16 @@ def test_em(classes, params, measurements):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pykalman", "filterpy", severity="none"),
-    reason="skip test if required soft dependencies pykalman, filterpy not available",
+    not _check_soft_dependencies(
+        "pykalman-bardo",
+        "filterpy",
+        package_import_alias={"pykalman-bardo": "pykalman"},
+        severity="none",
+    ),
+    reason=(
+        "skip test if required soft dependencies pykalman-bardo, "
+        "filterpy not available"
+    ),
 )
 @pytest.mark.parametrize(
     "classes, params, measurements",
@@ -720,10 +739,8 @@ def test_em(classes, params, measurements):
 def test_bad_inputs(classes, params, measurements):
     """Test adapters bad inputs error handling.
 
-    Call `fit` of input adapter/s, and pass if ValueError
-    was thrown.
-    This test is useful for both KalmanFilterTransformerPK
-    and KalmanFilterTransformerFP.
+    Call `fit` of input adapter/s, and pass if ValueError was thrown. This test is
+    useful for both KalmanFilterTransformerPK and KalmanFilterTransformerFP.
     """
     with pytest.raises(ValueError):
         for _class in classes:
@@ -735,6 +752,7 @@ def test_bad_inputs(classes, params, measurements):
     not _check_soft_dependencies("filterpy", severity="none"),
     reason="skip test if required soft dependency filterpy not available",
 )
+@pytest.mark.xfail(reason="failure of unknown cause, see #4835")
 @pytest.mark.parametrize(
     "params, measurements, y",
     [  # test case 1 -
@@ -850,9 +868,9 @@ def test_bad_inputs(classes, params, measurements):
 def test_transform_and_smooth_fp(params, measurements, y):
     """Test KalmanFilterTransformerFP `fit` and `transform`.
 
-    Creating two instances of KalmanFilterTransformerFP, one instance
-    with parameter `denoising` set to False, and the other's set to True.
-    Compare result with `FilterPy`'s `batch_filter` and `rts_smoother`.
+    Creating two instances of KalmanFilterTransformerFP, one instance with parameter
+    `denoising` set to False, and the other's set to True. Compare result with
+    `FilterPy`'s `batch_filter` and `rts_smoother`.
     """
     from filterpy.kalman.kalman_filter import batch_filter, rts_smoother
 

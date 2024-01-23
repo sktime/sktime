@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for seasonality."""
 
-__author__ = ["fkiraly"]
-__all__ = ["SeasonalityACF"]
+__author__ = ["fkiraly", "blazingbhavneek"]
+__all__ = ["SeasonalityACF", "SeasonalityPeriodogram"]
 
 import numpy as np
 
@@ -27,15 +26,16 @@ class SeasonalityACF(BaseParamFitter):
     Parameters
     ----------
     candidate_sp : None, int or list of int, optional, default = None
-        candidate sp to test, and to restrict tests to
-        if None, will test all integer lags between 1 and nlags
+        candidate sp to test, and to restrict tests to; ints must be 2 or larger
+        if None, will test all integer lags between 2 and `nlags` (inclusive)
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for seasonality
+        significance threshold to apply in testing for seasonality
     adjusted : bool, optional, default=False
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
         Number of lags to compute autocorrelations for and select from.
-        At default None, uses min(10 * np.log10(nobs), nobs - 1).
+        At default None, uses `min(10 * np.log10(nobs), nobs - 1)`.
+        Will be ignored if `candidate_sp` is provided.
     fft : bool, optional, default=True
         If True, computes the ACF via FFT.
     missing : str, ["none", "raise", "conservative", "drop"], optional, default="none"
@@ -71,6 +71,7 @@ class SeasonalityACF(BaseParamFitter):
 
     Series should be stationary before applying ACF.
     To pipeline SeasonalityACF with the Differencer, use the ParamFitterPipeline:
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
@@ -86,6 +87,7 @@ class SeasonalityACF(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -108,7 +110,7 @@ class SeasonalityACF(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACF, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -140,7 +142,9 @@ class SeasonalityACF(BaseParamFitter):
 
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
-            candidate_sp = range(2, nlags)
+            candidate_sp = range(2, nlags + 1)
+        elif isinstance(candidate_sp, int):
+            candidate_sp = [candidate_sp]
 
         fft = self.fft
         missing = self.missing
@@ -196,8 +200,9 @@ class SeasonalityACF(BaseParamFitter):
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
+        params3 = {"candidate_sp": 12}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class SeasonalityACFqstat(BaseParamFitter):
@@ -220,10 +225,10 @@ class SeasonalityACFqstat(BaseParamFitter):
     Parameters
     ----------
     candidate_sp : None, int or list of int, optional, default = None
-        candidate sp to test, and to restrict tests to
-        if None, will test all integer lags between 1 and nlags
+        candidate sp to test, and to restrict tests to; ints must be 2 or larger
+        if None, will test all integer lags between 2 and `nlags` (inclusive)
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for seasonality
+        significance threshold to apply in testing for seasonality
     p_adjust : str, optional, default="fdr_by" (Benjamini/Yekutieli)
         multiple testing correction applied to p-values of candidate sp in acf test
         multiple testing correction is applied to Ljung-Box tests on candidate_sp
@@ -235,7 +240,8 @@ class SeasonalityACFqstat(BaseParamFitter):
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
         Number of lags to compute autocorrelations for and select from.
-        At default None, uses min(10 * np.log10(nobs), nobs - 1).
+        At default None, uses `min(10 * np.log10(nobs), nobs - 1)`.
+        Will be ignored if `candidate_sp` is provided.
     fft : bool, optional, default=True
         If True, computes the ACF via FFT.
     missing : str, ["none", "raise", "conservative", "drop"], optional, default="none"
@@ -268,6 +274,7 @@ class SeasonalityACFqstat(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -292,7 +299,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACFqstat, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -329,7 +336,9 @@ class SeasonalityACFqstat(BaseParamFitter):
 
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
-            candidate_sp = range(2, nlags)
+            candidate_sp = range(2, nlags + 1)
+        elif isinstance(candidate_sp, int):
+            candidate_sp = [candidate_sp]
 
         fft = self.fft
         missing = self.missing
@@ -354,7 +363,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         else:
             qstat_cand = qstat
             pvalues_cand = pvalues
-            candidate_sp = range(2, nlags)
+            candidate_sp = range(2, nlags + 1)
 
         self.qstat_cand_ = qstat_cand
         self.pvalues_cand = pvalues_cand
@@ -403,5 +412,121 @@ class SeasonalityACFqstat(BaseParamFitter):
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
+        params3 = {"candidate_sp": 12}
 
-        return [params1, params2]
+        return [params1, params2, params3]
+
+
+class SeasonalityPeriodogram(BaseParamFitter):
+    """Score periodicities by their spectral power.
+
+    Interfacing `seasonal.periodogram` to determine candidate seasonality parameters.
+
+    Parameters
+    ----------
+    min_period : int
+        Disregard periods shorter than this number of samples.
+        Defaults to 4
+    max_period : int
+        Disregard periods longer than this number of samples.
+        Defaults to None
+    thresh : float (0..1)
+        Retain periods scoring above thresh*maxscore. Defaults to 0.10
+
+    Attributes
+    ----------
+    sp_ : int, seasonality period with highest power, if any sub-threshold, else 1
+    sp_significant_ : list of int, array of Fourier periods in descending order
+        of their powers.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.param_est.seasonality import SeasonalityPeriodogram
+    >>> X = load_airline().diff()[1:]  # doctest: +SKIP
+    >>> sp_est = SeasonalityPeriodogram()  # doctest: +SKIP
+    >>> sp_est.fit(X)  # doctest: +SKIP
+    SeasonalityPeriodogram(...)
+    >>> sp_est.get_fitted_params()["sp"]  # doctest: +SKIP
+    6
+    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
+    array([6, 12, 14, 4, 10, 5])
+    """
+
+    _tags = {
+        "authors": ["blazingbhavneek"],
+        "maintainers": ["blaingbhavneek"],
+        "X_inner_mtype": "pd.Series",
+        "scitype:X": "Series",
+        "capability:missing_values": True,
+        "capability:multivariate": False,
+        "python_dependencies": "seasonal",
+    }
+
+    def __init__(self, min_period=4, max_period=None, thresh=0.10):
+        self.min_period = min_period
+        self.max_period = max_period
+        self.thresh = thresh
+        super().__init__()
+
+    def _fit(self, X):
+        """Fit estimator and estimate parameters.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Time series to which to fit the estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from seasonal.periodogram import periodogram_peaks
+
+        seasons = periodogram_peaks(
+            X,
+            min_period=self.min_period,
+            max_period=self.max_period,
+            thresh=self.thresh,
+        )
+
+        seasons = [x[0] for x in seasons]
+
+        if seasons is None or len(seasons) == 0:
+            self.sp_ = 1
+            self.sp_significant_ = []
+        else:
+            self.sp_significant_ = seasons
+            self.sp_ = self.sp_significant_[0]
+
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"min_period": 5, "max_period": 24, "thresh": 0.1}
+        params3 = {"min_period": 5}
+
+        return [params1, params2, params3]

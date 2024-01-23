@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for classification."""
 
 __author__ = ["James-Large", "TonyBagnall"]
@@ -12,15 +11,12 @@ from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies(severity="warning")
-
 
 class CNNClassifier(BaseDeepClassifier):
     """Time Convolutional Neural Network (CNN), as described in [1]_.
 
     Parameters
     ----------
-    should inherited fields be listed here?
     n_epochs       : int, default = 2000
         the number of epochs to train the model
     batch_size      : int, default = 16
@@ -38,7 +34,6 @@ class CNNClassifier(BaseDeepClassifier):
         whether to output extra information
     loss            : string, default="mean_squared_error"
         fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
     activation      : string or a tf callable, default="sigmoid"
         Activation function used in the output linear layer.
@@ -70,7 +65,14 @@ class CNNClassifier(BaseDeepClassifier):
     CNNClassifier(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["James-Large", "TonyBagnall"],
+        "maintainers": ["James-Large"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
@@ -89,7 +91,7 @@ class CNNClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(CNNClassifier, self).__init__()
+        super().__init__()
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
         self.kernel_size = kernel_size

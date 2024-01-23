@@ -165,3 +165,6 @@ sktime/_contrib/temp/
 
 # example mlflow runs
 examples/local/
+
+# py-spy profiler output
+profile.svg

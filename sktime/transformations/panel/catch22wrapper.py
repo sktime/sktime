@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Catch22 features.
 
 A transformer for the Catch22 features using the pycatch22 C wrapper.
@@ -14,9 +13,6 @@ from joblib import Parallel, delayed
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel import catch22
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("pycatch22", severity="warning")
 
 
 class Catch22Wrapper(BaseTransformer):
@@ -75,13 +71,19 @@ class Catch22Wrapper(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "maintainers": "benfulcher",
+        "python_dependencies": "pycatch22",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
         "X_inner_mtype": "nested_univ",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
-        "python_dependencies": "pycatch22",
     }
 
     def __init__(
@@ -120,7 +122,7 @@ class Catch22Wrapper(BaseTransformer):
 
         self._transform_features = None
 
-        super(Catch22Wrapper, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform data into the Catch22 features.

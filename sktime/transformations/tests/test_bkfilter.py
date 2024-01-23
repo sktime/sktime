@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for BKfilter wrapper annotation estimator."""
 
 __author__ = ["klam-data", "pyyim"]

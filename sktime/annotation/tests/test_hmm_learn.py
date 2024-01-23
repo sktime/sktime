@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for hmmlearn wrapper annotation estimator."""
 
 __author__ = ["miraep8", "klam-data", "pyyim", "mgorlin"]

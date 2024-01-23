@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for classification."""
 
-__author__ = [
-    "Jack Russon",
-]
-__all__ = [
-    "TapNetRegressor",
-]
+__author__ = ["jnrusson1"]
+__all__ = ["TapNetRegressor"]
 
 from copy import deepcopy
 
@@ -78,7 +73,14 @@ class TapNetRegressor(BaseDeepRegressor):
     or class  based self attention.
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jnrusson1"],
+        "maintainers": ["jnrusson1"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
@@ -105,7 +107,7 @@ class TapNetRegressor(BaseDeepRegressor):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super(TapNetRegressor, self).__init__()
+        super().__init__()
 
         self.batch_size = batch_size
         self.random_state = random_state
@@ -195,8 +197,7 @@ class TapNetRegressor(BaseDeepRegressor):
         return model
 
     def _fit(self, X, y):
-        """
-        Fit the regressor on the training set (X, y).
+        """Fit the regressor on the training set (X, y).
 
         Parameters
         ----------

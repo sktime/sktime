@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 """BOSS classifiers.
 
-Dictionary based BOSS classifiers based on SFA transform. Contains a single
-BOSS and a BOSS ensemble.
+Dictionary based BOSS classifiers based on SFA transform. Contains a single BOSS and a
+BOSS ensemble.
 """
 
 __author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["BOSSEnsemble", "IndividualBOSS", "pairwise_distances"]
 
+from copy import copy
 from itertools import compress
 
 import numpy as np
@@ -118,17 +118,24 @@ class BOSSEnsemble(BaseClassifier):
     >>> from sktime.classification.dictionary_based import BOSSEnsemble
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = BOSSEnsemble(max_ensemble_size=3)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = BOSSEnsemble(max_ensemble_size=3) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     BOSSEnsemble(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "patrickzib"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:train_estimate": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
+        "capability:predict_proba": True,
     }
 
     def __init__(
@@ -163,7 +170,7 @@ class BOSSEnsemble(BaseClassifier):
         self._norm_options = [True, False]
         self.alphabet_size = alphabet_size
 
-        super(BOSSEnsemble, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a boss ensemble on cases (X,y), where y is the target variable.
@@ -519,14 +526,20 @@ class IndividualBOSS(BaseClassifier):
     >>> from sktime.classification.dictionary_based import IndividualBOSS
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = IndividualBOSS()
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = IndividualBOSS() # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     IndividualBOSS(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "patrickzib"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multithreading": True,
     }
 
@@ -562,7 +575,7 @@ class IndividualBOSS(BaseClassifier):
         self._subsample = []
         self._train_predictions = []
 
-        super(IndividualBOSS, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a single boss classifier on n_instances cases (X,y).
@@ -646,25 +659,22 @@ class IndividualBOSS(BaseClassifier):
         return self._class_vals[min_pos]
 
     def _shorten_bags(self, word_len, y):
-        new_boss = IndividualBOSS(
-            self.window_size,
-            word_len,
-            self.norm,
-            self.alphabet_size,
-            save_words=self.save_words,
-            use_boss_distance=self.use_boss_distance,
-            feature_selection=self.feature_selection,
-            n_jobs=self.n_jobs,
-            random_state=self.random_state,
-        )
+        new_boss = copy(self)
+
+        # change word length parameter
+        new_boss.word_length = word_len
+
+        # reset internal variables
+        new_boss._accuracy = 0
+        new_boss._subsample = []
+        new_boss._train_predictions = []
+
+        # copy fitted transformer as reference
         new_boss._transformer = self._transformer
+
+        # update shortened bags
         new_bag = new_boss._transformer._shorten_bags(word_len, y)
         new_boss._transformed_data = new_bag
-        new_boss._class_vals = self._class_vals
-        new_boss.n_classes_ = self.n_classes_
-        new_boss.classes_ = self.classes_
-        new_boss._class_dictionary = self._class_dictionary
-        new_boss._is_fitted = True
 
         return new_boss
 
@@ -721,11 +731,11 @@ def boss_distance(X, Y, i, XX_all=None, XY_all=None):
     """Find the distance between two histograms.
 
     This returns the distance between first and second dictionaries, using a non-
-    symmetric distance measure. It is used to find the distance between historgrams
+    symmetric distance measure. It is used to find the distance between histograms
     of words.
 
     This distance function is designed for sparse matrix, represented as either a
-    dictionary or an arrray. It only measures the distance between counts present in
+    dictionary or an array. It only measures the distance between counts present in
     the first dictionary and the second. Hence dist(a,b) does not necessarily equal
     dist(b,a).
 

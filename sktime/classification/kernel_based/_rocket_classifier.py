@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """RandOm Convolutional KErnel Transform (Rocket).
 
 Pipeline classifier using the ROCKET transformer and RidgeClassifierCV estimator.
@@ -31,15 +30,17 @@ class RocketClassifier(_DelegatedClassifier):
     Shorthand for the pipeline
     `rocket * StandardScaler(with_mean=False) * RidgeClassifierCV(alphas)`
     where `alphas = np.logspace(-3, 3, 10)`, and
-    where `rocket` depends on params `rocket_transform`, `use_multivariate` as follows:
+    where `rocket` depends on params `rocket_transform`, `use_multivariate` as follows
 
-        | rocket_transform | `use_multivariate` | rocket (class)          |
-        |------------------|--------------------|-------------------------|
-        | "rocket"         | any                | Rocket                  |
-        | "minirocket"     | "yes               | MiniRocketMultivariate  |
-        | "minirocket"     | "no"               | MiniRocket              |
-        | "multirocket"    | "yes"              | MultiRocketMultivariate |
-        | "multirocket"    | "no"               | MultiRocket             |
+    ================ ================== =======================
+    rocket_transform `use_multivariate` rocket (class)
+    ================ ================== =======================
+    "rocket"         any                Rocket
+    "minirocket"     "yes"               MiniRocketMultivariate
+    "minirocket"     "no"               MiniRocket
+    "multirocket"    "yes"              MultiRocketMultivariate
+    "multirocket"    "no"               MultiRocket
+    ================ ================== =======================
 
     classes are sktime classes, other parameters are passed on to the rocket class.
 
@@ -98,14 +99,21 @@ class RocketClassifier(_DelegatedClassifier):
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = RocketClassifier(num_kernels=500)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = RocketClassifier(num_kernels=500) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     RocketClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "victordremov", "fkiraly"],
+        "maintainers": ["victordremov"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "kernel",
@@ -134,7 +142,7 @@ class RocketClassifier(_DelegatedClassifier):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        super(RocketClassifier, self).__init__()
+        super().__init__()
 
         if use_multivariate not in self.VALID_MULTIVAR_VALUES:
             raise ValueError(

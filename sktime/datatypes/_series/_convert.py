@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Machine type converters for Series scitype.
 
 Exports conversion and mtype dictionary for Series scitype:
@@ -37,6 +36,7 @@ import pandas as pd
 ##############################################################
 # methods to convert one machine type to another machine type
 ##############################################################
+from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._registry import MTYPE_LIST_SERIES
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -45,7 +45,8 @@ convert_dict = dict()
 
 
 def convert_identity(obj, store=None):
-
+    # coerces pandas nullable dtypes; does nothing if obj is not pandas
+    obj = _coerce_df_dtypes(obj)
     return obj
 
 
@@ -55,9 +56,10 @@ for tp in MTYPE_LIST_SERIES:
 
 
 def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
-
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
+
+    obj = _coerce_df_dtypes(obj)
 
     if isinstance(store, dict):
         store["name"] = obj.name
@@ -78,9 +80,10 @@ convert_dict[("pd.Series", "pd.DataFrame", "Series")] = convert_UvS_to_MvS_as_Se
 
 
 def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
-
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input is not a pd.DataFrame")
+
+    obj = _coerce_df_dtypes(obj)
 
     if len(obj.columns) != 1:
         raise ValueError("input must be univariate pd.DataFrame, with one column")
@@ -102,9 +105,10 @@ convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Se
 
 
 def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
-
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input must be a pd.DataFrame")
+
+    obj = _coerce_df_dtypes(obj)
 
     if isinstance(store, dict):
         store["columns"] = obj.columns
@@ -117,9 +121,10 @@ convert_dict[("pd.DataFrame", "np.ndarray", "Series")] = convert_MvS_to_np_as_Se
 
 
 def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
-
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
+
+    obj = _coerce_df_dtypes(obj)
 
     if isinstance(store, dict):
         store["index"] = obj.index
@@ -132,7 +137,6 @@ convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Serie
 
 
 def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
-
     if not isinstance(obj, np.ndarray) and len(obj.shape) > 2:
         raise TypeError("input must be a np.ndarray of dim 1 or 2")
 
@@ -162,7 +166,6 @@ convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = convert_np_to_MvS_as_Se
 
 
 def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
-
     if not isinstance(obj, np.ndarray) or obj.ndim > 2:
         raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
 
@@ -213,6 +216,8 @@ if _check_soft_dependencies("xarray", severity="none"):
     ) -> xr.DataArray:
         if not isinstance(obj, pd.DataFrame):
             raise TypeError("input must be a xr.DataArray")
+
+        obj = _coerce_df_dtypes(obj)
 
         result = xr.DataArray(obj.values, coords=[obj.index, obj.columns])
         if isinstance(store, dict) and "coords" in store:

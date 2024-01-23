@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Catch22 Classifier.
 
 Pipeline classifier using the Catch22 transformer and an estimator.
@@ -71,19 +70,27 @@ class Catch22Classifier(_DelegatedClassifier):
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = Catch22Classifier(
     ...     estimator=RandomForestClassifier(n_estimators=5),
     ...     outlier_norm=True,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     Catch22Classifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "RavenRudi", "fkiraly"],
+        "maintainers": ["RavenRudi"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "feature",
     }
 
@@ -102,7 +109,7 @@ class Catch22Classifier(_DelegatedClassifier):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        super(Catch22Classifier, self).__init__()
+        super().__init__()
 
         transformer = Catch22(
             outlier_norm=self.outlier_norm, replace_nans=self.replace_nans

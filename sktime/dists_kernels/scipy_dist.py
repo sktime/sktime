@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """Interface module to scipy.
 
-Interface module to scipy.spatial's pairwise distance function cdist
-    exposes parameters as scikit-learn hyper-parameters
+Interface module to scipy.spatial's pairwise distance function cdist     exposes
+parameters as scikit-learn hyper-parameters
 """
 
 __author__ = ["fkiraly"]
@@ -11,7 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cdist
 
-from sktime.dists_kernels._base import BasePairwiseTransformer
+from sktime.dists_kernels.base import BasePairwiseTransformer
 
 
 class ScipyDist(BasePairwiseTransformer):
@@ -26,7 +25,9 @@ class ScipyDist(BasePairwiseTransformer):
     metric : string or function, as in cdist; default = 'euclidean'
         if string, one of: 'braycurtis', 'canberra', 'chebyshev', 'cityblock',
             'correlation', 'cosine', 'dice', 'euclidean', 'hamming', 'jaccard',
-            'jensenshannon', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
+            'jensenshannon',
+            'kulsinski' (< scipy 1.11) or 'kulczynski1' (from scipy 1.11),
+            'mahalanobis', 'matching', 'minkowski',
             'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
             'sokalsneath', 'sqeuclidean', 'yule'
         if function, should have signature 1D-np.array x 1D-np.array -> float
@@ -51,6 +52,7 @@ class ScipyDist(BasePairwiseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "symmetric": True,  # all the distances are symmetric
     }
 
@@ -62,14 +64,13 @@ class ScipyDist(BasePairwiseTransformer):
         var_weights=None,
         metric_kwargs=None,
     ):
-
         self.metric = metric
         self.p = p
         self.colalign = colalign
         self.var_weights = var_weights
         self.metric_kwargs = metric_kwargs
 
-        super(ScipyDist, self).__init__()
+        super().__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.

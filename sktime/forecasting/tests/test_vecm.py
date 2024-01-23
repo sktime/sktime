@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests the VAR model."""
 __author__ = ["thayeylolu", "AurumnPegasus"]
 import numpy as np
@@ -7,8 +6,8 @@ import pytest
 from numpy.testing import assert_allclose
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.vecm import VECM
+from sktime.split import temporal_train_test_split
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 index = pd.date_range(start="2005", end="2006-12", freq="M")

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
 __author__ = ["jnrusson1", "solen0id"]
 
@@ -10,21 +9,15 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.lstmfcn import LSTMFCNNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class LSTMFCNClassifier(BaseDeepClassifier):
-    """
-
-    Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
+    """Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
 
     Overview
     --------
      Combines an LSTM arm with a CNN arm. Optionally uses an attention mechanism in the
      LSTM which the author indicates provides improved performance.
-
 
     Parameters
     ----------
@@ -55,20 +48,20 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     random_state : int or None, default=None
         Seed for random, integer.
 
-
-    Notes
-    -----
-    Ported from sktime-dl source code
-    https://github.com/sktime/sktime-dl/blob/master/sktime_dl/classification/_lstmfcn.py
-
     References
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
     https://arxiv.org/pdf/1801.04503.pdf
-
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jnrusson1", "solen0id"],
+        "maintainers": ["jnrusson1", "solen0id"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
@@ -83,8 +76,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         random_state=None,
         verbose=0,
     ):
-
-        super(LSTMFCNClassifier, self).__init__()
+        super().__init__()
 
         self.classes_ = None
         self.input_shape = None

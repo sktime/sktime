@@ -1,21 +1,22 @@
-# -*- coding: utf-8 -*-
 """Tests for Prophet.
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "tpvasconcelos"]
+
+from unittest import mock
 
 import pandas as pd
 import pytest
 
 from sktime.forecasting.fbprophet import Prophet
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("prophet", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(Prophet),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("indextype", ["range", "period"])
 def test_prophet_nonnative_index(indextype):
@@ -37,14 +38,14 @@ def test_prophet_nonnative_index(indextype):
     y_pred = f.predict(fh=fh, X=X_test)
 
     if indextype == "range":
-        assert y_pred.index.is_integer()
+        assert pd.api.types.is_integer_dtype(y_pred.index)
     if indextype == "period":
         assert isinstance(y_pred.index, pd.PeriodIndex)
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("prophet", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(Prophet),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("convert_to_datetime", [False, True])
 def test_prophet_period_fh(convert_to_datetime):
@@ -78,3 +79,28 @@ def test_prophet_period_fh(convert_to_datetime):
     else:
         assert isinstance(y_pred.index, pd.PeriodIndex)
         assert (y_pred.index == fh_index).all()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Prophet),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "fit_kwargs", [None, {"foo": "bar"}, {"foo1": "bar1", "foo2": "bar2"}]
+)
+def test_prophet_fit_kwargs_are_passed_down(fit_kwargs: dict):
+    """Test that the `fit_kwargs` hyperparameter is passed down to Prophet.fit()."""
+    from sktime.datasets import load_airline
+    from sktime.forecasting.fbprophet import Prophet
+
+    y = load_airline()
+    with mock.patch("prophet.forecaster.Prophet.fit") as mock_fit:
+        forecaster = Prophet(fit_kwargs=fit_kwargs)
+        forecaster.fit(y)
+        mock_fit.assert_called_once()
+        assert mock_fit.call_args.args == ()
+        call_kwargs = mock_fit.call_args.kwargs
+        # `df` should always be one of the arguments but
+        # we don't care about its actual value here
+        call_kwargs.pop("df")
+        assert call_kwargs == (fit_kwargs or {})

@@ -1,15 +1,20 @@
-# -*- coding: utf-8 -*-
 """Simple ClaSP test."""
 
 __author__ = ["patrickzib"]
 __all__ = []
 
 import numpy as np
+import pytest
 
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.datasets import load_gun_point_segmentation
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ClaSPSegmentation),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_clasp_sparse():
     """Test ClaSP sparse segmentation.
 
@@ -28,6 +33,10 @@ def test_clasp_sparse():
     assert len(scores) == 1 and scores[0] > 0.74
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ClaSPSegmentation),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_clasp_dense():
     """Tests ClaSP dense segmentation.
 

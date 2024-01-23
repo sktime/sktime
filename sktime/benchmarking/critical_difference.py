@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Standalone module to compute and plot critical difference diagrams."""
 
 __author__ = ["SveaMeyer13"]
@@ -14,8 +13,7 @@ _check_soft_dependencies("matplotlib", severity="warning")
 
 
 def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):
-    """
-    Check whether Friedman test is significant.
+    """Check whether Friedman test is significant.
 
     Larger parts of code copied from scipy.
 
@@ -71,8 +69,7 @@ def plot_critical_difference(
     textspace=2.5,
     reverse=True,
 ):
-    """
-    Draw critical difference diagram.
+    """Draw critical difference diagram.
 
     Step 1 & 2: Calculate average ranks from data
     Step 3: Use Friedman test to check whether
@@ -98,7 +95,7 @@ def plot_critical_difference(
             list with names of the strategies
         cliques : lists of bit vectors,
             e.g. [[0,1,1,1,0,0] [0,0,0,0,1,1]]
-            statistically similiar cliques of strategies
+            statistically similar cliques of strategies
             optional (default: None, in this case cliques will be computed)
         is_errors : bool
             indicates whether scores are passed as errors (default) or accuracies
@@ -122,8 +119,7 @@ def plot_critical_difference(
         return [a[n] for a in lst]
 
     def _lloc(lst, n):
-        """
-        List location in list of list structure.
+        """List location in list of list structure.
 
         Enable the use of negative locations:
         -1 is the last element, -2 second last...
@@ -414,7 +410,7 @@ def plot_critical_difference(
     linesblank = 0  # lines between scale and text
     scalewidth = width - 2 * textspace
 
-    # calculate heigh needed height
+    # calculate height needed height
     minnotsignificant = max(2 * 0.2, linesblank)
     height = cline + ((n_strategies + 1) / 2) * 0.2 + minnotsignificant + 0.2
 

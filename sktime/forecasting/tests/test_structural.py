@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """UnobservedComponents Tests."""
 __author__ = ["juanitorduz"]
 
@@ -9,8 +8,8 @@ from pandas.testing import assert_series_equal
 
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.structural import UnobservedComponents
+from sktime.split import SlidingWindowSplitter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
@@ -35,7 +34,6 @@ class ModelSpec:
 
         # Sample from model parameters.
         for t in range(1, n):
-
             zeta[t] = self.params["zeta"] * np.random.normal(loc=0.0, scale=sigma_zeta)
             beta[t] = self.params["beta_1"] * beta[t - 1] + zeta[t]
 

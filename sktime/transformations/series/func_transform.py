@@ -1,6 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
-
 """Implements FunctionTransformer, a class to create custom transformers."""
 
 __author__ = ["BoukePostma"]
@@ -20,12 +18,12 @@ class FunctionTransformer(BaseTransformer):
     r"""Constructs a transformer from an arbitrary callable.
 
     A FunctionTransformer forwards its y (and optionally X) arguments to a
-    user-defined function or function object and returns the result of this
+    user-defined function (or callable object) and returns the result of this
     function. This is useful for stateless transformations such as taking the
     log of frequencies, doing custom scaling, etc.
 
-    Note: If a lambda is used as the function, then the resulting
-    transformer will not be pickleable.
+    Note: If a lambda function is used as the ``func``, then the
+    resulting transformer will not be pickleable.
 
     Parameters
     ----------
@@ -76,6 +74,7 @@ class FunctionTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["BoukePostma"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -105,7 +104,7 @@ class FunctionTransformer(BaseTransformer):
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
         self.X_type = X_type
-        super(FunctionTransformer, self).__init__()
+        super().__init__()
 
         if X_type is not None:
             self.set_tags(X_inner_mtype=X_type)

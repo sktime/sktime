@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unified high-level interface for various time series related learning strategies."""
 
 __all__ = ["TSCStrategy", "TSRStrategy"]
@@ -28,9 +27,8 @@ CASES = ("TSR", "TSC")
 class BaseStrategy(BaseEstimator):
     """Abstract base strategy class.
 
-    Implements attributes and operations shared by all strategies,
-    including input and compatibility checks between passed estimator,
-    data and task.
+    Implements attributes and operations shared by all strategies, including input and
+    compatibility checks between passed estimator, data and task.
     """
 
     def __init__(self, estimator, name=None):
@@ -173,7 +171,7 @@ class BaseStrategy(BaseEstimator):
     def __repr__(self):
         strategy_name = self.__class__.__name__
         estimator_name = self.estimator.__class__.__name__
-        return "%s(%s(%s))" % (
+        return "{}({}({}))".format(
             strategy_name,
             estimator_name,
             repr(self.get_params(deep=False)),
@@ -185,8 +183,8 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
 
     Accepts a low-level estimator to perform a given task.
 
-    Implements predict and internal fit methods for time series regression
-    and classification.
+    Implements predict and internal fit methods for time series regression and
+    classification.
     """
 
     def _fit(self, data):
@@ -231,8 +229,7 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
 
 
 class TSCStrategy(BaseSupervisedLearningStrategy):
-    """
-    Strategy for time series classification.
+    """Strategy for time series classification.
 
     Parameters
     ----------
@@ -245,12 +242,11 @@ class TSCStrategy(BaseSupervisedLearningStrategy):
     def __init__(self, estimator, name=None):
         self._case = "TSC"
         self._traits = {"required_estimator_type": CLASSIFIER_TYPES}
-        super(TSCStrategy, self).__init__(estimator, name=name)
+        super().__init__(estimator, name=name)
 
 
 class TSRStrategy(BaseSupervisedLearningStrategy):
-    """
-    Strategy for time series regression.
+    """Strategy for time series regression.
 
     Parameters
     ----------
@@ -263,4 +259,4 @@ class TSRStrategy(BaseSupervisedLearningStrategy):
     def __init__(self, estimator, name=None):
         self._case = "TSR"
         self._traits = {"required_estimator_type": REGRESSOR_TYPES}
-        super(TSRStrategy, self).__init__(estimator, name=name)
+        super().__init__(estimator, name=name)

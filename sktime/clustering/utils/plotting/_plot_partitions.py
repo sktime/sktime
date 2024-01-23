@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Cluster plotting tools."""
 
-__author__ = ["Christopher Holder", "Tony Bagnall"]
+__author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["plot_cluster_algorithm"]
 
 import numpy as np

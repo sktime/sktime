@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Summary Classifier.
 
 Pipeline classifier using the basic summary statistics and an estimator.
@@ -65,8 +64,14 @@ class SummaryClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "feature",
     }
 
@@ -89,7 +94,7 @@ class SummaryClassifier(BaseClassifier):
         self._estimator = None
         self._transform_atts = 0
 
-        super(SummaryClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.

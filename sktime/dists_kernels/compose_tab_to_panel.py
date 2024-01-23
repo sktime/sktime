@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Composers that create panel pairwise transformers from table pairwise transformers.
+"""Composers that create panel pairwise transformers from table pairwise transformers.
 
 Currently implemented composers in this module:
 
@@ -12,11 +10,11 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import (
+from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.deep_equals import deep_equals
 
 
 class AggrDist(BasePairwiseTransformerPanel):
@@ -56,13 +54,17 @@ class AggrDist(BasePairwiseTransformerPanel):
     Examples
     --------
     Mean pairwise euclidean distance between between time series
+
     >>> from sktime.dists_kernels import AggrDist, ScipyDist
     >>> mean_euc_tsdist = AggrDist(ScipyDist())
 
     Mean pairwise Gaussian kernel between time series
+
     >>> from sklearn.gaussian_process.kernels import RBF
     >>> mean_gaussian_tskernel = AggrDist(RBF())
     """
+
+    _tags = {"authors": "fkiraly"}
 
     def __init__(
         self,
@@ -70,12 +72,11 @@ class AggrDist(BasePairwiseTransformerPanel):
         aggfunc=None,
         aggfunc_is_symm=False,  # False for safety, but set True later if aggfunc=None
     ):
-
         self.aggfunc = aggfunc
         self.aggfunc_is_symm = aggfunc_is_symm
         self.transformer = transformer
 
-        super(AggrDist, self).__init__()
+        super().__init__()
 
         if self.aggfunc_is_symm:
             self.set_tags(**{"symmetric": True})
@@ -132,7 +133,6 @@ class AggrDist(BasePairwiseTransformerPanel):
 
         for i in range(n):
             for j in range(m):
-
                 if all_symm and j < i:
                     distmat[i, j] = distmat[j, i]
                 else:
@@ -186,24 +186,26 @@ class FlatDist(BasePairwiseTransformerPanel):
     Examples
     --------
     Euclidean distance between time series of equal length, considered as vectors
+
     >>> from sktime.dists_kernels import FlatDist, ScipyDist
     >>> euc_tsdist = FlatDist(ScipyDist())
 
     Gaussian kernel between time series of equal length, considered as vectors
+
     >>> from sklearn.gaussian_process.kernels import RBF
     >>> flat_gaussian_tskernel = FlatDist(RBF())
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "numpy3D",  # which mtype is used internally in _transform?
         "capability:unequal_length": False,
     }
 
     def __init__(self, transformer):
-
         self.transformer = transformer
 
-        super(FlatDist, self).__init__()
+        super().__init__()
 
         if isinstance(transformer, BasePairwiseTransformer):
             tags_to_clone = ["capability:missing_values"]

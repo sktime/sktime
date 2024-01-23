@@ -1,8 +1,8 @@
 ## ACSF1
 #
-#The dataset is compiled from ACS-F1, the first version of the database of appliance consumption signatures. The dataset contains the power consumption of typical appliances. The recordings are characterized by long idle periods and some high bursts of enery consumption when the appliance is active.
+#The dataset is compiled from ACS-F1, the first version of the database of appliance consumption signatures. The dataset contains the power consumption of typical appliances. The recordings are characterized by long idle periods and some high bursts of energy consumption when the appliance is active.
 #
-#The classes correspond to 10 categories of home appliances: mobile phones (via chargers), coffee machines, computer stations (including monitor), fridges and freezers, Hi-Fi systems (CD players), lamp (CFL), laptops (via chargers), microwave ovens, printers, and televisions (LCD or LED). 
+#The classes correspond to 10 categories of home appliances: mobile phones (via chargers), coffee machines, computer stations (including monitor), fridges and freezers, Hi-Fi systems (CD players), lamp (CFL), laptops (via chargers), microwave ovens, printers, and televisions (LCD or LED).
 #
 #Train size: 100
 #
@@ -10,7 +10,7 @@
 #
 #Missing value: No
 #
-#Number of classses: 10
+#Number of classes: 10
 #
 #Time series length: 1460
 #

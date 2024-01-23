@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Extension template for time series classifiers.
+"""Extension template for time series classifiers.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -18,7 +16,8 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting                 - _fit(self, X, y)
@@ -29,7 +28,7 @@ Optional implements:
     fitted parameter inspection           - _get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)
 
-Testing - implement if sktime classifier (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -41,11 +40,7 @@ from sktime.classification.base import BaseClassifier
 # todo: add any necessary imports here
 
 # todo: if any imports are sktime soft dependencies:
-#  * make sure to fill in the "python_dependencies" tag with the package import name
-#  * add a _check_soft_dependencies warning here, example:
-#
-# from sktime.utils.validation._dependencies import check_soft_dependencies
-# _check_soft_dependencies("soft_dependency_name", severity="warning")
+# make sure to fill in the "python_dependencies" tag with the package import name
 
 
 class MyTimeSeriesClassifier(BaseClassifier):
@@ -75,22 +70,39 @@ class MyTimeSeriesClassifier(BaseClassifier):
     # optional todo: override base class estimator default tags here if necessary
     # these are the default values, only add if different to these.
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        # maintainer = algorithm maintainer role, "owner"
+        # specify one or multiple authors and maintainers, only for sktime contribution
+        # remove maintainer tag if maintained by sktime core team
+        #
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # PEP 440 python dependencies specifier,
+        # e.g., "numba>0.53", or a list, e.g., ["numba>0.53", "numpy>=1.19.0"]
+        # delete if no python dependencies or version limitations
+        #
+        # estimator tags
+        # --------------
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
-        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
+        "y_inner_mtype": "numpy1D",  # which type do _fit/_predict return, usually
+        # this is either "numpy3D", "pd-multiindex" or "nested_univ" (nested df). Other
         # types are allowable, see datatypes/panel/_registry.py for options.
-        "capability:multivariate": False,
+        "capability:multivariate": False,  # ability to handle multivariate X
+        "capability:multioutput": False,  # ability to predict multiple columns in y
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
@@ -98,8 +110,8 @@ class MyTimeSeriesClassifier(BaseClassifier):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTimeSeriesClassifier" to the name of the class
-        super(MyTimeSeriesClassifier, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
@@ -134,13 +146,19 @@ class MyTimeSeriesClassifier(BaseClassifier):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
+            if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
 
         Returns
         -------
@@ -157,31 +175,32 @@ class MyTimeSeriesClassifier(BaseClassifier):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, X) -> np.ndarray:
+    def _predict(self, X):
         """Predict labels for sequences in X.
 
         private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
 
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
+        y : should be of mtype in self.get_tag("y_inner_mtype")
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            predicted class labels
             indices correspond to instance indices in X
+            if self.get_tag("capaility:multioutput") = False, should be 1D
+            if self.get_tag("capaility:multioutput") = True, should be 2D
         """
 
         # implement here
@@ -205,9 +224,11 @@ class MyTimeSeriesClassifier(BaseClassifier):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 

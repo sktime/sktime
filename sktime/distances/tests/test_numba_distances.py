@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test suite for numba distances."""
 
 __author__ = ["chrisholder"]
@@ -17,6 +16,8 @@ from sktime.distances.tests._shared_tests import (
     _test_metric_parameters,
 )
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _ran_once = False
 
@@ -147,6 +148,10 @@ def _validate_distance_result(
         assert_almost_equal(metric_str_result, expected_result, 5)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
 def test_distance(dist: MetricInfo) -> None:
     """Test distance.
@@ -160,6 +165,9 @@ def test_distance(dist: MetricInfo) -> None:
     distance_numba_class = dist.dist_instance
     distance_function = dist.dist_func
     distance_factory = distance_numba_class.distance_factory
+
+    if not run_test_for_class(distance_function):
+        return None
 
     _validate_distance_result(
         x=np.array([10.0]),
@@ -192,16 +200,28 @@ def test_distance(dist: MetricInfo) -> None:
     )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_metric_parameters():
     """Ensure different parameters can be passed to distance."""
     _test_metric_parameters(distance)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_incorrect_parameters():
     """Ensure incorrect parameters raise errors."""
     _test_incorrect_parameters(distance)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_distance_factory_1d():
     """Test distance factory works with 1d and 2d."""
     x = create_test_distance_numpy(100)

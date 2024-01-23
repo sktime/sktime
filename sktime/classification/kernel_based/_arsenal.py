@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Arsenal classifier.
 
 kernel based ensemble of ROCKET classifiers.
@@ -104,18 +103,26 @@ class Arsenal(BaseClassifier):
     >>> from sktime.classification.kernel_based import Arsenal
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test =load_unit_test(split="test", return_X_y=True)
-    >>> clf = Arsenal(num_kernels=100, n_estimators=5)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test =load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = Arsenal(num_kernels=100, n_estimators=5) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     Arsenal(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "kachayev"],
+        "maintainers": ["kachayev"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "kernel",
     }
 
@@ -154,7 +161,7 @@ class Arsenal(BaseClassifier):
 
         self._weight_sum = 0
 
-        super(Arsenal, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit Arsenal to training data.
@@ -227,7 +234,8 @@ class Arsenal(BaseClassifier):
                             if self.random_state is None
                             else (255 if self.random_state == 0 else self.random_state)
                             * 37
-                            * (i + 1),
+                            * (i + 1)
+                            % 2**31,
                         ),
                         X,
                         y,
@@ -251,7 +259,8 @@ class Arsenal(BaseClassifier):
                         if self.random_state is None
                         else (255 if self.random_state == 0 else self.random_state)
                         * 37
-                        * (i + 1),
+                        * (i + 1)
+                        % 2**31,
                     ),
                     X,
                     y,

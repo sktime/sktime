@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """HOG1D transform."""
 import math
 import numbers
@@ -42,6 +41,7 @@ class HOG1DTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["vnicholson1"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -56,7 +56,7 @@ class HOG1DTransformer(BaseTransformer):
         self.num_intervals = num_intervals
         self.num_bins = num_bins
         self.scaling_factor = scaling_factor
-        super(HOG1DTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

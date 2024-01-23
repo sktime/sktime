@@ -31,7 +31,7 @@ The release cycle process is as follows:
 1. 1 week before release date, update the release board.
 2. for major releases or substantial features, optionally extend the release cycle
 3. feature freeze 1 day before release date. Only release managers should merge at this point.
-  The feature freeze should be announced on the core dev channel (on slack) 1 week before, and 1 day before it comes into action.
+  The feature freeze should be announced on the core dev channel 1 week before, and 1 day before it comes into action.
   Any delays and extensions to the feature freeze should also be announced.
 4. if "must have" are not merged by planned release date: either delay release date and extend freeze period, or deprioritize.
 

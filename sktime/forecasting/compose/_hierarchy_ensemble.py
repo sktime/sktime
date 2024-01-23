@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for applying different univariates on hierarchical data."""
 
@@ -6,14 +5,13 @@ __author__ = ["VyomkeshVyas"]
 __all__ = ["HierarchyEnsembleForecaster"]
 
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+from sktime.utils.warnings import warn
 
 
 class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
@@ -95,6 +93,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["VyomkeshVyas"],
+        "maintainers": ["VyomkeshVyas"],
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
@@ -111,7 +111,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.forecasters = forecasters
         self.by = by
         self.default = default
-        super(HierarchyEnsembleForecaster, self).__init__(forecasters=forecasters)
+        super().__init__(forecasters=forecasters)
 
         if isinstance(forecasters, BaseForecaster):
             tags_to_clone = [
@@ -130,10 +130,9 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def _forecasters(self):
         """Make internal list of forecasters.
 
-        The list only contains the name and forecasters.
-        This is for the implementation of get_params
-        via _HeterogenousMetaEstimator._get_params which expects
-        lists of tuples of len 2.
+        The list only contains the name and forecasters. This is for the implementation
+        of get_params via _HeterogenousMetaEstimator._get_params which expects lists of
+        tuples of len 2.
         """
         forecasters = self.forecasters
         if isinstance(forecasters, BaseForecaster):
@@ -147,8 +146,10 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             self.forecasters = value[0][1]
         else:
             self.forecasters = [
-                (name, forecaster, lvl_nd)
-                for ((name, forecaster), (_, _, lvl_nd)) in zip(value, self.forecasters)
+                (name, forecaster, level_nd)
+                for ((name, forecaster), (_, _, level_nd)) in zip(
+                    value, self.forecasters
+                )
             ]
 
     def _aggregate(self, y):
@@ -157,7 +158,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         return Aggregator().fit_transform(y)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -197,7 +198,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         if self.by == "level":
             hier_dict = self._get_hier_dict(z)
-            for (_, forecaster, level) in self.forecasters_:
+            for _, forecaster, level in self.forecasters_:
                 if level in hier_dict.keys():
                     frcstr = forecaster.clone()
                     df = z[z.index.droplevel(-1).isin(hier_dict[level])]
@@ -258,7 +259,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return hier_dict
 
     def _get_node_dict(self, z):
-        """Create a separate dictionary of nodes and forecasters linked with common key value.
+        """Create dictionaries of nodes and forecasters linked with common key value.
 
         Parameters
         ----------
@@ -273,7 +274,6 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         frcstr_dict : dict
                     Dictionary with key as int and value as
                     forecaster
-
         """
         node_dict = {}
         frcstr_dict = {}
@@ -281,13 +281,14 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         counter = 0
         zindex = z.index.droplevel(-1).unique()
 
-        for (_, forecaster, node) in self.forecasters_:
+        for _, forecaster, node in self.forecasters_:
             if z.index.nlevels == 2:
                 mi = pd.Index(node)
                 if counter == 0:
                     nodes = mi
                 else:
-                    nodes.append(mi)
+                    # For nlevels = 2, 'nodes' is pd.Index object (L286)
+                    nodes = nodes.append(mi)
             else:
                 node_l = []
                 for i in range(len(node)):
@@ -497,6 +498,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     raise ValueError("Nodes cannot be empty.")
                 if z.index.nlevels == 2:
                     nodes_ix = pd.Index(nodes)
+                    nodes_t += nodes
                 else:
                     nodes_l = []
                     for i in range(len(nodes)):
@@ -534,11 +536,13 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                             else:
                                 nodes_l += inds
                                 warn(
-                                    f"Ideally, length of individual node should be "
+                                    f"Ideally, length of individual node "
+                                    f"in HierarchyEnsembleForecaster should be "
                                     f"equal to N-1 (where N is number of levels in "
                                     f"multi-index) and must not exceed N-1. The "
                                     f"forecaster will now be fitted to the "
-                                    f"following nodes : {list(inds)}"
+                                    f"following nodes : {list(inds)}",
+                                    obj=self,
                                 )
                         elif (
                             isinstance(nodes[i], tuple)

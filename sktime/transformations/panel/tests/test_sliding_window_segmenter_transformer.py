@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Tests for SlidingWindowSegmenter."""
 
-__authors__ = ["mloning"]
+__author__ = ["mloning"]
 
 
 import numpy as np

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """TSFresh Classifier.
 
 Pipeline classifier using the TSFresh transformer and an estimator.
@@ -6,8 +5,6 @@ Pipeline classifier using the TSFresh transformer and an estimator.
 
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["TSFreshClassifier"]
-
-import warnings
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -18,6 +15,7 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
+from sktime.utils.warnings import warn
 
 
 class TSFreshClassifier(BaseClassifier):
@@ -67,11 +65,17 @@ class TSFreshClassifier(BaseClassifier):
     """
 
     _tags = {
-        "capability:multivariate": True,
-        "capability:multithreading": True,
-        "classifier_type": "feature",
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
         "python_version": "<3.10",
         "python_dependencies": "tsfresh",
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
+        "capability:multithreading": True,
+        "capability:predict_proba": True,
+        "classifier_type": "feature",
     }
 
     def __init__(
@@ -98,7 +102,7 @@ class TSFreshClassifier(BaseClassifier):
         self._return_majority_class = False
         self._majority_class = 0
 
-        super(TSFreshClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.
@@ -150,13 +154,15 @@ class TSFreshClassifier(BaseClassifier):
             self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
+        self._Xt_colnames = X_t.columns
 
         if X_t.shape[1] == 0:
-            warnings.warn(
+            warn(
                 "TSFresh has extracted no features from the data. Returning the "
                 "majority class in predictions. Setting "
                 "relevant_feature_extractor=False will keep all features.",
                 UserWarning,
+                stacklevel=2,
             )
 
             self._return_majority_class = True
@@ -182,7 +188,9 @@ class TSFreshClassifier(BaseClassifier):
         if self._return_majority_class:
             return np.full(X.shape[0], self.classes_[self._majority_class])
 
-        return self._estimator.predict(self._transformer.transform(X))
+        X_t = self._transformer.transform(X)
+        X_t = X_t.reindex(self._Xt_colnames, axis=1, fill_value=0)
+        return self._estimator.predict(X_t)
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
@@ -207,7 +215,9 @@ class TSFreshClassifier(BaseClassifier):
             return self._estimator.predict_proba(self._transformer.transform(X))
         else:
             dists = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimator.predict(self._transformer.transform(X))
+            X_t = self._transformer.transform(X)
+            X_t = X_t.reindex(self._Xt_colnames, axis=1, fill_value=0)
+            preds = self._estimator.predict(X_t)
             for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists

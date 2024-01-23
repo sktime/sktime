@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Unit tests of AutoEnsembleForecaster functionality."""
 
@@ -16,7 +15,7 @@ from sktime.forecasting.compose import (
     AutoEnsembleForecaster,
     RecursiveTabularRegressionForecaster,
 )
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
 
 
 @pytest.mark.parametrize(
