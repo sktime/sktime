@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Contextual Time-series Neural Classifier for TSC."""
 
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
@@ -74,6 +73,11 @@ class CNTCClassifier(BaseDeepClassifier):
     >>> cntc.fit(X_train, y_train) # doctest: +SKIP
     CNTCClassifier(...) # doctest: +SKIP
     """
+
+    _tags = {
+        "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
+        "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
+    }   
 
     def __init__(
         self,

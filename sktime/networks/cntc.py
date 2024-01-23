@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """a combination of CCNN and CLSTM as feature extractors."""
 
 __author__ = ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"]
@@ -59,7 +58,11 @@ class CNTCNetwork(BaseDeepNetwork):
        }
     """
 
-    _tags = {"python_dependencies": ["tensorflow", "keras_self_attention"]}
+    _tags = {
+        "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
+        "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
+        "python_dependencies": ["tensorflow", "keras_self_attention"],
+    }
 
     def __init__(
         self,
@@ -70,7 +73,7 @@ class CNTCNetwork(BaseDeepNetwork):
         lstm_size=8,
         dense_size=64,
     ):
-        super(CNTCNetwork, self).__init__()
+        super().__init__()
         _check_dl_dependencies(severity="error")
         _check_soft_dependencies(
             package_import_alias={"keras-self-attention": "keras_self_attention"},
