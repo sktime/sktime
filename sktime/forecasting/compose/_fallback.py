@@ -64,32 +64,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         self.current_forecaster = None
         self.current_name = None
         self.warn = warn
-        self._set_forecast_pointer(0)
-
         self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
-
-    def _set_forecast_pointer(self, val):
-        """Set the current forecaster index to a specified value.
-
-        This method ensures the persistence of `__current_forecaster_index` across the
-        invocations of `.fit()`. Typically, calling `.fit()` invokes `.reset()`, which,
-        by default, would erase certain instance variables, including
-        `__current_forecaster_index`. By using this method, `__current_forecaster_index`
-        is preserved or initialized when necessary.
-
-        Parameters
-        ----------
-        val : int
-            The new value to which `__current_forecaster_index` should be set.
-
-        Returns
-        -------
-        None
-        """
-        try:
-            self.__current_forecaster_index
-        except AttributeError:
-            self.__current_forecaster_index = val
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecasters in the given order until one succeeds.
@@ -112,14 +87,26 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         RuntimeError
             If all forecasters fail to fit.
         """
-        for name, forecaster in self.forecasters[self.__current_forecaster_index :]:
+        self.first_nonfailing_forecaster_index__ = getattr(
+            self, "first_nonfailing_forecaster_index__", 0
+        )
+        self.exceptions_raised__ = getattr(self, "exceptions_raised__", dict())
+
+        for name, forecaster in self.forecasters[
+            self.first_nonfailing_forecaster_index__ :
+        ]:
             try:
                 forecaster.fit(y, X=X, fh=fh)
                 self.current_forecaster = forecaster
                 self.current_name = name
                 return self
             except Exception as e:
-                self.__current_forecaster_index += 1
+                self.exceptions_raised__[self.first_nonfailing_forecaster_index__] = {
+                    "failed_at_step": "fit",
+                    "exception": e,
+                    "forecaster_name": name,
+                }
+                self.first_nonfailing_forecaster_index__ += 1
                 if self.warn:
                     warnings.warn(
                         f"Forecaster {name} failed to fit with error: {e}", stacklevel=2
@@ -155,17 +142,47 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         try:
             return self.current_forecaster.predict(fh, X)
         except Exception as e:
+            self.exceptions_raised__[self.first_nonfailing_forecaster_index__] = {
+                "failed_at_step": "fit",
+                "exception": e,
+                "forecaster_name": self.current_name,
+            }
             if self.warn:
                 warnings.warn(
                     f"Current forecaster failed at prediction with error: {e}",
                     stacklevel=2,
                 )
-            self.__current_forecaster_index += 1
-
-            if not self.forecasters:
-                raise RuntimeError("No remaining forecasters to attempt prediction.")
+            self.first_nonfailing_forecaster_index__ += 1
 
             # Fit the next forecaster and retry prediction
             self.current_forecaster = None
             self.fit(self._y, X, fh)
             return self.predict(fh, X)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.naive import NaiveForecaster
+
+        # univariate case
+        FORECASTER = NaiveForecaster()
+        params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
+        # test multivariate case, i.e., ensembling multiple variables at same time
+        FORECASTER = DirectReductionForecaster.create_test_instance()
+        params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
+        return params
