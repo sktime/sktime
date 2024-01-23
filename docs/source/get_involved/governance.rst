@@ -162,7 +162,7 @@ as its first maintainer.
 
 Algorithm maintainers are listed in the ``"maintainers"`` tag of the estimator class,
 by their GitHub ID. The GitHub ID can be linked to further information via
-the ``all-contributorsrc`` file.	
+the ``all-contributorsrc`` file.
 The tag can be inspected directly in the source code of the class,
 or via ``EstimatorName.get_class_tag("maintainers").``
 Inverse lookup such as "which algorithms does maintainer M maintain"
