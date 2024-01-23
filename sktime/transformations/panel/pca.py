@@ -74,6 +74,8 @@ class PCATransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["prockenschaub", "fkiraly"],
+        "maintainers": ["prockenschaub"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

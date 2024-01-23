@@ -43,6 +43,8 @@ class DropNA(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["hliebert"],
+        "maintainers": ["hliebert"],
         "univariate-only": False,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",

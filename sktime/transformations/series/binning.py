@@ -54,6 +54,7 @@ class TimeBinAggregate(BaseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "fit_is_empty": True,
         "univariate-only": False,
         "scitype:transform-input": "Series",

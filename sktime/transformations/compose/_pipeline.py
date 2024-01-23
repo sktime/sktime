@@ -118,6 +118,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         # we let all X inputs through to be handled by first transformer
         "X_inner_mtype": CORE_MTYPES,
         "univariate-only": False,

@@ -65,6 +65,7 @@ class KinematicFeatures(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,

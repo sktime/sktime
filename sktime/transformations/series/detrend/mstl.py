@@ -99,6 +99,13 @@ class MSTL(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["luca-miniati"],
+        "maintainers": ["luca-miniati"],
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
@@ -110,7 +117,6 @@ class MSTL(BaseTransformer):
         "capability:inverse_transform:exact": False,
         "skip-inverse-transform": False,
         "fit_is_empty": False,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(

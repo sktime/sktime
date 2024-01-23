@@ -165,6 +165,7 @@ class STLBootstrapTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": "ltsaprounis",
         # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
         # todo: what scitype is returned: Primitives, Series, Panel

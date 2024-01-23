@@ -35,6 +35,7 @@ class IntervalSegmenter(BaseTransformer):
     """
 
     _tags = {
+        "authors": "mloning",
         "univariate-only": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -188,6 +189,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
     """
 
     _tags = {
+        "authors": "mloning",
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
         # which mtype do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",
