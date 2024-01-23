@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Frequency filters."""
 
 __author__ = ["sveameyer13"]
@@ -7,9 +6,6 @@ __all__ = ["Filter"]
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("mne", severity="warning")
 
 
 class Filter(BaseTransformer):
@@ -39,6 +35,12 @@ class Filter(BaseTransformer):
 
     # default tag values for "Series-to-Series"
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["sveameyer13"],
+        "python_dependencies": "mne",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -47,7 +49,6 @@ class Filter(BaseTransformer):
         "X_inner_mtype": ["np.ndarray", "numpy3D"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "python_dependencies": "mne",
     }
 
     def __init__(
@@ -72,7 +73,7 @@ class Filter(BaseTransformer):
                 raise ValueError("Negative values not supported")
             if l_freq > h_freq:
                 raise ValueError("High frequency must be higher" " than low frequency")
-        super(Filter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None) -> np.ndarray:
         """Transform data.

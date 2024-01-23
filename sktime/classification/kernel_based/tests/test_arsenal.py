@@ -1,9 +1,15 @@
-# -*- coding: utf-8 -*-
 """Arsenal test code."""
+import pytest
+
 from sktime.classification.kernel_based import Arsenal
 from sktime.datasets import load_unit_test
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Arsenal),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_contracted_arsenal():
     """Test of contracted Arsenal on unit test data."""
     # load unit test data
@@ -18,4 +24,4 @@ def test_contracted_arsenal():
     )
     arsenal.fit(X_train, y_train)
 
-    assert len(arsenal.estimators_) > 1
+    assert len(arsenal.estimators_) >= 1

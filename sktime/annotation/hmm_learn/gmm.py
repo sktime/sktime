@@ -1,25 +1,17 @@
-# -*- coding: utf-8 -*-
-
-"""
-Hidden Markov Model with Gaussian mixture emissions.
+"""Hidden Markov Model with Gaussian mixture emissions.
 
 Please see the original library
 (https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py)
 """
 
 from sktime.annotation.hmm_learn import BaseHMMLearn
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["miraep8"]
 __all__ = ["GMMHMM"]
 
 
-_check_soft_dependencies("hmmlearn.hmm", severity="warning")
-
-
 class GMMHMM(BaseHMMLearn):
-    """
-    Hidden Markov Model with Gaussian mixture emissions.
+    """Hidden Markov Model with Gaussian mixture emissions.
 
     Parameters
     ----------
@@ -51,7 +43,7 @@ class GMMHMM(BaseHMMLearn):
         Parameters of the Dirichlet prior distribution for
         :attr:`weights_`.
     means_prior, means_weight : array, shape (n_mix, ), optional
-        Mean and precision of the Normal prior distribtion for
+        Mean and precision of the Normal prior distribution for
         :attr:`means_`.
     covars_prior, covars_weight : array, shape (n_mix, ), optional
         Parameters of the prior distribution for the covariance matrix
@@ -81,7 +73,7 @@ class GMMHMM(BaseHMMLearn):
     implementation: string, optional
         Determines if the forward-backward algorithm is implemented with
         logarithms ("log"), or using scaling ("scaling").  The default is
-        to use logarithms for backwards compatability.
+        to use logarithms for backwards compatibility.
 
     Attributes
     ----------
@@ -137,7 +129,6 @@ class GMMHMM(BaseHMMLearn):
         init_params: str = "stmcw",
         implementation: str = "log",
     ):
-
         self.n_components = n_components
         self.n_mix = n_mix
         self.min_covar = min_covar
@@ -157,7 +148,7 @@ class GMMHMM(BaseHMMLearn):
         self.params = params
         self.init_params = init_params
         self.implementation = implementation
-        super(GMMHMM, self).__init__()
+        super().__init__()
 
     def _fit(self, X, Y=None):
         # import inside _fit to avoid hard dependency.
@@ -184,7 +175,7 @@ class GMMHMM(BaseHMMLearn):
             self.init_params,
             self.implementation,
         )
-        return super(GMMHMM, self)._fit(X, Y)
+        return super()._fit(X, Y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

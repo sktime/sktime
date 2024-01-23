@@ -1,17 +1,14 @@
-# -*- coding: utf-8 -*-
 """Time series kernel kmeans."""
 from typing import Dict, Union
 
 import numpy as np
 from numpy.random import RandomState
 
-from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tslearn", severity="warning")
+from sktime.base.adapters._tslearn import _TslearnAdapter
+from sktime.clustering.base import BaseClusterer
 
 
-class TimeSeriesKernelKMeans(BaseClusterer):
+class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
     """Kernel algorithm wrapper tslearns implementation.
 
     Parameters
@@ -68,9 +65,26 @@ class TimeSeriesKernelKMeans(BaseClusterer):
     """
 
     _tags = {
-        "capability:multivariate": True,
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
         "python_dependencies": "tslearn",
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
     }
+
+    # defines the name of the attribute containing the tslearn estimator
+    _estimator_attr = "_tslearn_kernel_k_means"
+
+    def _get_tslearn_class(self):
+        """Get tslearn class.
+
+        should import and return tslearn class
+        """
+        from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans
+
+        return TsLearnKernelKMeans
 
     def __init__(
         self,
@@ -98,64 +112,7 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         self.inertia_ = None
         self.n_iter_ = 0
 
-        self._tslearn_kernel_k_means = None
-
-        super(TimeSeriesKernelKMeans, self).__init__(n_clusters=n_clusters)
-
-    def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
-        """Fit time series clusterer to training data.
-
-        Parameters
-        ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
-            Training time series instances to cluster.
-        y: ignored, exists for API consistency reasons.
-
-        Returns
-        -------
-        self:
-            Fitted estimator.
-        """
-        from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans
-
-        verbose = 0
-        if self.verbose is True:
-            verbose = 1
-
-        if self._tslearn_kernel_k_means is None:
-            self._tslearn_kernel_k_means = TsLearnKernelKMeans(
-                n_clusters=self.n_clusters,
-                kernel=self.kernel,
-                max_iter=self.max_iter,
-                tol=self.tol,
-                n_init=self.n_init,
-                kernel_params=self.kernel_params,
-                n_jobs=self.n_jobs,
-                verbose=verbose,
-                random_state=self.random_state,
-            )
-        self._tslearn_kernel_k_means.fit(X)
-        self.labels_ = self._tslearn_kernel_k_means.labels_
-        self.inertia_ = self._tslearn_kernel_k_means.inertia_
-        self.n_iter_ = self._tslearn_kernel_k_means.n_iter_
-
-    def _predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
-        """Predict the closest cluster each sample in X belongs to.
-
-        Parameters
-        ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
-            Time series instances to predict their cluster indexes.
-        y: ignored, exists for API consistency reasons.
-
-        Returns
-        -------
-        np.ndarray (1d array of shape (n_instances,))
-            Index of the cluster each time series in X belongs to.
-        """
-        return self._tslearn_kernel_k_means.predict(X)
+        super().__init__(n_clusters=n_clusters)
 
     @classmethod
     def get_test_params(cls, parameter_set="default") -> Dict:

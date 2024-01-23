@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Tests for mlflow-sktime custom model flavor."""
 
-__author__ = ["benjaminbluhm"]
+__author__ = ["benjaminbluhm", "achieveordie"]
 
 import os
 import sys
@@ -12,10 +11,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_airline, load_longley
+from sktime.datasets import load_airline, load_arrow_head, load_longley
 from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import temporal_train_test_split
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -79,10 +78,34 @@ def test_data_longley():
 
 
 @pytest.fixture(scope="module")
+def test_data_arrow_head():
+    """Create sample data for univariate classification."""
+    X_train, y_train = load_arrow_head(split="TRAIN")
+    X_test, y_test = load_arrow_head(split="TEST")
+    return y_train.astype(int), y_test.astype(int), X_train, X_test
+
+
+@pytest.fixture(scope="module")
 def auto_arima_model(test_data_airline):
     """Create instance of fitted auto arima model."""
     return AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True).fit(
         test_data_airline, fh=[1, 2, 3]
+    )
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="skip test if required soft dependency is not available.",
+)
+@pytest.fixture(scope="module")
+def cnn_model(test_data_arrow_head):
+    """Create an instance of fitted ResNet Classifier model."""
+    from sktime.classification.deep_learning.cnn import CNNClassifier
+
+    y_train, _, X_train, _ = test_data_arrow_head
+
+    return CNNClassifier(n_epochs=1, n_conv_layers=1, kernel_size=3).fit(
+        X_train, y_train
     )
 
 
@@ -173,6 +196,31 @@ def test_auto_arima_model_pyfunc_output(
     not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
+@pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
+def test_cnn_model_save_and_load(
+    cnn_model, test_data_arrow_head, model_path, serialization_format
+):
+    """Test saving and loading of DL sktime estimator."""
+    from sktime.utils import mlflow_sktime
+
+    mlflow_sktime.save_model(
+        sktime_model=cnn_model,
+        path=model_path,
+        serialization_format=serialization_format,
+    )
+    loaded_model = mlflow_sktime.load_model(model_uri=model_path)
+
+    _, _, _, X_test = test_data_arrow_head
+
+    np.testing.assert_array_almost_equal(
+        cnn_model.predict(X_test), loaded_model.predict(X_test)
+    )
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("mlflow", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_auto_arima_model_pyfunc_with_params_output(auto_arima_model, model_path):
     """Test auto arima prediction of loaded pyfunc model with parameters."""
     from sktime.utils import mlflow_sktime
@@ -196,8 +244,8 @@ def test_auto_arima_model_pyfunc_with_params_output(auto_arima_model, model_path
     model_predict_interval = auto_arima_model.predict_interval(coverage=[0.1, 0.9])
     model_predict_interval.columns = flatten_multiindex(model_predict_interval)
     model_predict_proba_dist = auto_arima_model.predict_proba()
-    model_predict_proba = pd.DataFrame(model_predict_proba_dist.quantile([0.1, 0.9]))
-    model_predict_proba.index = model_predict_proba_dist.parameters["loc"].index
+    model_predict_proba = model_predict_proba_dist.quantile([0.1, 0.9])
+    model_predict_proba.columns = flatten_multiindex(model_predict_proba)
     model_predict_quantiles = auto_arima_model.predict_quantiles(alpha=[0.1, 0.9])
     model_predict_quantiles.columns = flatten_multiindex(model_predict_quantiles)
     model_predict_var = auto_arima_model.predict_var(cov=True)
@@ -250,8 +298,8 @@ def test_auto_arima_model_pyfunc_without_params_output(auto_arima_model, model_p
     model_predict_interval = auto_arima_model.predict_interval()
     model_predict_interval.columns = flatten_multiindex(model_predict_interval)
     model_predict_proba_dist = auto_arima_model.predict_proba()
-    model_predict_proba = pd.DataFrame(model_predict_proba_dist.quantile([0.1, 0.9]))
-    model_predict_proba.index = model_predict_proba_dist.parameters["loc"].index
+    model_predict_proba = model_predict_proba_dist.quantile([0.1, 0.9])
+    model_predict_proba.columns = flatten_multiindex(model_predict_proba)
     model_predict_quantiles = auto_arima_model.predict_quantiles()
     model_predict_quantiles.columns = flatten_multiindex(model_predict_quantiles)
     model_predict_var = auto_arima_model.predict_var()
@@ -530,6 +578,7 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
         mlflow.end_run()
 
 
+@pytest.mark.xfail(reason="known failure to be debugged, see #4904")
 @pytest.mark.skipif(
     not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",

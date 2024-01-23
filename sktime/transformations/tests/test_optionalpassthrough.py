@@ -1,11 +1,16 @@
-# -*- coding: utf-8 -*-
 """Tests for using OptionalPassthrough."""
 
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.compose import OptionalPassthrough
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(OptionalPassthrough),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency is not available",
@@ -19,12 +24,9 @@ def test_optionalpassthrough():
 
     from sktime.datasets import load_airline
     from sktime.forecasting.compose import TransformedTargetForecaster
-    from sktime.forecasting.model_selection import (
-        ForecastingGridSearchCV,
-        SlidingWindowSplitter,
-    )
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.forecasting.naive import NaiveForecaster
-    from sktime.transformations.compose import OptionalPassthrough
+    from sktime.split import SlidingWindowSplitter
     from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     from sktime.transformations.series.detrend import Deseasonalizer
 
@@ -50,3 +52,43 @@ def test_optionalpassthrough():
         forecaster=pipe, param_grid=param_grid, cv=cv, n_jobs=-1
     )
     gscv.fit(load_airline())
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(OptionalPassthrough),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_passthrough_does_not_broadcast_variables():
+    """Test that OptionalPassthrough does not itself vectorize/broadcast columns."""
+    from sktime.datasets import load_longley
+    from sktime.transformations.compose import OptionalPassthrough
+    from sktime.transformations.series.detrend import Deseasonalizer
+
+    _, X = load_longley()
+
+    t = OptionalPassthrough(Deseasonalizer())
+    t.fit(X)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(OptionalPassthrough),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_passthrough_does_not_broadcast_instances():
+    """Test that OptionalPassthrough does not itself vectorize/broadcast rows."""
+    from sktime.transformations.compose import OptionalPassthrough
+    from sktime.transformations.series.detrend import Deseasonalizer
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    X = _make_hierarchical()
+
+    t = OptionalPassthrough(Deseasonalizer())
+    t.fit(X)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implements base class for defining performance metric in sktime."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -14,9 +13,14 @@ class BaseMetric(BaseObject):
     Extends sktime BaseObject.
     """
 
-    def __init__(self):
+    _tags = {
+        "object_type": "metric",
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+    }
 
-        super(BaseMetric, self).__init__()
+    def __init__(self):
+        super().__init__()
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.

@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """Test detrenders."""
 import numpy as np
 import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.forecasting.tests.test_trend import get_expected_polynomial_coefs
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.forecasting.trend.tests.test_trend import get_expected_polynomial_coefs
 from sktime.transformations.series.detrend import Detrender
 
 __author__ = ["mloning", "KishManani"]
@@ -24,7 +23,7 @@ def y_dataframe():
 
 
 def test_polynomial_detrending():
-
+    """Test that transformer results agree with manual detrending."""
     y = pd.Series(np.arange(20) * 0.5) + np.random.normal(0, 1, size=20)
     forecaster = PolynomialTrendForecaster(degree=1, with_intercept=True)
     transformer = Detrender(forecaster)
@@ -38,9 +37,11 @@ def test_polynomial_detrending():
     np.testing.assert_array_almost_equal(actual_coefs, expected_coefs)
 
     # check trend
-    expected_trend = expected_coefs[0] + np.arange(len(y)) * expected_coefs[1]
-    actual_trend = transformer.forecaster_.predict(-np.arange(len(y)))
-    np.testing.assert_array_almost_equal(actual_trend, expected_trend)
+    n = len(y)
+    expected_trend = expected_coefs[0] + np.arange(n) * expected_coefs[1]
+    expected_trend_2D = np.reshape(expected_trend, (n, 1))
+    actual_trend = transformer.forecaster_.predict(-np.arange(n))
+    np.testing.assert_array_almost_equal(actual_trend, expected_trend_2D)
 
     # check residuals
     actual = transformer.transform(y)

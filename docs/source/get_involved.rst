@@ -13,8 +13,11 @@ Get Involved
    get_involved/code_of_conduct
    get_involved/governance
 
-sktime is a community-driven project and your help is extremely welcome.
-If you get stuck, please don’t hesitate to chat with us or raise an issue.
+``sktime`` is an open, community-driven project, seeking to provide opportunities to all.
+Therefore, we invite and wamly welcome any kind of contribution (not just code).
+If you'd like to talk to someone for advice, or encounter any obstacles along the way,
+don't hesitate to reach out to us on Discord or GitHub.
+We greatly appreciate your support and look forward to collaborating with you!
 
 .. grid:: 1 2 2 2
     :gutter: 3

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Temporal importance curve diagram generators for interval forests."""
 
 __author__ = ["MatthewMiddlehurst"]

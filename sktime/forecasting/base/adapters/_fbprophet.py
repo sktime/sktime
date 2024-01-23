@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for Facebook prophet to be used in sktime framework."""
@@ -17,8 +16,10 @@ class _ProphetAdapter(BaseForecaster):
     """Base class for interfacing prophet and neuralprophet."""
 
     _tags = {
+        "authors": ["mloning", "aiwalter", "fkiraly"],
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "y_inner_mtype": "pd.DataFrame",
@@ -34,7 +35,24 @@ class _ProphetAdapter(BaseForecaster):
         y.index = int_idx
         return y
 
-    def _fit(self, y, X=None, fh=None):
+    def _convert_input_to_date(self, y):
+        """Coerce y.index to pd.DatetimeIndex, for use by prophet."""
+        if y is None:
+            return None
+        elif type(y.index) is pd.PeriodIndex:
+            y = y.copy()
+            y.index = y.index.to_timestamp()
+        elif pd.api.types.is_integer_dtype(y.index):
+            y = self._convert_int_to_date(y)
+        # else y is pd.DatetimeIndex as prophet expects, and needs no conversion
+        return y
+
+    def _remember_y_input_index_type(self, y):
+        """Remember input type of y by setting attributes, for use in _fit."""
+        self.y_index_was_period_ = type(y.index) is pd.PeriodIndex
+        self.y_index_was_int_ = pd.api.types.is_integer_dtype(y.index)
+
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -53,23 +71,17 @@ class _ProphetAdapter(BaseForecaster):
         self._instantiate_model()
         self._check_changepoints()
 
-        if type(y.index) is pd.PeriodIndex:
-            raise NotImplementedError(
-                "pd.PeriodIndex is not supported for y, use "
-                "pd.DatetimeIndex or integer pd.Index instead."
-            )
+        # sets y_index_was_period_ and self.y_index_was_int_ flags
+        # to remember the index type of y before conversion
+        self._remember_y_input_index_type(y)
 
-        # integer type indices are converted to datetime
+        # various type input indices are converted to datetime
         # since facebook prophet can only deal with dates
-        if y.index.dtype == "int64":
-            self.y_index_was_int_ = True
-            y = self._convert_int_to_date(y)
-        else:
-            self.y_index_was_int_ = False
-        if X is not None and X.index.dtype == "int64":
-            X = self._convert_int_to_date(X)
+        y = self._convert_input_to_date(y)
+        X = self._convert_input_to_date(X)
 
-        # We have to bring the data into the required format for fbprophet:
+        # We have to bring the data into the required format for fbprophet
+        # the index should not be pandas index, but in a column named "ds"
         df = y.copy()
         df.columns = ["y"]
         df.index.name = "ds"
@@ -77,9 +89,9 @@ class _ProphetAdapter(BaseForecaster):
 
         # Add seasonality/seasonalities
         if self.add_seasonality:
-            if type(self.add_seasonality) == dict:
+            if isinstance(self.add_seasonality, dict):
                 self._forecaster.add_seasonality(**self.add_seasonality)
-            elif type(self.add_seasonality) == list:
+            elif isinstance(self.add_seasonality, list):
                 for seasonality in self.add_seasonality:
                     self._forecaster.add_seasonality(**seasonality)
 
@@ -96,7 +108,6 @@ class _ProphetAdapter(BaseForecaster):
 
         # Add floor and bottom when growth is logistic
         if self.growth == "logistic":
-
             if self.growth_cap is None:
                 raise ValueError(
                     "Since `growth` param is set to 'logistic', expecting `growth_cap`"
@@ -106,22 +117,45 @@ class _ProphetAdapter(BaseForecaster):
             df["cap"] = self.growth_cap
             df["floor"] = self.growth_floor
 
+        if hasattr(self, "fit_kwargs") and isinstance(self.fit_kwargs, dict):
+            fit_kwargs = self.fit_kwargs
+        else:
+            fit_kwargs = {}
         if self.verbose:
-            self._forecaster.fit(df=df)
+            self._forecaster.fit(df=df, **fit_kwargs)
         else:
             with _suppress_stdout_stderr():
-                self._forecaster.fit(df=df)
+                self._forecaster.fit(df=df, **fit_kwargs)
 
         return self
 
     def _get_prophet_fh(self):
         """Get a prophet compatible fh, in datetime, even if fh was int."""
-        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        fh = self.fh.to_absolute_index(cutoff=self.cutoff)
+        if isinstance(fh, pd.PeriodIndex):
+            fh = fh.to_timestamp()
         if not isinstance(fh, pd.DatetimeIndex):
             max_int = fh[-1] + 1
             fh_date = pd.date_range(start="2000-01-01", periods=max_int, freq="D")
             fh = fh_date[fh]
         return fh
+
+    def _convert_X_for_exog(self, X, fh):
+        """Conerce index of X to index expected by prophet."""
+        if X is None:
+            return None
+        elif isinstance(X.index, pd.PeriodIndex):
+            X = X.copy()
+            X = X.loc[self.fh.to_absolute_index(self.cutoff)]
+            X.index = X.index.to_timestamp()
+        elif pd.api.types.is_integer_dtype(X.index):
+            X = X.copy()
+            X = X.loc[self.fh.to_absolute(self.cutoff).to_numpy()]
+            X.index = fh
+        # else X is pd.DatetimeIndex as prophet expects, and needs no conversion
+        else:
+            X = X.loc[fh]
+        return X
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
@@ -148,14 +182,10 @@ class _ProphetAdapter(BaseForecaster):
         fh = self._get_prophet_fh()
         df = pd.DataFrame({"ds": fh}, index=fh)
 
-        if X is not None and X.index.dtype == "int64":
-            X = X.copy()
-            X = X.loc[self.fh.to_absolute(self.cutoff).to_numpy()]
-            X.index = fh
+        X = self._convert_X_for_exog(X, fh)
 
         # Merge X with df (of created future DatetimeIndex values)
         if X is not None:
-            X = X.copy()
             df, X = _merge_X(df, X)
 
         if self.growth == "logistic":
@@ -175,12 +205,12 @@ class _ProphetAdapter(BaseForecaster):
         y_pred.drop("ds", axis=1, inplace=True)
         y_pred.columns = self._y.columns
 
-        if self.y_index_was_int_:
-            y_pred.index = self.fh.to_absolute(cutoff=self.cutoff)
+        if self.y_index_was_int_ or self.y_index_was_period_:
+            y_pred.index = self.fh.to_absolute_index(cutoff=self.cutoff)
 
         return y_pred
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -217,20 +247,18 @@ class _ProphetAdapter(BaseForecaster):
         """
         fh = self._get_prophet_fh()
 
-        if X is not None and X.index.dtype == "int64":
-            X = X.copy()
-            X = X.loc[self.fh.to_absolute(self.cutoff).to_numpy()]
-            X.index = fh
+        X = self._convert_X_for_exog(X, fh)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = ["Coverage"]
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
         # prepare the DataFrame to pass to prophet
         df = pd.DataFrame({"ds": fh}, index=fh)
         if X is not None:
-            X = X.copy()
             df, X = _merge_X(df, X)
 
         for c in coverage:
@@ -248,13 +276,13 @@ class _ProphetAdapter(BaseForecaster):
             # retrieve lower/upper and write in pred_int return frame
             # instead of writing lower to lower, upper to upper
             #  we take the min/max for lower and upper
-            #  because prophet (erroneously?) uses MC indenendent for upper/lower
+            #  because prophet (erroneously?) uses MC independent for upper/lower
             #  so if coverage is small, it can happen that upper < lower in prophet
-            pred_int[("Coverage", c, "lower")] = out_prophet.min(axis=1)
-            pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
+            pred_int[(var_name, c, "lower")] = out_prophet.min(axis=1)
+            pred_int[(var_name, c, "upper")] = out_prophet.max(axis=1)
 
-        if self.y_index_was_int_:
-            pred_int.index = self.fh.to_absolute(cutoff=self.cutoff)
+        if self.y_index_was_int_ or self.y_index_was_period_:
+            pred_int.index = self.fh.to_absolute_index(cutoff=self.cutoff)
 
         return pred_int
 
@@ -325,7 +353,7 @@ def _merge_X(df, X):
     return df, X
 
 
-class _suppress_stdout_stderr(object):
+class _suppress_stdout_stderr:
     """Context manager for doing  a "deep suppression" of stdout and stderr.
 
     A context manager for doing a "deep suppression" of stdout and stderr in

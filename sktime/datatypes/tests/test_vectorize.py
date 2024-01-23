@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing vectorization via VectorizedDF."""
 
 __author__ = ["fkiraly"]
@@ -11,9 +10,14 @@ from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
 from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_is_mtype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.deep_equals import deep_equals
+from sktime.utils.pandas import df_map
+from sktime.utils.parallel import _get_parallel_test_fixtures
 
 SCITYPES = ["Panel", "Hierarchical"]
+
+# list of parallelization backends to test
+BACKENDS = _get_parallel_test_fixtures("estimator")
 
 
 def _get_all_mtypes_for_scitype(scitype):
@@ -73,7 +77,6 @@ def _generate_scitype_mtype_combinations():
     sci_mtype_tuples = []
 
     for scitype in SCITYPES:
-
         mtypes = _get_all_mtypes_for_scitype(scitype)
 
         for mtype in mtypes:
@@ -124,7 +127,7 @@ def pytest_generate_tests(metafunc):
 
     fixturenames = set(metafunc.fixturenames)
 
-    if set(["scitype", "mtype", "fixture_index"]).issubset(fixturenames):
+    if {"scitype", "mtype", "fixture_index"}.issubset(fixturenames):
         keys = _generate_scitype_mtype_fixtureindex_combinations()
 
         ids = []
@@ -134,7 +137,7 @@ def pytest_generate_tests(metafunc):
         # parameterize test with from-mtpes
         metafunc.parametrize("scitype,mtype,fixture_index", keys, ids=ids)
 
-    elif set(["scitype", "mtype"]).issubset(fixturenames):
+    elif {"scitype", "mtype"}.issubset(fixturenames):
         keys = _generate_scitype_mtype_combinations()
 
         ids = []
@@ -229,12 +232,20 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
         true_length = 1
     elif iterate_as == "Series":
         _, _, metadata = check_is_mtype(
-            fixture, mtype=mtype, scitype=scitype, return_metadata=True
+            fixture,
+            mtype=mtype,
+            scitype=scitype,
+            return_metadata=True,
+            msg_return_dict="list",
         )
         true_length = metadata["n_instances"]
     elif iterate_as == "Panel":
         _, _, metadata = check_is_mtype(
-            fixture, mtype=mtype, scitype=scitype, return_metadata=True
+            fixture,
+            mtype=mtype,
+            scitype=scitype,
+            return_metadata=True,
+            msg_return_dict="list",
         )
         true_length = metadata["n_panels"]
 
@@ -331,7 +342,10 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
         raise RuntimeError(f"found unexpected iterate_as value: {iterate_as}")
 
     X_list_valid = [
-        check_is_mtype(X, mtype=correct_mtype, scitype=iterate_as) for X in X_list
+        check_is_mtype(
+            X, mtype=correct_mtype, scitype=iterate_as, msg_return_dict="list"
+        )
+        for X in X_list
     ]
 
     assert np.all(
@@ -372,10 +386,16 @@ def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as, iterat
     X_list = list(X_vect)
 
     # reconstructed fixture should equal multiindex fixture if not convert_back
-    assert deep_equals(X_vect.reconstruct(X_list), X_vect.X_multiindex)
+    eq, msg = deep_equals(
+        X_vect.reconstruct(X_list), X_vect.X_multiindex, return_msg=True
+    )
+    assert eq, msg
 
     # reconstructed fixture should equal original fixture if convert_back
-    assert deep_equals(X_vect.reconstruct(X_list, convert_back=True), fixture)
+    eq, msg = deep_equals(
+        X_vect.reconstruct(X_list, convert_back=True), fixture, return_msg=True
+    )
+    assert eq, msg
 
 
 @pytest.mark.parametrize(
@@ -414,3 +434,65 @@ def test_enforce_index_freq(item, freq):
     """Tests that enforce freq infers the right frequency."""
     item = _enforce_index_freq(item)
     assert item.index.freq == freq
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+@pytest.mark.parametrize("varname_used", [True, False])
+def test_vectorize_est(
+    scitype, mtype, fixture_index, iterate_as, iterate_cols, varname_used, backend
+):
+    """Tests vectorize_est method of VectorizeDF, for method = clone, fit.
+
+    Fixtures parameterized
+    ----------------------
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
+    iterate_as : str - level on which to iterate over
+    iterate_cols : bool - whether to iterate over columns
+
+    Raises
+    ------
+    RuntimeError if scitype is not defined or has no mtypes or examples
+    AssertionError if vectorize_fit output has unexpected format
+    exception if vectorize_fit produces error
+    """
+    from sktime.forecasting.naive import NaiveForecaster
+
+    # escape for the invalid combinations, see above
+    if not _is_valid_iterate_as(scitype, iterate_as):
+        return None
+
+    # retrieve fixture for checking
+    fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
+    X_vect = VectorizedDF(
+        X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
+    )
+
+    kwargs = {"fh": [1, 2], "X": X_vect}
+
+    if varname_used:
+        kwargs["varname_of_self"] = "y"
+    else:
+        kwargs["y"] = X_vect
+
+    kwargs.update(backend)
+
+    est_clones = X_vect.vectorize_est(NaiveForecaster(), method="clone")
+    result = X_vect.vectorize_est(est_clones, method="fit", **kwargs)
+
+    def _len(x):
+        if x is None:
+            return 1
+        else:
+            return len(x)
+
+    # the result should be a pd.DataFrame
+    # with entries being fitted NaiveForecaster clones
+    rows, cols = X_vect.get_iter_indices()
+    n_rows = _len(rows)
+    n_cols = _len(cols)
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape == (n_rows, n_cols)
+    is_fcst_frame = df_map(result)(lambda x: isinstance(x, NaiveForecaster))
+    assert is_fcst_frame.all().all()

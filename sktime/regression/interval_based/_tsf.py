@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Time Series Forest Regressor (TSF)."""
 
-__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"]
+__author__ = ["TonyBagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"]
 __all__ = ["TimeSeriesForestRegressor"]
 
 import numpy as np
@@ -9,11 +8,8 @@ from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
+from sktime.base._panel.forest._tsf import BaseTimeSeriesForest, _transform
 from sktime.regression.base import BaseRegressor
-from sktime.series_as_features.base.estimators.interval_based._tsf import (
-    BaseTimeSeriesForest,
-    _transform,
-)
 
 
 class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegressor):
@@ -64,9 +60,26 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
        classification and feature extraction", Information Sciences, 239, 2013
     .. [2] Java implementation https://github.com/uea-machine-learning/tsml
     .. [3] Arxiv paper: https://arxiv.org/abs/1302.2277
+
+    Examples
+    --------
+    >>> from sktime.regression.interval_based import TimeSeriesForestRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> regressor = TimeSeriesForestRegressor(n_estimators=150) # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
+    TimeSeriesForestRegressor(n_estimators=150)
+    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["TonyBagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"],
+        "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        # estimator type
+        # --------------
         "capability:multivariate": False,
         "X_inner_mtype": "numpy3D",
     }
@@ -80,7 +93,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         n_jobs=1,
         random_state=None,
     ):
-        super(TimeSeriesForestRegressor, self).__init__(
+        super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,
             n_jobs=n_jobs,

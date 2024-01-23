@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Compositors that use pairwise transformers for an ordinary transformstion."""
 
 __author__ = ["fkiraly"]
@@ -46,6 +45,7 @@ class DistanceFeatures(BaseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
         "scitype:transform-input": "Series",
@@ -74,7 +74,7 @@ class DistanceFeatures(BaseTransformer):
         self.distance_mtype = distance_mtype
         self.flatten_hierarchy = flatten_hierarchy
 
-        super(DistanceFeatures, self).__init__()
+        super().__init__()
 
         from sktime.dists_kernels import (
             BasePairwiseTransformerPanel,

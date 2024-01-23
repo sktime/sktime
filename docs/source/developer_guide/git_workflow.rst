@@ -3,7 +3,7 @@
 Git and GitHub workflow
 =======================
 
-The preferred workflow for contributing to sktime’s repository is to
+The preferred workflow for contributing to sktime's repository is to
 fork the `main
 repository <https://github.com/sktime/sktime/>`__ on
 GitHub, clone, and develop on a new branch.
@@ -93,10 +93,9 @@ GitHub, clone, and develop on a new branch.
 10. To add more changes, simply repeat steps 7 - 8. Pull requests are
     updated automatically if you push new changes to the same branch.
 
-.. _Discord: https://discord.com/invite/gqSab2K
-.. _Slack: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
+.. _Discord: https://discord.com/invite/54ACzaFsn7
 
 .. note::
 
    If any of the above seems like magic to you, look up the `Git documentation <https://git scm.com/documentation>`_.
-   If you get stuck, chat with us on `Slack`_, or join one of the community sessions on `Discord`_.
+   If you get stuck, chat with us on `Discord`_, or join one of the community sessions on `Discord`_.

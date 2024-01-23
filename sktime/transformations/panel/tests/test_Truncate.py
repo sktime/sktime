@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test Truncator transformer."""
 
 from sktime.datasets import load_basic_motions
@@ -21,7 +20,7 @@ def test_truncation_transformer():
     assert len(data.columns) == 5 * 6
 
 
-def test_truncation_paramterised_transformer():
+def test_truncation_parameterised_transformer():
     """Test truncation to the a user defined length."""
     # load data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)

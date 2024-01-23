@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """Configuration file for the Sphinx documentation builder."""
 
+import datetime
 import os
 import sys
 from importlib import import_module
@@ -20,8 +19,9 @@ if not ON_READTHEDOCS:
     sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
+current_year = datetime.datetime.now().year
 project = "sktime"
-copyright = "2019 - 2021 (BSD-3-Clause License)"
+project_copyright = f"2019 - {current_year} (BSD-3-Clause License)"
 author = "sktime developers"
 
 # The full version, including alpha/beta/rc tags
@@ -42,14 +42,17 @@ if ON_READTHEDOCS:
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.autosectionlabel",
     "numpydoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
     "nbsphinx",  # integrates example notebooks
     "sphinx_gallery.load_style",
     "myst_parser",
+    "sphinx_copybutton",
     "sphinx_design",
     "sphinx_issues",
+    "sphinx.ext.doctest",
 ]
 
 # Recommended by sphinx_design when using the MyST Parser
@@ -81,7 +84,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -167,7 +170,7 @@ def linkcode_resolve(domain, info):
         filename = "sktime/%s#L%d-L%d" % find_source()
     except Exception:
         filename = info["module"].replace(".", "/") + ".py"
-    return "https://github.com/sktime/sktime/blob/%s/%s" % (
+    return "https://github.com/sktime/sktime/blob/{}/{}".format(
         CURRENT_VERSION,
         filename,
     )
@@ -192,24 +195,14 @@ html_theme_options = {
             "icon": "fab fa-github",
         },
         {
-            "name": "Slack",
-            "url": "https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig",  # noqa: E501
-            "icon": "fab fa-slack",
-        },
-        {
             "name": "Discord",
-            "url": "https://discord.com/invite/gqSab2K",
+            "url": "https://discord.com/invite/54ACzaFsn7",
             "icon": "fab fa-discord",
         },
         {
             "name": "LinkedIn",
-            "url": "https://www.linkedin.com/company/sktime/",
+            "url": "https://www.linkedin.com/company/scikit-time/",
             "icon": "fab fa-linkedin",
-        },
-        {
-            "name": "Twitter",
-            "url": "https://twitter.com/sktime_toolbox",
-            "icon": "fab fa-twitter",
         },
     ],
     "favicons": [
@@ -314,8 +307,7 @@ def _make_estimator_overview(app):
     from sktime.registry import all_estimators
 
     def _process_author_info(author_info):
-        """
-        Process author information from source code files.
+        """Process author information from source code files.
 
         Parameters
         ----------
@@ -368,7 +360,7 @@ def _make_estimator_overview(app):
         clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
         # adds html link reference
         modname = str(
-            '<a href="https://www.sktime.org/en/latest/api_reference'
+            '<a href="https://www.sktime.net/en/latest/api_reference'
             + "/auto_generated/"
             + clean_path
             + '.html">'
@@ -406,7 +398,7 @@ nbsphinx_execute = "never"  # always  # whether to run notebooks
 nbsphinx_allow_errors = False  # False
 nbsphinx_timeout = 600  # seconds, set to -1 to disable timeout
 
-# add Binder launch buttom at the top
+# add Binder launch button at the top
 current_file = "{{ env.doc2path( env.docname, base=None) }}"
 
 # make sure Binder points to latest stable release, not main
@@ -435,15 +427,19 @@ Generated using nbsphinx_. The Jupyter notebook can be found here_.
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
-    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
-    "matplotlib": ("https://matplotlib.org/", None),
+    "python": (f"https://docs.python.org/{sys.version_info.major}", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-    "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
+    "joblib": ("https://joblib.readthedocs.io/en/stable/", None),
     "scikit-learn": ("https://scikit-learn.org/stable/", None),
     "statsmodels": ("https://www.statsmodels.org/stable/", None),
 }
 
 # -- Options for _todo extension ----------------------------------------------
 todo_include_todos = False
+
+copybutton_prompt_text = r">>> |\.\.\. |\$ "
+copybutton_prompt_is_regexp = True
+copybutton_line_continuation_character = "\\"

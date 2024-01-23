@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Slope transformer."""
 import math
 import statistics
@@ -28,6 +27,7 @@ class SlopeTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -42,7 +42,7 @@ class SlopeTransformer(BaseTransformer):
 
     def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
-        super(SlopeTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """Pipelines for pairwise panel transformers."""
 
 __author__ = ["fkiraly"]
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose import TransformerPipeline
 
@@ -40,7 +39,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
     Parameters
     ----------
     pw_trafo : pairwise panel transformer,
-        i.e., estimator inheriting from BasePairwiseTransformerPane
+        i.e., estimator inheriting from BasePairwiseTransformerPanel
         this is a "blueprint" estimator, state does not change when `fit` is called
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
@@ -60,6 +59,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
@@ -67,12 +67,11 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
     }
 
     def __init__(self, pw_trafo, transformers):
-
         self.pw_trafo = pw_trafo
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(PwTrafoPanelPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = pw_trafo.get_tag("capability:multivariate", False)
@@ -87,10 +86,14 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
             "capability:missing_values:removes", False
         )
 
+        # type of trafo is the same
+        trafo_type = pw_trafo.get_tag("pwtrafo_type", "distance")
+
         # set the pipeline tags to the above
         tags_to_set = {
             "capability:multivariate": multivariate,
             "capability:missing_values": missing,
+            "pwtrafo_type": trafo_type,
         }
         self.set_tags(**tags_to_set)
 
@@ -209,12 +212,37 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Test parameters for DistFromAligner."""
-        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for distance/kernel transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.dists_kernels.compose_tab_to_panel import AggrDist, FlatDist
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer
 
-        params = {
+        # transformer has no fit, two transformers, list without names
+        params1 = {
             "pw_trafo": AggrDist.create_test_instance(),
-            "transformers": [ExponentTransformer()],
+            "transformers": [ExponentTransformer(), ExponentTransformer(3)],
         }
-        return params
+
+        # transformer has fit, 1 transformer, name/estimator pair list
+        params2 = {
+            "pw_trafo": FlatDist.create_test_instance(),
+            "transformers": [("boxcox", BoxCoxTransformer())],
+        }
+
+        return [params1, params2]

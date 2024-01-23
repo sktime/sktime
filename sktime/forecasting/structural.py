@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Wraps the UnobservedComponents (state space) model from statsmodels."""
@@ -179,8 +178,8 @@ class UnobservedComponents(_StatsModelsAdapter):
 
     References
     ----------
-    .. [1] Seabold, Skipper, and Josef Perktold. “statsmodels: Econometric
-       and statistical modeling with python.” Proceedings of the 9th Python
+    .. [1] Seabold, Skipper, and Josef Perktold. "statsmodels: Econometric
+       and statistical modeling with python." Proceedings of the 9th Python
        in Science Conference. 2010.
 
     .. [2] Durbin, James, and Siem Jan Koopman. 2012.
@@ -199,7 +198,15 @@ class UnobservedComponents(_StatsModelsAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["juanitorduz"],
+        "maintainers": ["juanitorduz"],
+        # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
     }
@@ -276,7 +283,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         self.flags = flags
         self.low_memory = low_memory
 
-        super(UnobservedComponents, self).__init__(random_state=random_state)
+        super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.
@@ -332,57 +339,31 @@ class UnobservedComponents(_StatsModelsAdapter):
             low_memory=self.low_memory,
         )
 
-    def _predict_interval(self, fh, X=None, coverage=None):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_interval containing the core logic,
-            called from predict_interval and possibly predict_quantiles
+    @staticmethod
+    def _extract_conf_int(prediction_results, alpha) -> pd.DataFrame:
+        """Construct confidence interval at specified `alpha` for each timestep.
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        coverage : list of float (guaranteed not None and floats in [0,1] interval)
-           nominal coverage(s) of predictive interval(s)
+        prediction_results : PredictionResults
+            results class, as returned by ``self._fitted_forecaster.get_prediction``
+        alpha : float
+            one minus nominal coverage
 
         Returns
         -------
-        pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
-                Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-                Upper/lower interval end forecasts are equivalent to
-                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        pd.DataFrame
+            confidence intervals at each timestep
 
-        See Also
-        --------
-        statsmodels.tsa.statespace.mlemodel.PredictionResults.summary_frame
+            The dataframe must have at least two columns ``lower`` and ``upper``, and
+            the row indices must be integers relative to ``self.cutoff``. Order of
+            columns do not matter, and row indices must be a superset of relative
+            integer horizon of ``fh``.
         """
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        conf_int = prediction_results.conf_int(alpha=alpha)
+        conf_int.columns = ["lower", "upper"]
 
-        start, end = valid_indices[[0, -1]]
-        prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end, exog=X
-        )
-        pred_int = pd.DataFrame()
-        for c in coverage:
-            alpha = 1 - c
-            pred_statsmodels = prediction_results.summary_frame(alpha=alpha)
-            pred_int[(c, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
-                valid_indices
-            ]
-            pred_int[(c, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
-                valid_indices
-            ]
-        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
-        pred_int.columns = index
-        return pred_int
+        return conf_int
 
     def summary(self):
         """Get a summary of the fitted forecaster.
@@ -401,7 +382,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         initial_state=None,
         anchor=None,
         repetitions=None,
-        **kwargs
+        **kwargs,
     ):
         r"""Simulate a new time series following the state space model.
 
@@ -475,7 +456,7 @@ class UnobservedComponents(_StatsModelsAdapter):
             anchor=anchor,
             repetitions=repetitions,
             exog=X,
-            **kwargs
+            **kwargs,
         )
 
     def plot_diagnostics(

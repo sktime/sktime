@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
 """Multi Layer Perceptron Network (MLP) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus"]
 __all__ = ["MLPClassifier"]
+
+from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mlp import MLPNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class MLPClassifier(BaseDeepClassifier):
@@ -61,6 +60,14 @@ class MLPClassifier(BaseDeepClassifier):
     MLPClassifier(...)
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["James-Large", "AurumnPegasus"],
+        "maintainers": ["James-Large", "AurumnPegasus"],
+        # estimator type handled by parent class
+    }
+
     def __init__(
         self,
         n_epochs=2000,
@@ -75,7 +82,7 @@ class MLPClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(MLPClassifier, self).__init__()
+        super().__init__()
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -87,7 +94,9 @@ class MLPClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
-        self._network = MLPNetwork()
+        self._network = MLPNetwork(
+            random_state=self.random_state,
+        )
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -151,9 +160,6 @@ class MLPClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
-
         y_onehot = self.convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
@@ -169,7 +175,7 @@ class MLPClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
@@ -195,6 +201,8 @@ class MLPClassifier(BaseDeepClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         param1 = {
             "n_epochs": 10,
             "batch_size": 4,
@@ -206,5 +214,16 @@ class MLPClassifier(BaseDeepClassifier):
             "batch_size": 6,
             "use_bias": True,
         }
+        test_params = [param1, param2]
 
-        return [param1, param2]
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import LambdaCallback
+
+            test_params.append(
+                {
+                    "n_epochs": 2,
+                    "callbacks": [LambdaCallback()],
+                }
+            )
+
+        return test_params

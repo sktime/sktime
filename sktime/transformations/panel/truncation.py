@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Truncation transformer - truncate unequal length panels to lower/upper bounds."""
 import numpy as np
 import pandas as pd
@@ -26,6 +25,8 @@ class TruncationTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["abostrom"],
+        "maintainers": ["abostrom"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -42,7 +43,7 @@ class TruncationTransformer(BaseTransformer):
         self.lower = lower
         self.upper = upper
         self.min_length = lower
-        super(TruncationTransformer, self).__init__()
+        super().__init__()
 
     @staticmethod
     def _get_min_length(X):

@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """sktime."""
 
-__version__ = "0.14.1"
+__version__ = "0.25.0"
 
 __all__ = ["show_versions"]
 

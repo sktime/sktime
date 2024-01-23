@@ -1,9 +1,15 @@
-# -*- coding: utf-8 -*-
 """DrCIF test code."""
+import pytest
+
 from sktime.classification.interval_based import DrCIF
 from sktime.datasets import load_unit_test
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DrCIF),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_contracted_drcif():
     """Test of contracted DrCIF on unit test data."""
     # load unit test data

@@ -1,24 +1,19 @@
-# -*- coding: utf-8 -*-
-"""tsfresh interface class."""
+"""Tsfresh interface class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["AyushmaanSeth", "mloning", "Alwin Wang", "MatthewMiddlehurst"]
+__author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
-from warnings import warn
-
-from sktime.datatypes._panel._convert import from_nested_to_long
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tsfresh", severity="warning")
 
 
 class _TSFreshFeatureExtractor(BaseTransformer):
     """Base adapter class for tsfresh transformations."""
 
     _tags = {
+        "authors": ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"],
+        "maintainers": ["AyushmaanSeth"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -28,7 +23,6 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "python_dependencies": "tsfresh",
-        "python_version": "<3.10",
     }
 
     def __init__(
@@ -57,7 +51,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         self.profiling_filename = profiling_filename
         self.distributor = distributor
 
-        super(_TSFreshFeatureExtractor, self).__init__()
+        super().__init__()
 
         # _get_extraction_params should be after the init because this imports tsfresh
         # and the init checks for python version and tsfresh being present
@@ -105,6 +99,12 @@ class _TSFreshFeatureExtractor(BaseTransformer):
                 value = getattr(self, name)
                 if value is not None:
                     extraction_params[name] = value
+
+            # Fixes key mismatch between tsfresh and sktime
+            # tsfresh uses "profile" while sktime uses "profiling"
+            # This fix keeps compatibility
+            if name == "profile":
+                extraction_params[name] = self.profiling
 
         self.n_jobs = n_jobs
 
@@ -212,9 +212,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     --------
     >>> from sklearn.model_selection import train_test_split
     >>> from sktime.datasets import load_arrow_head
-    >>> from sktime.transformations.panel.tsfresh import (
-    ...     TSFreshFeatureExtractor
-    ... )
+    >>> from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
     >>> X, y = load_arrow_head(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> ts_eff = TSFreshFeatureExtractor(
@@ -232,6 +230,8 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     >>> X_transform2 = ts_custom.fit_transform(X_train) # doctest: +SKIP
     """
 
+    _tags = {"X_inner_mtype": "pd-long"}
+
     def __init__(
         self,
         default_fc_parameters="efficient",
@@ -246,7 +246,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         profiling_sorting=None,
         distributor=None,
     ):
-        super(TSFreshFeatureExtractor, self).__init__(
+        super().__init__(
             default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=kind_to_fc_parameters,
             chunksize=chunksize,
@@ -278,34 +278,24 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
             each cell of Xt contains pandas.Series
             transformed version of X
         """
-        # tsfresh requires unique index, returns only values for
-        # unique index values
-        if X.index.nunique() < X.shape[0]:
-            warn(
-                "tsfresh requires a unique index, but found "
-                "non-unique. To avoid this warning, please make sure the index of X "
-                "contains only unique values."
-            )
-            X = X.reset_index(drop=True)
-
-        Xt = from_nested_to_long(X)
-
         # lazy imports to avoid hard dependency
         from tsfresh import extract_features
 
         Xt = extract_features(
-            Xt,
-            column_id="index",
-            column_value="value",
-            column_kind="column",
-            column_sort="time_index",
+            X,
+            column_id=X.columns[0],
+            column_value=X.columns[3],
+            column_kind=X.columns[2],
+            column_sort=X.columns[1],
             **self.default_fc_parameters_,
         )
 
         # When using the long input format, tsfresh seems to sort the index,
         # here we make sure we return the dataframe in the sort order as the
         # input data
-        return Xt.reindex(X.index)
+        instances = X.iloc[:, 0].unique()
+        Xt = Xt.reindex(instances)
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -491,7 +481,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         hypotheses_independent=None,
         ml_task="auto",
     ):
-        super(TSFreshRelevantFeatureExtractor, self).__init__(
+        super().__init__(
             default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=kind_to_fc_parameters,
             chunksize=chunksize,
@@ -726,4 +716,9 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "show_warnings": False,
             "fdr_level": 0.01,
         }
-        return params
+        params2 = {
+            "default_fc_parameters": "minimal",
+            "disable_progressbar": True,
+            "show_warnings": False,
+        }
+        return [params, params2]

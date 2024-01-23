@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests for transformer composition functionality attached to the base class."""
 
@@ -6,6 +5,7 @@ __author__ = ["fkiraly"]
 __all__ = []
 
 import pandas as pd
+import pytest
 from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_airline
@@ -23,8 +23,9 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.subset import ColumnSelect
 from sktime.transformations.series.summarize import SummaryTransformer
 from sktime.transformations.series.theta import ThetaLinesTransformer
-from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
+from sktime.utils.deep_equals import deep_equals
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def test_dunder_mul():
@@ -180,11 +181,14 @@ def test_pipeline_column_vectorization():
 
     X_theta = t.fit_transform(X)
 
-    assert set(X_theta.columns) == set(["a__0", "a__2", "b__0", "b__2"])
+    assert set(X_theta.columns) == {"a__0", "a__2", "b__0", "b__2"}
 
 
 def test_pipeline_inverse():
-    """Tests that inverse composition works, with inverse skips. Also see #3084."""
+    """Tests that inverse composition works, with inverse skips.
+
+    Also see #3084.
+    """
     X = load_airline()
     t = LogTransformer() * Imputer()
 
@@ -260,3 +264,27 @@ def test_dunder_neg():
     assert isinstance(tp.get_params()["transformer"], ExponentTransformer)
 
     _assert_array_almost_equal(tp.fit_transform(X), X)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodel", severity="none"),
+    reason="skip test if required soft dependency for statsmodels not available",
+)
+def test_input_output_series_panel_chain():
+    """Test that series-to-panel can be chained with series-to-series trafos.
+
+    Failure case of #5624.
+    """
+    from sktime.datasets import load_airline
+    from sktime.transformations.bootstrap import STLBootstrapTransformer
+    from sktime.transformations.series.impute import Imputer
+
+    X = load_airline()
+    bootstrap_trafo = STLBootstrapTransformer(4, sp=4) * Imputer(method="nearest")
+
+    assert bootstrap_trafo.get_tags()["scitype:transform-input"] == "Series"
+    assert bootstrap_trafo.get_tags()["scitype:transform-output"] == "Panel"
+
+    Xt = bootstrap_trafo.fit_transform(X)
+    assert isinstance(Xt, pd.DataFrame)
+    assert isinstance(Xt.index, pd.MultiIndex)

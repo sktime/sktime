@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """RandOm Convolutional KErnel Transform (Rocket) regressor.
 
 Pipeline regressor using the ROCKET transformer and RidgeCV estimator.
@@ -93,14 +92,20 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     >>> from sktime.regression.kernel_based import RocketRegressor
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> reg = RocketRegressor(num_kernels=500)
-    >>> reg.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> reg = RocketRegressor(num_kernels=500) # doctest: +SKIP
+    >>> reg.fit(X_train, y_train) # doctest: +SKIP
     RocketRegressor(...)
-    >>> y_pred = reg.predict(X_test)
+    >>> y_pred = reg.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
     }
@@ -128,7 +133,7 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        super(RocketRegressor, self).__init__()
+        super().__init__()
 
         if use_multivariate not in self.VALID_MULTIVAR_VALUES:
             raise ValueError(

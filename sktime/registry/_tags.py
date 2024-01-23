@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Register of estimator and object tags.
 
 Note for extenders: new tags should be entered in ESTIMATOR_TAG_REGISTER.
@@ -37,7 +36,6 @@ ESTIMATOR_TAG_LIST - list of string
 ---
 
 check_tag_is_valid(tag_name, tag_value) - checks whether tag_value is valid for tag_name
-
 """
 
 __author__ = ["fkiraly", "victordremov"]
@@ -45,6 +43,12 @@ __author__ = ["fkiraly", "victordremov"]
 import pandas as pd
 
 ESTIMATOR_TAG_REGISTER = [
+    (
+        "object_type",
+        "object",
+        "str",
+        "type of object: estimator, transformer, regressor, etc",
+    ),
     (
         "ignores-exogeneous-X",
         "forecaster",
@@ -106,6 +110,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
     (
+        "pwtrafo_type",
+        ["transformer-pairwise", "transformer-pairwise-panel"],
+        ("str", ["distance", "kernel", "other"]),
+        "mathematical type of pairwise transformer - distance, kernel, or other",
+    ),
+    (
         "scitype:X",
         "param_est",
         "str",
@@ -125,7 +135,7 @@ ESTIMATOR_TAG_REGISTER = [
             [
                 "pd.Series",
                 "pd.DataFrame",
-                "np.array",
+                "np.ndarray",
                 "nested_univ",
                 "pd-multiindex",
                 "numpy3D",
@@ -136,13 +146,19 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer", "transformer-pairwise-panel", "param_est"],
+        [
+            "clusterer",
+            "forecaster",
+            "transformer",
+            "transformer-pairwise-panel",
+            "param_est",
+        ],
         (
             "list",
             [
                 "pd.Series",
                 "pd.DataFrame",
-                "np.array",
+                "np.ndarray",
                 "nested_univ",
                 "pd-multiindex",
                 "numpy3D",
@@ -188,6 +204,18 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer capable of carrying out an inverse transform?",
     ),
     (
+        "capability:inverse_transform:range",
+        "transformer",
+        "list",
+        "domain of invertibility of transform, must be list [lower, upper] of float",
+    ),
+    (
+        "capability:inverse_transform:exact",
+        "transformer",
+        "bool",
+        "whether inverse_transform is expected to be an exact inverse to transform",
+    ),
+    (
         "capability:pred_int",
         "forecaster",
         "bool",
@@ -198,6 +226,25 @@ ESTIMATOR_TAG_REGISTER = [
         "forecaster",
         "bool",
         "does the forecaster implement predict_variance?",
+    ),
+    (
+        "capability:insample",
+        "forecaster",
+        "bool",
+        "can the forecaster make in-sample predictions?",
+    ),
+    (
+        "capability:pred_int:insample",
+        "forecaster",
+        "bool",
+        "can the forecaster make in-sample predictions in predict_interval/quantiles?",
+    ),
+    (
+        "capability:predict_proba",
+        "classifier",
+        "bool",
+        "does the classifier implement a non-default predict_proba, "
+        "i.e., not just 0/1 probabilities obtained from predict?",
     ),
     (
         "capability:multivariate",
@@ -307,6 +354,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does aligner return pairwise distance matrix between aligned series?",
     ),
     (
+        "alignment_type",
+        "aligner",
+        ("str", ["full", "partial"]),
+        "does aligner produce a full or partial alignment",
+    ),
+    (
         "requires-y-train",
         "metric",
         "bool",
@@ -355,10 +408,113 @@ ESTIMATOR_TAG_REGISTER = [
         "python dependencies of estimator as str or list of str",
     ),
     (
+        "python_dependencies_alias",
+        "estimator",
+        "dict",
+        "should be provided if import name differs from package name, \
+        key-value pairs are package name, import name",
+    ),
+    (
+        "requires_cython",
+        "estimator",
+        "bool",
+        "whether the estimator requires a C compiler present such as libomp, gcc",
+    ),
+    (
         "remember_data",
         ["forecaster", "transformer"],
         "bool",
         "whether estimator remembers all data seen as self._X, self._y, etc",
+    ),
+    (
+        "distribution_type",
+        "estimator",
+        "str",
+        "distribution type of data as str",
+    ),
+    (
+        "reserved_params",
+        "estimator",
+        ("list", "str"),
+        "parameters reserved by the base class and present in all child estimators",
+    ),
+    (
+        "split_hierarchical",
+        "splitter",
+        "bool",
+        "whether _split is natively implemented for hierarchical y types",
+    ),
+    (
+        "split_series_uses",
+        "splitter",
+        ("str", ["iloc", "loc", "custom"]),
+        "whether split_series uses split (iloc) or split_loc (loc) to split series",
+    ),
+    (
+        "capabilities:exact",
+        "distribution",
+        ("list", "str"),
+        "methods provided by the distribution that return numerically exact results",
+    ),
+    (
+        "capabilities:approx",
+        "distribution",
+        ("list", "str"),
+        "methods provided by the distribution that return approximate results",
+    ),
+    (
+        "distr:measuretype",
+        "distribution",
+        ("str", ["continuous", "discrete", "mixed"]),
+        "class the distribution measure belongs to - abs.continuous, discrete, mixed",
+    ),
+    (
+        "approx_mean_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative mean if not available",
+    ),
+    (
+        "approx_var_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative variance if not available",
+    ),
+    (
+        "approx_energy_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating generative energy if not available",
+    ),
+    (
+        "approx_spl",
+        "distribution",
+        "int",
+        "sample size used in approximating other statistics if not available",
+    ),
+    (
+        "bisect_iter",
+        "distribution",
+        "int",
+        "max iters for bisection method in ppf",
+    ),
+    (
+        "capability:multioutput",
+        ["classifier", "regressor"],  # might need to add "early_classifier" here
+        "bool",
+        "can the estimator handle multioutput data?",
+    ),
+    (
+        "maintainers",
+        "object",
+        ("list", "str"),
+        "list of current maintainers of the object, each maintainer a GitHub handle",
+    ),
+    (
+        "authors",
+        "object",
+        ("list", "str"),
+        "list of authors of the object, each author a GitHub handle",
     ),
 ]
 

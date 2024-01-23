@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-HMM Annotation Estimator.
+"""HMM Annotation Estimator.
 
-Implements a basic Hidden Markov Model (HMM) as an annotation estimator.
-To read more about the algorithm, check out the `HMM wikipedia page
+Implements a basic Hidden Markov Model (HMM) as an annotation estimator. To read more
+about the algorithm, check out the `HMM wikipedia page
 <https://en.wikipedia.org/wiki/Hidden_Markov_model>`_.
 """
 import warnings
@@ -80,7 +78,7 @@ class HMM(BaseSeriesAnnotator):
         hidden states and  should match the length of both the emission funcs
         list and the transition_prob_mat. The initial probs should be reflective
         of prior beliefs.  If none is passed will each hidden state will be
-        assigned an equal inital prob.
+        assigned an equal initial prob.
 
     Attributes
     ----------
@@ -141,7 +139,7 @@ class HMM(BaseSeriesAnnotator):
         self.initial_probs = initial_probs
         self.emission_funcs = emission_funcs
         self.transition_prob_mat = transition_prob_mat
-        super(HMM, self).__init__(fmt="dense", labels="int_label")
+        super().__init__(fmt="dense", labels="int_label")
         self._validate_init()
 
     def _validate_init(self):
@@ -161,7 +159,7 @@ class HMM(BaseSeriesAnnotator):
             or tran_mat_len != self.transition_prob_mat.shape[1]
         ):
             raise ValueError(
-                "Transtion Probability must be 2D square, but got an"
+                "Transition Probability must be 2D square, but got an"
                 f"object of size {self.transition_prob_mat.shape}"
             )
         # number of states should be consistent!
@@ -213,7 +211,7 @@ class HMM(BaseSeriesAnnotator):
             number of hidden states and m is the number of observations.
             For a given observation, it should contain the probability that it
             could havbe been generated (ie emitted) from each of the hidden states
-            Each entry should be beteen 0 and 1
+            Each entry should be between 0 and 1
         transition_prob_mat : 2D np.ndarray, shape = [num_states, num_states]
             A nxn dimensional array of floats where n is
             the number of hidden states in the model. The jth col in the ith row
@@ -241,14 +239,14 @@ class HMM(BaseSeriesAnnotator):
         trans_prob[:, 0] = np.log(initial_probs) + np.log(emi_probs[:, 0])
 
         # trans_id is the index of the state that would have been the most
-        # likely preceeding state.
+        # likely preceding state.
         trans_id = np.zeros((num_states, num_obs), dtype=np.int32)
 
         # use Vertibi Algorithm to fill in trans_prob and trans_id:
         for i in range(1, num_obs):
             # adds log(transition_prob_mat) element-wise:
             paths = np.log(transition_prob_mat)
-            # adds the probabilities for the state before columsn wise:
+            # adds the probabilities for the state before columns wise:
             paths += np.stack(
                 [trans_prob[:, i - 1] for _ in range(num_states)], axis=0
             ).T
@@ -260,7 +258,10 @@ class HMM(BaseSeriesAnnotator):
             trans_prob[:, i] = np.max(paths, axis=0)
 
         if np.any(np.isinf(trans_prob[:, -1])):
-            warnings.warn("Change parameters, the distribution doesn't work")
+            warnings.warn(
+                "Change parameters, the distribution doesn't work",
+                stacklevel=2,
+            )
 
         return trans_prob, trans_id
 
@@ -291,7 +292,7 @@ class HMM(BaseSeriesAnnotator):
             number of hidden states and m is the number of observations.
             For a given observation, it contains the probability that it
             could havbe been generated (ie emitted) from each of the hidden states
-            Each entry should be beteen 0 and 1
+            Each entry should be between 0 and 1
         """
         # assign emission probabilities from each state to each position:
 

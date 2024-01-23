@@ -1,16 +1,11 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements reconciled forecasters for hierarchical data."""
 
 __all__ = ["ReconcilerForecaster"]
-__author__ = [
-    "ciaran-g",
-]
+__author__ = ["ciaran-g"]
 
 # todo: top down historical proportions? -> new _get_g_matrix_prop(self)
-
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -23,10 +18,11 @@ from sktime.transformations.hierarchical.reconcile import (
     _get_s_matrix,
     _parent_child_df,
 )
+from sktime.utils.warnings import warn
 
 
 class ReconcilerForecaster(BaseForecaster):
-    """Hierarchical reconcilation forecaster.
+    """Hierarchical reconciliation forecaster.
 
     Reconciliation is applied to make the forecasts in a hierarchy of
     time-series sum together appropriately.
@@ -42,16 +38,16 @@ class ReconcilerForecaster(BaseForecaster):
     ----------
     forecaster : estimator
         Estimator to generate base forecasts which are then reconciled
-    method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str",
-                "bu", "td_fcst"}, default="mint_shrink"
-        The reconciliation approach applied to the forecasts based on
-            "mint_cov" - sample covariance
-            "mint_shrink" - covariance with shrinkage
-            "ols" - ordinary least squares
-            "wls_var" - weighted least squares (variance)
-            "wls_str" - weighted least squares (structural)
-            "bu" - bottom-up
-            "td_fcst" - top down based on forecast proportions
+    method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str", \
+            "bu", "td_fcst"}, default="mint_shrink"
+        The reconciliation approach applied to the forecasts based on:
+            * "mint_cov" - sample covariance
+            * "mint_shrink" - covariance with shrinkage
+            * "ols" - ordinary least squares
+            * "wls_var" - weighted least squares (variance)
+            * "wls_str" - weighted least squares (structural)
+            * "bu" - bottom-up
+            * "td_fcst" - top down based on forecast proportions
 
     See Also
     --------
@@ -73,6 +69,7 @@ class ReconcilerForecaster(BaseForecaster):
     ...     no_bottom_nodes=3,
     ...     no_levels=1,
     ...     random_seed=123,
+    ...     length=7,
     ... )
     >>> y = agg.fit_transform(y)
     >>> forecaster = NaiveForecaster(strategy="drift")
@@ -83,6 +80,12 @@ class ReconcilerForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "ciaran-g",
+        "maintainers": "ciaran-g",
+        # estimator type
+        # --------------
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -109,11 +112,10 @@ class ReconcilerForecaster(BaseForecaster):
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
 
     def __init__(self, forecaster, method="mint_shrink"):
-
         self.forecaster = forecaster
         self.method = method
 
-        super(ReconcilerForecaster, self).__init__()
+        super().__init__()
 
     def _add_totals(self, y):
         """Add total levels to y, using Aggregate."""
@@ -121,7 +123,7 @@ class ReconcilerForecaster(BaseForecaster):
 
         return Aggregator().fit_transform(y)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         Parameters
@@ -153,7 +155,7 @@ class ReconcilerForecaster(BaseForecaster):
             if _check_index_no_total(X):
                 X = self._add_totals(X)
 
-        # if transformer just fit pipline and return
+        # if transformer just fit pipeline and return
         if np.isin(self.method, self.TRFORM_LIST):
             self.forecaster_ = self.forecaster.clone() * Reconciler(method=self.method)
             self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -191,7 +193,7 @@ class ReconcilerForecaster(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters
@@ -206,12 +208,17 @@ class ReconcilerForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
+        if X is not None:
+            if _check_index_no_total(X):
+                X = self._add_totals(X)
+
         base_fc = self.forecaster_.predict(fh=fh, X=X)
 
         if base_fc.index.nlevels < 2:
             warn(
                 "Reconciler is intended for use with y.index.nlevels > 1. "
-                "Returning predictions unchanged."
+                "Returning predictions unchanged.",
+                obj=self,
             )
             return base_fc
 
@@ -250,16 +257,27 @@ class ReconcilerForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        # check index for no "__total", if not add totals to y
+        if _check_index_no_total(y):
+            y = self._add_totals(y)
+
+        if X is not None:
+            if _check_index_no_total(X):
+                X = self._add_totals(X)
+
         self.forecaster_.update(y, X, update_params=update_params)
 
         if y.index.nlevels < 2 or np.isin(self.method, self.TRFORM_LIST):
             return self
 
+        # update self.residuals_
         # bug in self.forecaster_.predict_residuals() for heir data
         fh_resid = ForecastingHorizon(
-            self._y.index.get_level_values(-1).unique(), is_relative=False
+            y.index.get_level_values(-1).unique(), is_relative=False
         )
-        self.residuals_ = self._y - self.forecaster_.predict(fh=fh_resid, X=self._X)
+        update_residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
+        self.residuals_ = pd.concat([self.residuals_, update_residuals], axis=0)
+        self.residuals_ = self.residuals_.sort_index()
 
         # could implement something specific here
         # for now just refit
@@ -329,7 +347,7 @@ class ReconcilerForecaster(BaseForecaster):
             # higherorder var (only diags)
             resid_corseries = resid**2
             hovar_mat = (resid_corseries.transpose().dot(resid_corseries)) - scale_hovar
-            hovar_mat = (nobs / ((nobs - 1)) ** 3) * hovar_mat
+            hovar_mat = (nobs / (nobs - 1) ** 3) * hovar_mat
 
             # set diagonals to zero
             for i in resid.columns:

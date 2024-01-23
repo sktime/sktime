@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Extension template for series annotation.
+"""Extension template for series annotation.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -16,7 +14,8 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting         - _fit(self, X, Y=None)
@@ -25,7 +24,7 @@ Mandatory implements:
 Optional implements:
     updating        - _update(self, X, Y=None)
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -82,7 +81,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         labels="indicator",
     ):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
@@ -90,8 +89,8 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MySeriesAnnotator" to the name of the class
-        super(MySeriesAnnotator, self).__init__(fmt=fmt, labels=labels)
+        # leave this as is
+        super().__init__(fmt=fmt, labels=labels)
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

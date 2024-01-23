@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __author__ = ["mloning"]
 __all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
@@ -12,8 +10,6 @@ from sktime.registry import (
 )
 from sktime.transformations.base import BaseTransformer
 
-# The following estimators currently do not pass all unit tests
-# https://github.com/sktime/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
@@ -33,12 +29,33 @@ EXCLUDE_ESTIMATORS = [
     "TapNetRegressor",
     "TapNetClassifier",
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
+    "LSTMFCNClassifier",  # unknown cause, see bug report #4033
+    "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
+    # DL classifier suspected to cause hangs and memouts, see #4610
+    "FCNClassifier",
+    "MACNNClassifier",
+    "SimpleRNNClassifier",
+    "SimpleRNNRegressor",
+    "EditDist",
+    "CNNClassifier",
+    "FCNClassifier",
+    "InceptionTimeClassifier",
+    "LSTMFCNClassifier",
+    "MLPClassifier",
+    "CNNRegressor",
+    "ResNetRegressor",
 ]
 
 
 EXCLUDED_TESTS = {
-    # issue when predicting residuals, see #3479
-    "SquaringResiduals": ["test_predict_residuals"],
+    # issue when prediction intervals, see #3479 and #4504
+    # known issue with prediction intervals that needs fixing, tracked in #4181
+    "SquaringResiduals": [
+        "test_predict_time_index",
+        "test_predict_residuals",
+        "test_predict_interval",
+        "test_predict_time_index_with_X",  # separate - refer to #4765
+    ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
@@ -60,6 +77,7 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
+        "test_multiprocessing_idempotent",  # see 5658
     ],
     "ProximityForest": [
         "test_persistence_via_pickle",
@@ -81,6 +99,9 @@ EXCLUDED_TESTS = {
     "ResNetClassifier": [
         "test_fit_idempotent",
     ],
+    "ResNetRegressor": [
+        "test_fit_idempotent",
+    ],
     "CNNClassifier": [
         "test_fit_idempotent",
     ],
@@ -97,6 +118,28 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "CNTCClassifier": [
+        "test_fit_idempotent",
+    ],
+    "InceptionTimeClassifier": [
+        "test_fit_idempotent",
+    ],
+    "SimpleRNNClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "SimpleRNNRegressor": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "MCDCNNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "MCDCNNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "MACNNClassifier": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
@@ -126,8 +169,24 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
-    "SAX": "test_fit_transform_output",  # SAX returns strange output format
+    # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
+    "SAX": "test_fit_transform_output",
+    "DynamicFactor": [
+        "test_predict_time_index_in_sample_full",  # refer to #4765
+    ],
+    "ARIMA": [
+        "test_predict_time_index_in_sample_full",  # refer to #4765
+    ],
+    "VECM": [
+        "test_hierarchical_with_exogeneous",  # refer to #4743
+    ],
+    "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
+    # networks do not support negative fh
+    "LTSFLinearForecaster": ["test_predict_time_index_in_sample_full"],
+    "LTSFDLinearForecaster": ["test_predict_time_index_in_sample_full"],
+    "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
+    "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

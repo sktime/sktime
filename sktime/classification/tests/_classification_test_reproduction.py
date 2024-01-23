@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
 
@@ -15,10 +14,7 @@ from sktime.classification.distance_based import (
     ProximityForest,
     ShapeDTW,
 )
-from sktime.classification.early_classification import (
-    TEASER,
-    ProbabilityThresholdEarlyClassifier,
-)
+from sktime.classification.early_classification import TEASER
 from sktime.classification.feature_based import (
     Catch22Classifier,
     MatrixProfileClassifier,

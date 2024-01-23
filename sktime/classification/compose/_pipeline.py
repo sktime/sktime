@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Pipeline with a classifier."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
@@ -88,10 +87,12 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = PCATransformer() * TimeSeriesForestClassifier(n_estimators=5)
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "X_inner_mtype": "pd-multiindex",  # which type do _fit/_predict accept
         "capability:multivariate": False,
         "capability:unequal_length": False,
@@ -99,18 +100,18 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:predict_proba": True,
     }
 
     # no default tag values - these are set dynamically below
 
     def __init__(self, classifier, transformers):
-
         self.classifier = classifier
         self.classifier_ = classifier.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ClassifierPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = classifier.get_tag("capability:multivariate", False)
@@ -133,6 +134,8 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         unequal = unequal or self.transformers_.get_tag(
             "capability:unequal_length:removes", False
         )
+        # predict_proba is same as that of classifier
+        predict_proba = classifier.get_tag("capability:predict_proba")
         # last three tags are always False, since not supported by transformers
         tags_to_set = {
             "capability:multivariate": multivariate,
@@ -141,6 +144,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
             "capability:contractable": False,
             "capability:train_estimate": False,
             "capability:multithreading": False,
+            "capability:predict_proba": predict_proba,
         }
         self.set_tags(**tags_to_set)
 
@@ -398,23 +402,24 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = t1 * t2 * KNeighborsClassifier()
     """
 
     _tags = {
         "X_inner_mtype": "pd-multiindex",  # which type do _fit/_predict accept
-        "capability:multivariate": False,
-        "capability:unequal_length": False,
+        "capability:multivariate": True,
+        "capability:unequal_length": True,
         "capability:missing_values": True,
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:predict_proba": True,
     }
 
     # no default tag values - these are set dynamically below
 
     def __init__(self, classifier, transformers):
-
         from sklearn.base import clone
 
         self.classifier = classifier
@@ -422,11 +427,10 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(SklearnClassifierPipeline, self).__init__()
+        super().__init__()
 
-        # can handle multivariate iff all transformers can
-        # sklearn transformers always support multivariate
-        multivariate = not self.transformers_.get_tag("univariate-only", True)
+        # all sktime and sklearn transformers always support multivariate
+        multivariate = True
         # can handle missing values iff transformer chain removes missing data
         # sklearn classifiers might be able to handle missing data (but no tag there)
         # so better set the tag liberally

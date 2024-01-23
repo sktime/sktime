@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for transformers.
+"""Extension template for transformers.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -19,7 +17,8 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting         - _fit(self, X, y=None)
@@ -30,7 +29,7 @@ Optional implements:
     update                      - _update(self, X, y=None)
     fitted parameter inspection - _get_fitted_params()
 
-Testing - implement if sktime transformer (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 """
 # todo: write an informative docstring for the file or module, remove the above
@@ -48,11 +47,7 @@ from sktime.transformations.base import BaseTransformer
 # todo: add any necessary sktime internal imports here
 
 # todo: if any imports are sktime soft dependencies:
-#  * make sure to fill in the "python_dependencies" tag with the package import name
-#  * add a _check_soft_dependencies warning here, example:
-#
-# from sktime.utils.validation._dependencies import check_soft_dependencies
-# _check_soft_dependencies("soft_dependency_name", severity="warning")
+# make sure to fill in the "python_dependencies" tag with the package import name
 
 
 class MyTransformer(BaseTransformer):
@@ -151,7 +146,7 @@ class MyTransformer(BaseTransformer):
         # univariate-only controls whether internal X can be univariate/multivariate
         # if True (only univariate), always applies vectorization over variables
         "univariate-only": False,
-        # valid values: True = inner _fit, _transform receive only univariate serie
+        # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
         #
         # requires_y = does y need to be passed in fit?
@@ -199,6 +194,20 @@ class MyTransformer(BaseTransformer):
         # if False, exception is raised if inverse_transform is called,
         #   unless the skip-inverse-transform tag is set to True
         #
+        # capability:inverse_transform:range = domain of invertibility of transform
+        "capability:inverse_transform:range": None,
+        # valid values: None (no range), list of two floats [min, max]
+        # if None, inverse_transform is assumed to be defined for all values
+        # if list of floats, invertibility is assumed
+        # only in the closed interval [min, max] of transform
+        # note: the range applies to the *input* of transform, not the output
+        #
+        # capability:inverse_transform:exact = is inverse transform exact?
+        "capability:inverse_transform:exact": True,
+        # valid values: boolean True (yes), False (no)
+        # if True, inverse_transform is assumed to be exact inverse of transform
+        # if False, inverse_transform is assumed to be an approximation
+        #
         # skip-inverse-transform = is inverse-transform skipped when called?
         "skip-inverse-transform": False,
         # if False, capability:inverse_transform tag behaviour is as per devault
@@ -230,6 +239,26 @@ class MyTransformer(BaseTransformer):
         # valid values: boolean True (yes), False (no)
         # used for search index and validity checking, does not raise direct exception
         #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
         #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
@@ -237,10 +266,10 @@ class MyTransformer(BaseTransformer):
         # python version requirement
         "python_version": None,
         # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python veresion is incompatible
+        # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
+        "python_dependencies": None,
         # valid values: str or list of str
         # raises exception at construction if modules at strings cannot be imported
     }
@@ -251,7 +280,7 @@ class MyTransformer(BaseTransformer):
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
@@ -259,8 +288,8 @@ class MyTransformer(BaseTransformer):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTransformer" to the name of the class
-        super(MyTransformer, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
@@ -328,10 +357,10 @@ class MyTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
             if X_inner_mtype is list, _transform must support all types in it
             Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for transformation
 
         Returns
@@ -368,10 +397,10 @@ class MyTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
             if X_inner_mtype is list, _inverse_transform must support all types in it
             Data to be inverse transformed
-        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for transformation
 
         Returns
@@ -404,10 +433,10 @@ class MyTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
             if X_inner_mtype is list, _update must support all types in it
             Data to update transformer with
-        y : Series or Panel of mtype y_inner_mtype, default=None
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for tarnsformation
 
         Returns

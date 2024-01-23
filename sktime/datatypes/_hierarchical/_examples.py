@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Example generation for testing.
 
 Exports dict of examples, useful for testing as fixtures.
@@ -23,6 +22,8 @@ overall, conversions from non-lossy representations to any other ones
 """
 
 import pandas as pd
+
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 example_dict = dict()
 example_dict_lossy = dict()
@@ -93,6 +94,16 @@ X = X.set_index(["foo", "bar", "timepoints"])
 example_dict[("pd_multiindex_hier", "Hierarchical", 0)] = X
 example_dict_lossy[("pd_multiindex_hier", "Hierarchical", 0)] = False
 
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import convert_pandas_to_dask
+
+    df_dask = convert_pandas_to_dask(
+        example_dict[("pd_multiindex_hier", "Hierarchical", 0)], npartitions=1
+    )
+
+    example_dict[("dask_hierarchical", "Hierarchical", 0)] = df_dask
+    example_dict_lossy[("dask_hierarchical", "Hierarchical", 0)] = False
+
 example_dict_metadata[("Hierarchical", 0)] = {
     "is_univariate": False,
     "is_one_panel": False,
@@ -103,6 +114,8 @@ example_dict_metadata[("Hierarchical", 0)] = {
     "has_nans": False,
     "n_instances": 6,
     "n_panels": 2,
+    "n_features": 2,
+    "feature_names": ["var_0", "var_1"],
 }
 
 
@@ -125,6 +138,16 @@ X = X.set_index(["foo", "bar", "timepoints"])
 example_dict[("pd_multiindex_hier", "Hierarchical", 1)] = X
 example_dict_lossy[("pd_multiindex_hier", "Hierarchical", 1)] = False
 
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import convert_pandas_to_dask
+
+    df_dask = convert_pandas_to_dask(
+        example_dict[("pd_multiindex_hier", "Hierarchical", 1)], npartitions=1
+    )
+
+    example_dict[("dask_hierarchical", "Hierarchical", 1)] = df_dask
+    example_dict_lossy[("dask_hierarchical", "Hierarchical", 1)] = False
+
 example_dict_metadata[("Hierarchical", 1)] = {
     "is_univariate": True,
     "is_one_panel": False,
@@ -135,4 +158,6 @@ example_dict_metadata[("Hierarchical", 1)] = {
     "has_nans": False,
     "n_instances": 6,
     "n_panels": 2,
+    "n_features": 1,
+    "feature_names": ["var_0"],
 }

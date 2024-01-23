@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Clustering averaging metrics."""
 __author__ = ["chrisholder", "TonyBagnall"]
 

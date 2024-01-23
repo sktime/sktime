@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements online algorithms for prediction weighted ensembles."""
 
 import numpy as np
-from scipy.optimize import bisect
-from scipy.optimize import nnls
+from scipy.optimize import bisect, nnls
 
 
 class _PredictionWeightedEnsembler:
@@ -23,6 +21,12 @@ class _PredictionWeightedEnsembler:
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["magittan"],
+        "maintainers": ["magittan"],
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -32,7 +36,7 @@ class _PredictionWeightedEnsembler:
         self.n_estimators = n_estimators
         self.weights = np.ones(n_estimators) / n_estimators
         self.loss_func = loss_func
-        super(_PredictionWeightedEnsembler, self).__init__()
+        super().__init__()
 
     def _predict(self, y_pred):
         """Make predictions by taking weighted average of forecaster predictions.
@@ -63,7 +67,7 @@ class _PredictionWeightedEnsembler:
         self.weights /= np.sum(self.weights)
 
     def _update(self, y_pred, y_true):
-        """Update fitted paramters and performs a new ensemble fit.
+        """Update fitted parameters and performs a new ensemble fit.
 
         Resets the weights over the estimators by passing previous
         observations to the weighting algorithm.
@@ -185,7 +189,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
 
         Update the weights on each of the estimators by performing a potential
         function update with a root-finding search. low_c represents the lower
-        bound on the window that the root finding is occuring over.
+        bound on the window that the root finding is occurring over.
 
         Parameters
         ----------
@@ -213,7 +217,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
             -------
             potential: float
             """
-            return np.mean(np.exp((R_plus ** 2) / (2 * c))) - np.e
+            return np.mean(np.exp((R_plus**2) / (2 * c))) - np.e
 
         c_t = bisect(_pot, low_c, high_c)
 
@@ -232,7 +236,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
             prob : float
                 probability
             """
-            return (r / c_t) * np.exp((r ** 2) / (2 * c_t))
+            return (r / c_t) * np.exp((r**2) / (2 * c_t))
 
         self.weights = np.array([_prob(r, c_t) for r in R_plus])
         self.weights /= np.sum(self.weights)

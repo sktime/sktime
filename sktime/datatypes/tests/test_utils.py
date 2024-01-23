@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing utilities in the datatype module."""
 
 __author__ = ["fkiraly"]
@@ -32,7 +31,10 @@ SCITYPE_MTYPE_PAIRS = [
 
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_time_index(scitype, mtype):
-    """Tests that conversions for scitype agree with from/to example fixtures.
+    """Tests that get_time_index returns the expected output.
+
+    Note: this is tested only for fixtures with equal time index across instances,
+    as get_time_index assumes that.
 
     Parameters
     ----------
@@ -41,7 +43,7 @@ def test_get_time_index(scitype, mtype):
 
     Raises
     ------
-    AssertionError if get_cutoff does not return a length 1 pandas.index
+    AssertionError if get_time_index does not return the expected return
         for any fixture example of given scitype, mtype
     """
     # get_time_index currently does not work for df-list type, skip
@@ -49,10 +51,15 @@ def test_get_time_index(scitype, mtype):
         return None
 
     # retrieve example fixture
-    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)
+    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_metadata=True)
 
-    for fixture in fixtures.values():
+    for fixture_tuple in fixtures.values():
+        fixture = fixture_tuple[0]
+        fixture_metadata = fixture_tuple[2]
+
         if fixture is None:
+            continue
+        if not fixture_metadata.get("is_equal_index", True):
             continue
 
         idx = get_time_index(fixture)
@@ -96,9 +103,14 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
         for any fixture example of given scitype, mtype
     """
     # retrieve example fixture
-    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)
+    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_metadata=True)
 
-    for fixture in fixtures.values():
+    for fixture_tuple in fixtures.values():
+        fixture = fixture_tuple[0]
+        fixture_metadata = fixture_tuple[2]
+        fixture_equally_spaced = fixture_metadata.get("is_equally_spaced", True)
+        fixture_equal_index = fixture_metadata.get("is_equal_index", True)
+
         if fixture is None:
             continue
 
@@ -126,7 +138,9 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
         if return_index:
             assert len(cutoff) == 1
             if isinstance(cutoff_val, (pd.Period, pd.Timestamp)):
-                assert hasattr(cutoff, "freq") and cutoff.freq is not None
+                assert hasattr(cutoff, "freq")
+                if fixture_equally_spaced and fixture_equal_index:
+                    assert cutoff.freq is not None
 
         if isinstance(fixture, np.ndarray):
             if reverse_order:
@@ -192,7 +206,7 @@ def test_get_cutoff_from_index(reverse_order):
     )
 
     assert isinstance(cutoff, pd.Index) and len(cutoff) == 1
-    assert cutoff.is_integer()
+    assert pd.api.types.is_integer_dtype(cutoff)
     assert idx == cutoff[0]
 
     if reverse_order:
@@ -217,6 +231,36 @@ def test_get_cutoff_wrong_input(bad_inputs):
         get_cutoff(bad_inputs, check_input=True)
 
 
+def test_get_cutoff_inferred_freq():
+    """Tests that get_cutoff infers the freq in a case where it is not directly set.
+
+    Ensures that the bug in #4405 does not occur, combined with the forecaster contract.
+    """
+    np.random.seed(seed=0)
+
+    past_data = pd.DataFrame(
+        {
+            "time_identifier": pd.to_datetime(
+                [
+                    "2024-01-01",
+                    "2024-01-02",
+                    "2024-01-03",
+                    "2024-01-04",
+                    "2024-01-05",
+                    "2024-01-06",
+                    "2024-01-07",
+                    "2024-01-08",
+                ],
+                format="%Y-%m-%d",
+            ),
+            "series_data": np.random.random(size=8),
+        }
+    )
+    past_data = past_data.set_index(["time_identifier"])
+    cutoff = get_cutoff(past_data, return_index=True)
+    assert cutoff.freq == "D"
+
+
 @pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_window_output_type(scitype, mtype, window_length, lag):
@@ -236,7 +280,9 @@ def test_get_window_output_type(scitype, mtype, window_length, lag):
     # retrieve example fixture
     fixture = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)[0]
     X = get_window(fixture, window_length=window_length, lag=lag)
-    valid, err, _ = check_is_mtype(X, mtype=mtype, return_metadata=True)
+    valid, err, _ = check_is_mtype(
+        X, mtype=mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"get_window should return an output of mtype {mtype} for that type of input, "
@@ -308,7 +354,9 @@ def test_get_slice_output_type(scitype, mtype):
     # retrieve example fixture
     fixture = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)[0]
     X = get_slice(fixture)
-    valid, err, _ = check_is_mtype(X, mtype=mtype, return_metadata=True)
+    valid, err, _ = check_is_mtype(
+        X, mtype=mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"get_slice should return an output of mtype {mtype} for that type of input, "

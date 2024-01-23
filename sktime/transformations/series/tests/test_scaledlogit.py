@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """ScaledLogit transform unit tests."""
 
 __author__ = ["ltsaprounis"]
-
-from warnings import warn
 
 import numpy as np
 import pytest
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
+from sktime.utils.warnings import warn
 
 TEST_SERIES = np.array([30, 40, 60])
 

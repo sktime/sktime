@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning"]
@@ -89,7 +88,7 @@ def make_forecasting_problem(
     Parameters
     ----------
     n_timepoints : int, optional
-        Lenght of data, by default 50
+        Length of data, by default 50
     all_positive : bool, optional
         Only positive values or not, by default True
     index_type : e.g. pd.PeriodIndex, optional
@@ -132,8 +131,8 @@ def make_forecasting_problem(
 def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     assert isinstance(y_pred_index, pd.Index)
     fh = check_fh(fh)
-    expected = fh.to_absolute(cutoff).to_pandas()
-    y_pred_index.equals(expected)
+    expected = fh.to_absolute_index(cutoff)
+    assert y_pred_index.equals(expected)
 
 
 def _assert_correct_columns(y_pred, y_train):
