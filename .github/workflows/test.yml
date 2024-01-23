@@ -12,8 +12,8 @@ jobs:
   code-quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
         with:
@@ -31,9 +31,9 @@ jobs:
     needs: code-quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Install dependencies
@@ -44,13 +44,30 @@ jobs:
         run: build_tools/run_examples.sh
         shell: bash
 
+  run-blogpost-examples:
+    needs: code-quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[all_extras,binder,dev,mlflow]
+      - name: Run example notebooks
+        run: build_tools/run_blogposts.sh
+        shell: bash
+
   test-nodevdeps:
     needs: code-quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Display Python version
@@ -68,9 +85,9 @@ jobs:
     needs: code-quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Display Python version
@@ -90,14 +107,14 @@ jobs:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - run: git remote set-branches origin 'main'
 
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
 
@@ -118,9 +135,9 @@ jobs:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Display Python version
@@ -140,9 +157,14 @@ jobs:
     needs: test-nosoftdeps
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Display Python version
@@ -164,73 +186,23 @@ jobs:
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
 
-  test-windows:
-    needs: test-nosoftdeps
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false  # to not fail all combinations if just one fail
-      matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - run: git remote set-branches origin 'main'
-
-      - run: git fetch --depth 1
-
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
-          channels: anaconda, conda-forge,
-
-      - run: conda --version
-      - run: which python
-
-      - name: Fix windows paths
-        if: ${{ runner.os == 'Windows' }}
-        run: echo "C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Install conda libpython
-        run: conda install -c anaconda libpython
-
-      - name: Install sktime and dependencies
-        run: python -m pip install .[all_extras_pandas2,dev]
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Show available branches
-        run: git branch -a
-
-      - name: Run tests
-        run: |
-          mkdir -p testdir/
-          cp .coveragerc testdir/
-          cp setup.cfg testdir/
-          python -m pytest
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v3
-
-  test-unix:
+  test-full:
     needs: test-nosoftdeps
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
-        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - run: git remote set-branches origin 'main'
 
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -239,7 +211,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras_pandas2,dev] --no-cache-dir
+          python -m pip install .[all_extras_pandas2,dev,dl] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list
@@ -248,7 +220,7 @@ jobs:
         run: git branch -a
 
       - name: Run tests
-        run: make test
+        run: make test_without_datasets
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
@@ -258,17 +230,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - run: git remote set-branches origin 'main'
 
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -286,7 +258,7 @@ jobs:
         run: git branch -a
 
       - name: Run tests
-        run: make test
+        run: make test_without_datasets
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3

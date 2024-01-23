@@ -1,4 +1,4 @@
-"""Arithmetics with distances/kernels, e.g., addition, multiplication."""
+"""Arithmetic with distances/kernels, e.g., addition, multiplication."""
 
 __author__ = ["fkiraly"]
 
@@ -53,6 +53,11 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        # estimator type
+        # --------------
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?

@@ -90,12 +90,17 @@ class HIVECOTEV2(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MatthewMiddlehurst",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "hybrid",
-        "python_dependencies": "numba",
     }
 
     def __init__(

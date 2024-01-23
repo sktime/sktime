@@ -8,7 +8,6 @@ __all__ = ["ConformalIntervals"]
 __author__ = ["fkiraly", "bethrice44"]
 
 from math import floor
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -18,6 +17,7 @@ from sklearn.base import clone
 from sktime.datatypes import MTYPE_LIST_SERIES, convert, convert_to
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.warnings import warn
 
 
 class ConformalIntervals(BaseForecaster):
@@ -94,7 +94,7 @@ class ConformalIntervals(BaseForecaster):
     >>> from sktime.forecasting.conformal import ConformalIntervals
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
-    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.param_est.plugin import PluginParamsForecaster
     >>> # part 1 = grid search
     >>> cv = ExpandingWindowSplitter(fh=[1, 2, 3])  # doctest: +SKIP
@@ -119,6 +119,11 @@ class ConformalIntervals(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly", "bethrice44"],
+        # estimator type
+        # --------------
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -185,6 +190,8 @@ class ConformalIntervals(BaseForecaster):
                 initial_window=self.initial_window,
                 sample_frac=self.sample_frac,
             )
+        else:
+            self.residuals_matrix_ = None
 
         return self
 
@@ -204,8 +211,7 @@ class ConformalIntervals(BaseForecaster):
                 update=True,
             )
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -250,7 +256,6 @@ class ConformalIntervals(BaseForecaster):
                 fh=fh,
                 coverage=coverage,
                 y_pred=y_pred,
-                legacy_interface=legacy_interface,
             )
 
         # otherwise, we have a hierarchical/multiindex y
@@ -265,12 +270,11 @@ class ConformalIntervals(BaseForecaster):
                 fh=fh,
                 coverage=coverage,
                 y_pred=y_pred_ix,
-                legacy_interface=legacy_interface,
             )
         pred_int = pd.concat(pred_ints, axis=0, keys=y_pred_index)
         return pred_int
 
-    def _predict_interval_series(self, fh, coverage, y_pred, legacy_interface):
+    def _predict_interval_series(self, fh, coverage, y_pred):
         """Compute prediction intervals predict_interval for series scitype."""
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
@@ -289,9 +293,7 @@ class ConformalIntervals(BaseForecaster):
 
         ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
 
-        var_names = self._get_varnames(
-            default="Coverage", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
 
         cols = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
@@ -459,8 +461,9 @@ class ConformalIntervals(BaseForecaster):
                 residuals = forecaster.predict_residuals(y_test, X_test)
             except IndexError:
                 warn(
-                    f"Couldn't predict after fitting on time series of length \
-                                 {len(y_train)}.\n"
+                    "Couldn't predict after fitting on time series of length"
+                    f"{len(y_train)}.",
+                    obj=forecaster,
                 )
             return residuals
 
@@ -486,8 +489,9 @@ class ConformalIntervals(BaseForecaster):
                     residuals = forecaster_to_extend.predict_residuals(y_test, X_test)
                 except IndexError:
                     warn(
-                        f"Couldn't predict with existing forecaster for cutoff {id} \
-                         with existing forecaster.\n"
+                        f"Couldn't predict with existing forecaster for cutoff {id}"
+                        " with existing forecaster.",
+                        obj=forecaster,
                     )
                 return residuals
 

@@ -15,6 +15,7 @@ from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
 from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X
 
 
@@ -101,12 +102,15 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         Keys are transformer names and values are the fitted transformer
         objects.
     sparse_output_ : bool
-        Boolean flag indicating wether the output of ``transform`` is a
+        Boolean flag indicating whether the output of ``transform`` is a
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformations and the `sparse_threshold` keyword.
     """
 
-    _tags = {"python_dependencies": "scipy"}
+    _tags = {
+        "authors": ["mloning", "sajaysurya", "fkiraly"],
+        "python_dependencies": ["scipy", "sklearn<1.4"],
+    }
 
     def __init__(
         self,
@@ -117,6 +121,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         transformer_weights=None,
         preserve_dataframe=True,
     ):
+        self.preserve_dataframe = preserve_dataframe
+
         warn(
             "ColumnTransformer is not fully compliant with the sktime interface "
             "and will be replaced by sktime.transformations.ColumnEnsembleTransformer "
@@ -127,6 +133,18 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             "ColumnTransformer can simply be replaced by ColumnEnsembleTransformer."
         )
 
+        if not _check_soft_dependencies("sklearn<1.4", severity="none"):
+            raise ModuleNotFoundError(
+                "ColumnTransformer is not fully compliant with the sktime interface "
+                "and distributed only for reasons of downwards compatibility. "
+                "ColumnTransformer requires scikit-learn<1.4 "
+                "to be present in the python environment, with version, "
+                "due to reliance on sklearn.compose.ColumnTransformer, "
+                "and is not compatible with scikit-learn>=1.4. "
+                "Please use sktime.transformations.ColumnEnsembleTransformer instead, "
+                "if you have scikit-learn>=1.4 installed."
+            )
+
         super().__init__(
             transformers=transformers,
             remainder=remainder,
@@ -135,7 +153,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             transformer_weights=transformer_weights,
         )
         BaseTransformer.__init__(self)
-        self.preserve_dataframe = preserve_dataframe
+
         self._is_fitted = False
 
     def _hstack(self, Xs):
@@ -293,7 +311,7 @@ class ColumnConcatenator(BaseTransformer):
         Xst = pd.DataFrame(X.stack())
         Xt = Xst.swaplevel(-2, -1).sort_index().droplevel(-2)
 
-        # the above has the right structure, but the wrong indes
+        # the above has the right structure, but the wrong index
         # the time index is in general non-unique now, we replace it by integer index
         inst_idx = Xt.index.get_level_values(0)
         t_idx = [range(len(Xt.loc[x])) for x in inst_idx.unique()]

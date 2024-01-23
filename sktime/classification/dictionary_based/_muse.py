@@ -8,7 +8,6 @@ __author__ = ["patrickzib", "BINAYKUMAR943"]
 __all__ = ["MUSE"]
 
 import math
-import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -18,6 +17,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.utils.warnings import warn
 
 
 class MUSE(BaseClassifier):
@@ -119,12 +119,18 @@ class MUSE(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["patrickzib", "BINAYKUMAR943"],
+        "maintainers": "BINAYKUMAR943",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -198,9 +204,10 @@ class MUSE(BaseClassifier):
         self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
 
         if self.n_dims == 1:
-            warnings.warn(
+            warn(
                 "MUSE Warning: Input series is univariate; MUSE is designed for"
                 + " multivariate series. It is recommended WEASEL is used instead.",
+                obj=self,
                 stacklevel=2,
             )
 

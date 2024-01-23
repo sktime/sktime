@@ -52,7 +52,7 @@ class _distance_matrix:
     """Create distance matrix."""
 
     def distance(self, centroid_frame):
-        """Fuction to create DM."""
+        """Create distance matrix."""
         distance_pair = list(
             itertools.combinations(range(0, centroid_frame.shape[0]), 2)
         )
@@ -177,6 +177,8 @@ class ElbowClassSum(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["haskarb", "a-pasos-ruiz", "TonyBagnall", "fkiraly"],
+        "maintainers": ["haskarb"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         # "scitype:transform-output": "Primitives",

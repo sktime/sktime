@@ -44,7 +44,7 @@ class HolidayFeatures(BaseTransformer):
     return_indicator : bool, default=False
         Whether or not to return an indicator variable equal to 1 if a time
         point is a holiday or not.
-    keep_original_columns : bool, defalut=False
+    keep_original_columns : bool, default=False
         Keep original columns in X passed to `.transform()`.
 
     Examples
@@ -88,6 +88,13 @@ class HolidayFeatures(BaseTransformer):
 
     _required_parameters = ["calendar"]
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "VyomkeshVyas"],
+        "maintainers": "VyomkeshVyas",
+        "python_dependencies": ["holidays"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -102,7 +109,6 @@ class HolidayFeatures(BaseTransformer):
         "enforce_index_type": [pd.DatetimeIndex],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
-        "python_dependencies": ["holidays"],
     }
 
     def __init__(

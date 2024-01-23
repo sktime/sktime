@@ -1,9 +1,8 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Test grid search CV."""
+"""Test forecasting tuners."""
 
 __author__ = ["mloning", "fkiraly"]
-__all__ = ["test_gscv", "test_rscv"]
 
 import numpy as np
 import pytest
@@ -18,8 +17,6 @@ from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
-    SingleWindowSplitter,
-    SlidingWindowSplitter,
 )
 from sktime.forecasting.model_selection._tune import BaseGridSearch
 from sktime.forecasting.naive import NaiveForecaster
@@ -35,10 +32,12 @@ from sktime.performance_metrics.forecasting import (
     MeanSquaredError,
 )
 from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
+from sktime.split import SingleWindowSplitter, SlidingWindowSplitter
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.parallel import _get_parallel_test_fixtures
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 TEST_METRICS_PROBA = [CRPS(), PinballLoss()]
@@ -81,12 +80,13 @@ def _check_cv(forecaster, tuner, cv, param_grid, y, X, scoring):
     assert param_grid[best_idx].items() <= fitted_params.items()
 
 
-def _create_hierarchical_data():
+def _create_hierarchical_data(n_columns=1):
     y = _make_hierarchical(
         random_state=TEST_RANDOM_SEEDS[0],
         hierarchy_levels=(2, 2),
         min_timepoints=15,
         max_timepoints=15,
+        n_columns=n_columns,
     )
     X = _make_hierarchical(
         random_state=TEST_RANDOM_SEEDS[1],
@@ -97,7 +97,10 @@ def _create_hierarchical_data():
     return y, X
 
 
-NAIVE = NaiveForecaster(strategy="mean")
+# estimator fixtures used for tuning
+# set_tags in NaiveForecaster ensures that it is univariate and broadcasts
+# this is currently the case, but a future improved NaiveForecaster may reduce coverage
+NAIVE = NaiveForecaster(strategy="mean").set_tags(**{"scitype:y": "univariate"})
 NAIVE_GRID = {"window_length": TEST_WINDOW_LENGTHS_INT}
 PIPE = TransformedTargetForecaster(
     [
@@ -126,9 +129,14 @@ ERROR_SCORES = [np.nan, "raise", 1000]
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("cv", CVs)
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
-def test_gscv(forecaster, param_grid, cv, scoring, error_score):
+@pytest.mark.parametrize("multivariate", [True, False])
+def test_gscv(forecaster, param_grid, cv, scoring, error_score, multivariate):
     """Test ForecastingGridSearchCV."""
-    y, X = load_longley()
+    if multivariate:
+        X, y = load_longley()
+    else:
+        y, X = load_longley()
+
     gscv = ForecastingGridSearchCV(
         forecaster,
         param_grid=param_grid,
@@ -177,6 +185,7 @@ def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_s
         ParameterSampler(param_grid, n_iter, random_state=random_state)
     )
     _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
+    _check_fitted_params_keys(rscv.get_fitted_params())
 
 
 @pytest.mark.skipif(
@@ -189,9 +198,10 @@ def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_s
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("cv", CVs)
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
-def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
+@pytest.mark.parametrize("n_cols", [1, 2])
+def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score, n_cols):
     """Test ForecastingGridSearchCV."""
-    y, X = _create_hierarchical_data()
+    y, X = _create_hierarchical_data(n_columns=n_cols)
     gscv = ForecastingGridSearchCV(
         forecaster,
         param_grid=param_grid,
@@ -203,6 +213,7 @@ def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
 
     param_grid = ParameterGrid(param_grid)
     _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring)
+    _check_fitted_params_keys(gscv.get_fitted_params())
 
 
 @pytest.mark.skipif(
@@ -312,3 +323,30 @@ def test_skoptcv_multiple_forecaster():
     )
     sscv.fit(y, X)
     assert len(sscv.cv_results_) == 5
+
+
+BACKEND_TEST = _get_parallel_test_fixtures("estimator")
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastingGridSearchCV),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("backend_set", BACKEND_TEST)
+def test_gscv_backends(backend_set):
+    """Test ForecastingGridSearchCV."""
+    backend = backend_set["backend"]
+    backend_params = backend_set["backend_params"]
+
+    y, X = load_longley()
+
+    gscv = ForecastingGridSearchCV(
+        PIPE,
+        param_grid=PIPE_GRID,
+        cv=CVs[0],
+        scoring=TEST_METRICS[0],
+        error_score=ERROR_SCORES[0],
+        backend=backend,
+        backend_params=backend_params,
+    )
+    gscv.fit(y, X)

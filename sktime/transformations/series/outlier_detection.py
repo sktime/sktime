@@ -11,7 +11,7 @@ from math import ceil
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.split import SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 
 
@@ -24,7 +24,7 @@ class HampelFilter(BaseTransformer):
     Parameters
     ----------
     window_length : int, optional (default=10)
-        Lenght of the sliding window
+        Length of the sliding window
     n_sigma : int, optional
         Defines how strong a point must outly to be an "outlier", by default 3
     k : float, optional
@@ -53,6 +53,7 @@ class HampelFilter(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["aiwalter"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -171,8 +172,8 @@ class HampelFilter(BaseTransformer):
 def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
     for i in cv.split(Z):
         cv_window = i[0]
-        cv_median = np.nanmedian(Z[cv_window])
-        cv_sigma = k * np.nanmedian(np.abs(Z[cv_window] - cv_median))
+        cv_median = np.nanmedian(Z.iloc[cv_window])
+        cv_sigma = k * np.nanmedian(np.abs(Z.iloc[cv_window] - cv_median))
 
         is_start_window = cv_window[-1] == cv.window_length - 1
         is_end_window = cv_window[-1] == len(Z) - 1

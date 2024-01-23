@@ -55,9 +55,8 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     Examples
     --------
     >>> from sktime.forecasting.ets import AutoETS
-    >>> from sktime.forecasting.model_selection import (
-    ...    ForecastingGridSearchCV,
-    ...    ExpandingWindowSplitter)
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.compose import MultiplexForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
@@ -78,6 +77,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
+        "authors": ["kkoralturk", "aiwalter", "fkiraly", "miraep8"],
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "scitype:y": "both",

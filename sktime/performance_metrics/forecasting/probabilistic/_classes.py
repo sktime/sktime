@@ -119,16 +119,16 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
 
         if isinstance(multioutput, str):
             if self.score_average and multioutput == "uniform_average":
-                out = float(out.mean(axis=1).iloc[0])  # average over all
+                out = out.mean(axis=1).iloc[0]  # average over all
             if self.score_average and multioutput == "raw_values":
-                out = out.groupby(axis=1, level=0).mean()  # average over scores
+                out = out.T.groupby(level=0).mean().T  # average over scores
             if not self.score_average and multioutput == "uniform_average":
-                out = out.groupby(axis=1, level=1).mean()  # average over variables
+                out = out.T.groupby(level=1).mean().T  # average over variables
             if not self.score_average and multioutput == "raw_values":
                 out = out  # don't average
         else:  # is np.array with weights
             if self.score_average:
-                out_raw = out.groupby(axis=1, level=0).mean()
+                out_raw = out.T.groupby(level=0).mean().T
                 out = out_raw.dot(multioutput)[0]
             else:
                 out = _groupby_dot(out, multioutput)
@@ -215,14 +215,14 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
             if self.score_average and multioutput == "uniform_average":
                 out = out.mean(axis=1)  # average over all
             if self.score_average and multioutput == "raw_values":
-                out = out.groupby(axis=1, level=0).mean()  # average over scores
+                out = out.T.groupby(level=0).mean().T  # average over scores
             if not self.score_average and multioutput == "uniform_average":
-                out = out.groupby(axis=1, level=1).mean()  # average over variables
+                out = out.T.groupby(level=1).mean().T  # average over variables
             if not self.score_average and multioutput == "raw_values":
                 out = out  # don't average
         else:  # numpy array
             if self.score_average:
-                out_raw = out.groupby(axis=1, level=0).mean()
+                out_raw = out.T.groupby(level=0).mean().T
                 out = out_raw.dot(multioutput)
             else:
                 out = _groupby_dot(out, multioutput)
@@ -360,13 +360,13 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         return alpha
 
     def _handle_multioutput(self, loss, multioutput):
-        """Specificies how multivariate outputs should be handled.
+        """Handle output according to multioutput parameter.
 
         Parameters
         ----------
         loss : float, np.ndarray the evaluated metric value.
 
-        multioutput : string "uniform_average" or "raw_values" determines how \
+        multioutput : string "uniform_average" or "raw_values" determines how
             multioutput results will be treated.
         """
         if isinstance(multioutput, str):

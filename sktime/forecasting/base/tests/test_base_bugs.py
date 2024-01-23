@@ -5,13 +5,11 @@ import pytest
 
 from sktime.forecasting.compose import ForecastByLevel, TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.split import ExpandingWindowSplitter
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -65,7 +63,7 @@ def test_heterogeneous_get_fitted_params():
 def test_predict_residuals_conversion():
     """Regression test for bugfix #4766, related to predict_residuals internal type."""
     from sktime.datasets import load_longley
-    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.split import temporal_train_test_split
 
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
@@ -73,4 +71,4 @@ def test_predict_residuals_conversion():
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = pipe.predict_residuals()
 
-    assert type(result) == type(y_train)
+    assert type(result) is type(y_train)

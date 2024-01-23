@@ -61,9 +61,8 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     >>> from sktime.transformations.compose import MultiplexTransformer
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.forecasting.model_selection import (
-    ...     ForecastingGridSearchCV,
-    ...     ExpandingWindowSplitter)
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> # create MultiplexTransformer:
     >>> multiplexer = MultiplexTransformer(transformers=[
     ...     ("impute_mean", Imputer(method="mean", missing_values = -1)),
@@ -91,6 +90,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
 
     # tags will largely be copied from selected_transformer
     _tags = {
+        "authors": ["miraep8", "fkiraly"],
         "fit_is_empty": False,
         "univariate-only": False,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,

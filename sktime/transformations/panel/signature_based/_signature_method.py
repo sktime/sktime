@@ -9,6 +9,8 @@ from sktime.transformations.panel.signature_based._augmentations import (
 from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 
 class SignatureTransformer(BaseTransformer):
@@ -19,19 +21,34 @@ class SignatureTransformer(BaseTransformer):
 
     Parameters
     ----------
-    augmentation_list: tuple of strings, contains the augmentations to be
-        applied before application of the signature transform.
-    window_name: str, The name of the window transform to apply.
-    window_depth: int, The depth of the dyadic window. (Active only if
-        `window_name == 'dyadic'`).
-    window_length: int, The length of the sliding/expanding window. (Active
-        only if `window_name in ['sliding, 'expanding']`.
-    window_step: int, The step of the sliding/expanding window. (Active
-        only if `window_name in ['sliding, 'expanding']`.
-    rescaling: str or None, The method of signature rescaling.
-    sig_tfm: str, String to specify the type of signature transform. One of:
-        ['signature', 'logsignature']).
-    depth: int, Signature truncation depth.
+    augmentation_list: list or tuple of strings, possible strings are
+        ['leadlag', 'ir', 'addtime', 'cumsum', 'basepoint']
+        Augmentations to apply to the data before computing the signature.
+        The order of the augmentations is the order in which they are applied.
+        default: ('basepoint', 'addtime')
+    window_name: str, one of ``['global', 'sliding', 'expanding', 'dyadic']``
+        default: 'dyadic'
+        Type of the window to use for the signature transform.
+    window_depth: int, default=3
+        The depth of the dyadic window.
+        Ignored unless ``window_name`` is ``'dyadic'``.
+    window_length: None (default) or int
+        The length of the sliding/expanding window. (Active
+        Ignored unless ``window_name`` is one of ``['sliding, 'expanding']``.
+    window_step: None (default) or int
+        The step of the sliding/expanding window.
+        Ignored unless ``window_name`` is one of ``['sliding, 'expanding']``.
+    rescaling: None (default) or str, "pre" or "post",
+        None: No rescaling is applied.
+        "pre": rescale the path last signature term should be roughly O(1)
+        "post": Rescales the output signature by multiplying the depth-d term by d!.
+            Aim is that every term becomes ~O(1).
+    sig_tfm: str, one of ``['signature', 'logsignature']``. default: ``'signature'``
+        The type of signature transform to use, plain or logarithmic.
+    depth: int, default=4
+        Signature truncation depth.
+    backend: str, one of: ``'esig'`` (default), or ``'iisignature'``.
+        The backend to use for signature computation.
 
     Attributes
     ----------
@@ -40,6 +57,14 @@ class SignatureTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "jambo6",
+        "maintainers": "jambo6",
+        "python_dependencies": "esig",
+        "python_version": "<3.10",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -48,8 +73,6 @@ class SignatureTransformer(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?#
         "fit_is_empty": False,
-        "python_dependencies": "esig",
-        "python_version": "<3.10",
     }
 
     def __init__(
@@ -62,6 +85,7 @@ class SignatureTransformer(BaseTransformer):
         rescaling=None,
         sig_tfm="signature",
         depth=4,
+        backend="esig",
     ):
         self.augmentation_list = augmentation_list
         self.window_name = window_name
@@ -71,8 +95,27 @@ class SignatureTransformer(BaseTransformer):
         self.rescaling = rescaling
         self.sig_tfm = sig_tfm
         self.depth = depth
+        self.backend = backend
 
         super().__init__()
+
+        if backend == "esig":
+            _check_soft_dependencies("esig")
+        elif backend == "iisignature":
+            _check_soft_dependencies("iisignature")
+            warn(
+                "iisignature backend of SignatureTransformer is experimental "
+                "and not systematically tested, due to lack of stable installation "
+                "process for iisignature via pip. Kindly exercise caution, "
+                "and report any issues on the sktime issue tracker.",
+                stacklevel=2,
+            )
+        else:
+            raise ValueError(
+                "Error in SignatureTransformer, backend "
+                "must be one of 'esig' or 'iisignature'"
+            )
+
         self.setup_feature_pipeline()
 
     def setup_feature_pipeline(self):
@@ -86,6 +129,7 @@ class SignatureTransformer(BaseTransformer):
             sig_tfm=self.sig_tfm,
             sig_depth=self.depth,
             rescaling=self.rescaling,
+            backend=self.backend,
         )
 
         # The so-called 'signature method' as defined in the reference paper

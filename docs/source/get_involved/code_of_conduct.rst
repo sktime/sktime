@@ -34,7 +34,7 @@ sktime is a community-oriented and -led project.
 We value the involvement of everyone in the community, and strive to be an open
 community. We commit to provide fair and rewarding opportunities for everyone without
 restriction, to participate, learn, and become leaders of the community. We expect from
-leaders of our community to create such opportunities for others, and we stronly encourage
+leaders of our community to create such opportunities for others, and we strongly encourage
 all members of our community to create opportunities as have been created for them.
 
 We are committed to scientific quality and strive to be an open forum on matters

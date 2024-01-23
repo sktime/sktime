@@ -72,6 +72,13 @@ class VAR(_StatsModelsAdapter):
     _fitted_param_names = ("aic", "fpe", "hqic", "bic")
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["thayeylolu", "aiwalter", "lbventura"],
+        "maintainers": "lbventura",
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "scitype:y": "multivariate",
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
@@ -189,8 +196,7 @@ class VAR(_StatsModelsAdapter):
         )
         return y_pred
 
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

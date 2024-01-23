@@ -20,14 +20,15 @@ class BaggingClassifier(BaseClassifier):
     On ``predict_proba``, the mean average of probabilistic predictions is returned.
     For a deterministic classifier, this results in majority vote for ``predict``.
 
-    The estimator allows to choose sample sizes fir instances, variables,
+    The estimator allows to choose sample sizes for instances, variables,
     and whether sampling is with or without replacement.
 
     Direct generalization of ``sklearn``'s ``BaggingClassifier``
     to the time series classification task.
 
-    Note: if n_features=1, BaggingClassifier turns a univariate classifier into
-    a multivariate classifier (as slices seen by ``estimator`` are all univariate).
+    Note: if ``n_features=1``, ``BaggingClassifier`` turns a univariate classifier into
+    a multivariate classifier, because slices seen by ``estimator`` are all univariate.
+    This can be used to give a univariate classifier multivariate capabilities.
 
     Parameters
     ----------
@@ -77,6 +78,11 @@ class BaggingClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:predict_proba": True,

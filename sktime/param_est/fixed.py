@@ -25,6 +25,7 @@ class FixedParams(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         # which types do _fit/_predict, support for X?
         "scitype:X": ["Series", "Panel", "Hierarchical"],

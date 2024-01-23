@@ -1,5 +1,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
+from inspect import signature
+from typing import Dict
+from warnings import warn
+
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
@@ -12,6 +16,14 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     """Base adapter class for StatsForecast models."""
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["yarnabrina"],
+        "maintainers": ["yarnabrina"],
+        "python_version": ">=3.8",
+        "python_dependencies": ["statsforecast"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -19,17 +31,100 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
         "handles-missing-data": False,
-        "python_version": ">=3.8",
-        "python_dependencies": ["statsforecast"],
     }
 
     def __init__(self):
         super().__init__()
 
         self._forecaster = None
+        pred_supported = self._check_supports_pred_int()
+        self._support_pred_int_in_sample = pred_supported["int_in_sample"]
+        self._support_pred_int = pred_supported["int"]
+
+        self.set_tags(
+            **{"capability:pred_int:insample": self._support_pred_int_in_sample}
+        )
+        self.set_tags(**{"capability:pred_int": self._support_pred_int})
+
+    def _get_statsforecast_class(self):
+        raise NotImplementedError("abstract method")
+
+    def _get_statsforecast_params(self) -> dict:
+        return self.get_params()
+
+    def _get_init_statsforecast_params(self):
+        """Return parameters in __init__ statsforecast forecaster.
+
+        Return a list of parameters in the __init__ method from
+        the statsforecast forecaster class used in the sktime adapter.
+        """
+        statsforecast_class = self._get_statsforecast_class()
+        return list(signature(statsforecast_class.__init__).parameters.keys())
+
+    def _get_statsforecast_default_params(self) -> dict:
+        """Get default parameters for the statsforecast forecaster.
+
+        This will in general be different from self.get_param_defaults(),
+        as the set or names of inner parameters can differ.
+
+        For parameters without defaults, will use the parameter
+        of self instead.
+        """
+        self_params = self.get_params(deep=False)
+        self_default_params = self.get_param_defaults()
+        self_params.update(self_default_params)
+        cls_with_defaults = type(self)(**self_params)
+        return cls_with_defaults._get_statsforecast_params()
+
+    def _get_validated_statsforecast_params(self) -> dict:
+        """Return parameter dict with only parameters accepted by statsforecast API.
+
+        Checks if the parameters passed to the statsforecast forecaster
+        are valid in the __init__ method of the aforementioned forecaster.
+        If the parameter is not there it will just not be passed. Furthermore
+        if the parameter is modified by the sktime user,
+        he will be notified that the parameter does not exist
+        anymore in the version installed of statsforecast by the user.
+
+        """
+        params_sktime_to_statsforecast: dict = self._get_statsforecast_params()
+        params_sktime_to_statsforecast_default: dict = (
+            self._get_statsforecast_default_params()
+        )
+        statsforecast_init_params = set(self._get_init_statsforecast_params())
+
+        # Filter sktime_params to only include keys in statsforecast_params
+        filtered_sktime_params = {
+            key: value
+            for key, value in params_sktime_to_statsforecast.items()
+            if key in statsforecast_init_params
+        }
+
+        non_default_params = [
+            p
+            for p in params_sktime_to_statsforecast
+            if params_sktime_to_statsforecast[p]
+            != params_sktime_to_statsforecast_default[p]
+        ]
+        # Find parameters not in statsforecast_params or sktime_default_params
+        param_diff = set(non_default_params) - statsforecast_init_params
+
+        if param_diff:
+            params_str = ", ".join([f'"{param}"' for param in param_diff])
+            warning_message = (
+                f"Keyword arguments {params_str} "
+                f"will be omitted as they are not found in the __init__ method from "
+                f"{self._get_statsforecast_class()}. Check your statsforecast version "
+                f"to find out the right API parameters."
+            )
+            warn(warning_message)
+
+        return filtered_sktime_params
 
     def _instantiate_model(self):
-        raise NotImplementedError("abstract method")
+        cls = self._get_statsforecast_class()
+        params = self._get_validated_statsforecast_params()
+        return cls(**params)
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -75,9 +170,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return self
 
-    def _predict_in_or_out_of_sample(
-        self, fh, fh_type, X=None, levels=None, legacy_interface=True
-    ):
+    def _predict_in_or_out_of_sample(self, fh, fh_type, X=None, levels=None):
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
 
         absolute_horizons = fh.to_absolute_index(self.cutoff)
@@ -86,12 +179,20 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         level_arguments = None if levels is None else [100 * level for level in levels]
 
         if fh_type == "in-sample":
-            predictions = self._forecaster.predict_in_sample(level=level_arguments)
+            predict_method = self._forecaster.predict_in_sample
+            # Before v1.5.0 (from statsforecast) not all foreasters
+            # have a "level" keyword argument in `predict_in_sample`
+            level_kw = (
+                {"level": level_arguments} if self._support_pred_int_in_sample else {}
+            )
+            predictions = predict_method(**level_kw)
             point_predictions = predictions["fitted"]
         elif fh_type == "out-of-sample":
-            predictions = self._forecaster.predict(
-                maximum_forecast_horizon, X=X, level=level_arguments
-            )
+            predict_method = self._forecaster.predict
+            # Before v1.5.0 (from statsforecast) not all foreasters
+            # have a "level" keyword argument in `predict`
+            level_kw = {"level": level_arguments} if self._support_pred_int else {}
+            predictions = predict_method(maximum_forecast_horizon, X=X, **level_kw)
             point_predictions = predictions["mean"]
 
         if isinstance(point_predictions, pandas.Series):
@@ -104,9 +205,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         if levels is None:
             return final_point_predictions
 
-        var_names = self._get_varnames(
-            default="Coverage", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         interval_predictions_indices = pandas.MultiIndex.from_product(
@@ -199,8 +298,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_point_predictions
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -249,7 +347,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
                 in_sample_horizon,
                 "in-sample",
                 levels=coverage,
-                legacy_interface=legacy_interface,
             )
             interval_predictions.append(in_sample_interval_predictions)
 
@@ -259,13 +356,67 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
                 "out-of-sample",
                 X=X_predict_input,
                 levels=coverage,
-                legacy_interface=legacy_interface,
             )
             interval_predictions.append(out_of_sample_interval_predictions)
 
         final_interval_predictions = pandas.concat(interval_predictions, copy=False)
 
         return final_interval_predictions
+
+    def _check_supports_pred_int(self) -> Dict[str, bool]:
+        """
+        Check if prediction intervals will work with forecaster.
+
+        Check if `level` argument is available in `predict_in_sample` and
+        `predict` methods from the `statsforecast` forecaster.
+        A tuple of booleans (`support_pred_int_in_sample`, `support_pred_int`)
+        is returned where the user is informed which of the two, if any,
+        support interval predictions.
+
+         Furthermore, will throw a warning to let the user know that he should consider
+         upgrading statsforecast version as both or one of the two methods might
+         not be able to produce confidence intervals.
+
+        Returns
+        -------
+        Dict of bool
+            A dict containing two boolean values:
+            - `support_pred_int_in_sample`: True if prediction intervals are supported
+              in `predict_in_sample`, False otherwise.
+            - `support_pred_int`: True if prediction intervals are supported
+              in `predict`, False otherwise.
+        """
+        statsforecast_class = self._get_statsforecast_class()
+        if (
+            "level"
+            not in signature(statsforecast_class.predict_in_sample).parameters.keys()
+        ):
+            support_pred_int_in_sample = False
+            import statsforecast
+
+            warn(
+                f" {statsforecast_class.__name__} from "
+                f"statsforecast v{statsforecast.__version__} "
+                f"does not support prediction of intervals in `predict_in_sample`. "
+                f"Consider upgrading to a newer version."
+            )
+        else:
+            support_pred_int_in_sample = True
+
+        if "level" not in signature(statsforecast_class.predict).parameters.keys():
+            support_pred_int = False
+            import statsforecast
+
+            warn(
+                f" {statsforecast_class.__name__} from "
+                f"statsforecast v{statsforecast.__version__} "
+                f"does not support prediction of intervals in `predict`. "
+                f"Consider upgrading to a newer version."
+            )
+        else:
+            support_pred_int = True
+
+        return {"int_in_sample": support_pred_int_in_sample, "int": support_pred_int}
 
 
 class StatsForecastBackAdapter:
@@ -302,9 +453,16 @@ class StatsForecastBackAdapter:
         super().__init__()
 
         self.estimator = estimator
+        self.prediction_intervals = None
 
     def __repr__(self):
         return "StatsForecastBackAdapter"
+
+    def new(self):
+        """Make new instance of back-adapter."""
+        _self = type(self).__new__(type(self))
+        _self.__dict__.update(self.__dict__)
+        return _self
 
     def fit(self, y, X=None):
         """Fit to training data.
@@ -344,9 +502,15 @@ class StatsForecastBackAdapter:
         mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
         if level is None:
             return {"mean": mean}
+        # if a level is passed, and if prediction_intervals has not been instantiated
+        # yet
+        elif self.prediction_intervals is None:
+            from statsforecast.utils import ConformalIntervals
+
+            self.prediction_intervals = ConformalIntervals(h=h)
 
         level = sorted(level)
-        coverage = [round(1 - (_l / 100), 2) for _l in level]
+        coverage = [round(_l / 100, 2) for _l in level]
 
         pred_int = self.estimator.predict_interval(
             fh=range(1, h + 1), X=X, coverage=coverage
@@ -374,7 +538,7 @@ class StatsForecastBackAdapter:
             return {"fitted": fitted}
 
         level = sorted(level)
-        coverage = [round(1 - (_l / 100), 2) for _l in level]
+        coverage = [round(_l / 100, 2) for _l in level]
         pred_int = self.estimator.predict_interval(
             fh=self.estimator._y.index, X=self.estimator._X, coverage=coverage
         )

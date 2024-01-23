@@ -1,0 +1,23 @@
+name: test install
+description: install individual extra of sktime
+inputs:
+  sktime-extra-identifier:
+    description: name of sktime extra
+    required: true
+  python-version-identifier:
+    description: python version to run tests
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: repository checkout step
+      uses: actions/checkout@v4
+
+    - name: python environment step
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version-identifier }}
+
+    - name: extra installation step
+      run: python3 -m pip install .[${{ inputs.sktime-extra-identifier }}]
+      shell: bash

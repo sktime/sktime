@@ -110,18 +110,23 @@ class AlignerDtwNumba(BaseAligner):
     >>> from sktime.utils._testing.series import _make_series
     >>> from sktime.alignment.dtw_numba import AlignerDtwNumba
     >>>
-    >>> X0 = _make_series()  # doctest: +SKIP
-    >>> X1 = _make_series()  # doctest: +SKIP
+    >>> X0 = _make_series(return_mtype="pd.DataFrame")  # doctest: +SKIP
+    >>> X1 = _make_series(return_mtype="pd.DataFrame")  # doctest: +SKIP
     >>> d = AlignerDtwNumba(weighted=True, derivative=True)  # doctest: +SKIP
     >>> align = d.fit([X0, X1]).get_alignment()  # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["chrisholder", "TonyBagnall", "fkiraly"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "X_inner_mtype": "numpy3D",
-        "python_dependencies": "numba",
     }
 
     def __init__(

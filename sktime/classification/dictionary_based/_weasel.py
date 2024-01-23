@@ -3,7 +3,7 @@
 Dictionary based classifier based on SFA transform, BOSS and linear regression.
 """
 
-__author__ = ["patrickzib", "Arik Ermshaus"]
+__author__ = ["patrickzib", "ermshaua"]
 __all__ = ["WEASEL"]
 
 import math
@@ -120,10 +120,16 @@ class WEASEL(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["patrickzib", "ermshaua"],
+        "maintainers": ["ermshaua"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "dictionary",
-        "python_dependencies": "numba",
     }
 
     def __init__(

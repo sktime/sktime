@@ -15,7 +15,7 @@ from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datatypes import convert
-from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dictionary_based._paa import PAAlegacy as PAA
 from sktime.transformations.panel.dwt import DWTTransformer
 from sktime.transformations.panel.hog1d import HOG1DTransformer
 
@@ -71,10 +71,10 @@ class ShapeDTW(BaseClassifier):
                                 - params = None
 
         - 'hog1d'               : use a histogram of gradients in one
-                                  dimension as the shape desciptor
+                                  dimension as the shape descriptor
                                   function.
                                 - params = num_intervals_hog1d
-                                                    (defualt=2)
+                                                    (default=2)
                                          = num_bins_hod1d
                                                     (default=8)
                                          = scaling_factor_hog1d
@@ -111,6 +111,12 @@ class ShapeDTW(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["vincent-nich12"],
+        "maintainers": ["vincent-nich12"],
+        # estimator type
+        # --------------
         "capability:predict_proba": True,
         "classifier_type": "distance",
     }
@@ -395,7 +401,7 @@ class ShapeDTW(BaseClassifier):
             num_bins = parameters.get("num_bins_hog1d")
             scaling_factor = parameters.get("scaling_factor_hog1d")
 
-            # All 3 paramaters are None
+            # All 3 parameters are None
             if num_intervals is None and num_bins is None and scaling_factor is None:
                 return HOG1DTransformer()
 
@@ -426,7 +432,7 @@ class ShapeDTW(BaseClassifier):
                 scaling_factor=scaling_factor,
             )
         else:
-            raise ValueError("Invalid shape desciptor function.")
+            raise ValueError("Invalid shape descriptor function.")
 
     def _check_metric_params(self, parameters):
         """Check for an invalid metric_params."""
@@ -443,7 +449,7 @@ class ShapeDTW(BaseClassifier):
         names = list(parameters.keys())
 
         for x in names:
-            if not (x in valid_metric_params):
+            if x not in valid_metric_params:
                 raise ValueError(
                     x
                     + " is not a valid metric parameter."
