@@ -52,6 +52,7 @@ class ScipyDist(BasePairwiseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "symmetric": True,  # all the distances are symmetric
     }
 

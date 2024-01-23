@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Prophet forecaster by wrapping fbprophet."""
 
-__author__ = ["aiwalter"]
+__author__ = ["mloning", "aiwalter", "fkiraly"]
 __all__ = ["Prophet"]
 
 
@@ -46,7 +46,7 @@ class Prophet(_ProphetAdapter):
         trend. If 'logistic' specified float for 'growth_cap' must be provided.
     growth_floor: float, default=0
         Growth saturation minimum value.
-        Used only if  `growth="logistic"`, has no effect otherwise
+        Used only if `growth="logistic"`, has no effect otherwise
         (if `growth` is not `"logistic"`).
     growth_cap: float, default=None
         Growth saturation maximum aka carrying capacity.
@@ -111,6 +111,10 @@ class Prophet(_ProphetAdapter):
     stan_backend: str or None, default=None
         str as defined in StanBackendEnum. If None, will try to
         iterate over all available backends and find the working one.
+    fit_kwargs: dict or None, default=None
+        Dict with args for Prophet.fit().
+        These are additional arguments passed to the optimizing or sampling
+        functions in Stan.
 
     References
     ----------
@@ -158,6 +162,7 @@ class Prophet(_ProphetAdapter):
         uncertainty_samples=1000,
         stan_backend=None,
         verbose=0,
+        fit_kwargs=None,
     ):
         self.freq = freq
         self.add_seasonality = add_seasonality
@@ -182,6 +187,7 @@ class Prophet(_ProphetAdapter):
         self.uncertainty_samples = uncertainty_samples
         self.stan_backend = stan_backend
         self.verbose = verbose
+        self.fit_kwargs = fit_kwargs
 
         super().__init__()
 
@@ -233,5 +239,6 @@ class Prophet(_ProphetAdapter):
             "daily_seasonality": False,
             "uncertainty_samples": 10,
             "verbose": False,
+            "fit_kwargs": {"seed": 12345},
         }
         return params

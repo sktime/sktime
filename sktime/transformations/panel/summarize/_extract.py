@@ -10,6 +10,7 @@ from joblib import Parallel, delayed
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
+from sktime.utils.pandas import df_map
 
 
 class PlateauFinder(BaseTransformer):
@@ -30,6 +31,7 @@ class PlateauFinder(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning"],
         "fit_is_empty": True,
         "univariate-only": True,
         "scitype:transform-input": "Series",
@@ -103,7 +105,7 @@ class PlateauFinder(BaseTransformer):
         Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
         Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
 
-        Xt = Xt.applymap(lambda x: pd.Series(x))
+        Xt = df_map(Xt)(lambda x: pd.Series(x))
         return Xt
 
 

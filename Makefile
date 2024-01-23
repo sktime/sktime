@@ -37,6 +37,13 @@ full_test: ## Run all tests
 	cp setup.cfg ${TEST_DIR}
 	python -m pytest --only_changed_modules False
 
+test_without_datasets: ## Run unit tests skipping sktime/datasets
+	-rm -rf ${TEST_DIR}
+	mkdir -p ${TEST_DIR}
+	cp .coveragerc ${TEST_DIR}
+	cp setup.cfg ${TEST_DIR}
+	python -m pytest --ignore sktime/datasets
+
 test_check_suite: ## run only estimator contract tests in TestAll classes
 	-rm -rf ${TEST_DIR}
 	mkdir -p ${TEST_DIR}
@@ -53,12 +60,12 @@ test_softdeps: ## Run unit tests to check soft dependency handling in estimators
 	python -m pytest -v -n auto --showlocals -k 'test_check_estimator_does_not_raise' $(PYTESTOPTIONS) --pyargs sktime.utils.tests
 	python -m pytest -v -n auto --showlocals $(PYTESTOPTIONS) --pyargs sktime.tests.test_softdeps
 
-test_softdeps_full: ## Run all non-suite unit tests without soft dependencies
+test_softdeps_full: ## Run all non-suite unit tests without soft dependencies or downloading datasets
 	-rm -rf ${TEST_DIR}
 	mkdir -p ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
 	cd ${TEST_DIR}
-	python -m pytest -v --showlocals -k 'not TestAll' $(PYTESTOPTIONS)
+	python -m pytest -v --showlocals --ignore sktime/datasets -k 'not TestAll' $(PYTESTOPTIONS)
 
 test_mlflow: ## Run mlflow integration tests
 	-rm -rf ${TEST_DIR}

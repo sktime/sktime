@@ -116,6 +116,11 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jasonlines", "TonyBagnall", "chrisholder", "fkiraly"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
@@ -153,7 +158,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             raise ValueError(
                 f"Unrecognised distance measure string: {distance}. "
                 f"Allowed values for string codes are: {DISTANCES_SUPPORTED}. "
-                "Alternatively, pass a callable distance measure into the constuctor."
+                "Alternatively, pass a callable distance measure into the constructor."
             )
 
         self.knn_estimator_ = KNeighborsClassifier(
@@ -212,8 +217,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime comatible Panel data container, of mtype X_inner_mtype, with n series
-            data to fit the estimator to
+        X : sktime compatible Panel data container, of mtype X_inner_mtype,
+            with n time series to fit the estimator to
         y : {array-like, sparse matrix}
             Target values of shape = [n]
         """
@@ -229,7 +234,9 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             # "X may be a sparse graph, in which case only "nonzero" elements
             #   may be considered neighbors."
             X_inner_mtype = self.get_tag("X_inner_mtype")
-            _, _, X_meta = check_is_mtype(X, X_inner_mtype, return_metadata=True)
+            _, _, X_meta = check_is_mtype(
+                X, X_inner_mtype, return_metadata=True, msg_return_dict="list"
+            )
             n = X_meta["n_instances"]
             dist_mat = np.zeros([n, n], dtype="float")
 

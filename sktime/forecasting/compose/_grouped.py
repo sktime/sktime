@@ -53,6 +53,7 @@ class ForecastByLevel(_DelegatedForecaster):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "scitype:y": "both",

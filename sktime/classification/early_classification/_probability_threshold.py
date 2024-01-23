@@ -20,7 +20,7 @@ from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-# TODO: fix this in 0.25.0
+# TODO: fix this in 0.26.0
 # base class should have been changed to BaseEarlyClassifier
 class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     """Probability Threshold Early Classifier.
@@ -48,7 +48,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
         in the _classification_points List. Duplicate values will be removed, and the
-        full series length will be appeneded if not present.
+        full series length will be appended if not present.
         If None, will use 20 thresholds linearly spaces from 0 to the series length.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.

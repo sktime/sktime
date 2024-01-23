@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for statsmodels forecasters to be used in sktime framework."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "ciaran-g"]
 __all__ = ["_StatsModelsAdapter"]
 
 import inspect
@@ -19,10 +19,16 @@ class _StatsModelsAdapter(BaseForecaster):
 
     _fitted_param_names = ()
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "ciaran-g"],
+        "maintainers": ["ciaran-g"],
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, random_state=None):
@@ -99,7 +105,7 @@ class _StatsModelsAdapter(BaseForecaster):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        fh_abs = fh.to_absolute_index(self.cutoff)
+        fh_int = fh.to_absolute_int(self._y.index[0], self.cutoff) - len(self._y)
 
         # bug fix for evaluate function as test_plus_train indices are passed
         # statsmodels exog must contain test indices only.
@@ -108,7 +114,7 @@ class _StatsModelsAdapter(BaseForecaster):
             ind_drop = self._X.index
             X = X.loc[~X.index.isin(ind_drop)]
             # Entire range of the forecast horizon is required
-            X = X[: fh_abs[-1]]
+            X = X.iloc[: (fh_int[-1] + 1)]  # include end point
 
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
@@ -117,7 +123,9 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        y_pred = y_pred.loc[fh_abs]
+        # if fh[0] > 1 steps ahead of cutoff then make relative to `start`
+        fh_int = fh_int - fh_int[0]
+        y_pred = y_pred.iloc[fh_int]
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
         y_pred.name = self._y.name
@@ -186,7 +194,9 @@ class _StatsModelsAdapter(BaseForecaster):
             return BaseForecaster._predict_interval(self, fh, X=X, coverage=coverage)
 
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        fh_int = fh.to_absolute_int(self._y.index[0], self.cutoff) - len(self._y)
+        # if fh > 1 steps ahead of cutoff
+        fh_int = fh_int - fh_int[0]
 
         get_prediction_arguments = {"start": start, "end": end}
 
@@ -205,17 +215,15 @@ class _StatsModelsAdapter(BaseForecaster):
         var_names = self._get_varnames()
         var_name = var_names[0]
         columns = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
-        pred_int = pd.DataFrame(index=valid_indices, columns=columns)
+        preds_index = self._extract_conf_int(prediction_results, (1 - coverage[0]))
+        preds_index = preds_index.iloc[fh_int].index
+        pred_int = pd.DataFrame(index=preds_index, columns=columns)
 
         for c in coverage:
             pred_statsmodels = self._extract_conf_int(prediction_results, (1 - c))
 
-            pred_int[(var_name, c, "lower")] = pred_statsmodels.loc[
-                valid_indices, "lower"
-            ]
-            pred_int[(var_name, c, "upper")] = pred_statsmodels.loc[
-                valid_indices, "upper"
-            ]
+            pred_int[(var_name, c, "lower")] = pred_statsmodels.iloc[fh_int]["lower"]
+            pred_int[(var_name, c, "upper")] = pred_statsmodels.iloc[fh_int]["upper"]
 
         return pred_int
 

@@ -12,6 +12,8 @@ class _TSFreshFeatureExtractor(BaseTransformer):
     """Base adapter class for tsfresh transformations."""
 
     _tags = {
+        "authors": ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"],
+        "maintainers": ["AyushmaanSeth"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -97,6 +99,12 @@ class _TSFreshFeatureExtractor(BaseTransformer):
                 value = getattr(self, name)
                 if value is not None:
                     extraction_params[name] = value
+
+            # Fixes key mismatch between tsfresh and sktime
+            # tsfresh uses "profile" while sktime uses "profiling"
+            # This fix keeps compatibility
+            if name == "profile":
+                extraction_params[name] = self.profiling
 
         self.n_jobs = n_jobs
 
@@ -708,4 +716,9 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "show_warnings": False,
             "fdr_level": 0.01,
         }
-        return params
+        params2 = {
+            "default_fc_parameters": "minimal",
+            "disable_progressbar": True,
+            "show_warnings": False,
+        }
+        return [params, params2]

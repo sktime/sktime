@@ -98,7 +98,7 @@ algorithm. They have the same voting rights as core developers with
 regard to their algorithm.
 
 In sktime, algorithms are encapsulated in classes with specific
-interface requirements and are called estimators. To faciliate
+interface requirements and are called estimators. To facilitate
 maintainership questions, we try to write algorithms in separate files
 when possible.
 
@@ -664,18 +664,19 @@ We have the following guidelines:
    will have to be extended first. For extending current API, see the
    `decision making process <#Decision-making>`__ for major changes.
 
-Note that your implementation need not be in sktime to be used together
-with sktime tools. You can implement your favorite algorithm in a sktime
-compatible way in one of `our companion
-repositories <https://github.com/sktime>`__ on GitHub. We will be happy
-to list it under `related
-software <https://github.com/sktime/sktime/wiki/related-software>`__.
+Note that an algorithm need not be in sktime to be fully compatible with
+sktime interfaces. You can implement your favorite algorithm in a sktime
+compatible way in a third party codebase - open or closed - following
+the guide for implmenting compatible estimators (see :ref:`developer_guide_add_estimators:`).
 
-If algorithms require major dependencies, we encourage to create a
-separate companion repository. For smaller
-dependencies which are limited to a few files, we encourage to use soft
-dependencies, which are only required for particular modules, but not
-for most of sktime's functionality and not for installing sktime.
+We are happy to list any compatible open source project under `related
+software <https://github.com/sktime/sktime/wiki/related-software>`__.
+Contributions are also welcome to any one of `our companion
+repositories <https://github.com/sktime>`__ on GitHub.
+
+Dependencies are managed on the level of estimators, hence it is entirely possible
+to maintain an algorithm primarily in a third or second party package, and add a
+thin interface to sktime proper which has that package as a dependency.
 
 .. _acknowledging-contributions:
 

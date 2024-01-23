@@ -6,16 +6,16 @@ Interval based TSF classifier, extracts basic summary features from random inter
 __author__ = ["kkoziara", "luiszugasti", "kanand77"]
 __all__ = ["TimeSeriesForestClassifier"]
 
+from typing import Optional
+
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
+from sktime.base._panel.forest._tsf import BaseTimeSeriesForest, _transform
 from sktime.classification.base import BaseClassifier
-from sktime.series_as_features.base.estimators.interval_based import (
-    BaseTimeSeriesForest,
-)
-from sktime.series_as_features.base.estimators.interval_based._tsf import _transform
 
 
 class TimeSeriesForestClassifier(
@@ -26,19 +26,30 @@ class TimeSeriesForestClassifier(
     A time series forest is an ensemble of decision trees built on random intervals.
     Overview: Input n series length m.
     For each tree
-        - sample sqrt(m) intervals,
-        - find mean, std and slope for each interval, concatenate to form new
-        data set,
-        - build decision tree on new data set.
+
+    - sample sqrt(m) intervals,
+    - find mean, std and slope for each interval, concatenate to form new
+    data set, if inner series length is set, then intervals are sampled
+    within bins of length inner_series_length.
+    - build decision tree on new data set.
+
     Ensemble the trees with averaged probability estimates.
 
     This implementation deviates from the original in minor ways. It samples
     intervals with replacement and does not use the splitting criteria tiny
     refinement described in [1].
 
-    This is an intentionally stripped down, non
-    configurable version for use as a hive-cote component. For a configurable
-    tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
+    This classifier is intentionally written with low configurability,
+    for performace reasons.
+
+    * for a more configurable tree based ensemble,
+      use ``sktime.classication.ensemble.ComposableTimeSeriesForestClassifier``,
+      which also allows switching the base estimator.
+    * to build a a time series forest with configurable ensembling, base estimator,
+      and/or feature extraction, fully from composable blocks,
+      combine ``sktime.classication.ensemble.BaggingClassifier`` with
+      any classifier pipeline, e.g., pipelining any ``sklearn`` classifier
+      with any time series feature extraction, e.g., ``Summarizer``
 
     Parameters
     ----------
@@ -49,6 +60,10 @@ class TimeSeriesForestClassifier(
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
+    inner_series_length: int, default=None
+        The maximum length of unique segments within X from which we extract
+        intervals is determined. This helps prevent the extraction of
+        intervals that span across distinct inner series.
     random_state : int or None, default=None
         Seed for random number generation.
 
@@ -58,6 +73,10 @@ class TimeSeriesForestClassifier(
         The number of classes.
     classes_ : list
         The classes labels.
+    feature_importances_ : pandas Dataframe of shape (series_length, 3)
+        The feature temporal importances for each feature type (mean, std, slope).
+        It shows how much each time point of your input dataset, through the
+        feature types extracted (mean, std, slope), contributed to the predictions.
 
     Notes
     -----
@@ -82,22 +101,36 @@ class TimeSeriesForestClassifier(
     >>> y_pred = clf.predict(X_test)
     """
 
+    _feature_types = ["mean", "std", "slope"]
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
-    _tags = {"capability:predict_proba": True}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["kkoziara", "luiszugasti", "kanand77"],
+        "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        # estimator type
+        # --------------
+        "capability:predict_proba": True,
+    }
 
     def __init__(
         self,
         min_interval=3,
         n_estimators=200,
+        inner_series_length: Optional[int] = None,
         n_jobs=1,
         random_state=None,
     ):
+        self.criterion = "gini"  # needed for BaseForest in sklearn > 1.4.0,
+        # because sklearn tag logic looks at this attribute
+
         super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,
             n_jobs=n_jobs,
             random_state=random_state,
+            inner_series_length=inner_series_length,
         )
         BaseClassifier.__init__(self)
 
@@ -155,7 +188,7 @@ class TimeSeriesForestClassifier(
 
         Returns
         -------
-        output : nd.array of shape = (n_instances, n_classes)
+        output : np.ndarray of shape = (n_instances, n_classes)
             Predicted probabilities
         """
         X = X.squeeze(1)
@@ -202,6 +235,91 @@ class TimeSeriesForestClassifier(
             return {"n_estimators": 10}
         else:
             return {"n_estimators": 2}
+
+    def _extract_feature_importance_by_feature_type_per_tree(
+        self, tree_feature_importance: np.array, feature_type: str
+    ) -> np.array:
+        """Return feature importance.
+
+        Extracting the feature importance corresponding from a feature type
+        (eg. "mean", "std", "slope") from tree feature importance
+
+        Parameters
+        ----------
+        tree_feature_importance : array-like of shape (n_features_in,)
+            The feature importance per feature in an estimator, n_intervals x number
+            of feature types
+        feature_type : str
+            feature type belonging to self.feature_types
+
+        Returns
+        -------
+        self : array-like of shape (n_intervals,)
+            Feature importance corresponding from a feature type.
+        """
+        feature_index = np.argwhere(
+            [
+                feature_type == feature_type_recorded
+                for feature_type_recorded in self._feature_types
+            ]
+        )[0, 0]
+
+        feature_type_feature_importance = tree_feature_importance[
+            [
+                interval_index + feature_index
+                for interval_index in range(
+                    0, len(tree_feature_importance), len(self._feature_types)
+                )
+            ]
+        ]
+
+        return feature_type_feature_importance
+
+    @property
+    def feature_importances_(self, **kwargs) -> pd.DataFrame:
+        """Return the temporal feature importances.
+
+        There is an implementation of temporal feature importance in
+        BaseTimeSeriesForest in sktime.base._panel.forest._composable
+        but TimeseriesForestClassifier is inheriting from
+        sktime.base._panel.forest._tsf.py
+        which does not have feature_importance_.
+
+        Other feature importance methods implementation:
+        >>> from sktime.base._panel.forest._composable import BaseTimeSeriesForest
+
+        Returns
+        -------
+        feature_importances_ : pandas Dataframe of shape (series_length, 3)
+            The feature importances for each feature type (mean, std, slope).
+        """
+        all_importances_per_feature = {
+            _feature_type: np.zeros(self.series_length)
+            for _feature_type in self._feature_types
+        }
+
+        for tree_index in range(self.n_estimators):
+            tree = self.estimators_[tree_index]
+            tree_importances = tree.feature_importances_
+            tree_intervals = self.intervals_[tree_index]
+            for feature_type in self._feature_types:
+                feature_type_importances = (
+                    self._extract_feature_importance_by_feature_type_per_tree(
+                        tree_importances, feature_type
+                    )
+                )
+                for interval_index in range(self.n_intervals):
+                    interval = tree_intervals[interval_index]
+                    all_importances_per_feature[feature_type][
+                        interval[0] : interval[1]
+                    ] += feature_type_importances[interval_index]
+
+        temporal_feature_importance = (
+            pd.DataFrame(all_importances_per_feature)
+            / self.n_estimators
+            / self.n_intervals
+        )
+        return temporal_feature_importance
 
 
 def _predict_single_classifier_proba(X, estimator, intervals):

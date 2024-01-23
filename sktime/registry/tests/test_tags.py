@@ -1,4 +1,4 @@
-"""Tests for tag register an tag functionality."""
+"""Tests for tag register and tag functionality."""
 
 from sktime.registry._tags import ESTIMATOR_TAG_REGISTER
 

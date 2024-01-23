@@ -319,9 +319,18 @@ def test_get_duration(n_timepoints, index_type):
             _make_index(n_timepoints, index_type)
 
 
-FIXED_FREQUENCY_STRINGS = ["10T", "H", "D", "2D"]
+FIXED_FREQUENCY_STRINGS = ["10min", "H", "D", "2D"]
 NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
 FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
+
+
+def _get_expected_freqstr(freqstr):
+    # special case for 10min, T is being deprecated and replaced by min
+    if freqstr == "10min":
+        fh_freqstr_expected = "10T"
+    else:
+        fh_freqstr_expected = freqstr
+    return fh_freqstr_expected
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -332,7 +341,7 @@ def test_to_absolute_freq(freqstr):
     fh = ForecastingHorizon([1, 2, 3])
 
     abs_fh = fh.to_absolute(cutoff)
-    assert abs_fh._values.freqstr == freqstr
+    assert abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -346,7 +355,8 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
 
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
-    assert converted_abs_fh._values.freqstr == freqstr
+    fh_freqstr = converted_abs_fh._values.freqstr
+    assert fh_freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
@@ -363,7 +373,8 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
 
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
-    assert converted_abs_fh._values.freqstr == freqstr
+
+    assert converted_abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -728,3 +739,60 @@ def test_empty_range_in_fh():
     """Test when ``range`` has zero length."""
     empty_range = ForecastingHorizon(values=range(-5))
     assert (empty_range == ForecastingHorizon(values=[])).all()
+
+
+def test_fh_expected_pred():
+    """Test for expected prediction index method."""
+    fh = ForecastingHorizon([1, 2, 3])
+    y_pred_idx = fh.get_expected_pred_idx(pd.Index([2, 3, 4]))
+
+    assert y_pred_idx.equals(pd.Index([5, 6, 7]))
+
+    y_df = pd.DataFrame([1, 2, 3], index=[2, 3, 4])
+    y_pred_idx = fh.get_expected_pred_idx(y_df)
+
+    assert y_pred_idx.equals(pd.Index([5, 6, 7]))
+
+    # pd.MultiIndex case, 2 levels
+    idx = pd.MultiIndex.from_tuples([("a", 3), ("a", 5), ("b", 4), ("b", 5), ("b", 6)])
+    y_pred_idx = fh.get_expected_pred_idx(idx)
+
+    y_pred_idx_expected = pd.MultiIndex.from_tuples(
+        [("a", 6), ("a", 7), ("a", 8), ("b", 7), ("b", 8), ("b", 9)]
+    )
+    assert y_pred_idx.equals(y_pred_idx_expected)
+
+    y_pred_idx = fh.get_expected_pred_idx(idx, sort_by_time=True)
+    y_pred_idx_expected = pd.MultiIndex.from_tuples(
+        [("a", 6), ("a", 7), ("b", 7), ("a", 8), ("b", 8), ("b", 9)]
+    )
+    assert y_pred_idx.equals(y_pred_idx_expected)
+
+    # pd.MultiIndex case, 3 levels
+    idx = pd.MultiIndex.from_tuples(
+        [("a", 3, 4), ("a", 3, 5), ("b", 5, 4), ("b", 5, 5), ("b", 5, 6)]
+    )
+    y_pred_idx = fh.get_expected_pred_idx(idx)
+
+    y_pred_idx_expected = pd.MultiIndex.from_tuples(
+        [("a", 3, 6), ("a", 3, 7), ("a", 3, 8), ("b", 5, 7), ("b", 5, 8), ("b", 5, 9)]
+    )
+    assert y_pred_idx.equals(y_pred_idx_expected)
+
+    y_pred_idx = fh.get_expected_pred_idx(idx, sort_by_time=True)
+
+    y_pred_idx_expected = pd.MultiIndex.from_tuples(
+        [("a", 3, 6), ("a", 3, 7), ("b", 5, 7), ("a", 3, 8), ("b", 5, 8), ("b", 5, 9)]
+    )
+    assert y_pred_idx.equals(y_pred_idx_expected)
+
+
+def test_tz_preserved():
+    """Test that time zone information is preserved in to_absolute.
+
+    Failure case in issue #5584.
+    """
+    cutoff = pd.Timestamp("2020-01-01", tz="utc")
+    fh_absolute = ForecastingHorizon(range(100), freq="h").to_absolute(cutoff)
+
+    assert fh_absolute[0].tz == cutoff.tz

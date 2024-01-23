@@ -17,7 +17,6 @@ class CNNClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
-    should inherited fields be listed here?
     n_epochs       : int, default = 2000
         the number of epochs to train the model
     batch_size      : int, default = 16
@@ -35,7 +34,6 @@ class CNNClassifier(BaseDeepClassifier):
         whether to output extra information
     loss            : string, default="mean_squared_error"
         fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
     activation      : string or a tf callable, default="sigmoid"
         Activation function used in the output linear layer.
@@ -67,7 +65,14 @@ class CNNClassifier(BaseDeepClassifier):
     CNNClassifier(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["James-Large", "TonyBagnall"],
+        "maintainers": ["James-Large"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,

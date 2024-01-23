@@ -191,7 +191,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     fmt :                  str {"dense", "sparse"}, optional (default="sparse")
         Annotation output format:
         * If "sparse", a pd.Series of the found Change Points is returned
-        * If "dense", a pd.IndexSeries with the Segmenation of X is returned
+        * If "dense", a pd.IndexSeries with the Segmentation of X is returned
     exclusion_radius : int
         Exclusion Radius for change points to be non-trivial matches
 

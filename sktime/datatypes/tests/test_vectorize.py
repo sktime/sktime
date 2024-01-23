@@ -10,10 +10,14 @@ from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
 from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_is_mtype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
-from sktime.utils._testing.deep_equals import deep_equals
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.deep_equals import deep_equals
+from sktime.utils.pandas import df_map
+from sktime.utils.parallel import _get_parallel_test_fixtures
 
 SCITYPES = ["Panel", "Hierarchical"]
+
+# list of parallelization backends to test
+BACKENDS = _get_parallel_test_fixtures("estimator")
 
 
 def _get_all_mtypes_for_scitype(scitype):
@@ -228,12 +232,20 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
         true_length = 1
     elif iterate_as == "Series":
         _, _, metadata = check_is_mtype(
-            fixture, mtype=mtype, scitype=scitype, return_metadata=True
+            fixture,
+            mtype=mtype,
+            scitype=scitype,
+            return_metadata=True,
+            msg_return_dict="list",
         )
         true_length = metadata["n_instances"]
     elif iterate_as == "Panel":
         _, _, metadata = check_is_mtype(
-            fixture, mtype=mtype, scitype=scitype, return_metadata=True
+            fixture,
+            mtype=mtype,
+            scitype=scitype,
+            return_metadata=True,
+            msg_return_dict="list",
         )
         true_length = metadata["n_panels"]
 
@@ -330,7 +342,10 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
         raise RuntimeError(f"found unexpected iterate_as value: {iterate_as}")
 
     X_list_valid = [
-        check_is_mtype(X, mtype=correct_mtype, scitype=iterate_as) for X in X_list
+        check_is_mtype(
+            X, mtype=correct_mtype, scitype=iterate_as, msg_return_dict="list"
+        )
+        for X in X_list
     ]
 
     assert np.all(
@@ -421,7 +436,7 @@ def test_enforce_index_freq(item, freq):
     assert item.index.freq == freq
 
 
-@pytest.mark.parametrize("backend", [None, "loky", "threading", "dask"])
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("varname_used", [True, False])
 def test_vectorize_est(
     scitype, mtype, fixture_index, iterate_as, iterate_cols, varname_used, backend
@@ -448,10 +463,6 @@ def test_vectorize_est(
     if not _is_valid_iterate_as(scitype, iterate_as):
         return None
 
-    # escape test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
-
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
     X_vect = VectorizedDF(
@@ -465,8 +476,10 @@ def test_vectorize_est(
     else:
         kwargs["y"] = X_vect
 
+    kwargs.update(backend)
+
     est_clones = X_vect.vectorize_est(NaiveForecaster(), method="clone")
-    result = X_vect.vectorize_est(est_clones, method="fit", backend=backend, **kwargs)
+    result = X_vect.vectorize_est(est_clones, method="fit", **kwargs)
 
     def _len(x):
         if x is None:
@@ -481,5 +494,5 @@ def test_vectorize_est(
     n_cols = _len(cols)
     assert isinstance(result, pd.DataFrame)
     assert result.shape == (n_rows, n_cols)
-    is_fcst_frame = result.applymap(lambda x: isinstance(x, NaiveForecaster))
+    is_fcst_frame = df_map(result)(lambda x: isinstance(x, NaiveForecaster))
     assert is_fcst_frame.all().all()

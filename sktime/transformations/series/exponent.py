@@ -70,6 +70,7 @@ class ExponentTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["RNKuhns"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -189,7 +190,7 @@ class ExponentTransformer(BaseTransformer):
 
 
 class SqrtTransformer(ExponentTransformer):
-    """Apply element-sise square root transformation to a time series.
+    """Apply elementwise square root transformation to a time series.
 
     Transformation performs the following operations element-wise:
         * adds the constant `offset` (shift)

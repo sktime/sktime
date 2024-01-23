@@ -50,7 +50,16 @@ class DtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
            Signal Processing, vol. 26(1), pp. 43--49, 1978.
     """
 
-    _tags = {"symmetric": True, "pwtrafo_type": "distance"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        "python_dependencies": ["tslearn"],
+        # estimator type
+        # --------------
+        "symmetric": True,
+        "pwtrafo_type": "distance",
+    }
 
     def __init__(
         self,
@@ -101,7 +110,7 @@ class DtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
 
 class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
-    """Dynamic time warping distance, from tslearn.
+    """Soft dynamic time warping distance, from tslearn.
 
     Direct interface to ``tslearn.metrics.cdist_soft_dtw`` and
     ``tslearn.metrics.cdist_soft_dtw_normalized``.

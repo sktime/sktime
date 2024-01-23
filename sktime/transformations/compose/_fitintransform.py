@@ -46,7 +46,7 @@ class FitInTransform(BaseTransformer):
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
     >>> # we want to fit the Imputer only on the predict (=transform) data.
-    >>> # note that NaiveForecaster cant use X data, this is just a show case.
+    >>> # note that NaiveForecaster can't use X data, this is just a show case.
     >>> pipe = ForecastingPipeline(
     ...     steps=[
     ...         ("imputer", FitInTransform(Imputer(method="mean"))),
@@ -57,6 +57,8 @@ class FitInTransform(BaseTransformer):
     ForecastingPipeline(...)
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
     """
+
+    _tags = {"authors": ["aiwalter", "fkiraly"]}
 
     def __init__(self, transformer, skip_inverse_transform=True):
         self.transformer = transformer

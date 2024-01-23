@@ -4,14 +4,14 @@
 #This dataset comes from PLAID1. It includes current and voltage measurements sampled at 30 kHz from 11 different appliance types present in more than 56 households in Pittsburgh, Pennsylvania, USA. Data collection took place during the summer of 2013. Each appliance type is represented by dozens of different instances of varying makes/models.
 #For each appliance, three to six measurements were collected for each state transition. These measurements were then post-processed to extract a few-second-long window containing both the steady-state operation and the startup transient )when available).
 #The classes correspond to 11 different appliance types: % air
-#conditioner (class 0), compact flourescent lamp, fan, fridge,
+#conditioner (class 0), compact fluorescent lamp, fan, fridge,
 #hairdryer , heater, incandescent light bulb, laptop, microwave,
 #vacuum,washing machine (class 10)%
 #
 #Train size: 537
 #Test size: 537
 #Missing value: No
-#Number of classses: 11
+#Number of classes: 11
 #Time series length: Vary
 #Data created by Gao, Jingkun, et al. (see [1], [2], [3]). Data edited by Patrick Schafer and Ulf Leser (see [4]).
 #

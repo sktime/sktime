@@ -58,7 +58,7 @@ class VECM(_StatsModelsAdapter):
         Deterministic terms inside the cointegration relation.
     exog_coint_fc : optional, a scalar (float), 1D ndarray of size nobs,
         2D ndarray/pd.DataFrame of size (any, neqs)
-        Forcasted value of exog_coint
+        Forecasted value of exog_coint
 
     Example
     -------
@@ -77,6 +77,12 @@ class VECM(_StatsModelsAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["thayeylolu", "AurumnPegasus"],
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "scitype:y": "multivariate",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",

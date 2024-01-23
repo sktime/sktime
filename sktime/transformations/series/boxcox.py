@@ -126,7 +126,7 @@ class BoxCoxTransformer(BaseTransformer):
     Attributes
     ----------
     lambda_ : float
-        The Box-Cox lambda paramter that was fitted, based on the supplied
+        The Box-Cox lambda parameter that was fitted, based on the supplied
         `method` and data provided in `fit`.
 
     See Also
@@ -144,7 +144,7 @@ class BoxCoxTransformer(BaseTransformer):
     References
     ----------
     .. [1] Box, G. E. P. & Cox, D. R. (1964) An analysis of transformations,
-       Journal ofthe Royal Statistical Society, Series B, 26, 211-252.
+       Journal of the Royal Statistical Society, Series B, 26, 211-252.
     .. [2] V.M. Guerrero, "Time-series analysis supported by Power
        Transformations ", Journal of Forecasting, vol. 12, pp. 37-48, 1993.
 
@@ -158,6 +158,12 @@ class BoxCoxTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "aiwalter", "fkiraly"],
+        "python_dependencies": "scipy",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -169,7 +175,6 @@ class BoxCoxTransformer(BaseTransformer):
         "fit_is_empty": False,
         "univariate-only": True,
         "capability:inverse_transform": True,
-        "python_dependencies": "scipy",
     }
 
     def __init__(
@@ -528,7 +533,8 @@ def _guerrero(x, sp, bounds=None):
 
     if sp is None or not is_int(sp) or sp < 2:
         raise ValueError(
-            "Guerrero method requires an integer seasonal periodicity (sp) value >= 2."
+            "In BoxCoxTransformer, method='guerrero' requires an integer seasonal "
+            f"periodicity (sp) value >= 2, but found sp={sp}"
         )
 
     x = np.asarray(x)

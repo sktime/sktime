@@ -92,6 +92,11 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "X_inner_mtype": "pd-multiindex",  # which type do _fit/_predict accept
         "capability:multivariate": False,
         "capability:unequal_length": False,

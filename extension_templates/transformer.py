@@ -146,7 +146,7 @@ class MyTransformer(BaseTransformer):
         # univariate-only controls whether internal X can be univariate/multivariate
         # if True (only univariate), always applies vectorization over variables
         "univariate-only": False,
-        # valid values: True = inner _fit, _transform receive only univariate serie
+        # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
         #
         # requires_y = does y need to be passed in fit?
@@ -239,6 +239,26 @@ class MyTransformer(BaseTransformer):
         # valid values: boolean True (yes), False (no)
         # used for search index and validity checking, does not raise direct exception
         #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
         #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
@@ -246,10 +266,10 @@ class MyTransformer(BaseTransformer):
         # python version requirement
         "python_version": None,
         # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python veresion is incompatible
+        # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
+        "python_dependencies": None,
         # valid values: str or list of str
         # raises exception at construction if modules at strings cannot be imported
     }
@@ -260,7 +280,7 @@ class MyTransformer(BaseTransformer):
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est

@@ -124,7 +124,7 @@ def _write_header(
     dirt = f"{str(path)}/{str(problem_name)}/"
     try:
         os.makedirs(dirt)
-    except os.error:
+    except OSError:
         pass  # raises os.error if path already exists
     # create ts file in the path
     file = open(f"{dirt}{str(problem_name)}{fold}.ts", "w")
@@ -172,7 +172,7 @@ def write_results_to_uea_format(
     ----------
     estimator_name : str,
         Name of the object that made the predictions, written to file and can
-        deterimine file structure of output_root is True
+        determine file structure of output_root is True
     dataset_name : str
         name of the problem the classifier was built on
     y_pred : np.array
@@ -210,7 +210,7 @@ def write_results_to_uea_format(
         output_path = f"{output_path}/{estimator_name}/Predictions/{dataset_name}/"
     try:
         os.makedirs(output_path)
-    except os.error:
+    except OSError:
         pass  # raises os.error if path already exists, so just ignore this
 
     if split == "TRAIN" or split == "train":
@@ -229,7 +229,7 @@ def write_results_to_uea_format(
         first_line += "," + first_line_comment
     file.write(first_line + "\n")
     # the second line of the output is free form and estimator-specific; usually this
-    # will record info such as build time, paramater options used, any constituent model
+    # will record info such as build time, parameter options used, any constituent model
     # names for ensembles, etc.
     file.write(str(second_line) + "\n")
     # the third line of the file is the accuracy (should be between 0 and 1
