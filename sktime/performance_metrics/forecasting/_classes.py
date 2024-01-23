@@ -273,12 +273,17 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_pred : VectorizedDF
         non-time-like instances of y_true, y_pred must be identical
         """
+        backend = dict()
+        backend["backend"] = self.get_config()["backend:parallel"]
+        backend["backend_params"] = self.get_config()["backend:parallel:params"]
+
         eval_result = y_true.vectorize_est(
             estimator=self.clone(),
             method="_evaluate",
             varname_of_self="y_true",
             args={**kwargs, "y_pred": y_pred},
             colname_default=self.name,
+            **backend,
         )
 
         if isinstance(self.multioutput, str) and self.multioutput == "raw_values":
@@ -305,6 +310,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_pred : VectorizedDF
         non-time-like instances of y_true, y_pred must be identical
         """
+        backend = dict()
+        backend["backend"] = self.get_config()["backend:parallel"]
+        backend["backend_params"] = self.get_config()["backend:parallel:params"]
+
         eval_result = y_true.vectorize_est(
             estimator=self.clone().set_params(**{"multilevel": "uniform_average"}),
             method="_evaluate_by_index",
@@ -312,6 +321,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             args={**kwargs, "y_pred": y_pred},
             colname_default=self.name,
             return_type="list",
+            **backend,
         )
 
         eval_result = y_true.reconstruct(eval_result)
