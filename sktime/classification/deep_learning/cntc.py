@@ -95,7 +95,7 @@ class CNTCClassifier(BaseDeepClassifier):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super(CNTCClassifier, self).__init__()
+
         self.kernel_sizes = kernel_sizes  # used plural
         self.filter_sizes = filter_sizes  # used plural
         self.rnn_size = rnn_size
@@ -109,6 +109,8 @@ class CNTCClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.random_state = random_state
         self._network = CNTCNetwork()
+
+        super().__init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

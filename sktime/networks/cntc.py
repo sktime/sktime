@@ -73,7 +73,7 @@ class CNTCNetwork(BaseDeepNetwork):
         lstm_size=8,
         dense_size=64,
     ):
-        super().__init__()
+
         _check_dl_dependencies(severity="error")
         _check_soft_dependencies(
             package_import_alias={"keras-self-attention": "keras_self_attention"},
@@ -85,6 +85,8 @@ class CNTCNetwork(BaseDeepNetwork):
         self.kernel_sizes = kernel_sizes
         self.lstm_size = lstm_size
         self.dense_size = dense_size
+
+        super().__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
