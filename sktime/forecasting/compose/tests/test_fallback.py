@@ -160,7 +160,7 @@ def test_fallbackforecaster_fails_at_fit():
     pd.testing.assert_series_equal(y_pred_expected, y_pred_actual)
 
     # Count the number of exceptions raised
-    exceptions_raised = forecaster.exceptions_raised__
+    exceptions_raised = forecaster.exceptions_raised_
     assert len(exceptions_raised) == 1
 
 
@@ -243,7 +243,7 @@ def test_fallbackforecaster_fails_twice():
     pd.testing.assert_series_equal(y_pred_expected, y_pred_actual)
 
     # Assert correct number of expected exceptions
-    exceptions_raised = forecaster.exceptions_raised__
+    exceptions_raised = forecaster.exceptions_raised_
     assert len(exceptions_raised) == 2
 
     # Assert the correct forecasters failed
@@ -299,7 +299,7 @@ def test_fallbackforecaster_fails_fit_twice():
     pd.testing.assert_series_equal(y_pred_expected, y_pred_actual)
 
     # Assert correct number of expected exceptions
-    exceptions_raised = forecaster.exceptions_raised__
+    exceptions_raised = forecaster.exceptions_raised_
     assert len(exceptions_raised) == 2
 
     # Assert the correct forecasters failed
@@ -376,7 +376,7 @@ def test_many_forecasters_fail1():
     pd.testing.assert_series_equal(y_pred_expected, y_pred_actual)
 
     # Assert correct number of expected exceptions
-    exceptions_raised = forecaster.exceptions_raised__
+    exceptions_raised = forecaster.exceptions_raised_
     assert len(exceptions_raised) == 4
 
     # Assert the correct forecasters failed
@@ -389,4 +389,94 @@ def test_many_forecasters_fail1():
         "raise_fit3",
         "raise_predict4",
     ]
+    assert names_raised_actual == names_raised_expected
+
+
+def test_fallbackforecaster_fails_twice_simple():
+    """First two FallbackForecasters fail, third succeeds"""
+    y = make_forecasting_problem(random_state=42)
+    forecaster1 = DummyForecaster(raise_at="fit")
+    forecaster2 = DummyForecaster(raise_at="predict")
+    forecaster3 = PolynomialTrendForecaster()
+    forecaster4 = NaiveForecaster()
+
+    forecaster = FallbackForecaster(
+        [
+            ("forecaster1_fails_fit", forecaster1),
+            ("forecaster2_fails_prd", forecaster2),
+            ("forecaster3_succeeded", forecaster3),
+            ("forecaster4_notcalled", forecaster4),
+        ]
+    )
+    forecaster.fit(y=y, fh=[1, 2, 3])
+    y_pred_actual = forecaster.predict()
+    y_pred_expected = forecaster3.predict()
+
+    # Assert correct forecaster name
+    name = forecaster.current_name
+    assert name == "forecaster3_succeeded"
+
+    # Assert correct y_pred
+    pd.testing.assert_series_equal(y_pred_expected, y_pred_actual)
+
+    # Assert correct number of expected exceptions
+    exceptions_raised = forecaster.exceptions_raised_
+    assert len(exceptions_raised) == 2
+
+    # Assert the correct forecasters failed
+    names_raised_actual = [
+        vals["forecaster_name"] for vals in exceptions_raised.values()
+    ]
+    names_raised_expected = ["forecaster1_fails_fit", "forecaster2_fails_prd"]
+    assert names_raised_actual == names_raised_expected
+
+
+def test_fallbackforecaster_fails_many_simple():
+    """First two FallbackForecasters fail, third succeeds"""
+    y = make_forecasting_problem(random_state=42)
+    forecaster1 = DummyForecaster(raise_at="predict")
+    forecaster2 = DummyForecaster(raise_at="predict")
+    forecaster3 = DummyForecaster(raise_at="fit")
+    forecaster4 = DummyForecaster(raise_at="fit")
+    forecaster5 = DummyForecaster(raise_at="fit")
+    forecaster6 = DummyForecaster(raise_at="predict")
+    forecaster7 = DummyForecaster(raise_at="fit")
+    forecaster8 = DummyForecaster(raise_at="predict")
+    forecaster9 = PolynomialTrendForecaster()
+    forecaster10 = NaiveForecaster()
+
+    forecaster = FallbackForecaster(
+        [
+            ("f1", forecaster1),
+            ("f2", forecaster2),
+            ("f3", forecaster3),
+            ("f4", forecaster4),
+            ("f5", forecaster5),
+            ("f6", forecaster6),
+            ("f7", forecaster7),
+            ("f8", forecaster8),
+            ("target", forecaster9),
+            ("notcalled", forecaster10),
+        ]
+    )
+    forecaster.fit(y=y, fh=[1, 2, 3])
+    y_pred_actual = forecaster.predict()
+    y_pred_expected = forecaster9.predict()
+
+    # Assert correct forecaster name
+    name = forecaster.current_name
+    assert name == "target"
+
+    # Assert correct y_pred
+    pd.testing.assert_series_equal(y_pred_expected, y_pred_actual)
+
+    # Assert correct number of expected exceptions
+    exceptions_raised = forecaster.exceptions_raised_
+    assert len(exceptions_raised) == 8
+
+    # Assert the correct forecasters failed
+    names_raised_actual = [
+        vals["forecaster_name"] for vals in exceptions_raised.values()
+    ]
+    names_raised_expected = ["f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8"]
     assert names_raised_actual == names_raised_expected

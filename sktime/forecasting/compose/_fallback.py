@@ -87,32 +87,49 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         RuntimeError
             If all forecasters fail to fit.
         """
-        self.first_nonfailing_forecaster_index__ = getattr(
-            self, "first_nonfailing_forecaster_index__", 0
-        )
-        self.exceptions_raised__ = getattr(self, "exceptions_raised__", dict())
+        self.first_nonfailing_forecaster_index_ = 0
+        self.exceptions_raised_ = dict()
+        return self._try_fit_forecasters()
 
-        for name, forecaster in self.forecasters[
-            self.first_nonfailing_forecaster_index__ :
-        ]:
+    def _try_fit_forecasters(self):
+        """
+        Attempt to fit the forecasters in sequence until one succeeds.
+
+        This method iterates over the forecasters starting from the index
+        `first_nonfailing_forecaster_index_`. For each forecaster, it tries to fit it
+        with the current data. If the fit method of a forecaster raises an exception,
+        it records the exception and proceeds to the next forecaster. If a forecaster
+        fits successfully, it updates the current forecaster and its name.
+
+        Returns
+        -------
+        self : an instance of self
+
+        Raises
+        ------
+        RuntimeError
+            If all forecasters fail to fit.
+        """
+        while True:
+            if self.first_nonfailing_forecaster_index_ >= len(self.forecasters):
+                raise RuntimeError("No remaining forecasters to attempt prediction.")
+            name, forecaster = self.forecasters[self.first_nonfailing_forecaster_index_]
             try:
-                forecaster.fit(y, X=X, fh=fh)
-                self.current_forecaster = forecaster
                 self.current_name = name
+                self.current_forecaster = forecaster
+                forecaster.fit(self._y, X=self._X, fh=self._fh)
                 return self
             except Exception as e:
-                self.exceptions_raised__[self.first_nonfailing_forecaster_index__] = {
+                self.exceptions_raised_[self.first_nonfailing_forecaster_index_] = {
                     "failed_at_step": "fit",
                     "exception": e,
                     "forecaster_name": name,
                 }
-                self.first_nonfailing_forecaster_index__ += 1
+                self.first_nonfailing_forecaster_index_ += 1
                 if self.warn:
                     warnings.warn(
                         f"Forecaster {name} failed to fit with error: {e}", stacklevel=2
                     )
-
-        raise RuntimeError("All forecasters failed to fit.")
 
     def _predict(self, fh, X=None):
         """Predict using the current forecaster.
@@ -142,7 +159,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         try:
             return self.current_forecaster.predict(fh, X)
         except Exception as e:
-            self.exceptions_raised__[self.first_nonfailing_forecaster_index__] = {
+            self.exceptions_raised_[self.first_nonfailing_forecaster_index_] = {
                 "failed_at_step": "fit",
                 "exception": e,
                 "forecaster_name": self.current_name,
@@ -152,11 +169,11 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
                     f"Current forecaster failed at prediction with error: {e}",
                     stacklevel=2,
                 )
-            self.first_nonfailing_forecaster_index__ += 1
+            self.first_nonfailing_forecaster_index_ += 1
 
             # Fit the next forecaster and retry prediction
             self.current_forecaster = None
-            self.fit(self._y, X, fh)
+            self._try_fit_forecasters()
             return self.predict(fh, X)
 
     @classmethod
