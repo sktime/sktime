@@ -177,10 +177,15 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "TonyBagnall",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "interval",
-        "python_dependencies": "numba",
     }
 
     def __init__(

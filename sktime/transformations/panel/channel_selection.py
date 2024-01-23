@@ -177,6 +177,8 @@ class ElbowClassSum(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["haskarb", "a-pasos-ruiz", "TonyBagnall", "fkiraly"],
+        "maintainers": ["haskarb"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         # "scitype:transform-output": "Primitives",

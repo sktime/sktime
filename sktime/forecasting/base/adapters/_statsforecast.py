@@ -15,6 +15,8 @@ class _StatsForecastAdapter(BaseForecaster):
     """Base class for interfacing StatsForecast."""
 
     _tags = {
+        "authors": ["FedericoGarza"],
+        "maintainers": ["FedericoGarza"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?

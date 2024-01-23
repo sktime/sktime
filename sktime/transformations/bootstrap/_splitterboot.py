@@ -86,11 +86,11 @@ class SplitterBootstrapTransformer(BaseTransformer):
     """
 
     _tags = {
-        # todo: what is the scitype of X: Series, or Panel
+        # what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
-        # todo: what scitype is returned: Primitives, Series, Panel
+        # what scitype is returned: Primitives, Series, Panel
         "scitype:transform-output": "Panel",
-        # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?

@@ -54,6 +54,13 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     https://github.com/Mcompetitions/M4-methods
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning"],
+        # estimator type handled by parent class
+    }
+
     def __init__(
         self,
         num_epochs=None,

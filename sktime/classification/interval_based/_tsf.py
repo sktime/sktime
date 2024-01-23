@@ -104,7 +104,15 @@ class TimeSeriesForestClassifier(
     _feature_types = ["mean", "std", "slope"]
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
-    _tags = {"capability:predict_proba": True}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["kkoziara", "luiszugasti", "kanand77"],
+        "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        # estimator type
+        # --------------
+        "capability:predict_proba": True,
+    }
 
     def __init__(
         self,
@@ -114,6 +122,9 @@ class TimeSeriesForestClassifier(
         n_jobs=1,
         random_state=None,
     ):
+        self.criterion = "gini"  # needed for BaseForest in sklearn > 1.4.0,
+        # because sklearn tag logic looks at this attribute
+
         super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,

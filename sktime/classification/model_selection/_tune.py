@@ -233,6 +233,11 @@ class TSCGridSearchCV(_DelegatedClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly", "achieveordie"],
+        # estimator type
+        # --------------
         "X_inner_mtype": ["nested_univ", "numpy3D"],
         "y_inner_mtype": ["numpy2D"],
         "capability:multivariate": True,

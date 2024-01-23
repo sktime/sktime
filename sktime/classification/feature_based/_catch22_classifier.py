@@ -81,11 +81,17 @@ class Catch22Classifier(_DelegatedClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "RavenRudi", "fkiraly"],
+        "maintainers": ["RavenRudi"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
-        "python_dependencies": "numba",
     }
 
     def __init__(

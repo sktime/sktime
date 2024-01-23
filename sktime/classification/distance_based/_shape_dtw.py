@@ -15,7 +15,7 @@ from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datatypes import convert
-from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dictionary_based._paa import PAAlegacy as PAA
 from sktime.transformations.panel.dwt import DWTTransformer
 from sktime.transformations.panel.hog1d import HOG1DTransformer
 
@@ -111,6 +111,12 @@ class ShapeDTW(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["vincent-nich12"],
+        "maintainers": ["vincent-nich12"],
+        # estimator type
+        # --------------
         "capability:predict_proba": True,
         "classifier_type": "distance",
     }
@@ -443,7 +449,7 @@ class ShapeDTW(BaseClassifier):
         names = list(parameters.keys())
 
         for x in names:
-            if not (x in valid_metric_params):
+            if x not in valid_metric_params:
                 raise ValueError(
                     x
                     + " is not a valid metric parameter."
