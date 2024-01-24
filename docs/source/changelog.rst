@@ -91,7 +91,7 @@ Parameter estimation and hypothesis testing
   but only to the input of ``SeasonalityACF``, as the first ``*`` constructs
   a parameter estimator, and the second ``*`` plugs in the parameter estimator into
   the ``Deseasonalizer``.
-  
+
 Transformations
 ^^^^^^^^^^^^^^^
 
