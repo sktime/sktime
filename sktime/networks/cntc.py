@@ -55,7 +55,7 @@ class CNTCNetwork(BaseDeepNetwork):
     _tags = {
         "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
-        "python_dependencies": ["tensorflow", "keras_self_attention"],
+        "python_dependencies": ["tensorflow", "keras-self-attention"],
     }
 
     def __init__(
