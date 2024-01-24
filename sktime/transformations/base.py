@@ -166,19 +166,24 @@ class BaseTransformer(BaseEstimator):
 
     _config_doc = {
         "input_conversion": """
-        input_conversion : str, one of "on", "off", valid mtype string
+        input_conversion : str, one of "on" (default), "off", or valid mtype string
             controls input checks and conversions,
-            for _fit, _transform, _inverse_transform, _update
-            "on" - input check and conversion is carried out
-            "off" - input check and conversion not done before passing to inner methods
-            valid mtype string - input is assumed to specified mtype
+            for ``_fit``, ``_transform``, ``_inverse_transform``, ``_update``
+
+            * ``"on"`` - input check and conversion is carried out
+            * ``"off"`` - input check and conversion are not carried out
+              before passing data to inner methods
+            * valid mtype string - input is assumed to specified mtype,
+              conversion is carried out but no check
         """,
         "output_conversion": """
         output_conversion : str, one of "on", "off", valid mtype string
-            controls output conversion for _transform, _inverse_transform
-            "on" - if input_conversion is "on", output conversion is carried out
-            "off" - output of _transform, _inverse_transform is directly returned
-            valid mtype string - output is converted to specified mtype
+            controls output conversion for ``_transform``, ``_inverse_transform``
+
+            * ``"on"`` - if input_conversion is "on", output conversion is carried out
+            * ``"off"`` - output of ``_transform``, ``_inverse_transform``
+              is directly returned
+            * valid mtype string - output is converted to specified mtype
         """,
     }
 
@@ -1449,6 +1454,10 @@ class BaseTransformer(BaseEstimator):
         """
         # standard behaviour: no update takes place, new data is ignored
         return self
+
+
+# initialize dynamic docstrings
+BaseTransformer._init_dynamic_doc()
 
 
 class _SeriesToPrimitivesTransformer(BaseTransformer):
