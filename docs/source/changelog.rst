@@ -25,6 +25,7 @@ Version 0.25.1 - 2023-01-24
 Highlights
 ~~~~~~~~~~
 
+* new, efficient, parallelizable PAA and SAX transformer implementations, available as ``PAA2``, ``SAX2`` (:pr:`5742`) :user:`steenrotsman`
 * ``sktime`` native grid search for time series classification (:pr:`4596`) :user:`achieveordie`, :user:`fkiraly`
 * ``IgnoreX`` - forecasting compositor to ignore exogenous data, for use in tuning (:pr:`5769`) :user:`fkiraly`
 * extension template for time series splitters (:pr:`5716`) :user:`fkiraly`
@@ -137,6 +138,7 @@ BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] update ``deep_equals`` to accommodate plugins, e.g., for ``polars`` (:pr:`5504`) :user:`fkiraly`
+* [ENH] Replace ``isinstance`` by ``object_type`` tag based checks (:pr:`5657`) :user:`benheid`
 * [ENH] author and maintainer tags (:pr:`5754`) :user:`fkiraly`
 * [ENH] enable ``all_tags`` to retrieve estimator and object tags (:pr:`5798`) :user:`fkiraly`
 * [ENH] remove maintainer information from ``CODEOWNERS`` in favour of estimator tags (:pr:`5808`) :user:`fkiraly`
@@ -190,6 +192,8 @@ Time series clustering
 Transformations
 ^^^^^^^^^^^^^^^
 
+* [ENH] better explanation about fit/transform instance linking in instance-wise transformers in error messages, and pointer to common solution (:pr:`5652`) :user:`fkiraly`
+* [ENH] New ``PAA`` and ``SAX`` transformer implementations (:pr:`5742`) :user:`steenrotsman`
 * [ENH] feature upgrade for ``SplitterSummarizer`` - granular control of inner ``fit``/``transform`` input (:pr:`5750`) :user:`fkiraly`
 * [ENH] allow ``BaseTransformer._transform`` to return ``None`` (:pr:`5772`) :user:`fkiraly`, :user:`hliebert`
 
@@ -199,51 +203,81 @@ Visualization
 Test framework
 ^^^^^^^^^^^^^^
 
+### 🚀 Features
+
+
+* [ENH] private utility for ``BaseForecaster`` get columns, for all ``predict``-like functions by @fkiraly in https://github.com/sktime/sktime/pull/5590
+* [ENH] multiplexer classifier by @fkiraly in https://github.com/sktime/sktime/pull/5678
+* [ENH] adding second test parameters for ``TBATS`` by @NguyenChienFelix33 in https://github.com/sktime/sktime/pull/5689
+* [ENH] Simplify ``BaseEstimator._get_fitted_params()`` and ``BaseParamFitter`` inheritance of that method by @tpvasconcelos in https://github.com/sktime/sktime/pull/5633
+* [ENH] in ``VectorizedDF``, partially decouple internal data store from methods by @fkiraly in https://github.com/sktime/sktime/pull/5681
+* [ENH] refactor tests with parallelization backend fixtures to programmatic backend fixture lookup by @fkiraly in https://github.com/sktime/sktime/pull/5714
+* [ENH] Simplify conditional statements in direct reducer by @fkiraly in https://github.com/sktime/sktime/pull/5725
+* [ENH] support for probabilistic regressors (``skpro``) in ``make_reduction``, direct reduction by @fkiraly in https://github.com/sktime/sktime/pull/5536
+* [ENH] reduce private coupling of ``IndividualBOSS`` classifier and ``BaseClassifier`` by @fkiraly in https://github.com/sktime/sktime/pull/5654
+* [ENH] further refactor parallelization backend test fixtures to use central location by @fkiraly in https://github.com/sktime/sktime/pull/5734
+* [ENH] add ``disp`` parameter to sarimax to control output verbosity by @tvdboom in https://github.com/sktime/sktime/pull/5770
+
+
+(:pr:`5709`) :user:`fkiraly`
+(:pr:`5639`) :user:`yarnabrina`
 
 Fixes
 ~~~~~
 
-
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [BUG] fix scitype inference utility for all cases (:pr:`5672`) :user:`fkiraly`
 * [BUG] fixes for minor typos in error message related to custom ``joblib`` backend selection (:pr:`5724`) :user:`fkiraly`
 * [BUG] handles ``AttributeError`` in ``show_versions`` when dependency lacks ``__version__`` (:pr:`5793`) :user:`yarnabrina`
+* [BUG] fix type error in parallelization backend test fixture refactor (:pr:`5760`) :user:`fkiraly`
 
 Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [BUG] Fix dynamic ``make_forecasting_scorer`` for newer ``sklearn`` metrics (:pr:`5717`) :user:`fkiraly`
 * [BUG] fix ``test_evaluate_error_score`` to skip test of expected warning raised if the ``joblib`` backend is ``"loky"`` or ``"multiprocessing"`` (:pr:`5780`) :user:`fkiraly`
+
+Data loaders
+^^^^^^^^^^^^
+
+* [BUG] fix ``extract_path`` arg in ``sktime.datasets.load_UCR_UEA_dataset`` (:pr:`5744`) :user:`steenrotsman`
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [BUG] fix ``deep_equals`` for ``np.array`` with ``dtype="object"`` (:pr:`5697`) :user:`fkiraly`
+
 Forecasting
 ^^^^^^^^^^^
 
-Parameter estimation and hypothesis testing
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* [BUG] fix ``ForecastingHorizon.get_expected_pred_idx`` ``sort_time`` (:pr:`5726`) :user:`fkiraly`
+* [BUG] in ``BaggingForecaster``, fix ``random_state`` handling (:pr:`5730`) :user:`fkiraly`
 
+Pipelines
+^^^^^^^^^
 
-Time series annotation
-^^^^^^^^^^^^^^^^^^^^^^
+* [BUG] Enable ``pipeline.fit`` without X (:pr:`5656`) :user:`benheid`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Time series clustering
+* [BUG] fix ``predict`` output conversion failure in ``BaseClassifier``, ``BaseRegressor``, if ``y_inner_mtype`` tag is a list (:pr:`5680`) :user:`fkiraly`
+* [BUG] fix ``test_multioutput`` for genuinely multioutput classifiers (:pr:`5700`) :user:`fkiraly`
+
+Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 
+* [BUG] fix ``predict`` output conversion failure in ``BaseClassifier``, ``BaseRegressor``, if ``y_inner_mtype`` tag is a list (:pr:`5680`) :user:`fkiraly`
 
 Transformations
 ^^^^^^^^^^^^^^^
 
-
 * [BUG] skip sporadic test errors in ``ExponentialSmoothing`` (:pr:`5516`) :user:`achieveordie`
-
-
-Visualization
-^^^^^^^^^^^^^
+* [BUG] fix sporadic permutation of internal feature columns in ``TSFreshClassifier.predict`` (:pr:`5673`) :user:`fkiraly`
+* [BUG] fix backend strings in transformer ``test_base`` (:pr:`5695`) :user:`fkiraly`
+* [BUG] Ensure ``MultiRocketMultivariate`` uses ``random_state`` (:pr:`5710`) :user:`chrico-bu-uab`
 
 Test framework
 ^^^^^^^^^^^^^^
@@ -295,56 +329,6 @@ Documentation
 * [DOC] various minor API reference improvements (:pr:`5721`) :user:`fkiraly`
 * [DOC] add ``ReducerTransform`` and ``DirectReductionForecaster`` to API reference (:pr:`5690`) :user:`fkiraly`
 * [DOC] remove outdated ``sktime-dl`` reference in ``README.md`` (:pr:`5685`) :user:`fkiraly`
-
-
-### 🚀 Features
-* [ENH] Replace ``isinstance`` by ``object_type`` tag based checks by @benHeid in https://github.com/sktime/sktime/pull/5657
-* [ENH] better explanation about fit/transform instance linking in instance-wise transformers in error messages, and pointer to common solution by @fkiraly in https://github.com/sktime/sktime/pull/5652
-* [ENH] private utility for ``BaseForecaster`` get columns, for all ``predict``-like functions by @fkiraly in https://github.com/sktime/sktime/pull/5590
-* [BUG] Enable pipeline.fit without X by @benHeid in https://github.com/sktime/sktime/pull/5656
-* [ENH] multiplexer classifier by @fkiraly in https://github.com/sktime/sktime/pull/5678
-* [ENH] adding second test parameters for ``TBATS`` by @NguyenChienFelix33 in https://github.com/sktime/sktime/pull/5689
-* [ENH] Simplify ``BaseEstimator._get_fitted_params()`` and ``BaseParamFitter`` inheritance of that method by @tpvasconcelos in https://github.com/sktime/sktime/pull/5633
-* [ENH] in ``VectorizedDF``, partially decouple internal data store from methods by @fkiraly in https://github.com/sktime/sktime/pull/5681
-* [ENH] refactor tests with parallelization backend fixtures to programmatic backend fixture lookup by @fkiraly in https://github.com/sktime/sktime/pull/5714
-* [ENH] Simplify conditional statements in direct reducer by @fkiraly in https://github.com/sktime/sktime/pull/5725
-* [ENH] support for probabilistic regressors (``skpro``) in ``make_reduction``, direct reduction by @fkiraly in https://github.com/sktime/sktime/pull/5536
-* [ENH] reduce private coupling of ``IndividualBOSS`` classifier and ``BaseClassifier`` by @fkiraly in https://github.com/sktime/sktime/pull/5654
-* [ENH] further refactor parallelization backend test fixtures to use central location by @fkiraly in https://github.com/sktime/sktime/pull/5734
-* [ENH] add ``disp`` parameter to sarimax to control output verbosity by @tvdboom in https://github.com/sktime/sktime/pull/5770
-* [ENH] New PAA and SAX transformer implementations by @steenrotsman in https://github.com/sktime/sktime/pull/5742
-* [ENH] update ``deep_equals`` to accommodate plugins, e.g., for ``polars`` by @fkiraly in https://github.com/sktime/sktime/pull/5504
-* [ENH] expose parameters supported by ``fit`` method of ``SARIMAX`` in ``statsmodels`` by @yarnabrina in https://github.com/sktime/sktime/pull/5787
-* [ENH] refactor structure of time series forest classifier related files by @fkiraly in https://github.com/sktime/sktime/pull/5751
-* &hliebert [ENH] allow ``BaseTransformer._transform`` to return ``None`` by @fkiraly in https://github.com/sktime/sktime/pull/5772
-* [ENH] feature upgrade for ``SplitterSummarizer`` - granular control of inner ``fit``/``transform`` input by @fkiraly in https://github.com/sktime/sktime/pull/5750
-* [ENH] fix ``test_evaluate_error_score`` to skip test of expected warning raised if the ``joblib`` backend is ``"loky"`` or ``"multiprocessing"`` by @fkiraly in https://github.com/sktime/sktime/pull/5780
-* [ENH] parameter plugin for estimator into transformers, right concat dunder by @fkiraly in https://github.com/sktime/sktime/pull/5764
-* [ENH] author and maintainer tags by @fkiraly in https://github.com/sktime/sktime/pull/5754
-* [ENH] enable ``all_tags`` to retrieve estimator and object tags by @fkiraly in https://github.com/sktime/sktime/pull/5798
-* [ENH] forecasting compositor to ignore exogenous data by @fkiraly in https://github.com/sktime/sktime/pull/5769
-* [ENH] Repeat splitter composition by @fkiraly in https://github.com/sktime/sktime/pull/5737
-* by aurumnpegasus [ENH] migrating CNTC network for classification from sktime-dl by @fkiraly in https://github.com/sktime/sktime/pull/3978
-* &corradomio [ENH] config to turn off data memory in forecasters by @fkiraly in https://github.com/sktime/sktime/pull/5676
-* [ENH] parallelization support and config for forecasting performance metrics by @fkiraly in https://github.com/sktime/sktime/pull/5813
-### 🐛 Bug Fixes
-* [BUG] fix sporadic permutation of internal feature columns in ``TSFreshClassifier.predict`` by @fkiraly in https://github.com/sktime/sktime/pull/5673
-* [BUG] fix ``predict`` output conversion failure in ``BaseClassifier``, ``BaseRegressor``, if ``y_inner_mtype`` tag is a list by @fkiraly in https://github.com/sktime/sktime/pull/5680
-* [BUG] fix scitype inference utility for all cases by @fkiraly in https://github.com/sktime/sktime/pull/5672
-* [BUG] fix backend strings in transformer ``test_base`` by @fkiraly in https://github.com/sktime/sktime/pull/5695
-* [BUG] fix ``test_multioutput`` for genuinely multioutput classifiers by @fkiraly in https://github.com/sktime/sktime/pull/5700
-* [BUG] fix ``deep_equals`` for ``np.array`` with ``dtype="object"`` by @fkiraly in https://github.com/sktime/sktime/pull/5697
-* [BUG] fix ``ForecastingHorizon.get_expected_pred_idx`` ``sort_time`` by @fkiraly in https://github.com/sktime/sktime/pull/5726
-* [BUG] Ensure ``MultiRocketMultivariate`` uses ``random_state`` by @chrico-bu-uab in https://github.com/sktime/sktime/pull/5710
-* [BUG] Fix dynamic ``make_forecasting_scorer`` for newer ``sklearn`` metrics by @fkiraly in https://github.com/sktime/sktime/pull/5717
-* [BUG] fix ``extract_path`` arg in ``sktime.datasets.load_UCR_UEA_dataset`` by @steenrotsman in https://github.com/sktime/sktime/pull/5744
-* [BUG] fix type error in parallelization backend test fixture refactor by @fkiraly in https://github.com/sktime/sktime/pull/5760
-* [BUG] in ``BaggingForecaster``, fix ``random_state`` handling by @fkiraly in https://github.com/sktime/sktime/pull/5730
-* [BUG] handles ``AttributeError`` in ``show_versions()`` when dependency lacks ``__version__`` by @yarnabrina in https://github.com/sktime/sktime/pull/5793
-
-
-(:pr:`5709`) :user:`fkiraly`
-(:pr:`5639`) :user:`yarnabrina`
  
 
 Contributors
@@ -354,6 +338,7 @@ Contributors
 :user:`aiwalter`,
 :user:`alex-jg3`,
 :user:`aurumnpegasus`,
+:user:`benheid`,
 :user:`chrico-bu-uab`,
 :user:`corradomio`,
 :user:`DManowitz`,
