@@ -200,7 +200,7 @@ class BaseObject(_BaseObject):
     def _init_dynamic_doc(cls):
         """Set docstring for set_config from self._config_doc."""
         try:  # try/except to avoid unexpected failures
-            setattr(cls, "set_config", deepcopy_func(cls.set_config))
+            cls.set_config = deepcopy_func(cls.set_config)
             cls.set_config.__doc__ = cls._get_set_config_doc()
         except Exception:
             pass
