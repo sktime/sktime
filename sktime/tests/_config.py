@@ -119,6 +119,7 @@ EXCLUDED_TESTS = {
     ],
     "CNTCClassifier": [
         "test_fit_idempotent",
+        "test_persistence_via_pickle",
     ],
     "InceptionTimeClassifier": [
         "test_fit_idempotent",

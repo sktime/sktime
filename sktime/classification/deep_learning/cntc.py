@@ -110,7 +110,7 @@ class CNTCClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self._network = CNTCNetwork()
 
-        super().__init__()
+        super().__init__(batch_size = batch_size, random_state = random_state)
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
