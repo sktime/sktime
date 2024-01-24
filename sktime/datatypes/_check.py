@@ -87,14 +87,13 @@ def _coerce_list_of_str(obj, var_name="obj"):
     return obj
 
 
-# todo 0.26.0: change default for msg_return_dict to "dict", update docstring
 def check_is_mtype(
     obj,
     mtype: Union[str, List[str]],
     scitype: str = None,
     return_metadata=False,
     var_name="obj",
-    msg_return_dict=None,
+    msg_return_dict="dict",
 ):
     """Check object for compliance with mtype specification, return metadata.
 
@@ -112,10 +111,10 @@ def check_is_mtype(
         if str, list of str, metadata return dict is subset to keys in return_metadata
     var_name: str, optional, default="obj"
         name of input in error messages
-    msg_return_dict: str, "list" or "dict", optional, default="list"
+    msg_return_dict: str, "list" or "dict", optional, default="dict"
         whether returned msg, if returned is a str, dict or list
         if "list", msg is str if mtype is str, list of str if mtype is list
-        if "dict", msg is dict if mtype is str, list of str if mtype is list,
+        if "dict", msg is str if mtype is str, dict of str if mtype is list,
         if dict, has with mtype as key and error message for mtype as value
 
     Returns
@@ -168,16 +167,8 @@ def check_is_mtype(
 
     # initialize loop variables
     if msg_return_dict is None:
-        # todo 0.26.0: remove this warning, and change default to "dict"
-        warn(
-            "From sktime 0.26.0 onwards, msg return of check_is_mtype "
-            "will default to dict if mtype is a list. "
-            "To retain the old behaviour, set msg_return_dict='list' explicitly. "
-            "To move to the new behaviour, set msg_return_dict='dict' explicitly. "
-            "Setting msg_return_dict explicitly will silence the warning."
-        )
-        msg = []
-        msg_return_dict = "list"
+        msg_return_dict = "dict"
+        msg = dict()
     elif msg_return_dict == "list":
         msg = []
     elif msg_return_dict == "dict":
@@ -232,7 +223,10 @@ def check_is_mtype(
     # c. no mtype is found - then return False and all error messages if requested
     else:
         if len(msg) == 1:
-            msg = msg[0]
+            if msg_return_dict == "list":
+                msg = msg[0]
+            else:
+                msg = list(msg.values())[0]
 
         return _ret(False, msg, None, return_metadata)
 
