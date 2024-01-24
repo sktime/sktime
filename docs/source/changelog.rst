@@ -25,10 +25,13 @@ Version 0.25.1 - 2023-01-24
 Highlights
 ~~~~~~~~~~
 
+* in ``make_reduction``, direct reduction now supports probabilistic tabular regressors from ``skpro`` (:pr:`5536`) :user:`fkiraly`
 * new, efficient, parallelizable PAA and SAX transformer implementations, available as ``PAA2``, ``SAX2`` (:pr:`5742`) :user:`steenrotsman`
-* ``sktime`` native grid search for time series classification (:pr:`4596`) :user:`achieveordie`, :user:`fkiraly`
-* ``IgnoreX`` - forecasting compositor to ignore exogenous data, for use in tuning (:pr:`5769`) :user:`fkiraly`
+* time series classification: ``sktime`` native grid search, multiplexer for autoML (:pr:`4596`, :pr:`5678`) :user:`achieveordie`, :user:`fkiraly`
+* ``IgnoreX`` - forecasting compositor to ignore exogenous data, for use in tuning (:pr:`5769`) :user:`hliebert`, :user:`fkiraly`
+* classifier migrated from ``sktime-dl``: CNTC classifier (:pr:`3978`) :user:`aurumnpegasus`
 * extension template for time series splitters (:pr:`5716`) :user:`fkiraly`
+* authors and maintainers of algorithms are now tracked via tags ``"authors"`` and ``"maintainers"``, see below
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -36,7 +39,6 @@ Dependency changes
 * ``arch`` (forecasting and parameter estimation soft dependency) bounds have been updated to ``>=5.6,<6.4.0`` (:pr:`5771`) :user:`dependabot[bot]`
 * ``mne`` (transformations soft dependency) bounds have been updated to  ``>=1.5,<1.7`` (:pr:`5585`) :user:`dependabot[bot]`
 * ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.1.1`` (:pr:`5748`) :user:`dependabot[bot]`
-
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -157,17 +159,25 @@ Benchmarking, Metrics, Splitters
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] in ``VectorizedDF``, partially decouple internal data store from methods (:pr:`5681`) :user:`fkiraly`
+
 Forecasting
 ^^^^^^^^^^^
 
 * [ENH] ``Imputer``: conditional parameter handling logic (:pr:`3916`) :user:`aiwalter`, :user:`fkiraly``
+* [ENH] support for probabilistic regressors (``skpro``) in ``make_reduction``, direct reduction (:pr:`5536`) :user:`fkiraly`
+* [ENH] private utility for ``BaseForecaster`` get columns, for all ``predict``-like functions (:pr:`5590`) :user:`fkiraly`
+* [ENH] adding second test parameters for ``TBATS`` (:pr:`5689`) :user:`NguyenChienFelix33`
 * [ENH] config to turn off data memory in forecasters (:pr:`5676`) :user:`fkiraly`, :user:`corradomio`
-* [ENH] forecasting compositor to ignore exogenous data (:pr:`5769`) :user:`fkiraly`
+* [ENH] Simplify conditional statements in direct reducer (:pr:`5725`) :user:`fkiraly`
+* [ENH] forecasting compositor to ignore exogenous data (:pr:`5769`) :user:`hliebert`, :user:`fkiraly`
+* [ENH] add ``disp`` parameter to ``SARIMAX`` to control output verbosity (:pr:`5770`) :user:`tvdboom`
 * [ENH] expose parameters supported by ``fit`` method of ``SARIMAX`` in ``statsmodels`` (:pr:`5787`) :user:`yarnabrina`
 
 Parameter estimation and hypothesis testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] Simplify ``BaseEstimator._get_fitted_params()`` and ``BaseParamFitter`` inheritance of that method (:pr:`5633`) :user:`tpvasconcelos`
 * [ENH] parameter plugin for estimator into transformers, right concat dunder (:pr:`5764`) :user:`fkiraly`
 
 Probability distributions and simulators
@@ -175,19 +185,14 @@ Probability distributions and simulators
 
 * [ENH] bring distributions module on par with ``skpro`` distributions (:pr:`5708`) :user:`fkiraly`, :user:`alex-jg3`
 
-Time series annotation
-^^^^^^^^^^^^^^^^^^^^^^
-
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] migrating CNTC network and classifier for classification from ``sktime-dl`` (:pr:`3978`) :user:`aurumnpegasus`, :user:`fkiraly`
 * [ENH] grid search for time series classification (:pr:`4596`) :user:`achieveordie`, :user:`fkiraly`
+* [ENH] reduce private coupling of ``IndividualBOSS`` classifier and ``BaseClassifier`` (:pr:`5654`) :user:`fkiraly`
+* [ENH] multiplexer classifier (:pr:`5678`) :user:`fkiraly`
 * [ENH] refactor structure of time series forest classifier related files (:pr:`5751`) :user:`fkiraly`
-
-Time series clustering
-^^^^^^^^^^^^^^^^^^^^^^
-
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -197,30 +202,12 @@ Transformations
 * [ENH] feature upgrade for ``SplitterSummarizer`` - granular control of inner ``fit``/``transform`` input (:pr:`5750`) :user:`fkiraly`
 * [ENH] allow ``BaseTransformer._transform`` to return ``None`` (:pr:`5772`) :user:`fkiraly`, :user:`hliebert`
 
-Visualization
-^^^^^^^^^^^^^
-
 Test framework
 ^^^^^^^^^^^^^^
 
-### 🚀 Features
+* [ENH] refactor tests with parallelization backend fixtures to programmatic backend fixture lookup (:pr:`5714`) :user:`fkiraly`
+* [ENH] further refactor parallelization backend test fixtures to use central location (:pr:`5734`) :user:`fkiraly`
 
-
-* [ENH] private utility for ``BaseForecaster`` get columns, for all ``predict``-like functions by @fkiraly in https://github.com/sktime/sktime/pull/5590
-* [ENH] multiplexer classifier by @fkiraly in https://github.com/sktime/sktime/pull/5678
-* [ENH] adding second test parameters for ``TBATS`` by @NguyenChienFelix33 in https://github.com/sktime/sktime/pull/5689
-* [ENH] Simplify ``BaseEstimator._get_fitted_params()`` and ``BaseParamFitter`` inheritance of that method by @tpvasconcelos in https://github.com/sktime/sktime/pull/5633
-* [ENH] in ``VectorizedDF``, partially decouple internal data store from methods by @fkiraly in https://github.com/sktime/sktime/pull/5681
-* [ENH] refactor tests with parallelization backend fixtures to programmatic backend fixture lookup by @fkiraly in https://github.com/sktime/sktime/pull/5714
-* [ENH] Simplify conditional statements in direct reducer by @fkiraly in https://github.com/sktime/sktime/pull/5725
-* [ENH] support for probabilistic regressors (``skpro``) in ``make_reduction``, direct reduction by @fkiraly in https://github.com/sktime/sktime/pull/5536
-* [ENH] reduce private coupling of ``IndividualBOSS`` classifier and ``BaseClassifier`` by @fkiraly in https://github.com/sktime/sktime/pull/5654
-* [ENH] further refactor parallelization backend test fixtures to use central location by @fkiraly in https://github.com/sktime/sktime/pull/5734
-* [ENH] add ``disp`` parameter to sarimax to control output verbosity by @tvdboom in https://github.com/sktime/sktime/pull/5770
-
-
-(:pr:`5709`) :user:`fkiraly`
-(:pr:`5639`) :user:`yarnabrina`
 
 Fixes
 ~~~~~
@@ -329,7 +316,6 @@ Documentation
 * [DOC] various minor API reference improvements (:pr:`5721`) :user:`fkiraly`
 * [DOC] add ``ReducerTransform`` and ``DirectReductionForecaster`` to API reference (:pr:`5690`) :user:`fkiraly`
 * [DOC] remove outdated ``sktime-dl`` reference in ``README.md`` (:pr:`5685`) :user:`fkiraly`
- 
 
 Contributors
 ~~~~~~~~~~~~
@@ -344,9 +330,11 @@ Contributors
 :user:`DManowitz`,
 :user:`fkiraly`,
 :user:`hliebert`,
+:user:`NguyenChienFelix33`,
 :user:`ninedigits`,
 :user:`kurayami07734`,
 :user:`steenrotsman`,
+:user:`tpvasconcelos`,
 :user:`tvdboom`,
 :user:`yarnabrina`
 
