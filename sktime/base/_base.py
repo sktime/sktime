@@ -99,8 +99,8 @@ class BaseObject(_BaseObject):
         "print_changed_only": """
         print_changed_only : bool, default=True
             whether printing of self lists only self-parameters that differ
-            from defaults (False), or all parameter names and values (False)
-            does not nest, i.e., only affects self and not component estimators
+            from defaults (False), or all parameter names and values (False).
+            Does not nest, i.e., only affects self and not component estimators.
         """,
         "warnings": """
         warnings : str, "on" (default), or "off"
