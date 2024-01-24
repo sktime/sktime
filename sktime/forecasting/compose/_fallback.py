@@ -58,9 +58,11 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     >>> y_pred = forecaster.predict()
     """
 
+    _steps_attr = "forecasters"
+
     def __init__(self, forecasters, warn=False):
         super().__init__()
-        self.forecasters = tuple(forecasters)
+        self.forecasters = forecasters
         self.current_forecaster = None
         self.current_name = None
         self.warn = warn
