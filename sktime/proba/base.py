@@ -20,9 +20,16 @@ class BaseDistribution(BaseObject):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # str or list of str, package soft dependencies
+        # estimator type
+        # --------------
         "object_type": "distribution",  # type of object, e.g., 'distribution'
         "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": None,  # string or str list of pkg soft dependencies
         "reserved_params": ["index", "columns"],
         "capabilities:approx": ["energy", "mean", "var", "pdfnorm"],
         "approx_mean_spl": 1000,  # sample size used in MC estimates of mean
@@ -30,8 +37,6 @@ class BaseDistribution(BaseObject):
         "approx_energy_spl": 1000,  # sample size used in MC estimates of energy
         "approx_spl": 1000,  # sample size used in other MC estimates
         "bisect_iter": 1000,  # max iters for bisection method in ppf
-        "authors": "sktime developers",  # author(s) of the object
-        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(self, index=None, columns=None):
