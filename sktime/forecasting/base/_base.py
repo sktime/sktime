@@ -1545,8 +1545,7 @@ class BaseForecaster(BaseEstimator):
     def _update_X(self, X, enforce_index_type=None):
         if X is not None and self.get_config()["remember_data"]:
             X = check_X(X, enforce_index_type=enforce_index_type)
-            if X is len(X) > 0:
-                self._X = X.combine_first(self._X)
+            self._X = update_data(self._X, X)
 
     def _update_y_X(self, y, X=None, enforce_index_type=None):
         """Update internal memory of seen training data.

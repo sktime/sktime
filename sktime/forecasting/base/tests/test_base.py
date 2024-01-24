@@ -465,6 +465,10 @@ def test_remember_data():
     X = load_airline()
     f = NaiveForecaster()
 
+    # force passing and remembering of _X unless turned off
+    f.set_tags(**{"ignores-exogeneous-X": False})
+
+    # turn off remembering _X, _y by config
     f.set_config(**{"remember_data": False})
     f.fit(y, X, fh=[1, 2, 3])
 
