@@ -105,9 +105,9 @@ class DilationMappingTransformer(BaseTransformer):
         return self._dilate_series(X, self.dilation)
 
     def _dilate_series(self, x, d):
-        x_dilated = pd.Series(name=x.name)
-        for i in range(0, d):
-            x_dilated = pd.concat((x_dilated, x[i::d]), axis=0)
+        x_dilations = [x[i::d] for i in range(0, d)]
+        x_dilated = pd.concat(x_dilations, axis=0)
+        x_dilated.name = x.name
         return x_dilated.reset_index(drop=True)
 
     @classmethod
