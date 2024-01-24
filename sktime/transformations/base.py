@@ -400,14 +400,6 @@ class BaseTransformer(BaseEstimator):
         else:
             return ColumnSelect(key) * self
 
-    def set_config(self, **config_dict):
-        """Set config flags to given values.
-
-        Dummy method to capture dynamic docstring generation in sphinx,
-        with config setting specific to this base class.
-        """
-        return super().set_config(**config_dict)
-
     def fit(self, X, y=None):
         """Fit transformer to X, optionally to y.
 
@@ -1457,6 +1449,10 @@ class BaseTransformer(BaseEstimator):
         """
         # standard behaviour: no update takes place, new data is ignored
         return self
+
+
+# initialize dynamic docstrings
+BaseTransformer._init_dynamic_doc()
 
 
 class _SeriesToPrimitivesTransformer(BaseTransformer):

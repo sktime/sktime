@@ -141,10 +141,6 @@ class BaseObject(_BaseObject):
         """,
     }
 
-    def __init__(self):
-        super().__init__()
-        self.__class__.set_config.__doc__ = self._get_set_config_doc()
-
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
@@ -199,6 +195,15 @@ class BaseObject(_BaseObject):
             doc += cfg_doc
         doc += doc_end
         return doc
+
+    @classmethod
+    def _init_dynamic_doc(cls):
+        """Set docstring for set_config from self._config_doc."""
+        try:  # try/except to avoid unexpected failures
+            setattr(cls, "set_config", deepcopy_func(cls.set_config))
+            cls.set_config.__doc__ = cls._get_set_config_doc()
+        except Exception:
+            pass
 
     def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
@@ -652,3 +657,19 @@ def _clone_estimator(base_estimator, random_state=None):
         set_random_state(estimator, random_state)
 
     return estimator
+
+
+def deepcopy_func(f, name=None):
+    """Deepcopy of a function."""
+    import types
+
+    return types.FunctionType(
+        f.__code__,
+        f.__globals__,
+        name or f.__name__,
+        f.__defaults__,
+        f.__closure__,
+    )
+
+# initialize dynamic docstrings
+BaseObject._init_dynamic_doc()

@@ -295,14 +295,6 @@ class BaseForecaster(BaseEstimator):
         else:
             return ColumnSelect(key) ** self
 
-    def set_config(self, **config_dict):
-        """Set config flags to given values.
-
-        Dummy method to capture dynamic docstring generation in sphinx,
-        with config setting specific to this base class.
-        """
-        return super().set_config(**config_dict)
-
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -2409,6 +2401,10 @@ class BaseForecaster(BaseEstimator):
                     "alpha must be passed to _get_columns for predict_quantiles"
                 )
             return pd.MultiIndex.from_product([featnames, alpha])
+
+
+# initialize dynamic docstrings
+BaseForecaster._init_dynamic_doc()
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
