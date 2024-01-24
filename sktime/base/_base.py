@@ -671,5 +671,6 @@ def deepcopy_func(f, name=None):
         f.__closure__,
     )
 
+
 # initialize dynamic docstrings
 BaseObject._init_dynamic_doc()
