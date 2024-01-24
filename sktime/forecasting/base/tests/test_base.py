@@ -14,6 +14,7 @@ from pandas.testing import assert_series_equal
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.compose import YfromX
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.var import VAR
@@ -463,10 +464,7 @@ def test_remember_data():
 
     y = load_airline()
     X = load_airline()
-    f = NaiveForecaster()
-
-    # force passing and remembering of _X unless turned off
-    f.set_tags(**{"ignores-exogeneous-X": False})
+    f = YfromX.create_test_instance()
 
     # turn off remembering _X, _y by config
     f.set_config(**{"remember_data": False})
