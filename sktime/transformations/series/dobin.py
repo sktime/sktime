@@ -78,10 +78,15 @@ class DOBIN(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "KatieBuc",
+        "python_dependencies": "scipy",
+        # estimator type
+        # --------------
         "X_inner_mtype": "pd.DataFrame",
         "fit_is_empty": False,
         "skip-inverse-transform": True,
-        "python_dependencies": "scipy",
     }
 
     def __init__(

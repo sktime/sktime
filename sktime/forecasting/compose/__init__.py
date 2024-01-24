@@ -18,6 +18,7 @@ __all__ = [
     "RecursiveTimeSeriesRegressionForecaster",
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
+    "DirectReductionForecaster",
     "StackingForecaster",
     "MultiplexForecaster",
     "make_reduction",
@@ -26,6 +27,7 @@ __all__ = [
     "ForecastByLevel",
     "Permute",
     "YfromX",
+    "IgnoreX",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -37,6 +39,7 @@ from sktime.forecasting.compose._ensemble import (
 from sktime.forecasting.compose._fhplex import FhPlexForecaster
 from sktime.forecasting.compose._grouped import ForecastByLevel
 from sktime.forecasting.compose._hierarchy_ensemble import HierarchyEnsembleForecaster
+from sktime.forecasting.compose._ignore_x import IgnoreX
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster
 from sktime.forecasting.compose._pipeline import (
     ForecastingPipeline,
@@ -45,6 +48,7 @@ from sktime.forecasting.compose._pipeline import (
     TransformedTargetForecaster,
 )
 from sktime.forecasting.compose._reduce import (
+    DirectReductionForecaster,
     DirectTabularRegressionForecaster,
     DirectTimeSeriesRegressionForecaster,
     DirRecTabularRegressionForecaster,

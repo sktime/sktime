@@ -4,7 +4,8 @@
 __author__ = ["fkiraly"]
 __all__ = ["IxToX"]
 
-from pandas.api.types import is_datetime64_any_dtype, is_period_dtype
+import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype
 
 from sktime.transformations.base import BaseTransformer
 
@@ -63,6 +64,7 @@ class IxToX(BaseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
         "univariate-only": False,
@@ -101,7 +103,7 @@ class IxToX(BaseTransformer):
         level = self.level
 
         def is_date_like(x):
-            return is_datetime64_any_dtype(x) or is_period_dtype(x)
+            return is_datetime64_any_dtype(x) or isinstance(x, pd.PeriodDtype)
 
         if ix_source == "y" and y is not None:
             X = y

@@ -16,6 +16,8 @@ class _PmdArimaAdapter(BaseForecaster):
     """Base class for interfacing pmdarima."""
 
     _tags = {
+        "authors": ["mloning", "hyang1996", "kejsitake", "fkiraly"],
+        "maintainers": "hyang1996",
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -91,7 +93,7 @@ class _PmdArimaAdapter(BaseForecaster):
         fh_abs = fh.to_absolute(self.cutoff).to_pandas()
         fh_abs_int = fh.to_absolute_int(fh_abs[0], self.cutoff).to_pandas()
         end_int = fh_abs_int[-1] + 2
-        # +2 becuase + 1 for "end" (python index), +1 for starting to count at 1 in fh
+        # +2 because + 1 for "end" (python index), +1 for starting to count at 1 in fh
 
         if X is not None:
             X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
@@ -148,7 +150,7 @@ class _PmdArimaAdapter(BaseForecaster):
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
         y_pred = pd.Series(index=fh_abs, dtype="float64")
 
-        # for in-sample predictions, pmdarima requires zero-based integer indicies
+        # for in-sample predictions, pmdarima requires zero-based integer indices
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         if start < 0:
             # Can't forecasts earlier to train starting point
@@ -279,7 +281,7 @@ class _PmdArimaAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        # initializaing cutoff and fh related info
+        # initializing cutoff and fh related info
         cutoff = self.cutoff
         fh_oos = fh.to_out_of_sample(cutoff)
         fh_ins = fh.to_in_sample(cutoff)

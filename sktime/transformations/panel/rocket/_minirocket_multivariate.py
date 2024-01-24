@@ -19,6 +19,15 @@ class MiniRocketMultivariate(BaseTransformer):
     convolutions with six of one weight, three of the second weight to seed dilations.
     MiniRocketMultivariate works with univariate and multivariate time series.
 
+    This transformer fits one set of paramereters per individual series,
+    and applies the transform with fitted parameter i to the i-th series in transform.
+    Vanilla use requires same number of series in fit and transform.
+
+    To fit and transform series at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
+
     Parameters
     ----------
     num_kernels : int, default=10,000
@@ -56,6 +65,8 @@ class MiniRocketMultivariate(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["angus924"],
+        "maintainers": ["angus924"],
         "univariate-only": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
@@ -142,7 +153,7 @@ class MiniRocketMultivariate(BaseTransformer):
         )
 
         X = X.astype(np.float32)
-        # change n_jobs dependend on value and existing cores
+        # change n_jobs depended on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()

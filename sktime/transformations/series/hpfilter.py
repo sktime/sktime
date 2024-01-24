@@ -53,6 +53,8 @@ class HPFilter(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["ken_maeda"],
+        "maintainers": ["ken_maeda"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

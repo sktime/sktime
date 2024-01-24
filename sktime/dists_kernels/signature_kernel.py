@@ -515,7 +515,7 @@ def seq_kernel(
     lowrank=False,
     rankbound=float("inf"),
 ):
-    """Compute the sequential kernel between seqeuence/time series.
+    """Compute the sequential kernel between sequence/time series.
 
     Provides interface for vanilla sequential kernel, low-rank, and higher-order.
 
@@ -603,7 +603,7 @@ def seq_kernel_XY(
     lowrank=False,
     rankbound=float("inf"),
 ):
-    """Compute the sequential kernel between two different collections of seqeuence.
+    """Compute the sequential kernel between two different collections of sequence.
 
     Provides interface for vanilla sequential kernel, low-rank, and higher-order.
 
@@ -867,7 +867,7 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
 
 
 class SignatureKernel(BasePairwiseTransformerPanel):
-    """Compute the sequential kernel matrix row features on collection of series.
+    """Time series signature kernel, including high-order and low-rank variants.
 
     Implements the signature kernel of Kiraly et al, see [1]_ and [2]_,
     including higher-order and low-rank approximation variants described therein.
@@ -903,7 +903,11 @@ class SignatureKernel(BasePairwiseTransformerPanel):
         Journal of Machine Learning Research.
     """
 
-    _tags = {"X_inner_mtype": "numpy3D", "pwtrafo_type": "kernel"}
+    _tags = {
+        "authors": "fkiraly",
+        "X_inner_mtype": "numpy3D",
+        "pwtrafo_type": "kernel",
+    }
 
     def __init__(
         self,

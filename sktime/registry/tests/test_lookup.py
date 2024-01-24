@@ -15,17 +15,8 @@ from sktime.registry._base_classes import (
 from sktime.registry._lookup import _check_estimator_types
 
 VALID_SCITYPES_SET = set(
-    BASE_CLASS_SCITYPE_LIST + TRANSFORMER_MIXIN_SCITYPE_LIST + ["estimator"]
+    BASE_CLASS_SCITYPE_LIST + TRANSFORMER_MIXIN_SCITYPE_LIST + ["estimator", "object"]
 )
-
-# some scitypes have no associated tags yet
-SCITYPES_WITHOUT_TAGS = [
-    "series-annotator",
-    "clusterer",
-    "object",
-    "splitter",
-    "network",
-]
 
 # shorthands for easy reading
 b = BASE_CLASS_SCITYPE_LIST
@@ -101,14 +92,8 @@ def test_all_tags(estimator_scitype):
     assert isinstance(tags, list)
 
     # there should be at least one tag returned
-    # exception: scitypes which we know don't have tags associated
-    est_list = (
-        estimator_scitype
-        if isinstance(estimator_scitype, list)
-        else [estimator_scitype]
-    )
-    if not set(est_list).issubset(SCITYPES_WITHOUT_TAGS):
-        assert len(tags) > 0
+    # even scitypes without tags should return those for "object"
+    assert len(tags) > 0
 
     # checks return type specification (see docstring)
     for tag in tags:
@@ -121,6 +106,11 @@ def test_all_tags(estimator_scitype):
             assert isinstance(tag[2][0], str)
             assert isinstance(tag[2][1], (str, list))
         assert isinstance(tag[3], str)
+
+    # check some tags that all object types should have
+    tags_strs = [tag[0] for tag in tags]
+    assert "python_dependencies" in tags_strs
+    assert "python_version" in tags_strs
 
 
 @pytest.mark.parametrize("return_names", [True, False])

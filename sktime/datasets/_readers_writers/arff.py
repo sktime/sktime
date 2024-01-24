@@ -17,7 +17,7 @@ from sktime.transformations.base import BaseTransformer
 # ==================================================================================================
 
 
-# TODO: original author didnt add test for this function
+# TODO: original author didn't add test for this function
 # Refactor the nested loops
 def load_from_arff_to_dataframe(
     full_file_path_and_name,
@@ -202,7 +202,7 @@ def write_tabular_transformation_to_arff(
     dirt = f"{str(path)}/{str(problem_name)}-{type(transformation).__name__}/"
     try:
         os.makedirs(dirt)
-    except os.error:
+    except OSError:
         pass  # raises os.error if path already exists
     # create arff file in the path
     file = open(

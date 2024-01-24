@@ -28,7 +28,7 @@ from sktime.utils.validation.panel import check_X_y
 class DrCIF(BaseClassifier):
     """Diverse Representation Canonical Interval Forest Classifier (DrCIF).
 
-    Extension of the CIF algorithm using multple representations. Implementation of the
+    Extension of the CIF algorithm using multiple representations. Implementation of the
     interval based forest making use of the catch22 feature set on randomly selected
     intervals on the base series, periodogram representation and differences
     representation described in the HIVE-COTE 2.0 paper Middlehurst et al (2021). [1]_
@@ -141,13 +141,18 @@ class DrCIF(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MatthewMiddlehurst",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "interval",
-        "python_dependencies": "numba",
     }
 
     def __init__(

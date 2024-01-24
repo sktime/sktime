@@ -65,12 +65,17 @@ class TSFreshClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_version": "<3.10",
+        "python_dependencies": "tsfresh",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
-        "python_version": "<3.10",
-        "python_dependencies": "tsfresh",
     }
 
     def __init__(
@@ -149,6 +154,7 @@ class TSFreshClassifier(BaseClassifier):
             self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
+        self._Xt_colnames = X_t.columns
 
         if X_t.shape[1] == 0:
             warn(
@@ -182,7 +188,9 @@ class TSFreshClassifier(BaseClassifier):
         if self._return_majority_class:
             return np.full(X.shape[0], self.classes_[self._majority_class])
 
-        return self._estimator.predict(self._transformer.transform(X))
+        X_t = self._transformer.transform(X)
+        X_t = X_t.reindex(self._Xt_colnames, axis=1, fill_value=0)
+        return self._estimator.predict(X_t)
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
@@ -207,7 +215,9 @@ class TSFreshClassifier(BaseClassifier):
             return self._estimator.predict_proba(self._transformer.transform(X))
         else:
             dists = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimator.predict(self._transformer.transform(X))
+            X_t = self._transformer.transform(X)
+            X_t = X_t.reindex(self._Xt_colnames, axis=1, fill_value=0)
+            preds = self._estimator.predict(X_t)
             for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists

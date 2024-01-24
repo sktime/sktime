@@ -1,4 +1,4 @@
-"""Mutli-scale Attention Convolutional Neural Classifier."""
+"""Multi-scale Attention Convolutional Neural Classifier."""
 
 __author__ = ["jnrusson1"]
 
@@ -51,7 +51,7 @@ class MACNNClassifier(BaseDeepClassifier):
     optimizer: None or keras.optimizers.Optimizer instance, optional (default=None)
         The optimizer that is used for model compiltation. If left as None,
         then `keras.optimizers.Adam(learning_rate=0.0001)` is used.
-    callbacks : None or list of keras.callbacks.Callback, optinal (default=None)
+    callbacks : None or list of keras.callbacks.Callback, optional (default=None)
         The callback(s) to use during training.
     random_state : int, optional (default=0)
         The seed to any random action.
@@ -77,7 +77,14 @@ class MACNNClassifier(BaseDeepClassifier):
     MACNNClassifier(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jnrusson1"],
+        "maintainers": "jnrusson1",
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,

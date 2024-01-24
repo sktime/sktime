@@ -26,7 +26,7 @@ class Deseasonalizer(BaseTransformer):
 
     `transform` aligns seasonal components stored in `seasonal_` with
     the time index of the passed :term:`series <Time series>` and then
-    substracts them ("additive" model) from the passed :term:`series <Time series>`
+    subtracts them ("additive" model) from the passed :term:`series <Time series>`
     or divides the passed series by them ("multiplicative" model).
 
     Parameters
@@ -63,6 +63,12 @@ class Deseasonalizer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "eyalshafran", "aiwalter"],
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -75,7 +81,6 @@ class Deseasonalizer(BaseTransformer):
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
         "univariate-only": True,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, sp=1, model="additive"):
@@ -247,7 +252,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 
     Transform aligns seasonal components stored in `seasonal_` with
     the time index of the passed series and then
-    substracts them ("additive" model) from the passed series
+    subtracts them ("additive" model) from the passed series
     or divides the passed series by them ("multiplicative" model).
 
 
@@ -363,16 +368,25 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 class STLTransformer(BaseTransformer):
     """Remove seasonal components from a time-series using STL.
 
-    Interfaces STL from statsmodels as an sktime transformer.
+    Interfaces ``statsmodels.tsa.seasonal.STL`` as an sktime transformer.
 
-    The STLTransformer is a descriptive transformer to remove seasonality
-    from a series and is based on statsmodels.STL. It returns deseasonalized
-    data. Components are returned in addition if return_components=True
-    STLTransformer can not inverse_transform on indices not seen in fit().
-    This means that for pipelining, the Deseasonalizer or Detrender must be
-    used instead of STLTransformer.
+    ``STLTransformer`` can be used to perform deseasonalization or decomposition:
 
-    Important note: the returned series has seasonality removed, but not trend.
+    If ``return_components=False``, it will return the deseasonalized series, i.e.,
+    the trend component from ``statsmodels`` ``STL``.
+
+    If ``return_components=True``, it will transform the series into a decomposition
+    of component, returning the trend, seasonal, and residual components.
+
+    ``STLTransformer`` performs ``inverse_transform`` by summing any components,
+    and can be used for pipelining in a ``TransformedTargetForecaster``.
+
+    Important: for separate forecasts of trend and seasonality, and an
+    inverse transform that respects seasonality, ensure
+    that ``return_components=True`` is set, otherwise the inverse will just
+    return the trend component.
+
+    An alternative for pipeline-style composition is ``STLForecaster``.
 
     Parameters
     ----------
@@ -414,7 +428,7 @@ class STLTransformer(BaseTransformer):
         the two are linearly interpolated. Higher values reduce estimation
         time.
     return_components : bool, default=False
-        if False, will return only the STL transformed series
+        if False, will return only the trend component
         if True, will return the transformed series, as well as three components
             as variables in the returned multivariate series (DataFrame cols)
             "transformed" - the transformed series
@@ -613,7 +627,7 @@ class STLTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # test case 1: all default parmameters
+        # test case 1: all default parameters
         params1 = {}
 
         # test case 2: return all components

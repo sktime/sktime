@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -22,7 +22,7 @@ jobs:
           python -m build --wheel --sdist --outdir wheelhouse
 
       - name: Store wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: wheelhouse/*
@@ -39,14 +39,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: wheels
           path: wheelhouse
+
+      - name: Display downloaded artifacts
+        run: ls -l wheelhouse
 
       - name: Get wheel filename
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $GITHUB_ENV
@@ -55,7 +58,7 @@ jobs:
         run: python -m pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
 
       - name: Run tests
-        run: make test
+        run: make test_without_datasets
 
   test_windows_wheels:
     needs: build_wheels
@@ -64,53 +67,19 @@ jobs:
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        include:
-          # Window 64 bit
-          - os: windows-latest
-            python: 38
-            python-version: '3.8'
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-latest
-            python: 39
-            python-version: '3.9'
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-latest
-            python: 310
-            python-version: '3.10'
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-latest
-            python: 311
-            python-version: '3.11'
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-latest
-            python: 312
-            python-version: '3.12'
-            bitness: 64
-            platform_id: win_amd64
+        os: [windows-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
 
     steps:
       - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/setup-python@v5
         with:
-          activate-environment: test
-          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
-          channels: anaconda, conda-forge,
 
-      - run: conda --version
-      - run: which python
-
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: wheels
           path: wheelhouse
-
-      - name: Install conda libpython
-        run: conda install -c anaconda -n test -y libpython
 
       - name: Display downloaded artifacts
         run: ls -l wheelhouse
@@ -118,21 +87,11 @@ jobs:
       - name: Get wheel filename
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $env:GITHUB_ENV
 
-      - name: Activate conda env
-        run: conda activate test
-
       - name: Install wheel and extras
         run: python -m pip install "${env:WHEELNAME}[all_extras_pandas2,dev]"
 
-      - name: Show conda packages
-        run: conda list -n test
-
-      - name: Run tests
-        run: |
-          mkdir -p testdir/
-          cp .coveragerc testdir/
-          cp setup.cfg testdir/
-          python -m pytest
+      - name: Run tests  # explicit commands as windows does not support make
+        run: python -m pytest  --ignore sktime/datasets
 
   upload_wheels:
     name: Upload wheels to PyPI
@@ -140,7 +99,7 @@ jobs:
     needs: [build_wheels,test_unix_wheels,test_windows_wheels]
 
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: wheels
           path: wheelhouse

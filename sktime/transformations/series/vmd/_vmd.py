@@ -97,6 +97,12 @@ class VmdTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["DaneLyttinen", "vcarvo"],
+        "maintainers": ["DaneLyttinen", "vcarvo"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,

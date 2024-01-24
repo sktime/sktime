@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.pandas import df_map
 
 __all__ = ["PaddingTransformer"]
 __author__ = ["abostrom"]
@@ -23,6 +24,8 @@ class PaddingTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["abostrom"],
+        "maintainers": ["abostrom"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -103,7 +106,7 @@ class PaddingTransformer(BaseTransformer):
             )
 
         pad = [pd.Series([self._create_pad(series) for series in out]) for out in arr]
-        Xt = pd.DataFrame(pad).applymap(pd.Series)
+        Xt = df_map(pd.DataFrame(pad))(pd.Series)
 
         return Xt
 

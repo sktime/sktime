@@ -33,6 +33,12 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["eyjo"],
+        "maintainers": ["eyjo"],
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

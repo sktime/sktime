@@ -60,6 +60,8 @@ class BaseParamFitter(BaseEstimator):
         "capability:multivariate": False,  # can estimator handle multivariate data?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(self):
@@ -70,11 +72,46 @@ class BaseParamFitter(BaseEstimator):
         super().__init__()
         _check_estimator_deps(self)
 
+    def __mul__(self, other):
+        """Magic * method, for estimators on the right.
+
+        Overloaded multiplication operation for parameter fitters.
+        Implemented for ``other`` being:
+
+        * a forecaster, results in ``PluginParamsForecaster``
+        * a transformer, results in ``PluginParamsTransformer``
+        * otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` estimator, must be one of the types specified above
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        one of the plugin estimator objects,
+        concatenation of `self` (first) with `other` (last).
+        """
+        from sktime.forecasting.base import BaseForecaster
+        from sktime.param_est.plugin import (
+            PluginParamsForecaster,
+            PluginParamsTransformer,
+        )
+        from sktime.transformations.base import BaseTransformer
+
+        if isinstance(other, BaseForecaster):
+            return PluginParamsForecaster(param_est=self, forecaster=other)
+        elif isinstance(other, BaseTransformer):
+            return PluginParamsTransformer(param_est=self, transformer=other)
+        else:
+            return NotImplemented
+
     def __rmul__(self, other):
         """Magic * method, return concatenated ParamFitterPipeline, trafos on left.
 
-        Overloaded multiplication operation for classifiers. Implemented for `other`
-        being a transformer, otherwise returns `NotImplemented`.
+        Overloaded multiplication operation for parameter fitters.
+        Implemented for ``other`` being a transformer,
+        otherwise returns `NotImplemented`.
 
         Parameters
         ----------
@@ -381,23 +418,3 @@ class BaseParamFitter(BaseEstimator):
         # but looping to self.fit for now to avoid interface break
 
         return self
-
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        # default retrieves all self attributes ending in "_"
-        # and returns them with keys that have the "_" removed
-        fitted_params = [attr for attr in dir(self) if attr.endswith("_")]
-        fitted_params = [x for x in fitted_params if not x.startswith("_")]
-        fitted_param_dict = {p[:-1]: getattr(self, p) for p in fitted_params}
-
-        return fitted_param_dict

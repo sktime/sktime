@@ -23,7 +23,7 @@ class ForecastKnownValues(BaseForecaster):
       e.g., in combination with ReconcilerForecaster for an isolated reconciliation step
 
     When forecasting, uses `pandas.DataFrame.reindex` under the hood to obtain predicted
-    values from `y_known`. Paramters other than `y_known` are directly passed
+    values from `y_known`. Parameters other than `y_known` are directly passed
     on to `pandas.DataFrame.reindex`.
 
     Parameters
@@ -56,6 +56,11 @@ class ForecastKnownValues(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "both",

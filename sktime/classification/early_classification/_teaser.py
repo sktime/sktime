@@ -55,7 +55,7 @@ class TEASER(BaseEarlyClassifier):
         List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
         in the _classification_points List. Duplicate values will be removed, and the
-        full series length will be appeneded if not present.
+        full series length will be appended if not present.
         If None, will use 20 thresholds linearly spaces from 0 to the series length.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -78,7 +78,7 @@ class TEASER(BaseEarlyClassifier):
     state_info : 2d np.ndarray (4 columns)
         Information stored about input instances after the decision-making process in
         update/predict methods. Used in update methods to make decisions based on
-        the resutls of previous method calls.
+        the results of previous method calls.
         Records in order: the time stamp index, the number of consecutive decisions
         made, the predicted class and the series length.
 
@@ -548,9 +548,9 @@ class TEASER(BaseEarlyClassifier):
             earliness,
         )
 
-    def _update_state_info(self, acccept_decision, preds, state_info, idx, time_stamp):
+    def _update_state_info(self, accept_decision, preds, state_info, idx, time_stamp):
         # consecutive predictions, add one if positive decision and same class
-        if acccept_decision[idx] and preds[idx] == state_info[idx][2]:
+        if accept_decision[idx] and preds[idx] == state_info[idx][2]:
             return (
                 time_stamp,
                 state_info[idx][1] + 1,
@@ -561,7 +561,7 @@ class TEASER(BaseEarlyClassifier):
         else:
             return (
                 time_stamp,
-                1 if acccept_decision[idx] else 0,
+                1 if accept_decision[idx] else 0,
                 preds[idx],
                 self._classification_points[time_stamp],
             )

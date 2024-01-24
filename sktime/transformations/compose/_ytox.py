@@ -22,6 +22,7 @@ class YtoX(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
         "univariate-only": False,

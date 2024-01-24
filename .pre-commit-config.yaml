@@ -1,9 +1,10 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-added-large-files
-        args: ["--maxkb=1000"]
+        args:
+          - --maxkb=1000
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks
@@ -18,27 +19,26 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.10.1
+    rev: v3.15.0
     hooks:
       - id: pyupgrade
         args:
           - --py38-plus
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
         name: isort
 
   - repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 23.12.1
     hooks:
       - id: black
         language_version: python3
-        # args: [--line-length 79]
 
   - repo: https://github.com/pycqa/flake8
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: flake8
         exclude: docs/conf.py
@@ -51,28 +51,30 @@ repos:
         stages: [manual]
 
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.7.0
+    rev: 1.7.1
     hooks:
       - id: nbqa-black
-        args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
-        additional_dependencies: [black==22.3.0]
+        args:
+          - --nbqa-dont-skip-bad-cells
       - id: nbqa-isort
-        args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
-        additional_dependencies: [isort==5.6.4]
+        args:
+          - --nbqa-dont-skip-bad-cells
       - id: nbqa-flake8
-        args: [--nbqa-dont-skip-bad-cells, "--extend-ignore=E402,E203"]
-        additional_dependencies: [flake8==3.8.3]
+        args:
+          - --nbqa-dont-skip-bad-cells
+          - --extend-ignore=E402,E203
 
   - repo: https://github.com/pycqa/pydocstyle
     rev: 6.3.0
     hooks:
       - id: pydocstyle
-        args: ["--config=setup.cfg"]
+        args:
+          - --config=setup.cfg
 
   # We use the Python version instead of the original version which seems to require Docker
   # https://github.com/koalaman/shellcheck-precommit
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.5
+    rev: v0.9.0.6
     hooks:
       - id: shellcheck
         name: shellcheck

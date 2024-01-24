@@ -1,7 +1,7 @@
 """Time Convolutional Neural Network (CNN) for classification."""
 
 __author__ = [
-    "Jack Russon",
+    "jnrusson1",
     "TonyBagnall",
     "achieveordie",
 ]
@@ -46,7 +46,7 @@ class TapNetClassifier(BaseDeepClassifier):
     loss                : str, default = "binary_crossentropy"
         loss function for the classifier
     optimizer           : str or None, default = "Adam(lr=0.01)"
-        gradient updating function for the classifer
+        gradient updating function for the classifier
     use_bias            : bool, default = True
         whether to use bias in the output dense layer
     use_rp              : bool, default = True
@@ -85,7 +85,14 @@ class TapNetClassifier(BaseDeepClassifier):
     TapNetClassifier(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jnrusson1", "TonyBagnall", "achieveordie"],
+        "maintainers": ["jnrusson1", "achieveordie"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,

@@ -14,7 +14,7 @@ from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.deep_equals import deep_equals
 
 
 class AggrDist(BasePairwiseTransformerPanel):
@@ -63,6 +63,8 @@ class AggrDist(BasePairwiseTransformerPanel):
     >>> from sklearn.gaussian_process.kernels import RBF
     >>> mean_gaussian_tskernel = AggrDist(RBF())
     """
+
+    _tags = {"authors": "fkiraly"}
 
     def __init__(
         self,
@@ -195,6 +197,7 @@ class FlatDist(BasePairwiseTransformerPanel):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "numpy3D",  # which mtype is used internally in _transform?
         "capability:unequal_length": False,
     }

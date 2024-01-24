@@ -30,6 +30,7 @@ class Normal(BaseDistribution):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "capabilities:approx": ["pdfnorm"],
         "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
         "distr:measuretype": "continuous",
@@ -44,7 +45,6 @@ class Normal(BaseDistribution):
         # todo: untangle index handling
         # and broadcast of parameters.
         # move this functionality to the base class
-        # 0.19.0?
         self._mu, self._sigma = self._get_bc_params(self.mu, self.sigma)
         shape = self._mu.shape
 

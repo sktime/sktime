@@ -38,13 +38,18 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        "python_dependencies": "dtw-python",
+        "python_dependencies_alias": {"dtw-python": "dtw"},
+        # estimator type
+        # --------------
         "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
         "symmetric": True,  # all the distances are symmetric
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
         "X_inner_mtype": "df-list",
-        "python_dependencies": "dtw-python",
-        "python_dependencies_alias": {"dtw-python": "dtw"},
     }
 
     def __init__(

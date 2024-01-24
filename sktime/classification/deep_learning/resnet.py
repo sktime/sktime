@@ -60,7 +60,14 @@ class ResNetClassifier(BaseDeepClassifier):
     ResNetClassifier(...)
     """
 
-    _tags = {"python_dependencies": ["tensorflow"]}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["James-Large", "AurumnPegasus", "nilesh05apr"],
+        "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
+        "python_dependencies": ["tensorflow"],
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
