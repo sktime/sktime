@@ -8,12 +8,6 @@ from sktime.utils.validation._dependencies import (
     _check_soft_dependencies,
 )
 
-_check_dl_dependencies(severity="warning")
-_check_soft_dependencies(
-    package_import_alias={"keras-self-attention": "keras_self_attention"},
-    severity="warning",
-)
-
 
 class CNTCNetwork(BaseDeepNetwork):
     """Combining contextual neural networks for time series classification.
@@ -73,11 +67,13 @@ class CNTCNetwork(BaseDeepNetwork):
         lstm_size=8,
         dense_size=64,
     ):
-        _check_dl_dependencies(severity="error")
         _check_soft_dependencies(
+            "keras-self-attention",
             package_import_alias={"keras-self-attention": "keras_self_attention"},
-            severity="warning",
+            severity="error",
         )
+        _check_dl_dependencies(severity="error")
+
         self.random_state = random_state
         self.rnn_layer = rnn_layer
         self.filter_sizes = filter_sizes
