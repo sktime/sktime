@@ -52,6 +52,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     HierarchyEnsembleForecaster
     FhPlexForecaster
     IgnoreX
+    FallbackForecaster
 
 Reduction
 ---------
