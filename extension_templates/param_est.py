@@ -133,7 +133,7 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         #
         # soft dependency requirement
         "python_dependencies": None,
-        # valid values: str or list of str
+        # valid values: str or list of str, PEP 440 valid package version specifiers
         # raises exception at construction if modules at strings cannot be imported
     }
     #  in case of inheritance, concrete class should typically set tags
