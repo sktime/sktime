@@ -12,6 +12,7 @@ __author__ = ["ninedigits"]
 __all__ = ["FallbackForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.warnings import warn
 
@@ -67,6 +68,16 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     FallbackForecaster(...)
     >>> y_pred = forecaster.predict()
     """
+
+    _tags = {
+        "authors": ["ninedigits"],
+        "maintainers": ["ninedigits"],
+        "handles-missing-data": True,
+        "scitype:y": "both",
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "fit_is_empty": False,
+    }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
@@ -230,7 +241,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
 
         # test multivariate case, i.e., ensembling multiple variables at same time
-        FORECASTER = YfromX.create_test_instance()
-        params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+        FORECASTER2 = YfromX.create_test_instance()
+        params = params + [{"forecasters": [FORECASTER2, FORECASTER]}]
 
         return params
