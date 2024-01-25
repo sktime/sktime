@@ -25,12 +25,12 @@ Version 0.25.1 - 2023-01-24
 Highlights
 ~~~~~~~~~~
 
-* in ``make_reduction``, direct reduction now supports probabilistic tabular regressors from ``skpro`` (:pr:`5536`) :user:`fkiraly`
+* in ``make_reduction``, direct reduction forecaster now supports probabilistic tabular regressors from ``skpro`` (:pr:`5536`) :user:`fkiraly`
 * new, efficient, parallelizable PAA and SAX transformer implementations, available as ``PAA2``, ``SAX2`` (:pr:`5742`) :user:`steenrotsman`
+* ``FallbackForecaster``, fallback chain of multiple forecaster for exception handling (:pr:`5779`) :user:`ninedigits`
 * time series classification: ``sktime`` native grid search, multiplexer for autoML (:pr:`4596`, :pr:`5678`) :user:`achieveordie`, :user:`fkiraly`
 * ``IgnoreX`` - forecasting compositor to ignore exogenous data, for use in tuning (:pr:`5769`) :user:`hliebert`, :user:`fkiraly`
 * classifier migrated from ``sktime-dl``: CNTC classifier (:pr:`3978`) :user:`aurumnpegasus`
-* extension template for time series splitters (:pr:`5716`) :user:`fkiraly`
 * authors and maintainers of algorithms are now tracked via tags ``"authors"`` and ``"maintainers"``, see below
 
 Dependency changes
@@ -173,6 +173,7 @@ Forecasting
 * [ENH] forecasting compositor to ignore exogenous data (:pr:`5769`) :user:`hliebert`, :user:`fkiraly`
 * [ENH] add ``disp`` parameter to ``SARIMAX`` to control output verbosity (:pr:`5770`) :user:`tvdboom`
 * [ENH] expose parameters supported by ``fit`` method of ``SARIMAX`` in ``statsmodels`` (:pr:`5787`) :user:`yarnabrina`
+* [ENH] ``FallbackForecaster``, fallback upon fail with multiple forecaster chain (:pr:`5779`) :user:`ninedigits`
 
 Parameter estimation and hypothesis testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
