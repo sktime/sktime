@@ -252,7 +252,7 @@ tests = [
 # these are for specual uses and may be changed or removed at any time
 binder = [
   "jupyter",
-  "pandas<2.0.0",
+  "pandas<3.0.0",
 ]
 cython_extras = [
   "mrseql",
@@ -273,7 +273,7 @@ mlflow_tests = [
   "moto",
 ]
 pandas1 = [
-  "pandas<2.0.0",
+  "pandas<3.0.0",
 ]
 
 [project.urls]
