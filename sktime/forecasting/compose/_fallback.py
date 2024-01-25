@@ -83,11 +83,13 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         super().__init__()
 
         self.forecasters = forecasters
-        self.current_forecaster = None
-        self.current_name = None
+        self.current_forecaster_ = None
+        self.current_name_ = None
         self.verbose = verbose
 
-        self._forecasters = self._check_estimators(forecasters, "forecasters")
+        self._forecasters = self._check_estimators(
+            forecasters, "forecasters", clone_ests=False
+        )
         self.forecasters_ = self._check_estimators(forecasters, "forecasters")
 
         self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
@@ -215,7 +217,6 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-
 
         Returns
         -------
