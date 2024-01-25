@@ -49,6 +49,13 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     current_name_ : str
         name of the current forecaster
         same as ``forecasters_[first_nonfailing_forecaster_index_][0]``
+    exceptions_raised_ : dict
+        dictionary of exceptions raised by forecasters during fitting or prediction
+        keys are int indices of forecasters in the list of forecasters
+        values are dicts with keys "failed_at_step", "exception", "forecaster_name"
+        failed_at_step is either "fit" or "predict"
+        exception is the exception raised by the forecaster
+        forecaster_name is the name of the forecaster
 
     Examples
     --------
@@ -204,7 +211,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             self.exceptions_raised_[self.first_nonfailing_forecaster_index_] = {
                 "failed_at_step": "fit",
                 "exception": e,
-                "forecaster_name": self.current_name,
+                "forecaster_name": self.current_name_,
             }
             if self.verbose:
                 warn(
