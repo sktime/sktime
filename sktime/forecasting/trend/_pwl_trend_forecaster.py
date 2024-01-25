@@ -51,6 +51,15 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         automatic changepoint selection. Large values will allow many
         changepoints, small values will allow few changepoints.
         Recommended to take values within [0.001,0.5].
+    yearly_seasonality: str or bool or int, default="auto"
+        Fit yearly seasonality.
+        Can be 'auto', True, False, or a number of Fourier terms to generate.
+    weekly_seasonality: str or bool or int, default="auto"
+        Fit weekly seasonality.
+        Can be 'auto', True, False, or a number of Fourier terms to generate.
+    daily_seasonality: str or bool or int, default="auto"
+        Fit daily seasonality.
+        Can be 'auto', True, False, or a number of Fourier terms to generate.
 
     References
     ----------
@@ -89,6 +98,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         changepoint_range=0.8,
         changepoint_prior_scale=0.05,
         verbose=0,
+        yearly_seasonality="auto",
+        weekly_seasonality="auto",
+        daily_seasonality="auto",
     ):
         self.freq = None
         self.add_seasonality = None
@@ -99,9 +111,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         self.changepoints = changepoints
         self.n_changepoints = n_changepoints
         self.changepoint_range = changepoint_range
-        self.yearly_seasonality = "auto"
-        self.weekly_seasonality = "auto"
-        self.daily_seasonality = "auto"
+        self.yearly_seasonality = yearly_seasonality
+        self.weekly_seasonality = weekly_seasonality
+        self.daily_seasonality = daily_seasonality
         self.holidays = None
         self.seasonality_mode = "additive"
         self.seasonality_prior_scale = 10.0
