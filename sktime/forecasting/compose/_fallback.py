@@ -222,7 +222,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.compose._reduce import YfromX
         from sktime.forecasting.naive import NaiveForecaster
 
         # univariate case
@@ -230,7 +230,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
 
         # test multivariate case, i.e., ensembling multiple variables at same time
-        FORECASTER = DirectReductionForecaster.create_test_instance()
+        FORECASTER = YfromX.create_test_instance()
         params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
 
         return params
