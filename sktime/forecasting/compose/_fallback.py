@@ -26,8 +26,12 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
     Parameters
     ----------
-    forecasters : list of (str, estimator) tuples
+    forecasters : list of forecasters, or
+        list of tuples (str, estimator) of sktime forecasters
         Forecasters to be tried sequentially.
+        These are "blueprint" transformers resp forecasters,
+        forecaster states do not change when `fit` is called
+
     warn : bool, default=False
         If True, raises warnings when a forecaster fails to fit or predict.
 
