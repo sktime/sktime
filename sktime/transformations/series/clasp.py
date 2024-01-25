@@ -58,6 +58,13 @@ class ClaSPTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ermshaua", "patrickzib"],
+        "maintainers": ["ermshaua"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -67,7 +74,6 @@ class ClaSPTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": True,
         "fit_is_empty": True,
-        "python_dependencies": "numba",
     }
 
     def __init__(

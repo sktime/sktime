@@ -67,6 +67,14 @@ class FinancialHolidaysTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "yarnabrina",
+        "maintainers": "yarnabrina",
+        "python_version": ">=3.8",
+        "python_dependencies": ["holidays"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
@@ -79,8 +87,6 @@ class FinancialHolidaysTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "handles-missing-data": True,
-        "python_version": ">=3.8",
-        "python_dependencies": ["holidays"],
     }
 
     def __init__(self, market, years=None, expand=True, observed=True, name=None):

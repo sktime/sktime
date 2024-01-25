@@ -123,6 +123,8 @@ class ShapeletTransform(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst", "jasonlines", "dguijo"],
+        "maintainers": ["dguijo"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -1066,6 +1068,8 @@ class RandomShapeletTransform(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst", "jasonlines", "dguijo"],
+        "maintainers": ["dguijo"],
         "fit_is_empty": False,
         "univariate-only": False,
         "scitype:transform-input": "Series",

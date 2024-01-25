@@ -17,8 +17,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
 
+from sktime.base._panel.forest._composable import BaseTimeSeriesForest
 from sktime.classification.base import BaseClassifier
-from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
@@ -174,6 +174,12 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "AyushmaanSeth"],
+        "maintainers": ["AyushmaanSeth"],
+        # estimator type
+        # --------------
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
     }
 

@@ -141,13 +141,18 @@ class DrCIF(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MatthewMiddlehurst",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "interval",
-        "python_dependencies": "numba",
     }
 
     def __init__(

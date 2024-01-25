@@ -5,10 +5,12 @@
 __author__ = [
     "mloning",
     "AyushmaanSeth",
+    "danbartl",
     "kAnand77",
     "LuisZugasti",
     "Lovkush-A",
     "fkiraly",
+    "benheid",
 ]
 
 __all__ = [
@@ -196,6 +198,16 @@ class _Reducer(_BaseWindowForecaster):
     """Base class for reducing forecasting to regression."""
 
     _tags = {
+        "authors": [
+            "mloning",
+            "AyushmaanSeth",
+            "danbartl",
+            "kAnand77",
+            "LuisZugasti",
+            "Lovkush-A",
+            "fkiraly",
+            "benheid",
+        ],
         "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
         "handles-missing-data": True,
         "capability:insample": False,
@@ -1868,6 +1880,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
@@ -2207,6 +2220,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],

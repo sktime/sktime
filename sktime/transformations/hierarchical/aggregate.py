@@ -49,6 +49,12 @@ class Aggregator(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "ciaran-g",
+        "maintainers": "ciaran-g",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",

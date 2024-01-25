@@ -64,6 +64,8 @@ class BaseClassifier(BasePanelMixin):
         "capability:predict_proba": False,
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "requires_cython": False,  # whether C compiler is required in env, e.g., gcc
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     # convenience constant to control which metadata of input data

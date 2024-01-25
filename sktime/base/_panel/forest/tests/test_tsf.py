@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from numpy.random import RandomState
 
-from sktime.series_as_features.base.estimators.interval_based._tsf import _get_intervals
+from sktime.base._panel.forest._tsf import _get_intervals
 
 
 @pytest.mark.parametrize(

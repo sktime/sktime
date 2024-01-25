@@ -119,12 +119,18 @@ class MUSE(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["patrickzib", "BINAYKUMAR943"],
+        "maintainers": "BINAYKUMAR943",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
-        "python_dependencies": "numba",
     }
 
     def __init__(

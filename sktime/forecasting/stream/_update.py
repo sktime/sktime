@@ -50,6 +50,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
+        "authors": "fkiraly",
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -235,6 +236,7 @@ class UpdateEvery(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
+        "authors": "fkiraly",
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -400,6 +402,7 @@ class DontUpdate(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
+        "authors": "fkiraly",
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,

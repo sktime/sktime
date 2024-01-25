@@ -224,10 +224,6 @@ def test_evaluate_no_exog_against_with_exog():
 @pytest.mark.parametrize("scores", [[MeanAbsolutePercentageError()], METRICS])
 def test_evaluate_error_score(error_score, return_data, strategy, backend, scores):
     """Test evaluate to raise warnings and exceptions according to error_score value."""
-    # skip test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
-
     forecaster = ExponentialSmoothing(sp=12)
     y = load_airline()
     # add NaN to make ExponentialSmoothing fail
@@ -249,7 +245,7 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend, score
 
     if error_score in [np.nan, 1000]:
         # known bug - loky backend does not pass on warnings, #5307
-        if backend != "loky":
+        if backend["backend"] not in ["loky", "multiprocessing"]:
             with pytest.warns(FitFailedWarning):
                 results = evaluate(**args)
         else:

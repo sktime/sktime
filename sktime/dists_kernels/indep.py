@@ -59,6 +59,11 @@ class IndepDist(BasePairwiseTransformerPanel):
     """  # noqa: E501
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?

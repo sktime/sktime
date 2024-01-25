@@ -160,11 +160,17 @@ Appointment
 The contributor who contributes an algorithm is automatically appointed
 as its first maintainer.
 
-Algorithm maintainers are listed in the `CODEOWNERS <https://github
-.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
+Algorithm maintainers are listed in the ``"maintainers"`` tag of the estimator class,
+by their GitHub ID. The GitHub ID can be linked to further information via
+the ``all-contributorsrc`` file.
+The tag can be inspected directly in the source code of the class,
+or via ``EstimatorName.get_class_tag("maintainers").``
+Inverse lookup such as "which algorithms does maintainer M maintain"
+can be carried out using ``registry.all_estimators``.
 
 When an algorithm maintainer resigns, they can appoint another contributor as the
-new algorithm maintainer. No vote is required. This change should be reflected in the ``CODEOWNERS`` file.
+new algorithm maintainer. No vote is required.
+This change should be reflected in the ``"maintainers"`` tag.
 
 Algorithm maintainers can be appointed by CC simple majority for any algorithm without maintainers.
 
@@ -664,18 +670,19 @@ We have the following guidelines:
    will have to be extended first. For extending current API, see the
    `decision making process <#Decision-making>`__ for major changes.
 
-Note that your implementation need not be in sktime to be used together
-with sktime tools. You can implement your favorite algorithm in a sktime
-compatible way in one of `our companion
-repositories <https://github.com/sktime>`__ on GitHub. We will be happy
-to list it under `related
-software <https://github.com/sktime/sktime/wiki/related-software>`__.
+Note that an algorithm need not be in sktime to be fully compatible with
+sktime interfaces. You can implement your favorite algorithm in a sktime
+compatible way in a third party codebase - open or closed - following
+the guide for implmenting compatible estimators (see :ref:`developer_guide_add_estimators:`).
 
-If algorithms require major dependencies, we encourage to create a
-separate companion repository. For smaller
-dependencies which are limited to a few files, we encourage to use soft
-dependencies, which are only required for particular modules, but not
-for most of sktime's functionality and not for installing sktime.
+We are happy to list any compatible open source project under `related
+software <https://github.com/sktime/sktime/wiki/related-software>`__.
+Contributions are also welcome to any one of `our companion
+repositories <https://github.com/sktime>`__ on GitHub.
+
+Dependencies are managed on the level of estimators, hence it is entirely possible
+to maintain an algorithm primarily in a third or second party package, and add a
+thin interface to sktime proper which has that package as a dependency.
 
 .. _acknowledging-contributions:
 

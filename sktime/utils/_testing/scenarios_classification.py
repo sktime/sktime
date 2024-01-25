@@ -72,7 +72,7 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
         #   BaseRegressor. currently we test both classifiers and regressors using these
         #   scenarios
-        if not scitype(obj) in (
+        if scitype(obj) not in (
             "classifier",
             "early_classifier",
             "regressor",

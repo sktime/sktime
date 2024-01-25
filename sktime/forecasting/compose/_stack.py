@@ -60,6 +60,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "indinewton"],
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
         "handles-missing-data": True,

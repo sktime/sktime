@@ -70,6 +70,22 @@ class MyTimeSeriesClassifier(BaseClassifier):
     # optional todo: override base class estimator default tags here if necessary
     # these are the default values, only add if different to these.
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        # maintainer = algorithm maintainer role, "owner"
+        # specify one or multiple authors and maintainers, only for sktime contribution
+        # remove maintainer tag if maintained by sktime core team
+        #
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # PEP 440 python dependencies specifier,
+        # e.g., "numba>0.53", or a list, e.g., ["numba>0.53", "numpy>=1.19.0"]
+        # delete if no python dependencies or version limitations
+        #
+        # estimator tags
+        # --------------
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
         "y_inner_mtype": "numpy1D",  # which type do _fit/_predict return, usually
         # this is either "numpy3D", "pd-multiindex" or "nested_univ" (nested df). Other
@@ -81,7 +97,6 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     # todo: add any hyper-parameters and components to constructor

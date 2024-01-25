@@ -790,6 +790,12 @@ class ProximityStump(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["goastler", "moradabaz"],
+        "maintainers": ["goastler", "moradabaz"],
+        # estimator type
+        # --------------
         "capability:multithreading": True,
         "X_inner_mtype": "nested_univ",  # input in nested dataframe
     }
@@ -1061,10 +1067,16 @@ class ProximityTree(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["goastler", "moradabaz"],
+        "maintainers": ["goastler", "moradabaz"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "X_inner_mtype": "nested_univ",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -1315,11 +1327,17 @@ class ProximityForest(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["goastler", "moradabaz"],
+        "maintainers": ["goastler", "moradabaz"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "X_inner_mtype": "nested_univ",
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "distance",
-        "python_dependencies": "numba",
     }
 
     def __init__(

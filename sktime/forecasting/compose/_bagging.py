@@ -8,19 +8,13 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
-from sklearn import clone
 from sklearn.utils import check_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.ets import AutoETS
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.bootstrap import (
-    MovingBlockBootstrapTransformer,
-    STLBootstrapTransformer,
-)
-from sktime.utils.estimators import MockForecaster
-from sktime.utils.random_state import set_random_state
+from sktime.transformations.bootstrap import STLBootstrapTransformer
 
 
 class BaggingForecaster(BaseForecaster):
@@ -38,15 +32,15 @@ class BaggingForecaster(BaseForecaster):
 
     Parameters
     ----------
-    bootstrap_transformer : BaseTransformer
-        (sktime.transformations.bootstrap.STLBootstrapTransformer)
+    bootstrap_transformer : sktime transformer BaseTransformer descendant instance
+        (default = sktime.transformations.bootstrap.STLBootstrapTransformer)
         Bootstrapping Transformer that takes a series (with tag
         scitype:transform-input=Series) as input and returns a panel (with tag
         scitype:transform-input=Panel) of bootstrapped time series if not specified
         sktime.transformations.bootstrap.STLBootstrapTransformer is used.
-    forecaster : BaseForecaster (sktime.forecating.ets.AutoETS)
-        A valid sktime Forecaster. If not specified sktime.forecating.ets.AutoETS is
-        used.
+    forecaster : sktime forecaster, BaseForecaster descendant instance, optional
+        (default = sktime.forecating.ets.AutoETS)
+        If not specified, sktime.forecating.ets.AutoETS is used.
     sp: int (default=2)
         Seasonal period for default Forecaster and Transformer. Must be 2 or greater.
         Ignored for the bootstrap_transformer and forecaster if they are specified.
@@ -88,6 +82,7 @@ class BaggingForecaster(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["ltsaprounis"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -161,13 +156,17 @@ class BaggingForecaster(BaseForecaster):
         """
         if self.bootstrap_transformer is None:
             self.bootstrap_transformer_ = STLBootstrapTransformer(sp=self.sp)
+        elif hasattr(self.bootstrap_transformer, "clone"):
+            self.bootstrap_transformer_ = self.bootstrap_transformer.clone()
         else:
+            from sklearn import clone
+
             self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
 
         if self.forecaster is None:
             self.forecaster_ = AutoETS(sp=self.sp)
         else:
-            self.forecaster_ = clone(self.forecaster)
+            self.forecaster_ = self.forecaster.clone()
 
         if (
             self.bootstrap_transformer_.get_tag(
@@ -192,8 +191,6 @@ class BaggingForecaster(BaseForecaster):
 
         # random state handling passed into input estimators
         self.random_state_ = check_random_state(self.random_state)
-        set_random_state(self.bootstrap_transformer_, random_state=self.random_state_)
-        set_random_state(self.forecaster_, random_state=self.random_state_)
         self.bootstrap_transformer_.fit(X=y)
         y_bootstraps = self.bootstrap_transformer_.transform(X=y)
         self.forecaster_.fit(y=y_bootstraps, fh=fh, X=None)
@@ -303,6 +300,8 @@ class BaggingForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
+        from sktime.utils.estimators import MockForecaster
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         params = [

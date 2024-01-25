@@ -271,6 +271,8 @@ class BaseKalmanFilter:
            https://www.stat.pitt.edu/stoffer/dss_files/em.pdf
     """
 
+    _tags = {"authors": ["NoaBenAmi", "lielleravid"], "maintainers": ["NoaBenAmi"]}
+
     def __init__(
         self,
         state_dim,
@@ -533,6 +535,14 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["NoaBenAmi", "lielleravid"],
+        "maintainers": ["NoaBenAmi"],
+        "python_dependencies": "pykalman-bardo",
+        "python_dependencies_alias": {"pykalman-bardo": "pykalman"},
+        # estimator type
+        # --------------
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "requires_y": False,  # does y need to be passed in fit?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -542,8 +552,6 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "python_dependencies": "pykalman-bardo",
-        "python_dependencies_alias": {"pykalman-bardo": "pykalman"},
     }
 
     def __init__(
@@ -998,6 +1006,13 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["NoaBenAmi", "lielleravid"],
+        "maintainers": ["NoaBenAmi"],
+        "python_dependencies": "filterpy",
+        # estimator type
+        # --------------
         "scitype:transform-labels": "Series",
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
@@ -1010,7 +1025,6 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "python_dependencies": "filterpy",
     }
 
     def __init__(

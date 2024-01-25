@@ -30,7 +30,7 @@ class FeatureSelection(BaseTransformer):
           Requires parameter n_columns.
         * "random": Randomly select n_columns features. Requires parameter n_columns.
         * "columns": Select features by given names.
-        * "none": Remove all columns by setting Z to None.
+        * "none": Remove all columns, transform returns None.
         * "all": Select all given features.
     regressor : sklearn-like regressor, optional, default=None.
         Used as meta-model for the method "feature-importances". The given
@@ -70,6 +70,7 @@ class FeatureSelection(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["aiwalter"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

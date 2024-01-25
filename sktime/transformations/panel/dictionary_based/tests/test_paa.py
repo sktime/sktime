@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dictionary_based._paa import PAAlegacy as PAA
 from sktime.utils._testing.panel import _make_nested_from_array
 
 

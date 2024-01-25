@@ -45,7 +45,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         "y_inner_mtype": "pd.DataFrame",
         "capability:insample": False,
         "capability:pred_int:insample": False,
-        "python_dependencies": "torch",
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
     }

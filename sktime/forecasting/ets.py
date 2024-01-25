@@ -2,7 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements automatic and manually exponential time series smoothing models."""
 
-
 __author__ = ["hyang1996"]
 __all__ = ["AutoETS"]
 
@@ -175,6 +174,13 @@ class AutoETS(_StatsModelsAdapter):
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["hyang1996"],
+        "maintainers": ["hyang1996"],
+        # "python_dependencies": "statmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

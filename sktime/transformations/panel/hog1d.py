@@ -41,6 +41,7 @@ class HOG1DTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["vnicholson1"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

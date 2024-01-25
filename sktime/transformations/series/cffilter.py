@@ -51,6 +51,13 @@ class CFFilter(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ken-maeda"],
+        "maintainers": ["ken-maeda"],
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -71,7 +78,6 @@ class CFFilter(BaseTransformer):
         # can the transformer handle unequal length time series (if passed Panel)?
         "handles-missing-data": False,  # can estimator handle missing data?
         "remember_data": False,  # whether all data seen is remembered as self._X
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(

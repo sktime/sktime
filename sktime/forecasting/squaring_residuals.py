@@ -80,6 +80,12 @@ class SquaringResiduals(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["kcc-lion", "fkiraly"],
+        "maintainers": ["kcc-lion"],
+        # estimator type
+        # --------------
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -91,7 +97,6 @@ class SquaringResiduals(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "capability:pred_int:insample": False,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     def __init__(

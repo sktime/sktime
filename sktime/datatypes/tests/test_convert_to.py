@@ -4,7 +4,7 @@ __author__ = ["fkiraly"]
 
 from sktime.datatypes._convert import convert_to
 from sktime.datatypes._examples import get_examples
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.deep_equals import deep_equals
 
 # hard-coded scitypes/mtypes to use in test_convert_to
 #   easy to change in case the strings change
