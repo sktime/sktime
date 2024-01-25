@@ -154,7 +154,7 @@ def test_fallbackforecaster_fails_at_fit():
     y_pred_expected = forecaster2.predict()
 
     # Assert that the first valid forecaster is trained
-    name = forecaster.current_name
+    name = forecaster.current_name_
     assert name == "ensemble2"
 
     # Assert that the first valid forecaster produces the same results as it would
@@ -197,7 +197,7 @@ def test_fallbackforecaster_fails_at_predict():
     y_pred_expected = forecaster2.predict()
 
     # Assert correct forecaster name
-    name = forecaster.current_name
+    name = forecaster.current_name_
     assert name == "forecaster2_succeeded"
 
     # Assert correct y_pred
@@ -242,7 +242,7 @@ def test_fallbackforecaster_fails_twice():
     y_pred_expected = forecaster3.predict()
 
     # Assert correct forecaster name
-    name = forecaster.current_name
+    name = forecaster.current_name_
     assert name == "forecaster3_succeeded"
 
     # Assert correct y_pred
@@ -300,7 +300,7 @@ def test_fallbackforecaster_fails_fit_twice():
     y_pred_expected = forecaster3.predict()
 
     # Assert correct forecaster name
-    name = forecaster.current_name
+    name = forecaster.current_name_
     assert name == "forecaster3_succeeded"
 
     # Assert correct y_pred
@@ -370,7 +370,7 @@ def test_many_forecasters_fail1():
     )
     forecaster.fit(y, fh=[1, 2, 3])
     y_pred_actual = forecaster.predict()
-    y_name_actual = forecaster.current_name
+    y_name_actual = forecaster.current_name_
     expected_forecaster = forecaster5[1]
     expected_forecaster.fit(y, fh=[1, 2, 3])
     y_pred_expected = expected_forecaster.predict()
@@ -379,7 +379,7 @@ def test_many_forecasters_fail1():
     assert y_name_actual == y_name_expected
 
     # Assert correct forecaster name
-    name = forecaster.current_name
+    name = forecaster.current_name_
     assert name == "forecaster5"
 
     # Assert correct y_pred
@@ -425,7 +425,7 @@ def test_fallbackforecaster_fails_twice_simple():
     y_pred_expected = forecaster3.predict()
 
     # Assert correct forecaster name
-    name = forecaster.current_name
+    name = forecaster.current_name_
     assert name == "forecaster3_succeeded"
 
     # Assert correct y_pred
@@ -478,7 +478,7 @@ def test_fallbackforecaster_fails_many_simple():
     y_pred_expected = forecaster9.predict()
 
     # Assert correct forecaster name
-    name = forecaster.current_name
+    name = forecaster.current_name_
     assert name == "target"
 
     # Assert correct y_pred
