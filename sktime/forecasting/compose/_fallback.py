@@ -11,10 +11,9 @@ a robust forecasting mechanism by providing fallback options.
 __author__ = ["ninedigits"]
 __all__ = ["FallbackForecaster"]
 
-import warnings
-
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.warnings import warn
 
 
 class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
@@ -32,6 +31,20 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     warn : bool, default=False
         If True, raises warnings when a forecaster fails to fit or predict.
 
+    Attributes
+    ----------
+    forecasters_ : list of (str, estimator) tuples
+        The forecasters to be tried sequentially.
+        Forecasters that have been fitted successfully are stored in this list.
+    first_nonfailing_forecaster_index_ : int
+        Index of the first non-failing forecaster in the list of forecasters.
+    current_forecaster_ : sktime forecaster
+        pointer to the first forecaster that was successfully fitted
+        same as ``forecasters_[first_nonfailing_forecaster_index_][1]``
+    current_name_ : str
+        name of the current forecaster
+        same as ``forecasters_[first_nonfailing_forecaster_index_][0]``
+
     Examples
     --------
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -40,16 +53,9 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
+    >>> # first fit polyomial trend, if fails make naive forecast
     >>> forecasters = [
-    ...     (
-    ...         "ensemble",
-    ...         EnsembleForecaster(
-    ...             [
-    ...                 ("trend", PolynomialTrendForecaster()),
-    ...                 ("polynomial", NaiveForecaster())
-    ...             ]
-    ...         )
-    ...     ),
+    ...     ("poly", PolynomialTrendForecaster()),
     ...     ("naive", NaiveForecaster())
     ... ]
     >>> forecaster = FallbackForecaster(forecasters=forecasters)
@@ -58,15 +64,29 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     >>> y_pred = forecaster.predict()
     """
 
-    _steps_attr = "forecasters"
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "_forecasters"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, warn=False):
+    def __init__(self, forecasters, verbose=False):
         super().__init__()
+
         self.forecasters = forecasters
         self.current_forecaster = None
         self.current_name = None
-        self.warn = warn
-        self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
+        self.verbose = verbose
+
+        self._forecasters = self._check_estimators(forecasters, "forecasters")
+        self.forecasters_ = self._check_estimators(forecasters, "forecasters")
+
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecasters in the given order until one succeeds.
@@ -91,9 +111,9 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         """
         self.first_nonfailing_forecaster_index_ = 0
         self.exceptions_raised_ = dict()
-        return self._try_fit_forecasters()
+        return self._try_fit_forecasters(y=y, X=X, fh=fh)
 
-    def _try_fit_forecasters(self):
+    def _try_fit_forecasters(self, y, X, fh):
         """
         Attempt to fit the forecasters in sequence until one succeeds.
 
@@ -113,13 +133,14 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             If all forecasters fail to fit.
         """
         while True:
-            if self.first_nonfailing_forecaster_index_ >= len(self.forecasters):
+            ix = self.first_nonfailing_forecaster_index_
+            if self.first_nonfailing_forecaster_index_ >= len(self.forecasters_):
                 raise RuntimeError("No remaining forecasters to attempt prediction.")
-            name, forecaster = self.forecasters[self.first_nonfailing_forecaster_index_]
+            name, forecaster = self.forecasters_[ix]
             try:
-                self.current_name = name
-                self.current_forecaster = forecaster.clone()
-                self.current_forecaster.fit(self._y, X=self._X, fh=self._fh)
+                self.current_name_ = name
+                self.current_forecaster_ = forecaster.clone()
+                self.current_forecaster_.fit(y=y, X=X, fh=fh)
                 return self
             except Exception as e:
                 self.exceptions_raised_[self.first_nonfailing_forecaster_index_] = {
@@ -128,9 +149,11 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
                     "forecaster_name": name,
                 }
                 self.first_nonfailing_forecaster_index_ += 1
-                if self.warn:
-                    warnings.warn(
-                        f"Forecaster {name} failed to fit with error: {e}", stacklevel=2
+                if self.verbose:
+                    warn(
+                        f"Forecaster {name} failed to fit with error: {e}",
+                        stacklevel=2,
+                        obj=self,
                     )
 
     def _predict(self, fh, X=None):
@@ -155,27 +178,28 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         RuntimeError
             If no forecaster is fitted or all forecasters fail to predict.
         """
-        if self.current_forecaster is None:
+        if self.current_forecaster_ is None:
             raise RuntimeError("No forecaster has been successfully fitted yet.")
 
         try:
-            return self.current_forecaster.predict(fh, X)
+            return self.current_forecaster_.predict(fh, X)
         except Exception as e:
             self.exceptions_raised_[self.first_nonfailing_forecaster_index_] = {
                 "failed_at_step": "fit",
                 "exception": e,
                 "forecaster_name": self.current_name,
             }
-            if self.warn:
-                warnings.warn(
+            if self.verbose:
+                warn(
                     f"Current forecaster failed at prediction with error: {e}",
                     stacklevel=2,
+                    obj=self,
                 )
             self.first_nonfailing_forecaster_index_ += 1
 
             # Fit the next forecaster and retry prediction
-            self.current_forecaster = None
-            self._try_fit_forecasters()
+            self.current_forecaster_ = None
+            self._try_fit_forecasters(self._y, self._X, self._fh)
             return self.predict(fh, X)
 
     @classmethod
