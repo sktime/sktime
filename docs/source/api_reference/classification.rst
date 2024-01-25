@@ -57,6 +57,7 @@ Deep learning
     :template: class.rst
 
     CNNClassifier
+    CNTCClassifier
     FCNClassifier
     LSTMFCNClassifier
     InceptionTimeClassifier

@@ -14,6 +14,7 @@ from pandas.testing import assert_series_equal
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.compose import YfromX
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.var import VAR
@@ -455,3 +456,25 @@ def test_range_fh_in_predict():
 
     assert isinstance(var_predictions, pd.DataFrame)
     assert var_predictions.shape == (10 * 2, 5)
+
+
+def test_remember_data():
+    """Test that the ``remember_data`` flag works as expected."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    X = load_airline()
+    f = YfromX.create_test_instance()
+
+    # turn off remembering _X, _y by config
+    f.set_config(**{"remember_data": False})
+    f.fit(y, X, fh=[1, 2, 3])
+
+    assert f._X is None
+    assert f._y is None
+
+    f.set_config(**{"remember_data": True})
+    f.fit(y, X, fh=[1, 2, 3])
+
+    assert f._X is not None
+    assert f._y is not None
