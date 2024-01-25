@@ -2417,6 +2417,10 @@ class BaseForecaster(BaseEstimator):
             return pd.MultiIndex.from_product([featnames, alpha])
 
 
+# initialize dynamic docstrings
+BaseForecaster._init_dynamic_doc()
+
+
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions.
 
