@@ -494,3 +494,41 @@ def test_fallbackforecaster_fails_many_simple():
     ]
     names_raised_expected = ["f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8"]
     assert names_raised_actual == names_raised_expected
+
+
+def test_fallbackforecaster_pred_int():
+    """First two FallbackForecasters fail, third succeeds"""
+    y = make_forecasting_problem(random_state=42)
+    forecaster1 = NaiveForecaster("mean")
+    forecaster2 = NaiveForecaster("last")
+    forecaster = FallbackForecaster(
+        [("naive_mean", forecaster1), ("naive_last", forecaster2)]
+    )
+    fh = [1, 2, 3]
+    forecaster.fit(y, fh=fh)
+    pred_int_actual = forecaster.predict_interval()
+
+    forecaster1.fit(y, fh=fh)
+    pred_int_expected = forecaster1.predict_interval()
+    pd.testing.assert_frame_equal(pred_int_expected, pred_int_actual)
+
+
+def test_fallbackforecaster_pred_int_raises():
+    """First two FallbackForecasters fail, third succeeds"""
+    y = make_forecasting_problem(random_state=42)
+    forecaster1 = NaiveForecaster("mean")
+    forecaster2 = EnsembleForecaster(
+        [("naive_last", NaiveForecaster("last")), ("poly", PolynomialTrendForecaster())]
+    )
+    forecaster = FallbackForecaster(
+        [("naive_mean", forecaster1), ("ensemble", forecaster2)]
+    )
+    fh = [1, 2, 3]
+    forecaster.fit(y, fh=fh)
+    with pytest.raises(AttributeError) as e:
+        forecaster.predict_interval()
+    msg_actual = e.value.args[0]
+    msg_expected = (
+        "[{'index': 1, 'name': 'ensemble', 'estimator': 'EnsembleForecaster'}]"
+    )
+    assert msg_expected in msg_actual
