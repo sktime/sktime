@@ -35,6 +35,7 @@ class IgnoreX(_DelegatedForecaster):
 
     _tags = {
         "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": False,
     }
 
     def __init__(self, forecaster, ignore_x=True):
