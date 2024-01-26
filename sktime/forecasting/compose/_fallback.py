@@ -209,7 +209,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             return self.current_forecaster_.predict(fh, X)
         except Exception as e:
             self.exceptions_raised_[self.first_nonfailing_forecaster_index_] = {
-                "failed_at_step": "fit",
+                "failed_at_step": "predict",
                 "exception": e,
                 "forecaster_name": self.current_name_,
             }
