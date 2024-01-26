@@ -13,11 +13,11 @@ __all__ = ["FallbackForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.warnings import warn
 
 
-class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
+class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """Forecaster that sequentially tries a list of forecasting models.
 
     Attempts to fit the provided forecasters in the order they are given. If a
@@ -84,8 +84,9 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
+        "capability:pred_int": True,
     }
-
+    _delegate_name = "estimator_"
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
@@ -102,6 +103,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
         self.forecasters = forecasters
         self.current_forecaster_ = None
+        self.estimator_ = None
         self.current_name_ = None
         self.verbose = verbose
 
@@ -111,6 +113,29 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         self.forecasters_ = self._check_estimators(forecasters, "forecasters")
 
         self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+
+    def _predict_interval(self, fh, X, coverage):
+        pred_int_capability = True
+        nonvalid_estimators = []
+        for ix, (name, forecaster) in enumerate(self.forecasters):
+            if not forecaster.get_tag("capability:pred_int"):
+                pred_int_capability = False
+                nonvalid_estimators.append(
+                    {
+                        "index": ix,
+                        "name": name,
+                        "estimator": forecaster.__class__.__name__,
+                    }
+                )
+        if pred_int_capability:
+            return self.current_forecaster_.predict_interval(fh, X, coverage)
+        else:
+            raise AttributeError(
+                "All forecasters must have prediction capbility "
+                "enabled to call `predict_interval`, but at least one"
+                "forecaster is missing this capability, see: "
+                f"{nonvalid_estimators}"
+            )
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecasters in the given order until one succeeds.
@@ -164,6 +189,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             try:
                 self.current_name_ = name
                 self.current_forecaster_ = forecaster.clone()
+                self.estimator_ = self.current_forecaster_
                 self.current_forecaster_.fit(y=y, X=X, fh=fh)
                 return self
             except Exception as e:
