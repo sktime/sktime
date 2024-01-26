@@ -61,14 +61,14 @@ Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * In ``SimpleRNNClassifier``, the ``num_epochs`` parameter has been
-  renamed to ``n_epochs``. The original parameter name ``num_epochs`` has now
+  renamed to ``n_epochs``. The original parameter of name ``num_epochs`` has now
   been removed.
 
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 
 * In ``SimpleRNNRegressor``, the ``num_epochs`` parameter has been
-  renamed to ``n_epochs``. The original parameter name ``num_epochs`` has now
+  renamed to ``n_epochs``. The original parameter of name ``num_epochs`` has now
   been removed.
 
 Contents
