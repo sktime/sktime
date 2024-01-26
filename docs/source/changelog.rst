@@ -24,7 +24,7 @@ Version 0.26.0 - 2023-01-27
 
 Maintenance release:
 
-* support for ``scikit-lear 1.4.X``
+* support for ``scikit-learn 1.4.X``
 * scheduled deprecations
 
 For last non-maintenance content updates, see 0.25.1.
