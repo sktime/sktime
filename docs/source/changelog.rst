@@ -26,6 +26,7 @@ Maintenance release:
 
 * support for ``scikit-learn 1.4.X``
 * scheduled deprecations
+* minor bugfix
 
 For last non-maintenance content updates, see 0.25.1.
 
@@ -74,9 +75,14 @@ Time series regression
 Contents
 ~~~~~~~~
 
+* [MNT] 0.26.0 deprecations and change actions (:pr:`5817`) :user:`fkiraly`
 * [MNT] [Dependabot](deps-dev): Update ``scikit-learn`` requirement from
   ``<1.4.0,>=0.24`` to ``>=0.24,<1.5.0`` (:pr:`5776`) :user:`dependabot[bot]`
-* [MNT] 0.26.0 deprecations and change actions (:pr:`5817`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Bump styfle/cancel-workflow-action from ``0.12.0``
+  to ``0.12.1`` (:pr:`5839`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Bump dorny/paths-filter
+  from ``2`` to ``3`` (:pr:`5838`) :user:`dependabot[bot]`
+* [BUG] fix tag handling in ``IgnoreX`` (:pr:`5843`) :user:`tpvasconcelos`, :user:`fkiraly`
 
 
 Version 0.25.1 - 2023-01-24
