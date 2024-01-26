@@ -32,7 +32,7 @@ jobs:
       datasets: ${{ steps.filter.outputs.datasets }}
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
