@@ -4,7 +4,7 @@ import pytest
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.classification.dummy import DummyClassifier
-from sktime.datasets import load_arrow_head, load_longley
+from sktime.datasets import load_arrow_head, load_longley, load_airline
 from sktime.forecasting.compose import ForecastX
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
@@ -17,6 +17,8 @@ from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
+from sktime.forecasting.compose import make_reduction
+from sklearn.linear_model import Ridge
 
 
 def test_transformer_regression():
@@ -317,3 +319,20 @@ def test_forecasterX_regression():
     general_pipeline.fit(y=y, X=X, fh=[1, 2, 3])
     result_general = general_pipeline.predict(None, None)
     pd.testing.assert_series_equal(result, result_general)
+
+
+def test_lagged_y_prediction():
+    # regression test for issue 5830
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y)
+
+    forecaster = make_reduction(Ridge(), window_length=12, strategy="recursive")
+
+    pipe = Pipeline()
+    pipe = pipe.add_step(Differencer(lags=[1, 3]), "differencer", edges={"X": "y"})
+    pipe = pipe.add_step(
+        forecaster, name="forecaster", edges={"X": "differencer", "y": "y"}
+    )
+    pipe.fit(y=y_train)
+    y_pred = pipe.predict(fh=[1, 2, 3])
+    assert y_pred.shape == y_test.shape
