@@ -39,7 +39,7 @@ class _DelegatedForecaster(BaseForecaster):
         return getattr(self, self._delegate_name)
 
     def _set_delegated_tags(self, delegate=None):
-        """Sets delegated tags, only tags for boilerplate control.
+        """Set delegated tags, only tags for boilerplate control.
 
         Writes tags to self.
         Can be used by descendant classes to set dependent tags.
