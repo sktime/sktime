@@ -2474,7 +2474,5 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
 
     if not y_pred.index.is_monotonic_increasing:
         y_pred = y_pred.sort_index()
-    if hasattr(y_pred, "columns") and not y_pred.columns.is_monotonic_increasing:
-        y_pred = y_pred.sort_index(axis=1)
 
     return y_pred
