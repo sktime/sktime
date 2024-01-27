@@ -131,9 +131,10 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
         self._set_delegated_tags(self.forecaster_)
 
-        self.set_tags(**{"fit_is_empty": False})
+        self.set_tags(**{"fit_is_empty": False, "scitype:y": "univariate"})
         # todo: only works for single series now
         #   think about how to deal with vectorization later
+        self.set_tags(**{"X_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"]})
         self.set_tags(**{"y_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"]})
 
     def _fit(self, y, X, fh):
