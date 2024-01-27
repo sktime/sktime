@@ -21,48 +21,49 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     Parameters
     ----------
     order : tuple, optional The (p, d, q) order of the model for the autoregressive,
-    differences, and moving average components. `d` is always an integer, while `p`
-    and `q` may either be integers or lists of integers.
+        differences, and moving average components. `d` is always an integer, while `p`
+        and `q` may either be integers or lists of integers.
 
     seasonal_order : tuple, optional The (P, D, Q, s) order of the seasonal component
-    of the model for the AR parameters, differences, MA parameters, and periodicity.
-    Default is (0, 0, 0, 0). `D` and `s` are always integers, while `P` and `Q` may
-    either be integers or lists of positive integers.
+        of the model for the AR parameters, differences, MA parameters, and periodicity.
+        Default is (0, 0, 0, 0). `D` and `s` are always integers, while `P` and `Q` may
+        either be integers or lists of positive integers.
 
     trend : str{'n', 'c', 't', 'ct'} or iterable, optional Parameter controlling the
-    deterministic trend. Can be specified as a string where 'c' indicates a constant
-    term, 't' indicates a linear trend in time, and 'ct' includes both. Can also be
-    specified as an iterable defining a polynomial, as in numpy.poly1d, where [1,1,0,
-    1] would denote ... Default is 'c' for models without integration, and no trend
-    for models with integration. Note that all trend terms are included in the model
-    as exogenous regressors, which differs from how trends are included in SARIMAX
-    models. See the Notes section for a precise definition of the treatment of trend
-    terms.
+        deterministic trend. Can be specified as a string where 'c' indicates a constant
+        term, 't' indicates a linear trend in time, and 'ct' includes both. Can also be
+        specified as an iterable defining a polynomial, as in numpy.poly1d, where
+        [1,1,0,1] would denote :math:`a + bt + ct^3`. Default is 'c' for models without
+        integration, and no trend for models with integration. Note that all trend terms
+        are included in the model as exogenous regressors, which differs from how trends
+        are included in SARIMAX models. See the Notes section for a precise definition
+        of the treatment of trend terms.
 
     enforce_stationarity : bool, optional Whether to require the autoregressive
-    parameters to correspond to a stationarity process.
+        parameters to correspond to a stationarity process.
 
     enforce_invertibility : bool, optional Whether to require the moving average
-    parameters to correspond to an invertible process.
+        parameters to correspond to an invertible process.
 
     concentrate_scale : bool, optional Whether to concentrate the scale (variance of
-    the error term) out of the likelihood. This reduces the number of parameters by
-    one. This is only applicable when considering estimation by numerical maximum
-    likelihood.
+        the error term) out of the likelihood. This reduces the number of parameters by
+        one. This is only applicable when considering estimation by numerical maximum
+        likelihood.
 
     trend_offset : int, optional The offset at which to start time trend values.
-    Default is 1, so that if `trend='t'` the trend is equal to 1, 2, …,
-    nobs. Typically, is only set when the model created by extending a previous dataset.
+        Default is 1, so that if `trend='t'` the trend is equal to 1, 2, …,
+        nobs. Typically, is only set when the model created by extending a previous
+         dataset.
 
     dates : array_like of datetime, optional If no index is given by `endog` or
-    `exog`, an array-like object of datetime objects can be provided.
+        `exog`, an array-like object of datetime objects can be provided.
 
     freq : str, optional If no index is given by `endog` or `exog`, the frequency of
-    the time-series may be specified here as a Pandas offset or offset string.
+        the time-series may be specified here as a Pandas offset or offset string.
 
     missing : str, optional Available options are 'none', 'drop', and 'raise'. If
-    'none', no nan checking is done. If 'drop', any observations with nans are
-    dropped. If 'raise', an error is raised. Default is 'none'.
+        'none', no nan checking is done. If 'drop', any observations with nans are
+        dropped. If 'raise', an error is raised. Default is 'none'.
 
     validate_specification : bool, optional
         Whether to validate the model specification. Default is True.
@@ -75,36 +76,38 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         Whether start_params is already transformed. Default is True.
 
     includes_fixed : bool, optional If parameters were previously fixed with the
-    fix_params method, this argument describes whether start_params also includes the
-    fixed parameters, in addition to the free parameters. Default is False.
+        fix_params method, this argument describes whether start_params also includes
+        the fixed parameters, in addition to the free parameters. Default is False.
 
     method : str, optional The method used for estimating the parameters of the
-    model. Valid options include 'statespace', 'innovations_mle', 'hannan_rissanen',
-    'burg', 'innovations', and 'yule_walker'. Not all options are available for every
-    specification (for example 'yule_walker' can only be used with AR(p) models).
+        model. Valid options include 'statespace', 'innovations_mle', 'hannan_rissanen',
+        'burg', 'innovations', and 'yule_walker'. Not all options are available for
+        every specification (for example 'yule_walker' can only be used with
+        AR(p) models).
 
     method_kwargs : dict, optional Arguments to pass to the fit function for the
-    parameter estimator described by the method argument.
+        parameter estimator described by the method argument.
 
     gls : bool, optional
         Whether to use generalized least squares (GLS) to estimate regression effects.
         The default is False if method='statespace' and is True otherwise.
 
     gls_kwargs : dict, optional Arguments to pass to the GLS estimation fit method.
-    Only applicable if GLS estimation is used (see gls argument for details).
+        Only applicable if GLS estimation is used (see gls argument for details).
 
     cov_type : str, optional The cov_type keyword governs the method for calculating
-    the covariance matrix of parameter estimates. Can be one of 'opg' for the outer
-    product of gradient estimator, 'oim' for the observed information matrix
-    estimator, calculated using the method of Harvey (1989), 'approx' for the
-    observed information matrix estimator, calculated using a numerical approximation
-    of the Hessian matrix, 'robust' for an approximate (quasi-maximum likelihood)
-    covariance matrix that may be valid even in the presence of some
-    misspecifications. Intermediate calculations use the 'oim' method.
-    'robust_approx' is the same as 'robust' except that the intermediate calculations
-    use the 'approx' method. 'none' for no covariance matrix calculation. Default is
-    'opg' unless memory conservation is used to avoid computing the loglikelihood
-    values for each observation, in which case the default is 'oim'.
+        the covariance matrix of parameter estimates. Can be one of 'opg' for the outer
+        product of gradient estimator, 'oim' for the observed information matrix
+        estimator, calculated using the method of Harvey (1989), 'approx' for the
+        observed information matrix estimator, calculated using a numerical
+        approximation of the Hessian matrix, 'robust' for an approximate
+        (quasi-maximum likelihood) covariance matrix that may be valid even in the
+         presence of some misspecifications. Intermediate calculations use the 'oim'
+         method. 'robust_approx' is the same as 'robust' except that the intermediate
+         calculations use the 'approx' method. 'none' for no covariance matrix
+         calculation. Default is 'opg' unless memory conservation is used to avoid
+         computing the loglikelihood values for each observation,
+         in which case the default is 'oim'.
 
     cov_kwds : dict or None, optional
         A dictionary of arguments affecting covariance matrix computation.
@@ -113,9 +116,9 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         Whether to return only the array of maximizing parameters. Default is False.
 
     low_memory : bool, optional If set to True, techniques are applied to
-    substantially reduce memory usage. If used, some features of the results object
-    will not be available (including smoothed results and in-sample prediction),
-    although out-of-sample forecasting is possible. Default is False.
+        substantially reduce memory usage. If used, some features of the results object
+        will not be available (including smoothed results and in-sample prediction),
+        although out-of-sample forecasting is possible. Default is False.
 
     See Also
     --------
@@ -290,18 +293,18 @@ class StatsModelsARIMA(_StatsModelsAdapter):
                 "enforce_stationarity": False,
                 "enforce_invertibility": False,
                 "concentrate_scale": True,
-                "method": "statespace",  # Example value, adjust as needed
+                "method": "statespace",
             },
             {
                 "order": (
                     1,
                     1,
                     2,
-                ),  # Adjust the order based on your requirements
+                ),
                 "trend": "t",
                 "enforce_stationarity": False,
                 "enforce_invertibility": False,
-                "method": "statespace",  # Example value, adjust as needed
+                "method": "statespace",
             },
             {
                 "order": (0, 0, 1),
@@ -309,7 +312,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
                 "seasonal_order": (1, 0, 1, 2),
                 "cov_type": "opg",
                 "gls": True,
-                "method": "statespace",  # Example value, adjust as needed
+                "method": "statespace",
             },
             {"cov_type": "robust", "gls": True, "method": "burg"},
         ]
