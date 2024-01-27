@@ -11,14 +11,14 @@ __all__ = [
 
 from sktime.transformations.panel.rocket._minirocket import MiniRocket
 from sktime.transformations.panel.rocket._minirocket_multivariate import (
-    MiniRocketMultivariate
+    MiniRocketMultivariate,
 )
 from sktime.transformations.panel.rocket._minirocket_multivariate_variable import (
-    MiniRocketMultivariateVariable
+    MiniRocketMultivariateVariable,
 )
 from sktime.transformations.panel.rocket._multirocket import MultiRocket
 from sktime.transformations.panel.rocket._multirocket_multivariate import (
-    MultiRocketMultivariate
+    MultiRocketMultivariate,
 )
 from sktime.transformations.panel.rocket._rocket import Rocket
 from sktime.transformations.panel.rocket._rocket_pyts import RocketPyts
