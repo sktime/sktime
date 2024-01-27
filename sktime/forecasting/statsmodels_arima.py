@@ -133,7 +133,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     >>> y = load_airline()
     >>> forecaster = StatsModelsARIMA(order=(0, 0, 12))  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=y.index)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _tags = {
