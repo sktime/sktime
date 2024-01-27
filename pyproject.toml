@@ -98,6 +98,7 @@ all_extras = [
   "pycatch22<0.4.4",
   "pykalman-bardo<0.10,>=0.9.7",
   'pyod>=0.8; python_version < "3.11"',
+  "pyts<0.14.0; python_version < '3.12'",
   "scikit-optimize",
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
