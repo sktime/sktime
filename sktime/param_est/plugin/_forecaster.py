@@ -131,8 +131,11 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
         self._set_delegated_tags(self.forecaster_)
 
-        if not param_est.get_tags()["capability:multivariate"]:
-            self.set_tags(**{"scitype:y": "univariate"})
+        # parameter estimators that are univariate do not broadcast,
+        # so broadcasting needs to be done by the composite (i.e., self)
+        if param_est.get_tags()["object_type"] == "param_est":
+            if not param_est.get_tags()["capability:multivariate"]:
+                self.set_tags(**{"scitype:y": "univariate"})
 
         self.set_tags(**{"fit_is_empty": False})
         # todo: only works for single series now
