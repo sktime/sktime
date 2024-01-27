@@ -1,6 +1,8 @@
 name: CI
 on:
-  workflow_call:
+  pull_request:
+    branches:
+      - main
 jobs:
   code_quality:
     name: code quality
