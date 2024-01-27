@@ -131,11 +131,8 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsmodels_arima import StatsModelsARIMA
     >>> y = load_airline()
-    >>> forecaster = StatsModelsARIMA(
-    ...     order=(0, 0, 12))  # doctest: +SKIP
-    ... )
+    >>> forecaster = StatsModelsARIMA(order=(0, 0, 12))  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    SARIMAX(...)
     >>> y_pred = forecaster.predict(fh=y.index)  # doctest: +SKIP
     """
 
