@@ -84,7 +84,7 @@ class _DelegatedForecaster(BaseForecaster):
             "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         }
 
-        self.clone_tags(delegate, tags_to_clone=TAGS_TO_DELEGATE)
+        self.clone_tags(delegate, tag_names=TAGS_TO_DELEGATE)
         self.set_tags(**TAGS_TO_SET)
 
         return self
