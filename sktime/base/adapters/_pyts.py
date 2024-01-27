@@ -7,7 +7,7 @@ __author__ = ["fkiraly"]
 from inspect import signature
 
 
-class _TslearnAdapter:
+class _PytsAdapter:
     """Mixin adapter class for pyts models."""
 
     _tags = {

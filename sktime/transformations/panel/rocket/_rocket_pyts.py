@@ -8,7 +8,7 @@ from sktime.base.adapters._pyts import _PytsAdapter
 from sktime.transformations.base import BaseTransformer
 
 
-class RocketPyts(BaseTransformer):
+class RocketPyts(_PytsAdapter, BaseTransformer):
     """RandOm Convolutional KErnel Transform (ROCKET).
 
     Direct interface to ``pyts.transformation.rocket``.
