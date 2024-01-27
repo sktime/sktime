@@ -131,7 +131,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
         self._set_delegated_tags(self.forecaster_)
 
-        if not param_est.get_tags("capability:multivariate"):
+        if not param_est.get_tags()["capability:multivariate"]:
             self.set_tags(**{"scitype:y": "univariate"})
 
         self.set_tags(**{"fit_is_empty": False})
