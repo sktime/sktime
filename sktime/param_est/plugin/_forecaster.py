@@ -131,6 +131,9 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
         self._set_delegated_tags(self.forecaster_)
 
+        if not param_est.get_tags("capability:multivariate"):
+            self.set_tags(**{"scitype:y": "univariate"})
+
         self.set_tags(**{"fit_is_empty": False})
         # todo: only works for single series now
         #   think about how to deal with vectorization later
