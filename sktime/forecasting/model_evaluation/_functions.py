@@ -262,10 +262,6 @@ def _evaluate_window(x, meta):
                 score = metric(y_test, y_pred, y_train=y_train)
                 temp_result[result_key] = [score]
 
-        y_pred = method(fh=fh, X=X_test, **metric_args)
-        pred_time = time.perf_counter() - start_pred
-        # score
-        score = scoring(y_test, y_pred, y_train=y_train)
         # get cutoff
         cutoff = forecaster.cutoff
 
