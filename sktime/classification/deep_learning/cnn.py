@@ -83,7 +83,7 @@ class CNNClassifier(BaseDeepClassifier):
         n_conv_layers=2,
         callbacks=None,
         verbose=False,
-        loss="mean_squared_error",
+        loss="categorical_crossentropy",
         metrics=None,
         random_state=None,
         activation="sigmoid",
