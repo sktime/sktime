@@ -213,7 +213,6 @@ def _evaluate_window(x, meta):
         if i == 0 or strategy == "refit":
             forecaster = forecaster.clone()
             forecaster.fit(y=y_train, X=X_train, fh=fh)
-            forecaster.fit(y=y_train, X=X_train, fh=fh)
         else:  # if strategy in ["update", "no-update_params"]:
             update_params = strategy == "update"
             forecaster.update(y_train, X_train, update_params=update_params)
@@ -253,7 +252,7 @@ def _evaluate_window(x, meta):
                 # make prediction
                 if y_pred_key not in y_preds_cache.keys():
                     start_pred = time.perf_counter()
-                    y_pred = method(fh, X_test, **pred_args)
+                    y_pred = method(fh=fh, X=X_test, **pred_args)
                     pred_time = time.perf_counter() - start_pred
                     temp_result[time_key] = [pred_time]
                     y_preds_cache[y_pred_key] = [y_pred]
