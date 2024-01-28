@@ -8,10 +8,12 @@ __all__ = [
     "STLBootstrapTransformer",
     "MovingBlockBootstrapTransformer",
     "SplitterBootstrapTransformer",
+    "RepeatBootstrapTransformer"
 ]
 
 from sktime.transformations.bootstrap._mbb import (
     MovingBlockBootstrapTransformer,
     STLBootstrapTransformer,
 )
+from sktime.transformations.bootstrap._repeat import RepeatBootstrapTransformer
 from sktime.transformations.bootstrap._splitterboot import SplitterBootstrapTransformer
