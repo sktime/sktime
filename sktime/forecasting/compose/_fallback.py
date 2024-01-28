@@ -113,11 +113,12 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         self.forecasters_ = self._check_estimators(forecasters, "forecasters")
 
         self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+        self._do_all_estimators_have_pred_int(self.forecasters_)
 
-    def _predict_interval(self, fh, X, coverage):
+    def _do_all_estimators_have_pred_int(self, estimators):
         pred_int_capability = True
         nonvalid_estimators = []
-        for ix, (name, forecaster) in enumerate(self.forecasters):
+        for ix, (name, forecaster) in enumerate(estimators):
             if not forecaster.get_tag("capability:pred_int"):
                 pred_int_capability = False
                 nonvalid_estimators.append(
@@ -127,15 +128,26 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
                         "estimator": forecaster.__class__.__name__,
                     }
                 )
+        self._fallback_predict_int = {
+            "capability:pred_int": pred_int_capability,
+            "if.false": nonvalid_estimators,
+        }
+
+    def _predict_interval(self, fh, X, coverage):
+        pred_int_capability = self._fallback_predict_int["capability:pred_int"]
         if pred_int_capability:
             return self.current_forecaster_.predict_interval(fh, X, coverage)
         else:
+            nonvalid_estimators = self._fallback_predict_int["if.false"]
             raise AttributeError(
                 "All forecasters must have prediction capbility "
                 "enabled to call `predict_interval`, but at least one"
                 "forecaster is missing this capability, see: "
                 f"{nonvalid_estimators}"
             )
+
+    def _get_delegate(self):
+        return self.current_forecaster_
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecasters in the given order until one succeeds.
@@ -235,7 +247,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
             return self.current_forecaster_.predict(fh, X)
         except Exception as e:
             self.exceptions_raised_[self.first_nonfailing_forecaster_index_] = {
-                "failed_at_step": "fit",
+                "failed_at_step": "predict",
                 "exception": e,
                 "forecaster_name": self.current_name_,
             }
