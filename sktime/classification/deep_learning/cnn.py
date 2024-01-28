@@ -32,7 +32,7 @@ class CNNClassifier(BaseDeepClassifier):
         Seed for random number generation.
     verbose         : boolean, default = False
         whether to output extra information
-    loss            : string, default="mean_squared_error"
+    loss            : string, default="categorical_crossentropy"
         fit parameter for the keras model
     metrics         : list of strings, default=["accuracy"],
     activation      : string or a tf callable, default="sigmoid"
