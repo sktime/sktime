@@ -80,6 +80,32 @@ class _PytsAdapter:
 
         return self
 
+    def _transform(self, X, y=None):
+        """Predict the closest cluster each sample in X belongs to.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length))
+            Time series instances to predict their cluster indexes.
+        y: ignored, exists for API consistency reasons.
+
+        Returns
+        -------
+        np.ndarray (1d array of shape (n_instances,))
+            Index of the cluster each time series in X belongs to.
+        """
+        pyts_est = getattr(self, self._estimator_attr)
+
+        # check if pyts_est fit has y parameter
+        # if yes, call with y, otherwise without
+        pyts_has_y = "y" in signature(pyts_est.transform).parameters
+
+        if pyts_has_y:
+            return pyts_est.transform(X, y)
+        else:
+            return pyts_est.transform(X)
+
     def _predict(self, X, y=None):
         """Predict the closest cluster each sample in X belongs to.
 

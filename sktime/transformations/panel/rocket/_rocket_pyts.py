@@ -143,6 +143,6 @@ class RocketPyts(_PytsAdapter, BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {"n_kernels": 234}
-        params2 = {"n_kernels": 512, "kernel_sizes": (6, 7, 10)}
+        params1 = {"n_kernels": 234, "kernel_sizes": (5, 4)}
+        params2 = {"n_kernels": 512, "kernel_sizes": (6, 7, 8)}
         return [params1, params2]
