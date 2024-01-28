@@ -16,12 +16,12 @@ class Empirical(BaseDistribution):
     ----------
     spl : pd.DataFrame with pd.MultiIndex
         empirical sample
-        last (highest) index is time, first (lowest) index is sample
+        last (highest) index is instance, first (lowest) index is sample
     weights : pd.Series, with same index and length as spl, optional, default=None
         if not passed, ``spl`` is assumed to be unweighted
     time_indep : bool, optional, default=True
-        if True, ``sample`` will sample individual time indices independently
-        if False, ``sample`` will sample etire instances from ``spl``
+        if True, ``sample`` will sample individual instance indices independently
+        if False, ``sample`` will sample entire instances from ``spl``
     index : pd.Index, optional, default = RangeIndex
     columns : pd.Index, optional, default = RangeIndex
 
@@ -43,6 +43,7 @@ class Empirical(BaseDistribution):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "capabilities:approx": [],
         "capabilities:exact": ["mean", "var", "energy", "cdf", "ppf"],
         "distr:measuretype": "discrete",
@@ -79,7 +80,6 @@ class Empirical(BaseDistribution):
 
         sorted = {}
         weights = {}
-        weights
         for t in times:
             sorted[t] = {}
             weights[t] = {}
@@ -124,8 +124,42 @@ class Empirical(BaseDistribution):
                     x_t = x.loc[ix, col]
                 else:
                     x_t = x
-                res.loc[ix, col] = func(spl=spl_t, weights=weights_t, x=x_t, **params)
-        return res.convert_dtypes()
+                res.at[ix, col] = func(spl=spl_t, weights=weights_t, x=x_t, **params)
+        return res.apply(pd.to_numeric)
+
+    def _iloc(self, rowidx=None, colidx=None):
+        index = self.index
+        columns = self.columns
+        weights = self.weights
+
+        spl_subset = self.spl
+
+        if rowidx is not None:
+            rowidx_loc = index[rowidx]
+            # subset multiindex to rowidx by last level
+            spl_subset = self.spl.loc[(slice(None), rowidx_loc), :]
+            if weights is not None:
+                weights_subset = weights.loc[(slice(None), rowidx_loc)]
+            else:
+                weights_subset = None
+            subs_rowidx = index[rowidx]
+        else:
+            subs_rowidx = index
+            weights_subset = weights
+
+        if colidx is not None:
+            spl_subset = spl_subset.iloc[:, colidx]
+            subs_colidx = columns[colidx]
+        else:
+            subs_colidx = columns
+
+        return Empirical(
+            spl_subset,
+            weights=weights_subset,
+            time_indep=self.time_indep,
+            index=subs_rowidx,
+            columns=subs_colidx,
+        )
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
@@ -162,9 +196,9 @@ class Empirical(BaseDistribution):
         """
         spl = self.spl
         if self.weights is None:
-            mean_df = spl.groupby(level=-1).mean()
+            mean_df = spl.groupby(level=-1, sort=False).mean()
         else:
-            mean_df = spl.groupby(level=-1).apply(
+            mean_df = spl.groupby(level=-1, sort=False).apply(
                 lambda x: np.average(x, weights=self.weights.loc[x.index], axis=0)
             )
             mean_df = pd.DataFrame(mean_df.tolist(), index=mean_df.index)
@@ -186,11 +220,11 @@ class Empirical(BaseDistribution):
         spl = self.spl
         N = self._N
         if self.weights is None:
-            var_df = spl.groupby(level=-1).var(ddof=0)
+            var_df = spl.groupby(level=-1, sort=False).var(ddof=0)
         else:
             mean = self.mean()
             means = pd.concat([mean] * N, axis=0, keys=self._spl_instances)
-            var_df = spl.groupby(level=-1).apply(
+            var_df = spl.groupby(level=-1, sort=False).apply(
                 lambda x: np.average(
                     (x - means.loc[x.index]) ** 2,
                     weights=self.weights.loc[x.index],
@@ -334,7 +368,7 @@ def _energy_np(spl, x=None, weights=None, assume_sorted=False):
 
     if x is None:
         cum_fwd = np.cumsum(weights[:-1])
-        cum_back = np.cumsum(weights[1::-1])[::-1]
+        cum_back = np.cumsum(weights[1:][::-1])[::-1]
         energy = 2 * np.sum(cum_fwd * cum_back * spl_diff)
     else:
         spl_diff = np.abs(spl - x)

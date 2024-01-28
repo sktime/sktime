@@ -23,6 +23,17 @@ Composition
     SklearnClassifierPipeline
     MultiplexClassifier
 
+Model selection and tuning
+--------------------------
+
+.. currentmodule:: sktime.classification.model_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSCGridSearchCV
+
 Ensembles
 ---------
 
@@ -46,6 +57,7 @@ Deep learning
     :template: class.rst
 
     CNNClassifier
+    CNTCClassifier
     FCNClassifier
     LSTMFCNClassifier
     InceptionTimeClassifier
@@ -182,8 +194,15 @@ Shapelet-based
     MrSEQL
     MrSQM
 
-sklearn
--------
+
+sklearn classifiers
+-------------------
+
+This section contains classifiers which are not time series classifiers but
+simple tabular classifiers in ``sklearn`` compatible API.
+
+They are used internally in time series classifiers, but can also be used
+directly in a tabular setting.
 
 .. currentmodule:: sktime.classification.sklearn
 

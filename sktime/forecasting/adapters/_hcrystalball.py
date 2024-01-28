@@ -106,10 +106,16 @@ class HCrystalBallAdapter(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MichalChromcak",
+        "maintainers": "MichalChromcak",
+        "python_dependencies": "hcrystalball",
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "python_dependencies": "hcrystalball",
     }
 
     def __init__(self, model):

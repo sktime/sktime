@@ -90,6 +90,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
 
     # tags will largely be copied from selected_transformer
     _tags = {
+        "authors": ["miraep8", "fkiraly"],
         "fit_is_empty": False,
         "univariate-only": False,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,

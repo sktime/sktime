@@ -116,6 +116,11 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jasonlines", "TonyBagnall", "chrisholder", "fkiraly"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,

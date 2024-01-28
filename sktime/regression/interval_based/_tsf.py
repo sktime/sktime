@@ -8,11 +8,8 @@ from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
+from sktime.base._panel.forest._tsf import BaseTimeSeriesForest, _transform
 from sktime.regression.base import BaseRegressor
-from sktime.series_as_features.base.estimators.interval_based._tsf import (
-    BaseTimeSeriesForest,
-    _transform,
-)
 
 
 class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegressor):
@@ -77,6 +74,12 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["TonyBagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"],
+        "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        # estimator type
+        # --------------
         "capability:multivariate": False,
         "X_inner_mtype": "numpy3D",
     }

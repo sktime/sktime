@@ -1,89 +1,14 @@
-# The file lists sktime's algorithm maintainers as specified in GOVERNANCE.md.
-# Each line is a file pattern followed by one or more owners.
+# The file specifies framework level core developers for automated review requests
+#
+# Note: historically, this file has been used to maintain a list of
+# algorithm maintainers as specified in GOVERNANCE.md.
+# This is no longer the case, algorithm maintainers are now
+# specified directly in the estimator,
+# in the "maintainers" tag of the respective scikit-base object.
+#
+# Algorithm maintainers are programmatically queriable
+# via Estimator.get_class_tag("maintainers").
+# Further lookup such as "which algorithms does M maintain"
+# can be carried out using registry.all_estimators
 
 * @achieveordie @benheid @fkiraly @yarnabrina
-
-sktime/annotation/hmm_learn/ @miraep8
-sktime/annotation/clasp.py @patrickzib @ermshaua
-sktime/annotation/eagglo.py @KatieBuc
-sktime/annotation/stray.py @KatieBuc
-
-sktime/classification/dictionary_based/_boss.py @patrickzib @MatthewMiddlehurst
-sktime/classification/dictionary_based/_cboss.py @patrickzib @MatthewMiddlehurst
-sktime/classification/dictionary_based/_muse.py @patrickzib @MatthewMiddlehurst
-sktime/classification/dictionary_based/_tde.py @patrickzib @MatthewMiddlehurst
-sktime/classification/dictionary_based/_weasel.py @patrickzib @MatthewMiddlehurst
-sktime/classification/distance_based/ @goastler
-sktime/classification/dummy/ @ZiyaoWei
-sktime/classification/early_classification/_probability_threshold.py @MatthewMiddlehurst
-sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst
-sktime/classification/feature_based/_catch22_classifier.py @MatthewMiddlehurst
-sktime/classification/feature_based/_fresh_prince.py @MatthewMiddlehurst
-sktime/classification/feature_based/_matrix_profile_classifier.py @MatthewMiddlehurst
-sktime/classification/feature_based/_random_interval_classifier.py @MatthewMiddlehurst
-sktime/classification/feature_based/_signature_classifier.py @jambo6
-sktime/classification/feature_based/_summary_classifier.py @MatthewMiddlehurst
-sktime/classification/feature_based/_tsfresh_classifier.py @MatthewMiddlehurst
-sktime/classification/hybrid/_hivecote_v1.py @MatthewMiddlehurst
-sktime/classification/hybrid/_hivecote_v2.py @MatthewMiddlehurst
-sktime/classification/interval_based/_cif.py @MatthewMiddlehurst
-sktime/classification/interval_based/_drcif.py @MatthewMiddlehurst
-sktime/classification/interval_based/_rise.py @MatthewMiddlehurst
-sktime/classification/interval_based/_stsf.py @MatthewMiddlehurst
-sktime/classification/interval_based/_tsf.py @MatthewMiddlehurst
-sktime/classification/kernel_based/_arsenal.py @MatthewMiddlehurst
-sktime/classification/kernel_based/_rocket_classifier.py @MatthewMiddlehurst
-sktime/classification/shapelet_based/_stc.py @ABostrom @MatthewMiddlehurst
-sktime/classification/sklearn/_continuous_interval_tree.py @MatthewMiddlehurst
-sktime/classification/sklearn/_rotation_forest.py @MatthewMiddlehurst
-
-sktime/forecasting/adapters/_hcrystalball.py @MichalChromcak
-sktime/forecasting/arch/_uarch.py @Vasudeva-bit
-sktime/forecasting/arima.py @HYang1996
-sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
-sktime/forecasting/bats.py @aiwalter
-sktime/forecasting/compose/_ensemble.py @aiwalter
-sktime/forecasting/compose/_hierarchy_ensemble.py @VyomkeshVyas
-sktime/forecasting/ets.py @HYang1996
-sktime/forecasting/fbprophet.py @aiwalter
-sktime/forecasting/model_selection/_split @koralturkk
-sktime/forecasting/online_learning/ @magittan
-sktime/forecasting/sarimax.py @TNTran92
-sktime/forecasting/statsforecast.py @FedericoGarza
-sktime/forecasting/structural.py @juanitorduz
-sktime/forecasting/tests/test_ets.py @HYang1996
-sktime/forecasting/tbats.py @aiwalter
-
-sktime/regression/dummy/ @badrmarani
-
-sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
-sktime/transformations/panel/catch22.py @MatthewMiddlehurst
-sktime/transformations/panel/catch22wrapper.py @MatthewMiddlehurst
-sktime/transformations/panel/channel_selection.py @haskarb @a-pasos-ruiz
-sktime/transformations/panel/dictionary_based/_paa.py @patrickzib @MatthewMiddlehurst
-sktime/transformations/panel/dictionary_based/_sax.py @patrickzib @MatthewMiddlehurst
-sktime/transformations/panel/dictionary_based/_sfa.py @patrickzib @MatthewMiddlehurst
-sktime/transformations/panel/dictionary_based/_sfa_fast.py @patrickzib @MatthewMiddlehurst
-sktime/transformations/panel/random_intervals.py @MatthewMiddlehurst
-sktime/transformations/panel/rocket/ @angus924
-sktime/transformations/panel/rocket/_multirocket.py @ChangWeiTan @fstinner @angus924
-sktime/transformations/panel/rocket/_multirocket_multivariate.py @ChangWeiTan @fstinner @angus924
-sktime/transformations/panel/signature_based/ @jambo6
-sktime/transformations/panel/shapelet_transform.py @ABostrom @MatthewMiddlehurst
-sktime/transformations/panel/supervised_intervals.py @MatthewMiddlehurst
-
-sktime/transformations/series/clear_sky.py @ciaran-g
-sktime/transformations/series/clasp.py @patrickzib @ermshaua
-sktime/transformations/series/date.py @danbartl @KishManani
-sktime/transformations/series/difference.py @rnkuhns
-sktime/transformations/series/exponent.py @rnkuhns
-sktime/transformations/series/feature_selection.py @aiwalter
-sktime/transformations/series/impute.py @aiwalter
-sktime/transformations/series/kalman_filter.py @NoaBenAmi
-sktime/transformations/series/outlier_detection.py @aiwalter
-sktime/transformations/series/scaledlogit.py @ltsaprounis
-sktime/transformations/series/time_since.py @KishManani
-sktime/transformations/series/theta.py @GuzalBulatova
-sktime/transformations/series/scaledasinh.py @ali-parizad
-
-sktime/utils/mlflow_sktime.py @benjaminbluhm

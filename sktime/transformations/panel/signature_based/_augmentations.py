@@ -68,6 +68,12 @@ class _AddTime(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "jambo6",
+        "maintainers": "jambo6",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

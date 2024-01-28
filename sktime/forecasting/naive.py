@@ -108,6 +108,20 @@ class NaiveForecaster(_BaseWindowForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": [
+            "mloning",
+            "piyush1729",
+            "sri1419",
+            "Flix6x",
+            "aiwalter",
+            "IlyasMoutawwakil",
+            "fkiraly",
+            "bethrice44",
+        ],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
@@ -191,7 +205,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             )
 
         # check window length
-        if self.window_length_ > len(self._y):
+        if self.window_length_ > len(y):
             param = "sp" if self.strategy == "last" and sp != 1 else "window_length_"
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
@@ -654,6 +668,11 @@ class NaiveVariance(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly", "bethrice44"],
+        # estimator type
+        # --------------
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

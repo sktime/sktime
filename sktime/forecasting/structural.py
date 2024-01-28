@@ -198,6 +198,13 @@ class UnobservedComponents(_StatsModelsAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["juanitorduz"],
+        "maintainers": ["juanitorduz"],
+        # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "handles-missing-data": False,

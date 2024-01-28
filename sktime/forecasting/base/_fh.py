@@ -682,12 +682,13 @@ class ForecastingHorizon:
         y : pd.DataFrame, pd.Series, pd.Index, or None
             data to compute fh relative to,
             assumed in sktime pandas based mtype or index thereof
-        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+            if None, assumes no MultiIndex
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional (default=None)
             Cutoff value to use in computing resulting index.
             If cutoff is not provided, is computed from ``y`` via ``get_cutoff``.
         sort_by_time : bool, optional (default=False)
             for MultiIndex returns, whether to sort by time index (level -1)
-            - If True, result Index is sorted sort by time index (level -1)
+            - If True, result Index is sorted by time index (level -1)
             - If False, result Index is sorted overall
 
         Returns
@@ -707,9 +708,11 @@ class ForecastingHorizon:
         elif isinstance(y, pd.Index):
             y_index = y
             y = pd.DataFrame(index=y_index)
-        else:
+        elif cutoff is None:
             y_index = pd.Index(y)
             y = pd.DataFrame(index=y_index)
+        else:
+            y_index = None
 
         if cutoff is None and not isinstance(y_index, pd.MultiIndex):
             _cutoff = get_cutoff(y)
@@ -720,15 +723,15 @@ class ForecastingHorizon:
             fh_idx = pd.Index(self.to_absolute_index(_cutoff))
 
         if cutoff is not None and isinstance(y_index, pd.MultiIndex):
-            y_inst_idx = y_index.droplevel(-1).unique()
+            y_inst_idx = y_index.droplevel(-1).unique().sort_values()
             if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
-                fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
-            elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
                 fh_list = [x + (y,) for y in fh_idx for x in y_inst_idx]
+            elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
+                fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
             elif sort_by_time:  # and not isinstance(y_inst_idx, pd.MultiIndex):
-                fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
-            else:  # not sort_by_time and not isinstance(y_inst_idx, pd.MultiIndex):
                 fh_list = [(x, y) for y in fh_idx for x in y_inst_idx]
+            else:  # not sort_by_time and not isinstance(y_inst_idx, pd.MultiIndex):
+                fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
 
             fh_idx = pd.Index(fh_list)
 
@@ -806,7 +809,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        # TODO: 0.26.0:
+        # TODO: 0.27.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #

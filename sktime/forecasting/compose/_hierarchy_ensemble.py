@@ -93,6 +93,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["VyomkeshVyas"],
+        "maintainers": ["VyomkeshVyas"],
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],

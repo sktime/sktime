@@ -71,6 +71,7 @@ class OptionalPassthrough(_DelegatedTransformer):
     """
 
     _tags = {
+        "authors": ["aiwalter", "fkiraly"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
