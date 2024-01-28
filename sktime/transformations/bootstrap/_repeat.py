@@ -1,21 +1,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Bootstrapping methods for time series."""
+"""Simple repetition bootstrap.."""
 
-__author__ = ["ltsaprounis"]
+__author__ = ["fkiraly"]
 
-from copy import copy
-from typing import Tuple, Union
-
-import numpy as np
 import pandas as pd
-from sklearn.utils import check_random_state
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
 class RepeatBootstrapTransformer(BaseTransformer):
-    """Repeat bootstrap, repeats given time series identically, ``n_series`` times.
+    """Repetition bootstrap, repeats given time series identically, ``n_series`` times.
 
     Useful as a baseline method, or for random reinitialization of a model.
 
