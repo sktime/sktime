@@ -84,9 +84,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
-        "capability:pred_int": True,
     }
-    _delegate_name = "estimator_"
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
@@ -103,7 +101,6 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
 
         self.forecasters = forecasters
         self.current_forecaster_ = None
-        self.estimator_ = None
         self.current_name_ = None
         self.verbose = verbose
 
@@ -170,7 +167,6 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
             try:
                 self.current_name_ = name
                 self.current_forecaster_ = forecaster.clone()
-                self.estimator_ = self.current_forecaster_
                 self.current_forecaster_.fit(y=y, X=X, fh=fh)
                 return self
             except Exception as e:
