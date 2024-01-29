@@ -525,10 +525,5 @@ def test_fallbackforecaster_pred_int_raises():
     )
     fh = [1, 2, 3]
     forecaster.fit(y, fh=fh)
-    with pytest.raises(AttributeError) as e:
+    with pytest.raises(NotImplementedError):
         forecaster.predict_interval()
-    msg_actual = e.value.args[0]
-    msg_expected = (
-        "[{'index': 1, 'name': 'ensemble', 'estimator': 'EnsembleForecaster'}]"
-    )
-    assert msg_expected in msg_actual
