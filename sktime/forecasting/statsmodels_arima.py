@@ -144,6 +144,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsmodels"],
     }
 
     def __init__(
