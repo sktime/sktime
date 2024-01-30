@@ -497,7 +497,9 @@ def test_fallbackforecaster_fails_many_simple():
 
 
 def test_fallbackforecaster_pred_int():
-    """First two FallbackForecasters fail, third succeeds"""
+    """Predict interval works bc all forecasters have them enabled, first forecaster
+    expected
+    """
     y = make_forecasting_problem(random_state=42)
     forecaster1 = NaiveForecaster("mean")
     forecaster2 = NaiveForecaster("last")
@@ -514,7 +516,7 @@ def test_fallbackforecaster_pred_int():
 
 
 def test_fallbackforecaster_pred_int_raises():
-    """First two FallbackForecasters fail, third succeeds"""
+    """Predict int raises because EnsembleForecaster does not have this capability"""
     y = make_forecasting_problem(random_state=42)
     forecaster1 = NaiveForecaster("mean")
     forecaster2 = EnsembleForecaster(
