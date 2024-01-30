@@ -6,8 +6,11 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
+import numbers
 import os
+import types
 from copy import deepcopy
+from inspect import getfullargspec, signature
 from tempfile import TemporaryDirectory
 
 import joblib
