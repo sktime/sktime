@@ -187,7 +187,7 @@ class BaseFixtureGenerator(_BaseFixtureGenerator):
     #   warning: direct fixtures retain state changes within the same test
     indirect_fixtures = ["estimator_instance"]
 
-    def _all_estimators(self):
+    def _all_objects(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
         if CYTHON_ESTIMATORS:
             filter_tags = {"requires_cython": True}
@@ -235,7 +235,7 @@ class BaseFixtureGenerator(_BaseFixtureGenerator):
         """
         estimator_classes_to_test = [
             est
-            for est in self._all_estimators()
+            for est in self._all_objects()
             if not self.is_excluded(test_name, est)
         ]
 
