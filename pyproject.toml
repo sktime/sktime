@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.25.0"
+version = "0.26.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -57,7 +57,7 @@ dependencies = [
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.2.0,>=1.1",  # pandas is the main in-memory data container
   "scikit-base<0.8.0",  # base module for sklearn compatible base API
-  "scikit-learn<1.4.0,>=0.24",  # required for estimators and framework layer
+  "scikit-learn>=0.24,<1.5.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
 
