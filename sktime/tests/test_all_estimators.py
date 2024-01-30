@@ -43,12 +43,10 @@ from sktime.tests._config import (
     VALID_TRANSFORMER_TYPES,
 )
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils._testing._conditional_fixtures import (
-    create_conditional_fixtures_and_names,
-)
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
+    _get_args,
     _has_capability,
     _list_required_methods,
 )
