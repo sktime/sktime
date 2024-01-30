@@ -234,9 +234,7 @@ class BaseFixtureGenerator(_BaseFixtureGenerator):
             ranges over all estimator classes not excluded by EXCLUDED_TESTS
         """
         estimator_classes_to_test = [
-            est
-            for est in self._all_objects()
-            if not self.is_excluded(test_name, est)
+            est for est in self._all_objects() if not self.is_excluded(test_name, est)
         ]
 
         estimator_names = [est.__name__ for est in estimator_classes_to_test]
