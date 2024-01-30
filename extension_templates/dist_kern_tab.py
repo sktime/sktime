@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Extension template for pairwise distance or kernel on tabular data.
+"""Extension template for pairwise distance or kernel on tabular data.
 
 How to use this:
 - this is meant as a "fill in" template for easy extension
@@ -19,7 +17,7 @@ How to use this:
 Mandatory implements:
     transforming    - _transform(self, X, X2=None)
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -30,11 +28,7 @@ from sktime.dists_kernels import BasePairwiseTransformer
 # todo: add any necessary imports here
 
 # todo: if any imports are sktime soft dependencies:
-#  * make sure to fill in the "python_dependencies" tag with the package import name
-#  * add a _check_soft_dependencies warning here, example:
-#
-# from sktime.utils.validation._dependencies import check_soft_dependencies
-# _check_soft_dependencies("soft_dependency_name", severity="warning")
+# make sure to fill in the "python_dependencies" tag with the package import name
 
 
 class MyTrafoPw(BasePairwiseTransformer):
@@ -63,16 +57,21 @@ class MyTrafoPw(BasePairwiseTransformer):
 
     # todo: fill out transformer tags here
     #  delete the tags that you *didn't* change - these defaults are inherited
-    # _tags = {
-    #    currently there are no tags for pairwise transformers
-    # }
+    _tags = {
+        # specify one or multiple authors and maintainers, only for sktime contribution
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        # maintainer = algorithm maintainer role, "owner"
+        # remove maintainer tag if maintained by sktime core team
+    }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
@@ -80,8 +79,8 @@ class MyTrafoPw(BasePairwiseTransformer):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTrafoPw" to the name of the class
-        super(MyTrafoPw, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

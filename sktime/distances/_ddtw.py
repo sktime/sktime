@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
 
@@ -27,7 +26,7 @@ def average_of_slope_transform(X: np.ndarray) -> np.ndarray:
     -------
     np.ndarray (2d array of shape nxm where n is len(q.shape[0]-2) and m is
                 len(q.shape[1]))
-        The derviative of the time series X.
+        The derivative of the time series X.
     """
     from sktime.distances._ddtw_numba import average_of_slope
 
@@ -40,8 +39,8 @@ def average_of_slope_transform(X: np.ndarray) -> np.ndarray:
 class _DdtwDistance(NumbaDistance):
     """Derivative dynamic time warping (ddtw) between two time series.
 
-    Takes the slope based derivative of the series (using compute_derivative),
-    then applies DTW (using the _cost_matrix from _DtwDistance)
+    Takes the slope based derivative of the series (using compute_derivative), then
+    applies DTW (using the _cost_matrix from _DtwDistance)
     """
 
     def _distance_alignment_path_factory(
@@ -116,7 +115,7 @@ class _DdtwDistance(NumbaDistance):
         )
 
         if not is_no_python_compiled_callable(compute_derivative):
-            raise (
+            raise TypeError(
                 f"The derivative callable must be no_python compiled. The name"
                 f"of the callable that must be compiled is "
                 f"{compute_derivative.__name__}"
@@ -218,7 +217,7 @@ class _DdtwDistance(NumbaDistance):
         )
 
         if not is_no_python_compiled_callable(compute_derivative):
-            raise (
+            raise TypeError(
                 f"The derivative callable must be no_python compiled. The name"
                 f"of the callable that must be compiled is "
                 f"{compute_derivative.__name__}"

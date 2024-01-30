@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Base class template for objects and fittable objects.
+"""Base class template for objects and fittable objects.
 
 templates in this module:
 
@@ -27,6 +25,10 @@ Tag inspection and setter methods
     inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
     setting dynamic tags          - set_tags(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
+
+Config inspection and setter methods
+    get configs (all)             - get_config()
+    set configs                   - set_config(**config_dict: dict)
 
 Blueprinting: resetting and cloning, post-init state with same hyper-parameters
     reset estimator to post-init  - reset()
@@ -60,26 +62,94 @@ from copy import deepcopy
 from skbase.base import BaseObject as _BaseObject
 from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
-from sklearn.ensemble._base import _set_random_states
 
 from sktime.exceptions import NotFittedError
+from sktime.utils.random_state import set_random_state
+
+SERIALIZATION_FORMATS = {
+    "pickle",
+    "cloudpickle",
+}
 
 
 class BaseObject(_BaseObject):
-    """Base class for parametric objects with tags sktime.
+    """Base class for parametric objects with tags in sktime.
 
     Extends skbase BaseObject with additional features.
     """
 
+    _config = {
+        "warnings": "on",
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend,
+    }
+
+    _config_doc = {
+        "display": """
+        display : str, "diagram" (default), or "text"
+            how jupyter kernels display instances of self
+
+            * "diagram" = html box diagram representation
+            * "text" = string printout
+        """,
+        "print_changed_only": """
+        print_changed_only : bool, default=True
+            whether printing of self lists only self-parameters that differ
+            from defaults (False), or all parameter names and values (False).
+            Does not nest, i.e., only affects self and not component estimators.
+        """,
+        "warnings": """
+        warnings : str, "on" (default), or "off"
+            whether to raise warnings, affects warnings from sktime only
+
+            * "on" = will raise warnings from sktime
+            * "off" = will not raise warnings from sktime
+        """,
+        "backend:parallel": """
+        backend:parallel : str, optional, default="None"
+            backend to use for parallelization when broadcasting/vectorizing, one of
+
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+            - "dask": uses ``dask``, requires ``dask`` package in environment
+        """,
+        "backend:parallel:params": """
+        backend:parallel:params : dict, optional, default={} (no parameters passed)
+            additional parameters passed to the parallelization backend as config.
+            Valid keys depend on the value of ``backend:parallel``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+              any valid keys for ``joblib.Parallel`` can be passed here, e.g.,
+              ``n_jobs``, with the exception of ``backend`` which is directly
+              controlled by ``backend``.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "joblib": custom and 3rd party ``joblib`` backends,
+              e.g., ``spark``. Any valid keys for ``joblib.Parallel``
+              can be passed here, e.g., ``n_jobs``,
+              ``backend`` must be passed as a key of ``backend_params`` in this case.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "dask": any valid keys for ``dask.compute`` can be passed,
+              e.g., ``scheduler``
+        """,
+    }
+
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
-        Returns True iff result of get_params(deep=False)
-        results in equal parameter sets.
+        Returns True iff result of get_params(deep=False) results in equal parameter
+        sets.
 
         Nested BaseObject descendants from get_params are compared via __eq__ as well.
         """
-        from sktime.utils._testing.deep_equals import deep_equals
+        from sktime.utils.deep_equals import deep_equals
 
         if not isinstance(other, BaseObject):
             return False
@@ -89,7 +159,53 @@ class BaseObject(_BaseObject):
 
         return deep_equals(self_params, other_params)
 
-    def save(self, path=None):
+    @classmethod
+    def _get_set_config_doc(cls):
+        """Create docstring for set_config from self._config_doc.
+
+        Returns
+        -------
+        collected_config_docs : dict
+            Dictionary of doc name: docstring part.
+            Collected from _config_doc class attribute via nested inheritance.
+        """
+        cfgs_dict = cls._get_class_flags(flag_attr_name="_config_doc")
+
+        doc_start = """Set config flags to given values.
+
+        Parameters
+        ----------
+        config_dict : dict
+            Dictionary of config name : config value pairs.
+            Valid configs, values, and their meaning is listed below:
+        """
+
+        doc_end = """
+        Returns
+        -------
+        self : reference to self.
+
+        Notes
+        -----
+        Changes object state, copies configs in config_dict to self._config_dynamic.
+        """
+
+        doc = doc_start
+        for _, cfg_doc in cfgs_dict.items():
+            doc += cfg_doc
+        doc += doc_end
+        return doc
+
+    @classmethod
+    def _init_dynamic_doc(cls):
+        """Set docstring for set_config from self._config_doc."""
+        try:  # try/except to avoid unexpected failures
+            cls.set_config = deepcopy_func(cls.set_config)
+            cls.set_config.__doc__ = cls._get_set_config_doc()
+        except Exception:
+            pass
+
+    def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
@@ -109,6 +225,12 @@ class BaseObject(_BaseObject):
                 path="/home/stored/estimator" then a zip file `estimator.zip` will be
                 stored in `/home/stored/`.
 
+        serialization_format: str, default = "pickle"
+            Module to use for serialization.
+            The available options are "pickle" and "cloudpickle".
+            Note that non-default formats might require
+            installation of other soft dependencies.
+
         Returns
         -------
         if `path` is None - in-memory serialized self
@@ -119,19 +241,44 @@ class BaseObject(_BaseObject):
         from pathlib import Path
         from zipfile import ZipFile
 
-        if path is None:
-            return (type(self), pickle.dumps(self))
-        if not isinstance(path, (str, Path)):
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        if serialization_format not in SERIALIZATION_FORMATS:
+            raise ValueError(
+                f"The provided `serialization_format`='{serialization_format}' "
+                "is not yet supported. The possible formats are: "
+                f"{SERIALIZATION_FORMATS}."
+            )
+
+        if path is not None and not isinstance(path, (str, Path)):
             raise TypeError(
                 "`path` is expected to either be a string or a Path object "
                 f"but found of type:{type(path)}."
             )
+        if path is not None:
+            path = Path(path) if isinstance(path, str) else path
+            path.mkdir()
 
-        path = Path(path) if isinstance(path, str) else path
-        path.mkdir()
+        if serialization_format == "cloudpickle":
+            _check_soft_dependencies("cloudpickle", severity="error")
+            import cloudpickle
 
-        pickle.dump(type(self), open(path / "_metadata", "wb"))
-        pickle.dump(self, open(path / "_obj", "wb"))
+            if path is None:
+                return (type(self), cloudpickle.dumps(self))
+
+            with open(path / "_metadata", "wb") as file:
+                cloudpickle.dump(type(self), file)
+            with open(path / "_obj", "wb") as file:
+                cloudpickle.dump(self, file)
+
+        elif serialization_format == "pickle":
+            if path is None:
+                return (type(self), pickle.dumps(self))
+
+            with open(path / "_metadata", "wb") as file:
+                pickle.dump(type(self), file)
+            with open(path / "_obj", "wb") as file:
+                pickle.dump(self, file)
 
         shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
@@ -176,24 +323,24 @@ class TagAliaserMixin:
     """Mixin class for tag aliasing and deprecation of old tags.
 
     To deprecate tags, add the TagAliaserMixin to BaseObject or BaseEstimator.
-    alias_dict contains the deprecated tags, and supports removal and renaming.
-        For removal, add an entry "old_tag_name": ""
-        For renaming, add an entry "old_tag_name": "new_tag_name"
-    deprecate_dict contains the version number of renaming or removal.
-        the keys in deprecate_dict should be the same as in alias_dict.
-        values in deprecate_dict should be strings, the version of removal/renaming.
+    alias_dict contains the deprecated tags, and supports removal and renaming.     For
+    removal, add an entry "old_tag_name": ""     For renaming, add an entry
+    "old_tag_name": "new_tag_name" deprecate_dict contains the version number of
+    renaming or removal.     the keys in deprecate_dict should be the same as in
+    alias_dict.     values in deprecate_dict should be strings, the version of
+    removal/renaming.
 
-    The class will ensure that new tags alias old tags and vice versa, during
-    the deprecation period. Informative warnings will be raised whenever the
-    deprecated tags are being accessed.
+    The class will ensure that new tags alias old tags and vice versa, during the
+    deprecation period. Informative warnings will be raised whenever the deprecated tags
+    are being accessed.
 
-    When removing tags, ensure to remove the removed tags from this class.
-    If no tags are deprecated anymore (e.g., all deprecated tags are removed/renamed),
-    ensure toremove this class as a parent of BaseObject or BaseEstimator.
+    When removing tags, ensure to remove the removed tags from this class. If no tags
+    are deprecated anymore (e.g., all deprecated tags are removed/renamed), ensure
+    toremove this class as a parent of BaseObject or BaseEstimator.
     """
 
     def __init__(self):
-        super(TagAliaserMixin, self).__init__()
+        super().__init__()
 
     @classmethod
     def get_class_tags(cls):
@@ -206,7 +353,7 @@ class TagAliaserMixin:
             class attribute via nested inheritance. NOT overridden by dynamic
             tags set by set_tags or mirror_tags.
         """
-        collected_tags = super(TagAliaserMixin, cls).get_class_tags()
+        collected_tags = super().get_class_tags()
         collected_tags = cls._complete_dict(collected_tags)
         return collected_tags
 
@@ -228,7 +375,7 @@ class TagAliaserMixin:
             `tag_value_default`.
         """
         cls._deprecate_tag_warn([tag_name])
-        return super(TagAliaserMixin, cls).get_class_tag(
+        return super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
 
@@ -242,7 +389,7 @@ class TagAliaserMixin:
             class attribute via nested inheritance and then any overrides
             and new tags from _tags_dynamic object attribute.
         """
-        collected_tags = super(TagAliaserMixin, self).get_tags()
+        collected_tags = super().get_tags()
         collected_tags = self._complete_dict(collected_tags)
         return collected_tags
 
@@ -270,7 +417,7 @@ class TagAliaserMixin:
         ).keys()
         """
         self._deprecate_tag_warn([tag_name])
-        return super(TagAliaserMixin, self).get_tag(
+        return super().get_tag(
             tag_name=tag_name,
             tag_value_default=tag_value_default,
             raise_error=raise_error,
@@ -291,13 +438,13 @@ class TagAliaserMixin:
 
         Notes
         -----
-        Changes object state by settting tag values in tag_dict as dynamic tags
+        Changes object state by setting tag values in tag_dict as dynamic tags
         in self.
         """
         self._deprecate_tag_warn(tag_dict.keys())
 
         tag_dict = self._complete_dict(tag_dict)
-        super(TagAliaserMixin, self).set_tags(**tag_dict)
+        super().set_tags(**tag_dict)
         return self
 
     @classmethod
@@ -346,7 +493,7 @@ class TagAliaserMixin:
                     )
                 else:
                     msg += ', please remove code that access or sets "{tag_name}"'
-                warnings.warn(msg, category=DeprecationWarning)
+                warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
 
 
 class BaseEstimator(BaseObject):
@@ -355,9 +502,12 @@ class BaseEstimator(BaseObject):
     Extends sktime's BaseObject to include basic functionality for fittable estimators.
     """
 
+    # global dependency alias tag for sklearn dependency management
+    _tags = {"python_dependencies_alias": {"scikit-learn": "sklearn"}}
+
     def __init__(self):
         self._is_fitted = False
-        super(BaseEstimator, self).__init__()
+        super().__init__()
 
     @property
     def is_fitted(self):
@@ -477,12 +627,12 @@ class BaseEstimator(BaseObject):
 
         # default retrieves all self attributes ending in "_"
         # and returns them with keys that have the "_" removed
-        fitted_params = [attr for attr in dir(obj) if attr.endswith("_")]
-        fitted_params = [x for x in fitted_params if not x.startswith("_")]
-        fitted_params = [x for x in fitted_params if hasattr(obj, x)]
-        fitted_param_dict = {p[:-1]: getattr(obj, p) for p in fitted_params}
-
-        return fitted_param_dict
+        fitted_params = {
+            attr[:-1]: getattr(obj, attr)
+            for attr in dir(obj)
+            if attr.endswith("_") and not attr.startswith("_") and hasattr(obj, attr)
+        }
+        return fitted_params
 
     def _get_fitted_params(self):
         """Get fitted parameters.
@@ -504,6 +654,23 @@ def _clone_estimator(base_estimator, random_state=None):
     estimator = clone(base_estimator)
 
     if random_state is not None:
-        _set_random_states(estimator, random_state)
+        set_random_state(estimator, random_state)
 
     return estimator
+
+
+def deepcopy_func(f, name=None):
+    """Deepcopy of a function."""
+    import types
+
+    return types.FunctionType(
+        f.__code__,
+        f.__globals__,
+        name or f.__name__,
+        f.__defaults__,
+        f.__closure__,
+    )
+
+
+# initialize dynamic docstrings
+BaseObject._init_dynamic_doc()

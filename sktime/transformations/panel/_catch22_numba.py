@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Isolated numba imports for catch22."""
 
 __author__ = ["MatthewMiddlehurst"]
@@ -651,24 +650,24 @@ def _SB_BinaryStats_mean_longstretch1(X):
 def _SB_MotifThree_quantile_hh(X):
     # Shannon entropy of two successive letters in equiprobable 3-letter
     # symbolization.
-    indicies = np.argsort(X)
+    indices = np.argsort(X)
     bins = np.zeros(len(X))
     q1 = int(len(X) / 3)
     q2 = q1 * 2
     l1 = np.zeros(q1, dtype=np.int_)
     for i in range(q1):
-        l1[i] = indicies[i]
+        l1[i] = indices[i]
     l2 = np.zeros(q1, dtype=np.int_)
     c1 = 0
     for i in range(q1, q2):
-        bins[indicies[i]] = 1
-        l2[c1] = indicies[i]
+        bins[indices[i]] = 1
+        l2[c1] = indices[i]
         c1 += 1
-    l3 = np.zeros(len(indicies) - q2, dtype=np.int_)
+    l3 = np.zeros(len(indices) - q2, dtype=np.int_)
     c2 = 0
-    for i in range(q2, len(indicies)):
-        bins[indicies[i]] = 2
-        l3[c2] = indicies[i]
+    for i in range(q2, len(indices)):
+        bins[indices[i]] = 2
+        l3[c2] = indices[i]
         c2 += 1
 
     found_last = False
@@ -798,15 +797,15 @@ def _SB_TransitionMatrix_3ac_sumdiagcov(X, acfz):
     ds = np.zeros(int((len(X) - 1) / acfz + 1))
     for i in range(len(ds)):
         ds[i] = X[i * acfz]
-    indicies = np.argsort(ds)
+    indices = np.argsort(ds)
 
     bins = np.zeros(len(ds), dtype=np.int32)
     q1 = int(len(ds) / 3)
     q2 = q1 * 2
     for i in range(q1 + 1, q2 + 1):
-        bins[indicies[i]] = 1
-    for i in range(q2 + 1, len(indicies)):
-        bins[indicies[i]] = 2
+        bins[indices[i]] = 1
+    for i in range(q2 + 1, len(indices)):
+        bins[indices[i]] = 2
 
     t = np.zeros((3, 3))
     for i in range(len(ds) - 1):

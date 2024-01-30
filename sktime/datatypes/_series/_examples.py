@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Example generation for testing.
 
 Exports dict of examples, useful for testing as fixtures.
@@ -81,6 +80,8 @@ example_dict_metadata[("Series", 0)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 1,
+    "feature_names": ["a"],
 }
 
 ###
@@ -122,6 +123,8 @@ example_dict_metadata[("Series", 1)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 2,
+    "feature_names": ["a", "b"],
 }
 
 
@@ -166,6 +169,8 @@ example_dict_metadata[("Series", 2)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 2,
+    "feature_names": ["a", "b"],
 }
 
 ###
@@ -202,4 +207,6 @@ example_dict_metadata[("Series", 3)] = {
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 1,
+    "feature_names": ["a"],
 }

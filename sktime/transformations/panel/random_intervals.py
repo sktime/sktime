@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Random interval features.
 
 A transformer for the extraction of features on randomly selected intervals.
@@ -47,6 +46,7 @@ class RandomIntervals(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
@@ -73,7 +73,7 @@ class RandomIntervals(BaseTransformer):
         self._intervals = []
         self._dims = []
 
-        super(RandomIntervals, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit the random interval transform.

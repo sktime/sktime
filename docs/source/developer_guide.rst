@@ -24,9 +24,9 @@ New developers should:
 
 Further special topics are listed below.
 
-sktime follows `scikit-learn <https://scikit-learn.org/stable/>`_\ ’s API whenever possible.
-If you’re new to scikit-learn, take a look at their `getting-started guide <https://scikit-learn.org/stable/getting_started.html>`_.
-If you’re already familiar with scikit-learn, you may still learn something new from their `developers’ guide <https://scikit-learn.org/stable/developers/index.html>`_.
+sktime follows `scikit-learn <https://scikit-learn.org/stable/>`_\ 's API whenever possible.
+If you're new to scikit-learn, take a look at their `getting-started guide <https://scikit-learn.org/stable/getting_started.html>`_.
+If you're already familiar with scikit-learn, you may still learn something new from their `developers' guide <https://scikit-learn.org/stable/developers/index.html>`_.
 
 .. toctree::
    :maxdepth: 1

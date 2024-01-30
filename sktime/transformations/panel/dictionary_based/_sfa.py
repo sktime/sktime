@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Symbolic Fourier Approximation (SFA) Transformer.
 
 Configurable SFA transform for discretising time series into words.
@@ -102,6 +101,7 @@ class SFA(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst", "patrickzib"],
         "univariate-only": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -186,10 +186,10 @@ class SFA(BaseTransformer):
         self.level_bits = 0
         self.level_max = 0
 
-        super(SFA, self).__init__()
+        super().__init__()
 
         if not return_pandas_data_series:
-            self._output_convert = "off"
+            self.set_config(**{"output_conversion": "off"})
 
     def fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
@@ -285,7 +285,7 @@ class SFA(BaseTransformer):
         if self.save_words:
             self.words = list(words)
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             nl = [None] * len(dim)
             for i, pdict in enumerate(dim):
@@ -396,7 +396,7 @@ class SFA(BaseTransformer):
                                 skip_gram = (skip_gram << self.level_bits) | 0
                         bag[skip_gram] = bag.get(skip_gram, 0) + 1
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             pdict = dict()
             for key, val in bag.items():
@@ -659,7 +659,7 @@ class SFA(BaseTransformer):
             delayed(self._shorten_case)(word_len, i) for i in range(len(self.words))
         )
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             nl = [None] * len(dim)
             for i, pdict in enumerate(dim):
@@ -755,7 +755,7 @@ class SFA(BaseTransformer):
                                 skip_gram = (skip_gram << self.level_bits) | 0
                         new_bag[skip_gram] = new_bag.get(skip_gram, 0) + 1
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             pdict = dict()
             for key, val in new_bag.items():
@@ -863,7 +863,7 @@ class SFA(BaseTransformer):
         """Convert a bag of SFA words into a string."""
         s = "{"
         for word, value in bag.items():
-            s += "{0}: {1}, ".format(
+            s += "{}: {}, ".format(
                 self.word_list_typed(word) if self.typed_dict else self.word_list(word),
                 value,
             )

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for Deseasonalizer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -8,8 +7,8 @@ __all__ = []
 import numpy as np
 import pytest
 
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import TEST_SPS
+from sktime.split import temporal_train_test_split
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -98,4 +97,4 @@ def test_deseasonalizer_in_pipeline():
     )
     train_df = all_df["1949":"1950"]
     model.fit(train_df)
-    model.update(y=all_df["1951"])
+    model.update(y=all_df["1951":"1951"])

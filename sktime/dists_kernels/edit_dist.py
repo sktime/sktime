@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BaseEstimator interface to sktime edit distances in distances module."""
 
 __author__ = ["fkiraly"]
@@ -8,7 +7,7 @@ from typing import Union
 import numpy as np
 
 from sktime.distances import pairwise_distance
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class EditDist(BasePairwiseTransformerPanel):
@@ -100,12 +99,30 @@ class EditDist(BasePairwiseTransformerPanel):
     .. [4] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
         for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
         Intelligence. 31 (2): 306–318.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.dists_kernels.edit_dist import EditDist
+    >>>
+    >>> X, _ = load_unit_test(return_type="pd-multiindex")  # doctest: +SKIP
+    >>> d = EditDist("edr")  # doctest: +SKIP
+    >>> distmat = d.transform(X)  # doctest: +SKIP
+
+    distances are also callable, this does the same:
+
+    >>> distmat = d(X)  # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["chrisholder", "TonyBagnall", "fkiraly"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
-        "python_dependencies": "numba",
     }
 
     ALLOWED_DISTANCE_STR = ["lcss", "edr", "erp", "twe"]
@@ -132,7 +149,7 @@ class EditDist(BasePairwiseTransformerPanel):
         self.nu = nu
         self.p = p
 
-        super(EditDist, self).__init__()
+        super().__init__()
 
         kwargs = {
             "window": window,

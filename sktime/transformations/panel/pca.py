@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""sklearn PCA applied after flattening series."""
+"""Sklearn PCA applied after flattening series."""
 __author__ = ["prockenschaub", "fkiraly"]
 __all__ = ["PCATransformer"]
 
@@ -10,7 +9,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class PCATransformer(BaseTransformer):
-    """Principal Components Analysis applied to panel of time seires.
+    """Principal Components Analysis applied to panel of time series.
 
     Provides a simple wrapper around ``sklearn.decomposition.PCA``.
 
@@ -75,6 +74,8 @@ class PCATransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["prockenschaub", "fkiraly"],
+        "maintainers": ["prockenschaub"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -114,7 +115,7 @@ class PCATransformer(BaseTransformer):
             random_state=random_state,
         )
 
-        super(PCATransformer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

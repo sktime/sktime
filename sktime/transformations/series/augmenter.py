@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Series transformers for time series augmentation."""
 
@@ -13,7 +12,6 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import BaseTransformer
@@ -21,6 +19,12 @@ from sktime.transformations.base import BaseTransformer
 
 class _AugmenterTags:
     _tags = {
+        # packaging info
+        # ----------------
+        "authors": ["MrPr3ntice", "MFehsenfeld", "iljamaurer"],
+        "maintainers": ["MrPr3ntice", "MFehsenfeld", "iljamaurer"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -63,8 +67,9 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         augmentation for time series classification with neural networks. Plos
         one, 2021, 16. Jg., Nr. 7, S. e0254841.
         [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
-
     """
+
+    _tags = {"python_dependencies": "scipy"}
 
     _allowed_statistics = [np.std]
 
@@ -74,6 +79,8 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         super().__init__()
 
     def _transform(self, X, y=None):
+        from scipy.stats import norm
+
         if self.scale in self._allowed_statistics:
             scale = self.scale(X)
         elif isinstance(self.scale, (int, float)):
@@ -111,7 +118,6 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
         [1]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data
         augmentation for time series classification with neural networks. Plos
         one, 2021, 16. Jg., Nr. 7, S. e0254841.
-
     """
 
     def __init__(self):
@@ -177,7 +183,6 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     ----------
 
         [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
-
     """
 
     def __init__(

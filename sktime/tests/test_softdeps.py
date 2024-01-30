@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests that soft dependencies are handled correctly.
 
-sktime supports a number of soft dependencies which are necessary for using
-a certain module but otherwise not necessary.
+sktime supports a number of soft dependencies which are necessary for using a certain
+module but otherwise not necessary.
 
 Adapted from code of mloning for the legacy Azure CI/CD build tools.
 """
@@ -19,7 +18,10 @@ import pytest
 from sktime.registry import all_estimators
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
-from sktime.utils.validation._dependencies import _check_python_version
+from sktime.utils.validation._dependencies import (
+    _check_python_version,
+    _check_soft_dependencies,
+)
 
 # list of soft dependencies used
 # excludes estimators, only for soft dependencies used in non-estimator modules
@@ -86,6 +88,23 @@ modules = [x[1] for x in modules]
 modules = [x for x in modules if not (_is_test(x) or _is_ignored(x) or _is_private(x))]
 
 
+def is_soft_dep_missing_message(msg):
+    """Check whether message is one of multiple missing softdep messages."""
+    # message if PEP 440 string is specified
+    missing_version_msg = "to be present in the python environment, with version"
+    cond1 = missing_version_msg in msg
+    # message if dependency is missing entirely
+    missing_dep_entirely_msg = (
+        "is a soft dependency and not included in the base sktime installation"
+    )
+    cond2 = missing_dep_entirely_msg in msg
+    # special message for deep learning dependencies
+    error_msg_dl = "required for deep learning"
+    cond3 = error_msg_dl in msg
+
+    return cond1 or cond2 or cond3
+
+
 @pytest.mark.parametrize("module", modules)
 def test_module_softdeps(module):
     """Test soft dependency imports in sktime modules."""
@@ -95,21 +114,13 @@ def test_module_softdeps(module):
     except ModuleNotFoundError as e:
         error_msg = str(e)
 
-        # Check if appropriate exception with useful error message is raised as
-        # defined in the `_check_soft_dependencies` function
-        expected_error_msg = (
-            "is a soft dependency and not included in the base sktime installation"
-        )
-        # message is different for deep learning deps tensorflow, tensorflow-proba
-        error_msg_alt = "required for deep learning"
-
-        if expected_error_msg not in error_msg and error_msg_alt not in error_msg:
+        if not is_soft_dep_missing_message(error_msg):
             raise RuntimeError(
-                f"The module: {module} seems to require a soft "
-                f"dependency, but does not raise an appropriate error "
-                f"message when the soft dependency is missing. Please "
-                f"use our `_check_soft_dependencies` function to "
-                f"raise a more appropriate error message."
+                f"The module: {module} seems to have unsatisfied soft "
+                f"dependency requirements, but does not raise an appropriate error "
+                f"message when the soft dependency requirement is not satisfied. "
+                f"Please use our `_check_soft_dependencies` function to "
+                f"raise an appropriate error with one of the predefined messages."
             ) from e
 
         # If the error is raised in a module which does depend on a soft dependency,
@@ -144,8 +155,9 @@ def _coerce_list_of_str(obj):
 
 
 def _get_soft_deps(est):
-    """Return soft dependencies of an estimator, as list of str."""
+    """Return soft dependencies of an estimator, as list of str and its alias."""
     softdeps = est.get_class_tag("python_dependencies", None)
+    softdeps_aliases = est.get_class_tag("python_dependencies_aliases", None)
     softdeps = _coerce_list_of_str(softdeps)
     if softdeps is None:
         raise RuntimeError(
@@ -153,15 +165,14 @@ def _get_soft_deps(est):
             f" but {est.__name__} has {softdeps}"
         )
     else:
-        return softdeps
+        return softdeps, softdeps_aliases
 
 
-def _is_in_env(modules):
+def _is_in_env(modules, module_aliases):
     """Return whether all modules in list of str modules are installed in env."""
     modules = _coerce_list_of_str(modules)
     try:
-        for module in modules:
-            import_module(module)
+        _check_soft_dependencies(modules, package_import_alias=module_aliases)
         return True
     except ModuleNotFoundError:
         return False
@@ -184,7 +195,7 @@ est_with_soft_dep = [est for est in all_ests if _has_soft_dep(est)]
 # estimators that have soft dependencies and are python compatible
 est_pyok_with_soft_dep = [est for est in est_with_soft_dep if _python_compat(est)]
 
-# estimators that have no soft dependenies
+# estimators that have no soft dependencies
 est_without_soft_dep = [est for est in all_ests if not _has_soft_dep(est)]
 # estimators that have soft dependencies and are python compatible
 est_pyok_without_soft_dep = [est for est in est_without_soft_dep if _python_compat(est)]
@@ -212,43 +223,35 @@ def test_python_error(estimator):
                 f"Estimator {estimator.__name__} has python version bound "
                 f"{pyspec} according to tags, but does not raise an appropriate "
                 f"error message on __init__ for incompatible python environments. "
-                f"Likely reason is that __init__ does not call super(cls).__init__."
+                f"Likely reason is that __init__ does not call super().__init__."
             ) from e
 
 
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_softdep_error(estimator):
     """Test that estimators raise error if required soft dependencies are missing."""
-    softdeps = _get_soft_deps(estimator)
-    if not _is_in_env(softdeps):
+    softdeps, softdeps_alias = _get_soft_deps(estimator)
+    if not _is_in_env(softdeps, softdeps_alias):
         try:
             estimator.create_test_instance()
         except ModuleNotFoundError as e:
             error_msg = str(e)
 
-            # Check if appropriate exception with useful error message is raised as
-            # defined in the `_check_soft_dependencies` function
-            expected_error_msg = (
-                "is a soft dependency and not included in the base sktime installation"
-            )
-            # message is different for deep learning deps tensorflow, tensorflow-proba
-            error_msg_alt = "required for deep learning"
-
-            if expected_error_msg not in error_msg and error_msg_alt not in error_msg:
+            if not is_soft_dep_missing_message(error_msg):
                 raise RuntimeError(
-                    f"Estimator {estimator.__name__} requires soft dependencies "
+                    f"Estimator {estimator.__name__} has soft dependency requirements, "
                     f"{softdeps} according to tags, but does not raise an appropriate "
-                    f"error message on __init__, when the soft dependency is missing. "
-                    f"Likely reason is that __init__ does not call super(cls).__init__,"
-                    f" or imports super(cls).__init__ only after an attempted import."
+                    f"error message on __init__, when those requirements are unmet. "
+                    f"Likely reason is that __init__ does not call super().__init__,"
+                    f" or imports super().__init__ only after an attempted import."
                 ) from e
 
 
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_est_construct_if_softdep_available(estimator):
     """Test that estimators construct if required soft dependencies are there."""
-    softdeps = _get_soft_deps(estimator)
-    if _is_in_env(softdeps):
+    softdeps, softdeps_alias = _get_soft_deps(estimator)
+    if _is_in_env(softdeps, softdeps_alias):
         try:
             estimator.create_test_instance()
         except ModuleNotFoundError as e:

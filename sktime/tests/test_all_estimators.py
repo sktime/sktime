@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Suite of tests for all estimators.
 
@@ -12,6 +11,8 @@ from copy import deepcopy
 from tempfile import TemporaryDirectory
 
 import joblib
+import numpy as np
+import pandas as pd
 import pytest
 from skbase.testing import BaseFixtureGenerator as _BaseFixtureGenerator
 from skbase.testing import QuickTester as _QuickTester
@@ -20,7 +21,7 @@ from sklearn.utils._testing import set_random_state
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
-from sktime.dists_kernels._base import (
+from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
@@ -38,7 +39,10 @@ from sktime.tests._config import (
     VALID_ESTIMATOR_TYPES,
     VALID_TRANSFORMER_TYPES,
 )
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.tests.test_switch import run_test_for_class
+from sktime.utils._testing._conditional_fixtures import (
+    create_conditional_fixtures_and_names,
+)
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
@@ -46,23 +50,29 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
+from sktime.utils.deep_equals import deep_equals
+from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
-from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies,
-    _check_estimator_deps,
-    _check_soft_dependencies,
-)
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # whether to subsample estimators per os/version partition matrix design
 # default is False, can be set to True by pytest --matrixdesign True flag
 MATRIXDESIGN = False
 
+# whether to test only estimators that require cython, C compiler such as gcc
+# default is False, can be set to True by pytest --only_cython_estimators True flag
+CYTHON_ESTIMATORS = False
+
+# whether to test only estimators from modules that are changed w.r.t. main
+# default is False, can be set to True by pytest --only_changed_modules True flag
+ONLY_CHANGED_MODULES = False
+
 
 def subsample_by_version_os(x):
     """Subsample objects by operating system and python version.
 
-    Ensures each estimator is tested at least once on every OS and python version,
-    if combined with a matrix of OS/versions.
+    Ensures each estimator is tested at least once on every OS and python version, if
+    combined with a matrix of OS/versions.
 
     Currently assumes that matrix includes py3.8-3.10, and win/ubuntu/mac.
     """
@@ -179,16 +189,29 @@ class BaseFixtureGenerator(_BaseFixtureGenerator):
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
+        if CYTHON_ESTIMATORS:
+            filter_tags = {"requires_cython": True}
+        else:
+            filter_tags = None
+
         est_list = all_estimators(
             estimator_types=getattr(self, "estimator_type_filter", None),
             return_names=False,
             exclude_estimators=EXCLUDE_ESTIMATORS,
+            filter_tags=filter_tags,
         )
         # subsample estimators by OS & python version
         # this ensures that only a 1/3 of estimators are tested for a given combination
         # but all are tested on every OS at least once, and on every python version once
         if MATRIXDESIGN:
             est_list = subsample_by_version_os(est_list)
+
+        # run_test_for_class selects the estimators to run
+        # based on whether they have changed, and whether they have all dependencies
+        # internally, uses the ONLY_CHANGED_MODULES flag,
+        # and checks the python env against python_dependencies tag
+        est_list = [est for est in est_list if run_test_for_class(est)]
+
         return est_list
 
     @staticmethod
@@ -214,13 +237,6 @@ class BaseFixtureGenerator(_BaseFixtureGenerator):
             est
             for est in self._all_estimators()
             if not self.is_excluded(test_name, est)
-        ]
-
-        # exclude classes based on python version compatibility
-        estimator_classes_to_test = [
-            est
-            for est in estimator_classes_to_test
-            if _check_estimator_deps(est, severity="none")
         ]
 
         estimator_names = [est.__name__ for est in estimator_classes_to_test]
@@ -323,10 +339,8 @@ class BaseFixtureGenerator(_BaseFixtureGenerator):
         # ensure cls is a class
         if "estimator_class" in kwargs.keys():
             obj = kwargs["estimator_class"]
-            cls = obj
         elif "estimator_instance" in kwargs.keys():
             obj = kwargs["estimator_instance"]
-            cls = type(obj)
         else:
             return []
 
@@ -335,12 +349,6 @@ class BaseFixtureGenerator(_BaseFixtureGenerator):
 
         # subset to the methods that x has implemented
         nsc_list = [x for x in nsc_list if _has_capability(obj, x)]
-
-        # remove predict_proba for forecasters, if tensorflow-proba is not installed
-        # this ensures that predict_proba, which requires it, is not called in testing
-        if issubclass(cls, BaseForecaster):
-            if not _check_dl_dependencies(severity="none"):
-                nsc_list = list(set(nsc_list).difference(["predict_proba"]))
 
         return nsc_list
 
@@ -373,6 +381,173 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
 
     estimator_type_filter = "object"
 
+    def test_create_test_instance(self, estimator_class):
+        """Check create_test_instance logic and basic constructor functionality.
+
+        create_test_instance and create_test_instances_and_names are the
+        key methods used to create test instances in testing.
+        If this test does not pass, validity of the other tests cannot be guaranteed.
+
+        Also tests inheritance and super call logic in the constructor.
+
+        Tests that:
+        * create_test_instance results in an instance of estimator_class
+        * __init__ calls super.__init__
+        * _tags_dynamic attribute for tag inspection is present after construction
+        """
+        estimator = estimator_class.create_test_instance()
+
+        # Check that init does not construct object of other class than itself
+        assert isinstance(estimator, estimator_class), (
+            "object returned by create_test_instance must be an instance of the class, "
+            f"found {type(estimator)}"
+        )
+
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_tags_dynamic"), msg
+
+    def test_get_test_params(self, estimator_class):
+        """Check that get_test_params returns valid parameter sets."""
+        param_list = estimator_class.get_test_params()
+
+        assert isinstance(param_list, list) or isinstance(param_list, dict), (
+            "get_test_params must return list of dict or dict, "
+            f"found object of type {type(param_list)}"
+        )
+        if isinstance(param_list, dict):
+            param_list = [param_list]
+        assert all(
+            isinstance(x, dict) for x in param_list
+        ), f"get_test_params must return list of dict or dict, found {param_list}"
+
+        def _coerce_to_list_of_str(obj):
+            if isinstance(obj, str):
+                return obj
+            elif isinstance(obj, list):
+                return obj
+            else:
+                return []
+
+        reserved_param_names = estimator_class.get_class_tag(
+            "reserved_params", tag_value_default=None
+        )
+        reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
+        # reserved_set = set(reserved_param_names)
+
+        param_names = estimator_class.get_param_names()
+        # unreserved_param_names = set(param_names).difference(reserved_set)
+
+        key_list = [x.keys() for x in param_list]
+
+        # commenting out "no reserved params in test params for now"
+        # probably cannot ask for that, e.g., index/columns in BaseDistribution
+
+        # reserved_errs = [set(x).intersection(reserved_set) for x in key_list]
+        # reserved_errs = [x for x in reserved_errs if len(x) > 0]
+
+        # assert len(reserved_errs) == 0, (
+        #     "get_test_params return dict keys must be valid parameter names, "
+        #     "i.e., names of arguments of __init__ that are not reserved, "
+        #     f"but found the following reserved parameters as keys: {reserved_errs}"
+        # )
+
+        notfound_errs = [set(x).difference(param_names) for x in key_list]
+        notfound_errs = [x for x in notfound_errs if len(x) > 0]
+
+        assert len(notfound_errs) == 0, (
+            "get_test_params return dict keys must be valid parameter names, "
+            "i.e., names of arguments of __init__, "
+            f"but found some parameters that are not __init__ args: {notfound_errs}"
+        )
+
+        # if len(unreserved_param_names) > 0:
+        #     assert (
+        #         len(param_list) > 1
+        #     ), "get_test_params should return at least two test parameter sets"
+        # params_tested = set()
+        # for params in param_list:
+        #     params_tested = params_tested.union(params.keys())
+
+        # this test is too harsh for the current estimator base
+        # params_not_tested = set(unreserved_param_names).difference(params_tested)
+        # assert len(params_not_tested) == 0, (
+        #     f"get_test_params should set each parameter of {estimator_class} "
+        #     f"to a non-default value at least once, but the following "
+        #     f"parameters are not tested: {params_not_tested}"
+        # )
+
+    def test_create_test_instances_and_names(self, estimator_class):
+        """Check that create_test_instances_and_names works.
+
+        create_test_instance and create_test_instances_and_names are the key methods
+        used to create test instances in testing. If this test does not pass, validity
+        of the other tests cannot be guaranteed.
+
+        Tests expected function signature of create_test_instances_and_names.
+        """
+        estimators, names = estimator_class.create_test_instances_and_names()
+
+        assert isinstance(estimators, list), (
+            "first return of create_test_instances_and_names must be a list, "
+            f"found {type(estimators)}"
+        )
+        assert isinstance(names, list), (
+            "second return of create_test_instances_and_names must be a list, "
+            f"found {type(names)}"
+        )
+
+        assert np.all([isinstance(est, estimator_class) for est in estimators]), (
+            "list elements of first return returned by create_test_instances_and_names "
+            "all must be an instance of the class"
+        )
+
+        assert np.all([isinstance(name, str) for name in names]), (
+            "list elements of second return returned by create_test_instances_and_names"
+            " all must be strings"
+        )
+
+        assert len(estimators) == len(names), (
+            "the two lists returned by create_test_instances_and_names must have "
+            "equal length"
+        )
+
+    def test_estimator_tags(self, estimator_class):
+        """Check conventions on estimator tags."""
+        Estimator = estimator_class
+
+        assert hasattr(Estimator, "get_class_tags")
+        all_tags = Estimator.get_class_tags()
+        assert isinstance(all_tags, dict)
+        assert all(isinstance(key, str) for key in all_tags.keys())
+        if hasattr(Estimator, "_tags"):
+            tags = Estimator._tags
+            msg = (
+                f"_tags attribute of {estimator_class} must be dict, "
+                f"but found {type(tags)}"
+            )
+            assert isinstance(tags, dict), msg
+            assert len(tags) > 0, f"_tags dict of class {estimator_class} is empty"
+            invalid_tags = [
+                tag for tag in tags.keys() if tag not in VALID_ESTIMATOR_TAGS
+            ]
+            assert len(invalid_tags) == 0, (
+                f"_tags of {estimator_class} contains invalid tags: {invalid_tags}. "
+                "For a list of valid tags, see registry.all_tags, or registry._tags. "
+            )
+
+        # Avoid ambiguous class attributes
+        ambiguous_attrs = ("tags", "tags_")
+        for attr in ambiguous_attrs:
+            assert not hasattr(Estimator, attr), (
+                f"Please avoid using the {attr} attribute to disambiguate it from "
+                f"estimator tags."
+            )
+
     def test_inheritance(self, estimator_class):
         """Check that estimator inherits from BaseObject and/or BaseEstimator."""
         assert issubclass(
@@ -384,6 +559,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
                 f"estimator: {estimator_class} has fit method, but"
                 f"is not a sub-class of BaseEstimator."
             )
+        from sktime.pipeline import Pipeline
+
+        if issubclass(estimator_class, Pipeline):
+            return
 
         # Usually estimators inherit only from one BaseEstimator type, but in some cases
         # they may be predictor and transformer at the same time (e.g. pipelines)
@@ -418,19 +597,91 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
         if hasattr(estimator, "predict_proba"):
             assert hasattr(estimator, "predict")
 
-    def test_clone(self, estimator_instance):
-        """Check that clone method does not raise exceptions and results in a clone.
+    def test_constructor(self, estimator_class):
+        """Check that the constructor has sklearn compatible signature and behaviour.
 
-        A clone of an object x is an object that:
-        * has same class and parameters as x
-        * is not identical with x
-        * is unfitted (even if x was fitted)
+        Based on sklearn check_estimator testing of __init__ logic.
+        Uses create_test_instance to create an instance.
+        Assumes test_create_test_instance has passed and certified create_test_instance.
+
+        Tests that:
+        * constructor has no varargs
+        * tests that constructor constructs an instance of the class
+        * tests that all parameters are set in init to an attribute of the same name
+        * tests that parameter values are always copied to the attribute and not changed
+        * tests that default parameters are one of the following:
+            None, str, int, float, bool, tuple, function, joblib memory, numpy primitive
+            (other type parameters should be None, default handling should be by writing
+            the default to attribute of a different name, e.g., my_param_ not my_param)
         """
-        est_clone = estimator_instance.clone()
-        assert isinstance(est_clone, type(estimator_instance))
-        assert est_clone is not estimator_instance
-        if hasattr(est_clone, "is_fitted"):
-            assert not est_clone.is_fitted
+        msg = "constructor __init__ should have no varargs"
+        assert getfullargspec(estimator_class.__init__).varkw is None, msg
+
+        estimator = estimator_class.create_test_instance()
+        assert isinstance(estimator, estimator_class)
+
+        # Ensure that each parameter is set in init
+        init_params = _get_args(type(estimator).__init__)
+        invalid_attr = set(init_params) - set(vars(estimator)) - {"self"}
+        assert not invalid_attr, (
+            "Estimator %s should store all parameters"
+            " as an attribute during init. Did not find "
+            "attributes `%s`." % (estimator.__class__.__name__, sorted(invalid_attr))
+        )
+
+        # Ensure that init does nothing but set parameters
+        # No logic/interaction with other parameters
+        def param_filter(p):
+            """Identify hyper parameters of an estimator."""
+            return p.name != "self" and p.kind not in [p.VAR_KEYWORD, p.VAR_POSITIONAL]
+
+        init_params = [
+            p
+            for p in signature(estimator.__init__).parameters.values()
+            if param_filter(p)
+        ]
+
+        params = estimator.get_params()
+
+        test_params = estimator_class.get_test_params()
+        if isinstance(test_params, list):
+            test_params = test_params[0]
+        test_params = test_params.keys()
+
+        init_params = [param for param in init_params if param.name not in test_params]
+
+        for param in init_params:
+            assert param.default != param.empty, (
+                "parameter `%s` for %s has no default value and is not "
+                "set in `get_test_params`" % (param.name, estimator.__class__.__name__)
+            )
+            if type(param.default) is type:
+                assert param.default in [np.float64, np.int64]
+            else:
+                assert type(param.default) in [
+                    str,
+                    int,
+                    float,
+                    bool,
+                    tuple,
+                    type(None),
+                    np.float64,
+                    types.FunctionType,
+                    joblib.Memory,
+                ]
+
+            reserved_params = estimator_class.get_class_tag("reserved_params", [])
+            if param.name not in reserved_params:
+                param_value = params[param.name]
+                if isinstance(param_value, np.ndarray):
+                    np.testing.assert_array_equal(param_value, param.default)
+                elif bool(
+                    isinstance(param_value, numbers.Real) and np.isnan(param_value)
+                ):
+                    # Allows to set default parameters to np.nan
+                    assert param_value is param.default, param.name
+                else:
+                    assert param_value == param.default, param.name
 
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
@@ -460,7 +711,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         fitted_estimator = scenario.run(estimator_instance, method_sequence=["fit"])
 
-        # Check 0s_fitted attribute is updated correctly to False after calling fit
+        # Check is_fitted attributes are updated correctly to True after calling fit
         for attr in attrs:
             assert getattr(
                 fitted_estimator, attr
@@ -558,11 +809,16 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # The only exception to this rule of immutable constructor parameters
             # is possible RandomState instance but in this check we explicitly
             # fixed the random_state params recursively to be integer seeds.
-            assert joblib.hash(new_value) == joblib.hash(original_value), (
+            msg = (
                 "Estimator %s should not change or mutate "
                 " the parameter %s from %s to %s during fit."
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
+            # joblib.hash has problems with pandas objects, so we use deep_equals then
+            if isinstance(original_value, (pd.DataFrame, pd.Series)):
+                assert deep_equals(new_value, original_value), msg
+            else:
+                assert joblib.hash(new_value) == joblib.hash(original_value), msg
 
     def test_non_state_changing_method_contract(
         self, estimator_instance, scenario, method_nsc
@@ -574,7 +830,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             (including hyper-parameters and fitted parameters)
         2. expected output type of the method matches actual output type
             - only for abstract BaseEstimator methods, common to all estimator scitypes
-            list of BaseEstimator methdos tested: get_fitted_params
+            list of BaseEstimator methods tested: get_fitted_params
             scitype specific method outputs are tested in TestAll[estimatortype] class
         """
         estimator = estimator_instance
@@ -745,44 +1001,52 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 err_msg=msg,
             )
 
-    # todo: this needs to be diagnosed and fixed - temporary skip
-    @pytest.mark.skip(reason="hangs on mac and unix remote tests")
     def test_multiprocessing_idempotent(
         self, estimator_instance, scenario, method_nsc_arraylike
     ):
         """Test that single and multi-process run results are identical.
 
         Check that running an estimator on a single process is no different to running
-        it on multiple processes. We also check that we can set n_jobs=-1 to make use
-        of all CPUs. The test is not really necessary though, as we rely on joblib for
+        it on multiple processes. We also check that we can set n_jobs=-1 to make use of
+        all CPUs. The test is not really necessary though, as we rely on joblib for
         parallelization and can trust that it works as expected.
         """
         method_nsc = method_nsc_arraylike
         params = estimator_instance.get_params()
 
-        if "n_jobs" in params:
-            # run on a single process
-            # -----------------------
-            estimator = deepcopy(estimator_instance)
-            estimator.set_params(n_jobs=1)
-            set_random_state(estimator)
-            result_single_process = scenario.run(
-                estimator, method_sequence=["fit", method_nsc]
-            )
+        # test runs only if n_jobs is a parameter of the estimator
+        if "n_jobs" not in params:
+            return None
 
-            # run on multiple processes
-            # -------------------------
-            estimator = deepcopy(estimator_instance)
-            estimator.set_params(n_jobs=-1)
-            set_random_state(estimator)
-            result_multiple_process = scenario.run(
-                estimator, method_sequence=["fit", method_nsc]
-            )
-            _assert_array_equal(
-                result_single_process,
-                result_multiple_process,
-                err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
-            )
+        # skip test for predict_proba
+        # this produces a BaseDistribution object, for which no ready
+        # equality check is implemented
+        if method_nsc == "predict_proba":
+            return None
+
+        # run on a single process
+        # -----------------------
+        estimator = deepcopy(estimator_instance)
+        estimator.set_params(n_jobs=1)
+        set_random_state(estimator)
+        result_single_process = scenario.run(
+            estimator, method_sequence=["fit", method_nsc]
+        )
+
+        # run on multiple processes
+        # -------------------------
+        estimator = deepcopy(estimator_instance)
+        estimator.set_params(n_jobs=-1)
+        set_random_state(estimator)
+        result_multiple_process = scenario.run(
+            estimator, method_sequence=["fit", method_nsc]
+        )
+
+        _assert_array_equal(
+            result_single_process,
+            result_multiple_process,
+            err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
+        )
 
     def test_dl_constructor_initializes_deeply(self, estimator_class):
         """Test DL estimators that they pass custom parameters to underlying Network."""

@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-"""Test single problem loaders with varying return types."""
+"""Test single problem loaders using data shipping with sktime."""
 import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import (  # Univariate; Unequal length; Multivariate
+from sktime.datasets import (
     load_acsf1,
     load_arrow_head,
     load_basic_motions,
@@ -12,6 +11,7 @@ from sktime.datasets import (  # Univariate; Unequal length; Multivariate
     load_japanese_vowels,
     load_osuleaf,
     load_plaid,
+    load_tecator,
     load_unit_test,
 )
 
@@ -21,6 +21,7 @@ UNIVARIATE_PROBLEMS = [
     load_italy_power_demand,
     load_osuleaf,
     load_unit_test,
+    load_tecator,
 ]
 MULTIVARIATE_PROBLEMS = [
     load_basic_motions,

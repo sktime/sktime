@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
-"""
-ClaSP (Classification Score Profile) Segmentation.
+"""ClaSP (Classification Score Profile) Segmentation.
 
 Notes
 -----
@@ -194,7 +191,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     fmt :                  str {"dense", "sparse"}, optional (default="sparse")
         Annotation output format:
         * If "sparse", a pd.Series of the found Change Points is returned
-        * If "dense", a pd.IndexSeries with the Segmenation of X is returned
+        * If "dense", a pd.IndexSeries with the Segmentation of X is returned
     exclusion_radius : int
         Exclusion Radius for change points to be non-trivial matches
 
@@ -231,7 +228,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         self.period_length = int(period_length)
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
-        super(ClaSPSegmentation, self).__init__(fmt)
+        super().__init__(fmt)
 
     def _fit(self, X, Y=None):
         """Do nothing, as there is no need to fit a model for ClaSP.
@@ -340,7 +337,6 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         -------
         IntervalIndex:
             Segmentation based on found change pints
-
         """
         cps = np.array(found_cps)
         start = np.insert(cps, 0, 0)

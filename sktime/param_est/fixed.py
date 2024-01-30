@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimator with fixed parameters."""
 
@@ -26,6 +25,7 @@ class FixedParams(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         # which types do _fit/_predict, support for X?
         "scitype:X": ["Series", "Panel", "Hierarchical"],
@@ -36,7 +36,7 @@ class FixedParams(BaseParamFitter):
 
     def __init__(self, param_dict):
         self.param_dict = param_dict
-        super(FixedParams, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """Tests for hierarchical reconcilers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -11,6 +10,7 @@ from pandas.testing import assert_frame_equal
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconcile import Reconciler
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
@@ -26,6 +26,10 @@ flatten_list = [True, False]
 # test the index/columns on the g and s matrices match
 # test it works for named and unnamed indexes
 @pytest.mark.skipif(
+    not run_test_for_class([Aggregator, Reconciler]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
 )
@@ -33,7 +37,7 @@ flatten_list = [True, False]
 @pytest.mark.parametrize("flatten", flatten_list)
 @pytest.mark.parametrize("no_levels", level_list)
 def test_reconciler_fit_transform(method, flatten, no_levels):
-    """Tests fit_trasnform and output of reconciler.
+    """Tests fit_transform and output of reconciler.
 
     Raises
     ------

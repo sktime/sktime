@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast forecasters to be used in sktime framework."""
 
@@ -16,6 +15,8 @@ class _StatsForecastAdapter(BaseForecaster):
     """Base class for interfacing StatsForecast."""
 
     _tags = {
+        "authors": ["FedericoGarza"],
+        "maintainers": ["FedericoGarza"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -25,17 +26,18 @@ class _StatsForecastAdapter(BaseForecaster):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        "capability:pred_int:insample": True,
         "python_dependencies": "statsforecast",
     }
 
     def __init__(self):
         self._forecaster = None
-        super(_StatsForecastAdapter, self).__init__()
+        super().__init__()
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -69,7 +71,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -178,7 +180,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
-        mean = pd.Series(result["mean"].values[fh_idx], index=fh_abs)
+        mean = pd.Series(result["mean"].values[fh_idx], index=fh_abs.to_pandas())
         if return_pred_int:
             pred_ints = []
             for a in alpha:
@@ -189,14 +191,16 @@ class _StatsForecastAdapter(BaseForecaster):
                 )
                 pred_int = result.drop("mean", axis=1).values
                 pred_int = pd.DataFrame(
-                    pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+                    pred_int[fh_idx, :],
+                    index=fh_abs.to_pandas(),
+                    columns=["lower", "upper"],
                 )
                 pred_ints.append(pred_int)
             return mean, pred_ints
         else:
-            return pd.Series(mean, index=fh_abs)
+            return pd.Series(mean, index=fh_abs.to_pandas())
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -229,7 +233,7 @@ class _StatsForecastAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        # initializaing cutoff and fh related info
+        # initializing cutoff and fh related info
         cutoff = self.cutoff
         fh_oos = fh.to_out_of_sample(cutoff)
         fh_ins = fh.to_in_sample(cutoff)
@@ -237,7 +241,9 @@ class _StatsForecastAdapter(BaseForecaster):
         fh_is_oosample = fh.is_all_out_of_sample(cutoff)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = ["Coverage"]
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
@@ -254,8 +260,8 @@ class _StatsForecastAdapter(BaseForecaster):
         if fh_is_in_sample or fh_is_oosample:
             # needs to be replaced, also seems duplicative, identical to part A
             for intervals, a in zip(y_pred_int, coverage):
-                pred_int[("Coverage", a, "lower")] = intervals["lower"]
-                pred_int[("Coverage", a, "upper")] = intervals["upper"]
+                pred_int[(var_name, a, "lower")] = intervals["lower"]
+                pred_int[(var_name, a, "upper")] = intervals["upper"]
             return pred_int
 
         # both in-sample and out-of-sample values (we reach this line only then)
@@ -263,7 +269,7 @@ class _StatsForecastAdapter(BaseForecaster):
         _, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
         _, y_oos_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
         for ins_int, oos_int, a in zip(y_ins_pred_int, y_oos_pred_int, coverage):
-            pred_int[("Coverage", a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
-            pred_int[("Coverage", a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
+            pred_int[(var_name, a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
+            pred_int[(var_name, a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
 
         return pred_int

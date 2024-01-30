@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """Symbolic Fourier Approximation (SFA) Transformer.
 
 Configurable SFA transform for discretising time series into words.
-
 """
 
 __author__ = ["patrickzib"]
@@ -14,7 +12,6 @@ import sys
 
 import numpy as np
 import pandas as pd
-from scipy.sparse import csr_matrix
 from sklearn.feature_selection import chi2, f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -126,6 +123,7 @@ class SFAFast(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["patrickzib"],
         "univariate-only": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -135,7 +133,7 @@ class SFAFast(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "scipy"],
     }
 
     def __init__(
@@ -210,7 +208,7 @@ class SFAFast(BaseTransformer):
         else:
             n_jobs = self.n_jobs
 
-        super(SFAFast, self).__init__()
+        super().__init__()
         # super raises numba import exception if not available
         # so now we know we can use numba
 
@@ -219,7 +217,7 @@ class SFAFast(BaseTransformer):
         set_num_threads(n_jobs)
 
         if not return_pandas_data_series:
-            self._output_convert = "off"
+            self.set_config(**{"output_conversion": "off"})
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it."""
@@ -323,6 +321,7 @@ class SFAFast(BaseTransformer):
         """
         from numba.core import types
         from numba.typed import Dict
+        from scipy.sparse import csr_matrix
 
         from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
             _transform_case,
@@ -383,6 +382,7 @@ class SFAFast(BaseTransformer):
         """Transform words to bag-of-pattern and apply feature selection."""
         from numba.core import types
         from numba.typed import Dict
+        from scipy.sparse import csr_matrix
 
         from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
             create_bag_feature_selection,
@@ -657,7 +657,7 @@ class SFAFast(BaseTransformer):
 
         state = self.__dict__.copy()
 
-        if type(state["relevant_features"]) == Dict:
+        if isinstance(state["relevant_features"], Dict):
             state["relevant_features"] = dict(state["relevant_features"])
         return state
 
@@ -667,7 +667,7 @@ class SFAFast(BaseTransformer):
         from numba.typed import Dict
 
         self.__dict__.update(state)
-        if type(self.relevant_features) == dict:
+        if isinstance(self.relevant_features, dict):
             typed_dict = Dict.empty(key_type=types.uint32, value_type=types.uint32)
             for key, value in self.relevant_features.items():
                 typed_dict[key] = value

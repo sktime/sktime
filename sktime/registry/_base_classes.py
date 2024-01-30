@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Register of estimator base classes corresponding to sktime scitypes.
 
 This module exports the following:
@@ -50,8 +49,6 @@ TRANSFORMER_MIXIN_LIST - list of string
 
 TRANSFORMER_MIXIN_LOOKUP - dictionary
     keys/entries are 0/1-th entries of TRANSFORMER_MIXIN_REGISTER
-
-
 """
 
 __author__ = ["fkiraly"]
@@ -64,16 +61,17 @@ from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
-from sktime.dists_kernels._base import (
+from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.networks.base import BaseDeepNetwork
 from sktime.param_est.base import BaseParamFitter
 from sktime.performance_metrics.base import BaseMetric
+from sktime.proba.base import BaseDistribution
 from sktime.regression.base import BaseRegressor
+from sktime.split.base import BaseSplitter
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,
@@ -107,6 +105,7 @@ BASE_CLASS_REGISTER = [
         BasePairwiseTransformerPanel,
         "pairwise transformer for panel data, distance or kernel",
     ),
+    ("distribution", BaseDistribution, "pandas-like probability distribution"),
 ]
 
 

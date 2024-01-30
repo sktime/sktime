@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for the FourierFeatures transformer."""
 
 from copy import deepcopy
@@ -6,8 +5,7 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_index_equal
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_index_equal
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.fourier import FourierFeatures
@@ -17,7 +15,7 @@ Y_datetime = deepcopy(Y)
 Y_datetime.index = Y_datetime.index.to_timestamp(freq="M")
 
 
-def test_fourier_list_length_missmatch():
+def test_fourier_list_length_mismatch():
     """Tests exception raised when sp_list & fourier_terms_list lengths don't match."""
     with pytest.raises(ValueError) as ex:
         FourierFeatures(sp_list=[365, 52], fourier_terms_list=[1])

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Random Interval Spectral Ensemble (RISE)."""
 
 __author__ = ["TonyBagnall"]
@@ -178,9 +177,15 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
     """
 
     _tags = {
-        "capability:multithreading": True,
-        "classifier_type": "interval",
+        # packaging info
+        # --------------
+        "authors": "TonyBagnall",
         "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:multithreading": True,
+        "capability:predict_proba": True,
+        "classifier_type": "interval",
     }
 
     def __init__(
@@ -205,7 +210,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
 
         self.base_estimator = DecisionTreeClassifier(random_state=random_state)
 
-        super(RandomIntervalSpectralEnsemble, self).__init__()
+        super().__init__()
 
     @property
     def feature_importances_(self):

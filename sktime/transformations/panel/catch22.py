@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Catch22 features.
 
 A transformer for the Catch22 features.
@@ -160,13 +159,18 @@ class Catch22(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
         "X_inner_mtype": "nested_univ",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -217,7 +221,7 @@ class Catch22(BaseTransformer):
         self._ac = None
         self._acfz = None
 
-        super(Catch22, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform data into the Catch22 features.
@@ -238,15 +242,6 @@ class Catch22(BaseTransformer):
         f_idx = _verify_features(self.features, self.catch24)
 
         threads_to_use = check_n_jobs(self.n_jobs)
-
-        # todo remove in v0.16 and add to docstring: ``-1`` means using all processors.
-        if self.n_jobs == -1:
-            threads_to_use = 1
-            warnings.warn(
-                "``n_jobs`` default was changed to 1 from -1 in version 0.14.0. "
-                "In version 0.16.0 a value of -1 will use all CPU cores instead of the "
-                "current 1 CPU core."
-            )
 
         c22_list = Parallel(n_jobs=threads_to_use)(
             delayed(self._transform_case)(
@@ -333,7 +328,7 @@ class Catch22(BaseTransformer):
 
         f_count = -1
         for i in range(len(X)):
-            series = np.array(X[i])
+            series = np.array(X.iloc[i])
             dim = i * len(f_idx)
             outlier_series = None
             smin = None
@@ -413,9 +408,7 @@ class Catch22(BaseTransformer):
         return c22
 
     def _transform_single_feature(self, X, feature, case_id=None):
-        if isinstance(feature, (int, np.integer)) or isinstance(
-            feature, (float, float)
-        ):
+        if isinstance(feature, (int, np.integer)) or isinstance(feature, float):
             if feature > 21 or feature < 0:
                 raise ValueError("Invalid catch22 feature ID")
         elif isinstance(feature, str):
@@ -472,7 +465,8 @@ class Catch22(BaseTransformer):
             warnings.warn(
                 "``n_jobs`` default was changed to 1 from -1 in version 0.13.4. "
                 "In version 0.15 a value of -1 will use all CPU cores instead of the "
-                "current 1 CPU core."
+                "current 1 CPU core.",
+                stacklevel=2,
             )
 
         c22_list = Parallel(n_jobs=threads_to_use)(

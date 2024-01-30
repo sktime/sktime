@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Metrics classes to assess performance on forecasting task.
 
@@ -7,9 +6,7 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
-from copy import deepcopy
 from inspect import getfullargspec, isfunction, signature
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -17,6 +14,12 @@ from sklearn.utils import check_array
 
 from sktime.datatypes import VectorizedDF, check_is_scitype, convert_to
 from sktime.performance_metrics.base import BaseMetric
+from sktime.performance_metrics.forecasting._coerce import (
+    _coerce_to_1d_numpy,
+    _coerce_to_df,
+    _coerce_to_scalar,
+    _coerce_to_series,
+)
 from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_absolute_error,
     geometric_mean_relative_absolute_error,
@@ -40,8 +43,9 @@ from sktime.performance_metrics.forecasting._functions import (
     median_squared_scaled_error,
     relative_loss,
 )
+from sktime.utils.warnings import warn
 
-__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns", "fkiraly"]
+__author__ = ["mloning", "tch", "RNKuhns", "fkiraly"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
@@ -68,21 +72,23 @@ __all__ = [
 ]
 
 
-def _coerce_to_scalar(obj):
-    """Coerce obj to scalar, from polymorphic input scalar or pandas."""
-    if isinstance(obj, pd.DataFrame):
-        assert len(obj) == 1
-        assert len(obj.columns) == 1
-        return obj.iloc[0, 0]
-    if isinstance(obj, pd.Series):
-        assert len(obj) == 1
-        return obj.iloc[0]
-    return obj
+def _is_average(multilevel_or_multioutput):
+    """Check if multilevel is one of the inputs that lead to averaging.
 
+    True if `multilevel_or_multioutput` is one of the strings `"uniform_average"`,
+    `"uniform_average_time"`.
 
-def _coerce_to_df(obj):
-    """Coerce to pd.DataFrame, from polymorphic input scalar or pandas."""
-    return pd.DataFrame(obj)
+    False if `multilevel_or_multioutput` is the string `"raw_values"`
+
+    True otherwise
+    """
+    if isinstance(multilevel_or_multioutput, str):
+        if multilevel_or_multioutput in ["uniform_average", "uniform_average_time"]:
+            return True
+        if multilevel_or_multioutput in ["raw_values"]:
+            return False
+    else:
+        return True
 
 
 class BaseForecastingErrorMetric(BaseMetric):
@@ -106,7 +112,7 @@ class BaseForecastingErrorMetric(BaseMetric):
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
         If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', errors are mean-averaged across rows.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
     """
 
@@ -117,16 +123,17 @@ class BaseForecastingErrorMetric(BaseMetric):
         "lower_is_better": True,
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         "inner_implements_multilevel": False,
+        "reserved_params": ["multioutput", "multilevel"],
     }
 
     def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
         self.multioutput = multioutput
         self.multilevel = multilevel
 
-        if not hasattr(self, "name"):
+        if not hasattr(self, "name") or self.name is None:
             self.name = type(self).__name__
 
-        super(BaseForecastingErrorMetric, self).__init__()
+        super().__init__()
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.
@@ -207,15 +214,12 @@ class BaseForecastingErrorMetric(BaseMetric):
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
-            if multilevel == "uniform_average":
-                out_df = out_df.mean(axis=0)
-                # if level is averaged, but not variables, return numpy
-                if multioutput == "raw_values":
-                    out_df = out_df.values
 
-        if multilevel == "uniform_average" and multioutput == "uniform_average":
+        if _is_average(multilevel) and not _is_average(multioutput):
+            out_df = _coerce_to_1d_numpy(out_df)
+        if _is_average(multilevel) and _is_average(multioutput):
             out_df = _coerce_to_scalar(out_df)
-        if multilevel == "raw_values":
+        if not _is_average(multilevel):
             out_df = _coerce_to_df(out_df)
 
         return out_df
@@ -265,32 +269,63 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : pandas.DataFrame with MultiIndex, last level time-like
-        y_pred : pandas.DataFrame with MultiIndex, last level time-like
-        non-time-like instanceso of y_true, y_pred must be identical
+        y_true : VectorizedDF
+        y_pred : VectorizedDF
+        non-time-like instances of y_true, y_pred must be identical
         """
-        kwargsi = deepcopy(kwargs)
-        n_batches = len(y_true)
-        res = []
-        for i in range(n_batches):
-            if "y_train" in kwargs:
-                kwargsi["y_train"] = kwargs["y_train"][i]
-            if "y_pred_benchmark" in kwargs:
-                kwargsi["y_pred_benchmark"] = kwargs["y_pred_benchmark"][i]
-            resi = self._evaluate(y_true=y_true[i], y_pred=y_pred[i], **kwargsi)
-            if isinstance(resi, float):
-                resi = pd.Series(resi)
-            if self.multioutput == "raw_values":
-                assert isinstance(resi, np.ndarray)
-                df = pd.DataFrame(columns=y_true.X.columns)
-                df.loc[0] = resi
-                resi = df
-            res += [resi]
-        out_df = y_true.reconstruct(res)
-        if out_df.index.nlevels == y_true.X.index.nlevels:
-            out_df.index = out_df.index.droplevel(-1)
+        backend = dict()
+        backend["backend"] = self.get_config()["backend:parallel"]
+        backend["backend_params"] = self.get_config()["backend:parallel:params"]
 
-        return out_df
+        eval_result = y_true.vectorize_est(
+            estimator=self.clone(),
+            method="_evaluate",
+            varname_of_self="y_true",
+            args={**kwargs, "y_pred": y_pred},
+            colname_default=self.name,
+            **backend,
+        )
+
+        if isinstance(self.multioutput, str) and self.multioutput == "raw_values":
+            eval_result = pd.DataFrame(
+                eval_result.iloc[:, 0].to_list(),
+                index=eval_result.index,
+                columns=y_true.X.columns,
+            )
+
+        if self.multilevel == "uniform_average":
+            eval_result = eval_result.mean(axis=0)
+
+        return eval_result
+
+    def _evaluate_by_index_vectorized(self, y_true, y_pred, **kwargs):
+        """Vectorized version of _evaluate_by_index.
+
+        Runs _evaluate for all instances in y_true, y_pred,
+        and returns results in a hierarchical pandas.DataFrame.
+
+        Parameters
+        ----------
+        y_true : VectorizedDF
+        y_pred : VectorizedDF
+        non-time-like instances of y_true, y_pred must be identical
+        """
+        backend = dict()
+        backend["backend"] = self.get_config()["backend:parallel"]
+        backend["backend_params"] = self.get_config()["backend:parallel:params"]
+
+        eval_result = y_true.vectorize_est(
+            estimator=self.clone().set_params(**{"multilevel": "uniform_average"}),
+            method="_evaluate_by_index",
+            varname_of_self="y_true",
+            args={**kwargs, "y_pred": y_pred},
+            colname_default=self.name,
+            return_type="list",
+            **backend,
+        )
+
+        eval_result = y_true.reconstruct(eval_result)
+        return eval_result
 
     def evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
@@ -325,9 +360,24 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
-        # pass to inner function
-        out_df = self._evaluate_by_index(y_true_inner, y_pred_inner, **kwargs)
+        requires_vectorization = isinstance(y_true_inner, VectorizedDF)
+        if not requires_vectorization:
+            # pass to inner function
+            out_df = self._evaluate_by_index(
+                y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+            )
+        else:
+            out_df = self._evaluate_by_index_vectorized(
+                y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+            )
 
+            if multilevel in ["uniform_average", "uniform_average_time"]:
+                out_df = out_df.groupby(level=-1).mean()
+
+        if isinstance(multioutput, str) and multioutput == "raw_values":
+            out_df = _coerce_to_df(out_df)
+        else:
+            out_df = _coerce_to_series(out_df)
         return out_df
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
@@ -342,12 +392,11 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
+        y_true : time series in sktime compatible pandas based data container format
             Ground truth (correct) target values
             y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
             Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
         y_pred :time series in sktime compatible data container format
             Forecasted values to evaluate
@@ -366,17 +415,23 @@ class BaseForecastingErrorMetric(BaseMetric):
         """
         multioutput = self.multioutput
         n = y_true.shape[0]
-        if multioutput == "raw_values":
-            out_series = pd.DataFrame(index=y_true.index, columns=y_true.columns)
+        if isinstance(multioutput, str) and multioutput == "raw_values":
+            out_series = pd.DataFrame(
+                index=y_true.index, columns=y_true.columns, dtype="float64"
+            )
         else:
-            out_series = pd.Series(index=y_true.index)
+            out_series = pd.Series(index=y_true.index, dtype="float64")
         try:
             x_bar = self.evaluate(y_true, y_pred, **kwargs)
             for i in range(n):
                 idx = y_true.index[i]
+                kwargs_i = kwargs.copy()
+                if "y_pred_benchmark" in kwargs.keys():
+                    kwargs_i["y_pred_benchmark"] = kwargs["y_pred_benchmark"].drop(idx)
                 pseudovalue = n * x_bar - (n - 1) * self.evaluate(
                     y_true.drop(idx),
                     y_pred.drop(idx),
+                    **kwargs_i,
                 )
                 out_series.loc[idx] = pseudovalue
             return out_series
@@ -384,7 +439,6 @@ class BaseForecastingErrorMetric(BaseMetric):
             RecursionError("Must implement one of _evaluate or _evaluate_by_index")
 
     def _check_consistent_input(self, y_true, y_pred, multioutput, multilevel):
-
         y_true_orig = y_true
         y_pred_orig = y_pred
 
@@ -411,7 +465,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             warn(
                 "y_pred and y_true do not have the same row index. "
                 "This may indicate incorrect objects passed to the metric. "
-                "Indices of y_true will be used for y_pred."
+                "Indices of y_true will be used for y_pred.",
+                obj=self,
             )
             y_pred_orig = y_pred_orig.copy()
             if isinstance(y_pred_orig, VectorizedDF):
@@ -422,7 +477,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             warn(
                 "y_pred and y_true do not have the same column index. "
                 "This may indicate incorrect objects passed to the metric. "
-                "Indices of y_true will be used for y_pred."
+                "Indices of y_true will be used for y_pred.",
+                obj=self,
             )
             y_pred_orig = y_pred_orig.copy()
             if isinstance(y_pred_orig, VectorizedDF):
@@ -466,11 +522,13 @@ class BaseForecastingErrorMetric(BaseMetric):
         return y_true_orig, y_pred_orig, multioutput, multilevel
 
     def _check_ys(self, y_true, y_pred, multioutput, multilevel, **kwargs):
-
         SCITYPES = ["Series", "Panel", "Hierarchical"]
         INNER_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
         def _coerce_to_df(y, var_name="y"):
+            if isinstance(y, VectorizedDF):
+                return y.X_multiindex
+
             valid, msg, metadata = check_is_scitype(
                 y, scitype=SCITYPES, return_metadata=True, var_name=var_name
             )
@@ -525,11 +583,29 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         else:
             func = self.func
 
+        return self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
+
+    def _evaluate_func(self, func, y_true, y_pred, **params):
+        """Call func with kwargs subset to func parameters."""
+        # import here for now to avoid interaction with getmembers in tests
+        # todo: clean up ancient getmembers in test_metrics_classes
+        from functools import partial
+
         # if func does not catch kwargs, subset to args of func
-        if getfullargspec(func).varkw is None:
+        if getfullargspec(func).varkw is None or isinstance(func, partial):
             func_params = signature(func).parameters.keys()
             func_params = set(func_params).difference(["y_true", "y_pred"])
+            func_params = func_params.intersection(params.keys())
             params = {key: params[key] for key in func_params}
+
+        # deal with sklearn specific parameter constraints
+        # as these are a decorator, they obfuscate python native inspection
+        # via signature, so have to be dealt with separately
+        if hasattr(func, "_skl_parameter_constraints"):
+            constr = func._skl_parameter_constraints
+            if isinstance(constr, dict):
+                constr_params = set(constr.keys()).intersection(params.keys())
+                params = {key: params[key] for key in constr_params}
 
         res = func(y_true=y_true, y_pred=y_pred, **params)
         return res
@@ -552,11 +628,19 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         self.name = name
         self.lower_is_better = lower_is_better
 
-        super(_DynamicForecastingErrorMetric, self).__init__(
-            multioutput=multioutput, multilevel=multilevel
-        )
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
         self.set_tags(**{"lower_is_better": lower_is_better})
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs."""
+        # this dict should contain all parameters
+        params = kwargs
+        params.update({"multioutput": self.multioutput, "multilevel": self.multilevel})
+
+        func = self.func
+
+        return self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -578,7 +662,6 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         """
 
         def custom_mape(y_true, y_pred) -> float:
-
             eps = np.finfo(np.float64).eps
 
             result = np.mean(np.abs(y_true - y_pred) / np.maximum(np.abs(y_true), eps))
@@ -588,12 +671,11 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         params1 = {"func": custom_mape, "name": "custom_mape", "lower_is_better": False}
 
         def custom_mae(y_true, y_pred) -> float:
-
             result = np.mean(np.abs(y_true - y_pred))
 
             return float(result)
 
-        params2 = {"func": custom_mae, "name": "custom_nmae", "lower_is_better": True}
+        params2 = {"func": custom_mae, "name": "custom_mae", "lower_is_better": True}
 
         return [params1, params2]
 
@@ -615,12 +697,12 @@ def make_forecasting_scorer(
     multioutput="uniform_average",
     multilevel="uniform_average",
 ):
-    """Create a metric class from a metric functions.
+    """Create a metric class from a metric function.
 
     Parameters
     ----------
-    func
-        Function to convert to a forecasting scorer class.
+    func : callable
+        Callable to convert to a forecasting scorer class.
         Score function (or loss function) with signature ``func(y, y_pred, **kwargs)``.
     name : str, default=None
         Name to use for the forecasting scorer loss class.
@@ -633,9 +715,10 @@ def make_forecasting_scorer(
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-    multilevel : {'raw_values', 'uniform_average'}
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
         If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     Returns
@@ -680,6 +763,11 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -786,6 +874,11 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -836,7 +929,6 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         multilevel="uniform_average",
         sp=1,
     ):
-
         self.sp = sp
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
@@ -870,7 +962,7 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     `square_root` is True. Both MSSE and RMSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MASE loss metric.  Like MASE and other
+    This is a squared variant of the MASE loss metric.  Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
     forecast methods on a single series or between series.
 
@@ -894,6 +986,11 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -975,7 +1072,7 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
     `square_root` is True. Both MdSSE and RMdSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MdASE loss metric. Like MASE and other
+    This is a squared variant of the MdASE loss metric. Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
     forecast methods on a single series or between series.
 
@@ -999,6 +1096,11 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1073,8 +1175,23 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         return [params1, params2]
 
 
-class MeanAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Mean absolute error (MAE).
+class MeanAbsoluteError(BaseForecastingErrorMetric):
+    r"""Mean absolute error (MAE).
+
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    `evaluate` or call returns the Mean Absolute Error,
+    :math:`\frac{1}{n}\sum_{i=1}^n |y_i - \widehat{y}_i|`.
+    (the time indices are not used)
+
+    `multioutput` and `multilevel` control averaging across variables and
+    hierarchy indices, see below.
+
+    `evaluate_by_index` returns, at a time index :math:`t_i`,
+    the absolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
+    for all time indices :math:`t_1, \dots, t_n` in the input.
 
     MAE output is non-negative floating point. The best value is 0.0.
 
@@ -1090,6 +1207,11 @@ class MeanAbsoluteError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1123,7 +1245,47 @@ class MeanAbsoluteError(BaseForecastingErrorMetricFunc):
     0.85
     """
 
-    func = mean_absolute_error
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred).abs()
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return raw_values
+
+            if multioutput == "uniform_average":
+                return raw_values.mean(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return raw_values.dot(multioutput)
 
 
 class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
@@ -1147,6 +1309,11 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1205,6 +1372,11 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1308,6 +1480,11 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1395,7 +1572,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     Like MAE and MdAE, GMAE is measured in the same units as the input data.
     Because GMAE takes the absolute value of the forecast error rather than
     squaring it, MAE penalizes large errors to a lesser degree than squared error
-    varients like MSE, RMSE or GMSE or RGMSE.
+    variants like MSE, RMSE or GMSE or RGMSE.
 
     Parameters
     ----------
@@ -1405,6 +1582,11 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1477,6 +1659,11 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1570,30 +1757,57 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
 
 
 class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
-    """Mean absolute percentage error (MAPE) or symmetric version.
+    r"""Mean absolute percentage error (MAPE) or symmetric version.
 
-    If `symmetric` is False then calculates MAPE and if `symmetric` is True
-    then calculates symmetric mean absolute percentage error (sMAPE). Both
-    MAPE and sMAPE output is non-negative floating point. The best value is 0.0.
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
+    at time indices :math:`t_1, \dots, t_n`,
+    `evaluate` or call returns the Mean Absolute Percentage Error,
+    :math:`\frac{1}{n} \sum_{i=1}^n \left|\frac{y_i-\widehat{y}_i}{y_i} \right|`.
+    (the time indices are not used)
+
+    if `symmetric` is True then calculates
+    symmetric mean absolute percentage error (sMAPE), defined as
+    :math:`\frac{2}{n} \sum_{i=1}^n \frac{|y_i - \widehat{y}_i|}
+    {|y_i| + |\widehat{y}_i|}`.
+
+    Both MAPE and sMAPE output non-negative floating point which is in fractional units
+    rather than percentage. The best value is 0.0.
 
     sMAPE is measured in percentage error relative to the test data. Because it
     takes the absolute value rather than square the percentage forecast
     error, it penalizes large errors less than MSPE, RMSPE, MdSPE or RMdSPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    MAPE has no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of `inf`. While sMAPE is bounded at 2.
+
+    `multioutput` and `multilevel` control averaging across variables and
+    hierarchy indices, see below.
+
+    `evaluate_by_index` returns, at a time index :math:`t_i`,
+    the absolute percentage error at that time index,
+    :math:`\left| \frac{y_i - \widehat{y}_i}{y_i} \right|`,
+    or :math:`\frac{2|y_i - \widehat{y}_i|}{|y_i| + |\widehat{y}_i|}`,
+    the symmetric version, if `symmetric` is True, for all time indices
+    :math:`t_1, \dots, t_n` in the input.
 
     Parameters
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
+    multioutput : str or 1D array-like (n_outputs,), default='uniform_average'
+        if str, must be one of {'raw_values', 'uniform_average'}
         Defines how to aggregate metric for multivariate (multioutput) data.
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1609,8 +1823,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.performance_metrics.forecasting import \
-    MeanAbsolutePercentageError
+    >>> from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mape = MeanAbsolutePercentageError(symmetric=False)
@@ -1674,11 +1887,21 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
 
 class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
-    """Median absolute percentage error (MdAPE) or symmetric version.
+    r"""Median absolute percentage error (MdAPE) or symmetric version.
 
-    If `symmetric` is False then calculates MdAPE and if `symmetric` is True
-    then calculates symmetric median absolute percentage error (sMdAPE). Both
-    MdAPE and sMdAPE output is non-negative floating point. The best value is 0.0.
+    For a univariate, non-hierarchical sample of true values :math:`y_1, \dots, y_n`
+    and predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
+    at time indices :math:`t_1, \dots, t_n`,
+    `evaluate` or call returns the Median Absolute Percentage Error,
+    :math:`median(\left|\frac{y_i - \widehat{y}_i}{y_i} \right|)`.
+    (the time indices are not used)
+
+    if `symmetric` is True then calculates
+    symmetric Median Absolute Percentage Error (sMdAPE), defined as
+    :math:`median(\frac{2|y_i-\widehat{y}_i|}{|y_i|+|\widehat{y}_i|})`.
+
+    Both MdAPE and sMdAPE output non-negative floating point which is in fractional
+    units rather than percentage. The best value is 0.0.
 
     MdAPE and sMdAPE are measured in percentage error relative to the test data.
     Because it takes the absolute value rather than square the percentage forecast
@@ -1688,20 +1911,28 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    MAPE has no limit on how large the error can be, particulalrly when `y_true`
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of `inf`. While sMAPE is bounded at 2.
+
+    `multioutput` and `multilevel` control averaging across variables and
+    hierarchy indices, see below.
 
     Parameters
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
+    multioutput : str or 1D array-like (n_outputs,), default='uniform_average'
+        if str, must be one of {'raw_values', 'uniform_average'}
         Defines how to aggregate metric for multivariate (multioutput) data.
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1717,8 +1948,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.performance_metrics.forecasting import \
-    MedianAbsolutePercentageError
+    >>> from sktime.performance_metrics.forecasting import MedianAbsolutePercentageError
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdape = MedianAbsolutePercentageError(symmetric=False)
@@ -1745,7 +1975,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smdape(y_true, y_pred)
     0.5066666666666666
-    """
+    """  # noqa: E501
 
     func = median_absolute_percentage_error
 
@@ -1811,6 +2041,11 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1928,6 +2163,11 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -2029,6 +2269,11 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -2091,6 +2336,11 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -2154,6 +2404,11 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -2224,6 +2479,11 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -2338,7 +2598,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         asymmetric threshold.
     left_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values less than
-        the asymetric threshold.
+        the asymmetric threshold.
     right_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values greater
         than the asymmetric threshold.
@@ -2348,6 +2608,11 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -2355,7 +2620,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
 
     Notes
     -----
-    Setting `left_error_function` and `right_error_function` to "aboslute", but
+    Setting `left_error_function` and `right_error_function` to "absolute", but
     choosing different values for `left_error_penalty` and `right_error_penalty`
     results in the "lin-lin" error function discussed in [2]_.
 
@@ -2480,6 +2745,11 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -2588,7 +2858,7 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     comparing the loss of 3rd party forecasts or surveys of professional
     forecasters.
 
-    Only metrics that do not require y_train are curretnly supported.
+    Only metrics that do not require y_train are currently supported.
 
     Parameters
     ----------
@@ -2600,6 +2870,11 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     References
     ----------
@@ -2650,3 +2925,10 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     ):
         self.relative_loss_function = relative_loss_function
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Retrieve test parameters."""
+        params1 = {}
+        params2 = {"relative_loss_function": mean_squared_error}
+        return [params1, params2]

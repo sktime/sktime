@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
-"""
-ClaSP (Classification Score Profile) Transformer implementation.
+"""ClaSP (Classification Score Profile) Transformer implementation.
 
 Notes
 -----
@@ -61,6 +58,13 @@ class ClaSPTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ermshaua", "patrickzib"],
+        "maintainers": ["ermshaua"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -70,7 +74,6 @@ class ClaSPTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": True,
         "fit_is_empty": True,
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -79,7 +82,7 @@ class ClaSPTransformer(BaseTransformer):
         self.window_length = int(window_length)
         self.scoring_metric = scoring_metric
         self.exclusion_radius = exclusion_radius
-        super(ClaSPTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Compute ClaSP.

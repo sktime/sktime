@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Time binning for turning series equally spaced."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -55,6 +54,7 @@ class TimeBinAggregate(BaseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "fit_is_empty": True,
         "univariate-only": False,
         "scitype:transform-input": "Series",
@@ -73,7 +73,6 @@ class TimeBinAggregate(BaseTransformer):
     }
 
     def __init__(self, bins, aggfunc=None, return_index="bin_start"):
-
         self.bins = bins
         self.aggfunc = aggfunc
         self.return_index = return_index
@@ -90,10 +89,13 @@ class TimeBinAggregate(BaseTransformer):
                 "aggfunc should be callable with" "signature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
-                warnings.warn("Save and load will not work with lambda functions")
+                warnings.warn(
+                    "Save and load will not work with lambda functions",
+                    stacklevel=2,
+                )
             self._aggfunc = self.aggfunc
 
-        super(TimeBinAggregate, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

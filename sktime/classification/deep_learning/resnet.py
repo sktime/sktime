@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Residual Network (ResNet) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus", "nilesh05apr"]
@@ -12,12 +11,9 @@ from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.resnet import ResNetNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies(severity="warning")
-
 
 class ResNetClassifier(BaseDeepClassifier):
-    """
-    Residual Neural Network as described in [1].
+    """Residual Neural Network as described in [1].
 
     Parameters
     ----------
@@ -64,7 +60,14 @@ class ResNetClassifier(BaseDeepClassifier):
     ResNetClassifier(...)
     """
 
-    _tags = {"python_dependencies": ["tensorflow"]}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["James-Large", "AurumnPegasus", "nilesh05apr"],
+        "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
+        "python_dependencies": ["tensorflow"],
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
@@ -80,7 +83,7 @@ class ResNetClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(ResNetClassifier, self).__init__()
+        super().__init__()
         self.n_epochs = n_epochs
         self.callbacks = callbacks
         self.verbose = verbose

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Dummy forecasters."""
 
@@ -24,7 +23,7 @@ class ForecastKnownValues(BaseForecaster):
       e.g., in combination with ReconcilerForecaster for an isolated reconciliation step
 
     When forecasting, uses `pandas.DataFrame.reindex` under the hood to obtain predicted
-    values from `y_known`. Paramters other than `y_known` are directly passed
+    values from `y_known`. Parameters other than `y_known` are directly passed
     on to `pandas.DataFrame.reindex`.
 
     Parameters
@@ -52,10 +51,16 @@ class ForecastKnownValues(BaseForecaster):
     ForecastKnownValues(...)
 
     The forecast "plays back" the known/prescribed values from y_known
+
     >>> y_pred = fcst.predict()
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "both",
@@ -64,13 +69,12 @@ class ForecastKnownValues(BaseForecaster):
     }
 
     def __init__(self, y_known, method=None, fill_value=None, limit=None):
-
         self.y_known = y_known
         self.method = method
         self.fill_value = fill_value
         self.limit = limit
 
-        super(ForecastKnownValues, self).__init__()
+        super().__init__()
 
         PANDAS_DF_TYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
@@ -80,12 +84,12 @@ class ForecastKnownValues(BaseForecaster):
         if isinstance(idx, pd.MultiIndex):
             if idx.nlevels >= 3:
                 mtypes = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
-            elif idx.levels == 2:
+            elif idx.nlevels == 2:
                 mtypes = ["pd.DataFrame", "pd-multiindex"]
             self.set_tags(**{"y_inner_mtype": mtypes})
             self.set_tags(**{"X_inner_mtype": mtypes})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -117,7 +121,7 @@ class ForecastKnownValues(BaseForecaster):
         # no fitting, we already know the forecast values
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -145,7 +149,7 @@ class ForecastKnownValues(BaseForecaster):
         if self.fill_value is not None:
             reindex_params["fill_value"] = self.fill_value
 
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        fh_abs = fh.to_absolute_index(self.cutoff)
 
         try:
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)

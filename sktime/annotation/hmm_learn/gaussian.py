@@ -1,19 +1,13 @@
-# -*- coding: utf-8 -*-
-
-"""
-Hidden Markov Model with Gaussian emissions.
+"""Hidden Markov Model with Gaussian emissions.
 
 Please see the original library
 (https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py)
 """
 
 from sktime.annotation.hmm_learn import BaseHMMLearn
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["miraep8"]
 __all__ = ["GaussianHMM"]
-
-_check_soft_dependencies("hmmlearn.hmm", severity="warning")
 
 
 class GaussianHMM(BaseHMMLearn):
@@ -38,7 +32,7 @@ class GaussianHMM(BaseHMMLearn):
         Floor on the diagonal of the covariance matrix to prevent
         overfitting. Defaults to 1e-3.
     means_prior, means_weight : array, shape (n_mix, ), optional
-        Mean and precision of the Normal prior distribtion for
+        Mean and precision of the Normal prior distribution for
         :attr:`means_`.
     covars_prior, covars_weight : array, shape (n_mix, ), optional
         Parameters of the prior distribution for the covariance matrix
@@ -73,7 +67,7 @@ class GaussianHMM(BaseHMMLearn):
     implementation: string, optional
         Determines if the forward-backward algorithm is implemented with
         logarithms ("log"), or using scaling ("scaling").  The default is
-        to use logarithms for backwards compatability.
+        to use logarithms for backwards compatibility.
 
     Attributes
     ----------
@@ -127,7 +121,6 @@ class GaussianHMM(BaseHMMLearn):
         init_params: str = "stmc",
         implementation: str = "log",
     ):
-
         self.n_components = n_components
         self.covariance_type = covariance_type
         self.min_covar = min_covar
@@ -145,7 +138,7 @@ class GaussianHMM(BaseHMMLearn):
         self.params = params
         self.init_params = init_params
         self.implementation = implementation
-        super(GaussianHMM, self).__init__()
+        super().__init__()
 
     def _fit(self, X, Y=None):
         """Create a new instance of wrapped hmmlearn estimator.
@@ -182,7 +175,7 @@ class GaussianHMM(BaseHMMLearn):
             self.init_params,
             self.implementation,
         )
-        return super(GaussianHMM, self)._fit(X, Y)
+        return super()._fit(X, Y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

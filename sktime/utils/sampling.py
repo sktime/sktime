@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Functions to sample sktime datasets.
 
 Used in experiments to get deterministic resamples.
@@ -14,7 +13,7 @@ import sklearn.utils
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
     """Stratified resample data without replacement using a random state.
 
-    Reproducable resampling. Combines train and test, resamples to get the same class
+    Reproducible resampling. Combines train and test, resamples to get the same class
     distribution, then returns new train and test.
 
     Parameters
@@ -28,7 +27,7 @@ def stratified_resample(X_train, y_train, X_test, y_test, random_state):
     y_test : np.array
         test data class labels as np array.
     random_state : int
-        seed to enable reproducable resamples
+        seed to enable reproducible resamples
     Returns
     -------
     new train and test attributes and class labels.

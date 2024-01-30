@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-"""Arithmetics with distances/kernels, e.g., addition, multiplication."""
+"""Arithmetic with distances/kernels, e.g., addition, multiplication."""
 
 __author__ = ["fkiraly"]
 
 import numpy as np
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
@@ -46,9 +45,19 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     >>> X = X[0:3]
     >>> sum_dist = CombinedDistance([DtwDist(), DtwDist(weighted=True)], "+")
     >>> dist_mat = sum_dist.transform(X)
+
+    the same can also be done more compactly using dunders:
+
+    >>> sum_dist = DtwDist() + DtwDist(weighted=True)
+    >>> dist_mat = sum_dist(X)
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        # estimator type
+        # --------------
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
@@ -62,7 +71,6 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     _steps_attr = "_pw_trafos"
 
     def __init__(self, pw_trafos, operation=None):
-
         self.pw_trafos = pw_trafos
         self.pw_trafos_ = self._check_estimators(
             self.pw_trafos, cls_type=BasePairwiseTransformerPanel
@@ -70,7 +78,7 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
         self.operation = operation
         self._operation = self._resolve_operation(operation)
 
-        super(CombinedDistance, self).__init__()
+        super().__init__()
 
         # abbreviate for readability
         ests = self.pw_trafos_

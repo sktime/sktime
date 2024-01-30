@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformations to detrend a time series."""
 
@@ -69,6 +68,12 @@ class Detrender(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "SveaMeyer13", "KishManani", "fkiraly"],
+        "maintainers": ["SveaMeyer13", "KishManani"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -88,7 +93,7 @@ class Detrender(BaseTransformer):
         self.forecaster = forecaster
         self.model = model
 
-        super(Detrender, self).__init__()
+        super().__init__()
 
         # default for forecaster - written to forecaster_ to not overwrite param
         if self.forecaster is None:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Hierarchical Data Generators."""
 
@@ -36,7 +35,7 @@ def _make_hierarchical(
     max_timepoints : int, optional
         maximum time points a series can have, by default 12
     min_timepoints : int, optional
-        minimum time points a seires can have, by default 12
+        minimum time points a series can have, by default 12
     same_cutoff : bool, optional
         If it's True all series will end at the same date, by default True
     n_columns : int, optional
@@ -106,18 +105,18 @@ def _bottom_hier_datagen(
     coef_1_max=20,
     coef_2_max=0.1,
     random_seed=None,
+    length=144,
 ):
-    """Hierarchical data generator using the flights dataset.
+    """Hierarchical data generator using the airline dataset.
 
     This function generates bottom level, i.e. not aggregated, time-series
-    from the flights dataset.
+    from the airline dataset (sktime.datasets.load_airline).
 
-    Each series is generated from the flights dataset using a linear model,
+    Each series is generated from the airline dataset using a linear model,
     y = c0 + c1x + c2x^(c3), where the coefficients, intercept, and exponent
     are randomly sampled for each series. The coefficients and intercept are
     sampled between np.arange(0, *_max, 0.01) to keep the values positive. The
     exponent is sampled from [0.5, 1, 1.5, 2].
-
 
     Parameters
     ----------
@@ -128,8 +127,10 @@ def _bottom_hier_datagen(
     *_max : int, optional
         Maximum possible value of the coefficient or intercept value.
     random_seed : int, optional
-        Random seed for reproducability.
-
+        Random seed for reproducibility.
+    length : int between 1 and 144, optional, default = 144
+        length of base time series. If lowe than 144,
+        the airline dataset is truncated to the specified length, cutting from the end.
 
     Returns
     -------
@@ -140,7 +141,7 @@ def _bottom_hier_datagen(
 
     rng = np.random.default_rng(random_seed)
 
-    base_ts = load_airline()
+    base_ts = load_airline()[:length]
     df = pd.DataFrame(base_ts, index=base_ts.index)
     df.index.rename(None, inplace=True)
 
@@ -149,7 +150,6 @@ def _bottom_hier_datagen(
         df.index.rename("timepoints", inplace=True)
         return df
     else:
-
         df.columns = ["l1_node01"]
 
         intercept = np.arange(0, intercept_max, 0.01)
@@ -164,16 +164,17 @@ def _bottom_hier_datagen(
         node_lookup.columns = ["l1_agg"]
 
         if no_levels >= 2:
-
             # create index from bottom up, sampling node names
             for i in range(2, no_levels + 1):
                 node_lookup["l" + str(i) + "_agg"] = node_lookup.groupby(
                     ["l" + str(i - 1) + "_agg"]
                 )["l1_agg"].transform(
                     lambda x: "l"
-                    + str(i)
+                    + str(i)  # noqa B023
                     + "_node"
-                    + "{:02d}".format(_sample_node(node_lookup.index, i, rng))
+                    + "{:02d}".format(
+                        _sample_node(node_lookup.index, i, rng)  # noqa B023
+                    )
                 )
 
         node_lookup = node_lookup.set_index("l1_agg", drop=True)
@@ -217,6 +218,6 @@ def _sample_node(index_table, level, sampler):
     """Sample a number of nodes depending on the size of hierarchy and level."""
     nodes = np.arange(1, np.floor(len(index_table) / level) + 1, 1)
     # return a single sample of them
-    sample_nodes = int(sampler.choice(nodes, size=1))
+    sample_nodes = int(sampler.choice(nodes, size=1)[0])
 
     return sample_nodes

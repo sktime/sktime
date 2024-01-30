@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for transformers, SIMPLE version.
+"""Extension template for transformers, SIMPLE version.
 
 Contains only bare minimum of implementation requirements for a functional transformer.
 Also assumes *no composition*, i.e., no transformer or other estimator components.
 For advanced cases (inverse transform, composition, etc),
-    see full extension template in forecasting.py
+    see full extension template in transformer.py
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -31,7 +29,7 @@ Mandatory implements:
     fitting         - _fit(self, X, y=None)
     transformation  - _transform(self, X, y=None)
 
-Testing - implement if sktime transformer (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 """
 # todo: write an informative docstring for the file or module, remove the above
@@ -140,7 +138,7 @@ class MyTransformer(BaseTransformer):
         # univariate-only controls whether internal X can be univariate/multivariate
         # if True (only univariate), always applies vectorization over variables
         "univariate-only": False,
-        # valid values: True = inner _fit, _transform receive only univariate serie
+        # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
         #
         # requires_y = does y need to be passed in fit?
@@ -174,18 +172,34 @@ class MyTransformer(BaseTransformer):
         "handles-missing-data": False,  # can estimator handle missing data?
         # valid values: boolean True (yes), False (no)
         # if False, may raise exception when passed time series with missing values
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
     }
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, parama, paramb="default", paramc=None):
-
         # todo: write any hyper-parameters to self
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTransformer" to the name of the class
-        super(MyTransformer, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

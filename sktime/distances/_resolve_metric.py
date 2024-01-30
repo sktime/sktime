@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
 import inspect
@@ -215,7 +214,6 @@ def _is_no_python_distance_callable(metric: Callable) -> bool:
     bool
         Boolean that is true if callable is a valid no_python compiled distance and
         false if the callable is an invalid no_python callable.
-
     """
     from sktime.distances._numba_utils import is_no_python_compiled_callable
 

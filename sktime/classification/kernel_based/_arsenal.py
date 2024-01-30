@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Arsenal classifier.
 
 kernel based ensemble of ROCKET classifiers.
@@ -112,12 +111,19 @@ class Arsenal(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "kachayev"],
+        "maintainers": ["kachayev"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "kernel",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -155,7 +161,7 @@ class Arsenal(BaseClassifier):
 
         self._weight_sum = 0
 
-        super(Arsenal, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit Arsenal to training data.
@@ -228,7 +234,8 @@ class Arsenal(BaseClassifier):
                             if self.random_state is None
                             else (255 if self.random_state == 0 else self.random_state)
                             * 37
-                            * (i + 1),
+                            * (i + 1)
+                            % 2**31,
                         ),
                         X,
                         y,
@@ -252,7 +259,8 @@ class Arsenal(BaseClassifier):
                         if self.random_state is None
                         else (255 if self.random_state == 0 else self.random_state)
                         * 37
-                        * (i + 1),
+                        * (i + 1)
+                        % 2**31,
                     ),
                     X,
                     y,

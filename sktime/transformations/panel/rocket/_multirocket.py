@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """MultiRocket transform."""
 
 import multiprocessing
@@ -8,6 +7,8 @@ import pandas as pd
 
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
+
+__author__ = ["ChangWeiTan", "fstinner", "angus924"]
 
 
 class MultiRocket(BaseTransformer):
@@ -20,6 +21,15 @@ class MultiRocket(BaseTransformer):
     Values (MPV); Mean of Indices of Positive Values (MIPV); and Longest Stretch of
     Positive Values (LSPV). This version is for univariate time series only. Use class
     MultiRocketMultivariate for multivariate input.
+
+    This transformer fits one set of paramereters per individual series,
+    and applies the transform with fitted parameter i to the i-th series in transform.
+    Vanilla use requires same number of series in fit and transform.
+
+    To fit and transform series at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
 
     Parameters
     ----------
@@ -45,7 +55,6 @@ class MultiRocket(BaseTransformer):
     parameter1 : tuple
         parameter (dilations, num_features_per_dilation, biases) for
         transformation of input X1 = np.diff(X, 1)
-
 
     See Also
     --------
@@ -73,6 +82,13 @@ class MultiRocket(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ChangWeiTan", "fstinner", "angus924"],
+        "maintainers": ["ChangWeiTan", "fstinner", "angus924"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "univariate-only": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
@@ -82,7 +98,6 @@ class MultiRocket(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -106,7 +121,7 @@ class MultiRocket(BaseTransformer):
         self.parameter = None
         self.parameter1 = None
 
-        super(MultiRocket, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit dilations and biases to input time series.
@@ -161,7 +176,7 @@ class MultiRocket(BaseTransformer):
 
         X1 = np.diff(X, 1)
 
-        # change n_jobs dependend on value and existing cores
+        # change n_jobs depended on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()

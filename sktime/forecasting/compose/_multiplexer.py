@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for selecting among different model classes."""
 
@@ -56,9 +55,8 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     Examples
     --------
     >>> from sktime.forecasting.ets import AutoETS
-    >>> from sktime.forecasting.model_selection import (
-    ...    ForecastingGridSearchCV,
-    ...    ExpandingWindowSplitter)
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.compose import MultiplexForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
@@ -79,6 +77,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
+        "authors": ["kkoralturk", "aiwalter", "fkiraly", "miraep8"],
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "scitype:y": "both",
@@ -108,7 +107,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         forecasters: list,
         selected_forecaster=None,
     ):
-        super(MultiplexForecaster, self).__init__()
+        super().__init__()
         self.selected_forecaster = selected_forecaster
 
         self.forecasters = forecasters

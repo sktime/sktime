@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Matrix profile transformer."""
 
 __author__ = ["Claudia Rincon Sanchez"]
@@ -207,6 +206,7 @@ class MatrixProfile(BaseTransformer):
     """
 
     _tags = {
+        "authors": "Claudia Rincon Sanchez",
         "univariate-only": True,
         "fit_is_empty": True,
         "scitype:transform-input": "Series",
@@ -220,7 +220,7 @@ class MatrixProfile(BaseTransformer):
 
     def __init__(self, m=10):
         self.m = m  # subsequence length
-        super(MatrixProfile, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Return the matrix profile for each single time series of the dataset.

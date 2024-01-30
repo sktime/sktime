@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for loading datasets."""
 
 __author__ = [
@@ -14,6 +13,7 @@ __author__ = [
     "jasonlines",
     "achieveordie",
     "ciaran-g",
+    "jonathanbechtel",
 ]
 
 __all__ = [
@@ -39,9 +39,11 @@ __all__ = [
     "load_macroeconomic",
     "load_unit_test_tsf",
     "load_covid_3month",
+    "load_tecator",
 ]
 
 import os
+import zipfile
 from urllib.error import HTTPError, URLError
 from warnings import warn
 
@@ -49,10 +51,13 @@ import numpy as np
 import pandas as pd
 
 from sktime.datasets._data_io import (
+    _download_and_extract,
+    _list_available_datasets,
     _load_dataset,
     _load_provided_dataset,
-    load_tsf_to_dataframe,
 )
+from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
+from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
@@ -117,6 +122,68 @@ def load_UCR_UEA_dataset(
     >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
     """
     return _load_dataset(name, split, return_X_y, return_type, extract_path)
+
+
+def load_tecator(split=None, return_X_y=True, return_type=None):
+    """Load the Tecator time series regression problem and returns X and y.
+
+    Parameters
+    ----------
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
+
+
+    Returns
+    -------
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The target values for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_tecator
+    >>> X, y = load_tecator()
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Series length:      100
+    Train cases:        172
+    Test cases:         43
+
+    The purpose of this dataset is to measure the fat content of meat based off its near
+      infrared absorbance spectrum.
+    The absorbance spectrum is measured in the wavelength range of 850 nm to 1050 nm.
+    The fat content is measured by standard chemical analysis methods.
+    The dataset contains 215 samples of meat, each with 100 spectral measurements.
+    For more information see:
+    https://www.openml.org/search?type=data&sort=runs&id=505&status=active
+    References
+    ----------
+    [1] C.Borggaard and H.H.Thodberg, "Optimal Minimal Neural Interpretation of Spectra"
+    , Analytical Chemistry 64 (1992), p 545-551.
+    [2] H.H.Thodberg, "Ace of Bayes: Application of Neural Networks with Pruning"
+    Manuscript 1132, Danish Meat Research Institute (1993), p 1-12.
+    """
+    name = "Tecator"
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_plaid(split=None, return_X_y=True, return_type=None):
@@ -343,8 +410,7 @@ def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
 
 
 def load_unit_test(split=None, return_X_y=True, return_type=None):
-    """
-    Load UnitTest data.
+    """Load UnitTest data.
 
     This is an equal length univariate time series classification problem. It is a
     stripped down version of the ChinaTown problem that is used in correctness tests
@@ -472,8 +538,7 @@ def load_japanese_vowels(split=None, return_X_y=True, return_type=None):
 
 
 def load_arrow_head(split=None, return_X_y=True, return_type=None):
-    """
-    Load the ArrowHead time series classification problem and returns X and y.
+    """Load the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -598,8 +663,7 @@ def load_acsf1(split=None, return_X_y=True, return_type=None):
 
 
 def load_basic_motions(split=None, return_X_y=True, return_type=None):
-    """
-    Load the BasicMotions time series classification problem and returns X and y.
+    """Load the BasicMotions time series classification problem and returns X and y.
 
     This is an equal length multivariate time series classification problem. It loads a
     4 class classification problem with number of cases, n, where n = 80 (if
@@ -1039,8 +1103,7 @@ def load_PBS_dataset():
 
 
 def load_macroeconomic():
-    """
-    Load the US Macroeconomic Data [1]_.
+    """Load the US Macroeconomic Data [1]_.
 
     Returns
     -------
@@ -1087,8 +1150,7 @@ def load_macroeconomic():
 
 
 def load_unit_test_tsf():
-    """
-    Load tsf UnitTest dataset.
+    """Load tsf UnitTest dataset.
 
     Returns
     -------
@@ -1131,7 +1193,7 @@ def load_solar(
     """Get national solar estimates for GB from Sheffield Solar PV_Live API.
 
     This function calls the Sheffield Solar PV_Live API to extract national solar data
-    for the GB eletricity network. Note that these are estimates of the true solar
+    for the GB electricity network. Note that these are estimates of the true solar
     generation, since the true values are "behind the meter" and essentially
     unknown.
 
@@ -1150,6 +1212,11 @@ def load_solar(
         Return a pd.DataFrame with power, capacity, and normalised estimates?
     api_version : string or None, default="v4"
         API version to call. If None then a stored sample of the data is loaded.
+
+    Returns
+    -------
+    y : pd.Series
+        The solar generation time-series, as requested by parameters, see above
 
     References
     ----------
@@ -1273,3 +1340,102 @@ def load_covid_3month(split=None, return_X_y=True):
     """
     name = "Covid3Month"
     return _load_dataset(name, split, return_X_y)
+
+
+def load_forecastingdata(
+    name,
+    replace_missing_vals="NAN",
+    value_column_name="series_value",
+    return_type="default_tsf",
+    extract_path=None,
+):
+    """Fetch forecasting datasets from Monash Time Series Forecasting Archive.
+
+    Downloads and extracts dataset if not already downloaded. Fetched dataset is
+    in the standard .tsf format. See https://forecastingdata.org/ for more details.
+
+    Parameters
+    ----------
+    name: str
+        Name of data set. If a dataset that is listed in tsf_all_dataset is given,
+        this function will look in the extract_path first, and if it is not present,
+        attempt to download the data from https://forecastingdata.org/, saving it to
+        the extract_path.
+    replace_missing_vals: str, default="NAN"
+        A term to indicate the missing values in series in the returning dataframe.
+    value_column_name: str, default="series_value"
+        Any name that is preferred to have as the name of the column containing series
+        values in the returning dataframe.
+    return_type : str - "pd_multiindex_hier", "default_tsf" (default), or valid sktime
+        mtype string for in-memory data container format specification of the
+        return type:
+        - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`
+        - "default_tsf" = container that faithfully mirrors tsf format from the original
+            implementation in: https://github.com/rakshitha123/TSForecasting/
+            blob/master/utils/data_loader.py.
+        - other valid mtype strings are Panel or Hierarchical mtypes in
+            datatypes.MTYPE_REGISTER. If Panel or Hierarchical mtype str is given, a
+            conversion to that mtype will be attempted
+        For tutorials and detailed specifications, see
+        examples/AA_datatypes_and_datasets.ipynb
+    extract_path : str, optional (default=None)
+        the path to look for the data. If no path is provided, the function
+        looks in `sktime/datasets/data/`. If a path is given, it can be absolute,
+        e.g. C:/Temp or relative, e.g. Temp or ./Temp.
+
+    Returns
+    -------
+    loaded_data: pd.DataFrame
+        The converted dataframe containing the time series.
+    metadata: dict
+        The metadata for the forecasting problem. The dictionary keys are:
+        "frequency", "forecast_horizon", "contain_missing_values",
+        "contain_equal_length"
+    """
+    # Allow user to have non standard extract path
+    if extract_path is not None:
+        local_module = os.path.dirname(extract_path)
+        local_dirname = extract_path
+    else:  # this is the default path for downloaded dataset
+        local_module = MODULE
+        local_dirname = DIRNAME
+
+    if not os.path.exists(os.path.join(local_module, local_dirname)):
+        os.makedirs(os.path.join(local_module, local_dirname))
+
+    path_to_data_dir = os.path.join(local_module, local_dirname)
+    # TODO should create a function to check if dataset exists
+    if name not in _list_available_datasets(path_to_data_dir, "forecastingorg"):
+        # Dataset is not already present in the datasets directory provided.
+        # If it is not there, download and install it.
+
+        # TODO: create a registry function to lookup
+        # valid dataset names for classification, regression, forecasting datasets repo
+        if name not in list(tsf_all_datasets):
+            raise ValueError(
+                {name}
+                + " is not a valid dataset name. \
+                    List of valid dataset names can be found at \
+                    sktime.datasets.tsf_dataset_names.tsf_all_datasets"
+            )
+
+        url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
+
+        # This also tests the validity of the URL, can't rely on the html
+        # status code as it always returns 200
+        try:
+            _download_and_extract(
+                url,
+                extract_path=path_to_data_dir,
+            )
+        except zipfile.BadZipFile as e:
+            raise ValueError(
+                f"Invalid dataset name ={name} is not available on extract path ="
+                f"{extract_path}. Nor is it available on "
+                f"https://forecastingdata.org/.",
+            ) from e
+
+    path_to_file = os.path.join(path_to_data_dir, f"{name}/{name}.tsf")
+    return load_tsf_to_dataframe(
+        path_to_file, replace_missing_vals, value_column_name, return_type
+    )

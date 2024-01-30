@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Transformers for index and column subsetting."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
@@ -37,6 +36,7 @@ class IndexSubset(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -53,7 +53,7 @@ class IndexSubset(BaseTransformer):
 
     def __init__(self, index_treatment="keep"):
         self.index_treatment = index_treatment
-        super(IndexSubset, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -84,7 +84,7 @@ class IndexSubset(BaseTransformer):
             Xt = X.loc[ind_X_and_y]
         elif index_treatment == "keep":
             Xt = X.loc[ind_X_and_y]
-            y_idx_frame = type(X)(index=y.index)
+            y_idx_frame = type(X)(index=y.index, dtype="float64")
             Xt = Xt.combine_first(y_idx_frame)
         else:
             raise ValueError(
@@ -161,13 +161,14 @@ class ColumnSelect(BaseTransformer):
         "fit_is_empty": True,
         "univariate-only": False,
         "capability:inverse_transform": False,
+        "skip-inverse-transform": True,
     }
 
     def __init__(self, columns=None, integer_treatment="col", index_treatment="remove"):
         self.columns = columns
         self.integer_treatment = integer_treatment
         self.index_treatment = index_treatment
-        super(ColumnSelect, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -196,7 +197,7 @@ class ColumnSelect(BaseTransformer):
 
         columns = pd.Index(columns)
 
-        if integer_treatment == "col" and columns.is_integer():
+        if integer_treatment == "col" and pd.api.types.is_integer_dtype(columns):
             columns = [x for x in columns if x < len(X.columns)]
             col_idx = X.columns[columns]
             return X[col_idx]

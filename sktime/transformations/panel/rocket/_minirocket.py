@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """MiniRocket transformer."""
 
-__author__ = "angus924"
+__author__ = ["angus924"]
 __all__ = ["MiniRocket"]
 
 import multiprocessing
@@ -20,6 +19,14 @@ class MiniRocket(BaseTransformer):
     convolutions with six of one weight, three of the second weight to seed dilations.
     MiniRocket is for unviariate time series only.  Use class MiniRocketMultivariate
     for multivariate time series.
+
+    This transformer fits one set of paramereters per individual series,
+    and applies them to series of the same number in the test set.
+
+    To fit and transform at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
 
     Parameters
     ----------
@@ -46,7 +53,7 @@ class MiniRocket(BaseTransformer):
 
     Examples
     --------
-     >>> from sktime.transformations.panel.rocket import Rocket
+     >>> from sktime.transformations.panel.rocket import MiniRocket
      >>> from sktime.datasets import load_unit_test
      >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
      >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
@@ -58,6 +65,13 @@ class MiniRocket(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["angus924"],
+        "maintainers": ["angus924"],
+        "python_dependencies": "numba",
+        # estimator tags
+        # --------------
         "univariate-only": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
@@ -67,7 +81,6 @@ class MiniRocket(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -82,7 +95,7 @@ class MiniRocket(BaseTransformer):
 
         self.n_jobs = n_jobs
         self.random_state = random_state
-        super(MiniRocket, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fits dilations and biases to input time series.
@@ -107,10 +120,8 @@ class MiniRocket(BaseTransformer):
         _, n_timepoints = X.shape
         if n_timepoints < 9:
             raise ValueError(
-                (
-                    f"n_timepoints must be >= 9, but found {n_timepoints};"
-                    " zero pad shorter series so that n_timepoints == 9"
-                )
+                f"n_timepoints must be >= 9, but found {n_timepoints};"
+                " zero pad shorter series so that n_timepoints == 9"
             )
         self.parameters = _fit(
             X, self.num_kernels, self.max_dilations_per_kernel, random_state
@@ -136,7 +147,7 @@ class MiniRocket(BaseTransformer):
 
         X = X[:, 0, :].astype(np.float32)
 
-        # change n_jobs dependend on value and existing cores
+        # change n_jobs depended on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()

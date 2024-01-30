@@ -1,24 +1,17 @@
-# -*- coding: utf-8 -*-
-
-"""
-Hidden Markov Model with Poisson emissions.
+"""Hidden Markov Model with Poisson emissions.
 
 Please see the original library
 (https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py)
 """
 
 from sktime.annotation.hmm_learn import BaseHMMLearn
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["klam-data", "pyyim", "mgorlin"]
 __all__ = ["PoissonHMM"]
 
-_check_soft_dependencies("hmmlearn.hmm", severity="warning")
-
 
 class PoissonHMM(BaseHMMLearn):
-    """
-    Hidden Markov Model with Poisson emissions.
+    """Hidden Markov Model with Poisson emissions.
 
     Parameters
     ----------
@@ -32,7 +25,7 @@ class PoissonHMM(BaseHMMLearn):
         of the transition probabilities :attr:`transmat_`.
     lambdas_prior, lambdas_weight : array, shape (n_components,), optional
         The gamma prior on the lambda values using alpha-beta notation,
-        respectivley. If None, will be set based on the method of
+        respectively. If None, will be set based on the method of
         moments.
     algorithm : {"viterbi", "map"}, optional
         Decoder algorithm.
@@ -55,7 +48,7 @@ class PoissonHMM(BaseHMMLearn):
     implementation: string, optional
         Determines if the forward-backward algorithm is implemented with
         logarithms ("log"), or using scaling ("scaling").  The default is
-        to use logarithms for backwards compatability.
+        to use logarithms for backwards compatibility.
 
     Attributes
     ----------
@@ -102,7 +95,6 @@ class PoissonHMM(BaseHMMLearn):
         init_params: str = "stl",
         implementation: str = "log",
     ):
-
         self.n_components = n_components
         self.startprob_prior = startprob_prior
         self.transmat_prior = transmat_prior
@@ -116,7 +108,7 @@ class PoissonHMM(BaseHMMLearn):
         self.params = params
         self.init_params = init_params
         self.implementation = implementation
-        super(PoissonHMM, self).__init__()
+        super().__init__()
 
     def _fit(self, X, Y=None):
         """Create a new instance of wrapped hmmlearn estimator.
@@ -149,7 +141,7 @@ class PoissonHMM(BaseHMMLearn):
             self.init_params,
             self.implementation,
         )
-        return super(PoissonHMM, self)._fit(X, Y)
+        return super()._fit(X, Y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

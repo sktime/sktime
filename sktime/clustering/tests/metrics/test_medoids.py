@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for medoids."""
 import numpy as np
 

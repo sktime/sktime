@@ -34,7 +34,7 @@ sktime is a community-oriented and -led project.
 We value the involvement of everyone in the community, and strive to be an open
 community. We commit to provide fair and rewarding opportunities for everyone without
 restriction, to participate, learn, and become leaders of the community. We expect from
-leaders of our community to create such opportunities for others, and we stronly encourage
+leaders of our community to create such opportunities for others, and we strongly encourage
 all members of our community to create opportunities as have been created for them.
 
 We are committed to scientific quality and strive to be an open forum on matters
@@ -121,11 +121,11 @@ hope you will consider to be appropriate community guidelines:
    unsure whether your behaviour towards another person is welcome, ask
    them. If someone tells you to stop, do so.
 -  **Respect the privacy and safety of others**. Do not take photographs
-   of others without their permission. Do not share other participant’s
+   of others without their permission. Do not share other participant's
    personal experiences without their express permission. Note that
    posting (or threatening to post) personally identifying information
    of others without their consent ("doxing") is a form of harassment.
--  **Be considerate of others’ participation**. Everyone should have an
+-  **Be considerate of others' participation**. Everyone should have an
    opportunity to be heard. In update sessions, please keep comments
    succinct so as to allow maximum engagement by all participants. Do
    not interrupt others on the basis of disagreement; hold such comments
@@ -135,7 +135,7 @@ hope you will consider to be appropriate community guidelines:
    crucial for fairness and diversity of our community, as well as its scientific quality.
    Free speech and constant scrutiny directed at those in power is also essential to ensure
    accountability and fair operations of our community, and to prevent groupthink or in-group dynamics.
--  **Don’t be a bystander**. If you see something inappropriate
+-  **Don't be a bystander**. If you see something inappropriate
    happening, speak up. If you don't feel comfortable intervening but
    feel someone should, please feel free to ask a member of the Code of
    Conduct response team for support.

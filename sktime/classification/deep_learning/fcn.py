@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Fully Connected Neural Network (CNN) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus"]
@@ -11,8 +10,6 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.fcn import FCNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class FCNClassifier(BaseDeepClassifier):
@@ -63,6 +60,14 @@ class FCNClassifier(BaseDeepClassifier):
     FCNClassifier(...)
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["James-Large", "AurumnPegasus"],
+        "maintainers": ["James-Large", "AurumnPegasus"],
+        # estimator type handled by parent class
+    }
+
     def __init__(
         self,
         n_epochs=2000,
@@ -77,7 +82,7 @@ class FCNClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(FCNClassifier, self).__init__()
+        super().__init__()
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size

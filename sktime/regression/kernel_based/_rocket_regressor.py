@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """RandOm Convolutional KErnel Transform (Rocket) regressor.
 
 Pipeline regressor using the ROCKET transformer and RidgeCV estimator.
@@ -101,9 +100,14 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "python_dependencies": "numba",
     }
 
     # valid rocket strings for input validity checking
@@ -129,7 +133,7 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        super(RocketRegressor, self).__init__()
+        super().__init__()
 
         if use_multivariate not in self.VALID_MULTIVAR_VALUES:
             raise ValueError(

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multivariate MiniRocket transformer."""
 
 __author__ = ["angus924", "michaelfeil"]
@@ -25,6 +24,15 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     with unequal length provided by the authors [2]_ .  For better
     performance, use the sktime class MiniRocket for univariate input,
     and MiniRocketMultivariate to equal length multivariate input.
+
+    This transformer fits one set of paramereters per individual series,
+    and applies the transform with fitted parameter i to the i-th series in transform.
+    Vanilla use requires same number of series in fit and transform.
+
+    To fit and transform series at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
 
     Parameters
     ----------
@@ -78,10 +86,11 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
     .. [2] Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
            https://github.com/angus924/minirocket
-
     """
 
     _tags = {
+        "authors": ["angus924", "michaelfeil"],
+        "maintainers": ["angus924", "michaelfeil"],
         "univariate-only": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
@@ -134,7 +143,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
                 f"{reference_length}"
             )
 
-        super(MiniRocketMultivariateVariable, self).__init__()
+        super().__init__()
 
     def _fit(self, X: List[pd.DataFrame], y=None):
         """Fits dilations and biases to input time series.
@@ -182,22 +191,22 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         if lengths_1darray.min() < 9:
             failed_index = np.where(lengths_1darray < 9)[0]
             raise ValueError(
-                (
-                    f"X must be >= 9 for all samples, but found miniumum to be "
-                    f"{lengths_1darray.min()}; at index {failed_index}, pad shorter "
-                    "series so that n_timepoints >= 9 for all samples."
-                )
+                f"X must be >= 9 for all samples, but found minimum to be "
+                f"{lengths_1darray.min()}; at index {failed_index}, pad shorter "
+                "series so that n_timepoints >= 9 for all samples."
             )
 
         if lengths_1darray.min() == lengths_1darray.max():
             warnings.warn(
                 "X is of equal length, consider using MiniRocketMultivariate for "
-                "speedup and stability instead."
+                "speedup and stability instead.",
+                stacklevel=2,
             )
         if X_2d_t.shape[0] == 1:
             warnings.warn(
                 "X is univariate, consider using MiniRocket as Univariante for "
-                "speedup and stability instead."
+                "speedup and stability instead.",
+                stacklevel=2,
             )
 
         self.parameters = _fit_multi_var(
@@ -240,7 +249,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         X_2d_t, L = _nested_dataframe_to_transposed2D_array_and_len_list(
             X, pad=self.pad_value_short_series
         )
-        # change n_jobs dependend on value and existing cores
+        # change n_jobs depended on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()
@@ -294,14 +303,14 @@ def _nested_dataframe_to_transposed2D_array_and_len_list(
         )
 
     vec = []
-    lenghts = []
+    lengths = []
 
     for _x in X:
         _x_shape = _x.shape
         if _x_shape[0] < 9:
             if pad is not None:
                 # emergency: pad with zeros up to 9.
-                lenghts.append(9)
+                lengths.append(9)
                 vec.append(
                     np.vstack(
                         [_x.values, np.full([9 - _x_shape[0], _x_shape[1]], float(pad))]
@@ -314,11 +323,11 @@ def _nested_dataframe_to_transposed2D_array_and_len_list(
                     " padding, discard, or setting a pad_value_short_series value"
                 )
         else:
-            lenghts.append(_x_shape[0])
+            lengths.append(_x_shape[0])
             vec.append(_x.values)
 
     X_2d_t = np.vstack(vec).T.astype(dtype=np.float32)
-    lengths = np.array(lenghts, dtype=np.int32)
+    lengths = np.array(lengths, dtype=np.int32)
 
     if not lengths.sum() == X_2d_t.shape[1]:
         raise ValueError("X_new and lengths do not match. check input dimension")

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tabularizer transform, for pipelining."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -12,21 +11,21 @@ import pandas as pd
 
 from sktime.datatypes import convert, convert_to
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.pandas import df_map
 
 
 class Tabularizer(BaseTransformer):
-    """
-    A transformer that turns time series/panel data into tabular data.
+    """A transformer that turns time series/panel data into tabular data.
 
-    This estimator converts nested pandas dataframe containing
-    time-series/panel data with numpy arrays or pandas Series in
-    dataframe cells into a tabular pandas dataframe with only primitives in
-    cells. This is useful for transforming
-    time-series/panel data into a format that is accepted by standard
-    validation learning algorithms (as in sklearn).
+    This estimator converts nested pandas dataframe containing time-series/panel data
+    with numpy arrays or pandas Series in dataframe cells into a tabular pandas
+    dataframe with only primitives in cells. This is useful for transforming time-
+    series/panel data into a format that is accepted by standard validation learning
+    algorithms (as in sklearn).
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "kcc-lion"],
         "fit_is_empty": True,
         "univariate-only": False,
         "scitype:transform-input": "Series",
@@ -98,6 +97,8 @@ class TimeBinner(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["kcc-lion", "fkiraly"],
+        "maintainers": ["kcc-lion"],
         "fit_is_empty": True,
         "univariate-only": False,
         "scitype:transform-input": "Series",
@@ -111,24 +112,29 @@ class TimeBinner(BaseTransformer):
     }
 
     def __init__(self, idx, aggfunc=None):
-
         assert isinstance(
             idx, pd.IntervalIndex
         ), "idx should be of type pd.IntervalIndex"
         self.aggfunc = aggfunc
         if self.aggfunc is None:
             self._aggfunc = np.mean
-            warnings.warn("No aggfunc was passed, defaulting to mean")
+            warnings.warn(
+                "No aggfunc was passed, defaulting to mean",
+                stacklevel=2,
+            )
         else:
             assert callable(aggfunc), (
                 "aggfunc should be callable with" "signature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
-                warnings.warn("Save and load will not work with lambda functions")
+                warnings.warn(
+                    "Save and load will not work with lambda functions",
+                    stacklevel=2,
+                )
             self._aggfunc = self.aggfunc
         self.idx = idx
 
-        super(TimeBinner, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -148,7 +154,7 @@ class TimeBinner(BaseTransformer):
         transformed version of X
         """
         idx = pd.cut(X.iloc[0, 0].index, bins=self.idx, include_lowest=True)
-        Xt = X.applymap(lambda x: x.groupby(idx).apply(self._aggfunc))
+        Xt = df_map(X)(lambda x: x.groupby(idx).apply(self._aggfunc))
         Xt = convert_to(Xt, to_type="numpyflat", as_scitype="Panel")
         return Xt
 

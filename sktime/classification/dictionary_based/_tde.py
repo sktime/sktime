@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """TDE classifiers.
 
-Dictionary based TDE classifiers based on SFA transform. Contains a single
-IndividualTDE and TDE.
+Dictionary based TDE classifiers based on SFA transform. Contains a single IndividualTDE
+and TDE.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -10,7 +9,6 @@ __all__ = ["TemporalDictionaryEnsemble", "IndividualTDE", "histogram_intersectio
 
 import math
 import time
-import warnings
 from collections import defaultdict
 
 import numpy as np
@@ -22,6 +20,7 @@ from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X_y
+from sktime.utils.warnings import warn
 
 
 class TemporalDictionaryEnsemble(BaseClassifier):
@@ -147,12 +146,18 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "dictionary",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -207,7 +212,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self._prev_parameters_y = []
         self._min_window = min_window
 
-        super(TemporalDictionaryEnsemble, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit an ensemble on cases (X,y), where y is the target variable.
@@ -234,10 +239,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         ending in "_" and sets is_fitted flag to True.
         """
         if self.n_parameter_samples <= self.randomly_selected_params:
-            warnings.warn(
+            warn(
                 "TemporalDictionaryEnsemble warning: n_parameter_samples <= "
-                "randomly_selected_params, ensemble member parameters will be fully "
-                "randomly selected."
+                "randomly_selected_params, ensemble member parameters will be "
+                "fully randomly selected.",
+                obj=self,
+                stacklevel=2,
             )
 
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
@@ -253,10 +260,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         if self.min_window >= max_window:
             self._min_window = max_window
-            warnings.warn(
+            warn(
                 f"TemporalDictionaryEnsemble warning: min_window = "
                 f"{self.min_window} is larger than max_window = {max_window}."
-                f" min_window has been set to {max_window}."
+                f" min_window has been set to {max_window}.",
+                obj=self,
+                stacklevel=2,
             )
 
         win_inc = int((max_window - self._min_window) / max_window_searches)
@@ -610,7 +619,7 @@ class IndividualTDE(BaseClassifier):
     bigrams : bool, default=False
         Whether to record word bigrams in the SFA transform.
     dim_threshold : float, default=0.85
-        Accuracy threshold as a propotion of the highest accuracy dimension for words
+        Accuracy threshold as a proportion of the highest accuracy dimension for words
         extracted from each dimensions. Only applicable for multivariate data.
     max_dims : int, default=20
         Maximum number of dimensions words are extracted from. Only applicable for
@@ -639,7 +648,7 @@ class IndividualTDE(BaseClassifier):
 
     See Also
     --------
-    TemporalDictinaryEnsemble, SFA
+    TemporalDictionaryEnsemble, SFA
 
     Notes
     -----
@@ -667,9 +676,14 @@ class IndividualTDE(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -716,7 +730,7 @@ class IndividualTDE(BaseClassifier):
         self._subsample = []
         self._train_predictions = []
 
-        super(IndividualTDE, self).__init__()
+        super().__init__()
 
     # todo remove along with BOSS and SFA workarounds when Dict becomes serialisable.
     def __getstate__(self):

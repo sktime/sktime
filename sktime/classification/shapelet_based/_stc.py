@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A shapelet transform classifier (STC).
 
 Shapelet transform classifier pipeline that simply performs a (configurable) shapelet
@@ -128,12 +127,18 @@ class ShapeletTransformClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["TonyBagnall", "MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "shapelet",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -174,7 +179,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         self._transform_limit_in_minutes = 0
         self._classifier_limit_in_minutes = 0
 
-        super(ShapeletTransformClassifier, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit ShapeletTransformClassifier to training data.

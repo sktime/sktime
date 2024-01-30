@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Classifier Experiments: code to run experiments as an alternative to orchestration.
 
 This file is configured for runs of the main method with command line arguments, or for
@@ -67,9 +66,8 @@ def demo_loading():
 
 
 if __name__ == "__main__":
-    """
-    Example simple usage, with arguments input via script or hard coded for testing.
-    """
+    """Example simple usage, with arguments input via script or hard coded for
+    testing."""
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = sys.argv[1]

@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for forecasters.
+"""Extension template for forecasters.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -34,7 +32,7 @@ Optional implements:
     distribution forecast       - _predict_proba(self, fh, X=None)
     fitted parameter inspection - _get_fitted_params()
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 """
 # todo: write an informative docstring for the file or module, remove the above
@@ -51,11 +49,7 @@ from sktime.forecasting.base import BaseForecaster
 # todo: add any necessary imports here
 
 # todo: if any imports are sktime soft dependencies:
-#  * make sure to fill in the "python_dependencies" tag with the package import name
-#  * add a _check_soft_dependencies warning here, example:
-#
-# from sktime.utils.validation._dependencies import check_soft_dependencies
-# _check_soft_dependencies("soft_dependency_name", severity="warning")
+# make sure to fill in the "python_dependencies" tag with the package import name
 
 
 class MyForecaster(BaseForecaster):
@@ -142,11 +136,42 @@ class MyForecaster(BaseForecaster):
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if y or X passed contain missing data (nans)
         #
+        # capability:insample = can forecaster make in-sample forecasts?
+        "capability:insample": True,
+        # valid values: boolean True (yes), False (no)
+        # if False, exception raised if any forecast method called with in-sample fh
+        #
         # capability:pred_int = does forecaster implement probabilistic forecasts?
         "capability:pred_int": False,
         # valid values: boolean True (yes), False (no)
         # if False, exception raised if proba methods are called (predict_interval etc)
         #
+        # capability:pred_int:insample = can forecaster make in-sample proba forecasts?
+        "capability:pred_int:insample": True,
+        # valid values: boolean True (yes), False (no)
+        # only needs to be set if capability:pred_int is True
+        # if False, exception raised if proba methods are called with in-sample fh
+        #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
         #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
@@ -154,11 +179,11 @@ class MyForecaster(BaseForecaster):
         # python version requirement
         "python_version": None,
         # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python veresion is incompatible
+        # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
-        # valid values: str or list of str
+        "python_dependencies": None,
+        # valid values: str or list of str, PEP 440 valid package version specifiers
         # raises exception at construction if modules at strings cannot be imported
     }
     #  in case of inheritance, concrete class should typically set tags
@@ -167,7 +192,7 @@ class MyForecaster(BaseForecaster):
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
@@ -175,8 +200,8 @@ class MyForecaster(BaseForecaster):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyForecaster" to the name of the class
-        super(MyForecaster, self).__init__()
+        # leave this as is
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
@@ -199,7 +224,7 @@ class MyForecaster(BaseForecaster):
         #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -236,7 +261,7 @@ class MyForecaster(BaseForecaster):
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
         #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals shoudld be used or fitted if needed
+        #  the clones, not the originals should be used or fitted if needed
         #
         # Note: when interfacing a model that has fit, with parameters
         #   that are not data (y, X) or forecasting-horizon-like,
@@ -245,7 +270,7 @@ class MyForecaster(BaseForecaster):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -323,9 +348,9 @@ class MyForecaster(BaseForecaster):
     def _update_predict_single(self, y, fh, X=None, update_params=True):
         """Update forecaster and then make forecasts.
 
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
+        Implements default behaviour of calling update and predict sequentially, but can
+        be overwritten by subclasses to implement more efficient updating algorithms
+        when available.
         """
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X)
@@ -342,7 +367,7 @@ class MyForecaster(BaseForecaster):
     #
     # if implementing _predict_interval, delete _predict_quantiles
     # if not implementing either, delete both methods
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -385,7 +410,7 @@ class MyForecaster(BaseForecaster):
     #
     # if implementing _predict_quantiles, delete _predict_interval
     # if not implementing either, delete both methods
-    def _predict_interval(self, fh, X=None, coverage=None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -501,22 +526,15 @@ class MyForecaster(BaseForecaster):
 
         Returns
         -------
-        pred_dist : tfp Distribution object
-            if marginal=True:
-                batch shape is 1D and same length as fh
-                event shape is 1D, with length equal number of variables being forecast
-                i-th (batch) distribution is forecast for i-th entry of fh
-                j-th (event) index is j-th variable, order as y in `fit`/`update`
-            if marginal=False:
-                there is a single batch
-                event shape is 2D, of shape (len(fh), no. variables)
-                i-th (event dim 1) distribution is forecast for i-th entry of fh
-                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
         """
-        # import tensorflow_probability as tfp
-        # tensorflow probability import should happen inside this function
-        #
         # implement here
+        # returned BaseDistribution should have same index and columns
+        # as the predict return
+        #
         # implementing the marginal=False case is optional and can be omitted
 
     # todo: consider implementing this, optional

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for seasonality."""
 
@@ -30,7 +29,7 @@ class SeasonalityACF(BaseParamFitter):
         candidate sp to test, and to restrict tests to; ints must be 2 or larger
         if None, will test all integer lags between 2 and `nlags` (inclusive)
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for seasonality
+        significance threshold to apply in testing for seasonality
     adjusted : bool, optional, default=False
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
@@ -72,6 +71,7 @@ class SeasonalityACF(BaseParamFitter):
 
     Series should be stationary before applying ACF.
     To pipeline SeasonalityACF with the Differencer, use the ParamFitterPipeline:
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
@@ -87,6 +87,7 @@ class SeasonalityACF(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -109,7 +110,7 @@ class SeasonalityACF(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACF, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -142,6 +143,8 @@ class SeasonalityACF(BaseParamFitter):
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
             candidate_sp = range(2, nlags + 1)
+        elif isinstance(candidate_sp, int):
+            candidate_sp = [candidate_sp]
 
         fft = self.fft
         missing = self.missing
@@ -197,8 +200,9 @@ class SeasonalityACF(BaseParamFitter):
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
+        params3 = {"candidate_sp": 12}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class SeasonalityACFqstat(BaseParamFitter):
@@ -224,7 +228,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         candidate sp to test, and to restrict tests to; ints must be 2 or larger
         if None, will test all integer lags between 2 and `nlags` (inclusive)
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for seasonality
+        significance threshold to apply in testing for seasonality
     p_adjust : str, optional, default="fdr_by" (Benjamini/Yekutieli)
         multiple testing correction applied to p-values of candidate sp in acf test
         multiple testing correction is applied to Ljung-Box tests on candidate_sp
@@ -270,6 +274,7 @@ class SeasonalityACFqstat(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -294,7 +299,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACFqstat, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -332,6 +337,8 @@ class SeasonalityACFqstat(BaseParamFitter):
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
             candidate_sp = range(2, nlags + 1)
+        elif isinstance(candidate_sp, int):
+            candidate_sp = [candidate_sp]
 
         fft = self.fft
         missing = self.missing
@@ -405,8 +412,9 @@ class SeasonalityACFqstat(BaseParamFitter):
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
+        params3 = {"candidate_sp": 12}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class SeasonalityPeriodogram(BaseParamFitter):
@@ -446,6 +454,8 @@ class SeasonalityPeriodogram(BaseParamFitter):
     """
 
     _tags = {
+        "authors": ["blazingbhavneek"],
+        "maintainers": ["blaingbhavneek"],
         "X_inner_mtype": "pd.Series",
         "scitype:X": "Series",
         "capability:missing_values": True,
@@ -457,7 +467,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
         self.min_period = min_period
         self.max_period = max_period
         self.thresh = thresh
-        super(SeasonalityPeriodogram, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.

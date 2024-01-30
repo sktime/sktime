@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements meta estimator for estimators composed of other estimators."""
 
@@ -97,23 +96,33 @@ class _HeterogenousMetaEstimator:
         return True
 
     def _get_params(self, attr, deep=True, fitted=False):
-
         if fitted:
-            method = "_get_fitted_params"
+            private_method = "_get_fitted_params"
+            public_method = "get_fitted_params"
             deepkw = {}
         else:
-            method = "get_params"
+            private_method = "get_params"
+            public_method = "get_params"
             deepkw = {"deep": deep}
 
-        out = getattr(super(), method)(**deepkw)
+        out = getattr(super(), private_method)(**deepkw)
         if deep and hasattr(self, attr):
             estimators = getattr(self, attr)
             estimators = [(x[0], x[1]) for x in estimators]
             out.update(estimators)
             for name, estimator in estimators:
-                if hasattr(estimator, "get_params"):
-                    for key, value in getattr(estimator, method)(**deepkw).items():
-                        out["%s__%s" % (name, key)] = value
+                # checks estimator has the method we want to call
+                cond1 = hasattr(estimator, public_method)
+                # checks estimator is fitted if calling get_fitted_params
+                is_fitted = hasattr(estimator, "is_fitted") and estimator.is_fitted
+                # if we call get_params and not get_fitted_params, this is True
+                cond2 = not fitted or is_fitted
+                # check both conditions together
+                if cond1 and cond2:
+                    for key, value in getattr(estimator, public_method)(
+                        **deepkw
+                    ).items():
+                        out[f"{name}__{key}"] = value
         return out
 
     def _set_params(self, attr, **params):
@@ -124,8 +133,8 @@ class _HeterogenousMetaEstimator:
         # 2. Step replacement
         items = getattr(self, attr)
         names = []
-        if items:
-            names, _ = zip(*items)
+        if items and isinstance(items, (list, tuple)):
+            names = list(zip(*items))[0]
         for name in list(params.keys()):
             if "__" not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
@@ -136,26 +145,28 @@ class _HeterogenousMetaEstimator:
     def _replace_estimator(self, attr, name, new_val):
         # assumes `name` is a valid estimator name
         new_estimators = list(getattr(self, attr))
-        for i, (estimator_name, _) in enumerate(new_estimators):
+        for i, est_tpl in enumerate(new_estimators):
+            estimator_name = est_tpl[0]
             if estimator_name == name:
-                new_estimators[i] = (name, new_val)
+                new_tpl = list(est_tpl)
+                new_tpl[1] = new_val
+                new_estimators[i] = tuple(new_tpl)
                 break
         setattr(self, attr, new_estimators)
 
     def _check_names(self, names):
         if len(set(names)) != len(names):
-            raise ValueError("Names provided are not unique: {0!r}".format(list(names)))
+            raise ValueError(f"Names provided are not unique: {list(names)!r}")
         invalid_names = set(names).intersection(self.get_params(deep=False))
         if invalid_names:
             raise ValueError(
                 "Estimator names conflict with constructor "
-                "arguments: {0!r}".format(sorted(invalid_names))
+                "arguments: {!r}".format(sorted(invalid_names))
             )
         invalid_names = [name for name in names if "__" in name]
         if invalid_names:
             raise ValueError(
-                "Estimator names must not contain __: got "
-                "{0!r}".format(invalid_names)
+                "Estimator names must not contain __: got " "{!r}".format(invalid_names)
             )
 
     def _subset_dict_keys(self, dict_to_subset, keys, prefix=None):
@@ -193,7 +204,7 @@ class _HeterogenousMetaEstimator:
         if prefix is not None:
             keys = [f"{prefix}__{key}" for key in keys]
         keys_in_both = set(keys).intersection(dict_to_subset.keys())
-        subsetted_dict = dict((rem_prefix(k), dict_to_subset[k]) for k in keys_in_both)
+        subsetted_dict = {rem_prefix(k): dict_to_subset[k] for k in keys_in_both}
         return subsetted_dict
 
     @staticmethod
@@ -207,7 +218,7 @@ class _HeterogenousMetaEstimator:
 
         Returns
         -------
-        bool : True if obj is (str, cls_type) tuple, False otherise
+        bool : True if obj is (str, cls_type) tuple, False otherwise
         """
         if cls_type is None:
             cls_type = BaseEstimator
@@ -776,10 +787,31 @@ def is_flat(obj):
 class _ColumnEstimator:
     """Mixin class with utilities for by-column applicates."""
 
-    def _coerce_to_pd_index(self, obj):
-        """Coerce obj to pandas Index."""
-        # replace ints by column names
-        obj = self._get_indices(self._y, obj)
+    def _coerce_to_pd_index(self, obj, ref=None):
+        """Coerce obj to pandas Index, replacing ints by index elements.
+
+        Parameters
+        ----------
+        obj : iterable of pandas compatible index elements or int
+        ref : reference index, coercible to pd.Index, optional, default=None
+
+        Returns
+        -------
+        obj coerced to pd.Index
+            if ref was passed, and
+            if obj had int or np.integer elements which do not occur in ref,
+            then each int-like element is replaced by the i-th element of ref
+        """
+        if ref is not None:
+            # coerce ref to pd.Index
+            if not isinstance(ref, pd.Index):
+                if hasattr(ref, "columns") and isinstance(ref.index, pd.Index):
+                    ref = ref.columns
+            else:
+                ref = pd.Index(ref)
+
+            # replace ints by column names
+            obj = self._get_indices(ref, obj)
 
         # deal with numpy int by coercing to python int
         if np.issubdtype(type(obj), np.integer):
@@ -793,14 +825,16 @@ class _ColumnEstimator:
 
     def _get_indices(self, y, idx):
         """Convert integer indices if necessary."""
+        if hasattr(y, "columns"):
+            y = y.columns
 
         def _get_index(y, ix):
             # deal with numpy int by coercing to python int
             if np.issubdtype(type(ix), np.integer):
                 ix = int(ix)
 
-            if isinstance(ix, int) and ix not in y.columns and ix < len(y.columns):
-                return y.columns[ix]
+            if isinstance(ix, int) and ix not in y and ix < len(y):
+                return y[ix]
             else:
                 return ix
 

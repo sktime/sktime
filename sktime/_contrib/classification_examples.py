@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Classifier Examples: some use case examples for building and assessing classifiers.
 
 This will become a note book once complete.

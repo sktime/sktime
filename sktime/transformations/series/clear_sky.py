@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Clear sky transformer for solar time-series."""
 
@@ -7,12 +6,11 @@ __author__ = ["ciaran-g"]
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from scipy.stats import vonmises
 
 from sktime.transformations.base import BaseTransformer
 
 # todo: update function?
-# todo: clock changes, time-zone aware index, miliseconds?
+# todo: clock changes, time-zone aware index, milliseconds?
 
 
 class ClearSky(BaseTransformer):
@@ -32,7 +30,7 @@ class ClearSky(BaseTransformer):
     The weights are defined using von-mises kernels with bandwidths chosen by the
     user.
 
-    This transformation can be inacurate at low values, in the solar example during
+    This transformation can be inaccurate at low values, in the solar example during
     early morning and late evening. Therefore, clear sky values below a threshold can
     be fixed to zero in the transformed domain. Denominator values of zero are set
     to zero in the transformed domain by default.
@@ -75,6 +73,13 @@ class ClearSky(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ciaran-g"],
+        "maintainers": ["ciaran-g"],
+        "python_dependencies": ["statsmodels", "scipy"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -98,8 +103,6 @@ class ClearSky(BaseTransformer):
         "capability:unequal_length:removes": True,  # ?
         "handles-missing-data": False,
         "capability:missing_values:removes": True,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -111,7 +114,6 @@ class ClearSky(BaseTransformer):
         n_jobs=None,
         backend="loky",
     ):
-
         self.quantile_prob = quantile_prob
         self.bw_diurnal = bw_diurnal
         self.bw_annual = bw_annual
@@ -119,7 +121,7 @@ class ClearSky(BaseTransformer):
         self.n_jobs = n_jobs
         self.backend = backend
 
-        super(ClearSky, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -305,6 +307,7 @@ def _clearskypower(y, q, tod_i, doy_i, tod_vec, doy_vec, bw_tod, bw_doy):
     csp : float
         The clear sky power at tod_i and doy_i
     """
+    from scipy.stats import vonmises
     from statsmodels.stats.weightstats import DescrStatsW
 
     wts_tod = vonmises.pdf(
@@ -340,7 +343,6 @@ def _check_index(X):
     -------
     freq_ind : str or None
         Frequency of data in string format
-
     """
     if not (isinstance(X.index, pd.DatetimeIndex)) | (
         isinstance(X.index, pd.PeriodIndex)
@@ -356,7 +358,7 @@ def _check_index(X):
             raise ValueError("Input index frequency cannot be inferred and is not set.")
 
     tod = pd.timedelta_range(start="0T", end="1D", freq=freq_ind)
-    # checck frequency of tod
+    # check frequency of tod
     if (tod.freq > pd.offsets.Day(1)) | (tod.freq < pd.offsets.Second(1)):
         raise ValueError(
             """

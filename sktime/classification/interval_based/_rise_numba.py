@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Random Interval Spectral Ensemble (RISE)."""
 
 __author__ = ["TonyBagnall"]
@@ -91,7 +90,6 @@ def matrix_acf(x, num_cases, max_lag):
     Returns
     -------
     y : array-like shape = [num_cases,max_lag]
-
     """
     y = np.empty(shape=(num_cases, max_lag))
     length = x.shape[1]

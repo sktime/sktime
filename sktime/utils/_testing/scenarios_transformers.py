@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for transformers.
 
 Contains TestScenario concrete children to run in tests for transformers.
@@ -432,7 +431,7 @@ class TransformerFitTransformHierarchicalMultivariate(TransformerTestScenario):
 
 # todo: scenario for Panel X
 #   where test and training set has different n_instances or n_timepoints
-#   may need a tag that tells us whethe transformer can cope with this
+#   may need a tag that tells us whether transformer can cope with this
 
 
 scenarios_transformers = [

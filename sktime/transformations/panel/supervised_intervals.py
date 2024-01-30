@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Supervised interval features.
 
 A transformer for the extraction of features on intervals extracted from a supervised
@@ -93,6 +92,7 @@ class SupervisedIntervals(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": False,
@@ -132,7 +132,7 @@ class SupervisedIntervals(BaseTransformer):
         self._transform_features = []
         self._n_jobs = n_jobs
 
-        super(SupervisedIntervals, self).__init__()
+        super().__init__()
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
@@ -230,7 +230,12 @@ class SupervisedIntervals(BaseTransformer):
 
         self._is_fitted = True
 
-        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
+        # obtain configs to control input and output control
+        configs = self.get_config()
+        input_conv = configs["input_conversion"]
+        output_conv = configs["output_conversion"]
+
+        if input_conv and output_conv:
             X_out = self._convert_output(Xt, metadata=metadata)
         else:
             X_out = Xt

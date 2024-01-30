@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Testing of registry lookup functionality."""
 
@@ -16,17 +15,8 @@ from sktime.registry._base_classes import (
 from sktime.registry._lookup import _check_estimator_types
 
 VALID_SCITYPES_SET = set(
-    BASE_CLASS_SCITYPE_LIST + TRANSFORMER_MIXIN_SCITYPE_LIST + ["estimator"]
+    BASE_CLASS_SCITYPE_LIST + TRANSFORMER_MIXIN_SCITYPE_LIST + ["estimator", "object"]
 )
-
-# some scitypes have no associated tags yet
-SCITYPES_WITHOUT_TAGS = [
-    "series-annotator",
-    "clusterer",
-    "object",
-    "splitter",
-    "network",
-]
 
 # shorthands for easy reading
 b = BASE_CLASS_SCITYPE_LIST
@@ -59,7 +49,6 @@ def _get_type_tuple(estimator_scitype):
         corresponding to scitype strings in estimator_scitypes
     """
     if estimator_scitype is not None:
-
         estimator_classes = tuple(
             BASE_CLASS_LOOKUP[scitype] for scitype in _to_list(estimator_scitype)
         )
@@ -103,14 +92,8 @@ def test_all_tags(estimator_scitype):
     assert isinstance(tags, list)
 
     # there should be at least one tag returned
-    # exception: scitypes which we know don't have tags associated
-    est_list = (
-        estimator_scitype
-        if isinstance(estimator_scitype, list)
-        else [estimator_scitype]
-    )
-    if not set(est_list).issubset(SCITYPES_WITHOUT_TAGS):
-        assert len(tags) > 0
+    # even scitypes without tags should return those for "object"
+    assert len(tags) > 0
 
     # checks return type specification (see docstring)
     for tag in tags:
@@ -123,6 +106,11 @@ def test_all_tags(estimator_scitype):
             assert isinstance(tag[2][0], str)
             assert isinstance(tag[2][1], (str, list))
         assert isinstance(tag[3], str)
+
+    # check some tags that all object types should have
+    tags_strs = [tag[0] for tag in tags]
+    assert "python_dependencies" in tags_strs
+    assert "python_version" in tags_strs
 
 
 @pytest.mark.parametrize("return_names", [True, False])
@@ -229,6 +217,25 @@ def test_all_estimators_return_tags_bad_arg(return_tags):
     """Test ability to catch bad arguments of return_tags."""
     with pytest.raises((TypeError, ValueError)):
         _ = all_estimators(return_tags=return_tags)
+
+
+@pytest.mark.parametrize("pred_int", [True, False])
+def test_all_estimators_tag_filter(pred_int):
+    """Test that tag filtering returns estimators as expected."""
+    NOPROBA_EXAMPLE = "TrendForecaster"
+    PROBA_EXAMPLE = "ARIMA"
+
+    res = all_estimators("forecaster", filter_tags={"capability:pred_int": pred_int})
+    names, ests = zip(*res)
+
+    if pred_int:
+        assert PROBA_EXAMPLE in names
+        assert NOPROBA_EXAMPLE not in names
+        assert [est.get_class_tag("capability:pred_int") for est in ests]
+    else:
+        assert PROBA_EXAMPLE not in names
+        assert NOPROBA_EXAMPLE in names
+        assert [not est.get_class_tag("capability:pred_int") for est in ests]
 
 
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)

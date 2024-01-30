@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 """Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
-Continuous Interval Tree aka Time Series Tree, base classifier originally used
-in the time series forest interval based classification algorithm. Fits sklearn
-conventions.
+Continuous Interval Tree aka Time Series Tree, base classifier originally used in the
+time series forest interval based classification algorithm. Fits sklearn conventions.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -34,7 +32,7 @@ class ContinuousIntervalTree(BaseEstimator):
     max_depth : int, default=sys.maxsize
         Maximum depth for the tree.
     thresholds : int, default=20
-        Number of thresholds to split continous attributes on at tree nodes.
+        Number of thresholds to split continuous attributes on at tree nodes.
     random_state : int, RandomState instance or None, default=None
         If `int`, random_state is the seed used by the random number generator;
         If `RandomState` instance, random_state is the random number generator;
@@ -93,7 +91,7 @@ class ContinuousIntervalTree(BaseEstimator):
         self.thresholds = thresholds
         self.random_state = random_state
 
-        super(ContinuousIntervalTree, self).__init__()
+        super().__init__()
 
     def fit(self, X, y):
         """Fit a tree on cases (X,y), where y is the target variable.

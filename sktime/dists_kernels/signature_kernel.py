@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Signature kernels from Kiraly et al, 2016."""
 
 __author__ = ["fkiraly"]
@@ -10,7 +9,7 @@ import numpy as np
 from scipy.sparse.linalg import svds
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 # cumsum varia
 # ------------
@@ -460,7 +459,6 @@ def sqize_kernel_low_rank_fast(
         R*R^t[i,j] is sequential kernel (low-rank) between i-th and j-th sequence in K
     """
     if normalize:
-
         Ksize = K.shape[0]
         B = np.ones([Ksize, 1, 1])
         R = np.ones([Ksize, 1])
@@ -517,7 +515,7 @@ def seq_kernel(
     lowrank=False,
     rankbound=float("inf"),
 ):
-    """Compute the sequential kernel between seqeuence/time series.
+    """Compute the sequential kernel between sequence/time series.
 
     Provides interface for vanilla sequential kernel, low-rank, and higher-order.
 
@@ -605,7 +603,7 @@ def seq_kernel_XY(
     lowrank=False,
     rankbound=float("inf"),
 ):
-    """Compute the sequential kernel between two different collections of seqeuence.
+    """Compute the sequential kernel between two different collections of sequence.
 
     Provides interface for vanilla sequential kernel, low-rank, and higher-order.
 
@@ -869,7 +867,7 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
 
 
 class SignatureKernel(BasePairwiseTransformerPanel):
-    """Compute the sequential kernel matrix row features on collection of series.
+    """Time series signature kernel, including high-order and low-rank variants.
 
     Implements the signature kernel of Kiraly et al, see [1]_ and [2]_,
     including higher-order and low-rank approximation variants described therein.
@@ -905,7 +903,11 @@ class SignatureKernel(BasePairwiseTransformerPanel):
         Journal of Machine Learning Research.
     """
 
-    _tags = {"X_inner_mtype": "numpy3D"}
+    _tags = {
+        "authors": "fkiraly",
+        "X_inner_mtype": "numpy3D",
+        "pwtrafo_type": "kernel",
+    }
 
     def __init__(
         self,
@@ -939,7 +941,7 @@ class SignatureKernel(BasePairwiseTransformerPanel):
             "rankbound": rankbound,
         }
 
-        super(SignatureKernel, self).__init__()
+        super().__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.

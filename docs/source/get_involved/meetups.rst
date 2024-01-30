@@ -6,7 +6,7 @@ Meetups
 Join our discussions, tutorials, workshops and sprints!
 
 Most of our meetups take place on Discord. You can join sktime's community
-server `here <https://discord.com/invite/gqSab2K>`_.
+server `here <https://discord.com/invite/54ACzaFsn7>`_.
 
 .. raw:: html
 

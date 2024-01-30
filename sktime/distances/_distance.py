@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
 
@@ -91,6 +90,8 @@ def erp_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import erp_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> erp_distance(x_1d, y_1d)
@@ -183,6 +184,8 @@ def edr_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import edr_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> edr_distance(x_1d, y_1d)
@@ -370,6 +373,8 @@ def wddtw_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import wddtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> wddtw_distance(x_1d, y_1d) # doctest: +SKIP
@@ -473,6 +478,8 @@ def wdtw_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import wdtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> wdtw_distance(x_1d, y_1d)
@@ -572,6 +579,7 @@ def ddtw_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import ddtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> ddtw_distance(x_1d, y_1d) # doctest: +SKIP
@@ -713,6 +721,7 @@ def dtw_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import dtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> dtw_distance(x_1d, y_1d)
@@ -892,6 +901,7 @@ def twe_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import twe_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> twe_distance(x_1d, y_1d)
@@ -958,6 +968,7 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import squared_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> squared_distance(x_1d, y_1d)
@@ -1011,6 +1022,7 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import euclidean_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> euclidean_distance(x_1d, y_1d)
@@ -1921,6 +1933,7 @@ def distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> distance(x_1d, y_1d, metric='dtw')
@@ -2094,6 +2107,7 @@ def pairwise_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import pairwise_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> pairwise_distance(x_1d, y_1d, metric='dtw')
@@ -2198,7 +2212,7 @@ def distance_alignment_path(
     Returns
     -------
     list[tuple]
-        List of tuples containing the alginment path for the distance.
+        List of tuples containing the alignment path for the distance.
     float
         Distance between the x and y.
     np.ndarray (of shape (len(x), len(y)).
@@ -2384,10 +2398,8 @@ _METRIC_INFOS = [
 ]
 
 _METRICS = {info.canonical_name: info for info in _METRIC_INFOS}
-_METRIC_ALIAS = dict((alias, info) for info in _METRIC_INFOS for alias in info.aka)
-_METRIC_CALLABLES = dict(
-    (info.canonical_name, info.dist_func) for info in _METRIC_INFOS
-)
+_METRIC_ALIAS = {alias: info for info in _METRIC_INFOS for alias in info.aka}
+_METRIC_CALLABLES = {info.canonical_name: info.dist_func for info in _METRIC_INFOS}
 _METRICS_NAMES = list(_METRICS.keys())
 
 ALL_DISTANCES = (

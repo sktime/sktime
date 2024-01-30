@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Synthetic data generating functions."""
 
 from typing import Union
@@ -15,8 +14,7 @@ def piecewise_normal_multivariate(
     covariances: npt.ArrayLike = None,
     random_state: Union[int, np.random.RandomState] = None,
 ) -> npt.ArrayLike:
-    """
-    Generate multivariate series from segments.
+    """Generate multivariate series from segments.
 
     Each segment has length specified in ``lengths`` and data sampled from a
     multivariate normal distribution with a mean from ``means`` and covariance
@@ -36,7 +34,7 @@ def piecewise_normal_multivariate(
         Covariances of segments to be generated of shape
         (n_segments, n_series, n_series)
         If None, this will be constructed from variances by assuming independence
-        of random vairables, i.e. variance as diagonal elements of covariance matrix
+        of random variables, i.e. variance as diagonal elements of covariance matrix
     random_state : int or np.random.RandomState
         Either a random seed or ``RandomState`` instance
 
@@ -89,7 +87,6 @@ def piecewise_normal_multivariate(
            [ 4.00389069,  3.95225998],
            [ 5.32264874,  5.05088075],
            [ 2.62479901,  6.08308546]])
-
     """
 
     def get_covariances(var):
@@ -139,8 +136,7 @@ def piecewise_normal(
     std_dev: Union[npt.ArrayLike, float] = 1.0,
     random_state: Union[int, np.random.RandomState] = None,
 ) -> npt.ArrayLike:
-    """
-    Generate series from segments.
+    """Generate series from segments.
 
     Each segment has length specified in ``lengths`` and data sampled from a normal
     distribution with a mean from ``means`` and standard deviation from ``std_dev``.
@@ -179,7 +175,6 @@ def piecewise_normal(
     array([1.        , 1.        , 2.32384427, 2.76151493, 1.88292331,
         1.88293152, 4.57921282, 3.76743473, 2.53052561, 3.54256004,
         2.53658231, 2.53427025, 3.24196227, 1.08671976])
-
     """
     rng = check_random_state(random_state)
     assert len(means) == len(lengths)
@@ -202,8 +197,7 @@ def piecewise_multinomial(
     p_vals: npt.ArrayLike,
     random_state: Union[int, np.random.RandomState] = None,
 ) -> npt.ArrayLike:
-    """
-    Generate series from segments.
+    """Generate series from segments.
 
     Each segment has length specified in ``lengths`` and data sampled from a multinomial
     distribution with a total number of experiments for each trial set from ``n_trials``
@@ -279,8 +273,7 @@ def piecewise_poisson(
     lengths: npt.ArrayLike,
     random_state: Union[int, np.random.RandomState] = None,
 ) -> npt.ArrayLike:
-    """
-    Generate series using Possion distribution.
+    """Generate series using Possion distribution.
 
     Each segment has length specified in ``lengths`` and data sampled from a Poisson
     distribution with expected lambda from ``lambdas``.
@@ -308,7 +301,6 @@ def piecewise_poisson(
     >>> from sktime.annotation.datagen import piecewise_poisson
     >>> piecewise_poisson(lambdas=[1,3,6],lengths=[2,4,8],random_state=42)#doctest:+SKIP
     array([1, 2, 1, 3, 3, 2, 5, 5, 6, 4, 4, 9, 3, 5])
-
     """
     rng = check_random_state(random_state)
 
@@ -339,8 +331,7 @@ def label_piecewise_normal(
     std_dev: Union[npt.ArrayLike, float] = 1.0,
     repeated_labels: bool = True,
 ) -> npt.ArrayLike:
-    """
-    Generate labels for a series composed of segments.
+    """Generate labels for a series composed of segments.
 
     Parameters
     ----------

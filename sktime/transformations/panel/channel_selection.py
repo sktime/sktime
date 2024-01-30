@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Channel Selection techniques for Multivariate Time Series Classification.
 
 A transformer that selects a subset of channels/dimensions for time series
@@ -14,7 +13,6 @@ import time
 
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import euclidean
 from sklearn.neighbors import NearestCentroid
 
 from sktime.datatypes import convert
@@ -24,6 +22,8 @@ from sktime.transformations.base import BaseTransformer
 
 def _eu_dist(x, y):
     """Calculate the euclidean distance."""
+    from scipy.spatial.distance import euclidean
+
     return euclidean(x, y)
 
 
@@ -52,7 +52,7 @@ class _distance_matrix:
     """Create distance matrix."""
 
     def distance(self, centroid_frame):
-        """Fuction to create DM."""
+        """Create distance matrix."""
         distance_pair = list(
             itertools.combinations(range(0, centroid_frame.shape[0]), 2)
         )
@@ -61,7 +61,6 @@ class _distance_matrix:
         map_cls = centroid_frame.class_vals.to_dict()
         distance_frame = pd.DataFrame()
         for class_ in distance_pair:
-
             class_pair = []
             # calculate the distance of centroid here
             for _, (q, t) in enumerate(
@@ -154,8 +153,8 @@ class ElbowClassSum(BaseTransformer):
 
     References
     ----------
-    ..[1]: Bhaskar Dhariyal et al. “Fast Channel Selection for Scalable Multivariate
-    Time Series Classification.” AALTD, ECML-PKDD, Springer, 2021
+    ..[1]: Bhaskar Dhariyal et al. "Fast Channel Selection for Scalable Multivariate
+    Time Series Classification." AALTD, ECML-PKDD, Springer, 2021
 
     Examples
     --------
@@ -168,6 +167,7 @@ class ElbowClassSum(BaseTransformer):
     >>> Xt = cs.transform(X)
 
     Any sktime compatible distance can be used, e.g., DTW distance:
+
     >>> from sktime.dists_kernels import DtwDist
     >>>
     >>> cs = ElbowClassSum(distance=DtwDist())
@@ -177,6 +177,8 @@ class ElbowClassSum(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["haskarb", "a-pasos-ruiz", "TonyBagnall", "fkiraly"],
+        "maintainers": ["haskarb"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         # "scitype:transform-output": "Primitives",
@@ -193,10 +195,9 @@ class ElbowClassSum(BaseTransformer):
     }
 
     def __init__(self, distance=None):
-
         self.distance = distance
 
-        super(ElbowClassSum, self).__init__()
+        super().__init__()
 
         from sktime.dists_kernels import (
             BasePairwiseTransformerPanel,
@@ -254,8 +255,7 @@ class ElbowClassSum(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        """
-        Transform X and return a transformed version.
+        """Transform X and return a transformed version.
 
         Parameters
         ----------
@@ -329,8 +329,8 @@ class ElbowClassPairwise(BaseTransformer):
 
     References
     ----------
-    ..[1]: Bhaskar Dhariyal et al. “Fast Channel Selection for Scalable Multivariate
-    Time Series Classification.” AALTD, ECML-PKDD, Springer, 2021
+    ..[1]: Bhaskar Dhariyal et al. "Fast Channel Selection for Scalable Multivariate
+    Time Series Classification." AALTD, ECML-PKDD, Springer, 2021
 
     Examples
     --------
@@ -357,10 +357,11 @@ class ElbowClassPairwise(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": False,
         # can the transformer handle unequal length time series (if passed Panel)?
+        "python_dependencies": "scipy",
     }
 
     def __init__(self):
-        super(ElbowClassPairwise, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit ECP to a specified X and y.
@@ -375,7 +376,6 @@ class ElbowClassPairwise(BaseTransformer):
         Returns
         -------
         self : reference to self.
-
         """
         self.channels_selected_ = []
         start = int(round(time.time() * 1000))
@@ -395,8 +395,7 @@ class ElbowClassPairwise(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        """
-        Transform X and return a transformed version.
+        """Transform X and return a transformed version.
 
         Parameters
         ----------

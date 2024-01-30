@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests of Imputer functionality."""
 
@@ -32,6 +31,8 @@ z.iloc[0] = np.nan
 z.iloc[-1] = np.nan
 
 
+@pytest.mark.parametrize("forecaster", [None, NaiveForecaster()])
+@pytest.mark.parametrize("value", [None, 1])
 @pytest.mark.parametrize("Z", [y, X, z])
 @pytest.mark.parametrize(
     "method",
@@ -48,10 +49,31 @@ z.iloc[-1] = np.nan
         "forecaster",
     ],
 )
-def test_imputer(method, Z):
+def test_imputer(method, Z, value, forecaster):
     """Test univariate and multivariate Imputer with all methods."""
-    forecaster = NaiveForecaster() if method == "forecaster" else None
-    value = 3 if method == "constant" else None
+    forecaster = NaiveForecaster() if method == "forecaster" else forecaster
+    value = 1 if method == "constant" else value
     t = Imputer(method=method, forecaster=forecaster, value=value)
     y_hat = t.fit_transform(Z)
     assert not y_hat.isnull().to_numpy().any()
+
+
+def test_imputer_forecaster_y():
+    """Test that forecaster imputer works with y.
+
+    Failure case in bug #5284.
+    """
+    from sklearn.linear_model import LinearRegression
+
+    from sktime.datasets import load_airline
+    from sktime.forecasting.compose import YfromX
+
+    X = load_airline()
+    y = load_airline()
+
+    model_reg = YfromX(LinearRegression())
+    model_reg.fit(X, y)
+    transformer = Imputer(method="forecaster", forecaster=model_reg)
+
+    transformer.fit(X=X, y=y)
+    transformer.transform(X=X, y=y)

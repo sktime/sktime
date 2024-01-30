@@ -1,6 +1,7 @@
-# -*- coding: utf-8 -*-
+"""Registry of mtypes for Proba scitype.
 
-import pandas as pd
+See datatypes._registry for API.
+"""
 
 __all__ = [
     "MTYPE_REGISTER_PROBA",
@@ -15,4 +16,4 @@ MTYPE_REGISTER_PROBA = [
     # ("pred_dost", "Proba", "full distribution predictions, tensorflow-probability"),
 ]
 
-MTYPE_LIST_PROBA = pd.DataFrame(MTYPE_REGISTER_PROBA)[0].values
+MTYPE_LIST_PROBA = [x[0] for x in MTYPE_REGISTER_PROBA]
