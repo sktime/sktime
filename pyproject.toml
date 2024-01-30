@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.25.1"
+version = "0.26.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -270,7 +270,7 @@ mlflow_tests = [
   "boto3",
   "botocore",
   "mlflow",
-  "moto",
+  "moto<5.0.0",
 ]
 pandas1 = [
   "pandas<2.0.0",
