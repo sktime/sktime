@@ -1894,14 +1894,14 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multioutput = self.multioutput
         symmetric = self.symmetric
 
-        enum_values = (y_true - y_pred).abs()
+        numer_values = (y_true - y_pred).abs()
 
         if symmetric:
             denom_values = (y_true.abs() + y_pred.abs()) / 2
         else:
             denom_values = y_true.abs()
 
-        raw_values = enum_values / denom_values
+        raw_values = numer_values / denom_values
 
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
