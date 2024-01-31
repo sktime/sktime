@@ -2,10 +2,11 @@ import numpy as np
 import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_soft_dependencies
+from sklearn.linear_model import Ridge
 
 from sktime.classification.dummy import DummyClassifier
-from sktime.datasets import load_arrow_head, load_longley, load_airline
-from sktime.forecasting.compose import ForecastX
+from sktime.datasets import load_airline, load_arrow_head, load_longley
+from sktime.forecasting.compose import ForecastX, make_reduction
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.pipeline.pipeline import Pipeline
@@ -17,8 +18,6 @@ from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
-from sktime.forecasting.compose import make_reduction
-from sklearn.linear_model import Ridge
 
 
 def test_transformer_regression():
