@@ -333,5 +333,5 @@ def test_lagged_y_prediction():
         forecaster, name="forecaster", edges={"X": "differencer", "y": "y"}
     )
     pipe.fit(y=y_train)
-    y_pred = pipe.predict(fh=[1, 2, 3])
+    y_pred = pipe.predict(fh=y_test.index)
     assert y_pred.shape == y_test.shape
