@@ -301,18 +301,14 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         return [
             {
                 "order": (0, 1, 2),
-                "trend": "t",
+                "trend": "n",
                 "enforce_stationarity": False,
                 "enforce_invertibility": False,
                 "concentrate_scale": True,
                 "method": "statespace",
             },
             {
-                "order": (
-                    1,
-                    1,
-                    2,
-                ),
+                "order": (1, 1, 2),
                 "trend": "t",
                 "enforce_stationarity": False,
                 "enforce_invertibility": False,
