@@ -84,6 +84,24 @@ def test_dunder_add():
 
     _assert_array_almost_equal(t123r.fit_transform(X), t123.fit_transform(X))
 
+def test_dunder_add_sklearn():
+    """Test the add dunder method, with sklearn coercion."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t1 = ExponentTransformer(power=2)
+    t2 = StandardScaler()
+    t3 = ExponentTransformer(power=3)
+
+    t123 = t1 + t2 + t3
+    t123r = t1 + (t2 + t3)
+    t123l = (t1 + t2) + t3
+
+    assert isinstance(t123, FeatureUnion)
+    assert isinstance(t123r, FeatureUnion)
+    assert isinstance(t123l, FeatureUnion)
+
+    _assert_array_almost_equal(t123.fit_transform(X), t123l.fit_transform(X))
+    _assert_array_almost_equal(t123r.fit_transform(X), t123l.fit_transform(X))
 
 def test_mul_sklearn_autoadapt():
     """Test auto-adapter for sklearn in mul."""
