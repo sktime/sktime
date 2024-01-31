@@ -7,7 +7,9 @@ from inspect import isclass
 from sktime.registry._base_classes import BASE_CLASS_REGISTER
 
 
-def scitype(obj, force_single_scitype=True, coerce_to_list=False):
+def scitype(
+        obj, force_single_scitype=True, coerce_to_list=False, raise_on_unknown=True
+    ):
     """Determine scitype string of obj.
 
     Parameters
@@ -20,6 +22,9 @@ def scitype(obj, force_single_scitype=True, coerce_to_list=False):
     coerce_to_list : bool, optional, default = False
         determines the return type: if True, returns a single str,
         if False, returns a list of str
+    raise_on_unknown : bool, optional, default = True
+        if True, raises an error if no scitype can be determined for obj
+        if False, returns "object" scitype
 
     Returns
     -------
@@ -57,7 +62,10 @@ def scitype(obj, force_single_scitype=True, coerce_to_list=False):
         scitypes = [sci[0] for sci in BASE_CLASS_REGISTER if isinstance(obj, sci[1])]
 
     if len(scitypes) == 0:
-        raise TypeError("Error, no scitype could be determined for obj")
+        if raise_on_unknown:
+            raise TypeError("Error, no scitype could be determined for obj")
+        else:
+            scitypes = ["object"]
 
     if len(scitypes) > 1 and "object" in scitypes:
         scitypes = list(set(scitypes).difference(["object"]))
