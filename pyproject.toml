@@ -270,7 +270,7 @@ mlflow_tests = [
   "boto3",
   "botocore",
   "mlflow",
-  "moto<5.0.0",
+  "moto",
 ]
 pandas1 = [
   "pandas<2.0.0",
