@@ -208,6 +208,25 @@ class BaseTransformer(BaseEstimator):
         super().__init__()
         _check_estimator_deps(self)
 
+    def _is_transformer(self, other):
+        """Check whether other is a transformer - sklearn or sktime.
+
+        Returns True iff at least one of the following is True:
+
+        * ``is_sklearn_transformer(other)``
+        * ``scitype(other) == "transformer"``
+
+        Parameters
+        ----------
+        other : object
+            object to check
+        """
+        from sktime.registry import scitype
+
+        is_sklearn_transformer = is_sklearn_transformer(other)
+        is_sktime_transformer = scitype(other) == "transformer"
+        return is_sklearn_transformer or is_sktime_transformer
+
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformerPipeline.
 
@@ -215,7 +234,7 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
+        other: ``sktime`` or ``sklearn`` compatible transformer
             otherwise, `NotImplemented` is returned
 
         Returns
@@ -228,11 +247,10 @@ class BaseTransformer(BaseEstimator):
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
         if (
-            isinstance(other, BaseTransformer)
+            self._is_transformer(other)
             or is_sklearn_classifier(other)
             or is_sklearn_clusterer(other)
             or is_sklearn_regressor(other)
-            or is_sklearn_transformer(other)
         ):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return self_as_pipeline * other
@@ -246,7 +264,7 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
+        other: ``sktime`` or ``sklearn`` compatible transformer
             otherwise, `NotImplemented` is returned
 
         Returns
@@ -258,7 +276,7 @@ class BaseTransformer(BaseEstimator):
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
-        if isinstance(other, BaseTransformer) or is_sklearn_transformer(other):
+        if self._is_transformer(other):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return other * self_as_pipeline
         else:
@@ -271,7 +289,8 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        other: `sktime` transformer or sktime MultiplexTransformer
+        other: ``sktime`` or ``sklearn`` compatible transformer
+            otherwise, `NotImplemented` is returned
 
         Returns
         -------
@@ -279,7 +298,7 @@ class BaseTransformer(BaseEstimator):
         """
         from sktime.transformations.compose import MultiplexTransformer
 
-        if isinstance(other, BaseTransformer):
+        if self._is_transformer(other):
             multiplex_self = MultiplexTransformer([self])
             return multiplex_self | other
         else:
@@ -292,7 +311,7 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
+        other: ``sktime`` or ``sklearn`` compatible transformer
             otherwise, `NotImplemented` is returned
 
         Returns
@@ -304,7 +323,7 @@ class BaseTransformer(BaseEstimator):
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the FeatureUnion does the rest, e.g., case distinctions on other
-        if isinstance(other, BaseTransformer):
+        if self._is_transformer(other):
             self_as_pipeline = FeatureUnion(transformer_list=[self])
             return self_as_pipeline + other
         else:
@@ -317,7 +336,7 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
+        other: ``sktime`` or ``sklearn`` compatible transformer
             otherwise, `NotImplemented` is returned
 
         Returns
@@ -329,7 +348,7 @@ class BaseTransformer(BaseEstimator):
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
-        if isinstance(other, BaseTransformer):
+        if self._is_transformer(other):
             self_as_pipeline = FeatureUnion(transformer_list=[self])
             return other + self_as_pipeline
         else:
