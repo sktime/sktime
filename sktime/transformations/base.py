@@ -223,9 +223,7 @@ class BaseTransformer(BaseEstimator):
         """
         from sktime.registry import scitype
 
-        is_sklearn_trafo = is_sklearn_transformer(other)
-        is_sktime_trafo = scitype(other) == "transformer"
-        return is_sklearn_trafo or is_sktime_trafo
+        return is_sklearn_transformer(other) or scitype(other) == "transformer"
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformerPipeline.
