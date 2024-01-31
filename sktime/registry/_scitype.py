@@ -8,8 +8,8 @@ from sktime.registry._base_classes import BASE_CLASS_REGISTER
 
 
 def scitype(
-        obj, force_single_scitype=True, coerce_to_list=False, raise_on_unknown=True
-    ):
+    obj, force_single_scitype=True, coerce_to_list=False, raise_on_unknown=True
+):
     """Determine scitype string of obj.
 
     Parameters
