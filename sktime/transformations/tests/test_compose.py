@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_airline
 from sktime.datatypes import get_examples
+from sktime.transformations.bootstrap import STLBootstrapTransformer
 from sktime.transformations.compose import (
     FeatureUnion,
     InvertTransform,
@@ -25,7 +26,7 @@ from sktime.transformations.series.summarize import SummaryTransformer
 from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 def test_dunder_mul():
@@ -285,7 +286,7 @@ def test_dunder_neg():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodel", severity="none"),
+    not _check_estimator_deps(STLBootstrapTransformer, severity="none"),
     reason="skip test if required soft dependency for statsmodels not available",
 )
 def test_input_output_series_panel_chain():
@@ -294,7 +295,6 @@ def test_input_output_series_panel_chain():
     Failure case of #5624.
     """
     from sktime.datasets import load_airline
-    from sktime.transformations.bootstrap import STLBootstrapTransformer
     from sktime.transformations.series.impute import Imputer
 
     X = load_airline()
