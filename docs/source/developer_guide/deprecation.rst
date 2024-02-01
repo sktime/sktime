@@ -113,7 +113,6 @@ No such warning is necessary if no working user logic would change, this is the 
 * a parameter is removed where non-defaults would always raise unexpected exceptions
 
 Recipes for individual cases above follow.
-Optimally, each 
 
 Changing the default value of a parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -152,7 +151,7 @@ Renaming a parameter
 To rename a parameter, follow steps 1-6 in the pull request
 implementing the change.
 
-1. at current version, add a parameter with the new name at the end of the 
+1. at current version, add a parameter with the new name at the end of the
   list of parameters, with the same default value as the old parameter.
   Do not remove the old parameter.
 2. change the value of the old parameter to the string ``"deprecated"``.
