@@ -102,7 +102,9 @@ In all cases, it needs to be ensured that:
   to retain current behaviour, or change to alternative behaviour
 * sufficient notice is given, i.e., the warning message is present for at least
   one MINOR version cycle before the change is carried out
-* "todo" messages are left for the release managers to carry out the change
+* "todo" comments are left for the release managers to carry out the change,
+  and optimally a merge-ready change branch/PR is provided, to be merged at the
+  scheduled version of change
 
 No such warning is necessary if no working user logic would change, this is the case if:
 
@@ -142,7 +144,7 @@ implementing the change.
   at the top of the function or class where the parameter is defined.
 4. the release manager will carry out the TODO action in the next MINOR version cycle,
   and remove the TODO comment. Optimally, a change branch is provided that the
-  release manager can merge.
+  release manager can merge, and its PR ID is mentioned in the todo.
 
 Renaming a parameter
 ~~~~~~~~~~~~~~~~~~~~
@@ -176,7 +178,7 @@ implementing the change.
   at the top of the function or class where the parameter is defined.
 7. the release manager will carry out the TODO action in the next MINOR version cycle,
   and remove the TODO comment. Optimally, a change branch is provided that the
-  release manager can merge.
+  release manager can merge, and its PR ID is mentioned in the todo.
 
 Adding a parameter with a default value that changes prior behaviour
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -218,7 +220,7 @@ implementing the change.
   in the next MINOR version cycle.
   The TODO comment should contain complete lines of code.
   Optimally, a change branch is provided that the
-  release manager can merge.
+  release manager can merge, and its PR ID is mentioned in the todo.
 
 Removing a parameter
 ~~~~~~~~~~~~~~~~~~~~
