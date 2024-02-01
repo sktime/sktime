@@ -941,7 +941,11 @@ class BaseTransformer(BaseEstimator):
             elif smaller_equal_than is not None:
                 return _most_complex_scitype(scitypes)
             else:
-                raise ValueError("no series scitypes supported, bug in estimator")
+                raise ValueError(
+                    f"Error in {type(self).__name__}, no series scitypes supported, "
+                    "likely a bug in estimator: scitypes arg passed to "
+                    f"_most_complex_scitype are {scitypes}"
+                )
 
         def _scitype_A_higher_B(scitypeA, scitypeB):
             """Compare two scitypes regarding complexity."""
@@ -986,10 +990,15 @@ class BaseTransformer(BaseEstimator):
             f"or with MultiIndex and last(-1) level an sktime compatible time index. "
             f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES} ."
         )
+        msg_start = (
+            f"Unsupported input data type in {self.__class__.__name__}, "
+            "input "
+        )
+        msg_X = msg_start + "X"
         if not X_valid or X_mtype not in ALLOWED_MTYPES:
             msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             check_is_error_msg(
-                msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
+                msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
             )
 
         if X_scitype in X_inner_scitype:
@@ -1033,8 +1042,9 @@ class BaseTransformer(BaseEstimator):
                     f"Passed X scitype was {X_scitype}, "
                     f"so allowed scitypes for y are {y_possible_scitypes}. "
                 )
+                msg_y = msg_start + "y"
                 check_is_error_msg(
-                    msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
+                    msg, var_name=msg_y, allowed_msg=allowed_msg, raise_exception=True
                 )
 
         else:
