@@ -1398,8 +1398,7 @@ class BaseForecaster(BaseEstimator):
             )
 
             msg_start = (
-                f"Unsupported input data type in {self.__class__.__name__}, "
-                "input y"
+                f"Unsupported input data type in {self.__class__.__name__}, input y"
             )
             allowed_msg = (
                 "Allowed scitypes for y in forecasting are "
@@ -1461,8 +1460,7 @@ class BaseForecaster(BaseEstimator):
             )
 
             msg_start = (
-                f"Unsupported input data type in {self.__class__.__name__}, "
-                "input X"
+                f"Unsupported input data type in {self.__class__.__name__}, input X"
             )
             allowed_msg = (
                 "Allowed scitypes for X in forecasting are None, "
@@ -1479,7 +1477,7 @@ class BaseForecaster(BaseEstimator):
                     allowed_msg=allowed_msg,
                     raise_exception=True,
                 )
- 
+
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype
             requires_vectorization = requires_vectorization or X_requires_vectorization

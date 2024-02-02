@@ -991,8 +991,7 @@ class BaseTransformer(BaseEstimator):
             f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES} ."
         )
         msg_start = (
-            f"Unsupported input data type in {self.__class__.__name__}, "
-            "input "
+            f"Unsupported input data type in {self.__class__.__name__}, input "
         )
         msg_X = msg_start + "X"
         if not X_valid or X_mtype not in ALLOWED_MTYPES:
