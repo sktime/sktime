@@ -4,6 +4,8 @@
 
 __author__ = ["sbuse"]
 
+from warnings import warn
+
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -52,14 +54,17 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         changepoints, small values will allow few changepoints.
         Recommended to take values within [0.001,0.5].
     yearly_seasonality: str or bool or int, default="auto"
-        Fit yearly seasonality.
-        Can be 'auto', True, False, or a number of Fourier terms to generate.
+        Include yearly seasonality in the model. "auto" for automatic determination,
+        True to enable, False to disable, or an integer specifying the number of terms
+        to include in the Fourier series.
     weekly_seasonality: str or bool or int, default="auto"
-        Fit weekly seasonality.
-        Can be 'auto', True, False, or a number of Fourier terms to generate.
+        Include weekly seasonality in the model. "auto" for automatic determination,
+        True to enable, False to disable, or an integer specifying the number of terms
+        to include in the Fourier series.
     daily_seasonality: str or bool or int, default="auto"
-        Fit daily seasonality.
-        Can be 'auto', True, False, or a number of Fourier terms to generate.
+        Include weekly seasonality in the model. "auto" for automatic determination,
+        True to enable, False to disable, or an integer specifying the number of terms
+        to include in the Fourier series.
 
     References
     ----------
@@ -126,6 +131,21 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         self.verbose = verbose
 
         super().__init__()
+
+        if any(
+            setting != "auto"
+            for setting in [
+                yearly_seasonality,
+                weekly_seasonality,
+                daily_seasonality,
+            ]
+        ):
+            message = (
+                "Warning: In the release 0.28.0, the default of all seasonality "
+                "parameters will change to 'False'. Please review your code and "
+                "update the parameters to prevent any unexpected behavior. "
+            )
+            warn(message, FutureWarning, stacklevel=2)
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
