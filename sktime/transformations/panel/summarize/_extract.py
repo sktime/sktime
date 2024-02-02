@@ -31,6 +31,7 @@ class PlateauFinder(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning"],
         "fit_is_empty": True,
         "univariate-only": True,
         "scitype:transform-input": "Series",

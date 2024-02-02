@@ -107,7 +107,10 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         of the individual transformations and the `sparse_threshold` keyword.
     """
 
-    _tags = {"python_dependencies": ["scipy", "sklearn<1.4"]}
+    _tags = {
+        "authors": ["mloning", "sajaysurya", "fkiraly"],
+        "python_dependencies": ["scipy", "sklearn<1.4"],
+    }
 
     def __init__(
         self,

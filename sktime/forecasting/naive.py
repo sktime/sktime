@@ -205,7 +205,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             )
 
         # check window length
-        if self.window_length_ > len(self._y):
+        if self.window_length_ > len(y):
             param = "sp" if self.strategy == "last" and sp != 1 else "window_length_"
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "

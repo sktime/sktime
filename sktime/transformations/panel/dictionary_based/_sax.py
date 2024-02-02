@@ -7,17 +7,13 @@ import pandas as pd
 import scipy.stats
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.dictionary_based import PAA
-
-#    TO DO: verify this returned pandas is consistent with sktime
-#    definition. Timestamps?
-
-# from numba import types
-# from numba.experimental import jitclass
+from sktime.transformations.panel.dictionary_based import PAAlegacy as PAA
+from sktime.utils.warnings import warn
 
 __author__ = ["MatthewMiddlehurst"]
 
 
+# TODO 0.27.0: rename the class SAX to SAXlegacy
 class SAX(BaseTransformer):
     """Symbolic Aggregate approXimation (SAX) transformer.
 
@@ -60,6 +56,7 @@ class SAX(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst"],
         "univariate-only": True,
         "fit_is_empty": True,
         "scitype:transform-input": "Series",
@@ -89,6 +86,24 @@ class SAX(BaseTransformer):
         self.words = []
 
         super().__init__()
+
+        warn(
+            "panel.dictionary_based.SAX will be renamed to SAXlegacy in sktime 0.27.0, "
+            "while sktime.transformations.series.SAX2 will be renamed to SAX. "
+            "SAX2 will become the primary SAX implementation in sktime, "
+            "while the current SAX will continue to be available as SAXlegacy. "
+            "Both estimators are also available under their future name at their "
+            "current location, and will be available under their deprecated name "
+            "until 0.28.0. "
+            "To prepare for the name change, do one of the following: "
+            "1. replace use of SAX from sktime.transformations.panel.dictionary_based "
+            "by use of SAX2 from sktime.transformations.series.sax, or "
+            "2. replace use of SAX from sktime.transformations.panel.dictionary_based "
+            "by use of SAXlegacy from sktime.transformations.panel.dictionary_based. ",
+            DeprecationWarning,
+            obj=self,
+        )
+
         self.set_config(**{"output_conversion": "off"})
 
     # todo: looks like this just loops over series instances
@@ -219,3 +234,8 @@ class SAX(BaseTransformer):
         # small word length, window size for testing
         params = {"word_length": 2, "window_size": 4}
         return params
+
+
+# TODO 0.27.0: switch the line to SAX = SAXlegacy
+# TODO 0.28.0: remove this alias altogether
+SAXlegacy = SAX

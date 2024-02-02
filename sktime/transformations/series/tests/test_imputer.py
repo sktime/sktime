@@ -31,6 +31,8 @@ z.iloc[0] = np.nan
 z.iloc[-1] = np.nan
 
 
+@pytest.mark.parametrize("forecaster", [None, NaiveForecaster()])
+@pytest.mark.parametrize("value", [None, 1])
 @pytest.mark.parametrize("Z", [y, X, z])
 @pytest.mark.parametrize(
     "method",
@@ -47,10 +49,10 @@ z.iloc[-1] = np.nan
         "forecaster",
     ],
 )
-def test_imputer(method, Z):
+def test_imputer(method, Z, value, forecaster):
     """Test univariate and multivariate Imputer with all methods."""
-    forecaster = NaiveForecaster() if method == "forecaster" else None
-    value = 3 if method == "constant" else None
+    forecaster = NaiveForecaster() if method == "forecaster" else forecaster
+    value = 1 if method == "constant" else value
     t = Imputer(method=method, forecaster=forecaster, value=value)
     y_hat = t.fit_transform(Z)
     assert not y_hat.isnull().to_numpy().any()

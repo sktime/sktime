@@ -67,6 +67,13 @@ class AutoCorrelationTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "afzal442",
+        "maintainers": "afzal442",
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -76,7 +83,6 @@ class AutoCorrelationTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": True,
         "fit_is_empty": True,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(

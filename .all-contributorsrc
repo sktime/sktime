@@ -209,7 +209,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/54197164?v=4",
       "profile": "https://github.com/achieveordie",
       "contributions": [
-       "test"
+        "bug",
+        "code",
+        "test"
       ]
     },
     {
@@ -283,6 +285,14 @@
         "code",
         "test",
         "tutorial"
+      ]
+    },
+    {
+      "login": "vnicholson1",
+      "name": "Vincent Nicholson",
+      "profile": "https://github.com/vnicholson1",
+      "contributions": [
+        "code"
       ]
     },
     {
@@ -2532,6 +2542,17 @@
       "profile": "https://github.com/DManowitz",
       "contributions": [
         "bug",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "ninedigits",
+      "name": "Max Frohlich",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16393653?v=4",
+      "profile": "https://www.linkedin.com/in/maxfrohlich/",
+      "contributions": [
+        "code",
+        "ideas",
         "maintenance"
       ]
     },

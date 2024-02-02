@@ -1,6 +1,8 @@
 name: CI
 on:
-  workflow_call:
+  pull_request:
+    branches:
+      - main
 jobs:
   code_quality:
     name: code quality
@@ -32,7 +34,7 @@ jobs:
       datasets: ${{ steps.filter.outputs.datasets }}
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |

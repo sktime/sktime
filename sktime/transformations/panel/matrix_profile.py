@@ -206,6 +206,7 @@ class MatrixProfile(BaseTransformer):
     """
 
     _tags = {
+        "authors": "Claudia Rincon Sanchez",
         "univariate-only": True,
         "fit_is_empty": True,
         "scitype:transform-input": "Series",

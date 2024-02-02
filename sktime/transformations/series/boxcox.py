@@ -158,6 +158,12 @@ class BoxCoxTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "aiwalter", "fkiraly"],
+        "python_dependencies": "scipy",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -169,7 +175,6 @@ class BoxCoxTransformer(BaseTransformer):
         "fit_is_empty": False,
         "univariate-only": True,
         "capability:inverse_transform": True,
-        "python_dependencies": "scipy",
     }
 
     def __init__(

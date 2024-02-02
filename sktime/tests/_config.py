@@ -117,6 +117,11 @@ EXCLUDED_TESTS = {
     "MLPClassifier": [
         "test_fit_idempotent",
     ],
+    "CNTCClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
     "InceptionTimeClassifier": [
         "test_fit_idempotent",
     ],

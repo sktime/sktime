@@ -88,18 +88,9 @@ class MySplitter(BaseSplitter):
         # calls split ("iloc") or split_loc ("loc"). Setting this can give
         # performance advantages, e.g., if "loc" is faster to obtain.
         #
-        # dependency tags: python version and soft dependencies
-        # -----------------------------------------------------
-        #
-        # python version requirement
-        "python_version": None,
-        # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python version is incompatible
-        #
-        # soft dependency requirement
-        "python_dependencies": None,
-        # valid values: str or list of str
-        # raises exception at construction if modules at strings cannot be imported
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
         #
         # ownership and contribution tags
         # -------------------------------
@@ -117,6 +108,19 @@ class MySplitter(BaseSplitter):
         "maintainers": ["maintainer1", "maintainer2"],
         # valid values: str or list of str, should be GitHub handles
         # remove tag if maintained by sktime core team
+        #
+        # dependency tags: python version and soft dependencies
+        # -----------------------------------------------------
+        #
+        # python version requirement
+        "python_version": None,
+        # valid values: str, PEP 440 valid python version specifiers
+        # raises exception at construction if local python version is incompatible
+        #
+        # soft dependency requirement
+        "python_dependencies": None,
+        # valid values: str or list of str, PEP 440 valid package version specifiers
+        # raises exception at construction if modules at strings cannot be imported
     }
 
     # todo: add any hyper-parameters and components to constructor

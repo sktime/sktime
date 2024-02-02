@@ -70,6 +70,7 @@ class ExponentTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["RNKuhns"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
