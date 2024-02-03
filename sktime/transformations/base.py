@@ -990,9 +990,7 @@ class BaseTransformer(BaseEstimator):
             f"or with MultiIndex and last(-1) level an sktime compatible time index. "
             f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES} ."
         )
-        msg_start = (
-            f"Unsupported input data type in {self.__class__.__name__}, input "
-        )
+        msg_start = f"Unsupported input data type in {self.__class__.__name__}, input "
         msg_X = msg_start + "X"
         if not X_valid or X_mtype not in ALLOWED_MTYPES:
             msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
