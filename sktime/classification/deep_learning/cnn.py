@@ -86,7 +86,7 @@ class CNNClassifier(BaseDeepClassifier):
         loss="categorical_crossentropy",
         metrics=None,
         random_state=None,
-        activation="sigmoid",
+        activation="softmax",
         use_bias=True,
         optimizer=None,
     ):
