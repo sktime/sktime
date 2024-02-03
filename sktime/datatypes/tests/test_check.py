@@ -3,12 +3,14 @@
 __author__ = ["fkiraly"]
 
 import numpy as np
+import pandas
 
 from sktime.datatypes._check import (
     AMBIGUOUS_MTYPES,
     check_dict,
     check_is_mtype,
     check_is_scitype,
+    check_raise,
 )
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._check import scitype as infer_scitype
@@ -441,3 +443,14 @@ def test_scitype_infer(scitype, mtype, fixture_index):
         assert scitype == infer_scitype(
             fixture, candidate_scitypes=SCITYPES_FOR_INFER_TEST
         ), f"scitype {scitype} not correctly identified for fixture {fixture_index}"
+
+
+def test_object_support_for_series_scitype() -> None:
+    """Test that passing object dtype does not fail series scitype check."""
+
+    sample_dataset = pandas.Series(
+        np.random.default_rng().choice(["A", "B"], size=(31 + 29 + 31), replace=True),
+        index=pandas.date_range(start="2000-01-01", end="2000-03-31", freq="D"),
+    )
+
+    assert check_raise(sample_dataset, "pd.Series")
