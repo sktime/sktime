@@ -259,3 +259,78 @@ When removing/renaming tags after the deprecation period,
 ensure to remove the removed tags from the dictionaries in ``TagAliaserMixin`` class.
 If no tags are deprecated anymore (e.g., all deprecated tags are removed/renamed),
 ensure to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.
+
+
+Example
+=======
+
+Here is a simple example template for renaming a parameter of an estimator while changing default value as well.
+
+Case 1: before any change
+-------------------------
+
+.. code:: python
+
+   class EstimatorName:
+       def __init__(self, old_parameter="old"):
+           self.old_parameter = old_parameter
+
+       def fit(self, X, y):
+           # Fit the model using old_parameter
+           pass
+
+       def predict(self, X):
+           # Predict using the fitted model
+           pass
+
+Case 2: during deprecation period
+---------------------------------
+
+.. code:: python
+
+   from sktime.utils.warnings import warn
+
+
+   class EstimatorName:
+       def __init__(self, old_parameter=None, new_parameter="new"):
+           # TODO (release <MAJOR>.<MINOR>.0)
+           # remove the 'old_parameter' argument from '__init__' signature
+           # remove the following 'if' check
+           # de-indent the following 'else' check
+           if old_parameter is not None:
+               warn(
+                   "'old_parameter' of `EstimatorName` is deprecated and will be removed"
+                   " in the version '<MAJOR>.<MINOR>.0'. This has been renamed to "
+                   " 'new_parameter', where you can pass 'old' to keep current behaviour."
+                   " The new argument will use 'new' as its default value.",
+                   category=DeprecationWarning,
+                   obj=self,
+               )
+               self.new_parameter = old_parameter
+           else:
+               self.new_parameter = new_parameter
+
+       def fit(self, X, y):
+           # Fit the model using new_parameter
+           pass
+
+       def predict(self, X):
+           # Predict using the fitted model
+           pass
+
+Case 3: after deprecation period
+--------------------------------
+
+.. code:: python
+
+   class FinalEstimator:
+       def __init__(self, new_parameter="new"):
+           self.new_parameter = new_parameter
+
+       def fit(self, X, y):
+           # Fit the model using new_parameter
+           pass
+
+       def predict(self, X):
+           # Predict using the fitted model
+           pass
