@@ -46,5 +46,5 @@ def test_resizing():
 
     # 4) check that result time series have lengths equal to `target_len
     #       that we set above
-    ts_lens_after_resize = [len(Xt.iloc[0][i]) for i in range(len(Xt.iloc[0]))]
+    ts_lens_after_resize = [len(Xt.iloc[0].iloc[i]) for i in range(len(Xt.iloc[0]))]
     assert all([length == target_len for length in ts_lens_after_resize])
