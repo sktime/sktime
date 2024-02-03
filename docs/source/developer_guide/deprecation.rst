@@ -260,13 +260,11 @@ ensure to remove the removed tags from the dictionaries in ``TagAliaserMixin`` c
 If no tags are deprecated anymore (e.g., all deprecated tags are removed/renamed),
 ensure to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.
 
-
 Example
 =======
-
 Here is a simple example template for renaming a parameter of an estimator while changing default value as well.
 
-Case 1: before any change
+Step 1: before any change
 -------------------------
 
 .. code:: python
@@ -283,7 +281,7 @@ Case 1: before any change
            # Predict using the fitted model
            pass
 
-Case 2: during deprecation period
+Step 2: during deprecation period
 ---------------------------------
 
 .. code:: python
@@ -318,7 +316,7 @@ Case 2: during deprecation period
            # Predict using the fitted model
            pass
 
-Case 3: after deprecation period
+Step 3: after deprecation period
 --------------------------------
 
 .. code:: python
