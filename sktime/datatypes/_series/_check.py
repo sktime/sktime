@@ -93,11 +93,6 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         )
         return ret(False, msg, None, return_metadata)
 
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
-        return ret(False, msg, None, return_metadata)
-
     # Check time index is ordered in time
     if not index.is_monotonic_increasing:
         msg = (
@@ -149,11 +144,6 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
     if _req("feature_kind", return_metadata):
         dtype_kind = _get_series_dtypekind(obj, "pd.Series")
         metadata["feature_kind"] = _get_feature_kind(dtype_kind)
-
-    # check that dtype is not object
-    if "object" == obj.dtypes:
-        msg = f"{var_name} should not be of 'object' dtype"
-        return ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
     if not is_in_valid_index_types(index):
