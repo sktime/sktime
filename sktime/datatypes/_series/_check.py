@@ -87,11 +87,6 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         )
         return ret(False, msg, None, return_metadata)
 
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
-        return ret(False, msg, None, return_metadata)
-
     # Check time index is ordered in time
     if not index.is_monotonic_increasing:
         msg = (
@@ -138,11 +133,6 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
             metadata["feature_names"] = [0]
         else:
             metadata["feature_names"] = [obj.name]
-
-    # check that dtype is not object
-    if "object" == obj.dtypes:
-        msg = f"{var_name} should not be of 'object' dtype"
-        return ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
     if not is_in_valid_index_types(index):
@@ -314,11 +304,6 @@ if _check_soft_dependencies("xarray", severity="none"):
                 f"{type(index)} is not supported for {var_name}, use "
                 f"one of {VALID_INDEX_TYPES} or integer index instead."
             )
-            return ret(False, msg, None, return_metadata)
-
-        # check that the dtype is not object
-        if "object" == obj.dtype:
-            msg = f"{var_name} should not have column of 'object' dtype"
             return ret(False, msg, None, return_metadata)
 
         # Check time index is ordered in time
