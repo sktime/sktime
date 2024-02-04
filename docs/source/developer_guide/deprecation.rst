@@ -152,8 +152,8 @@ To rename a parameter, follow steps 1-6 in the pull request
 implementing the change.
 
 1. at current version, add a parameter with the new name at the end of the
-  list of parameters, with the same default value as the old parameter.
-  Do not remove the old parameter.
+list of parameters, with the same default value as the old parameter.
+Do not remove the old parameter.
 2. change the value of the old parameter to the string ``"deprecated"``.
   Change all code in the function or class that uses the old parameter to use
   the new parameter instead. This can be done by a bulk-replace.
@@ -260,75 +260,245 @@ ensure to remove the removed tags from the dictionaries in ``TagAliaserMixin`` c
 If no tags are deprecated anymore (e.g., all deprecated tags are removed/renamed),
 ensure to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.
 
-Example
-=======
-Here is a simple example template for renaming a parameter of an estimator while changing default value as well.
+Examples
+========
+
+Below are example templates for some of the cases above.
+
+Changing the default value of a parameter
+-----------------------------------------
 
 Step 1: before any change
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
 
-   class EstimatorName:
-       def __init__(self, old_parameter="old"):
-           self.old_parameter = old_parameter
+    class EstimatorName:
+        """The old docstring.
 
-       def fit(self, X, y):
-           # Fit the model using old_parameter
-           pass
+        Parameters
+        ----------
+        parameter : str, default="old_default"
+            The parameter description.
+        """
+        def __init__(self, parameter="old_default"):
+            self.parameter = parameter
 
-       def predict(self, X):
-           # Predict using the fitted model
-           pass
+        def fit(self, X, y):
+            parameter = self.parameter
+            # Fit the model using parameter
+            fitting_logic(parameter)
+            return self
+
+        def predict(self, X):
+            parameter = self.parameter
+            # Predict using the fitted model
+            y_pred = prediction_logic(parameter)
+            return y_pred
 
 Step 2: during deprecation period
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This step is done by the developer, in a PR.
+Optionally, the developer can prepare a PR for step 3
+that the release manager can merge.
+
+.. code:: python
+
+    from sktime.utils.warnings import warn
+
+    # TODO (release <MAJOR>.<MINOR>.0)
+    # change the default of 'parameter' to <new_value>
+    # update the docstring for parameter
+    class EstimatorName:
+        """The old docstring with deprecation info.
+
+        Parameters
+        ----------
+        parameter : str, default="old_default"
+            The parameter description.
+            Default value of parameter will change to <new_value>
+            in version '<MAJOR>.<MINOR>.0'.
+        """
+        def __init__(self, parameter="changing_value"):
+            self.parameter = parameter
+            # TODO (release <MAJOR>.<MINOR>.0)
+            # change the default of 'parameter' to <new_value>
+            # remove the following 'if' check
+            # de-indent the following 'else' check
+            if parameter == "changing_value":
+                warn(
+                    "in `EstimatorName`, the default value of parameter 'parameter'"
+                    " will change to <new_value> in version '<MAJOR>.<MINOR>.0'. "
+                    "To keep current behaviour and to silence this warning, "
+                    "set 'parameter' to 'old' explicitly.",
+                    category=DeprecationWarning,
+                    obj=self,
+                )
+                self._parameter = "old_default"
+            else:
+                self._parameter = parameter
+
+        def fit(self, X, y):
+            parameter = self._parameter
+            # Fit the model using parameter
+            fitting_logic(parameter)
+            return self
+
+        def predict(self, X):
+            parameter = self._parameter
+            # Predict using the fitted model
+            y_pred = prediction_logic(parameter)
+            return y_pred
+
+Step 3: after deprecation period
+--------------------------------
+
+This step is done by the release manager, either by merging a prepared PR,
+or by carrying out the TODO action.
+
+.. code:: python
+
+    class EstimatorName:
+        """The final docstring.
+
+        Parameters
+        ----------
+        parameter : str, default="new_default"
+            The parameter description.
+        """
+        def __init__(self, parameter="new_default"):
+            self.parameter = parameter
+            self._parameter = parameter
+
+        def fit(self, X, y):
+            parameter = self._parameter
+            # Fit the model using parameter
+            fitting_logic(parameter)
+            return self
+
+        def predict(self, X):
+            parameter = self._parameter
+            # Predict using the fitted model
+            y_pred = prediction_logic(parameter)
+            return y_pred
+
+Optionally, use of the private parameter ``self._parameter`` can be removed,
+and replaced by ``self.parameter``,
+if it is not used elsewhere in the code.
+
+Renaming a parameter
+--------------------
+
+Step 1: before any change
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    class EstimatorName:
+        """The old docstring.
+
+        Parameters
+        ----------
+        old_parameter : str, default="default"
+            The parameter description.
+        """
+
+        def __init__(self, old_parameter="default"):
+            self.old_parameter = old_parameter
+
+        def fit(self, X, y):
+            old_parameter = self.old_parameter
+            # Fit the model using parameter
+            fitting_logic(old_parameter)
+            return self
+
+        def predict(self, X):
+            old_parameter = self.old_parameter
+            # Predict using the fitted model
+            y_pred = prediction_logic(old_parameter)
+            return y_pred
+
+Step 2: during deprecation period
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
 
    from sktime.utils.warnings import warn
 
+    class EstimatorName:
+        """The old docstring, but parameter already points to the new name.
 
-   class EstimatorName:
-       def __init__(self, old_parameter=None, new_parameter="new"):
-           # TODO (release <MAJOR>.<MINOR>.0)
-           # remove the 'old_parameter' argument from '__init__' signature
-           # remove the following 'if' check
-           # de-indent the following 'else' check
-           if old_parameter is not None:
-               warn(
-                   "'old_parameter' of `EstimatorName` is deprecated and will be removed"
-                   " in the version '<MAJOR>.<MINOR>.0'. This has been renamed to "
-                   " 'new_parameter', where you can pass 'old' to keep current behaviour."
-                   " The new argument will use 'new' as its default value.",
-                   category=DeprecationWarning,
-                   obj=self,
-               )
-               self.new_parameter = old_parameter
-           else:
-               self.new_parameter = new_parameter
+        Parameters
+        ----------
+        new_parameter : str, default="default"
+            The parameter description.
+        """
+        def __init__(self, old_parameter="deprecated", new_parameter="default"):
+            # IMPORTANT: both params need to be written to self during change period
+            self.new_parameter = new_parameter
+            self.old_parameter = old_parameter
+            # TODO (release <MAJOR>.<MINOR>.0)
+            # remove the 'old_parameter' argument from '__init__' signature
+            # move 'new_parameter' to the position of 'old_parameter'
+            # remove the following 'if' check
+            # de-indent the following 'else' check
+            if old_parameter != "deprecated":
+                warn(
+                    "in `EstimatorName`, parameter 'old_parameter'"
+                    " will be renamed to new_parameter in version '<MAJOR>.<MINOR>.0'. "
+                    "To keep current behaviour and to silence this warning, "
+                    "use 'new_parameter' instead of 'old_parameter', "
+                    "set new_parameter explicitly via kwarg, and do not set"
+                    " old_parameter.",
+                    category=DeprecationWarning,
+                    obj=self,
+                )
+                self._parameter = old_parameter
+            else:
+                self._parameter = new_parameter
 
        def fit(self, X, y):
-           # Fit the model using new_parameter
-           pass
+            old_parameter = self._parameter
+            # Fit the model using parameter
+            fitting_logic(old_parameter)
+            return self
 
        def predict(self, X):
-           # Predict using the fitted model
-           pass
+            old_parameter = self._parameter
+            # Predict using the fitted model
+            y_pred = prediction_logic(old_parameter)
+            return y_pred
 
 Step 3: after deprecation period
 --------------------------------
 
 .. code:: python
 
-   class FinalEstimator:
-       def __init__(self, new_parameter="new"):
+    class EstimatorName:
+        """Same as in step 2, no change necessary.
+
+        Parameters
+        ----------
+        new_parameter : str, default="default"
+            The parameter description.
+        """
+       def __init__(self, new_parameter="default"):
            self.new_parameter = new_parameter
+           self._parameter = new_parameter
 
        def fit(self, X, y):
-           # Fit the model using new_parameter
-           pass
+            old_parameter = self._parameter
+            # Fit the model using parameter
+            fitting_logic(old_parameter)
+            return self
 
        def predict(self, X):
-           # Predict using the fitted model
-           pass
+            old_parameter = self._parameter
+            # Predict using the fitted model
+            y_pred = prediction_logic(old_parameter)
+            return y_pred
+
+Optionally, use of the private parameter ``self._parameter`` can be removed,
+and replaced by ``self.new_parameter``,
+if it is not used elsewhere in the code.
