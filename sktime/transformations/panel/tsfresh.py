@@ -12,6 +12,8 @@ class _TSFreshFeatureExtractor(BaseTransformer):
     """Base adapter class for tsfresh transformations."""
 
     _tags = {
+        "authors": ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"],
+        "maintainers": ["AyushmaanSeth"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",

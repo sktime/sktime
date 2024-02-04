@@ -20,6 +20,7 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """Base Class for column ensemble."""
 
     _tags = {
+        "authors": ["abostrom"],
         "capability:multivariate": True,
         "capability:predict_proba": True,
         "X_inner_mtype": ["nested_univ", "pd-multiindex"],

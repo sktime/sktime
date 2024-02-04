@@ -73,6 +73,12 @@ class Reconciler(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ciaran-g", "eenticott-shell", "k1m190r"],
+        "maintainers": "ciaran-g",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",

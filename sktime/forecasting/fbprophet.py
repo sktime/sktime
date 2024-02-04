@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Prophet forecaster by wrapping fbprophet."""
 
-__author__ = ["aiwalter"]
+__author__ = ["mloning", "aiwalter", "fkiraly"]
 __all__ = ["Prophet"]
 
 

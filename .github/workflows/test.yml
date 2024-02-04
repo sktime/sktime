@@ -187,7 +187,7 @@ jobs:
         run: make PYTESTOPTIONS="--cov --cov-report=xml --only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
 
       - name: Publish code coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
 
   detect:
     needs: test-nosoftdeps
@@ -267,7 +267,7 @@ jobs:
         run: make test_without_datasets
 
       - name: Publish code coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
 
   test-unix-pandas1:
     needs: test-nosoftdeps
@@ -305,4 +305,4 @@ jobs:
         run: make test_without_datasets
 
       - name: Publish code coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4

@@ -1,11 +1,7 @@
 """Time Convolutional Neural Network (CNN) for classification."""
 
-__author__ = [
-    "Jack Russon",
-]
-__all__ = [
-    "TapNetRegressor",
-]
+__author__ = ["jnrusson1"]
+__all__ = ["TapNetRegressor"]
 
 from copy import deepcopy
 
@@ -77,7 +73,14 @@ class TapNetRegressor(BaseDeepRegressor):
     or class  based self attention.
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jnrusson1"],
+        "maintainers": ["jnrusson1"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,

@@ -16,6 +16,7 @@ class Id(BaseTransformer):
     """Identity transformer, returns data unchanged in transform/inverse_transform."""
 
     _tags = {
+        "authors": "fkiraly",
         "capability:inverse_transform": True,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": CORE_MTYPES,  # which mtypes do _fit/_predict support for X?

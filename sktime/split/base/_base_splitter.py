@@ -95,6 +95,8 @@ class BaseSplitter(BaseObject):
         # split_series_uses: "iloc" or "loc", whether split_series under the hood
         # calls split ("iloc") or split_loc ("loc"). Setting this can give
         # performance advantages, e.g., if "loc" is faster to obtain.
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(

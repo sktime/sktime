@@ -86,6 +86,11 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MatthewMiddlehurst",
+        # estimator type
+        # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "interval",

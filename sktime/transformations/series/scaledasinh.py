@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements the Hyperbolic Sine transformation and its inverse."""
 
-__author__ = ["Ali Parizad"]
+__author__ = ["ali-parizad"]
 __all__ = ["ScaledAsinhTransformer"]
 
 
@@ -82,6 +82,12 @@ class ScaledAsinhTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ali-parizad"],
+        "maintainers": ["ali-parizad"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

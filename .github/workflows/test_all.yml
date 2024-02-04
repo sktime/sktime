@@ -48,7 +48,7 @@ jobs:
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
       - name: upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
   test_module:
@@ -89,7 +89,7 @@ jobs:
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
       - name: upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
   test_other:
@@ -141,6 +141,6 @@ jobs:
           --matrixdesign False
           --only_changed_modules False
       - name: upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},components_without_extras,complete

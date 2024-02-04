@@ -81,6 +81,7 @@ class FhPlexForecaster(BaseForecaster):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "requires-fh-in-fit": True,
         "handles-missing-data": True,
         "scitype:y": "both",

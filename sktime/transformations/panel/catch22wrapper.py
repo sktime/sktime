@@ -71,13 +71,19 @@ class Catch22Wrapper(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "maintainers": "benfulcher",
+        "python_dependencies": "pycatch22",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
         "X_inner_mtype": "nested_univ",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
-        "python_dependencies": "pycatch22",
     }
 
     def __init__(
@@ -192,7 +198,7 @@ class Catch22Wrapper(BaseTransformer):
         f_count = -1
         for i in range(len(X)):
             dim = i * len(f_idx)
-            series = list(X[i])
+            series = list(X.iloc[i])
 
             if self.outlier_norm and (3 in f_idx or 4 in f_idx):
                 outlier_series = np.array(series)

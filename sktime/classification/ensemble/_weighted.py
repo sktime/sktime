@@ -85,6 +85,11 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:predict_proba": True,

@@ -74,6 +74,12 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["TonyBagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"],
+        "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        # estimator type
+        # --------------
         "capability:multivariate": False,
         "X_inner_mtype": "numpy3D",
     }

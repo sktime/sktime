@@ -8,6 +8,7 @@ the lower the better.
 """
 
 import numpy as np
+import sklearn
 from scipy.stats import gmean
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
@@ -17,6 +18,9 @@ from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
 from sktime.utils.stats import _weighted_geometric_mean
+
+if sklearn.__version__ >= "1.4.0":
+    from sklearn.metrics import root_mean_squared_error as _root_mean_squared_error
 
 __author__ = ["mloning", "tch", "RNKuhns"]
 __all__ = [
@@ -998,18 +1002,24 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], square_root=True)
     0.8936491673103708
     """
-    # Scikit-learn argument `squared` returns MSE when True and RMSE when False
-    # Scikit-time argument `square_root` returns RMSE when True and MSE when False
-    # Therefore need to pass the opposite of square_root as squared argument
-    # to the scikit-learn function being wrapped
-    squared = not square_root
-    return _mean_squared_error(
-        y_true,
-        y_pred,
-        sample_weight=horizon_weight,
-        multioutput=multioutput,
-        squared=squared,
-    )
+    metric_args = (y_true, y_pred)
+    metric_kwargs = {"sample_weight": horizon_weight, "multioutput": multioutput}
+
+    if not square_root:
+        metric_function = _mean_squared_error
+    elif sklearn.__version__ < "1.4.0":
+        # Scikit-learn argument `squared` returns MSE when True and RMSE when False
+        # Scikit-time argument `square_root` returns RMSE when True and MSE when False
+        # Therefore need to pass the opposite of square_root as squared argument
+        # to the scikit-learn function being wrapped
+        metric_function = _mean_squared_error
+        metric_kwargs["squared"] = False
+    else:
+        # sklearn 1.4 introduced ``root_mean_squared_error`` function, so we can
+        # use that directly to avoid DeprecationWarning from sklearn 1.6
+        metric_function = _root_mean_squared_error
+
+    return metric_function(*metric_args, **metric_kwargs)
 
 
 def median_absolute_error(

@@ -88,6 +88,27 @@ class MySplitter(BaseSplitter):
         # calls split ("iloc") or split_loc ("loc"). Setting this can give
         # performance advantages, e.g., if "loc" is faster to obtain.
         #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
+        #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
         #
@@ -97,8 +118,8 @@ class MySplitter(BaseSplitter):
         # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
-        # valid values: str or list of str
+        "python_dependencies": None,
+        # valid values: str or list of str, PEP 440 valid package version specifiers
         # raises exception at construction if modules at strings cannot be imported
     }
 

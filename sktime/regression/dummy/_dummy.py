@@ -1,6 +1,6 @@
 """Dummy time series regressor."""
 
-__author__ = ["Badr-Eddine Marani"]
+__author__ = ["badrmarani"]
 __all__ = ["DummyRegressor"]
 
 import numpy as np
@@ -58,6 +58,12 @@ class DummyRegressor(BaseRegressor):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "badrmarani",
+        "maintainers": "badrmarani",
+        # estimator type
+        # --------------
         "X_inner_mtype": "nested_univ",
         "capability:missing_values": True,
         "capability:unequal_length": True,

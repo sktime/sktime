@@ -452,15 +452,7 @@ class Evaluator:
             )
 
         # load all predictions
-        run_times = pd.DataFrame(
-            columns=[
-                "strategy_name",
-                "dataset_name",
-                "fit_estimator_start_time",
-                "fit_estimator_end_time",
-                "cv_fold",
-            ]
-        )
+        run_times_frames = []
         for cv_fold in cv_folds:
             for result in self.results.load_predictions(
                 cv_fold=cv_fold, train_or_test=train_or_test
@@ -483,7 +475,8 @@ class Evaluator:
                         "cv_fold": [cv_fold],
                     }
                 )
-                run_times = pd.concat([run_times, unwrapped], ignore_index=True)
+                run_times_frames.append(unwrapped)
+        run_times = pd.concat(run_times_frames, ignore_index=True)
 
         # calculate run time difference
         run_times["fit_runtime"] = (
