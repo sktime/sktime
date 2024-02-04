@@ -268,8 +268,8 @@ Below are example templates for some of the cases above.
 Changing the default value of a parameter
 -----------------------------------------
 
-Step 1: before any change
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Code before any change
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
 
@@ -296,11 +296,11 @@ Step 1: before any change
             y_pred = prediction_logic(parameter)
             return y_pred
 
-Step 2: during deprecation period
+Step 1: during deprecation period
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This step is done by the developer, in a PR.
-Optionally, the developer can prepare a PR for step 3
+Optionally, the developer can prepare a PR for step 2
 that the release manager can merge.
 
 .. code:: python
@@ -351,7 +351,7 @@ that the release manager can merge.
             y_pred = prediction_logic(parameter)
             return y_pred
 
-Step 3: after deprecation period
+Step 2: after deprecation period
 --------------------------------
 
 This step is done by the release manager, either by merging a prepared PR,
@@ -390,8 +390,8 @@ if it is not used elsewhere in the code.
 Renaming a parameter
 --------------------
 
-Step 1: before any change
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Code before any change
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
 
@@ -419,15 +419,22 @@ Step 1: before any change
             y_pred = prediction_logic(old_parameter)
             return y_pred
 
-Step 2: during deprecation period
+Step 1: during deprecation period
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This step is done by the developer, in a PR.
+Optionally, the developer can prepare a PR for step 2
+that the release manager can merge.
 
 .. code:: python
 
    from sktime.utils.warnings import warn
 
     class EstimatorName:
-        """The old docstring, but parameter already points to the new name.
+        """The old docstring, but already points to the new name.
+
+        The docstring should replace 'old_parameter' with 'new_parameter',
+        and no longer mention 'old_parameter'.
 
         Parameters
         ----------
@@ -470,8 +477,11 @@ Step 2: during deprecation period
             y_pred = prediction_logic(old_parameter)
             return y_pred
 
-Step 3: after deprecation period
+Step 2: after deprecation period
 --------------------------------
+
+This step is done by the release manager, either by merging a prepared PR,
+or by carrying out the TODO action.
 
 .. code:: python
 
