@@ -30,15 +30,20 @@ Our current deprecation policy is as follows:
 Example timeline:
 
 1. developer A resolves, at current state v0.9.3, to remove functionality X at some point in the near future.
+
 2. therefore, by the above, we should introduce a deprecation message, visible from next release (e.g., v0.9.4),
-  which says that functionality will be removed at v0.11.0
+which says that functionality will be removed at v0.11.0
+
 3. developer A makes a pull request to remove functionality X which includes that deprecation warning.
-  The pull request is reviewed by core developers, with the suggestion by developer A accepted or rejected.
+The pull request is reviewed by core developers, with the suggestion by developer A accepted or rejected.
+
 4. If accepted and merged before v0.10.0 release, the PR goes in the next release, with a deprecation note in the release notes.
-  If PR acceptance takes until after v0.10.0 but before v0.11.0, the planned removal moves to v0.12.0 and the warning needs to be updated.
+If PR acceptance takes until after v0.10.0 but before v0.11.0, the planned removal moves to v0.12.0 and the warning needs to be updated.
+
 5. an additional PR to remove deprecation warning and functionality X is prepared by developer A, for v0.12.0 but not merged
+
 6. a release manager merges the PR in part 5 as part of the release v0.12.0, effecting the removal.
-  Release notes of v0.12.0 includes a removal note.
+Release notes of v0.12.0 includes a removal note.
 
 Deprecation and change process
 ==============================
@@ -114,6 +119,9 @@ No such warning is necessary if no working user logic would change, this is the 
 
 Recipes for individual cases above follow.
 
+Fully worked examples for some of these cases are given in the
+last section of this document, "Examples to illustrate recipes".
+
 Changing the default value of a parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -121,29 +129,32 @@ To change the default value of a parameter, follow steps 1-3 in the pull request
 implementing the change.
 
 1. at current version, change the default value to ``"changing_value"``.
-  Internally, add logic that overrides the value of the parameter with the old default
-  value, if the parameter is set to ``"changing_value"``. If the parameter is an
-  ``__init__`` parameter of an estimator class,
-  the value cannot be directly overridden, but this needs to be done in a private
-  parameter copy, since all ``__init__`` parameters must be written
-  to ``self`` unchanged. I.e., write the parameter to ``self._<param_name>`` unchanged,
-  and add logic that overrides the value of ``self._<param_name>`` with the old default,
-  and ensure to use ``self._<param_name>`` in the rest of the code instead of
-  ``self.<param_name>``.
+Internally, add logic that overrides the value of the parameter with the old default
+value, if the parameter is set to ``"changing_value"``. If the parameter is an
+``__init__`` parameter of an estimator class,
+the value cannot be directly overridden, but this needs to be done in a private
+parameter copy, since all ``__init__`` parameters must be written
+to ``self`` unchanged. I.e., write the parameter to ``self._<param_name>`` unchanged,
+and add logic that overrides the value of ``self._<param_name>`` with the old default,
+and ensure to use ``self._<param_name>`` in the rest of the code instead of
+``self.<param_name>``.
+
 2. add a warning, using ``sktime.utils.warnings.warn``, if the parameter is called
-  with a non-default. This warning should always include the name of the estimator/function,
-  the version of change, and a clear instruction on how to change the code to retain
-  prior behaviour. E.g., ``"Parameter <param_name> of <estimator_name> will change
-  default value from <old_value> to <new_value> in sktime version <version_number>.
-  To retain prior behaviour, set <param_name> to <old_value> explicitly"``.
+with a non-default. This warning should always include the name of the estimator/function,
+the version of change, and a clear instruction on how to change the code to retain
+prior behaviour. E.g., ``"Parameter <param_name> of <estimator_name> will change
+default value from <old_value> to <new_value> in sktime version <version_number>.
+To retain prior behaviour, set <param_name> to <old_value> explicitly"``.
+
 3. add a TODO comment to the code, to remove the warning and change the default value,
-  in the next MINOR version cycle. E.g., add the comment
-  ``# TODO <version_number>: change default of <param_name> to <new_value>,
-  update docstring, and remove warning``,
-  at the top of the function or class where the parameter is defined.
+in the next MINOR version cycle. E.g., add the comment
+``# TODO <version_number>: change default of <param_name> to <new_value>,
+update docstring, and remove warning``,
+at the top of the function or class where the parameter is defined.
+
 4. the release manager will carry out the TODO action in the next MINOR version cycle,
-  and remove the TODO comment. Optimally, a change branch is provided that the
-  release manager can merge, and its PR ID is mentioned in the todo.
+and remove the TODO comment. Optimally, a change branch is provided that the
+release manager can merge, and its PR ID is mentioned in the todo.
 
 Renaming a parameter
 ~~~~~~~~~~~~~~~~~~~~
@@ -154,27 +165,33 @@ implementing the change.
 1. at current version, add a parameter with the new name at the end of the
 list of parameters, with the same default value as the old parameter.
 Do not remove the old parameter.
+
 2. change the value of the old parameter to the string ``"deprecated"``.
-  Change all code in the function or class that uses the old parameter to use
-  the new parameter instead. This can be done by a bulk-replace.
+Change all code in the function or class that uses the old parameter to use
+the new parameter instead. This can be done by a bulk-replace.
+
 3. at the start of the function or class init, add logic that overrides the value
-  of the new parameter with the value of the old parameter, if the old parameter
-  is not ``"deprecated"``. If the parameter is an ``__init__`` parameter
-  of an estimator class,
-  the value cannot be directly overridden, but this needs to be done in a private
-  parameter, since all ``__init__`` parameters must be written to ``self`` unchanged.
+of the new parameter with the value of the old parameter, if the old parameter
+is not ``"deprecated"``. If the parameter is an ``__init__`` parameter
+of an estimator class,
+the value cannot be directly overridden, but this needs to be done in a private
+parameter, since all ``__init__`` parameters must be written to ``self`` unchanged.
+
 4. add a warning, using ``sktime.utils.warnings.warn``, if the old parameter is called
-  with a non-default. This warning should always include the name of the estimator/function,
-  the version of change, and a clear instruction on how to change the code to retain
-  prior behaviour. E.g., ``"Parameter <param_name> of <estimator_name> will be renamed
-  from <old_name> to <new_name> in sktime version <version_number>.
-  To retain prior behaviour, use a kwargs call of <new_name> instead of <old_name>"``.
+with a non-default. This warning should always include the name of the estimator/function,
+the version of change, and a clear instruction on how to change the code to retain
+prior behaviour. E.g., ``"Parameter <param_name> of <estimator_name> will be renamed
+from <old_name> to <new_name> in sktime version <version_number>.
+To retain prior behaviour, use a kwargs call of <new_name> instead of <old_name>"``.
+
 5. update the docstring of the function or class to refer only to the new parameter.
+
 6. add a TODO comment to the code, to remove the warning and change the default value,
-  in the next MINOR version cycle. E.g., add the comment
-  ``# TODO <version_number>: change name of parameter <old_name> to <new_name>,
-  remove old parameter at the end, and remove warning``,
-  at the top of the function or class where the parameter is defined.
+in the next MINOR version cycle. E.g., add the comment
+``# TODO <version_number>: change name of parameter <old_name> to <new_name>,
+remove old parameter at the end, and remove warning``,
+at the top of the function or class where the parameter is defined.
+
 7. the release manager will carry out the TODO action in the next MINOR version cycle,
   and remove the TODO comment. Optimally, a change branch is provided that the
   release manager can merge, and its PR ID is mentioned in the todo.
@@ -198,28 +215,31 @@ To change the sequence of parameters, follow steps 1-6 in the pull request
 implementing the change.
 
 1. at current version, change the defaults of all parameters after and including
-  the first parameter to change position to ``"position_change"``.
+the first parameter to change position to ``"position_change"``.
+
 2. Internally, add logic that overrides the value of the parameter with the old default
-  value, if the parameter is set to ``"position_change"``.
-  For ``__init__`` parameters of an estimator class,
-  the values cannot be directly overridden, but this needs to be done in a private
-  parameter copy, since all ``__init__`` parameters must be written
-  to ``self`` unchanged. I.e., write the parameter to ``self._<param_name>`` unchanged,
-  and add logic that overrides the value of ``self._<param_name>`` with the old default,
-  and ensure to use ``self._<param_name>`` in the rest of the code instead of
-  ``self.<param_name>``.
+value, if the parameter is set to ``"position_change"``.
+For ``__init__`` parameters of an estimator class,
+the values cannot be directly overridden, but this needs to be done in a private
+parameter copy, since all ``__init__`` parameters must be written
+to ``self`` unchanged. I.e., write the parameter to ``self._<param_name>`` unchanged,
+and add logic that overrides the value of ``self._<param_name>`` with the old default,
+and ensure to use ``self._<param_name>`` in the rest of the code instead of
+``self.<param_name>``.
+
 3. add a warning, using ``sktime.utils.warnings.warn``, if any of the position changing
-  paramters are called with a non-default. This warning should always include
-  the name of the estimator/function, the version of change, and a clear instruction
-  on how to change the code to retain prior behaviour. The instruction
-  should direct the user to use ``kwargs`` calls instead of positional calls, for
-  all parameters that change position.
+paramters are called with a non-default. This warning should always include
+the name of the estimator/function, the version of change, and a clear instruction
+on how to change the code to retain prior behaviour. The instruction
+should direct the user to use ``kwargs`` calls instead of positional calls, for
+all parameters that change position.
+
 4. add a TODO comment to the code, to remove the warning and change the sequence,
-  as well as changing default values to the old defaults,
-  in the next MINOR version cycle.
-  The TODO comment should contain complete lines of code.
-  Optimally, a change branch is provided that the
-  release manager can merge, and its PR ID is mentioned in the todo.
+as well as changing default values to the old defaults,
+in the next MINOR version cycle.
+The TODO comment should contain complete lines of code.
+Optimally, a change branch is provided that the
+release manager can merge, and its PR ID is mentioned in the todo.
 
 Removing a parameter
 ~~~~~~~~~~~~~~~~~~~~
@@ -260,10 +280,12 @@ ensure to remove the removed tags from the dictionaries in ``TagAliaserMixin`` c
 If no tags are deprecated anymore (e.g., all deprecated tags are removed/renamed),
 ensure to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.
 
-Examples
-========
+Examples to illustrate recipes
+==============================
 
 Below are example templates for some of the cases above.
+The examples are carried out for a class with ``fit`` / ``predict`` methods,,
+but the same principles apply to functions, or classes with other APIs.
 
 Changing the default value of a parameter
 -----------------------------------------
