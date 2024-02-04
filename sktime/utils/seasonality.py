@@ -160,6 +160,7 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
 
     return df_pivot
 
+
 def _make_period_index_df(df, freq):
     if isinstance(df.index, pd.DatetimeIndex):
         df = df.copy()
@@ -167,7 +168,7 @@ def _make_period_index_df(df, freq):
         was_datetime = True
     else:
         was_datetime = False
-    return df,was_datetime
+    return df, was_datetime
 
 
 def _unpivot_sp(df, template=None):
