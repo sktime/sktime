@@ -111,12 +111,7 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     if freq is None and hasattr(anchor.index, "freq"):
         freq = anchor.index.freq
 
-    if isinstance(df.index, pd.DatetimeIndex):
-        df = df.copy()
-        df.index = df.index.to_period(freq=freq)
-        was_datetime = True
-    else:
-        was_datetime = False
+    df, was_datetime = _make_period_index_df(df, freq)
 
     if isinstance(anchor.index, pd.DatetimeIndex):
         aix = anchor.index.to_period(freq=freq)
@@ -145,8 +140,8 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     df = pd.DataFrame(df)
     df_pivot = pd.pivot_table(
         data=df,
-        index=ix // sp,  # Upper level
-        columns=ix % sp,  # Lower level
+        index=ix // (sp * abs(aix_int[1] - aix_int[0])),  # Upper level
+        columns=ix % (sp * abs(aix_int[1] - aix_int[0])),  # Lower level
         dropna=False,
     )
 
@@ -164,6 +159,15 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     df_pivot.columns = df_pivot.columns.droplevel(0)
 
     return df_pivot
+
+def _make_period_index_df(df, freq):
+    if isinstance(df.index, pd.DatetimeIndex):
+        df = df.copy()
+        df.index = df.index.to_period(freq=freq)
+        was_datetime = True
+    else:
+        was_datetime = False
+    return df,was_datetime
 
 
 def _unpivot_sp(df, template=None):
@@ -193,17 +197,20 @@ def _unpivot_sp(df, template=None):
             freq = template.freq
         else:
             freq = template
-
+    else:
+        freq = None
+    df_copied, _ = _make_period_index_df(template, freq)
+    ix = df_copied.index.astype("int64")
     df_melt = df.melt(ignore_index=False)
 
     offset = df_melt[df_melt.columns[0]]
     if isinstance(df_melt.index, pd.DatetimeIndex):
         a = df_melt.index.to_period(freq=freq)
-        res = a + offset
+        res = a + offset // abs(ix[1] - ix[0])
         df_melt.index = res
         was_datetime = True
     else:
-        df_melt.index = df_melt.index + offset
+        df_melt.index = df_melt.index + offset // abs(ix[1] - ix[0])
         was_datetime = False
     df_melt = df_melt.drop(columns=df_melt.columns[0])
     df_melt = df_melt.sort_index()

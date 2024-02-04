@@ -356,7 +356,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         lagger = Lag(1, keep_column_names=True, freq=freq)
 
-        expected_index = fh.to_absolute(cutoff).to_pandas()
+        expected_index = fh.to_absolute(cutoff).to_pandas().to_period(freq=freq)
 
         if strategy == "last" and sp == 1:
             y_old = lagger.fit_transform(_y)
