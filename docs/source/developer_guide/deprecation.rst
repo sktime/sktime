@@ -374,7 +374,7 @@ that the release manager can merge.
             return y_pred
 
 Step 2: after deprecation period
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This step is done by the release manager, either by merging a prepared PR,
 or by carrying out the TODO action.
@@ -500,7 +500,7 @@ that the release manager can merge.
             return y_pred
 
 Step 2: after deprecation period
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This step is done by the release manager, either by merging a prepared PR,
 or by carrying out the TODO action.
