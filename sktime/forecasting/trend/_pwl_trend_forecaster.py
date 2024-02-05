@@ -4,12 +4,11 @@
 
 __author__ = ["sbuse"]
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
+from sktime.utils.warnings import warn
 
 
 class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
@@ -103,9 +102,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         changepoint_range=0.8,
         changepoint_prior_scale=0.05,
         verbose=0,
-        yearly_seasonality="auto",
-        weekly_seasonality="auto",
-        daily_seasonality="auto",
+        yearly_seasonality="changing_value",
+        weekly_seasonality="changing_value",
+        daily_seasonality="changing_value",
     ):
         self.freq = None
         self.add_seasonality = None
@@ -131,21 +130,33 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         self.verbose = verbose
 
         super().__init__()
-
+        # TODO (release 0.28.0)
+        # set yearly_seasonality = False in __init__
+        # set weekly_seasonality = False in __init__
+        # set daily_seasonality = False in __init__
+        # remove the following 4 'if' checks
         if any(
-            setting != "auto"
+            setting is not False
             for setting in [
                 yearly_seasonality,
                 weekly_seasonality,
                 daily_seasonality,
             ]
         ):
-            message = (
-                "Warning: In the release 0.28.0, the default of all seasonality "
-                "parameters will change to 'False'. Please review your code and "
-                "update the parameters to prevent any unexpected behavior. "
+            warn(
+                "Warning: In sktime 0.28.0, the default value for all seasonality "
+                "parameters in ProphetPiecewiseLinearTrendForecaster will change from "
+                "'auto' to 'False'. To retain the prior behavior, set all seasonality "
+                "parameters to 'auto' explicitly.",
+                category=DeprecationWarning,
+                obj=self,
             )
-            warn(message, FutureWarning, stacklevel=2)
+        if yearly_seasonality == "changing_value":
+            self.yearly_seasonality = "auto"
+        if weekly_seasonality == "changing_value":
+            self.weekly_seasonality = "auto"
+        if daily_seasonality == "changing_value":
+            self.daily_seasonality = "auto"
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
