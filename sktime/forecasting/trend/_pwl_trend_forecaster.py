@@ -149,7 +149,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
                 "'auto' to 'False'. To retain the prior behavior, set all seasonality "
                 "parameters to 'auto' explicitly.",
                 category=DeprecationWarning,
-                obj=self,
+                stacklevel=3,
             )
         if yearly_seasonality == "changing_value":
             self.yearly_seasonality = "auto"
