@@ -33,7 +33,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         These are "blueprint" transformers resp forecasters,
         forecaster states do not change when `fit` is called
 
-    verbose : bool, default=False
+    warn : bool, default=False
         If True, raises warnings when a forecaster fails to fit or predict.
 
     Attributes
