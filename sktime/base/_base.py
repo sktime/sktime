@@ -565,31 +565,49 @@ class BaseEstimator(BaseObject):
                 "fitted yet, please call fit on data before get_fitted_params"
             )
 
-        # collect non-nested fitted params of self
-        fitted_params = self._get_fitted_params()
-
-        # the rest is only for nested parameters
-        # so, if deep=False, we simply return here
         if not deep:
-            return fitted_params
+            return self._gfp_non_nested_plugin()
 
-        def sh(x):
-            """Shorthand to remove all underscores at end of a string."""
-            if x.endswith("_"):
-                return sh(x[:-1])
-            else:
-                return x
+        fitted_params = {}
+        get_fitted_params_from_plugins = [
+            self._gfp_non_nested_plugin,
+            self._gfp_nested_skbase_plugin,
+            self._gfp_nested_sklearn_plugin,
+            self._gfp_sklearn_pipeline_plugin,
+        ]
 
-        # add all nested parameters from components that are sktime BaseObject
+        for plugin in get_fitted_params_from_plugins:
+            fitted_params.update(plugin())
+
+        return fitted_params
+
+    def _gfp_non_nested_plugin(self):
+        """Plugin to get fitted non-nested parameters."""
+        return self._get_fitted_params()
+
+    def _gfp_nested_skbase_plugin(self):
+        """Plugin to get fitted nested skbase parameters."""
+        nested_params = {}
+
+        # Add all skbase objects
         c_dict = self._components()
         for c, comp in c_dict.items():
             if isinstance(comp, BaseEstimator) and comp._is_fitted:
                 c_f_params = comp.get_fitted_params()
-                c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
-                fitted_params.update(c_f_params)
+                c_f_params = {
+                    f"{_rm_underscore(c)}__{k}": v for k, v in c_f_params.items()
+                }
+                nested_params.update(c_f_params)
 
-        # add all nested parameters from components that are sklearn estimators
-        # we do this recursively as we have to reach into nested sklearn estimators
+        return nested_params
+
+    def _gfp_nested_sklearn_plugin(self):
+        """Plugin to get fitted nested sklearn parameters."""
+        fitted_params = self._gfp_non_nested_plugin()
+
+        # Add all nested parameters from components that are sklearn estimators
+        # this is to be done recursively as we have to reach into nested sklearn
+        # estimators
         n_new_params = 42
         old_new_params = fitted_params
         while n_new_params > 0:
@@ -597,11 +615,35 @@ class BaseEstimator(BaseObject):
             for c, comp in old_new_params.items():
                 if isinstance(comp, _BaseEstimator):
                     c_f_params = self._get_fitted_params_default(comp)
-                    c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
-                    new_params.update(c_f_params)
+                    c_f_params = {
+                        f"{_rm_underscore(c)}__{k}": v for k, v in c_f_params.items()
+                    }
             fitted_params.update(new_params)
             old_new_params = new_params.copy()
             n_new_params = len(new_params)
+
+        return fitted_params
+
+    def _gfp_sklearn_pipeline_plugin(self):
+        """Plugin to get fitted nested sklearn parameters."""
+        from sklearn.pipeline import Pipeline
+
+        _fitted_params = self._gfp_non_nested_plugin()
+        fitted_params = {}
+
+        for _, entity in _fitted_params.items():
+            if isinstance(entity, Pipeline):
+                for name, step in entity.named_steps.items():
+                    if isinstance(step, _BaseEstimator):
+                        step_params = {
+                            f"{name}__{attr[:-1]}": getattr(step, attr)
+                            for attr in dir(step)
+                            if attr.endswith("_")
+                            and not attr.startswith("_")
+                            and hasattr(step, attr)
+                        }
+
+                        fitted_params.update(step_params)
 
         return fitted_params
 
@@ -670,6 +712,14 @@ def deepcopy_func(f, name=None):
         f.__defaults__,
         f.__closure__,
     )
+
+
+def _rm_underscore(x):
+    """Remove all underscores at end of a string."""
+    if x.endswith("_"):
+        return _rm_underscore(x[:-1])
+    else:
+        return x
 
 
 # initialize dynamic docstrings
