@@ -10,8 +10,6 @@ Installation
 
 See here for a `full list of precompiled wheels available on PyPI <https://pypi.org/simple/sktime/>`_.
 
-We appreciate community contributions towards compatibility with python 3.10, or other operating systems.
-
 .. contents::
    :local:
 
