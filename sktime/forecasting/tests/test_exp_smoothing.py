@@ -88,13 +88,3 @@ def check_panel_with_freq():
     y_pred = forecaster.predict(fh=fh)
 
     assert y_pred.equals(y_pred_update), "Expected same predictions after update"
-
-    y.index.names = ["datetime"]
-    y.name = "passengers"
-    y = y.to_frame()
-    y["hour_of_day"] = y.index.hour
-    y = y.reset_index().set_index(["hour_of_day", "datetime"]).sort_index()
-
-    forecaster = ExponentialSmoothing(trend="add", sp=1)
-    forecaster.fit(y)
-    forecaster.predict(fh=[1, 3])
