@@ -127,7 +127,6 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
         period_len_int = aix_int[1] - aix_int[0]
 
     if not isinstance(df.index, pd.PeriodIndex):
-
         if anchor_side == "start":
             ix = (df.index - anchor.index[0]) / period_len
         else:
