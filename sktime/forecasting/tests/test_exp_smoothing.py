@@ -57,3 +57,44 @@ def check_panel_expsmooth():
     forecaster = ExponentialSmoothing(trend="add", sp=1)
     forecaster.fit(y)
     forecaster.predict(fh=[1, 3])
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def check_panel_with_freq():
+    """Test exponential smoothing on panel datam, datetime index with frequency."""
+    # make panel with hour of day panel and datetime index
+    y = load_airline()
+    ind = pd.date_range(
+        start="1960-01-01", periods=len(y.index), freq="H", name="datetime"
+    )
+    y = pd.DataFrame(y.values, index=ind, columns=["passengers"])
+    y = y.set_index([y.index.hour.rename("hour"), y.index]).sort_index()
+    assert y.loc[0].index.freq == pd.Timedelta("1D"), "Expected daily frequency"
+
+    fh = [1, 2]
+    y_train, y_test = temporal_train_test_split(y, test_size=len(fh))
+    forecaster = ExponentialSmoothing(trend="add", sp=1)
+
+    # fit update predict
+    forecaster.fit(y_train)
+    forecaster.update(y_test)
+    y_pred_update = forecaster.predict(fh=fh)
+
+    # fit no update
+    forecaster.fit(y)
+    y_pred = forecaster.predict(fh=fh)
+
+    assert y_pred.equals(y_pred_update), "Expected same predictions after update"
+
+    y.index.names = ["datetime"]
+    y.name = "passengers"
+    y = y.to_frame()
+    y["hour_of_day"] = y.index.hour
+    y = y.reset_index().set_index(["hour_of_day", "datetime"]).sort_index()
+
+    forecaster = ExponentialSmoothing(trend="add", sp=1)
+    forecaster.fit(y)
+    forecaster.predict(fh=[1, 3])
