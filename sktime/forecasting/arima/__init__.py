@@ -3,11 +3,8 @@
 __all__ = [
     "AutoARIMA",
     "ARIMA",
-    "StatsModelsARIMA"
+    "StatsModelsARIMA",
 ]
 
-from sktime.forecasting.arima._pmdarima import (
-    ARIMA,
-    AutoARIMA,
-)
+from sktime.forecasting.arima._pmdarima import ARIMA, AutoARIMA
 from sktime.forecasting.arima._statsmodels import StatsModelsARIMA
