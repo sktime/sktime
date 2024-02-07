@@ -185,7 +185,7 @@ class BaseFixtureGenerator(_BaseFixtureGenerator):
     # which fixtures are indirect, e.g., have an additional pytest.fixture block
     #   to generate an indirect fixture at runtime. Example: estimator_instance
     #   warning: direct fixtures retain state changes within the same test
-    indirect_fixtures = ["estimator_instance"]
+    indirect_fixtures = ["object_instance", "estimator_instance"]
 
     def _all_objects(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
