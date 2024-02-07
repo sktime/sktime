@@ -648,6 +648,11 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         Whether or not to use a ARMA errors.
         Default is True and this evaluates both models.
 
+    See Also
+    --------
+    BATS
+    TBATS
+
     References
     ----------
     .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autotbats
