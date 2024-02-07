@@ -9,7 +9,7 @@ from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
 
 
 class AutoARIMA(_PmdArimaAdapter):
-    """Wrapper of the pmdarima implementation of fitting Auto-(S)ARIMA(X) models.
+    """Auto-(S)ARIMA(X) forecaster, from pmdarima package.
 
     Includes automated fitting of (S)ARIMA(X) hyper-parameters (p, d, q, P, D, Q).
 
@@ -487,7 +487,7 @@ class AutoARIMA(_PmdArimaAdapter):
 
 
 class ARIMA(_PmdArimaAdapter):
-    """Wrapper of the pmdarima implementation of fitting (S)ARIMA(X) models.
+    """(S)ARIMA(X) forecaster, from pmdarima package.
 
     Exposes `pmdarima.arima.ARIMA` [1]_ under the `sktime` interface.
     Seasonal ARIMA models and exogeneous input is supported, hence this estimator is

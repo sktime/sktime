@@ -14,7 +14,7 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class StatsModelsARIMA(_StatsModelsAdapter):
-    """ARIMA forecaster.
+    """ARIMA forecaster, from statsmodels package.
 
     Direct interface for `statsmodels.tsa.arima.model.ARIMA`.
 
