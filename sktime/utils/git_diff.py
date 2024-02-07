@@ -141,6 +141,10 @@ def get_packages_with_changed_specs():
         else:
             sep = "'"
 
+        splits = line.split(sep)
+        if len(splits) < 2:
+            continue
+
         req = line.split(sep)[1]
 
         # deal with ; python_version >= "3.7" in requirements
