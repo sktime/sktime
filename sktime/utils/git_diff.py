@@ -80,17 +80,22 @@ def is_class_changed(cls):
     return is_module_changed(module_str)
 
 
-def get_changed_lines(file_path):
+def get_changed_lines(file_path, only_indented=True):
     """Get changed or added lines from a file.
+
+    Compares the current branch to the origin-main branch.
 
     Parameters
     ----------
     file_path : str
         path to file to get changed lines from
+    only_indented : bool, default=True
+        if True, only indented lines are returned, otherwise all lines are returned;
+        more precisely, only changed/added lines starting with a space are returned
 
     Returns
     -------
-    list of str : changed lines
+    list of str : changed or added lines on current branch
     """
     cmd = f"git diff remotes/origin/main -- {file_path}"
 
@@ -98,9 +103,14 @@ def get_changed_lines(file_path):
         # Run 'git diff' command to get the changes in the specified file
         result = subprocess.check_output(cmd, shell=True, text=True)
 
+        # if intented 
+        start_chars = "+"
+        if only_indented:
+            start_chars += " "
+
         # Extract the changed or new lines and return as a list of strings
         changed_lines = [
-            line.strip() for line in result.split("\n") if line.startswith("+ ")
+            line.strip() for line in result.split("\n") if line.startswith(start_chars)
         ]
         # remove first character ('+') from each line
         changed_lines = [line[1:] for line in changed_lines]
