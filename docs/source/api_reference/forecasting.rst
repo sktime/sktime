@@ -309,6 +309,14 @@ Structural time series models
 
     TBATS
 
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastAutoTBATS
+
 .. currentmodule:: sktime.forecasting.fbprophet
 
 .. autosummary::
