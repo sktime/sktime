@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements autoregressive integrated moving average (ARIMA) models."""
+"""Interface to ARIMA and AutoARIMA models from pmdarima package."""
 
 __author__ = ["mloning", "hyang1996", "fkiraly", "ilkersigirci"]
 __all__ = ["AutoARIMA", "ARIMA"]
