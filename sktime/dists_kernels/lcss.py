@@ -44,7 +44,16 @@ class LcssTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
             IEEE Computer Society, USA, 673.
     """
 
-    _tags = {"symmetric": True, "pwtrafo_type": "distance"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        "python_dependencies": ["tslearn"],
+        # estimator type
+        # --------------
+        "symmetric": True,
+        "pwtrafo_type": "distance",
+    }
 
     _is_cdist = False
 

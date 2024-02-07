@@ -55,6 +55,15 @@ class CNNRegressor(BaseDeepRegressor):
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["AurumnPegasus", "achieveordie"],
+        "maintainers": ["AurumnPegasus", "achieveordie"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
+
     def __init__(
         self,
         n_epochs=2000,

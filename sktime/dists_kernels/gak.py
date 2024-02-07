@@ -34,7 +34,16 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
     .. [1] M. Cuturi, "Fast global alignment kernels," ICML 2011.
     """
 
-    _tags = {"symmetric": True, "pwtrafo_type": "kernel"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        "python_dependencies": ["tslearn"],
+        # estimator type
+        # --------------
+        "symmetric": True,
+        "pwtrafo_type": "kernel",
+    }
 
     def __init__(
         self,

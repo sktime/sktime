@@ -209,7 +209,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/54197164?v=4",
       "profile": "https://github.com/achieveordie",
       "contributions": [
-       "test"
+        "bug",
+        "code",
+        "test"
       ]
     },
     {
@@ -286,6 +288,14 @@
       ]
     },
     {
+      "login": "vnicholson1",
+      "name": "Vincent Nicholson",
+      "profile": "https://github.com/vnicholson1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "lnthach",
       "name": "Thach Le Nguyen",
       "avatar_url": "https://avatars0.githubusercontent.com/u/7788363?v=4",
@@ -307,6 +317,14 @@
         "doc",
         "eventOrganizing",
         "tutorial"
+      ]
+    },
+    {
+      "login": "Riyabelle25",
+      "name": "Riya Elizabeth John",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55790848?v=4",
+      "contributions": [
+        "code"
       ]
     },
     {
@@ -2524,6 +2542,17 @@
       "profile": "https://github.com/DManowitz",
       "contributions": [
         "bug",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "ninedigits",
+      "name": "Max Frohlich",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16393653?v=4",
+      "profile": "https://www.linkedin.com/in/maxfrohlich/",
+      "contributions": [
+        "code",
+        "ideas",
         "maintenance"
       ]
     },

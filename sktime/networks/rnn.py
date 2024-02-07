@@ -1,6 +1,6 @@
 """Time Recurrent Neural Network (RNN) (minus the final output layer)."""
 
-__authors__ = ["JamesLarge", "Withington", "TonyBagnall", "achieveordie"]
+__authors__ = ["James-Large", "Withington", "TonyBagnall", "achieveordie"]
 
 from sktime.networks.base import BaseDeepNetwork
 

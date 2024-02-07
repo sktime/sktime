@@ -158,6 +158,12 @@ class BoxCoxTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "aiwalter", "fkiraly"],
+        "python_dependencies": "scipy",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -169,7 +175,6 @@ class BoxCoxTransformer(BaseTransformer):
         "fit_is_empty": False,
         "univariate-only": True,
         "capability:inverse_transform": True,
-        "python_dependencies": "scipy",
     }
 
     def __init__(
@@ -528,7 +533,8 @@ def _guerrero(x, sp, bounds=None):
 
     if sp is None or not is_int(sp) or sp < 2:
         raise ValueError(
-            "Guerrero method requires an integer seasonal periodicity (sp) value >= 2."
+            "In BoxCoxTransformer, method='guerrero' requires an integer seasonal "
+            f"periodicity (sp) value >= 2, but found sp={sp}"
         )
 
     x = np.asarray(x)

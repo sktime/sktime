@@ -73,6 +73,13 @@ class ClearSky(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ciaran-g"],
+        "maintainers": ["ciaran-g"],
+        "python_dependencies": ["statsmodels", "scipy"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -96,8 +103,6 @@ class ClearSky(BaseTransformer):
         "capability:unequal_length:removes": True,  # ?
         "handles-missing-data": False,
         "capability:missing_values:removes": True,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": ["statsmodels", "scipy"],
     }
 
     def __init__(

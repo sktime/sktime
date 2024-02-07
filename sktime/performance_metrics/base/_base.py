@@ -13,7 +13,11 @@ class BaseMetric(BaseObject):
     Extends sktime BaseObject.
     """
 
-    _tags = {"object_type": "metric"}
+    _tags = {
+        "object_type": "metric",
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+    }
 
     def __init__(self):
         super().__init__()

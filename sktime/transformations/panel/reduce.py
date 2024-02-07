@@ -25,6 +25,7 @@ class Tabularizer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "kcc-lion"],
         "fit_is_empty": True,
         "univariate-only": False,
         "scitype:transform-input": "Series",
@@ -96,6 +97,8 @@ class TimeBinner(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["kcc-lion", "fkiraly"],
+        "maintainers": ["kcc-lion"],
         "fit_is_empty": True,
         "univariate-only": False,
         "scitype:transform-input": "Series",

@@ -88,6 +88,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     """
 
     _tags = {
+        "authors": ["GuzalBulatova", "mloning", "fkiraly"],
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "y_inner_mtype": PANDAS_MTYPES,

@@ -90,11 +90,17 @@ class SignatureClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "jambo6",
+        "maintainers": "jambo6",
+        "python_dependencies": "esig",
+        "python_version": "<3.10",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
-        "python_dependencies": "esig",
-        "python_version": "<3.10",
     }
 
     def __init__(

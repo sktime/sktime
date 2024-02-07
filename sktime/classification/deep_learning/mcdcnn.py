@@ -1,8 +1,6 @@
 """Multi Channel Deep Convolutional Neural Classifier (MCDCNN)."""
 
-__author__ = [
-    "JamesLarge",
-]
+__author__ = ["James-Large"]
 
 from copy import deepcopy
 
@@ -80,7 +78,14 @@ class MCDCNNClassifier(BaseDeepClassifier):
     MCDCNNClassifier(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["james-large"],
+        "maintainers": ["james-large"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,

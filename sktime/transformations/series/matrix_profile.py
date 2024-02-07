@@ -39,6 +39,12 @@ class MatrixProfileTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning"],
+        "python_dependencies": "stumpy",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -49,7 +55,6 @@ class MatrixProfileTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?,
         "univariate-only": True,
         "fit_is_empty": True,  # for unit test cases
-        "python_dependencies": "stumpy",
     }
 
     def __init__(self, window_length=3):

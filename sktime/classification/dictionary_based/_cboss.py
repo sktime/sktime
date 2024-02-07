@@ -130,12 +130,18 @@ class ContractableBOSS(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "BINAYKUMAR943"],
+        "maintainers": "BINAYKUMAR943",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
         "capability:predict_proba": True,
-        "python_dependencies": "numba",
     }
 
     def __init__(

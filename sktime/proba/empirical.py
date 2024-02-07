@@ -43,6 +43,7 @@ class Empirical(BaseDistribution):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "capabilities:approx": [],
         "capabilities:exact": ["mean", "var", "energy", "cdf", "ppf"],
         "distr:measuretype": "discrete",

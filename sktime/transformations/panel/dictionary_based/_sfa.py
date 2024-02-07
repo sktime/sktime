@@ -101,6 +101,7 @@ class SFA(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst", "patrickzib"],
         "univariate-only": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel

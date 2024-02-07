@@ -120,6 +120,7 @@ class ColumnEnsembleTransformer(
     """
 
     _tags = {
+        "authors": ["fkiraly", "mloning"],
         "X_inner_mtype": PANDAS_MTYPES,
         "y_inner_mtype": PANDAS_MTYPES,
         "fit_is_empty": False,

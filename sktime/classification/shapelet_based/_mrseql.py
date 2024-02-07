@@ -38,9 +38,15 @@ class MrSEQL(_DelegatedClassifier):
     """
 
     _tags = {
-        "X_inner_mtype": "nested_univ",
+        # packaging info
+        # --------------
+        "authors": ["lnthach", "heerme", "fkiraly"],
+        "maintainers": ["lnthach", "heerme", "fkiraly"],
         "python_dependencies": "mrseql",
         "requires_cython": True,
+        # estimator type
+        # --------------
+        "X_inner_mtype": "nested_univ",
     }
 
     def __init__(

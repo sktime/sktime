@@ -58,6 +58,8 @@ class BaseRegressor(BasePanelMixin):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     # convenience constant to control which metadata of input data
