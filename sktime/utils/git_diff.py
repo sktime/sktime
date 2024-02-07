@@ -78,3 +78,69 @@ def is_class_changed(cls):
     """
     module_str = get_module_from_class(cls)
     return is_module_changed(module_str)
+
+
+def get_changed_lines(file_path):
+    """Get changed or added lines from a file.
+
+    Parameters
+    ----------
+    file_path : str
+        path to file to get changed lines from
+
+    Returns
+    -------
+    list of str : changed lines
+    """
+    cmd = f"git diff remotes/origin/main -- {file_path}"
+
+    try:
+        # Run 'git diff' command to get the changes in the specified file
+        result = subprocess.check_output(cmd, shell=True, text=True)
+
+        # Extract the changed or new lines and return as a list of strings
+        changed_lines = [
+            line.strip() for line in result.split("\n") if line.startswith("+ ")
+        ]
+        # remove first character ('+') from each line
+        changed_lines = [line[1:] for line in changed_lines]
+
+        return changed_lines
+
+    except subprocess.CalledProcessError:
+        return []
+
+
+def get_packages_with_changed_specs():
+    """Get packages with changed or added specs.
+
+    Returns
+    -------
+    list of str : names of packages with changed or added specs
+    """
+    from packaging.requirements import Requirement
+
+    changed_lines = get_changed_lines("pyproject.toml")
+
+    packages = []
+    for line in changed_lines:
+        if line.find("'") > line.find('"') and line.find('"') != -1:
+            sep = '"'
+        elif line.find("'") == -1:
+            sep = '"'
+        else:
+            sep = "'"
+
+        req = line.split(sep)[1]
+
+        # deal with ; python_version >= "3.7" in requirements
+        if ";" in req:
+            req = req.split(";")[0]
+
+        pkg = Requirement(req).name
+        packages.append(pkg)
+
+    # make unique
+    packages = list(set(packages))
+
+    return packages
