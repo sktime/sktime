@@ -103,7 +103,7 @@ def get_changed_lines(file_path, only_indented=True):
         # Run 'git diff' command to get the changes in the specified file
         result = subprocess.check_output(cmd, shell=True, text=True)
 
-        # if intented 
+        # if only indented lines are requested, add space to start_chars
         start_chars = "+"
         if only_indented:
             start_chars += " "
