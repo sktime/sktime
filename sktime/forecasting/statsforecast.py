@@ -617,6 +617,114 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         return params
 
 
+class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
+    """StatsForecast TBATS model.
+
+    Direct interface to `statsforecast.models.AutoTBATS`,
+    from `statsforecast` [1]_ by Nixtla.
+
+    Automatically selects the best TBATS model from all feasible combinations of the
+    parameters `use_boxcox`, `use_trend`, `use_damped_trend`, and `use_arma_errors`.
+    Selection is made using the AIC.
+
+    Default value for `use_arma_errors` is `True` since this enables the evaluation of
+    models with and without ARMA errors.
+
+    Parameters
+    ----------
+    seasonal_periods : int or list of int.
+        Number of observations per unit of time. Ex: 24 Hourly data.
+    use_boxcox : bool (default=None)
+        Whether or not to use a Box-Cox transformation. By default tries both.
+    bc_lower_bound : float (default=0.0)
+        Lower bound for the Box-Cox transformation.
+    bc_upper_bound : float (default=1.5)
+        Upper bound for the Box-Cox transformation.
+    use_trend : bool (default=None)
+        Whether or not to use a trend component. By default tries both.
+    use_damped_trend : bool (default=None)
+        Whether or not to dampen the trend component. By default tries both.
+    use_arma_errors : bool (default=True)
+        Whether or not to use a ARMA errors.
+        Default is True and this evaluates both models.
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autotbats
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["yarnabrina"],
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.7.2"],
+    }
+
+    def __init__(
+        self,
+        seasonal_periods: Union[int, List[int]],
+        use_boxcox: Optional[bool] = None,
+        use_trend: Optional[bool] = None,
+        use_damped_trend: Optional[bool] = None,
+        use_arma_errors: bool = True,
+    ):
+        self.seasonal_periods = seasonal_periods
+        self.use_boxcox = use_boxcox
+        self.use_trend = use_trend
+        self.use_damped_trend = use_damped_trend
+        self.use_arma_errors = use_arma_errors
+
+        super().__init__()
+
+    def _get_statsforecast_class(self):
+        """Create underlying forecaster instance."""
+        from statsforecast.models import AutoTBATS
+
+        return AutoTBATS
+
+    def _get_statsforecast_params(self) -> dict:
+        return {
+            "seasonal_periods": self.seasonal_periods,
+            "use_boxcox": self.use_boxcox,
+            "use_trend": self.use_trend,
+            "use_damped_trend": self.use_damped_trend,
+            "use_arma_errors": self.use_arma_errors,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        del parameter_set  # to avoid being detected as unused by `vulture` etc.
+
+        params = [{"seasonal_periods": 3}, {"seasonal_periods": [3, 12]}]
+
+        return params
+
+
 class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     """StatsForecast Multiple Seasonal-Trend decomposition using LOESS model.
 
