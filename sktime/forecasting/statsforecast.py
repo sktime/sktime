@@ -357,7 +357,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
     References
     ----------
-    .. [1] https://nixtla.github.io/statsforecast/models.html#autotheta
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autotheta
 
     See Also
     --------
@@ -460,7 +460,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
     References
     ----------
-    .. [1] https://nixtla.github.io/statsforecast/models.html#autoets
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autoets
     .. [2] https://github.com/robjhyndman/forecast
 
     See Also
@@ -557,7 +557,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 
     References
     ----------
-    .. [1] https://nixtla.github.io/statsforecast/models.html#autoces
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autoces
     """
 
     _tags = {
