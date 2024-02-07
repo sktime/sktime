@@ -7,6 +7,7 @@ __all__ = [
     "StatsForecastAutoARIMA",
     "StatsForecastAutoCES",
     "StatsForecastAutoETS",
+    "StatsForecastAutoTBATS",
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
 ]
