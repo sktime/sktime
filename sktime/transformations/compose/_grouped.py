@@ -57,6 +57,7 @@ class TransformByLevel(_DelegatedTransformer):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,

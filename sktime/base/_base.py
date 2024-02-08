@@ -78,7 +78,15 @@ class BaseObject(_BaseObject):
     Extends skbase BaseObject with additional features.
     """
 
-    _config = {"warnings": "on"}
+    _config = {
+        "warnings": "on",
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend,
+    }
 
     _config_doc = {
         "display": """
@@ -91,8 +99,8 @@ class BaseObject(_BaseObject):
         "print_changed_only": """
         print_changed_only : bool, default=True
             whether printing of self lists only self-parameters that differ
-            from defaults (False), or all parameter names and values (False)
-            does not nest, i.e., only affects self and not component estimators
+            from defaults (False), or all parameter names and values (False).
+            Does not nest, i.e., only affects self and not component estimators.
         """,
         "warnings": """
         warnings : str, "on" (default), or "off"
@@ -101,11 +109,37 @@ class BaseObject(_BaseObject):
             * "on" = will raise warnings from sktime
             * "off" = will not raise warnings from sktime
         """,
-    }
+        "backend:parallel": """
+        backend:parallel : str, optional, default="None"
+            backend to use for parallelization when broadcasting/vectorizing, one of
 
-    def __init__(self):
-        super().__init__()
-        self.__class__.set_config.__doc__ = self._get_set_config_doc()
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+            - "dask": uses ``dask``, requires ``dask`` package in environment
+        """,
+        "backend:parallel:params": """
+        backend:parallel:params : dict, optional, default={} (no parameters passed)
+            additional parameters passed to the parallelization backend as config.
+            Valid keys depend on the value of ``backend:parallel``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+              any valid keys for ``joblib.Parallel`` can be passed here, e.g.,
+              ``n_jobs``, with the exception of ``backend`` which is directly
+              controlled by ``backend``.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "joblib": custom and 3rd party ``joblib`` backends,
+              e.g., ``spark``. Any valid keys for ``joblib.Parallel``
+              can be passed here, e.g., ``n_jobs``,
+              ``backend`` must be passed as a key of ``backend_params`` in this case.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "dask": any valid keys for ``dask.compute`` can be passed,
+              e.g., ``scheduler``
+        """,
+    }
 
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
@@ -115,7 +149,7 @@ class BaseObject(_BaseObject):
 
         Nested BaseObject descendants from get_params are compared via __eq__ as well.
         """
-        from sktime.utils._testing.deep_equals import deep_equals
+        from sktime.utils.deep_equals import deep_equals
 
         if not isinstance(other, BaseObject):
             return False
@@ -161,6 +195,15 @@ class BaseObject(_BaseObject):
             doc += cfg_doc
         doc += doc_end
         return doc
+
+    @classmethod
+    def _init_dynamic_doc(cls):
+        """Set docstring for set_config from self._config_doc."""
+        try:  # try/except to avoid unexpected failures
+            cls.set_config = deepcopy_func(cls.set_config)
+            cls.set_config.__doc__ = cls._get_set_config_doc()
+        except Exception:
+            pass
 
     def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
@@ -584,12 +627,12 @@ class BaseEstimator(BaseObject):
 
         # default retrieves all self attributes ending in "_"
         # and returns them with keys that have the "_" removed
-        fitted_params = [attr for attr in dir(obj) if attr.endswith("_")]
-        fitted_params = [x for x in fitted_params if not x.startswith("_")]
-        fitted_params = [x for x in fitted_params if hasattr(obj, x)]
-        fitted_param_dict = {p[:-1]: getattr(obj, p) for p in fitted_params}
-
-        return fitted_param_dict
+        fitted_params = {
+            attr[:-1]: getattr(obj, attr)
+            for attr in dir(obj)
+            if attr.endswith("_") and not attr.startswith("_") and hasattr(obj, attr)
+        }
+        return fitted_params
 
     def _get_fitted_params(self):
         """Get fitted parameters.
@@ -614,3 +657,20 @@ def _clone_estimator(base_estimator, random_state=None):
         set_random_state(estimator, random_state)
 
     return estimator
+
+
+def deepcopy_func(f, name=None):
+    """Deepcopy of a function."""
+    import types
+
+    return types.FunctionType(
+        f.__code__,
+        f.__globals__,
+        name or f.__name__,
+        f.__defaults__,
+        f.__closure__,
+    )
+
+
+# initialize dynamic docstrings
+BaseObject._init_dynamic_doc()

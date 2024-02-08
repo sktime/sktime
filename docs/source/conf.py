@@ -4,7 +4,6 @@
 import datetime
 import os
 import sys
-from importlib import import_module
 
 import sktime
 
@@ -339,19 +338,12 @@ def _make_estimator_overview(app):
     # creates dataframe as df
     COLNAMES = ["Class Name", "Estimator Type", "Authors"]
 
-    df = pd.DataFrame([], columns=COLNAMES)
+    records = []
 
     for modname, modclass in all_estimators():
-        algorithm_type = "::".join(str(modclass).split(".")[1:-2])
-        try:
-            author_info = _process_author_info(modclass.__author__)
-        except AttributeError:
-            try:
-                author_info = _process_author_info(
-                    import_module(modclass.__module__).__author__
-                )
-            except AttributeError:
-                author_info = "no author info"
+        algorithm_type = modclass.get_class_tag("object_type", "object")
+        author_tag = modclass.get_class_tag("authors", "sktime developers")
+        author_info = _process_author_info(author_tag)
 
         # includes part of class string
         modpath = str(modclass)[8:-2]
@@ -369,7 +361,9 @@ def _make_estimator_overview(app):
         )
 
         record = pd.DataFrame([modname, algorithm_type, author_info], index=COLNAMES).T
-        df = pd.concat([df, record], ignore_index=True)
+        records += [record]
+
+    df = pd.concat(records, ignore_index=True)
     with open("estimator_overview_table.md", "w") as file:
         df.to_markdown(file, index=False)
 

@@ -29,6 +29,7 @@ class Laplace(BaseDistribution):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "capabilities:approx": ["pdfnorm"],
         "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
         "distr:measuretype": "continuous",
@@ -43,7 +44,7 @@ class Laplace(BaseDistribution):
         # todo: untangle index handling
         # and broadcast of parameters.
         # move this functionality to the base class
-        self._mu, self._scale = self._get_bc_params()
+        self._mu, self._scale = self._get_bc_params(self.mu, self.scale)
         shape = self._mu.shape
 
         if index is None:
@@ -53,16 +54,6 @@ class Laplace(BaseDistribution):
             columns = pd.RangeIndex(shape[1])
 
         super().__init__(index=index, columns=columns)
-
-    def _get_bc_params(self):
-        """Fully broadcast parameters of self, given param shapes and index, columns."""
-        to_broadcast = [self.mu, self.scale]
-        if hasattr(self, "index") and self.index is not None:
-            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
-        if hasattr(self, "columns") and self.columns is not None:
-            to_broadcast += [self.columns.to_numpy()]
-        bc = np.broadcast_arrays(*to_broadcast)
-        return bc[0], bc[1]
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.

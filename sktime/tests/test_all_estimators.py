@@ -42,7 +42,6 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
-from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
@@ -51,6 +50,7 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
+from sktime.utils.deep_equals import deep_equals
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -876,6 +876,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 f"estimator: {estimator_class} has fit method, but"
                 f"is not a sub-class of BaseEstimator."
             )
+        from sktime.pipeline import Pipeline
+
+        if issubclass(estimator_class, Pipeline):
+            return
 
         # Usually estimators inherit only from one BaseEstimator type, but in some cases
         # they may be predictor and transformer at the same time (e.g. pipelines)
@@ -1428,8 +1432,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 err_msg=msg,
             )
 
-    # todo: this needs to be diagnosed and fixed - temporary skip
-    @pytest.mark.skip(reason="hangs on mac and unix remote tests")
     def test_multiprocessing_idempotent(
         self, estimator_instance, scenario, method_nsc_arraylike
     ):
@@ -1443,29 +1445,39 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         method_nsc = method_nsc_arraylike
         params = estimator_instance.get_params()
 
-        if "n_jobs" in params:
-            # run on a single process
-            # -----------------------
-            estimator = deepcopy(estimator_instance)
-            estimator.set_params(n_jobs=1)
-            set_random_state(estimator)
-            result_single_process = scenario.run(
-                estimator, method_sequence=["fit", method_nsc]
-            )
+        # test runs only if n_jobs is a parameter of the estimator
+        if "n_jobs" not in params:
+            return None
 
-            # run on multiple processes
-            # -------------------------
-            estimator = deepcopy(estimator_instance)
-            estimator.set_params(n_jobs=-1)
-            set_random_state(estimator)
-            result_multiple_process = scenario.run(
-                estimator, method_sequence=["fit", method_nsc]
-            )
-            _assert_array_equal(
-                result_single_process,
-                result_multiple_process,
-                err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
-            )
+        # skip test for predict_proba
+        # this produces a BaseDistribution object, for which no ready
+        # equality check is implemented
+        if method_nsc == "predict_proba":
+            return None
+
+        # run on a single process
+        # -----------------------
+        estimator = deepcopy(estimator_instance)
+        estimator.set_params(n_jobs=1)
+        set_random_state(estimator)
+        result_single_process = scenario.run(
+            estimator, method_sequence=["fit", method_nsc]
+        )
+
+        # run on multiple processes
+        # -------------------------
+        estimator = deepcopy(estimator_instance)
+        estimator.set_params(n_jobs=-1)
+        set_random_state(estimator)
+        result_multiple_process = scenario.run(
+            estimator, method_sequence=["fit", method_nsc]
+        )
+
+        _assert_array_equal(
+            result_single_process,
+            result_multiple_process,
+            err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
+        )
 
     def test_dl_constructor_initializes_deeply(self, estimator_class):
         """Test DL estimators that they pass custom parameters to underlying Network."""

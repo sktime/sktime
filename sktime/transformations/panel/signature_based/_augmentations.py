@@ -5,7 +5,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 def _make_augmentation_pipeline(augmentation_list):
-    """Buids an sklearn pipeline of augmentations from a tuple of strings.
+    """Build an sklearn pipeline of augmentations from a tuple of strings.
 
     Parameters
     ----------
@@ -68,6 +68,12 @@ class _AddTime(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "jambo6",
+        "maintainers": "jambo6",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

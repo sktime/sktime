@@ -90,11 +90,16 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
-        "python_dependencies": "numba",
     }
 
     def __init__(

@@ -65,8 +65,13 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
     """
 
     _tags = {
-        "capability:multivariate": True,
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
         "python_dependencies": "tslearn",
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
     }
 
     # defines the name of the attribute containing the tslearn estimator

@@ -1,6 +1,7 @@
 """Deep learning based classifiers."""
 __all__ = [
     "CNNClassifier",
+    "CNTCClassifier",
     "FCNClassifier",
     "InceptionTimeClassifier",
     "LSTMFCNClassifier",
@@ -13,6 +14,7 @@ __all__ = [
 ]
 
 from sktime.classification.deep_learning.cnn import CNNClassifier
+from sktime.classification.deep_learning.cntc import CNTCClassifier
 from sktime.classification.deep_learning.fcn import FCNClassifier
 from sktime.classification.deep_learning.inceptiontime import InceptionTimeClassifier
 from sktime.classification.deep_learning.lstmfcn import LSTMFCNClassifier

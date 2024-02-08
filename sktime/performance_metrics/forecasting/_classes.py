@@ -273,12 +273,17 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_pred : VectorizedDF
         non-time-like instances of y_true, y_pred must be identical
         """
+        backend = dict()
+        backend["backend"] = self.get_config()["backend:parallel"]
+        backend["backend_params"] = self.get_config()["backend:parallel:params"]
+
         eval_result = y_true.vectorize_est(
             estimator=self.clone(),
             method="_evaluate",
             varname_of_self="y_true",
             args={**kwargs, "y_pred": y_pred},
             colname_default=self.name,
+            **backend,
         )
 
         if isinstance(self.multioutput, str) and self.multioutput == "raw_values":
@@ -305,6 +310,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_pred : VectorizedDF
         non-time-like instances of y_true, y_pred must be identical
         """
+        backend = dict()
+        backend["backend"] = self.get_config()["backend:parallel"]
+        backend["backend_params"] = self.get_config()["backend:parallel:params"]
+
         eval_result = y_true.vectorize_est(
             estimator=self.clone().set_params(**{"multilevel": "uniform_average"}),
             method="_evaluate_by_index",
@@ -312,6 +321,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             args={**kwargs, "y_pred": y_pred},
             colname_default=self.name,
             return_type="list",
+            **backend,
         )
 
         eval_result = y_true.reconstruct(eval_result)
@@ -573,6 +583,10 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         else:
             func = self.func
 
+        return self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
+
+    def _evaluate_func(self, func, y_true, y_pred, **params):
+        """Call func with kwargs subset to func parameters."""
         # import here for now to avoid interaction with getmembers in tests
         # todo: clean up ancient getmembers in test_metrics_classes
         from functools import partial
@@ -583,6 +597,15 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
             func_params = set(func_params).difference(["y_true", "y_pred"])
             func_params = func_params.intersection(params.keys())
             params = {key: params[key] for key in func_params}
+
+        # deal with sklearn specific parameter constraints
+        # as these are a decorator, they obfuscate python native inspection
+        # via signature, so have to be dealt with separately
+        if hasattr(func, "_skl_parameter_constraints"):
+            constr = func._skl_parameter_constraints
+            if isinstance(constr, dict):
+                constr_params = set(constr.keys()).intersection(params.keys())
+                params = {key: params[key] for key in constr_params}
 
         res = func(y_true=y_true, y_pred=y_pred, **params)
         return res
@@ -608,6 +631,16 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
         self.set_tags(**{"lower_is_better": lower_is_better})
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs."""
+        # this dict should contain all parameters
+        params = kwargs
+        params.update({"multioutput": self.multioutput, "multilevel": self.multilevel})
+
+        func = self.func
+
+        return self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1829,6 +1862,56 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ):
         self.symmetric = symmetric
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+        symmetric = self.symmetric
+
+        numer_values = (y_true - y_pred).abs()
+
+        if symmetric:
+            denom_values = (y_true.abs() + y_pred.abs()) / 2
+        else:
+            denom_values = y_true.abs()
+
+        raw_values = numer_values / denom_values
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return raw_values
+
+            if multioutput == "uniform_average":
+                return raw_values.mean(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return raw_values.dot(multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

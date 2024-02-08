@@ -5,6 +5,8 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 
+__author__ = ["ChangWeiTan", "fstinner", "angus924"]
+
 
 class MultiRocketMultivariate(BaseTransformer):
     """Multi RandOm Convolutional KErnel Transform (MultiRocket).
@@ -15,6 +17,15 @@ class MultiRocketMultivariate(BaseTransformer):
     positive values (PPV) MultiRocket adds 3 pooling operators: Mean of Positive
     Values (MPV); Mean of Indices of Positive Values (MIPV); and Longest Stretch of
     Positive Values (LSPV). This version is the multivariate version.
+
+    This transformer fits one set of paramereters per individual series,
+    and applies the transform with fitted parameter i to the i-th series in transform.
+    Vanilla use requires same number of series in fit and transform.
+
+    To fit and transform series at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
 
     Parameters
     ----------
@@ -40,7 +51,6 @@ class MultiRocketMultivariate(BaseTransformer):
     parameter1 : tuple
         parameter (dilations, num_features_per_dilation, biases) for
         transformation of input X1 = np.diff(X, 1)
-
 
     See Also
     --------
@@ -68,6 +78,13 @@ class MultiRocketMultivariate(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ChangWeiTan", "fstinner", "angus924"],
+        "maintainers": ["ChangWeiTan", "fstinner", "angus924"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "univariate-only": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
@@ -77,7 +94,6 @@ class MultiRocketMultivariate(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -189,6 +205,9 @@ class MultiRocketMultivariate(BaseTransformer):
             _fit_dilations,
             _quantiles,
         )
+
+        if self.random_state is not None:
+            np.random.seed(self.random_state)
 
         _, num_channels, input_length = X.shape
 

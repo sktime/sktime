@@ -20,6 +20,14 @@ class MiniRocket(BaseTransformer):
     MiniRocket is for unviariate time series only.  Use class MiniRocketMultivariate
     for multivariate time series.
 
+    This transformer fits one set of paramereters per individual series,
+    and applies them to series of the same number in the test set.
+
+    To fit and transform at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
+
     Parameters
     ----------
     num_kernels : int, default=10,000
@@ -57,6 +65,13 @@ class MiniRocket(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["angus924"],
+        "maintainers": ["angus924"],
+        "python_dependencies": "numba",
+        # estimator tags
+        # --------------
         "univariate-only": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
@@ -66,7 +81,6 @@ class MiniRocket(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "python_dependencies": "numba",
     }
 
     def __init__(

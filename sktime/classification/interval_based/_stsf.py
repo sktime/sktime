@@ -86,6 +86,11 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MatthewMiddlehurst",
+        # estimator type
+        # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "interval",
@@ -205,7 +210,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
 
         Returns
         -------
-        output : nd.array of shape = (n_instances, n_classes)
+        output : np.ndarray of shape = (n_instances, n_classes)
             Predicted probabilities
         """
         X = X.squeeze(1)

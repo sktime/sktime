@@ -72,6 +72,13 @@ class VAR(_StatsModelsAdapter):
     _fitted_param_names = ("aic", "fpe", "hqic", "bic")
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["thayeylolu", "aiwalter", "lbventura"],
+        "maintainers": "lbventura",
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "scitype:y": "multivariate",
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,

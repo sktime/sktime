@@ -111,13 +111,19 @@ class Arsenal(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "kachayev"],
+        "maintainers": ["kachayev"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "kernel",
-        "python_dependencies": "numba",
     }
 
     def __init__(

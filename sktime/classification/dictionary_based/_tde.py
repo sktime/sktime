@@ -146,13 +146,18 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "dictionary",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -671,9 +676,14 @@ class IndividualTDE(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "python_dependencies": "numba",
     }
 
     def __init__(

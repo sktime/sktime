@@ -49,9 +49,16 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     https://github.com/Mcompetitions/M4-methods
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning"],
+        # estimator type handled by parent class
+    }
+
     def __init__(
         self,
-        num_epochs=100,
+        n_epochs=100,
         batch_size=1,
         units=6,
         callbacks=None,
@@ -65,8 +72,9 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
+
         super().__init__()
-        self.num_epochs = num_epochs
+
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -80,6 +88,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.optimizer = optimizer
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
+        self.n_epochs = n_epochs
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -189,7 +198,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             X,
             y_onehot,
             batch_size=self.batch_size,
-            epochs=self.num_epochs,
+            epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks_,
         )
@@ -218,7 +227,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         """
         params1 = {}
         params2 = {
-            "num_epochs": 50,
+            "n_epochs": 50,
             "batch_size": 2,
             "units": 5,
             "use_bias": False,

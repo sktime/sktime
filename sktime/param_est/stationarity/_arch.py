@@ -83,7 +83,9 @@ class StationarityADFArch(BaseParamFitter):
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "nd.array"],
+        "authors": ["Vasudeva-bit"],
+        "maintainers": ["Vasudeva-bit"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
         "scitype:X": "Series",
         "python_dependencies": "arch",
     }
@@ -233,7 +235,9 @@ class StationarityDFGLS(BaseParamFitter):
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "nd.array"],
+        "authors": ["Vasudeva-bit"],
+        "maintainers": ["Vasudeva-bit"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
         "scitype:X": "Series",
         "python_dependencies": "arch",
     }
@@ -374,7 +378,9 @@ class StationarityPhillipsPerron(BaseParamFitter):
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "nd.array"],
+        "authors": ["Vasudeva-bit"],
+        "maintainers": ["Vasudeva-bit"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
         "scitype:X": "Series",
         "python_dependencies": "arch",
     }
@@ -507,7 +513,9 @@ class StationarityKPSSArch(BaseParamFitter):
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "nd.array"],
+        "authors": ["Vasudeva-bit"],
+        "maintainers": ["Vasudeva-bit"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
         "scitype:X": "Series",
         "python_dependencies": "arch",
     }
@@ -647,7 +655,9 @@ class StationarityZivotAndrews(BaseParamFitter):
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "nd.array"],
+        "authors": ["Vasudeva-bit"],
+        "maintainers": ["Vasudeva-bit"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
         "scitype:X": "Series",
         "python_dependencies": "arch",
     }
@@ -794,7 +804,9 @@ class StationarityVarianceRatio(BaseParamFitter):
     """
 
     _tags = {
-        "X_inner_mtype": ["pd.Series", "nd.array"],
+        "authors": ["Vasudeva-bit"],
+        "maintainers": ["Vasudeva-bit"],
+        "X_inner_mtype": ["pd.Series", "np.ndarray"],
         "scitype:X": "Series",
         "python_dependencies": "arch",
     }

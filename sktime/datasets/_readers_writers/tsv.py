@@ -6,7 +6,7 @@ __all__ = ["load_from_ucr_tsv_to_dataframe"]
 import pandas as pd
 
 
-# TODO: original author didnt add test for this function
+# TODO: original author didn't add test for this function
 def load_from_ucr_tsv_to_dataframe(
     full_file_path_and_name, return_separate_X_and_y=True
 ):

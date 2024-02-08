@@ -1,17 +1,17 @@
-name: weekly test all estimators
+name: test all
 on:
   schedule:
     - cron: 0 0 * * 0
   workflow_dispatch:
 jobs:
   code_quality:
-    name: validate code quality
+    name: code quality
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
         uses: actions/checkout@v4
       - name: python environment step
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.8"
       - name: install pre-commit
@@ -23,7 +23,7 @@ jobs:
         shell: bash
   test_base:
     needs: code_quality
-    name: test base module
+    name: base
     strategy:
       fail-fast: false
       matrix:
@@ -47,9 +47,13 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-  test_components_with_extras:
+      - name: upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
+  test_module:
     needs: code_quality
-    name: test module
+    name: module
     strategy:
       fail-fast: false
       matrix:
@@ -84,9 +88,13 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-  test_components_without_extras:
+      - name: upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
+  test_other:
     needs: code_quality
-    name: test all components without extras
+    name: other
     strategy:
       fail-fast: false
       matrix:
@@ -109,14 +117,30 @@ jobs:
       - name: update local shallow clone
         run: git fetch --depth 1
       - name: create python virtual environment
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: install core, test and all soft dependencies
         run: python3 -m pip install .[all_extras_pandas2,tests]
       - name: run unit tests
-        run: python3 -m pytest sktime --ignore sktime/alignment --ignore sktime/annotation --ignore sktime/classification --ignore sktime/clustering --ignore sktime/datasets --ignore sktime/forecasting --ignore sktime/networks --ignore sktime/param_est --ignore sktime/regression --ignore sktime/transformations --matrixdesign False --only_changed_modules False
-      - name: test coverage
-        uses: codecov/codecov-action@v3
+        run: >-
+          python3
+          -m pytest
+          sktime
+          --ignore sktime/base
+          --ignore sktime/datasets
+          --ignore sktime/alignment
+          --ignore sktime/annotation
+          --ignore sktime/classification
+          --ignore sktime/clustering
+          --ignore sktime/forecasting
+          --ignore sktime/networks
+          --ignore sktime/param_est
+          --ignore sktime/regression
+          --ignore sktime/transformations
+          --matrixdesign False
+          --only_changed_modules False
+      - name: upload coverage
+        uses: codecov/codecov-action@v4
         with:
-          flags: ${{ matrix.python-version }},components_without_extras
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},components_without_extras,complete

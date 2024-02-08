@@ -21,6 +21,8 @@ Forecasting users interested in performance evaluation are advised
 to use full backtesting instead of a single split, e.g., via ``evaluate``,
 see :ref:`forecasting API reference <forecasting_ref>`.
 
+.. currentmodule:: sktime.split
+
 .. autosummary::
     :toctree: auto_generated/
     :template: function.rst
@@ -53,6 +55,14 @@ Time index splitter composition
 
 The following splitters are compositions that can be used to create
 more complex time index based splitting strategies.
+
+.. currentmodule:: sktime.split.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Repeat
 
 .. currentmodule:: sktime.split
 

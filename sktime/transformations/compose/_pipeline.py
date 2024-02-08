@@ -118,6 +118,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         # we let all X inputs through to be handled by first transformer
         "X_inner_mtype": CORE_MTYPES,
         "univariate-only": False,
@@ -145,7 +146,6 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # abbreviate for readability
         ests = self.steps_
         first_trafo = ests[0][1]
-        last_trafo = ests[-1][1]
 
         # input mtype and input type are as of the first estimator
         self.clone_tags(first_trafo, ["scitype:transform-input"])
@@ -153,7 +153,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # if "Primitives" occur in the middle, then output is set to that too
         # this is in a case where "Series-to-Series" is applied to primitive df
         #   e.g., in a case of pipelining with scikit-learn transformers
-        last_out = last_trafo.get_tag("scitype:transform-output")
+        last_out = self._trafo_out()
         self._anytagis_then_set(
             "scitype:transform-output", "Primitives", last_out, ests
         )
@@ -397,3 +397,63 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         params3 = {"steps": [("foo", t1), ("foo", t2), ("foo_1", t3)]}
 
         return [params1, params2, params3]
+
+    def _to_dim(self, x):
+        """Translate scitype:transform-input or output tag to data dimension.
+
+        Parameters
+        ----------
+        x : str, one of "Series", "Panel", "Hierarchical"
+            scitype:transform-input or output tag
+
+        Returns
+        -------
+        int
+            data dimension corresponding to x
+        """
+        if x == "Series":
+            return 1
+        elif x == "Panel":
+            return 2
+        else:
+            return 3
+
+    def _dim_diff(self, obj):
+        """Compute difference between input and output dimension."""
+        inp = obj.get_tag("scitype:transform-input")
+        out = obj.get_tag("scitype:transform-output")
+        return self._to_dim(out) - self._to_dim(inp)
+
+    def _dim_to_sci(self, d):
+        """Translate data dimension to scitype:transform-output tag.
+
+        Parameters
+        ----------
+        d : int
+            data dimension
+
+        Returns
+        -------
+        str
+            scitype:transform-output tag corresponding to data dimension
+        """
+        if d <= 1:
+            return "Series"
+        elif d == 2:
+            return "Panel"
+        else:
+            return "Hierarchical"
+
+    def _trafo_out(self):
+        """Infer scitype:transform-output tag.
+
+        Uses the self.steps_ attribute, assumes it is initialized already.
+        """
+        ests = self.steps_
+        est_list = [x[1] for x in ests]
+        inp_dim = self._to_dim(est_list[0].get_tag("scitype:transform-input"))
+        out_dim = inp_dim
+        for est in est_list:
+            dim_diff = self._dim_diff(est)
+            out_dim = out_dim + dim_diff
+        return self._dim_to_sci(out_dim)

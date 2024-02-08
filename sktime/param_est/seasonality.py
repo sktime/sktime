@@ -87,6 +87,7 @@ class SeasonalityACF(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -273,6 +274,7 @@ class SeasonalityACFqstat(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -452,6 +454,8 @@ class SeasonalityPeriodogram(BaseParamFitter):
     """
 
     _tags = {
+        "authors": ["blazingbhavneek"],
+        "maintainers": ["blaingbhavneek"],
         "X_inner_mtype": "pd.Series",
         "scitype:X": "Series",
         "capability:missing_values": True,

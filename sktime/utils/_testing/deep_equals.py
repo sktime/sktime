@@ -16,7 +16,84 @@ import numpy as np
 import pandas as pd
 
 
+# todo 0.27.0: check whether scikit-base>=0.6.1 lower bound is 0.6.1 or higher
+# if yes, remove this legacy function and use the new one from sktime.utils.deep_equals
 def deep_equals(x, y, return_msg=False):
+    """Test two objects for equality in value.
+
+    Correct if x/y are one of the following valid types:
+        types compatible with != comparison
+        pd.Series, pd.DataFrame, np.ndarray
+        lists, tuples, or dicts of a valid type (recursive)
+        delayed types that result in the above when calling .compute(), e.g., dask df
+
+    Important note:
+        this function will return "not equal" if types of x,y are different
+        for instant, bool and numpy.bool are *not* considered equal
+
+    Parameters
+    ----------
+    x : object
+    y : object
+    return_msg : bool, optional, default=False
+        whether to return informative message about what is not equal
+
+    Returns
+    -------
+    is_equal: bool - True if x and y are equal in value
+        x and y do not need to be equal in reference
+    msg : str, only returned if return_msg = True
+        indication of what is the reason for not being equal
+            concatenation of the following strings:
+            .type - type is not equal
+            .len - length is not equal
+            .value - value is not equal
+            .keys - if dict, keys of dict are not equal
+                    if class/object, names of attributes and methods are not equal
+            .dtype - dtype of pandas or numpy object is not equal
+            .index - index of pandas object is not equal
+            .series_equals, .df_equals, .index_equals - .equals of pd returns False
+            [i] - if tuple/list: i-th element not equal
+            [key] - if dict: value at key is not equal
+            [colname] - if pandas.DataFrame: column with name colname is not equal
+            != - call to generic != returns False
+    """
+    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    from sktime.utils.warnings import warn
+
+    deprec_explain = (
+        "The legacy deep_equals from sktime.utils._testing.deep_equals is "
+        "deprecated and should be replaced by the new deep_equals,"
+        " from sktime.utils.deep_equals, which requires scikit-base>=0.6.1. "
+    )
+
+    removal_schedule = (
+        "The legacy deep_equals is not scheduled for removal yet, this "
+        "warning will change to specify a removal date when it is scheduled."
+    )
+
+    if _check_soft_dependencies(
+        "scikit-base>=0.6.1",
+        package_import_alias={"scikit-base": "skbase"},
+    ):
+        env_msg = (
+            "As you have scikit-base>=0.6.1, please update your imports to use the "
+            "new deep_equals utility. "
+        )
+    else:
+        env_msg = (
+            "As you have scikit-base<0.6.1, please consider updating your environment "
+            "to scikit-base>=0.6.1, and update your imports to use the "
+            "new deep_equals utility. "
+        )
+
+    msg = deprec_explain + env_msg + removal_schedule
+    warn(msg, FutureWarning, stacklevel=2)
+
+    return deep_equals_legacy(x, y, return_msg=return_msg)
+
+
+def deep_equals_legacy(x, y, return_msg=False):
     """Test two objects for equality in value.
 
     Correct if x/y are one of the following valid types:
@@ -180,7 +257,10 @@ def deep_equals(x, y, return_msg=False):
     elif isinstance(x, np.ndarray):
         if x.dtype != y.dtype:
             return ret(False, f".dtype, x.dtype = {x.dtype} != y.dtype = {y.dtype}")
-        return ret(np.array_equal(x, y, equal_nan=True), ".values")
+        if x.dtype in ["object", "str"]:
+            return ret(np.array_equal(x, y), ".values")
+        else:
+            return ret(np.array_equal(x, y, equal_nan=True), ".values")
     # recursion through lists, tuples and dicts
     elif isinstance(x, (list, tuple)):
         return ret(*_tuple_equals(x, y, return_msg=True))

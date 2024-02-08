@@ -65,12 +65,17 @@ class MatrixProfileClassifier(BaseClassifier):
     """
 
     _tags = {
-        "capability:multithreading": True,
-        "capability:predict_proba": True,
-        "classifier_type": "distance",
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
         # sklearn 1.3.0 has a bug which causes predict_proba to fail
         # see scikit-learn#26768 and sktime#4778
         "python_dependencies": "scikit-learn!=1.3.0",
+        # estimator type
+        # --------------
+        "capability:multithreading": True,
+        "capability:predict_proba": True,
+        "classifier_type": "distance",
     }
 
     def __init__(

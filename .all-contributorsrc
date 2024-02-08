@@ -209,7 +209,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/54197164?v=4",
       "profile": "https://github.com/achieveordie",
       "contributions": [
-       "test"
+        "bug",
+        "code",
+        "test"
       ]
     },
     {
@@ -286,6 +288,14 @@
       ]
     },
     {
+      "login": "vnicholson1",
+      "name": "Vincent Nicholson",
+      "profile": "https://github.com/vnicholson1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "lnthach",
       "name": "Thach Le Nguyen",
       "avatar_url": "https://avatars0.githubusercontent.com/u/7788363?v=4",
@@ -307,6 +317,14 @@
         "doc",
         "eventOrganizing",
         "tutorial"
+      ]
+    },
+    {
+      "login": "Riyabelle25",
+      "name": "Riya Elizabeth John",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55790848?v=4",
+      "contributions": [
+        "code"
       ]
     },
     {
@@ -2463,10 +2481,96 @@
       ]
     },
     {
+      "login": "rahulporuri",
+      "name": "Poruri Sai Rahul",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1926457?v=4",
+      "profile": "https://github.com/rahulporuri",
+      "contributions": [
+        "doc"
+       ]
+    },
+    {
       "login": "fspinna",
       "name": "Francesco Spinnato",
       "avatar_url": "https://avatars.githubusercontent.com/u/35352023?v=4",
       "profile": "https://github.com/fspinna",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "sbuse",
+      "name": "Simon B.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24408707?v=4",
+      "profile": "https://github.com/sbuse",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "sd2k",
+      "name": "Ben Sully",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5464991?&v=4",
+      "profile": "https://github.com/sd2k",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "wayneadams",
+      "name": "Wayne Adams",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15034841?s=400&u=d717e9945910bcc844c5e64cd56d570c6cc4e8e6&v=4",
+      "profile": "https://github.com/wayneadams",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "sssilvar",
+      "name": "Santiago Smith Silva",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16252054?v=4",
+      "profile": "https://github.com/sssilvar",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "DManowitz",
+      "name": "David Manowitz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66927103?v=4",
+      "profile": "https://github.com/DManowitz",
+      "contributions": [
+        "bug",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "ninedigits",
+      "name": "Max Frohlich",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16393653?v=4",
+      "profile": "https://www.linkedin.com/in/maxfrohlich/",
+      "contributions": [
+        "code",
+        "ideas",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "steenrotsman",
+      "name": "Stijn J. Rotman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78110080?s=400&v=4",
+      "profile": "https://github.com/steenrotsman",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "tvdboom",
+      "name": "Mavs",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32366550?v=4",
+      "profile": "https://github.com/tvdboom",
       "contributions": [
         "code"
       ]

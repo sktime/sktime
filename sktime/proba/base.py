@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseObject
+from sktime.utils.pandas import df_map
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
@@ -19,15 +20,23 @@ class BaseDistribution(BaseObject):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # str or list of str, package soft dependencies
+        # estimator type
+        # --------------
         "object_type": "distribution",  # type of object, e.g., 'distribution'
         "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": None,  # string or str list of pkg soft dependencies
         "reserved_params": ["index", "columns"],
         "capabilities:approx": ["energy", "mean", "var", "pdfnorm"],
         "approx_mean_spl": 1000,  # sample size used in MC estimates of mean
         "approx_var_spl": 1000,  # sample size used in MC estimates of var
         "approx_energy_spl": 1000,  # sample size used in MC estimates of energy
         "approx_spl": 1000,  # sample size used in other MC estimates
+        "bisect_iter": 1000,  # max iters for bisection method in ppf
     }
 
     def __init__(self, index=None, columns=None):
@@ -41,15 +50,15 @@ class BaseDistribution(BaseObject):
     def loc(self):
         """Location indexer.
 
-        Use `my_distribution.loc[index]` for `pandas`-like row/column subsetting of
-        `BaseDistribution` descendants.
+        Use `my_distribution.loc[index]` for `pandas`-like row/column subsetting
+        of `BaseDistribution` descendants.
 
         `index` can be any `pandas` `loc` compatible index subsetter.
 
         `my_distribution.loc[index]` or `my_distribution.loc[row_index, col_index]`
-        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`, to
-        exactly the same/cols rows as `pandas` `loc` would subset rows in
-        `my_distribution.index` and columns in `my_distribution.columns`.
+        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`,
+        to exactly the same/cols rows as `pandas` `loc` would subset
+        rows in `my_distribution.index` and columns in `my_distribution.columns`.
         """
         return _Indexer(ref=self, method="_loc")
 
@@ -57,15 +66,15 @@ class BaseDistribution(BaseObject):
     def iloc(self):
         """Integer location indexer.
 
-        Use `my_distribution.iloc[index]` for `pandas`-like row/column subsetting of
-        `BaseDistribution` descendants.
+        Use `my_distribution.iloc[index]` for `pandas`-like row/column subsetting
+        of `BaseDistribution` descendants.
 
         `index` can be any `pandas` `iloc` compatible index subsetter.
 
         `my_distribution.iloc[index]` or `my_distribution.iloc[row_index, col_index]`
-        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`, to
-        exactly the same/cols rows as `pandas` `iloc` would subset rows in
-        `my_distribution.index` and columns in `my_distribution.columns`.
+        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`,
+        to exactly the same/cols rows as `pandas` `iloc` would subset
+        rows in `my_distribution.index` and columns in `my_distribution.columns`.
         """
         return _Indexer(ref=self, method="_iloc")
 
@@ -90,9 +99,12 @@ class BaseDistribution(BaseObject):
 
         subset_param_dict = {}
         for param, val in params.items():
-            arr = np.array(val)
-            if len(arr.shape) == 0:
-                subset_param_dict
+            if val is not None:
+                arr = np.array(val)
+            else:
+                arr = None
+            # if len(arr.shape) == 0:
+            # do nothing with arr
             if len(arr.shape) >= 1 and rowidx is not None:
                 arr = arr[rowidx]
             if len(arr.shape) >= 2 and colidx is not None:
@@ -225,7 +237,7 @@ class BaseDistribution(BaseObject):
                 "this may be numerically unstable"
             )
             warn(self._method_error_msg("pdf", fill_in=approx_method))
-            return self.log_pdf(x=x).applymap(np.exp)
+            return df_map(self.log_pdf(x=x))(np.exp)
 
         raise NotImplementedError(self._method_error_msg("pdf", "error"))
 
@@ -265,7 +277,7 @@ class BaseDistribution(BaseObject):
             )
             warn(self._method_error_msg("log_pdf", fill_in=approx_method))
 
-            return self.pdf(x=x).applymap(np.log)
+            return df_map(self.pdf(x=x))(np.log)
 
         raise NotImplementedError(self._method_error_msg("log_pdf", "error"))
 
@@ -282,10 +294,42 @@ class BaseDistribution(BaseObject):
         spl = self.sample(N)
         ind = splx <= spl
 
-        return ind.groupby(level=1).mean()
+        return ind.groupby(level=1, sort=False).mean()
 
     def ppf(self, p):
         """Quantile function = percent point function = inverse cdf."""
+        if self._has_implementation_of("cdf"):
+            from scipy.optimize import bisect
+
+            max_iter = self.get_tag("bisect_iter")
+            approx_method = (
+                "by using the bisection method (scipy.optimize.bisect) on "
+                f"the cdf, at {max_iter} maximum iterations"
+            )
+            warn(self._method_error_msg("cdf", fill_in=approx_method))
+
+            result = pd.DataFrame(index=p.index, columns=p.columns, dtype="float")
+            for ix in p.index:
+                for col in p.columns:
+                    d_ix = self.loc[[ix], [col]]
+                    p_ix = p.loc[ix, col]
+
+                    def opt_fun(x):
+                        """Optimization function, to find x s.t. cdf(x) = p_ix."""
+                        x = pd.DataFrame(x, index=[ix], columns=[col])  # noqa: B023
+                        return d_ix.cdf(x).values[0][0] - p_ix  # noqa: B023
+
+                    left_bd = -1e6
+                    right_bd = 1e6
+                    while opt_fun(left_bd) > 0:
+                        left_bd *= 10
+                    while opt_fun(right_bd) < 0:
+                        right_bd *= 10
+                    result.loc[ix, col] = bisect(
+                        opt_fun, left_bd, right_bd, maxiter=max_iter
+                    )
+            return result
+
         raise NotImplementedError(self._method_error_msg("ppf", "error"))
 
     def energy(self, x=None):
@@ -330,7 +374,8 @@ class BaseDistribution(BaseObject):
 
         # approx E[abs(X-Y)] via mean of samples of abs(X-Y) obtained from splx, sply
         spl = splx - sply
-        energy = spl.apply(np.linalg.norm, axis=1, ord=1).groupby(level=1).mean()
+        energy = spl.apply(np.linalg.norm, axis=1, ord=1)
+        energy = energy.groupby(level=1, sort=False).mean()
         energy = pd.DataFrame(energy, index=self.index, columns=["energy"])
         return energy
 
@@ -353,7 +398,7 @@ class BaseDistribution(BaseObject):
         warn(self._method_error_msg("mean", fill_in=approx_method))
 
         spl = self.sample(approx_spl_size)
-        return spl.groupby(level=1).mean()
+        return spl.groupby(level=1, sort=False).mean()
 
     def var(self):
         r"""Return element/entry-wise variance of the distribution.
@@ -376,10 +421,10 @@ class BaseDistribution(BaseObject):
         spl1 = self.sample(approx_spl_size)
         spl2 = self.sample(approx_spl_size)
         spl = (spl1 - spl2) ** 2
-        return spl.groupby(level=1).mean()
+        return spl.groupby(level=1, sort=False).mean()
 
     def pdfnorm(self, a=2):
-        r"""A-norm of pdf, defaults to 2-norm.
+        r"""a-norm of pdf, defaults to 2-norm.
 
         computes a-norm of the entry marginal pdf, i.e.,
         :math:`\mathbb{E}[p_X(X)^{a-1}] = \int p(x)^a dx`,
@@ -408,7 +453,7 @@ class BaseDistribution(BaseObject):
 
         # uses formula int p(x)^a dx = E[p(X)^{a-1}], and MC approximates the RHS
         spl = [self.pdf(self.sample()) ** (a - 1) for _ in range(approx_spl_size)]
-        return pd.concat(spl, axis=0).groupby(level=1).mean()
+        return pd.concat(spl, axis=0).groupby(level=1, sort=False).mean()
 
     def _coerce_to_self_index_df(self, x):
         x = np.array(x)
@@ -430,7 +475,7 @@ class BaseDistribution(BaseObject):
         The `ppf` method also computes quantiles, but broadcasts differently, in
         `numpy` style closer to `tensorflow`.
         In contrast, this `quantile` method broadcasts
-        as forecaster `predict_quantiles`, i.e., columns first.
+        as ``sktime`` forecaster `predict_quantiles`, i.e., columns first.
 
         Parameters
         ----------

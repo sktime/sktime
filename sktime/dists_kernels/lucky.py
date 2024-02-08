@@ -26,6 +26,11 @@ class LuckyDtwDist(_DelegatedPairwiseTransformerPanel):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly", "Kristian A Buza"],
+        # estimator type
+        # --------------
         "symmetric": True,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?

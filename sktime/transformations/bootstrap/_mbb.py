@@ -40,7 +40,7 @@ class STLBootstrapTransformer(BaseTransformer):
     Parameters
     ----------
     n_series : int, optional
-        The number of bootstraped time series that will be generated, by default 10.
+        The number of bootstrapped time series that will be generated, by default 10.
     sp : int, optional
         Seasonal periodicity of the data in integer form, by default 12.
         Must be an integer >= 2
@@ -165,6 +165,12 @@ class STLBootstrapTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "ltsaprounis",
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
         # todo: what scitype is returned: Primitives, Series, Panel
@@ -183,7 +189,6 @@ class STLBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -422,7 +427,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     Parameters
     ----------
     n_series : int, optional
-        The number of bootstraped time series that will be generated, by default 10
+        The number of bootstrapped time series that will be generated, by default 10
     block_length : int, optional
         The length of the block in the MBB method, by default None.
         If not provided, the following heuristic is used, the block length will the

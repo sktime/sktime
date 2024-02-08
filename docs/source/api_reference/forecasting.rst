@@ -51,6 +51,8 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     Permute
     HierarchyEnsembleForecaster
     FhPlexForecaster
+    IgnoreX
+    FallbackForecaster
 
 Reduction
 ---------
@@ -72,6 +74,7 @@ Use ``make_reduction`` for easy specification.
 
     DirectTabularRegressionForecaster
     DirectTimeSeriesRegressionForecaster
+    DirectReductionForecaster
     MultioutputTabularRegressionForecaster
     MultioutputTimeSeriesRegressionForecaster
     RecursiveTabularRegressionForecaster
@@ -150,6 +153,7 @@ Trend forecasters
     PolynomialTrendForecaster
     STLForecaster
     CurveFitForecaster
+    ProphetPiecewiseLinearTrendForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
@@ -228,6 +232,7 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
     :template: class.rst
 
     ARIMA
+    StatsModelsARIMA
 
 .. currentmodule:: sktime.forecasting.sarimax
 
@@ -255,6 +260,8 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
 Auto-ARIMA models
 ~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.arima
 
 .. autosummary::
     :toctree: auto_generated/
@@ -287,6 +294,14 @@ ARCH models
 Structural time series models
 -----------------------------
 
+.. currentmodule:: sktime.forecasting.ardl
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARDL
+
 .. currentmodule:: sktime.forecasting.bats
 
 .. autosummary::
@@ -302,6 +317,14 @@ Structural time series models
     :template: class.rst
 
     TBATS
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastAutoTBATS
 
 .. currentmodule:: sktime.forecasting.fbprophet
 

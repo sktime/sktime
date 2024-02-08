@@ -93,13 +93,18 @@ class AutoREG(_StatsModelsAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jonathanbechtel", "mgazian000", "CTFallon"],
+        "maintainers": ["jonathanbechtel", "mgazian000", "CTFallon"],
+        "python_dependencies": "statsmodels>=0.13.0",
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
-        "python_version": None,
-        "python_dependencies": "statsmodels>=0.13.0",
     }
 
     def __init__(

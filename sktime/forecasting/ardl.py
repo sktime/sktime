@@ -193,6 +193,13 @@ class ARDL(_StatsModelsAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "kcc-lion",
+        "maintainers": "kcc-lion",
+        "python_dependencies": "statsmodels>=0.13.0",
+        # estimator type
+        # --------------
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -202,8 +209,6 @@ class ARDL(_StatsModelsAdapter):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
-        "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": "statsmodels>=0.13.0",
     }
 
     def __init__(

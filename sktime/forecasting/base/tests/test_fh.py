@@ -319,9 +319,18 @@ def test_get_duration(n_timepoints, index_type):
             _make_index(n_timepoints, index_type)
 
 
-FIXED_FREQUENCY_STRINGS = ["10T", "H", "D", "2D"]
+FIXED_FREQUENCY_STRINGS = ["10min", "H", "D", "2D"]
 NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
 FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
+
+
+def _get_expected_freqstr(freqstr):
+    # special case for 10min, T is being deprecated and replaced by min
+    if freqstr == "10min":
+        fh_freqstr_expected = "10T"
+    else:
+        fh_freqstr_expected = freqstr
+    return fh_freqstr_expected
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -332,7 +341,7 @@ def test_to_absolute_freq(freqstr):
     fh = ForecastingHorizon([1, 2, 3])
 
     abs_fh = fh.to_absolute(cutoff)
-    assert abs_fh._values.freqstr == freqstr
+    assert abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -346,7 +355,8 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
 
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
-    assert converted_abs_fh._values.freqstr == freqstr
+    fh_freqstr = converted_abs_fh._values.freqstr
+    assert fh_freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
@@ -363,7 +373,8 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
 
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
-    assert converted_abs_fh._values.freqstr == freqstr
+
+    assert converted_abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -774,3 +785,14 @@ def test_fh_expected_pred():
         [("a", 3, 6), ("a", 3, 7), ("b", 5, 7), ("a", 3, 8), ("b", 5, 8), ("b", 5, 9)]
     )
     assert y_pred_idx.equals(y_pred_idx_expected)
+
+
+def test_tz_preserved():
+    """Test that time zone information is preserved in to_absolute.
+
+    Failure case in issue #5584.
+    """
+    cutoff = pd.Timestamp("2020-01-01", tz="utc")
+    fh_absolute = ForecastingHorizon(range(100), freq="h").to_absolute(cutoff)
+
+    assert fh_absolute[0].tz == cutoff.tz

@@ -152,12 +152,18 @@ class ARCH(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Vasudeva-bit",
+        "maintainers": "Vasudeva-bit",
+        "python_dependencies": "arch",
+        # estimator type
+        # --------------
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "python_dependencies": "arch",
         "capability:pred_int": True,
         "ignores-exogeneous-X": True,
     }
@@ -251,6 +257,7 @@ class ARCH(BaseForecaster):
         if fh:
             self._horizon = fh
 
+        y_name = y.name
         self._forecaster = _ARCH(
             y=y,
             x=X,
@@ -277,6 +284,7 @@ class ARCH(BaseForecaster):
             options=self.options,
             backcast=self.backcast,
         )
+        y.name = y_name
         return self
 
     def _get_arch_result_object(self, fh=None, X=None):
@@ -344,7 +352,7 @@ class ARCH(BaseForecaster):
         y_pred = pd.Series(
             ArchResultObject.mean.values[-1],
             index=full_range,
-            name=str(self._y.name),
+            name=self._y.name,
         )
         y_pred = y_pred.loc[abs_idx.to_pandas()]
         y_pred.index = self._horizon.to_absolute_index(self.cutoff)
@@ -398,11 +406,15 @@ class ARCH(BaseForecaster):
             upper_int = mean_forecast + (z_critical * std_err)
             lower_df = pd.DataFrame(
                 lower_int,
-                columns=[y_col_name + " " + str(alpha) + " " + "lower"],
+                columns=[
+                    y_col_name if y_col_name else "0" + " " + str(alpha) + " " + "lower"
+                ],
             )
             upper_df = pd.DataFrame(
                 upper_int,
-                columns=[y_col_name + " " + str(alpha) + " " + "upper"],
+                columns=[
+                    y_col_name if y_col_name else "0" + " " + str(alpha) + " " + "upper"
+                ],
             )
             df_list.append(pd.concat((lower_df, upper_df), axis=1))
         concat_df = pd.concat(df_list, axis=1)
@@ -410,7 +422,7 @@ class ARCH(BaseForecaster):
             OrderedDict.fromkeys(
                 [
                     col_df
-                    for col in y_col_name
+                    for col in (y_col_name if y_col_name else "0")
                     for col_df in concat_df.columns
                     if col in col_df
                 ]
@@ -425,7 +437,7 @@ class ARCH(BaseForecaster):
         final_columns = list(
             itertools.product(
                 *[
-                    [y_col_name],
+                    [y_col_name if y_col_name else 0],
                     coverage,
                     df.columns.get_level_values(2).unique(),
                 ]

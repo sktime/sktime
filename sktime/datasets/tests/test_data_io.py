@@ -84,6 +84,16 @@ def test_load_UCR_UEA_dataset():
     assert X.shape == (42, 1) and y.shape == (42,)
 
 
+def test_load_UCR_UEA_local():
+    """Tests load_UCR_UEA_dataset looks for local file if extract_path is set.
+
+    A FileNotFoundError indicates the function looked for the file and everything up
+    to that point went fine.
+    """
+    with pytest.raises(FileNotFoundError):
+        load_UCR_UEA_dataset(name="UnitTest", extract_path=" ")
+
+
 _CHECKS = {
     "uschange": {
         "columns": ["Income", "Production", "Savings", "Unemployment"],
