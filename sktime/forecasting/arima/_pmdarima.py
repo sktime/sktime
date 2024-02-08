@@ -248,6 +248,7 @@ class AutoARIMA(_PmdArimaAdapter):
     See Also
     --------
     ARIMA
+    StatsForecastAutoARIMA
 
     References
     ----------

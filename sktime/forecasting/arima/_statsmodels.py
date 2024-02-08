@@ -137,13 +137,14 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     See Also
     --------
     ARIMA
+    SARIMAX
     AutoARIMA
     StatsForecastAutoARIMA
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.statsmodels_arima import StatsModelsARIMA
+    >>> from sktime.forecasting.arima import StatsModelsARIMA
     >>> y = load_airline()
     >>> forecaster = StatsModelsARIMA(order=(0, 0, 12))  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
