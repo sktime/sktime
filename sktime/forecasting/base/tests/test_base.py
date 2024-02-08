@@ -1,7 +1,8 @@
 """Testing advanced functionality of the base class."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "ciaran-g"]
 
 from functools import reduce
 from operator import mul
@@ -18,6 +19,7 @@ from sktime.forecasting.compose import YfromX
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.var import VAR
+from sktime.split import temporal_train_test_split
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
@@ -478,3 +480,40 @@ def test_remember_data():
 
     assert f._X is not None
     assert f._y is not None
+
+
+def test_panel_with_inner_freq():
+    """Test that panel data with inner frequency set returns the correct predictions."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    ind = pd.date_range(
+        start="1960-01-01", periods=len(y.index), freq="H", name="datetime"
+    )
+    y = pd.DataFrame(y.values, index=ind, columns=["passengers"])
+
+    y_pan = y.set_index([y.index.hour.rename("hour"), y.index]).sort_index()
+    assert y_pan.loc[0].index.freq == pd.Timedelta("1D"), "Expected daily frequency"
+
+    fh = [1, 2]
+    y_train, y_test = temporal_train_test_split(y_pan, test_size=len(fh))
+
+    # fit update predict
+    forecaster = NaiveForecaster()
+    forecaster.fit(y_train)
+    forecaster.update(y_test)
+    y_pred_update = forecaster.predict(fh=fh)
+
+    # fit no update
+    forecaster.fit(y_pan)
+    y_pred = forecaster.predict(fh=fh)
+    assert y_pred.equals(y_pred_update), "Expected same predictions after update."
+
+    # test predictions against no panel case (simple here :))
+    forecaster = NaiveForecaster(sp=24)
+    forecaster.fit(y)
+    fh = np.arange(1, 49)
+    y_pred_simple = forecaster.predict(fh=fh)
+
+    msg = "Panel not returning same predictions as simple case."
+    assert y_pred.droplevel("hour").sort_index().equals(y_pred_simple), msg

@@ -432,8 +432,8 @@ class BaseForecaster(BaseEstimator):
         else:
             # otherwise we call the vectorized version of predict
             # this is required in case fh is not passed in fit and has to be set here.
-            # note each forecaster can have the same relative fh but different cutoffs
-            fh = self._check_fh(fh, non_vectorized_check=False)
+            # the vectorized check doesnt use the base cutoff in checking fh
+            fh = self._check_fh(fh, is_vectorized_check=True)
             y_pred = self._vectorize("predict", X=X_inner, fh=fh)
 
         # convert to output mtype, identical with last y mtype seen
@@ -602,7 +602,7 @@ class BaseForecaster(BaseEstimator):
             quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
         else:
             # otherwise we call the vectorized version of predict_quantiles
-            fh = self._check_fh(fh, non_vectorized_check=False)
+            fh = self._check_fh(fh, is_vectorized_check=True)
             quantiles = self._vectorize(
                 "predict_quantiles",
                 fh=fh,
@@ -675,7 +675,7 @@ class BaseForecaster(BaseEstimator):
             fh = self._check_fh(fh)
             pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
         else:
-            fh = self._check_fh(fh, non_vectorized_check=False)
+            fh = self._check_fh(fh, is_vectorized_check=True)
             # otherwise we call the vectorized version of predict_interval
             pred_int = self._vectorize(
                 "predict_interval",
@@ -751,7 +751,7 @@ class BaseForecaster(BaseEstimator):
             pred_var = self._predict_var(fh=fh, X=X_inner, cov=cov)
         else:
             # otherwise we call the vectorized version of predict_interval
-            fh = self._check_fh(fh, non_vectorized_check=False)
+            fh = self._check_fh(fh, is_vectorized_check=True)
             pred_var = self._vectorize("predict_var", fh=fh, X=X_inner, cov=cov)
 
         return pred_var
@@ -1075,7 +1075,6 @@ class BaseForecaster(BaseEstimator):
             return self.predict(fh=fh, X=X)
 
         self.check_is_fitted()
-        fh = self._check_fh(fh)
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -1086,10 +1085,12 @@ class BaseForecaster(BaseEstimator):
 
         # checks and conversions complete, pass to inner update_predict_single
         if not self._is_vectorized:
+            fh = self._check_fh(fh)
             y_pred = self._update_predict_single(
                 y=y_inner, X=X_inner, fh=fh, update_params=update_params
             )
         else:
+            fh = self._check_fh(fh, is_vectorized_check=True)
             y_pred = self._vectorize(
                 "update_predict_single",
                 y=y_inner,
@@ -1672,7 +1673,7 @@ class BaseForecaster(BaseEstimator):
 
         return self._fh
 
-    def _check_fh(self, fh, non_vectorized_check=True):
+    def _check_fh(self, fh, is_vectorized_check=False):
         """Check, set and update the forecasting horizon.
 
         Called from all methods where fh can be passed:
@@ -1743,8 +1744,12 @@ class BaseForecaster(BaseEstimator):
         # B. fh is passed
         else:
             # If fh is passed, coerce to ForecastingHorizon and validate (all cases)
-            # if vectorized do this in the inner loop (check individual forecaters)
-            if non_vectorized_check:
+
+            # if vectorized only check freq against the inner loop (check each fcstr)
+            # since cutoff and frequency can be different, but the same relative fh
+            if is_vectorized_check:
+                fh = check_fh(fh=fh)
+            else:
                 fh = check_fh(fh=fh, freq=self._cutoff)
 
             # fh is written to self if one of the following is true
