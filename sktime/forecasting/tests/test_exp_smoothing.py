@@ -72,7 +72,7 @@ def check_panel_with_freq():
     )
     y = pd.DataFrame(y.values, index=ind, columns=["passengers"])
     y = y.set_index([y.index.hour.rename("hour"), y.index]).sort_index()
-    assert y.loc[0].index.freq == pd.Timedelta("1D"), "Expected daily frequency"
+    assert y.loc[0].index.freq == pd.Timedelta("24H"), "Expected 24H frequency"
 
     fh = [1, 2]
     y_train, y_test = temporal_train_test_split(y, test_size=len(fh))
