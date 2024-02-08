@@ -294,6 +294,14 @@ ARCH models
 Structural time series models
 -----------------------------
 
+.. currentmodule:: sktime.forecasting.ardl
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARDL
+
 .. currentmodule:: sktime.forecasting.bats
 
 .. autosummary::
