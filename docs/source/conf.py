@@ -336,7 +336,7 @@ def _make_estimator_overview(app):
         return not input_string.startswith("_")
 
     # creates dataframe as df
-    COLNAMES = ["Class Name", "Estimator Type", "Authors"]
+    COLNAMES = ["Class Name", "Estimator Type", "Authors", "Maintainers"]
 
     records = []
 
@@ -344,6 +344,8 @@ def _make_estimator_overview(app):
         algorithm_type = modclass.get_class_tag("object_type", "object")
         author_tag = modclass.get_class_tag("authors", "sktime developers")
         author_info = _process_author_info(author_tag)
+        maintainer_tag = modclass.get_class_tag("maintainers", "sktime developers")
+        maintainer_info = _process_author_info(maintainer_tag)
 
         # includes part of class string
         modpath = str(modclass)[8:-2]
@@ -360,7 +362,8 @@ def _make_estimator_overview(app):
             + "</a>"
         )
 
-        record = pd.DataFrame([modname, algorithm_type, author_info], index=COLNAMES).T
+        record_cells = [modname, algorithm_type, author_info, maintainer_info]
+        record = pd.DataFrame(record_cells, index=COLNAMES).T
         records += [record]
 
     df = pd.concat(records, ignore_index=True)
