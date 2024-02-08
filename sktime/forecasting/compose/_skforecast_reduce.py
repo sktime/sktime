@@ -140,9 +140,10 @@ class SkforecastAutoreg(BaseForecaster):
     def _create_forecaster(self: "SkforecastAutoreg"):
         """Create ``skforecast.ForecasterAutoreg.ForecasterAutoreg`` model."""
         from skforecast.ForecasterAutoreg import ForecasterAutoreg
+        from sklearn import clone
 
         return ForecasterAutoreg(
-            self.regressor,
+            clone(self.regressor),
             self.lags,
             transformer_y=self.transformer_y,
             transformer_exog=self.transformer_exog,
@@ -196,7 +197,7 @@ class SkforecastAutoreg(BaseForecaster):
     def _get_horizon_details(
         self: "SkforecastAutoreg", fh: typing.Optional[ForecastingHorizon]
     ):
-        if fh.to_in_sample(self.cutoff):
+        if not fh.is_all_out_of_sample(self.cutoff):
             raise ValueError(
                 f"{self.__class__.__name__} does not support in-sample predictions."
             )
