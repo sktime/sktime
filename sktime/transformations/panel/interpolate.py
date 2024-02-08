@@ -100,5 +100,6 @@ class TSInterpolator(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        params = {"length": 10}
-        return params
+        params1 = {"length": 10}
+        params2 = {"length": 5}
+        return [params1, params2]
