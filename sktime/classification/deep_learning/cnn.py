@@ -35,7 +35,7 @@ class CNNClassifier(BaseDeepClassifier):
     loss            : string, default="categorical_crossentropy"
         fit parameter for the keras model
     metrics         : list of strings, default=["accuracy"],
-    activation      : string or a tf callable, default="sigmoid"
+    activation      : string or a tf callable, default="softmax"
         Activation function used in the output linear layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
