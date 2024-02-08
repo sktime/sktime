@@ -77,6 +77,7 @@ class BATS(_TbatsAdapter):
     See Also
     --------
     TBATS
+    StatsForecastAutoTBATS
 
     References
     ----------
