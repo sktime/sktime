@@ -598,10 +598,18 @@ class Pipeline(BaseEstimator):
     def _initiate_call(self, X, y, kwargs):
         if not self._assembled:
             self._assemble_steps()
-        for step in self.assembled_steps.values():
-            step.reset()
-        self.assembled_steps["X"].buffer = X
-        self.assembled_steps["y"].buffer = y
+        for key, step in self.assembled_steps.items():
+            # Empty the buffer of all steps except for the dummy
+            # steps X and y (input steps)
+            if key in ["X", "y"]:
+                step.reset(reset_buffer=False)
+            else:
+                step.reset()
+        # Overwrite the buffer of X and y if data are provided
+        if X is not None:
+            self.assembled_steps["X"].buffer = X
+        if y is not None:
+            self.assembled_steps["y"].buffer = y
         self.kwargs.update(kwargs)
 
     def _method_allowed(self, method):
