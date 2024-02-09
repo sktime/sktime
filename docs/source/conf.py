@@ -327,7 +327,7 @@ def _make_estimator_overview(app):
         if isinstance(author_info, str) and author_info.lower() == "sktime developers":
             link = (
                 '<a href="https://www.sktime.net/en/stable/about/team.html">'
-                'sktime developers</a>'
+                "sktime developers</a>"
             )
             return link
 
