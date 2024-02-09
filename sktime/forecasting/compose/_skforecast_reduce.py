@@ -216,7 +216,7 @@ class SkforecastAutoreg(BaseForecaster):
         self: "SkforecastAutoreg", fh: typing.Optional[ForecastingHorizon]
     ):
         if not fh.is_all_out_of_sample(self.cutoff):
-            raise ValueError(
+            raise NotImplementedError(
                 f"{self.__class__.__name__} does not support in-sample predictions."
             )
 
