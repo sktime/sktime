@@ -324,13 +324,19 @@ def _make_estimator_overview(app):
         Multiple author names will be separated by a comma,
         with the final name always preceded by "&".
         """
-        if isinstance(author_info, list):
-            if len(author_info) > 1:
-                return ", ".join(author_info[:-1]) + " & " + author_info[-1]
-            else:
-                return author_info[0]
+        if not isinstance(author_info, list):
+            author_info = [author_info]
+
+        def _add_link(github_id_str):
+            link = '<a href="https://www.github.com/{0}">{0}</a>'.format(github_id_str)
+            return link
+
+        author_info = [_add_link(author) for author in author_info]
+
+        if len(author_info) > 1:
+            return ", ".join(author_info[:-1]) + " & " + author_info[-1]
         else:
-            return author_info
+            return author_info[0]
 
     def _does_not_start_with_underscore(input_string):
         return not input_string.startswith("_")
