@@ -573,6 +573,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.1.0"],
     }
 
     def __init__(self, season_length: int = 1, model: str = "Z"):
