@@ -42,6 +42,7 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.5.0"],
     }
 
     def __init__(
@@ -105,6 +106,7 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.5.0"],
     }
 
     def __init__(
