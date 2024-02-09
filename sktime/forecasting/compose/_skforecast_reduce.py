@@ -21,8 +21,9 @@ class SkforecastAutoreg(BaseForecaster):
         Lags used as predictors. Index starts at 1, so lag 1 is equal to t-1.
 
             - ``int``: include lags from 1 to ``lags`` (included).
-            - ``list``, `1d numpy ndarray` or `range`: include only lags present in
+            - ``list``, ``1d numpy ndarray`` or ``range``: include only lags present in
             ``lags``, all elements must be int.
+
     transformer_y : object transformer (preprocessor), default ``None``
         An instance of a transformer (preprocessor) compatible with the scikit-learn
         preprocessing API with methods: ``fit``, ``transform``, ``fit_transform`` and
@@ -47,7 +48,7 @@ class SkforecastAutoreg(BaseForecaster):
         in the series. Differentiation is reversed in the output of ``predict()`` and
         ``predict_interval()``.
     fit_kwargs : dict, default ``None``
-        Additional arguments to be passed to the `fit` method of the regressor.
+        Additional arguments to be passed to the ``fit`` method of the regressor.
 
     References
     ----------
@@ -103,6 +104,8 @@ class SkforecastAutoreg(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["yarnabrina"],
+        "maintainers": ["yarnabrina"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
@@ -136,17 +139,32 @@ class SkforecastAutoreg(BaseForecaster):
         super().__init__()
 
         self._forecaster = None
+        self._transformer_y = None
+        self._transformer_exog = None
+
+        self._clone_estimators()
+
+    def _clone_estimators(self: "SkforecastAutoreg"):
+        """Clone the regressor and transformers."""
+        from sklearn.base import clone
+
+        self._regressor = clone(self.regressor)
+
+        if self.transformer_exog:
+            self._transformer_y = clone(self.transformer_y)
+
+        if self.transformer_exog:
+            self._transformer_exog = clone(self.transformer_exog)
 
     def _create_forecaster(self: "SkforecastAutoreg"):
         """Create ``skforecast.ForecasterAutoreg.ForecasterAutoreg`` model."""
         from skforecast.ForecasterAutoreg import ForecasterAutoreg
-        from sklearn import clone
 
         return ForecasterAutoreg(
-            clone(self.regressor),
+            self._regressor,
             self.lags,
-            transformer_y=self.transformer_y,
-            transformer_exog=self.transformer_exog,
+            transformer_y=self._transformer_y,
+            transformer_exog=self._transformer_exog,
             weight_func=self.weight_func,
             differentiation=self.differentiation,
             fit_kwargs=self.fit_kwargs,
