@@ -324,6 +324,9 @@ def _make_estimator_overview(app):
         Multiple author names will be separated by a comma,
         with the final name always preceded by "&".
         """
+        if isinstance(author_info, str) and author_info.lower() == "sktime developers":
+            return "sktime developers"
+
         if not isinstance(author_info, list):
             author_info = [author_info]
 
