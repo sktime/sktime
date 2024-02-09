@@ -139,16 +139,32 @@ class SkforecastAutoreg(BaseForecaster):
         super().__init__()
 
         self._forecaster = None
+        self._transformer_y = None
+        self._transformer_exog = None
+
+        self._clone_estimators()
+
+    def _clone_estimators(self: "SkforecastAutoreg"):
+        """Clone the regressor and transformers."""
+        from sklearn.base import clone
+
+        self._regressor = clone(self.regressor)
+
+        if self.transformer_exog:
+            self._transformer_y = clone(self.transformer_y)
+
+        if self.transformer_exog:
+            self._transformer_exog = clone(self.transformer_exog)
 
     def _create_forecaster(self: "SkforecastAutoreg"):
         """Create ``skforecast.ForecasterAutoreg.ForecasterAutoreg`` model."""
         from skforecast.ForecasterAutoreg import ForecasterAutoreg
 
         return ForecasterAutoreg(
-            self.regressor,
+            self._regressor,
             self.lags,
-            transformer_y=self.transformer_y,
-            transformer_exog=self.transformer_exog,
+            transformer_y=self._transformer_y,
+            transformer_exog=self._transformer_exog,
             weight_func=self.weight_func,
             differentiation=self.differentiation,
             fit_kwargs=self.fit_kwargs,
