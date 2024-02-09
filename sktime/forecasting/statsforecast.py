@@ -459,6 +459,8 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         Controlling state-space-equations.
     damped : bool
         A parameter that 'dampens' the trend.
+    phi : float, optional (default=None)
+        Smoothing parameter for trend damping. Only used when `damped=True`.
 
     References
     ----------
@@ -486,11 +488,16 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     }
 
     def __init__(
-        self, season_length: int = 1, model: str = "ZZZ", damped: Optional[bool] = None
+        self,
+        season_length: int = 1,
+        model: str = "ZZZ",
+        damped: Optional[bool] = None,
+        phi: Optional[float] = None,
     ):
         self.season_length = season_length
         self.model = model
         self.damped = damped
+        self.phi = phi
 
         super().__init__()
 
@@ -505,6 +512,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
             "season_length": self.season_length,
             "model": self.model,
             "damped": self.damped,
+            "phi": self.phi,
         }
 
     @classmethod
