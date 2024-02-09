@@ -362,8 +362,8 @@ def _make_estimator_overview(app):
             + "</a>"
         )
 
-        record_cells = [modname, algorithm_type, author_info, maintainer_info]
-        record = pd.DataFrame(record_cells, index=COLNAMES).T
+        record_cells = [[modname, algorithm_type, author_info, maintainer_info]]
+        record = pd.DataFrame(data=record_cells, columns=COLNAMES)
         records += [record]
 
     df = pd.concat(records, ignore_index=True)
