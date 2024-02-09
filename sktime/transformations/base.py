@@ -1238,7 +1238,7 @@ class BaseTransformer(BaseEstimator):
                     Xtd = {k: v for k, v in Xt_msg.items() if k in ALLOWED_OUT_MTYPES}
                     msg_start = (
                         f"Type checking error in output of _transform of "
-                        "{self.__class__.__name__}, output"
+                        f"{self.__class__.__name__}, output"
                     )
                     msg_out = (
                         f"_transform output of {type(self)} does not comply "
