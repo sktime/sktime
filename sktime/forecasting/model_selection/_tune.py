@@ -76,18 +76,9 @@ class BaseGridSearch(_DelegatedForecaster):
 
         super().__init__()
 
-        tags_to_clone = [
-            "requires-fh-in-fit",
-            "capability:pred_int",
-            "capability:pred_int:insample",
-            "capability:insample",
-            "ignores-exogeneous-X",
-            "handles-missing-data",
-            "y_inner_mtype",
-            "X_inner_mtype",
-            "X-y-must-have-same-index",
-            "enforce_index_type",
-        ]
+        self._set_delegated_tags(forecaster)
+
+        tags_to_clone = ["y_inner_mtype", "X_inner_mtype"]
         self.clone_tags(forecaster, tags_to_clone)
         self._extend_to_all_scitypes("y_inner_mtype")
         self._extend_to_all_scitypes("X_inner_mtype")
