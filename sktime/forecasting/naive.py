@@ -369,9 +369,8 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred = y_pred.iloc[:, 0]
 
         elif strategy == "last" and sp > 1:
-            y_new_mask = pd.DataFrame(index=expected_index, dtype="float64")
-            full_y = pd.concat([_y, y_new_mask])
-            full_y, _ = _make_period_index_df(full_y, freq)
+            y_new_mask = pd.DataFrame(index=expected_index, columns=_y.to_frame().columns, dtype="float64")
+            full_y = _y.combine_first(y_new_mask)
             idx = full_y.index.astype("int64")
             period_len_int = idx[1] - idx[0]
             diff_index = idx[1:] - idx[:-1]
