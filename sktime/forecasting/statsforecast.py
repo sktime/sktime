@@ -798,6 +798,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.2.0"],
     }
 
     def __init__(
