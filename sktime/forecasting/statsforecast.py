@@ -808,18 +808,19 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         stl_kwargs: Optional[Dict] = None,
         pred_int_kwargs: Optional[Dict] = None,
     ):
+        self.season_length = season_length
+        self.trend_forecaster = trend_forecaster
+        self.stl_kwargs = stl_kwargs
+        self.pred_int_kwargs = pred_int_kwargs
+
         super().__init__()
 
         from sklearn.base import clone
 
-        self.trend_forecaster = trend_forecaster
-        self.season_length = season_length
         if trend_forecaster:
             self._trend_forecaster = clone(trend_forecaster)
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
-        self.stl_kwargs = stl_kwargs
-        self.pred_int_kwargs = pred_int_kwargs
 
         # checks if trend_forecaster is already wrapped with
         # StatsForecastBackAdapter
