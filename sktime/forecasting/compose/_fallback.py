@@ -51,9 +51,11 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     nan_predict_policy: str, default='ignore'
         Determines the action to take if NaN values are found in the predictions.
         Available options:
+
         * "ignore"
         * "raise"
         * "warn"
+
         When set to 'raise', this policy treats NaN predictions as errors, prompting the
         FallbackForecaster to sequentially try the next forecaster in the queue. This
         process continues until a NaN-free prediction is obtained or all forecasters
