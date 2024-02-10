@@ -80,37 +80,45 @@ def is_class_changed(cls):
     return is_module_changed(module_str)
 
 
-def get_changed_lines(file_path):
+def get_changed_lines(file_path, only_indented=True):
     """Get changed or added lines from a file.
+
+    Compares the current branch to the origin-main branch.
 
     Parameters
     ----------
     file_path : str
         path to file to get changed lines from
+    only_indented : bool, default=True
+        if True, only indented lines are returned, otherwise all lines are returned;
+        more precisely, only changed/added lines starting with a space are returned
 
     Returns
     -------
-    list of str : changed lines
+    list of str : changed or added lines on current branch
     """
+    cmd = f"git diff remotes/origin/main -- {file_path}"
+
     try:
         # Run 'git diff' command to get the changes in the specified file
-        result = subprocess.run(
-            ["git", "diff", file_path], capture_output=True, text=True, check=True
-        )
+        result = subprocess.check_output(cmd, shell=True, text=True)
+
+        # if only indented lines are requested, add space to start_chars
+        start_chars = "+"
+        if only_indented:
+            start_chars += " "
 
         # Extract the changed or new lines and return as a list of strings
-        diff_output = result.stdout
         changed_lines = [
-            line.strip() for line in diff_output.split("\n") if line.startswith("+ ")
+            line.strip() for line in result.split("\n") if line.startswith(start_chars)
         ]
         # remove first character ('+') from each line
         changed_lines = [line[1:] for line in changed_lines]
 
         return changed_lines
 
-    except subprocess.CalledProcessError as e:
-        # Handle errors, if any
-        raise e
+    except subprocess.CalledProcessError:
+        return []
 
 
 def get_packages_with_changed_specs():
@@ -118,7 +126,7 @@ def get_packages_with_changed_specs():
 
     Returns
     -------
-    list of str : packages with changed or added specs
+    list of str : names of packages with changed or added specs
     """
     from packaging.requirements import Requirement
 
@@ -133,6 +141,10 @@ def get_packages_with_changed_specs():
         else:
             sep = "'"
 
+        splits = line.split(sep)
+        if len(splits) < 2:
+            continue
+
         req = line.split(sep)[1]
 
         # deal with ; python_version >= "3.7" in requirements
@@ -141,5 +153,8 @@ def get_packages_with_changed_specs():
 
         pkg = Requirement(req).name
         packages.append(pkg)
+
+    # make unique
+    packages = list(set(packages))
 
     return packages

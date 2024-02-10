@@ -16,31 +16,36 @@ def run_test_for_class(cls):
 
     1. whether all required soft dependencies are present.
        If not, does not run the test.
-       If yes, runs the test if and only if
-       at least one of conditions 2, 3 below are met.
+       If yes, behaviour depends on ONLY_CHANGED_MODULES setting:
+       if off (False), always runs the test (return True);
+       if on (True), runs test if and only if
+       at least one of conditions 2, 3, 4 below are met.
 
     2. Condition 2:
 
-      * if ONLY_CHANGED_MODULES setting is on, condition 2 is met if and only
-      if the module containing the class/func has changed according to is_class_changed
-      * if ONLY_CHANGED_MODULES if off, condition 2 is always met.
+      If the module containing the class/func has changed according to is_class_changed,
+      or one of the modules containing any parent classes in sktime,
+      then condition 2 is met.
 
     3. Condition 3:
 
-      If the object is an sktime BaseObject, and one of the test classes
+      If the object is an sktime ``BaseObject``, and one of the test classes
       covering the class have changed, then condition 3 is met.
 
     4. Condition 4:
 
-      If the object is an sktime BaseObject, and the package requirements
-      for any of its dependencies have changed in pyproject.toml, condition 4 is met.
+      If the object is an sktime ``BaseObject``, and the package requirements
+      for any of its dependencies have changed in ``pyproject.toml``,
+      condition 4 is met.
 
     cls can also be a list of classes or functions,
-    in this case the test is run if and only if:
+    in this case the test is run if and only if both of the following are True:
 
     * all required soft dependencies are present
-    * if yes, if any of the estimators in the list should be tested by
-      at least one of criteria 2-4 above
+    * if ``ONLY_CHANGED_MODULES`` is True, additionally,
+      if any of the estimators in the list should be tested by
+      at least one of criteria 2-4 above.
+      If ``ONLY_CHANGED_MODULES`` is False, this condition is always True.
 
     Parameters
     ----------
@@ -110,13 +115,15 @@ def run_test_for_class(cls):
         return False
     # otherwise, continue
 
+    # if ONLY_CHANGED_MODULES is off: always True
+    # tests are always run if soft dependencies are present
+    if not ONLY_CHANGED_MODULES:
+        return True
+
     # Condition 2:
-    # if ONLY_CHANGED_MODULES is on, run the test if and only if
     # any of the modules containing any of the classes in the list have changed
-    if ONLY_CHANGED_MODULES:
-        cond2 = any(_is_class_changed_or_sktime_parents(x) for x in cls)
-    else:
-        cond2 = True
+    # or any of the modules containing any parent classes in sktime have changed
+    cond2 = any(_is_class_changed_or_sktime_parents(x) for x in cls)
 
     # Condition 3:
     # if the object is an sktime BaseObject, and one of the test classes

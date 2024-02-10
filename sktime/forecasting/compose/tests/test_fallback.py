@@ -494,3 +494,38 @@ def test_fallbackforecaster_fails_many_simple():
     ]
     names_raised_expected = ["f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8"]
     assert names_raised_actual == names_raised_expected
+
+
+def test_fallbackforecaster_pred_int():
+    """Predict interval works bc all forecasters have them enabled, first forecaster
+    expected
+    """
+    y = make_forecasting_problem(random_state=42)
+    forecaster1 = NaiveForecaster("mean")
+    forecaster2 = NaiveForecaster("last")
+    forecaster = FallbackForecaster(
+        [("naive_mean", forecaster1), ("naive_last", forecaster2)]
+    )
+    fh = [1, 2, 3]
+    forecaster.fit(y, fh=fh)
+    pred_int_actual = forecaster.predict_interval()
+
+    forecaster1.fit(y, fh=fh)
+    pred_int_expected = forecaster1.predict_interval()
+    pd.testing.assert_frame_equal(pred_int_expected, pred_int_actual)
+
+
+def test_fallbackforecaster_pred_int_raises():
+    """Predict int raises because EnsembleForecaster does not have this capability"""
+    y = make_forecasting_problem(random_state=42)
+    forecaster1 = NaiveForecaster("mean")
+    forecaster2 = EnsembleForecaster(
+        [("naive_last", NaiveForecaster("last")), ("poly", PolynomialTrendForecaster())]
+    )
+    forecaster = FallbackForecaster(
+        [("naive_mean", forecaster1), ("ensemble", forecaster2)]
+    )
+    fh = [1, 2, 3]
+    forecaster.fit(y, fh=fh)
+    with pytest.raises(NotImplementedError):
+        forecaster.predict_interval()
