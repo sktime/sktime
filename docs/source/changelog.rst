@@ -50,7 +50,7 @@ Data types, checks, conversions
 
 * in ``check_is_mtype``, the default of ``msg_return_dict`` has now changed to ``"dict"``
 
-Forecastinng tuners
+Forecasting tuners
 ^^^^^^^^^^^^^^^^^^
 
 * in forecasting tuners ``ForecastingGridSearchCV``, ``ForecastingRandomizedSearchCV``,
