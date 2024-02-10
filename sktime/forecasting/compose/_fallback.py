@@ -13,11 +13,11 @@ __all__ = ["FallbackForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.warnings import warn
 
 
-class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
+class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """Forecaster that sequentially tries a list of forecasting models.
 
     Attempts to fit the provided forecasters in the order they are given. If a
@@ -33,7 +33,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         These are "blueprint" transformers resp forecasters,
         forecaster states do not change when `fit` is called
 
-    warn : bool, default=False
+    verbose : bool, default=False
         If True, raises warnings when a forecaster fails to fit or predict.
 
     Attributes
@@ -85,7 +85,6 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
     }
-
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
@@ -111,6 +110,10 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         self.forecasters_ = self._check_estimators(forecasters, "forecasters")
 
         self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+        self._anytagis_then_set("capability:pred_int", False, True, self._forecasters)
+
+    def _get_delegate(self):
+        return self.current_forecaster_
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecasters in the given order until one succeeds.

@@ -57,14 +57,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         """
         from sktime.forecasting.base import ForecastingHorizon
 
-        # save fh and y for prediction later
-        if fh.is_relative:
-            self._fh = fh
-        else:
-            fh = fh.to_relative(self.cutoff)
-            self._fh = fh
-
-        self._y = y
+        fh = fh.to_relative(self.cutoff)
 
         if type(fh) is ForecastingHorizon:
             self.network = self._build_network(fh._values[-1])
@@ -122,6 +115,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
 
         if fh is None:
             fh = self._fh
+        fh = fh.to_relative(self.cutoff)
 
         if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
             raise ValueError(
@@ -166,7 +160,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
             dataset = PyTorchTrainDataset(
                 y=y,
                 seq_len=self.network.seq_len,
-                fh=self._fh._values[-1],
+                fh=self._fh.to_relative(self.cutoff)._values[-1],
             )
 
         return DataLoader(

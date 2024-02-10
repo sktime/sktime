@@ -1730,17 +1730,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self.steps_arg = steps_arg
 
         super().__init__()
-        tags_to_clone = [
-            "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
-            "capability:insample",
-            "capability:pred_int",  # can the estimator produce prediction intervals?
-            "capability:pred_int:insample",
-            "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "enforce_index_type",  # index type that needs to be enforced in X/y
-            "fit_is_empty",
-        ]
 
-        self.clone_tags(self.estimator, tags_to_clone)
+        self._set_delegated_tags(estimator)
 
         self._set_permuted_estimator()
 
