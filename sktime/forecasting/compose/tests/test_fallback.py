@@ -625,3 +625,20 @@ def test_fallbackforecaster_warns():
     forecaster.fit(y=y, fh=[1, 2, 3])
     with pytest.warns(UserWarning):
         forecaster.predict()
+
+
+def test_fallbackforecaster_raises():
+    """All forecasters fail when last forecaster predicts nan, raises RuntimeError."""
+    y = make_forecasting_problem(random_state=42)
+    forecaster1 = DummyForecaster(raise_at="fit")
+    forecaster2 = DummyForecaster(raise_at=None, predict_nans=True)
+    forecaster = FallbackForecaster(
+        [
+            ("forecaster1_fails_fit", forecaster1),
+            ("forecaster2_pred_nans", forecaster2),
+        ],
+        nan_predict_policy="raise",
+    )
+    forecaster.fit(y=y, fh=[1, 2, 3])
+    with pytest.raises(RuntimeError):
+        forecaster.predict()

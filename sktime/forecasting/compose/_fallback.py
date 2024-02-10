@@ -26,6 +26,7 @@ def _check_nan_policy_option(nan_predict_policy):
             f"{nan_predict_policy_options} but instead got "
             f"{nan_predict_policy}"
         )
+    return nan_predict_policy
 
 
 class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
@@ -48,11 +49,20 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         If True, raises warnings when a forecaster fails to fit or predict.
 
     nan_predict_policy: str, default='ignore'
-        Determines the action to take if NaN values are found in the predictions. If set
-         to 'raise', the method raises a ValueError when NaN values are detected in the
-         predictions. If set to 'warn', a warning is issued instead of raising an
-         exception. The default value 'ignore' means that the presence of NaN values in
-         predictions will not trigger any warning or error.
+        Determines the action to take if NaN values are found in the predictions.
+        Available options:
+        * "ignore"
+        * "raise"
+        * "warn"
+        When set to 'raise', this policy treats NaN predictions as errors, prompting the
+        FallbackForecaster to sequentially try the next forecaster in the queue. This
+        process continues until a NaN-free prediction is obtained or all forecasters
+        have been attempted, in which case the operation fails. Conversely, the 'warn'
+        option alerts to the presence of NaNs in predictions with a warning, but does
+        not alter the forecasting sequence. The default 'ignore' mode takes no action,
+        permitting the forecasting process to proceed uninterrupted and without issuing
+        warnings or errors, regardless of NaN occurrences in predictions.
+
 
     Attributes
     ----------
@@ -121,9 +131,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         self.current_forecaster_ = None
         self.current_name_ = None
         self.verbose = verbose
-
-        _check_nan_policy_option(nan_predict_policy)
-        self.nan_predict_policy = nan_predict_policy
+        self.nan_predict_policy = _check_nan_policy_option(nan_predict_policy)
 
         self._forecasters = self._check_estimators(
             forecasters, "forecasters", clone_ests=False
@@ -135,8 +143,8 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
 
     def _validate_y_pred(self, y_pred):
         if self.nan_predict_policy in ("warn", "raise"):
-            num_nans = y_pred.isna().sum()
-            if num_nans > 0:
+            has_nans = y_pred.isnull().any()
+            if has_nans:
                 msg = f"Null value presents in predict: {y_pred}"
                 if self.nan_predict_policy == "raise":
                     raise ValueError(msg)
