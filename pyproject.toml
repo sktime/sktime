@@ -92,7 +92,7 @@ all_extras = [
   "kotsu>=0.3.1",
   "matplotlib>=3.3.2",
   "mne",
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53; python_version < "3.12"',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'prophet>=1.1; python_version < "3.12"',
   "pycatch22<0.4.4",
@@ -128,7 +128,7 @@ all_extras_pandas2 = [
   "kotsu>=0.3.1",
   "matplotlib>=3.3.2",
   "mne",
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53; python_version < "3.12"',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'prophet>=1.1; python_version < "3.12"',
   "pycatch22<0.4.4",
@@ -159,21 +159,21 @@ all_extras_pandas2 = [
 #
 alignment = [
   "dtw-python<1.4,>=1.3",
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53; python_version < "3.12"',
 ]
 annotation = [
   "hmmlearn<0.4,>=0.2.7",
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53; python_version < "3.12"',
   'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53; python_version < "3.12"',
   'tensorflow<=2.14,>=2; python_version < "3.12"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
 ]
 forecasting = [
@@ -194,7 +194,7 @@ param_est = [
   "statsmodels<0.15,>=0.12.1",
 ]
 regression = [
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53; python_version < "3.12"',
   'tensorflow<=2.14,>=2; python_version < "3.12"',
 ]
 transformations = [
@@ -202,7 +202,7 @@ transformations = [
   "filterpy<1.5,>=1.4.5",
   "holidays>=0.29,<0.43",
   "mne>=1.5,<1.7",
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53; python_version < "3.12"',
   "pycatch22>=0.4,<0.4.4",
   "pykalman-bardo<0.10,>=0.9.7",
   "statsmodels<0.15,>=0.12.1",
@@ -257,7 +257,7 @@ binder = [
 cython_extras = [
   "mrseql",
   'mrsqm; python_version < "3.11"',
-  "numba<0.59",
+  "numba<0.60",
 ]
 dl = [
   'tensorflow<=2.14,>=2; python_version < "3.12"',
