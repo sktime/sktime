@@ -4,7 +4,7 @@ from abc import ABC
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
