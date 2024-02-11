@@ -1669,7 +1669,7 @@ class ForecastX(BaseForecaster):
         params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
 
         params3 = {
-            "forecaster_y": fy,
+            "forecaster_X": fx,
             "fit_behaviour": "use_forecast",
             "forecaster_X_exogeneous": "complement",
         }
