@@ -89,6 +89,12 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     deterministic : bool, optional (default=False)
         Whether to use a deterministic or stochastic cINN. Note, deterministic
         should only used for testing.
+    patience : int, optional (default=5)
+        Number of epochs to wait before stopping the training.
+    delta : float, optional (default=0.0001)
+        Minimum change in the validation loss to consider as an improvement.
+    val_split : float, optional (default=0.2)
+        Fraction of the data to use for validation.
 
     References
     ----------
@@ -143,6 +149,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         lag_feature="mean",
         patience=5,
         delta=0.0001,
+        val_split=0.2,
     ):
         self.n_coupling_layers = n_coupling_layers
         self.hidden_dim_size = hidden_dim_size
@@ -167,6 +174,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self.lag_feature = lag_feature
         self.patience = patience
         self.delta = delta
+        self.val_split = val_split
         super().__init__(num_epochs, batch_size, lr=lr)
 
     def _fit(self, y, fh, X=None):
@@ -217,18 +225,24 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         )
         self.fourier_features.fit(y)
 
-        split_index = int(len(y) * 0.8)
+        split_index = int(len(y) * (1 - self.val_split))
 
-        dataset = self._prepare_data(y[:split_index], X[:split_index])
+        dataset = self._prepare_data(
+            y[:split_index], X[:split_index] if X is not None else None
+        )
         data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
 
         z = np.random.normal(0, 1, (len(y[split_index:]), self.sample_dim))
         z = pd.DataFrame(z, index=y[split_index:].index)
 
-        val_dataset_nll = self._prepare_data(y[split_index:], X[split_index:])
-        val_data_loader_nll = DataLoader(
-            val_dataset_nll, shuffle=False, batch_size=len(val_dataset_nll)
-        )
+        val_data_loader_nll = None
+        if self.val_split > 0:
+            val_dataset_nll = self._prepare_data(
+                y[split_index:], X[:split_index] if X is not None else None
+            )
+            val_data_loader_nll = DataLoader(
+                val_dataset_nll, shuffle=False, batch_size=len(val_dataset_nll)
+            )
 
         self.network = self._build_network(None)
 
@@ -244,7 +258,6 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
                 epoch,
                 data_loader,
                 val_data_loader_nll,
-                y[split_index:],
             )
 
         self.network = early_stopper._best_model
@@ -263,14 +276,16 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             num_coupling_layers=self.n_coupling_layers,
         ).build()
 
-    def _run_epoch(self, epoch, data_loader, val_data_loader_nll, val_y):
+    def _run_epoch(self, epoch, data_loader, val_data_loader_nll):
         nll = None
         for i, _input in enumerate(data_loader):
             (c, x) = _input
+            self.optimizer.zero_grad()
 
-            z, log_j = self.network(x, c)  # torch.cat([c, w], axis=-1))
+            z, log_j = self.network(x, c)
             nll = torch.mean(z**2) / 2 - torch.mean(log_j) / self.sample_dim
             nll.backward()
+            # TODO combine with forecast loss for backward?
 
             torch.nn.utils.clip_grad_norm_(self.network.trainable_parameters, 1.0)
             self.optimizer.step()
@@ -278,14 +293,17 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
             if i % 200 == 0:
                 with torch.no_grad():
-                    c, x = next(iter(val_data_loader_nll))
-                    z, log_j = self.network(x, c)  # torch.cat([c, w], axis=-1))
-                    val_nll = (
-                        torch.mean(z**2) / 2 - torch.mean(log_j) / self.sample_dim
-                    )
-                    print(  # noqa
-                        epoch, i, nll.detach().numpy(), val_nll.detach().numpy()
-                    )
+                    c, z = next(iter(val_data_loader_nll))
+                    z, log_j = self.network(x, c)
+                    val_nll = -1
+                    if val_data_loader_nll is not None:
+                        val_nll = (
+                            torch.mean(z**2) / 2 - torch.mean(log_j) / self.sample_dim
+                        )
+                        if self.verbose:
+                            print(  # noqa
+                                epoch, i, nll.detach().numpy(), val_nll.detach().numpy()
+                            )
         return val_nll.detach().numpy()
 
     def _predict(self, X=None, fh=None):
