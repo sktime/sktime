@@ -1211,8 +1211,9 @@ class ForecastX(BaseForecaster):
     forecaster_y : BaseForecaster
         sktime forecaster to use for endogeneous data ``y``
 
-    forecaster_X : BaseForecaster
-        sktime forecaster to use for exogeneous data ``X``
+    forecaster_X : BaseForecaster, optional
+        sktime forecaster to use for exogeneous data ``X``,
+        default = None = same as ``forecaster_y``
 
     fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
         optional, default = None = same as used for ``y`` in any instance.
@@ -1305,7 +1306,7 @@ class ForecastX(BaseForecaster):
     def __init__(
         self,
         forecaster_y,
-        forecaster_X,
+        forecaster_X=None,
         fh_X=None,
         behaviour="update",
         columns=None,
@@ -1669,7 +1670,7 @@ class ForecastX(BaseForecaster):
         params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
 
         params3 = {
-            "forecaster_X": fx,
+            "forecaster_y": fy,
             "fit_behaviour": "use_forecast",
             "forecaster_X_exogeneous": "complement",
         }
