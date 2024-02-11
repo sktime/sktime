@@ -65,9 +65,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         """
         fh = fh.to_relative(self.cutoff)
 
-        if type(fh) is ForecastingHorizon:
-            self.network = self._build_network(fh._values[-1])
-
         self.network = self._build_network(list(fh)[-1])
 
         self._criterion = self._instantiate_criterion()
