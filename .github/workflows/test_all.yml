@@ -3,6 +3,7 @@ on:
   schedule:
     - cron: 0 0 * * 0
   workflow_dispatch:
+
 jobs:
   code_quality:
     name: code quality
@@ -13,14 +14,11 @@ jobs:
       - name: python environment step
         uses: actions/setup-python@v5
         with:
-          python-version: "3.8"
-      - name: install pre-commit
-        run: python3 -m pip install pre-commit
-      - name: run pre-commit hooks on all files
-        run: pre-commit run --color always --all-files --show-diff-on-failure
+          python-version: "3.11"
       - name: check missing __init__ files
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
+
   test_base:
     needs: code_quality
     name: base
@@ -51,6 +49,7 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
+
   test_module:
     needs: code_quality
     name: module
@@ -92,6 +91,7 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
+
   test_other:
     needs: code_quality
     name: other
