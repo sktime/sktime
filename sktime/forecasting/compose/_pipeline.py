@@ -1453,7 +1453,7 @@ class ForecastX(BaseForecaster):
         return X_pred
 
     def _get_X_for_fcX(self, X):
-        """Shorthand to obtain X for forecaster_X, depending on parameters."""^
+        """Shorthand to obtain X for forecaster_X, depending on parameters."""
         ixx = self.forecaster_X_exogeneous
         if X is None or ixx is None or ixx == "None":
             return None
