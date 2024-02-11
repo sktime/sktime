@@ -1383,7 +1383,7 @@ class ForecastX(BaseForecaster):
         self.X_was_None_ = X is None
 
         # initialize forecaster_X_ and forecaster_y_
-        self.forecaster_y_ = self.forecaster_y.clone()        
+        self.forecaster_y_ = self.forecaster_y.clone()
         self.forecaster_X_ = self.forecaster_X_c.clone()
 
         if self.behaviour == "update" and X is not None:
