@@ -233,7 +233,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self.network = self._build_network(None)
 
         self.optimizer = self._instantiate_optimizer()
-        early_stopper = EarlyStopper(patience=self.patience, min_delta=self.delta)
+        early_stopper = _EarlyStopper(patience=self.patience, min_delta=self.delta)
 
         val_loss = np.inf
         # Fit the cINN
@@ -283,12 +283,9 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
                     val_nll = (
                         torch.mean(z**2) / 2 - torch.mean(log_j) / self.sample_dim
                     )
-                    print(
-                        epoch,
-                        i,
-                        nll.detach().numpy(),
-                        val_nll.detach().numpy(),  # noqa
-                    )  # noqa
+                    print(  # noqa
+                        epoch, i, nll.detach().numpy(), val_nll.detach().numpy()
+                    )
         return val_nll.detach().numpy()
 
     def _predict(self, X=None, fh=None):
@@ -548,7 +545,18 @@ class PyTorchCinnTestDataset(Dataset):
         )
 
 
-class EarlyStopper:
+class _EarlyStopper:
+    """
+    Early stopping for the cINN.
+
+    Parameters
+    ----------
+    patience : int, optional (default=1)
+        Number of epochs to wait before stopping the training.
+    min_delta : float, optional (default=0)
+        Minimum change in the validation loss to consider as an improvement.
+    """
+
     def __init__(self, patience=1, min_delta=0):
         self.patience = patience
         self.min_delta = min_delta
@@ -556,6 +564,16 @@ class EarlyStopper:
         self.min_validation_loss = None
 
     def early_stop(self, validation_loss, model):
+        """
+        Check if the training should be stopped. And saves the current best model.
+
+        Parameters
+        ----------
+        validation_loss : float
+            Validation loss of the current epoch.
+        model : torch.nn.Module
+            Current model.
+        """
         if (
             self.min_validation_loss is None
             or validation_loss <= self.min_validation_loss
