@@ -1,6 +1,8 @@
 """Conditional Invertible Neural Network (cINN) for forecasting."""
 __author__ = ["benHeid"]
 
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -139,6 +141,8 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         init_param_f_statistic=None,
         deterministic=False,
         lag_feature="mean",
+        patience=5,
+        delta=0.0001,
     ):
         self.n_coupling_layers = n_coupling_layers
         self.hidden_dim_size = hidden_dim_size
@@ -161,6 +165,8 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self._fourier_terms_list = fourier_terms_list if fourier_terms_list else [1]
         self.deterministic = deterministic
         self.lag_feature = lag_feature
+        self.patience = patience
+        self.delta = delta
         super().__init__(num_epochs, batch_size, lr=lr)
 
     def _fit(self, y, fh, X=None):
@@ -211,19 +217,38 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         )
         self.fourier_features.fit(y)
 
-        dataset = self._prepare_data(y, X)
+        split_index = int(len(y) * 0.8)
+
+        dataset = self._prepare_data(y[:split_index], X[:split_index])
         data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+
+        z = np.random.normal(0, 1, (len(y[split_index:]), self.sample_dim))
+        z = pd.DataFrame(z, index=y[split_index:].index)
+
+        val_dataset_nll = self._prepare_data(y[split_index:], X[split_index:])
+        val_data_loader_nll = DataLoader(
+            val_dataset_nll, shuffle=False, batch_size=len(val_dataset_nll)
+        )
 
         self.network = self._build_network(None)
 
         self.optimizer = self._instantiate_optimizer()
+        early_stopper = EarlyStopper(patience=self.patience, min_delta=self.delta)
 
+        val_loss = np.inf
         # Fit the cINN
         for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, data_loader)
+            if early_stopper.early_stop(val_loss, self.network):
+                break
+            val_loss = self._run_epoch(
+                epoch,
+                data_loader,
+                val_data_loader_nll,
+                y[split_index:],
+            )
 
-        dataset = self._prepare_data(y, X)
-        X, z = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(y))))
+        self.network = early_stopper._best_model
+        X, z = next(iter(DataLoader(val_dataset_nll, shuffle=False, batch_size=len(y))))
 
         res = self.network(z, c=X.reshape((-1, self.sample_dim * self.n_cond_features)))
         self.z_ = res[0].detach().numpy()
@@ -238,7 +263,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             num_coupling_layers=self.n_coupling_layers,
         ).build()
 
-    def _run_epoch(self, epoch, data_loader):
+    def _run_epoch(self, epoch, data_loader, val_data_loader_nll, val_y):
         nll = None
         for i, _input in enumerate(data_loader):
             (c, x) = _input
@@ -250,9 +275,21 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             torch.nn.utils.clip_grad_norm_(self.network.trainable_parameters, 1.0)
             self.optimizer.step()
             self.optimizer.zero_grad()
-            if i % 100 == 0 and self.verbose:
-                print(epoch, i, nll.detach().numpy())  # noqa
-        return nll.detach().numpy()
+
+            if i % 200 == 0:
+                with torch.no_grad():
+                    c, x = next(iter(val_data_loader_nll))
+                    z, log_j = self.network(x, c)  # torch.cat([c, w], axis=-1))
+                    val_nll = (
+                        torch.mean(z**2) / 2 - torch.mean(log_j) / self.sample_dim
+                    )
+                    print(
+                        epoch,
+                        i,
+                        nll.detach().numpy(),
+                        val_nll.detach().numpy(),  # noqa
+                    )  # noqa
+        return val_nll.detach().numpy()
 
     def _predict(self, X=None, fh=None):
         """Forecast time series at future horizon.
@@ -509,3 +546,25 @@ class PyTorchCinnTestDataset(Dataset):
             exog_data,
             from_numpy(self.y[i]).float(),
         )
+
+
+class EarlyStopper:
+    def __init__(self, patience=1, min_delta=0):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.min_validation_loss = None
+
+    def early_stop(self, validation_loss, model):
+        if (
+            self.min_validation_loss is None
+            or validation_loss <= self.min_validation_loss
+        ):
+            self.min_validation_loss = validation_loss
+            self.counter = 0
+            self._best_model = deepcopy(model)
+        elif validation_loss > (self.min_validation_loss + self.min_delta):
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False
