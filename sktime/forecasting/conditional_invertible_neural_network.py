@@ -238,7 +238,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         val_data_loader_nll = None
         if self.val_split > 0:
             val_dataset_nll = self._prepare_data(
-                y[split_index:], X[:split_index] if X is not None else None
+                y[split_index:], X[split_index:] if X is not None else None
             )
             val_data_loader_nll = DataLoader(
                 val_dataset_nll, shuffle=False, batch_size=len(val_dataset_nll)
@@ -293,17 +293,17 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
             if i % 200 == 0:
                 with torch.no_grad():
-                    c, z = next(iter(val_data_loader_nll))
+                    c, x = next(iter(val_data_loader_nll))
                     z, log_j = self.network(x, c)
                     val_nll = -1
                     if val_data_loader_nll is not None:
                         val_nll = (
                             torch.mean(z**2) / 2 - torch.mean(log_j) / self.sample_dim
                         )
-                        if self.verbose:
-                            print(  # noqa
-                                epoch, i, nll.detach().numpy(), val_nll.detach().numpy()
-                            )
+                    if self.verbose:
+                        print(  # noqa
+                            epoch, i, nll.detach().numpy(), val_nll.detach().numpy()
+                        )
         return val_nll.detach().numpy()
 
     def _predict(self, X=None, fh=None):
