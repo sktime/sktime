@@ -1382,12 +1382,14 @@ class ForecastX(BaseForecaster):
         # remember if X seen was None
         self.X_was_None_ = X is None
 
+        # initialize forecaster_X_ and forecaster_y_
+        self.forecaster_y_ = self.forecaster_y.clone()        
+        self.forecaster_X_ = self.forecaster_X_c.clone()
+
         if self.behaviour == "update" and X is not None:
-            self.forecaster_X_ = self.forecaster_X_c.clone()
             X_for_fcX = self._get_X_for_fcX(X)
             self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X, X=X_for_fcX)
 
-        self.forecaster_y_ = self.forecaster_y.clone()
         if self.fit_behaviour == "use_actual":
             self.forecaster_y_.fit(y=y, X=X, fh=fh)
         elif self.fit_behaviour == "use_forecast":
