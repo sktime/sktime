@@ -63,7 +63,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         X : iterable-style or map-style dataset
             see (https://pytorch.org/docs/stable/data.html) for more information
         """
-
         fh = fh.to_relative(self.cutoff)
 
         if type(fh) is ForecastingHorizon:
