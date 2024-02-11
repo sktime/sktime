@@ -1242,12 +1242,15 @@ class ForecastX(BaseForecaster):
         * if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
         ``forecaster_X`` as exogenous features in ``fit``
 
-    forecaster_X_exogeneous : str, one of "None" (default), or "complement"
+    forecaster_X_exogeneous : optional, str, one of "None" (default), or "complement",
+        or ``pandas.Index`` coercible
 
         * if "None", then ``forecaster_X`` uses no exogenous data
         * if "complement", then ``forecaster_X`` uses the complement of the
         ``columns`` as exogenous data to forecast. This is typically useful
         if the complement of ``columns`` is known to be available in the future.
+        * if a ``pandas.Index`` coercible, then uses columns indexed by the index
+        after coercion, in ``X`` passed (converted to pandas)
 
     Attributes
     ----------
@@ -1448,14 +1451,19 @@ class ForecastX(BaseForecaster):
         return X_pred
 
     def _get_X_for_fcX(self, X):
-        """Shorthand to obtain X for forecaster_X, depending on parameters."""
-        if X is None or self.forecaster_X_exogeneous != "complement":
+        """Shorthand to obtain X for forecaster_X, depending on parameters."""^
+        ixx = self.forecaster_X_exogeneous
+        if X is None or ixx is None or ixx == "None":
             return None
-        if self.forecaster_X_exogeneous == "complement":
+
+        if ixx == "complement":
             X_for_fcX = X.drop(columns=self.columns)
             if X_for_fcX.shape[1] < 1:
                 return None
             return X_for_fcX
+
+        ixx_pd = pd.Index(ixx)
+        return X.loc[:, ixx_pd]
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
