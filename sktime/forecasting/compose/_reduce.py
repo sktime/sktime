@@ -2502,9 +2502,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         est = LinearRegression()
         params1 = {
-            "estimator": est,
-            "window_length": 3,
-            "pooling": "global",  # all internal mtypes are tested across scenarios
+          "estimator": est,
+          "window_length": 3,
+          "pooling": "global",  # all internal mtypes are tested across scenarios
         }
 
         return params1
