@@ -389,14 +389,14 @@ class BaseClassifier(BasePanelMixin):
         )
 
     def _fit_predict_boilerplate(
-            self,
-            X,
-            y,
-            cv,
-            change_state,
-            method,
-            return_type="single_y_pred",
-        ):
+        self,
+        X,
+        y,
+        cv,
+        change_state,
+        method,
+        return_type="single_y_pred",
+    ):
         """Boilerplate logic for fit_predict and fit_predict_proba."""
         from sklearn.model_selection import KFold
 
@@ -471,7 +471,7 @@ class BaseClassifier(BasePanelMixin):
             if pd.DataFrame, instance index = first level of pd.MultiIndex
             if np.ndarray, instance index = 0-th axis
         ix : sklearn splitter index, e.g., ix, _ from KFold.split(X)
- 
+
         Returns
         -------
         obj_ix : obj subset by ix
