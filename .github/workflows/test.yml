@@ -188,6 +188,8 @@ jobs:
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   detect:
     needs: test-nosoftdeps
@@ -269,6 +271,8 @@ jobs:
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   test-unix-pandas1:
     needs: test-nosoftdeps
@@ -307,3 +311,5 @@ jobs:
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
