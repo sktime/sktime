@@ -6,7 +6,7 @@ on:
 
 jobs:
   code_quality:
-    name: code quality
+    name: code-quality
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
