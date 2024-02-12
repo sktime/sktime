@@ -1207,7 +1207,7 @@ class ForecastX(BaseForecaster):
     In such a case (no exogeneous data), there is no benefit in using this compositor.
 
     Parameters
-    ----------  
+    ----------
     forecaster_y : BaseForecaster
         sktime forecaster to use for endogeneous data ``y``
 
