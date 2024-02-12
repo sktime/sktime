@@ -199,10 +199,10 @@ class GMMHMM(BaseHMMLearn):
         }
 
         params2 = {
-            "n_components": 5,  
-            "covariance_type": "full",  
-            "min_covar": 1e-6,  
-            "random_state": 42, 
+            "n_components": 5,
+            "covariance_type": "full",
+            "min_covar": 1e-6,
+            "random_state": 42,
         }
 
         return [params1, params2]
