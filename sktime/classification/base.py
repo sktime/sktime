@@ -508,7 +508,10 @@ class BaseClassifier(BasePanelMixin):
         else:
             y_pred = -np.ones_like(y, dtype=y.dtype)
             for i, ix in enumerate(tt_ixx):
-                y_pred[ix] = y_preds[i]
+                y_preds_i = y_preds[i]
+                if y_pred.ndim == 1:
+                    y_preds_i = y_preds_i.reshape(-1)
+                y_pred[ix] = y_preds_i
         return y_pred
 
     def fit_predict_proba(self, X, y, cv=None, change_state=True):
