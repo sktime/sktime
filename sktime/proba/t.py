@@ -108,7 +108,9 @@ class TDistribution(BaseDistribution):
         d = self.loc[x.index, x.columns]
         pdf_arr = gamma((d._df + 1) / 2)
         pdf_arr = pdf_arr / (np.sqrt(np.pi * d._df) * gamma(d._df / 2))
-        pdf_arr = pdf_arr * (1 + x**2 / d._df) ** (-(d._df + 1) / 2)
+        pdf_arr = pdf_arr * (1 + ((x - d._mu) / d._sigma) ** 2 / d._df) ** (
+            -(d._df + 1) / 2
+        )
         return pd.DataFrame(pdf_arr, index=x.index, columns=x.columns)
 
     def log_pdf(self, x):
@@ -117,7 +119,9 @@ class TDistribution(BaseDistribution):
         lpdf_arr = loggamma((d._df + 1) / 2)
         lpdf_arr = lpdf_arr - 0.5 * np.log(d._df * np.pi)
         lpdf_arr = lpdf_arr - loggamma(d._df / 2)
-        lpdf_arr = lpdf_arr - ((d._df + 1) / 2) * np.log(1 + x**2 / d._df)
+        lpdf_arr = lpdf_arr - ((d._df + 1) / 2) * np.log(
+            1 + ((x - d._mu) / d._sigma) ** 2 / d._df
+        )
         return pd.DataFrame(lpdf_arr, index=x.index, columns=x.columns)
 
     def cdf(self, x):
