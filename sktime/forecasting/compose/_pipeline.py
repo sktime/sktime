@@ -1207,7 +1207,7 @@ class ForecastX(BaseForecaster):
     In such a case (no exogeneous data), there is no benefit in using this compositor.
 
     Parameters
-    ----------
+    ----------  
     forecaster_y : BaseForecaster
         sktime forecaster to use for endogeneous data ``y``
 
@@ -1384,22 +1384,24 @@ class ForecastX(BaseForecaster):
 
         # initialize forecaster_X_ and forecaster_y_
         self.forecaster_y_ = self.forecaster_y.clone()
-        self.forecaster_X_ = self.forecaster_X_c.clone()
+        if X is not None:
+            self.forecaster_X_ = self.forecaster_X_c.clone()
 
         if self.behaviour == "update" and X is not None:
             X_for_fcX = self._get_X_for_fcX(X)
             self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X, X=X_for_fcX)
 
-        if self.fit_behaviour == "use_actual":
-            self.forecaster_y_.fit(y=y, X=X, fh=fh)
+        if X is None or self.fit_behaviour == "use_actual":
+            X_for_fcy = X
         elif self.fit_behaviour == "use_forecast":
             if not self.forecaster_X_.get_tag("capability:insample"):
                 raise ValueError(
                     "forecaster_X does not have `capability:insample`. "
                     "Thus, it is not valid with `fit_behaviour=use_forecast`."
                 )
-            x_insample = self.forecaster_X_.predict(fh=X.index, X=X)
-            self.forecaster_y_.fit(y=y, X=x_insample, fh=fh)
+            X_for_fcy = self.forecaster_X_.predict(fh=X.index, X=X)
+
+        self.forecaster_y_.fit(y=y, X=X_for_fcy, fh=fh)
 
         return self
 
