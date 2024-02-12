@@ -506,7 +506,11 @@ class BaseClassifier(BasePanelMixin):
                 y_pred = y_pred.combine_first(y_preds[i])
             y_pred = y_pred.reindex(y.index).fillna(-1)
         else:
-            y_pred = -np.ones_like(y, dtype=y.dtype)
+            if y_pred.ndim == 1:
+                sh = y.shape
+            else:
+                sh = (y.shape[0], y_pred.shape[1])
+            y_pred = -np.ones(sh, dtype=y.dtype)
             for i, ix in enumerate(tt_ixx):
                 y_preds_i = y_preds[i]
                 if y_pred.ndim == 1:
