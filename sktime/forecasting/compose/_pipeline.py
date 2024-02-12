@@ -1399,7 +1399,11 @@ class ForecastX(BaseForecaster):
                     "forecaster_X does not have `capability:insample`. "
                     "Thus, it is not valid with `fit_behaviour=use_forecast`."
                 )
-            fh_for_fcst = ForecastingHorizon(X.index, is_relative=False)
+            if isinstance(X.index, pd.MultiIndex):
+                X_times = X.index.get_level_values(-1).unique()
+            else:
+                X_times = X.index
+            fh_for_fcst = ForecastingHorizon(X_times, is_relative=False)
             X_for_fcy = self.forecaster_X_.predict(fh=fh_for_fcst, X=X)
 
         self.forecaster_y_.fit(y=y, X=X_for_fcy, fh=fh)
