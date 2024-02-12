@@ -1460,6 +1460,11 @@ class ForecastX(BaseForecaster):
         if X is None or ixx is None or ixx == "None":
             return None
 
+        # if columns is None, then we use all columns
+        # so there is no complement
+        if self.columns is None and ixx == "complement":
+            return None
+
         if ixx == "complement":
             X_for_fcX = X.drop(columns=self.columns)
             if X_for_fcX.shape[1] < 1:
