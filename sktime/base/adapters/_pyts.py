@@ -53,7 +53,7 @@ class _PytsAdapter:
         Parameters
         ----------
         X : 3D np.ndarray of shape (n_instances, n_dimensions, series_length)
-            Training time series instances to cluster
+            Training features, passed only for classifiers or regressors
         y: None or 1D np.ndarray of shape (n_instances,)
             Training labels, passed only for classifiers or regressors
 
@@ -81,13 +81,12 @@ class _PytsAdapter:
         return self
 
     def _transform(self, X, y=None):
-        """Predict the closest cluster each sample in X belongs to.
+        """Transform method adapter.
 
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
             (n_instances, n_dimensions, series_length))
-            Time series instances to predict their cluster indexes.
         y: ignored, exists for API consistency reasons.
 
         Returns
@@ -107,14 +106,13 @@ class _PytsAdapter:
             return pyts_est.transform(X)
 
     def _predict(self, X, y=None):
-        """Predict the closest cluster each sample in X belongs to.
+        """Predict method adapter.
 
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
             (n_instances, n_dimensions, series_length))
-            Time series instances to predict their cluster indexes.
-        y: ignored, exists for API consistency reasons.
+        y: passed to pyts predict method if it has y parameter
 
         Returns
         -------
@@ -131,3 +129,29 @@ class _PytsAdapter:
             return pyts_est.predict(X, y)
         else:
             return pyts_est.predict(X)
+
+    def _predict_proba(self, X, y=None):
+        """Predict_proba method adapter.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length))
+            Time series instances to predict their cluster indexes.
+        y: passed to pyts predict method if it has y parameter
+
+        Returns
+        -------
+        np.ndarray (1d array of shape (n_instances,))
+            Index of the cluster each time series in X belongs to.
+        """
+        pyts_est = getattr(self, self._estimator_attr)
+
+        # check if pyts_est fit has y parameter
+        # if yes, call with y, otherwise without
+        pyts_has_y = "y" in signature(pyts_est.predict_proba).parameters
+
+        if pyts_has_y:
+            return pyts_est.predict_proba(X, y)
+        else:
+            return pyts_est.predict_proba(X)
