@@ -315,4 +315,3 @@ def test_forecastx_exog_for_forecaster_x():
 
     model_3.fit(y, X=X, fh=fh)
     assert model_3.forecaster_X_._X.columns.tolist() == ["UNEMP", "ARMED"]
-
