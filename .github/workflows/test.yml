@@ -216,22 +216,26 @@ jobs:
     needs: test-nosoftdeps
     name: base
     uses: ./.github/workflows/test_base.yml
+    secrets: inherit
 
   test-module:
     needs: test-nosoftdeps
     name: module
     uses: ./.github/workflows/test_module.yml
+    secrets: inherit
 
   test-other:
     needs: test-nosoftdeps
     name: other
     uses: ./.github/workflows/test_other.yml
+    secrets: inherit
 
   test-datasets:
     needs: detect
     name: datasets
     if: ${{ needs.detect.outputs.datasets == 'true' }}
     uses: ./.github/workflows/test_datasets.yml
+    secrets: inherit
 
   test-full:
     needs: test-nosoftdeps
