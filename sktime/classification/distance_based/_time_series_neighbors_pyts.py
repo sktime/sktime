@@ -102,11 +102,11 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
     def __init__(
         self,
         n_neighbors=1,
-        weights='uniform',
-        algorithm='auto',
+        weights="uniform",
+        algorithm="auto",
         leaf_size=30,
         p=2,
-        metric='minkowski',
+        metric="minkowski",
         metric_params=None,
         n_jobs=1,
     ):
