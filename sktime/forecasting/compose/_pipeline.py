@@ -1339,7 +1339,8 @@ class ForecastX(BaseForecaster):
         if isinstance(forecaster_X_exogeneous, str):
             if forecaster_X_exogeneous not in ["None", "complement"]:
                 raise ValueError(
-                    'forecaster_X_exogeneous must be one of "None", "complement"'
+                    'forecaster_X_exogeneous must be one of "None", "complement",'
+                    "or a pandas.Index coercible"
                 )
 
         super().__init__()
