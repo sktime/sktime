@@ -71,7 +71,7 @@ def test_forecastx_logic():
     reason="skip test if required soft dependency is not available",
 )
 def test_forecastx_fit_behavior():
-    from sktime.forecasting.compose import ForecastX, YfromX
+    from sktime.forecasting.compose import ForecastX
     from sktime.split import temporal_train_test_split
 
     y, X = load_longley()
