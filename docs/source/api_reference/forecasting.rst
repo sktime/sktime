@@ -232,6 +232,7 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
     :template: class.rst
 
     ARIMA
+    StatsModelsARIMA
 
 .. currentmodule:: sktime.forecasting.sarimax
 
@@ -293,6 +294,14 @@ ARCH models
 Structural time series models
 -----------------------------
 
+.. currentmodule:: sktime.forecasting.ardl
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARDL
+
 .. currentmodule:: sktime.forecasting.bats
 
 .. autosummary::
@@ -308,6 +317,14 @@ Structural time series models
     :template: class.rst
 
     TBATS
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastAutoTBATS
 
 .. currentmodule:: sktime.forecasting.fbprophet
 
