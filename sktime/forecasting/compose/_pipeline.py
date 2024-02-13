@@ -1336,10 +1336,11 @@ class ForecastX(BaseForecaster):
         self.behaviour = behaviour
         self.columns = columns
         self.forecaster_X_exogeneous = forecaster_X_exogeneous
-        if self.forecaster_X_exogeneous not in ["None", "complement"]:
-            raise ValueError(
-                'forecaster_X_exogeneous must be one of "None", "complement"'
-            )
+        if isinstance(forecaster_X_exogeneous, str):
+            if forecaster_X_exogeneous not in ["None", "complement"]:
+                raise ValueError(
+                    'forecaster_X_exogeneous must be one of "None", "complement"'
+                )
 
         super().__init__()
 
