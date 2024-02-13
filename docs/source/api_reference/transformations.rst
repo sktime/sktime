@@ -479,8 +479,15 @@ Missing value treatment
     :toctree: auto_generated/
     :template: class.rst
 
-    DropNA
     Imputer
+
+.. currentmodule:: sktime.transformations.series.dropna
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DropNA
 
 Seasonality and Date-Time Features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
