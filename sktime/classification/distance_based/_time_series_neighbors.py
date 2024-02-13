@@ -212,6 +212,11 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
                 else:
                     return distance(X, **distance_params)
 
+    def _one_element_distance(self, x, y, n_vars=1):
+        x = np.reshape(x, (1, n_vars, -1))
+        y = np.reshape(y, (1, n_vars, -1))
+        return self._distance(x, y)[0, 0]
+
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
@@ -222,6 +227,20 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         y : {array-like, sparse matrix}
             Target values of shape = [n]
         """
+        if isinstance(self.distance, str):
+            n_vars = X.shape[1]
+            self.knn_estimator_ = KNeighborsClassifier(
+                n_neighbors=self.n_neighbors,
+                algorithm=self.algorithm,
+                metric=lambda x, y: self._one_element_distance(x, y, n_vars),
+                leaf_size=self.leaf_size,
+                n_jobs=self.n_jobs,
+                weights=self.weights,
+            )
+            X = np.reshape(X, (X.shape[0], X.shape[1] * X.shape[2]))
+            self.knn_estimator_.fit(X, y)
+            return self
+
         # store full data as indexed X
         self._X = X
 
@@ -294,6 +313,11 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
+        if isinstance(self.distance, str):
+            X = np.reshape(X, (X.shape[0], X.shape[1] * X.shape[2]))
+            y_pred = self.knn_estimator_.predict(X)
+            return y_pred
+
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
 
@@ -316,6 +340,11 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
+        if isinstance(self.distance, str):
+            X = np.reshape(X, (X.shape[0], X.shape[1] * X.shape[2]))
+            y_pred = self.knn_estimator_.predict_proba(X)
+            return y_pred
+
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
 
