@@ -14,9 +14,6 @@ from sktime.forecasting.statsforecast import StatsForecastMSTL
 from sktime.tests.test_switch import run_test_for_class
 
 
-@pytest.mark.skip(
-    reason="probabilistic capability of StatsForecastMSTL is disabled, see #5703, #5920"
-)
 @pytest.mark.skipif(
     not run_test_for_class(StatsForecastMSTL),
     reason="run test only if softdeps are present and incrementally (if requested)",
