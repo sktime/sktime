@@ -199,6 +199,7 @@ jobs:
       datasets: ${{ steps.filter.outputs.datasets }}
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
+      - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
