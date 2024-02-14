@@ -1441,6 +1441,8 @@ class ForecastX(BaseForecaster):
         """
         if self.X_was_None_:
             return None
+        if isinstance(self.columns, (list, pd.Index)) and len(self.columns) == 0:
+            return X
         if self.behaviour == "update":
             forecaster = self.forecaster_X_
         elif self.behaviour == "refit":
@@ -1470,6 +1472,10 @@ class ForecastX(BaseForecaster):
         # if columns is None, then we use all columns
         # so there is no complement
         if self.columns is None and ixx == "complement":
+            return None
+
+        # if ixx is iterable and is empty, then we use no columns
+        if isinstance(ixx, (pd.Index, list)) and len(ixx) == 0:
             return None
 
         if ixx == "complement":
