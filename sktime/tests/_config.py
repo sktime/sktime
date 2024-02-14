@@ -190,7 +190,7 @@ EXCLUDED_TESTS = {
     "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
     # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
-    "StatsForecastMSTL": ["test_pred_int_tag", "test_statsforecast_mstl"],
+    "StatsForecastMSTL": ["test_pred_int_tag"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
