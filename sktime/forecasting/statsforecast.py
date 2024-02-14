@@ -796,8 +796,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         # estimator type
         # --------------
         "ignores-exogeneous-X": True,
-        "capability:pred_int": True,
-        "capability:pred_int:insample": True,
+        "capability:pred_int": False,
+        "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.2.0"],
     }
 
@@ -814,6 +814,14 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         self.pred_int_kwargs = pred_int_kwargs
 
         super().__init__()
+
+        # adapter class sets probabilistic capability as true
+        # because level is present in statsforecast signature
+        # happens in _check_supports_pred_int method
+        # manually overriding this temporarily
+        self.set_tags(
+            **{"capability:pred_int": False, "capability:pred_int:insample": False}
+        )
 
         from sklearn.base import clone
 
