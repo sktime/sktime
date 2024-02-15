@@ -1,22 +1,4 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Extension template for forecasters, SIMPLE version.
-
-How to use this implementation template to implement a new estimator:
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, cutoff, _fh,
-    _cutoff, _converter_store_y, forecasters_, _tags, _tags_dynamic, _is_vectorized
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
-- once complete: use as a local library, or contribute to sktime via PR
-- more details:
-  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
-
-Testing - required for sktime test framework and check_estimator usage:
-    get default parameters for test instance(s) - get_test_params()
-"""
 from __future__ import annotations
 
 __author__ = ["MBristle"]
@@ -261,9 +243,6 @@ class _AutoTSAdapter(BaseForecaster):
 
         return y_pred
 
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -461,8 +440,6 @@ class _AutoTSAdapter(BaseForecaster):
 
     def _get_forecast_length(self):
         if type(self._fh) is ForecastingHorizon:
-            # TODO: not nice to access the private attribute (_values),
-            #  consider better solution
             cutoff = self._fh_cutoff_transformation(self._y)
             fh_length = max(self._fh.to_relative(cutoff)._values)
             if fh_length <= 0:
