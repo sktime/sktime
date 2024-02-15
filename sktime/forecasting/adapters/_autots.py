@@ -181,8 +181,6 @@ class AutoTSAdapter(BaseForecaster):
         # various type input indices are converted to datetime
         # since AutoTS can only deal with dates
         y = self._convert_input_to_date(y)
-        # We have to bring the data into the required format for fbprophet
-        # the index should not be pandas index, but in a column named "ds"
         self._y = y
 
         self._fh = fh
