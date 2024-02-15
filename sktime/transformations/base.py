@@ -994,6 +994,12 @@ class BaseTransformer(BaseEstimator):
             var_name="X",
         )
 
+        if isinstance(X_metadata, dict):
+            X_mtype = X_metadata.get("mtype", "None")
+            mtype_not_allowed = X_mtype not in ALLOWED_MTYPES
+        else:
+            mtype_not_allowed = False
+
         # raise informative error message if X is in wrong format
         allowed_msg = (
             f"Allowed scitypes for X in transformations are "
@@ -1004,7 +1010,7 @@ class BaseTransformer(BaseEstimator):
         )
         msg_start = f"Unsupported input data type in {self.__class__.__name__}, input "
         msg_X = msg_start + "X"
-        if not X_valid or X_mtype not in ALLOWED_MTYPES:
+        if not X_valid or mtype_not_allowed:
             msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             check_is_error_msg(
                 msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
@@ -1012,6 +1018,7 @@ class BaseTransformer(BaseEstimator):
 
         X_scitype = X_metadata["scitype"]
         X_mtype = X_metadata["mtype"]
+
         # remember these for potential back-conversion (in transform etc)
         metadata["_X_mtype_last_seen"] = X_mtype
         metadata["_X_input_scitype"] = X_scitype
