@@ -505,7 +505,7 @@ class ForecastingHorizon:
 
         Returns
         -------
-        fh : ForecastingHorizon
+        fh_abs : pandas.Index
             Absolute representation of forecasting horizon.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
@@ -916,7 +916,7 @@ def _check_cutoff(cutoff, index):
     """
     if cutoff is None:
         raise ValueError("`cutoff` must be given, but found none.")
-
+    # breakpoint()
     if isinstance(index, pd.PeriodIndex):
         assert isinstance(cutoff, (pd.Period, pd.PeriodIndex))
         assert index.freqstr == cutoff.freqstr
