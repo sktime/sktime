@@ -988,7 +988,7 @@ class BaseTransformer(BaseEstimator):
 
         X_valid, msg, X_metadata = check_is_mtype(
             X,
-            scitype=ALLOWED_MTYPES,
+            mtype=ALLOWED_MTYPES,
             return_metadata=X_metadata_required,
             var_name="X",
         )
