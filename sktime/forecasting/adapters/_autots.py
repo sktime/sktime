@@ -10,7 +10,7 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
-class _AutoTSAdapter(BaseForecaster):
+class AutoTSAdapter(BaseForecaster):
     """Act as adapter for the AutoTS library.
 
     Parameter:
@@ -68,6 +68,7 @@ class _AutoTSAdapter(BaseForecaster):
         "capability:pred_int:insample": False,
         "requires-fh-in-fit": True,
         "reserved_params": ["fh_"],
+        "python_dependencies": "autots",
     }
 
     def __init__(

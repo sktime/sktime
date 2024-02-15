@@ -190,7 +190,7 @@ EXCLUDED_TESTS = {
     "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
     # Does not support neg. fh
-    "_AutoTSAdapter": ["test_predict_time_index_in_sample_full"],
+    "AutoTSAdapter": ["test_predict_time_index_in_sample_full"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
