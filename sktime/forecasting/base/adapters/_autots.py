@@ -177,22 +177,12 @@ class _AutoTSAdapter(BaseForecaster):
         -------
         self : reference to self
         """
-        # sets y_index_was_period_ and self.y_index_was_int_ flags
-        # to remember the index type of y before conversion
-        # self._remember_y_input_index_type(y)
-
         # various type input indices are converted to datetime
-        # since Auto can only deal with dates
+        # since AutoTS can only deal with dates
         y = self._convert_input_to_date(y)
         # We have to bring the data into the required format for fbprophet
         # the index should not be pandas index, but in a column named "ds"
-        df = y.copy()
-        # df.name = "y"
-        # df.index.name = "ds"
-        # df = df.reset_index()
-        # if type(df) == pd.Series:
-        #     df = df.to_frame()
-        self._y = df
+        self._y = y
 
         self._fh = fh
         self._instantiate_model()
@@ -200,7 +190,6 @@ class _AutoTSAdapter(BaseForecaster):
             self.forecaster_.fit(df=self._y)
         except Exception as e:
             raise e
-            # breakpoint()
         return self
 
     def _predict(
@@ -443,7 +432,6 @@ class _AutoTSAdapter(BaseForecaster):
             cutoff = self._fh_cutoff_transformation(self._y)
             fh_length = max(self._fh.to_relative(cutoff)._values)
             if fh_length <= 0:
-                # breakpoint()
                 raise ValueError(
                     "The relative length to the training data of "
                     "the forecasting horizon must be bigger than 0."
