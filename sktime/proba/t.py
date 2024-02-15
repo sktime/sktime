@@ -100,7 +100,7 @@ class TDistribution(BaseDistribution):
         df_arr = df_arr.astype(np.float32)
         df_arr[df_arr <= 2] = np.inf
         mask = (df_arr > 2) & (df_arr != np.inf)
-        df_arr[mask] = self._sigma**2 * df_arr[mask] / (df_arr[mask] - 2)
+        df_arr[mask] = self._sigma[mask] ** 2 * df_arr[mask] / (df_arr[mask] - 2)
         return pd.DataFrame(df_arr, index=self.index, columns=self.columns)
 
     def pdf(self, x):
