@@ -994,12 +994,6 @@ class BaseTransformer(BaseEstimator):
             var_name="X",
         )
 
-        X_scitype = X_metadata["scitype"]
-        X_mtype = X_metadata["mtype"]
-        # remember these for potential back-conversion (in transform etc)
-        metadata["_X_mtype_last_seen"] = X_mtype
-        metadata["_X_input_scitype"] = X_scitype
-
         # raise informative error message if X is in wrong format
         allowed_msg = (
             f"Allowed scitypes for X in transformations are "
@@ -1015,6 +1009,12 @@ class BaseTransformer(BaseEstimator):
             check_is_error_msg(
                 msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
             )
+
+        X_scitype = X_metadata["scitype"]
+        X_mtype = X_metadata["mtype"]
+        # remember these for potential back-conversion (in transform etc)
+        metadata["_X_mtype_last_seen"] = X_mtype
+        metadata["_X_input_scitype"] = X_scitype
 
         if X_scitype in X_inner_scitype:
             case = "case 1: scitype supported"
