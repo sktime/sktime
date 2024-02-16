@@ -1,4 +1,4 @@
-"""Rocket transformer, from pyts."""
+"""K-nearest neighbors time series classifier, from pyts."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
