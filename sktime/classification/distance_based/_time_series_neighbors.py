@@ -307,18 +307,6 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         else:
             return self._fit_dist(X=X, y=y)
 
-    def _n_instances(self, X):
-        """Get number of instances from X."""
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        _, _, X_meta = check_is_mtype(
-            X,
-            X_inner_mtype,
-            return_metadata=["n_instances"],
-            msg_return_dict="list"
-        )
-        n = X_meta["n_instances"]
-        return n
-
     def _fit_dist(self, X, y):
         """Fit the model using adapted distance metric."""
         # sklearn wants distance callabel element-wise,
@@ -358,7 +346,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         if self.pass_train_distances:
             dist_mat = self._distance(X)
         else:
-            n = self._n_instances(X)
+            n = self._X_metadata["n_instances"]
             # if we do not want/need to pass train-train distances,
             #   we still need to pass a zeros matrix, this means "do not consider"
             # citing the sklearn KNeighborsClassifier docs on distance matrix input:
