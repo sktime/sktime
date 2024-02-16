@@ -340,8 +340,8 @@ class AutoTSAdapter(BaseForecaster):
 
     def _predict(
         self,
-        fh: ForecastingHorizon | None = None,
-        X: pd.DataFrame | None = None,  # noqa: F841
+        fh: Union[ForecastingHorizon, None] = None,
+        X: [pd.DataFrame, None] = None,  # noqa: F841
     ):
         """Provide forecast at future horizon using fitted forecaster.
 
