@@ -25,7 +25,7 @@ import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 
 from sktime.classification.base import BaseClassifier
-from sktime.datatypes import check_is_mtype, convert
+from sktime.datatypes import convert
 from sktime.distances import pairwise_distance
 
 # add new distance string codes here
