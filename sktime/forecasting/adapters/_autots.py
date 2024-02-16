@@ -1,11 +1,12 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-from __future__ import annotations
 
 __author__ = ["MBristle"]
 
 import logging
+from typing import Union
 
 import pandas as pd
+from pandas.api.types import is_integer_dtype
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
@@ -15,44 +16,189 @@ class AutoTSAdapter(BaseForecaster):
 
     Parameter:
     ---------
-        fh (ForecastingHorizon): The forecasting horizon.
-        model_list (str): The list of models to use. See docs for details.
-        frequency (str): The frequency of the time series.
-        prediction_interval (float): The prediction interval for the forecast.
-        max_generations (int): The maximum number of
-            generations for the genetic algorithm.
-        no_negatives (bool): Whether negative values are allowed in the forecast.
-        constraint (float): The constraint on the forecast values.
-        ensemble (str): The ensemble method to use.
-        initial_template (str): The initial template to use for the forecast.
-        random_seed (int): The random seed for reproducibility.
-        holiday_country (str): The country for holiday effects.
-        subset (int): The subset of the data to use.
-        aggfunc (str): The aggregation function to use.
-        na_tolerance (float): The tolerance for missing values.
-        metric_weighting (dict): The weights for different forecast evaluation metrics.
-        drop_most_recent (int): The number of most recent data points to drop.
-        drop_data_older_than_periods (int): The threshold for dropping old data points.
-        transformer_list (dict): The list of transformers to use.
-        transformer_max_depth (int): The maximum depth of the transformers.
-        models_mode (str): The mode for selecting models.
-        num_validations (int): The number of validations to perform.
-        models_to_validate (float): The fraction of models to validate.
-        max_per_model_class (int): The maximum number of models per class.
-        validation_method (str): The method for validation.
-        min_allowed_train_percent (float): The minimum percentage of
-            data allowed for training.
-        remove_leading_zeroes (bool): Whether to remove leading zeroes from the data.
-        prefill_na (str): The method for prefilling missing values.
-        introduce_na (bool): Whether to introduce missing values to the data.
-        preclean (dict): The parameters for data pre-cleaning.
-        model_interrupt (bool): Whether the model can be interrupted.
-        generation_timeout (int): The timeout for each generation.
-        current_model_file (str): The file containing the current model.
-        verbose (int): The verbosity level.
-        n_jobs (int): The number of jobs to run in parallel.
-        model_name: (str): The name of the model.
-            NOTE: Overwrites the model_list parameter. For using only one model.
+        model_name : str, optional (default="fast")
+            The name of the model. NOTE: Overwrites the model_list parameter.
+            For using only one model oder a default model_list.
+        model_list : str
+            The list of models to use.
+             str alias or list of names of model objects to use now can be a dictionary
+             of {“model”: prob} but only affects starting random templates.
+             Genetic algorithm takes from there.
+        frequency : str
+            ‘infer’ or a specific pandas datetime offset. Can be used to force rollup of
+             data (ie daily input, but frequency ‘M’ will rollup to monthly).
+        prediction_interval: float
+            0-1, uncertainty range for upper and lower forecasts.
+            Adjust range, but rarely matches actual containment.
+        max_generations: int
+            The maximum number of generations for the genetic algorithm.
+            number of genetic algorithms generations to run. More runs = longer runtime,
+            generally better accuracy. It’s called max because someday there will be an
+            auto early stopping option, but for now this is just the exact number of
+            generations to run.
+        no_negatives (bool):
+            Whether negative values are allowed in the forecast.
+            if True, all negative predictions are rounded up to 0.
+        constraint (float):
+            The constraint on the forecast values.
+            when not None, use this float value * data st dev above max or below min for
+            constraining forecast values. now also instead accepts a
+            dictionary containing the following key/values:
+            constraint_method (str): one of
+                * stdev_min - threshold is min and max of historic data +/- constraint
+                * st dev of data stdev - threshold is the mean of historic data +/-
+                    constraint
+                * st dev of data absolute - input is array of length series containing
+                    the threshold’s final value for each quantile - constraint is the
+                    quantile of historic data to use as threshold
+            constraint_regularization (float): 0 to 1
+            where 0 means no constraint, 1 is hard threshold cutoff, and in between is
+            penalty term
+            upper_constraint (float): or array, depending on method, None if unused
+            lower_constraint (float): or array, depending on method, None if unused
+            bounds (bool): if True, apply to upper/lower forecast, otherwise
+            False applies only to forecast
+        ensemble: str
+            The ensemble method to use.
+            None or list or comma-separated string containing:
+            ‘auto’, ‘simple’, ‘distance’, ‘horizontal’, ‘horizontal-min’,
+            ‘horizontal-max’, “mosaic”, “subsample”
+        initial_template (str):
+            The initial template to use for the forecast.
+            ‘Random’ - randomly generates starting template, ‘General’ uses template
+            included in package, ‘General+Random’ - both of previous.
+            Also can be overriden with import_template()
+        random_seed (int):
+            The random seed for reproducibility.
+            Random seed allows (slightly) more consistent results.
+        holiday_country (str):
+            The country for holiday effects.
+            Can be passed through to Holidays package for some models.
+        subset (int):
+            Maximum number of series to evaluate at once. Useful to speed evaluation
+            when many series are input. takes a new subset of columns on each
+            validation, unless mosaic ensembling, in which case columns are the
+            same in each validation
+        aggfunc (str):
+            The aggregation function to use.
+            If data is to be rolled up to a higher frequency (daily -> monthly) or
+            duplicate timestamps are included. Default ‘first’ removes duplicates,
+            for rollup try ‘mean’ or np.sum. Beware numeric aggregations like ‘mean’
+            will not work with non-numeric inputs. Numeric aggregations like ‘sum’
+            will also change nan values to 0
+        na_tolerance (float):
+            The tolerance for missing values.
+            0 to 1. Series are dropped if they have more than this percent NaN.
+            0.95 here would allow series containing up to 95% NaN values.
+        metric_weighting (dict):
+            The weights for different forecast evaluation metrics.
+            Weights to assign to metrics, effecting how the ranking score is generated.
+        drop_most_recent (int):
+            Option to drop n most recent data points. Useful, say, for monthly sales
+            data where the current (unfinished) month is included. occurs after any
+            aggregration is applied, so will be whatever is specified by frequency,
+            will drop n frequencies
+        drop_data_older_than_periods (int):
+            The threshold for dropping old data points.
+            Will take only the n most recent timestamps.
+        transformer_list (dict):
+            List of transformers to use, or dict of transformer:probability.
+            Note this does not apply to initial templates. can accept string aliases:
+             “all”, “fast”, “superfast”, ‘scalable’ (scalable is a subset of fast that
+              should have fewer memory issues at scale)
+        transformer_max_depth (int):
+            maximum number of sequential transformers to generate for new Random
+            Transformers. Fewer will be faster.
+        models_mode (str):
+            The mode for selecting models.
+            option to adjust parameter options for newly generated models.
+            Only sporadically utilized. Currently includes: ‘default’/’random’,
+            ‘deep’ (searches more params, likely slower), and ‘regressor’
+            (forces ‘User’ regressor mode in regressor capable models),
+            ‘gradient_boosting’, ‘neuralnets’ (~Regression class models only)
+        num_validations (int):
+            The number of validations to perform.
+             number of cross validations to perform. 0 for just train/test on best
+             split. Possible confusion: num_validations is the number of
+             validations to perform after the first eval segment, so totally
+             eval/validations will be this + 1. Also “auto” and “max”
+             aliases available. Max maxes out at 50.
+        models_to_validate (float):
+            The fraction of models to validate.
+            Top n models to pass through to cross validation.
+            Or float in 0 to 1 as % of tried. 0.99 is forced to 100% validation.
+            1 evaluates just 1 model. If horizontal or mosaic ensemble, then
+            additional min per_series models above the number here are added to
+            validation.
+        max_per_model_class (int):
+            The maximum number of models per class. of the models_to_validate what is
+            the maximum to pass from any one model class/family.
+        validation_method (str):
+            The method for validation.  ‘even’, ‘backwards’, or ‘seasonal n’ where n is
+            an integer of seasonal ‘backwards’ is better for recency and for shorter
+            training sets ‘even’ splits the data into equally-sized slices best for
+            more consistent data, a poetic but less effective strategy than others here
+            ‘seasonal’ most similar indexes ‘seasonal n’ for example ‘seasonal 364’
+            would test all data on each previous year of the forecast_length that would
+            immediately follow the training data. ‘similarity’ automatically finds the
+            data sections most similar to the most recent data that will be used for
+            prediction ‘custom’ - if used, .fit() needs validation_indexes passed - a
+            list of pd.DatetimeIndex’s, tail of each is used as test
+        min_allowed_train_percent (float):
+            The minimum percentage of data allowed for training.
+            percent of forecast length to allow as min training, else raises error.
+            0.5 with a forecast length of 10 would mean 5 training points are mandated,
+            for a total of 15 points. Useful in (unrecommended) cases where forecast_
+            length > training length.
+        remove_leading_zeroes (bool):
+            Whether to remove leading zeroes from the data.
+            replace leading zeroes with NaN. Useful in data where initial
+            zeroes mean data collection hasn’t started yet.
+        prefill_na (str):
+            The method for prefilling missing values.
+            The value to input to fill all NaNs with. Leaving as None and allowing model
+            interpolation is recommended. None, 0, ‘mean’, or ‘median’. 0 may be useful
+            in for examples sales cases where all NaN can be assumed equal to zero.
+        introduce_na (bool):
+            Whether to introduce missing values to the data.
+            whether to force last values in one training validation to be NaN.
+            Helps make more robust models. defaults to None, which introduces NaN in
+            last rows of validations if any NaN in tail of training data. Will not
+            introduce NaN to all series if subset is used. if True, will also randomly
+            change 20% of all rows to NaN in the validations
+        preclean (dict):
+            The parameters for data pre-cleaning.
+            if not None, a dictionary of Transformer params to be applied to input data
+            {“fillna”: “median”, “transformations”: {}, “transformation_params”: {}}
+            This will change data used in model inputs for fit and predict, and for
+            accuracy evaluation in cross validation!
+        model_interrupt (bool):
+            Whether the model can be interrupted.
+            If False, KeyboardInterrupts quit entire program.
+            if True, KeyboardInterrupts attempt to only quit current model.
+            if True, recommend use in conjunction with verbose > 0 and result_file in
+            the event of accidental complete termination. if “end_generation”, as True
+            and also ends entire generation of run. Note skipped models will not be
+            tried again.
+        generation_timeout (int):
+            The timeout for each generation. if not None, this is the number of minutes
+            from start at which the generational search ends, then proceeding to
+            validation This is only checked after the end of each generation, so
+            only offers an ‘approximate’ timeout for searching. It is an overall
+            cap for total generation search time, not per generation.
+        current_model_file (str):
+            The file containing the current model.
+            file path to write to disk of current model params
+            (for debugging if computer crashes). .json is appended
+        verbose (int):
+            The verbosity level.
+            setting to 0 or lower should reduce most output.
+            Higher numbers give more output.
+        n_jobs (int):
+            The number of jobs to run in parallel.
+             Number of cores available to pass to parallel processing.
+             A joblib context manager can be used instead (pass None in this case).
+             Also ‘auto’.
     """
 
     _tags = {
@@ -63,17 +209,19 @@ class AutoTSAdapter(BaseForecaster):
         # "maintainers": ["MBristle"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": True,
+        "ignores-exogeneous-X": True,  # TODO: add capability
         "capability:insample": False,
         "capability:pred_int:insample": False,
+        "capability:pred_int": False,  # TODO: add capability
         "requires-fh-in-fit": True,
-        "reserved_params": ["fh_"],
-        "python_dependencies": "autots",
+        "python_dependencies": ["autots", "pandas", "sklearn", "statsmodels", "scipy"],
+        "python_version": ">=3.6",
     }
 
     def __init__(
         self,
-        model_list: str = "default",
+        model_name: str = "",
+        model_list: list = "superfast",
         frequency: str = "infer",
         prediction_interval: float = 0.9,
         max_generations: int = 10,
@@ -106,7 +254,6 @@ class AutoTSAdapter(BaseForecaster):
         current_model_file: str = None,
         verbose: int = 1,
         n_jobs: int = -2,
-        model_name: str = "",
     ):
         self.model_name = model_name
         self.model_list = model_list
@@ -154,8 +301,8 @@ class AutoTSAdapter(BaseForecaster):
     def _fit(
         self,
         y: pd.DataFrame,
-        fh: ForecastingHorizon | None = None,
-        X: pd.DataFrame | None = None,
+        fh: Union[ForecastingHorizon, None] = None,
+        X: Union[pd.DataFrame, None] = None,  # noqa: F841
     ):
         """Fits the model to the provided data.
 
@@ -192,7 +339,9 @@ class AutoTSAdapter(BaseForecaster):
         return self
 
     def _predict(
-        self, fh: ForecastingHorizon | None = None, X: pd.DataFrame | None = None
+        self,
+        fh: ForecastingHorizon | None = None,
+        X: pd.DataFrame | None = None,  # noqa: F841
     ):
         """Provide forecast at future horizon using fitted forecaster.
 
@@ -250,55 +399,106 @@ class AutoTSAdapter(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {
-            "model_list": None,
-            "frequency": "infer",
-            "prediction_interval": 0.9,
-            "max_generations": 1,
-            "no_negatives": False,
-            "constraint": None,
-            "ensemble": "auto",
-            "initial_template": "General+Random",
-            "random_seed": 2022,
-            "holiday_country": "US",
-            "subset": None,
-            "aggfunc": "first",
-            "na_tolerance": 1,
-            "metric_weighting": {
-                "smape_weighting": 5,
-                "mae_weighting": 2,
-                "rmse_weighting": 2,
-                "made_weighting": 0.5,
-                "mage_weighting": 0,
-                "mle_weighting": 0,
-                "imle_weighting": 0,
-                "spl_weighting": 3,
-                "containment_weighting": 0,
-                "contour_weighting": 1,
-                "runtime_weighting": 0.05,
-                "oda_weighting": 0.001,
+        params = [
+            {
+                "model_name": None,
+                "model_list": "superfast",
+                "frequency": "infer",
+                "prediction_interval": 0.9,
+                "max_generations": 1,
+                "no_negatives": False,
+                "constraint": None,
+                "ensemble": "auto",
+                "initial_template": "General+Random",
+                "random_seed": 2022,
+                "holiday_country": "US",
+                "subset": None,
+                "aggfunc": "first",
+                "na_tolerance": 1,
+                "metric_weighting": {
+                    "smape_weighting": 5,
+                    "mae_weighting": 2,
+                    "rmse_weighting": 2,
+                    "made_weighting": 0.5,
+                    "mage_weighting": 0,
+                    "mle_weighting": 0,
+                    "imle_weighting": 0,
+                    "spl_weighting": 3,
+                    "containment_weighting": 0,
+                    "contour_weighting": 1,
+                    "runtime_weighting": 0.05,
+                    "oda_weighting": 0.001,
+                },
+                "drop_most_recent": 0,
+                "drop_data_older_than_periods": 100000,
+                "transformer_list": "auto",
+                "transformer_max_depth": 6,
+                "models_mode": "random",
+                "num_validations": "auto",
+                "models_to_validate": 1,
+                "max_per_model_class": None,
+                "validation_method": "seasonal 1",
+                "min_allowed_train_percent": 0.5,
+                "remove_leading_zeroes": False,
+                "prefill_na": None,
+                "introduce_na": None,
+                "preclean": None,
+                "model_interrupt": True,
+                "generation_timeout": None,
+                "current_model_file": None,
+                "verbose": -2,
+                "n_jobs": -2,
             },
-            "drop_most_recent": 0,
-            "drop_data_older_than_periods": 100000,
-            "transformer_list": "auto",
-            "transformer_max_depth": 6,
-            "models_mode": "random",
-            "num_validations": "auto",
-            "models_to_validate": 1,
-            "max_per_model_class": None,
-            "validation_method": "seasonal 1",
-            "min_allowed_train_percent": 0.5,
-            "remove_leading_zeroes": False,
-            "prefill_na": None,
-            "introduce_na": None,
-            "preclean": None,
-            "model_interrupt": True,
-            "generation_timeout": None,
-            "current_model_file": None,
-            "verbose": -1,
-            "n_jobs": -2,
-            "model_name": "GLS",
-        }
+            {
+                "model_list": None,
+                "frequency": "infer",
+                "prediction_interval": 0.9,
+                "max_generations": 1,
+                "no_negatives": False,
+                "constraint": None,
+                "ensemble": "auto",
+                "initial_template": "General+Random",
+                "random_seed": 2022,
+                "holiday_country": "US",
+                "subset": None,
+                "aggfunc": "first",
+                "na_tolerance": 1,
+                "metric_weighting": {
+                    "smape_weighting": 5,
+                    "mae_weighting": 2,
+                    "rmse_weighting": 2,
+                    "made_weighting": 0.5,
+                    "mage_weighting": 0,
+                    "mle_weighting": 0,
+                    "imle_weighting": 0,
+                    "spl_weighting": 3,
+                    "containment_weighting": 0,
+                    "contour_weighting": 1,
+                    "runtime_weighting": 0.05,
+                    "oda_weighting": 0.001,
+                },
+                "drop_most_recent": 0,
+                "drop_data_older_than_periods": 100000,
+                "transformer_list": "auto",
+                "transformer_max_depth": 6,
+                "models_mode": "random",
+                "num_validations": "auto",
+                "models_to_validate": 1,
+                "max_per_model_class": None,
+                "validation_method": "seasonal 1",
+                "min_allowed_train_percent": 0.5,
+                "remove_leading_zeroes": False,
+                "prefill_na": None,
+                "introduce_na": None,
+                "preclean": None,
+                "model_interrupt": True,
+                "generation_timeout": None,
+                "current_model_file": None,
+                "verbose": -1,
+                "n_jobs": -2,
+                "model_name": "GLS",
+            },
+        ]
         return params
 
     def _instantiate_model(self):
@@ -308,14 +508,14 @@ class AutoTSAdapter(BaseForecaster):
         -------
             self: This function returns a reference to the instantiated model object.
         """
-        if type(self.ensemble) is not list:
+        if not isinstance(self.ensemble, list):
             ensemble = [
                 self.ensemble,
             ]
         else:
             ensemble = self.ensemble
 
-        if type(self.model_interrupt) is not tuple:
+        if not isinstance(self.model_interrupt, tuple):
             model_interrupt = (self.model_interrupt,)
         else:
             model_interrupt = self.model_interrupt
@@ -328,7 +528,7 @@ class AutoTSAdapter(BaseForecaster):
         else:
             model_list = self.model_list
 
-        if self.metric_weighting is None:
+        if self.metric_weighting is None or not self.metric_weighting != "":
             metric_weighting = (
                 {
                     "smape_weighting": 5,
@@ -345,6 +545,8 @@ class AutoTSAdapter(BaseForecaster):
                     "oda_weighting": 0.001,
                 },
             )
+        else:
+            metric_weighting = self.metric_weighting
 
         self.forecaster_ = self._ModelClass(
             model_list=model_list,
@@ -399,10 +601,10 @@ class AutoTSAdapter(BaseForecaster):
         """
         if y is None:
             return None
-        elif type(y.index) is pd.PeriodIndex:
+        elif isinstance(y.index, pd.PeriodIndex):
             y = y.copy()
             y.index = y.index.to_timestamp()
-        elif y.index.is_integer():
+        elif is_integer_dtype(y.index):
             y = self._convert_int_to_date(y)
         # else y is pd.DatetimeIndex as AutoAF expects, and needs no conversion
         return y
@@ -427,7 +629,7 @@ class AutoTSAdapter(BaseForecaster):
         return y
 
     def _get_forecast_length(self):
-        if type(self._fh) is ForecastingHorizon:
+        if isinstance(self._fh, ForecastingHorizon):
             cutoff = self._fh_cutoff_transformation(self._y)
             fh_length = max(self._fh.to_relative(cutoff)._values)
             if fh_length <= 0:
@@ -436,8 +638,6 @@ class AutoTSAdapter(BaseForecaster):
                     "the forecasting horizon must be bigger than 0."
                 )
             return fh_length
-        else:
-            raise NotImplementedError
 
     def _fh_cutoff_transformation(self, cutoff):
         if isinstance(self._fh._values, (pd.Period, pd.PeriodIndex)):
