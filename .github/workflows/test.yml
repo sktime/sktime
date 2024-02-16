@@ -232,7 +232,7 @@ jobs:
     uses: ./.github/workflows/test_datasets.yml
 
   test-full:
-    needs: test-nosoftdeps
+    needs: [test-base, test-module, test-other]
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
