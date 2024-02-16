@@ -84,4 +84,5 @@ jobs:
       - name: upload coverage
         uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},incomplete
