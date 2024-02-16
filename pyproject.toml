@@ -78,6 +78,7 @@ dependencies = [
 #
 all_extras = [
   "arch>=5.6,<6.4.0",
+  'autots>=0.6.10,<0.6.2',
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2024.1.1",
@@ -111,10 +112,10 @@ all_extras = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
-  'autots',
 ]
 all_extras_pandas2 = [
   "arch>=5.6,<6.4.0",
+  'autots>=0.6.10,<0.6.2',
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2024.1.1",
@@ -147,7 +148,6 @@ all_extras_pandas2 = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
-  'autots',
 ]
 
 # single-task dependencies, e.g., forecasting, classification, etc.
@@ -180,13 +180,13 @@ clustering = [
 ]
 forecasting = [
   "arch>=5.6,<6.4",
+  'autots>=0.6.10,<0.6.2',
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   "prophet<1.2,>=1.1",
   "skpro<2.2,>=2",
   'statsforecast<1.7,>=0.5.2; python_version < "3.12"',
   "statsmodels<0.15,>=0.12.1",
   'tbats<1.2,>=1.1; python_version < "3.12"',
-  'autots',
 ]
 networks = [
   "keras-self-attention<0.52,>=0.51",

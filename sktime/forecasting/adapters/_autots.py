@@ -14,8 +14,8 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 class AutoTSAdapter(BaseForecaster):
     """Act as adapter for the AutoTS library.
 
-    Parameter:
-    ---------
+    Parameters
+    ----------
         model_name : str, optional (default="fast")
             The name of the model. NOTE: Overwrites the model_list parameter.
             For using only one model oder a default model_list.
@@ -206,7 +206,7 @@ class AutoTSAdapter(BaseForecaster):
         "authors": [
             "MBristle",
         ],
-        # "maintainers": ["MBristle"],
+        "maintainers": ["MBristle"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,  # TODO: add capability
@@ -528,23 +528,21 @@ class AutoTSAdapter(BaseForecaster):
         else:
             model_list = self.model_list
 
-        if self.metric_weighting is None or not self.metric_weighting != "":
-            metric_weighting = (
-                {
-                    "smape_weighting": 5,
-                    "mae_weighting": 2,
-                    "rmse_weighting": 2,
-                    "made_weighting": 0.5,
-                    "mage_weighting": 0,
-                    "mle_weighting": 0,
-                    "imle_weighting": 0,
-                    "spl_weighting": 3,
-                    "containment_weighting": 0,
-                    "contour_weighting": 1,
-                    "runtime_weighting": 0.05,
-                    "oda_weighting": 0.001,
-                },
-            )
+        if not self.metric_weighting:
+            metric_weighting = {
+                "smape_weighting": 5,
+                "mae_weighting": 2,
+                "rmse_weighting": 2,
+                "made_weighting": 0.5,
+                "mage_weighting": 0,
+                "mle_weighting": 0,
+                "imle_weighting": 0,
+                "spl_weighting": 3,
+                "containment_weighting": 0,
+                "contour_weighting": 1,
+                "runtime_weighting": 0.05,
+                "oda_weighting": 0.001,
+            }
         else:
             metric_weighting = self.metric_weighting
 
@@ -597,7 +595,7 @@ class AutoTSAdapter(BaseForecaster):
         Returns
         -------
             pd.DataFrame or None: The input data with y.index coerced to
-                pd.DatetimeIndex, or None if y is None.
+            pd.DatetimeIndex, or None if y is None.
         """
         if y is None:
             return None
@@ -629,21 +627,21 @@ class AutoTSAdapter(BaseForecaster):
         return y
 
     def _get_forecast_length(self):
-        if isinstance(self._fh, ForecastingHorizon):
-            cutoff = self._fh_cutoff_transformation(self._y)
-            fh_length = max(self._fh.to_relative(cutoff)._values)
-            if fh_length <= 0:
-                raise ValueError(
-                    "The relative length to the training data of "
-                    "the forecasting horizon must be bigger than 0."
-                )
-            return fh_length
+        cutoff = self._fh_cutoff_transformation(self._y)
+        fh_length = max(self._fh.to_relative(cutoff)._values)
+        if fh_length <= 0:
+            raise ValueError(
+                "The relative length to the training data of "
+                "the forecasting horizon must be bigger than 0."
+            )
+        return fh_length
 
     def _fh_cutoff_transformation(self, cutoff):
         if isinstance(self._fh._values, (pd.Period, pd.PeriodIndex)):
-            return cutoff.index.to_period()[-1]
+            transformed_fh_cutoff = cutoff.index.to_period()[-1]
         elif isinstance(self._fh._values, pd.DatetimeIndex):
-            return cutoff.index[-1]
+            transformed_fh_cutoff = cutoff.index[-1]
 
         else:
-            return len(cutoff.index)
+            transformed_fh_cutoff = len(cutoff.index)
+        return transformed_fh_cutoff
