@@ -96,6 +96,7 @@ Distance-based
 
     ElasticEnsemble
     KNeighborsTimeSeriesClassifier
+    KNeighborsTimeSeriesClassifierTslearn
     ProximityForest
     ProximityStump
     ProximityTree
