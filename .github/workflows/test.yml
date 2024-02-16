@@ -271,7 +271,7 @@ jobs:
         uses: codecov/codecov-action@v4
 
   test-unix-pandas1:
-    needs: test-nosoftdeps
+    needs: [test-base, test-module, test-other]
     strategy:
       fail-fast: false
       matrix:
