@@ -75,12 +75,15 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         * 'brute' precomputes the distance matrix and applies
           ``sklearn`` ``KNeighborsClassifier`` directly.
           This algorithm is not memory efficient as it scales with the size
-          of the distance matrix.
+          of the distance matrix, but may be more runtime efficient.
         * 'brute_incr' passes the distance to ``sklearn`` ``KNeighborsClassifier``,
           with ``algorithm='brute'``. This is useful for large datasets,
-          as the distance is used incrementally, without precomputation
+          for memory efficiency, as the distance is used incrementally,
+          without precomputation. However, this may be less runtime efficient.
         * 'ball_tree' uses a ball tree to find the nearest neighbors,
           using ``KNeighborsClassifier`` from ``sklearn``.
+          May be more runtime and memory efficient on mid-to-large datasets,
+          however, the distance computation may be slower.
 
     distance : str or callable, optional. default ='dtw'
         distance measure between time series
