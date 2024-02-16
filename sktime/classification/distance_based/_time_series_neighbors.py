@@ -414,18 +414,16 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             return self._predict_dist(X)
 
     def _predict_dist(self, X):
-
+        """Predict using adapted distance metric."""
         X = self._convert_X_to_sklearn(X)
         y_pred = self.knn_estimator_.predict(X)
         return y_pred
 
-
     def _predict_precomp(self, X):
+        """Predict using precomputed distance matrix."""
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
-
         y_pred = self.knn_estimator_.predict(dist_mat)
-
         return y_pred
 
     def _predict_proba(self, X):
@@ -449,16 +447,16 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             return self._predict_proba_dist(X)
 
     def _predict_proba_dist(self, X):
+        """Predict (proba) using adapted distance metric."""
         X = self._convert_X_to_sklearn(X)
         y_pred = self.knn_estimator_.predict_proba(X)
         return y_pred
 
     def _predict_proba_precomp(self, X):
+        """Predict (proba) using precomputed distance matrix."""
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
-
         y_pred = self.knn_estimator_.predict_proba(dist_mat)
-
         return y_pred
 
     @classmethod
