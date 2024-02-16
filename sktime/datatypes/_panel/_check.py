@@ -198,11 +198,6 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         msg = f"{var_name} must have unique column indices, but found {col_names}"
         return _ret(False, msg, None, return_metadata)
 
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
-        return _ret(False, msg, None, return_metadata)
-
     # check that there are precisely two index levels
     nlevels = index.nlevels
     if panel is True and not nlevels == 2:
