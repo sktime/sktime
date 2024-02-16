@@ -41,7 +41,7 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         For metrics that accept parallelization of the cross-distance matrix
         computations, ``n_jobs`` and ``verbose`` keys passed in ``metric_params``
         are overridden by the ``n_jobs`` and ``verbose`` arguments.
-        For ``'sax'`` metric, these are hyper-parameters to be passed at the 
+        For ``'sax'`` metric, these are hyper-parameters to be passed at the
         creation of the ``SymbolicAggregateApproximation`` object.
 
     n_jobs : int or None, optional (default=None)
@@ -85,8 +85,8 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
     def __init__(
         self,
         n_neighbors=5,
-        weights='uniform',
-        metric='dtw',
+        weights="uniform",
+        metric="dtw",
         metric_params=None,
         n_jobs=None,
         verbose=0
