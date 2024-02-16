@@ -124,6 +124,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
 
         if fh is None:
             fh = self.fh
+        fh = fh.to_relative(self.cutoff)
 
         if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
             raise ValueError(
