@@ -89,7 +89,7 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         metric="dtw",
         metric_params=None,
         n_jobs=None,
-        verbose=0
+        verbose=0,
     ):
         self.n_neighbors = n_neighbors
         self.weights = weights
