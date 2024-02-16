@@ -63,6 +63,14 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a pandas.DataFrame, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
+    # check to delineate from nested_univ mtype (Panel)
+    # pd.DataFrame mtype allows object dtype,
+    # but if we allow object dtype with pd.Series entries,
+    # the mtype becomes ambiguous, i.e., non-delineable from nested_univ
+    if np.prod(obj.shape) > 0 and isinstance(obj.iloc[0, 0], (pd.Series, pd.DataFrame)):
+        msg = f"{var_name} cannot contain nested pd.Series or pd.DataFrame"
+        return ret(False, msg, None, return_metadata)
+
     # we now know obj is a pd.DataFrame
     index = obj.index
     if _req("is_empty", return_metadata):
