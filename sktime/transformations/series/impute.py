@@ -26,41 +26,54 @@ class Imputer(BaseTransformer):
         Method to fill the missing values.
 
         * "drift" : drift/trend values by sktime.PolynomialTrendForecaster(degree=1)
-            first, X in transform() is filled with ffill then bfill
-            then PolynomialTrendForecaster(degree=1) is fitted to filled X, and
-            predict values are queried at indices which had missing values
+          first, X in transform() is filled with ffill then bfill
+          then PolynomialTrendForecaster(degree=1) is fitted to filled X, and
+          predict values are queried at indices which had missing values
         * "linear" : linear interpolation, uses pd.Series.interpolate()
             WARNING: This method can not extrapolate, so it is fitted always on the
             data given to transform().
         * "nearest" : use nearest value, uses pd.Series.interpolate()
         * "constant" : same constant value (given in arg value) for all NaN
-        * "mean" : pd.Series.mean() of *fit* data
-        * "median" : pd.Series.median() of *fit* data
-        * "backfill" ot "bfill" : adapted from pd.Series.fillna()
-        * "pad" or "ffill" : adapted from pd.Series.fillna()
+        * "mean" : pd.Series.mean() of data seen in ``fit``
+          to use data in transform, wrap this estimator in ``FitInTransform``
+        * "median" : pd.Series.median() of data seen in ``fit``
+          to use data in transform, wrap this estimator in ``FitInTransform``
+        * "backfill" to "bfill" : applies ``pd.Series.bfill`` to all data
+        * "pad" or "ffill" : applies ``pd.Series.ffill`` to all data
         * "random" : random values between pd.Series.min() and .max() of *fit* data
-            if pd.Series dtype is int, sample is uniform discrete
-            if pd.Series dtype is float, sample is uniform continuous
-        * "forecaster" : use an sktime Forecaster, given in param forecaster.
-            First, X in *fit* is filled with ffill then bfill
-            then forecaster is fitted to filled X, and *predict* values are queried
-            at indices of X data in *transform* which had missing values
-        For the following methods, the train data is used to fit them:
-        "drift", "mean", "median", "random". For all other methods, the
-        transform data is sufficient to compute the impute values.
+          if pd.Series dtype is int, sample is uniform discrete
+          if pd.Series dtype is float, sample is uniform continuous
+        * "forecaster" : use an sktime forecaster, given in param ``forecaster``.
+          First, X seed in ``fit`` is filled with ``ffill`` then ``bfill``
+          then forecaster is fitted to filled X, and ``predict`` values are queried
+          at indices of X data in ``transform`` which had missing values.
+          ``forecaster`` is always applied by variable and instance.
 
-    missing_values : int/float/str, default=None
-        The placeholder for the missing values. All occurrences of
-        missing_values will be imputed, in addition to np.nan.
-        If None, then only np.nan values are imputed.
+        The following methods, fit non-trivially to the data seen in ``fit``:
+        "drift", "mean", "median", "random". All other methods
+        do not depend on values seen in ``fit``.
+
+    missing_values : str, int, float, regex, list, or None, default=None
+        Value to consider as `np.nan`` and impute, passed to ``DataFrame.replace``
+        If str, int, float, all entries equal to ``missing_values`` will be imputed,
+        in addition to ``np.nan.``
+        If regex, all entrie matching regex will be imputed, in addition to ``np.nan.``
+        If list, must be list of str, int, float, or regex.
+        Values matching any list element by above rules will be imputed,
+        in addition to ``np.nan``.
+        If None, then only ``np.nan`` values are imputed.
+
     value : int/float, default=None
         Value to use to fill missing values when method="constant".
+        Only used if ``method="constant"``, otherwise ignored.
+
     forecaster : Any Forecaster based on sktime.BaseForecaster, default=None
         Use a given Forecaster to impute by insample predictions when
-        method="forecaster". Before fitting, missing data is imputed with
-        method="ffill" or "bfill" as heuristic. in case of multivariate X,
-        the forecaster is applied separete to each column like a
-        ColumnEnsembleForecaster.
+        ``method="forecaster"``. Before fitting, missing data is imputed with
+        ``method="ffill"`` or ``"bfill"`` as heuristic. In case of multivariate X,
+        a clone of ``forecaster`` is applied per column.
+        Only used if ``method="forecaster"``, otherwise ignored.
+
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
 
@@ -68,7 +81,7 @@ class Imputer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> transformer = Imputer(method="drift")
@@ -79,6 +92,7 @@ class Imputer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["aiwalter"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -136,6 +150,9 @@ class Imputer(BaseTransformer):
                     ]
                 }
             )
+
+        if method in "forecaster":
+            self.set_tags(**{"y_inner_mtype": ["pd.DataFrame"]})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -217,13 +234,13 @@ class Imputer(BaseTransformer):
             X_grouped = X.groupby(level=list(range(index.nlevels - 1)))
 
             if self.method in ["backfill", "bfill"]:
-                X = X_grouped.fillna(method="bfill")
+                X = X_grouped.bfill()
                 # fill trailing NAs of panel instances with reverse method
-                return X.fillna(method="ffill")
+                return X.ffill()
             elif self.method in ["pad", "ffill"]:
-                X = X_grouped.fillna(method="ffill")
+                X = X_grouped.ffill()
                 # fill leading NAs of panel instances with reverse method
-                return X.fillna(method="bfill")
+                return X.bfill()
             elif self.method == "mean":
                 return X_grouped.fillna(value=self._mean)
             elif self.method == "median":
@@ -231,8 +248,10 @@ class Imputer(BaseTransformer):
             else:
                 raise AssertionError("Code should not be reached")
         else:
-            if self.method in ["backfill", "bfill", "pad", "ffill"]:
-                X = X.fillna(method=self.method)
+            if self.method in ["backfill", "bfill"]:
+                X = X.bfill()
+            elif self.method in ["pad", "ffill"]:
+                X = X.ffill()
             elif self.method == "drift":
                 X = self._impute_with_forecaster(X, y)
             elif self.method == "forecaster":
@@ -248,7 +267,7 @@ class Imputer(BaseTransformer):
 
             # fill first/last elements of series,
             # as some methods (e.g. "linear") can't impute those
-            X = X.fillna(method="ffill").fillna(method="backfill")
+            X = X.ffill().bfill()
 
             return X
 
@@ -269,25 +288,15 @@ class Imputer(BaseTransformer):
             "forecaster",
         ]:
             raise ValueError(f"Given method {method} is not an allowed method.")
-        if (
-            self.value is not None
-            and method != "constant"
-            or method == "constant"
-            and self.value is None
-        ):
+        if method == "constant" and self.value is None:
             raise ValueError(
-                """Imputing with a value can only be
-                used if method="constant" and if parameter "value" is not None"""
+                """Imputing with method=\"constant\" can only be used if parameter
+                value" is not None"""
             )
-        elif (
-            self.forecaster is not None
-            and method != "forecaster"
-            or method == "forecaster"
-            and self.forecaster is None
-        ):
+        elif method == "forecaster" and self.forecaster is None:
             raise ValueError(
-                """Imputing with a forecaster can only be used if
-                method=\"forecaster\" and if arg forecaster is not None"""
+                """Imputing with method=\"forecaster\" can only be
+                used if param forecaster is not None"""
             )
         else:
             pass
@@ -341,10 +350,9 @@ class Imputer(BaseTransformer):
                 # fill NaN before fitting with ffill and backfill (heuristic)
 
                 self._forecaster.fit(
-                    y=self._X[col].fillna(method="ffill").fillna(method="backfill"),
-                    X=self._y[col].fillna(method="ffill").fillna(method="backfill")
-                    if self._y is not None
-                    else None,
+                    y=self._X[col].ffill().bfill(),
+                    X=self._y[col].ffill().bfill() if self._y is not None else None,
+                    fh=fh,
                 )
 
                 # replace missing values with predicted values
@@ -370,7 +378,12 @@ class Imputer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.forecasting.compose import make_reduction
         from sktime.forecasting.trend import TrendForecaster
+
+        linear_forecaster = make_reduction(LinearRegression(), strategy="multioutput")
 
         return [
             {"method": "drift"},
@@ -383,6 +396,7 @@ class Imputer(BaseTransformer):
             {"method": "pad"},
             {"method": "random"},
             {"method": "forecaster", "forecaster": TrendForecaster()},
+            {"method": "forecaster", "forecaster": linear_forecaster},
         ]
 
 

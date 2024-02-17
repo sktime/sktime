@@ -30,8 +30,6 @@ class MrSQM(_DelegatedClassifier):
         number of representations produced by sax transformation.
     nsfa                : int, default=0
         number of representations produced by sfa transformation.
-        WARNING: setting this to 1 or larger will break estimator persistence (save),
-        known bug, see https://github.com/mlgig/mrsqm/issues/7
     custom_config       : dict, default=None
         customized parameters for the symbolic transformation.
     random_state        : int, default=None.
@@ -50,9 +48,15 @@ class MrSQM(_DelegatedClassifier):
     """
 
     _tags = {
-        "X_inner_mtype": "nested_univ",
+        # packaging info
+        # --------------
+        "authors": ["lnthach", "heerme", "fkiraly"],
+        "maintainers": ["lnthach", "heerme", "fkiraly"],
         "python_dependencies": "mrsqm",
         "requires_cython": True,
+        # estimator type
+        # --------------
+        "X_inner_mtype": "nested_univ",
     }
 
     def __init__(
@@ -124,15 +128,12 @@ class MrSQM(_DelegatedClassifier):
         """
         params1 = {}
 
-        # known problem: nsfa > 0 causes estimator to be non-pickleable
-        # see https://github.com/mlgig/mrsqm/issues/7
-        # fix this problem once the pickling issue is resolved
         params2 = {
             "strat": "SR",
             "features_per_rep": 200,
             "selection_per_rep": 1000,
             "nsax": 2,
-            "nsfa": 0,
+            "nsfa": 1,
             "sfa_norm": False,
         }
 

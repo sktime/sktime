@@ -8,6 +8,7 @@ the lower the better.
 """
 
 import numpy as np
+import sklearn
 from scipy.stats import gmean
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
@@ -17,7 +18,9 @@ from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
 from sktime.utils.stats import _weighted_geometric_mean
-from sktime.utils.validation.series import check_series
+
+if sklearn.__version__ >= "1.4.0":
+    from sklearn.metrics import root_mean_squared_error as _root_mean_squared_error
 
 __author__ = ["mloning", "tch", "RNKuhns"]
 __all__ = [
@@ -230,7 +233,7 @@ def mean_asymmetric_error(
         asymmetric threshold.
     left_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values less than
-        the asymetric threshold.
+        the asymmetric threshold.
     right_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values greater
         than the asymmetric threshold.
@@ -258,7 +261,7 @@ def mean_asymmetric_error(
 
     Notes
     -----
-    Setting `left_error_function` and `right_error_function` to "aboslute", but
+    Setting `left_error_function` and `right_error_function` to "absolute", but
     choosing different values for `left_error_penalty` and `right_error_penalty`
     results in the "lin-lin" error function discussed in [2]_.
 
@@ -418,7 +421,7 @@ def mean_absolute_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     # _check_reg_targets converts 1-dim y_true,y_pred to 2-dim so need to match
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
@@ -547,7 +550,7 @@ def median_absolute_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
 
@@ -588,7 +591,7 @@ def mean_squared_scaled_error(
     `square_root` is True. Both MSSE and RMSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MASE loss metric.  Like MASE and other
+    This is a squared variant of the MASE loss metric.  Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
     forecast methods on a single series or between series.
 
@@ -681,7 +684,7 @@ def mean_squared_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
 
@@ -726,7 +729,7 @@ def median_squared_scaled_error(
     `square_root` is True. Both MdSSE and RMdSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MdASE loss metric. Like MASE and other
+    This is a squared variant of the MdASE loss metric. Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
     forecast methods on a single series or between series.
 
@@ -809,7 +812,7 @@ def median_squared_scaled_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
-    y_train = check_series(y_train, enforce_univariate=False)
+
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
 
@@ -999,18 +1002,24 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], square_root=True)
     0.8936491673103708
     """
-    # Scikit-learn argument `squared` returns MSE when True and RMSE when False
-    # Scikit-time argument `square_root` returns RMSE when True and MSE when False
-    # Therefore need to pass the opposite of square_root as squared argument
-    # to the scikit-learn function being wrapped
-    squared = not square_root
-    return _mean_squared_error(
-        y_true,
-        y_pred,
-        sample_weight=horizon_weight,
-        multioutput=multioutput,
-        squared=squared,
-    )
+    metric_args = (y_true, y_pred)
+    metric_kwargs = {"sample_weight": horizon_weight, "multioutput": multioutput}
+
+    if not square_root:
+        metric_function = _mean_squared_error
+    elif sklearn.__version__ < "1.4.0":
+        # Scikit-learn argument `squared` returns MSE when True and RMSE when False
+        # Scikit-time argument `square_root` returns RMSE when True and MSE when False
+        # Therefore need to pass the opposite of square_root as squared argument
+        # to the scikit-learn function being wrapped
+        metric_function = _mean_squared_error
+        metric_kwargs["squared"] = False
+    else:
+        # sklearn 1.4 introduced ``root_mean_squared_error`` function, so we can
+        # use that directly to avoid DeprecationWarning from sklearn 1.6
+        metric_function = _root_mean_squared_error
+
+    return metric_function(*metric_args, **metric_kwargs)
 
 
 def median_absolute_error(
@@ -1224,7 +1233,7 @@ def geometric_mean_absolute_error(
     Like MAE and MdAE, GMAE is measured in the same units as the input data.
     Because GMAE takes the absolute value of the forecast error rather than
     squaring it, MAE penalizes large errors to a lesser degree than squared error
-    varients like MSE, RMSE or GMSE or RGMSE.
+    variants like MSE, RMSE or GMSE or RGMSE.
 
     Parameters
     ----------
@@ -1302,9 +1311,7 @@ def geometric_mean_absolute_error(
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
-            np.abs(errors),
-            sample_weight=horizon_weight,
-            axis=0,
+            np.abs(errors), weights=horizon_weight, axis=0
         )
 
     if isinstance(multioutput, str):
@@ -1427,9 +1434,7 @@ def geometric_mean_squared_error(
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
-            np.square(errors),
-            sample_weight=horizon_weight,
-            axis=0,
+            np.square(errors), weights=horizon_weight, axis=0
         )
 
     if square_root:
@@ -2435,7 +2440,7 @@ def relative_loss(
     comparing the loss of 3rd party forecasts or surveys of professional
     forecasters.
 
-    Only metrics that do not require y_train are curretnly supported.
+    Only metrics that do not require y_train are currently supported.
 
     Parameters
     ----------
@@ -2557,7 +2562,7 @@ def _asymmetric_error(
         asymmetric threshold.
     left_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values less than
-        the asymetric threshold.
+        the asymmetric threshold.
     right_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values greater
         than the asymmetric threshold.
@@ -2565,7 +2570,7 @@ def _asymmetric_error(
     Returns
     -------
     asymmetric_errors : float
-        Array of assymetric errors.
+        Array of asymmetric errors.
 
     References
     ----------

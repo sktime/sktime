@@ -1,7 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements pipelines for forecasting."""
 
-__author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
 import pandas as pd
@@ -10,6 +9,7 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
@@ -77,6 +77,15 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                 f"the two can be mixed; but, found steps of type {type(estimators)}"
             )
             raise TypeError(msg)
+
+        # if len(estimators) == 1:
+        #     msg = (
+        #         f"in {self_name}, found steps of length 1, "
+        #         f"this will result in the same behaviour "
+        #         f"as not wrapping the single step in a pipeline. "
+        #         f"Consider not wrapping steps in {self_name} as it is redundant."
+        #     )
+        #     warn(msg, obj=self)
 
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)
@@ -161,9 +170,11 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.23.0 - get rid of the "Coverage" case treatment
+                        # todo 0.27.0 - check why this cannot be easily removed
+                        # in theory, we should get rid of the "Coverage" case treatment
+                        # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
-                        #   i.d., special 1st level name of prediction objet
+                        #   i.d., special 1st level name of prediction object
                         #   in the case where there is only one variable
                         if len(yt[ix].columns) == 1:
                             temp = yt[ix].columns
@@ -250,7 +261,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         """
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.compose._reduce import YfromX
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.detrend import Detrender
@@ -266,13 +277,11 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", DirectReductionForecaster.create_test_instance()),
+            ("forecaster", YfromX.create_test_instance()),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {
-            "steps": [Detrender(), DirectReductionForecaster.create_test_instance()]
-        }
+        params3 = {"steps": [Detrender(), YfromX.create_test_instance()]}
 
         return [params1, params2, params3]
 
@@ -347,7 +356,7 @@ class ForecastingPipeline(_Pipeline):
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> y, X = load_longley()
     >>> y_train, _, X_train, X_test = temporal_train_test_split(y, X)
@@ -372,6 +381,7 @@ class ForecastingPipeline(_Pipeline):
 
         Example 3: using the dunder method
         Note: * (= apply to `y`) has precedence over ** (= apply to `X`)
+
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = (imputer * MinMaxScaler()) ** forecaster
@@ -381,6 +391,7 @@ class ForecastingPipeline(_Pipeline):
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "aiwalter"],
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
@@ -506,12 +517,10 @@ class ForecastingPipeline(_Pipeline):
         y_pred : pd.Series
             Point predictions
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict(fh, X)
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -543,14 +552,10 @@ class ForecastingPipeline(_Pipeline):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        X = self._transform(X=X)
-        return self.forecaster_.predict_quantiles(
-            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
-        )
+        X = self._transform(X=X, y=fh)
+        return self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -586,10 +591,8 @@ class ForecastingPipeline(_Pipeline):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        X = self._transform(X=X)
-        return self.forecaster_.predict_interval(
-            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
-        )
+        X = self._transform(X=X, y=fh)
+        return self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.
@@ -621,7 +624,7 @@ class ForecastingPipeline(_Pipeline):
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_var(fh=fh, X=X, cov=cov)
 
     # todo: does not work properly for multivariate or hierarchical
@@ -648,7 +651,7 @@ class ForecastingPipeline(_Pipeline):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        X = self._transform(X=X)
+        X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
 
     def _update(self, y, X=None, update_params=True):
@@ -679,6 +682,14 @@ class ForecastingPipeline(_Pipeline):
         # If X is not given or ignored, just passthrough the data without transformation
         if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
             for _, _, transformer in self._iter_transformers():
+                # if y is required but not passed,
+                # we create a zero-column y from the forecasting horizon
+                requires_y = transformer.get_tag("requires_y", False)
+                if isinstance(y, ForecastingHorizon) and requires_y:
+                    y = y.to_absolute_index(self.cutoff)
+                    y = pd.DataFrame(index=y)
+                else:
+                    y = None
                 X = transformer.transform(X=X, y=y)
         return X
 
@@ -777,6 +788,7 @@ class TransformedTargetForecaster(_Pipeline):
     >>> y = load_airline()
 
         Example 1: string/estimator pairs
+
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("detrender", Detrender()),
@@ -787,6 +799,7 @@ class TransformedTargetForecaster(_Pipeline):
     >>> y_pred = pipe.predict(fh=[1,2,3])
 
         Example 2: without strings
+
     >>> pipe = TransformedTargetForecaster([
     ...     Imputer(method="mean"),
     ...     Detrender(),
@@ -795,12 +808,14 @@ class TransformedTargetForecaster(_Pipeline):
     ... ])
 
         Example 3: using the dunder method
+
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = imputer * Detrender() * forecaster * ExponentTransformer()
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "aiwalter"],
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
@@ -829,6 +844,21 @@ class TransformedTargetForecaster(_Pipeline):
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
+
+        # above, we cloned the ignores-exogeneous-X tag,
+        # but we also need to check whether X is used as y in some transformer
+        # in this case X is not ignored by the pipe, even if the forecaster ignores it
+        # logic below checks whether there is at least one such transformer
+        # if there is, we override the ignores-exogeneous-X tag to False
+        # also see discussion in bug issue #5518
+        pre_ts = self.transformers_pre_
+        post_ts = self.transformers_post_
+        pre_use_y = [est.get_tag("y_inner_mtype") != "None" for _, est in pre_ts]
+        post_use_y = [est.get_tag("y_inner_mtype") != "None" for _, est in post_ts]
+        any_t_use_y = any(pre_use_y) or any(post_use_y)
+
+        if any_t_use_y:
+            self.set_tags(**{"ignores-exogeneous-X": False})
 
     @property
     def forecaster_(self):
@@ -1077,9 +1107,7 @@ class TransformedTargetForecaster(_Pipeline):
         Z = check_series(Z)
         return self._get_inverse_transform(self.transformers_pre_, Z, X)
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1111,17 +1139,13 @@ class TransformedTargetForecaster(_Pipeline):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        pred_int = self.forecaster_.predict_quantiles(
-            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
-        )
+        pred_int = self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         pred_int_transformed = self._get_inverse_transform(
             self.transformers_pre_, pred_int, mode="proba"
         )
         return pred_int_transformed
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -1157,9 +1181,7 @@ class TransformedTargetForecaster(_Pipeline):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = self.forecaster_.predict_interval(
-            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
-        )
+        pred_int = self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
         pred_int_transformed = self._get_inverse_transform(
             self.transformers_pre_, pred_int, mode="proba"
         )
@@ -1169,47 +1191,75 @@ class TransformedTargetForecaster(_Pipeline):
 class ForecastX(BaseForecaster):
     """Forecaster that forecasts exogeneous data for use in an endogeneous forecast.
 
-    In `predict`, this forecaster carries out a `predict` step on exogeneous `X`.
-    Then, a forecast is made for `y`, using exogeneous data plus its forecasts as `X`.
-    If `columns` argument is provided, will carry `predict` out only for the columns
-    in `columns`, and will use other columns in `X` unchanged.
+    In ``predict``, this forecaster carries out a ``predict`` step on exogeneous ``X``.
+    Then, a forecast is made for ``y``,
+    using exogeneous data plus its forecasts as ``X``.
+    If ``columns`` argument is provided, will carry ``predict`` out only for the columns
+    in ``columns``, and will use other columns in ``X`` unchanged.
 
-    The two forecasters and forecasting horizons (for forecasting `y` resp `X`)
+    The two forecasters and forecasting horizons (for forecasting ``y`` resp ``X``)
     can be selected independently, but default to the same.
 
     The typical use case is extending exogeneous data available only up until the cutoff
     into the future, for use by an exogeneous forecaster that requires such future data.
 
-    If no X is passed in `fit`, behaves like `forecaster_y`.
+    If no X is passed in ``fit``, behaves like ``forecaster_y``.
     In such a case (no exogeneous data), there is no benefit in using this compositor.
 
     Parameters
     ----------
     forecaster_y : BaseForecaster
-        sktime forecaster to use for endogeneous data `y`
-    forecaster_X : BaseForecaster, optional, default = forecaster_y
-        sktime forecaster to use for exogeneous data `X`
+        sktime forecaster to use for endogeneous data ``y``
+
+    forecaster_X : BaseForecaster, optional
+        sktime forecaster to use for exogeneous data ``X``,
+        default = None = same as ``forecaster_y``
+
     fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
-        optional, default = None = same as used for `y` in any instance.
-        valid inputs to construct ForecastingHorizon are:
+        optional, default = None = same as used for ``y`` in any instance.
+        valid inputs to construct ``ForecastingHorizon`` are:
         int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
+
     behaviour : str, one of "update" or "refit", optional, default = "update"
-        if "update", forecaster_X is fit to the data batch seen in `fit`,
-            and updated with any `X` seen in calls of `update`.
-            Forecast added to `X` in `predict` is obtained from this state.
-        if "refit", then forecaster_X is fit to `X` in `predict` only,
-            Forecast added to `X` in `predict` is obtained from this state.
+
+        * if "update", ``forecaster_X`` is fit to the data batch seen in ``fit``,
+        and updated with any ``X`` seen in calls of ``update``.
+        Forecast added to ``X`` in ``predict`` is obtained from this state.
+
+        * if "refit", then ``forecaster_X`` is fit to ``X`` in ``predict`` only,
+        Forecast added to ``X`` in ``predict`` is obtained from this state.
+
     columns : None, or pandas compatible index iterator (e.g., list of str), optional
-        default = None = all columns in X are used for forecast
-        columns to which `forecaster_X` is applied
+        default = None = all columns in ``X`` are used for forecast columns to which
+        ``forecaster_X`` is applied.
+        If not ``None``, must be a non-empty list of valid column names.
+        Note that ``[]`` and ``None`` do not imply the same.
+
+    fit_behaviour : str, one of "use_actual" (default), "use_forecast", optional,
+
+        * if "use_actual", then ``forecaster_y`` uses the actual ``X`` as
+        exogenous features in `fit`
+        * if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
+        ``forecaster_X`` as exogenous features in ``fit``
+
+    forecaster_X_exogeneous : optional, str, one of "None" (default), or "complement",
+        or ``pandas.Index`` coercible
+
+        * if "None", then ``forecaster_X`` uses no exogenous data
+        * if "complement", then ``forecaster_X`` uses the complement of the
+        ``columns`` as exogenous data to forecast. This is typically useful
+        if the complement of ``columns`` is known to be available in the future.
+        * if a ``pandas.Index`` coercible, then uses columns indexed by the index
+        after coercion, in ``X`` passed (converted to pandas)
 
     Attributes
     ----------
     forecaster_X_ : BaseForecaster
-        clone of forecaster_X, state updates with `fit` and `update`
-        created only if behaviour="update" and `X` passed is not None
+        clone of ``forecaster_X``, state updates with ``fit`` and ``update``
+        created only if ``behaviour="update"`` and ``X`` passed is not None
+        and ``forecaster_y`` has ``ignores-exogeneous-X`` tag as ``False``
     forecaster_y_ : BaseForecaster
-        clone of forecaster_y, state updates with `fit` and `update`
+        clone of ``forecaster_y``, state updates with ``fit`` and ``update``
 
     Examples
     --------
@@ -1231,6 +1281,7 @@ class ForecastX(BaseForecaster):
 
     to forecast only some columns, use the `columns` arg,
     and pass known columns to `predict`:
+
     >>> columns = ["ARMED", "POP"]
     >>> pipe = ForecastX(  # doctest: +SKIP
     ...     forecaster_X=VAR(),
@@ -1243,6 +1294,7 @@ class ForecastX(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["fkiraly", "benheid", "yarnabrina"],
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
         "scitype:y": "both",
@@ -1255,8 +1307,20 @@ class ForecastX(BaseForecaster):
     }
 
     def __init__(
-        self, forecaster_y, forecaster_X, fh_X=None, behaviour="update", columns=None
+        self,
+        forecaster_y,
+        forecaster_X=None,
+        fh_X=None,
+        behaviour="update",
+        columns=None,
+        fit_behaviour="use_actual",
+        forecaster_X_exogeneous="None",
     ):
+        if fit_behaviour not in ["use_actual", "use_forecast"]:
+            raise ValueError(
+                'fit_behaviour must be one of "use_actual", "use_forecast"'
+            )
+        self.fit_behaviour = fit_behaviour
         if behaviour not in ["update", "refit"]:
             raise ValueError('behaviour must be one of "update", "refit"')
 
@@ -1271,6 +1335,13 @@ class ForecastX(BaseForecaster):
         self.fh_X = fh_X
         self.behaviour = behaviour
         self.columns = columns
+        self.forecaster_X_exogeneous = forecaster_X_exogeneous
+        if isinstance(forecaster_X_exogeneous, str):
+            if forecaster_X_exogeneous not in ["None", "complement"]:
+                raise ValueError(
+                    'forecaster_X_exogeneous must be one of "None", "complement",'
+                    "or a pandas.Index coercible"
+                )
 
         super().__init__()
 
@@ -1278,6 +1349,7 @@ class ForecastX(BaseForecaster):
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:insample",
+            "ignores-exogeneous-X",
         ]
 
         self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)
@@ -1312,12 +1384,31 @@ class ForecastX(BaseForecaster):
         # remember if X seen was None
         self.X_was_None_ = X is None
 
-        if self.behaviour == "update" and X is not None:
-            self.forecaster_X_ = self.forecaster_X_c.clone()
-            self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X)
-
+        # initialize forecaster_X_ and forecaster_y_
         self.forecaster_y_ = self.forecaster_y.clone()
-        self.forecaster_y_.fit(y=y, X=X, fh=fh)
+        if X is not None:
+            self.forecaster_X_ = self.forecaster_X_c.clone()
+
+        if self.behaviour == "update" and X is not None:
+            X_for_fcX = self._get_X_for_fcX(X)
+            self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X, X=X_for_fcX)
+
+        if X is None or self.fit_behaviour == "use_actual":
+            X_for_fcy = X
+        elif self.fit_behaviour == "use_forecast":
+            if not self.forecaster_X_.get_tag("capability:insample"):
+                raise ValueError(
+                    "forecaster_X does not have `capability:insample`. "
+                    "Thus, it is not valid with `fit_behaviour=use_forecast`."
+                )
+            if isinstance(X.index, pd.MultiIndex):
+                X_times = X.index.get_level_values(-1).unique()
+            else:
+                X_times = X.index
+            fh_for_fcst = ForecastingHorizon(X_times, is_relative=False)
+            X_for_fcy = self.forecaster_X_.predict(fh=fh_for_fcst, X=X)
+
+        self.forecaster_y_.fit(y=y, X=X_for_fcy, fh=fh)
 
         return self
 
@@ -1350,15 +1441,19 @@ class ForecastX(BaseForecaster):
         """
         if self.X_was_None_:
             return None
+        if isinstance(self.columns, (list, pd.Index)) and len(self.columns) == 0:
+            return X
         if self.behaviour == "update":
             forecaster = self.forecaster_X_
         elif self.behaviour == "refit":
             if self.fh_X_ is not None:
                 fh = self.fh_X_
             forecaster = self.forecaster_X_c.clone()
-            forecaster.fit(y=self._get_Xcols(self._X), fh=fh)
+            X_for_fcX = self._get_X_for_fcX(self._X)
+            forecaster.fit(y=self._get_Xcols(self._X), fh=fh, X=X_for_fcX)
 
-        X_pred = getattr(forecaster, method)()
+        X_for_fcX = self._get_X_for_fcX(X)
+        X_pred = getattr(forecaster, method)(fh=fh, X=X_for_fcX)
         if X is not None:
             X_pred = X_pred.combine_first(X)
 
@@ -1367,6 +1462,30 @@ class ForecastX(BaseForecaster):
         X_pred = X_pred[X_cols_ordered]
 
         return X_pred
+
+    def _get_X_for_fcX(self, X):
+        """Shorthand to obtain X for forecaster_X, depending on parameters."""
+        ixx = self.forecaster_X_exogeneous
+        if X is None or ixx is None or ixx == "None":
+            return None
+
+        # if columns is None, then we use all columns
+        # so there is no complement
+        if self.columns is None and ixx == "complement":
+            return None
+
+        # if ixx is iterable and is empty, then we use no columns
+        if isinstance(ixx, (pd.Index, list)) and len(ixx) == 0:
+            return None
+
+        if ixx == "complement":
+            X_for_fcX = X.drop(columns=self.columns)
+            if X_for_fcX.shape[1] < 1:
+                return None
+            return X_for_fcX
+
+        ixx_pd = pd.Index(ixx)
+        return X.loc[:, ixx_pd]
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
@@ -1408,9 +1527,7 @@ class ForecastX(BaseForecaster):
 
         return self
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -1442,14 +1559,10 @@ class ForecastX(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_interval(
-            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
-        )
+        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X, coverage=coverage)
         return y_pred
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X=None, alpha=None, legacy_interface=True):
+    def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -1476,9 +1589,7 @@ class ForecastX(BaseForecaster):
                 at quantile probability in second col index, for the row index.
         """
         X = self._get_forecaster_X_prediction(fh=fh, X=X)
-        y_pred = self.forecaster_y_.predict_quantiles(
-            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
-        )
+        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -1568,12 +1679,12 @@ class ForecastX(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.compose import DirectTabularRegressionForecaster
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
 
-        fx = DirectReductionForecaster.create_test_instance()
-        fy = DirectTabularRegressionForecaster.create_test_instance()
+        fs, _ = YfromX.create_test_instances_and_names()
+        fx = fs[0]
+        fy = fs[1]
 
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
@@ -1588,7 +1699,13 @@ class ForecastX(BaseForecaster):
 
         params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
 
-        return [params1, params2]
+        params3 = {
+            "forecaster_y": fy,
+            "fit_behaviour": "use_forecast",
+            "forecaster_X_exogeneous": "complement",
+        }
+
+        return [params1, params2, params3]
 
 
 class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
@@ -1629,6 +1746,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.transformations.series.exponent import ExponentTransformer
 
     Simple example: permute sequence of estimator in forecasting pipeline
+
     >>> y = load_airline()
     >>> fh = ForecastingHorizon([1, 2, 3])
     >>> pipe = ForecastingPipeline(
@@ -1644,11 +1762,10 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> y_pred = permuted.predict()
 
     The permuter is useful in combination with grid search (toy example):
+
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
-    ...     ForecastingGridSearchCV,
-    ... )
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> fh = [1,2,3]
     >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
@@ -1663,6 +1780,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     """
 
     _tags = {
+        "authors": "aiwalter",
         "scitype:y": "both",
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -1682,17 +1800,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self.steps_arg = steps_arg
 
         super().__init__()
-        tags_to_clone = [
-            "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
-            "capability:insample",
-            "capability:pred_int",  # can the estimator produce prediction intervals?
-            "capability:pred_int:insample",
-            "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "enforce_index_type",  # index type that needs to be enforced in X/y
-            "fit_is_empty",
-        ]
 
-        self.clone_tags(self.estimator, tags_to_clone)
+        self._set_delegated_tags(estimator)
 
         self._set_permuted_estimator()
 

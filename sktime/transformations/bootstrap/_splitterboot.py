@@ -86,11 +86,11 @@ class SplitterBootstrapTransformer(BaseTransformer):
     """
 
     _tags = {
-        # todo: what is the scitype of X: Series, or Panel
+        # what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
-        # todo: what scitype is returned: Primitives, Series, Panel
+        # what scitype is returned: Primitives, Series, Panel
         "scitype:transform-output": "Panel",
-        # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
@@ -154,7 +154,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
         rng = self._rng
 
         if splitter is None:
-            from sktime.forecasting.model_selection import SlidingWindowSplitter
+            from sktime.split import SlidingWindowSplitter
 
             splitter = SlidingWindowSplitter(fh=[1], window_length=3, step_length=1)
 
@@ -207,7 +207,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+        from sktime.split import ExpandingWindowSplitter
 
         params = [
             {},

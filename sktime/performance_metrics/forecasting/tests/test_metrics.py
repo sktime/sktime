@@ -62,6 +62,13 @@ def test_gmse_function():
         0.7000014418652152,
     )
 
+    assert np.allclose(
+        gmse(
+            np.array([1, 2, 3]), np.array([6, 5, 4]), horizon_weight=np.array([7, 8, 9])
+        ),
+        6.185891035775025,
+    )
+
 
 def test_linex_class():
     """Doctest from MeanLinexError."""
@@ -120,5 +127,20 @@ def test_make_scorer():
     rmsle = functools.partial(mean_squared_log_error, squared=False)
 
     scorer = make_forecasting_scorer(rmsle, name="RMSLE")
+
+    scorer.evaluate(pd.Series([1, 2, 3]), pd.Series([1, 2, 4]))
+
+
+def test_make_scorer_sklearn():
+    """Test make_forecasting_scorer and the failure case in #5715.
+
+    Naive adaptation fails on newer sklearn versions due to
+    decoration with sklearn's custom input constraint wrapper.
+    """
+    from sklearn.metrics import mean_absolute_error
+
+    from sktime.performance_metrics.forecasting import make_forecasting_scorer
+
+    scorer = make_forecasting_scorer(mean_absolute_error, name="RMSLE")
 
     scorer.evaluate(pd.Series([1, 2, 3]), pd.Series([1, 2, 4]))

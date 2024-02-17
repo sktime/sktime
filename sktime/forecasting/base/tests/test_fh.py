@@ -22,7 +22,6 @@ from sktime.forecasting.base._fh import (
 )
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
     INDEX_TYPE_LOOKUP,
@@ -30,6 +29,8 @@ from sktime.forecasting.tests._config import (
     TEST_FHS_TIMEDELTA,
     VALID_INDEX_FH_COMBINATIONS,
 )
+from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import _make_fh, make_forecasting_problem
 from sktime.utils._testing.series import _make_index, _make_series
 from sktime.utils.datetime import (
@@ -40,7 +41,6 @@ from sktime.utils.datetime import (
     _shift,
     infer_freq,
 )
-from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
@@ -319,9 +319,18 @@ def test_get_duration(n_timepoints, index_type):
             _make_index(n_timepoints, index_type)
 
 
-FIXED_FREQUENCY_STRINGS = ["10T", "H", "D", "2D"]
+FIXED_FREQUENCY_STRINGS = ["10min", "H", "D", "2D"]
 NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
 FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
+
+
+def _get_expected_freqstr(freqstr):
+    # special case for 10min, T is being deprecated and replaced by min
+    if freqstr == "10min":
+        fh_freqstr_expected = "10T"
+    else:
+        fh_freqstr_expected = freqstr
+    return fh_freqstr_expected
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -332,7 +341,7 @@ def test_to_absolute_freq(freqstr):
     fh = ForecastingHorizon([1, 2, 3])
 
     abs_fh = fh.to_absolute(cutoff)
-    assert abs_fh._values.freqstr == freqstr
+    assert abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -346,7 +355,8 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
 
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
-    assert converted_abs_fh._values.freqstr == freqstr
+    fh_freqstr = converted_abs_fh._values.freqstr
+    assert fh_freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
@@ -363,7 +373,8 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
 
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
-    assert converted_abs_fh._values.freqstr == freqstr
+
+    assert converted_abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -435,10 +446,6 @@ def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
     assert_array_equal(fh + idx, absolute_int)
 
 
-@pytest.mark.skipif(
-    not _check_estimator_deps(AutoETS, severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
-)
 @pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
 def test_estimator_fh(freqstr):
     """Test model fitting with anchored frequency."""
@@ -446,7 +453,7 @@ def test_estimator_fh(freqstr):
         np.random.uniform(low=2000, high=7000, size=(104,)),
         index=pd.date_range("2019-01-02", freq=freqstr, periods=104),
     )
-    forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, restrict=True)
+    forecaster = NaiveForecaster()
     forecaster.fit(train)
     fh = ForecastingHorizon(np.arange(1, 27))
     pred = forecaster.predict(fh)
@@ -480,8 +487,8 @@ def test_frequency_setter(freqstr):
 
 # TODO: Replace this long running test with fast unit test
 @pytest.mark.skipif(
-    not _check_estimator_deps(AutoETS, severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    not run_test_for_class(AutoETS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_auto_ets():
     """Test failure case from #1435.
@@ -502,10 +509,31 @@ def test_auto_ets():
     )
 
 
+def test_auto_ets_case_with_naive():
+    """Test failure case from #1435.
+
+    AutoETS is replaced by NaiveForecaster.
+
+    https://github.com/sktime/sktime/issues/1435#issue-1000175469
+    """
+    freq = "30T"
+    _y = np.arange(50) + np.random.rand(50) + np.sin(np.arange(50) / 4) * 10
+    t = pd.date_range("2021-09-19", periods=50, freq=freq)
+    y = pd.Series(_y, index=t)
+    y.index = y.index.to_period(freq=freq)
+    forecaster = NaiveForecaster()
+    forecaster.fit(y)
+    y_pred = forecaster.predict(fh=[1, 2, 3])
+    pd.testing.assert_index_equal(
+        y_pred.index,
+        pd.date_range("2021-09-19", periods=53, freq=freq)[-3:].to_period(freq=freq),
+    )
+
+
 # TODO: Replace this long running test with fast unit test
 @pytest.mark.skipif(
-    not _check_estimator_deps(ExponentialSmoothing, severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    not run_test_for_class(ExponentialSmoothing),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_exponential_smoothing():
     """Test failure case from #1876.
@@ -531,10 +559,36 @@ def test_exponential_smoothing():
     )
 
 
+def test_exponential_smoothing_case_with_naive():
+    """Test failure case from #1876.
+
+    ExponentialSmoothing is replaced by NaiveForecaster.
+
+    https://github.com/sktime/sktime/issues/1876#issue-1103752402.
+    """
+    y = load_airline()
+    # Change index to 10 min interval
+    freq = "10Min"
+    time_range = pd.date_range(
+        pd.to_datetime("2019-01-01 00:00"),
+        pd.to_datetime("2019-01-01 23:55"),
+        freq=freq,
+    )
+    # Period Index does not work
+    y.index = time_range.to_period()
+
+    forecaster = NaiveForecaster()
+    forecaster.fit(y, fh=[1, 2, 3, 4, 5, 6])
+    y_pred = forecaster.predict()
+    pd.testing.assert_index_equal(
+        y_pred.index, pd.period_range("2019-01-02 00:00", periods=6, freq=freq)
+    )
+
+
 # TODO: Replace this long running test with fast unit test
 @pytest.mark.skipif(
-    not _check_estimator_deps(AutoARIMA, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(AutoARIMA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_auto_arima():
     """Test failure case from #805.
@@ -570,6 +624,50 @@ def test_auto_arima():
     fh = ForecastingHorizon(X.index[5:], is_relative=False)
 
     a_clf = AutoARIMA(start_p=2, start_q=2, max_p=5, max_q=5)
+    clf = a_clf.fit(X=X[:5], y=y[:5])
+    y_pred_sk = clf.predict(fh=fh, X=X[5:])
+
+    pd.testing.assert_index_equal(
+        y_pred_sk.index, pd.date_range("January 11, 2021", periods=3, freq="2D")
+    )
+
+
+def test_auto_arima_case_with_naive():
+    """Test failure case from #805.
+
+    AutoARIMA is replaced by NaiveForecaster.
+
+    https://github.com/sktime/sktime/issues/805#issuecomment-891848228.
+    """
+    time_index = pd.date_range("January 1, 2021", periods=8, freq="1D")
+    X = pd.DataFrame(
+        np.random.randint(0, 4, 24).reshape(8, 3),
+        columns=["First", "Second", "Third"],
+        index=time_index,
+    )
+    y = pd.Series([1, 3, 2, 4, 5, 2, 3, 1], index=time_index)
+
+    fh_ = ForecastingHorizon(X.index[5:], is_relative=False)
+
+    a_clf = NaiveForecaster()
+    clf = a_clf.fit(X=X[:5], y=y[:5])
+    y_pred_sk = clf.predict(fh=fh_, X=X[5:])
+
+    pd.testing.assert_index_equal(
+        y_pred_sk.index, pd.date_range("January 6, 2021", periods=3, freq="1D")
+    )
+
+    time_index = pd.date_range("January 1, 2021", periods=8, freq="2D")
+    X = pd.DataFrame(
+        np.random.randint(0, 4, 24).reshape(8, 3),
+        columns=["First", "Second", "Third"],
+        index=time_index,
+    )
+    y = pd.Series([1, 3, 2, 4, 5, 2, 3, 1], index=time_index)
+
+    fh = ForecastingHorizon(X.index[5:], is_relative=False)
+
+    a_clf = NaiveForecaster()
     clf = a_clf.fit(X=X[:5], y=y[:5])
     y_pred_sk = clf.predict(fh=fh, X=X[5:])
 
@@ -641,3 +739,60 @@ def test_empty_range_in_fh():
     """Test when ``range`` has zero length."""
     empty_range = ForecastingHorizon(values=range(-5))
     assert (empty_range == ForecastingHorizon(values=[])).all()
+
+
+def test_fh_expected_pred():
+    """Test for expected prediction index method."""
+    fh = ForecastingHorizon([1, 2, 3])
+    y_pred_idx = fh.get_expected_pred_idx(pd.Index([2, 3, 4]))
+
+    assert y_pred_idx.equals(pd.Index([5, 6, 7]))
+
+    y_df = pd.DataFrame([1, 2, 3], index=[2, 3, 4])
+    y_pred_idx = fh.get_expected_pred_idx(y_df)
+
+    assert y_pred_idx.equals(pd.Index([5, 6, 7]))
+
+    # pd.MultiIndex case, 2 levels
+    idx = pd.MultiIndex.from_tuples([("a", 3), ("a", 5), ("b", 4), ("b", 5), ("b", 6)])
+    y_pred_idx = fh.get_expected_pred_idx(idx)
+
+    y_pred_idx_expected = pd.MultiIndex.from_tuples(
+        [("a", 6), ("a", 7), ("a", 8), ("b", 7), ("b", 8), ("b", 9)]
+    )
+    assert y_pred_idx.equals(y_pred_idx_expected)
+
+    y_pred_idx = fh.get_expected_pred_idx(idx, sort_by_time=True)
+    y_pred_idx_expected = pd.MultiIndex.from_tuples(
+        [("a", 6), ("a", 7), ("b", 7), ("a", 8), ("b", 8), ("b", 9)]
+    )
+    assert y_pred_idx.equals(y_pred_idx_expected)
+
+    # pd.MultiIndex case, 3 levels
+    idx = pd.MultiIndex.from_tuples(
+        [("a", 3, 4), ("a", 3, 5), ("b", 5, 4), ("b", 5, 5), ("b", 5, 6)]
+    )
+    y_pred_idx = fh.get_expected_pred_idx(idx)
+
+    y_pred_idx_expected = pd.MultiIndex.from_tuples(
+        [("a", 3, 6), ("a", 3, 7), ("a", 3, 8), ("b", 5, 7), ("b", 5, 8), ("b", 5, 9)]
+    )
+    assert y_pred_idx.equals(y_pred_idx_expected)
+
+    y_pred_idx = fh.get_expected_pred_idx(idx, sort_by_time=True)
+
+    y_pred_idx_expected = pd.MultiIndex.from_tuples(
+        [("a", 3, 6), ("a", 3, 7), ("b", 5, 7), ("a", 3, 8), ("b", 5, 8), ("b", 5, 9)]
+    )
+    assert y_pred_idx.equals(y_pred_idx_expected)
+
+
+def test_tz_preserved():
+    """Test that time zone information is preserved in to_absolute.
+
+    Failure case in issue #5584.
+    """
+    cutoff = pd.Timestamp("2020-01-01", tz="utc")
+    fh_absolute = ForecastingHorizon(range(100), freq="h").to_absolute(cutoff)
+
+    assert fh_absolute[0].tz == cutoff.tz

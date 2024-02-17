@@ -2212,7 +2212,7 @@ def distance_alignment_path(
     Returns
     -------
     list[tuple]
-        List of tuples containing the alginment path for the distance.
+        List of tuples containing the alignment path for the distance.
     float
         Distance between the x and y.
     np.ndarray (of shape (len(x), len(y)).

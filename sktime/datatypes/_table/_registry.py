@@ -1,4 +1,7 @@
-import pandas as pd
+"""Registry of mtypes for Table scitype.
+
+See datatypes._registry for API.
+"""
 
 __all__ = [
     "MTYPE_REGISTER_TABLE",
@@ -14,4 +17,4 @@ MTYPE_REGISTER_TABLE = [
     ("list_of_dict", "Table", "list of dictionaries with primitive entries"),
 ]
 
-MTYPE_LIST_TABLE = pd.DataFrame(MTYPE_REGISTER_TABLE)[0].values
+MTYPE_LIST_TABLE = [x[0] for x in MTYPE_REGISTER_TABLE]

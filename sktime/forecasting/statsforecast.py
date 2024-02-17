@@ -7,22 +7,29 @@ __all__ = [
     "StatsForecastAutoARIMA",
     "StatsForecastAutoCES",
     "StatsForecastAutoETS",
+    "StatsForecastAutoTBATS",
     "StatsForecastAutoTheta",
+    "StatsForecastMSTL",
 ]
+from typing import Dict, List, Optional, Union
 
-
-from typing import Dict, Optional
-
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
+    StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     """StatsForecast AutoARIMA estimator.
 
-    This implementation is inspired by Hyndman's forecast::auto.arima [1]_
-    and based on the Python implementation of statsforecast [2]_ by Nixtla.
+    Direct interface to ``statsforecast.models.AutoARIMA`` by Nixtla.
+
+    This estimator directly interfaces ``AutoARIMA``,
+    from ``statsforecast`` [2]_ by Nixtla.
+    The ``statsforecast`` implementation is inspired
+    by Hyndman's forecast::auto.arima [1]_.
 
     Returns best ARIMA model according to either AIC, AICc or BIC value.
     The function conducts a search over possible model within
@@ -101,10 +108,12 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         is to use conditional-sum-of-squares to find starting values,
         then maximum likelihood. Can be abbreviated.
         It can be chosen from among the following strings:
+
         - 'CSS-ML' for conditional sum-of-squares to find starting values and
           then maximum likelihood.
         - 'ML' for maximum likelihood.
         - 'CSS' for conditional sum-of-squares.
+
     offset_test_args: dict optional (default None)
         Additional arguments to be passed to the unit root test.
     seasonal_test_args: dict optional (default None)
@@ -168,6 +177,14 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["FedericoGarza", "yarnabrina"],
+        "maintainers": ["FedericoGarza"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -245,45 +262,48 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        # import inside method to avoid hard dependency
-        from statsforecast.models import AutoARIMA as _AutoARIMA
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import AutoARIMA
 
-        return _AutoARIMA(
-            d=self.d,
-            D=self.D,
-            max_p=self.max_p,
-            max_q=self.max_q,
-            max_P=self.max_P,
-            max_Q=self.max_Q,
-            max_order=self.max_order,
-            max_d=self.max_d,
-            max_D=self.max_D,
-            start_p=self.start_p,
-            start_q=self.start_q,
-            start_P=self.start_P,
-            start_Q=self.start_Q,
-            stationary=self.stationary,
-            seasonal=self.seasonal,
-            ic=self.information_criterion,
-            stepwise=self.stepwise,
-            nmodels=self.n_fits,
-            trace=self.trace,
-            approximation=self.approximation,
-            method=self.method,
-            truncate=self.truncate,
-            test=self.test,
-            test_kwargs=self.offset_test_args,
-            seasonal_test=self.seasonal_test,
-            seasonal_test_kwargs=self.seasonal_test_args,
-            allowdrift=self.trend,
-            allowmean=self.with_intercept,
-            blambda=self.blambda,
-            biasadj=self.biasadj,
-            parallel=self.parallel,
-            num_cores=self.n_jobs,
-            season_length=self.sp,
-        )
+        return AutoARIMA
+
+    def _get_statsforecast_params(self):
+        return {
+            "d": self.d,
+            "D": self.D,
+            "max_p": self.max_p,
+            "max_q": self.max_q,
+            "max_P": self.max_P,
+            "max_Q": self.max_Q,
+            "max_order": self.max_order,
+            "max_d": self.max_d,
+            "max_D": self.max_D,
+            "start_p": self.start_p,
+            "start_q": self.start_q,
+            "start_P": self.start_P,
+            "start_Q": self.start_Q,
+            "stationary": self.stationary,
+            "seasonal": self.seasonal,
+            "ic": self.information_criterion,
+            "stepwise": self.stepwise,
+            "nmodels": self.n_fits,
+            "trace": self.trace,
+            "approximation": self.approximation,
+            "method": self.method,
+            "truncate": self.truncate,
+            "test": self.test,
+            "test_kwargs": self.offset_test_args,
+            "seasonal_test": self.seasonal_test,
+            "seasonal_test_kwargs": self.seasonal_test_args,
+            "allowdrift": self.trend,
+            "allowmean": self.with_intercept,
+            "blambda": self.blambda,
+            "biasadj": self.biasadj,
+            "parallel": self.parallel,
+            "num_cores": self.n_jobs,
+            "season_length": self.sp,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -304,14 +324,20 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"approximation": True, "max_p": 4, "max_Q": 1}
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        params = [{}, {"approximation": True, "max_p": 4, "max_Q": 1}]
+
         return params
 
 
 class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
-    """StatsForecast AutoTheta estimator.
+    """Statsforecast AutoTheta estimator.
 
-    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+    Direct interface to ``statsforecast.models.AutoTheta`` by Nixtla.
+
+    This estimator directly interfaces ``AutoTheta``,
+    from ``statsforecast`` [1]_ by Nixtla.
 
     AutoTheta model automatically selects the best Theta (Standard Theta Model ("STM"),
     Optimized Theta Model ("OTM"), Dynamic Standard Theta Model ("DSTM"), Dynamic
@@ -319,18 +345,19 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    season_length : int, optional
+    season_length : int, optional, default=1
         number of observations per unit of time (e.g. 24 for hourly data), by default 1
-    decomposition_type : str, optional
+
+    decomposition_type : str, optional, default="multipliciative"
+        possible values: "additive", "multiplicative"
         type of seasonal decomposition, by default "multiplicative"
 
-        possible values: "additive", "multiplicative"
     model : Optional[str], optional
         controlling Theta Model, by default searches the best model
 
     References
     ----------
-    .. [1] https://nixtla.github.io/statsforecast/models.html#autotheta
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autotheta
 
     See Also
     --------
@@ -338,6 +365,14 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["yarnabrina"],
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -355,15 +390,18 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        """Create underlying forecaster instance."""
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
         from statsforecast.models import AutoTheta
 
-        return AutoTheta(
-            season_length=self.season_length,
-            decomposition_type=self.decomposition_type,
-            model=self.model,
-        )
+        return AutoTheta
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "decomposition_type": self.decomposition_type,
+            "model": self.model,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -394,13 +432,15 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     """StatsForecast Automatic Exponential Smoothing model.
 
-    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+    Direct interface to ``statsforecast.models.AutoETS``,
+    from ``statsforecast`` [1]_ by Nixtla.
+    The ``statsforecast`` implementation is a mirror of Hyndman's forecast::ets [2]_.
 
     Automatically selects the best ETS (Error, Trend, Seasonality) model using an
     information criterion. Default is Akaike Information Criterion (AICc), while
     particular models are estimated using maximum likelihood. The state-space
     equations can be determined based on their $M$ multiplicative, $A$ additive, $Z$
-    optimized or $N$ ommited components. The `model` string parameter defines the ETS
+    optimized or $N$ omitted components. The `model` string parameter defines the ETS
     equations: E in [$M, A, Z$], T in [$N, A, M, Z$], and S in [$N, A, M, Z$].
 
     For example when model='ANN' (additive error, no trend, and no seasonality), ETS
@@ -418,13 +458,9 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     damped : bool
         A parameter that 'dampens' the trend.
 
-    Notes
-    -----
-    This implementation is a mirror of Hyndman's forecast::ets [2]_.
-
     References
     ----------
-    .. [1] https://nixtla.github.io/statsforecast/models.html#autoets
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autoets
     .. [2] https://github.com/robjhyndman/forecast
 
     See Also
@@ -433,6 +469,14 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["yarnabrina"],
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -447,13 +491,18 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
+    def _get_statsforecast_class(self):
         """Create underlying forecaster instance."""
         from statsforecast.models import AutoETS
 
-        return AutoETS(
-            season_length=self.season_length, model=self.model, damped=self.damped
-        )
+        return AutoETS
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "model": self.model,
+            "damped": self.damped,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -484,14 +533,15 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     """StatsForecast Complex Exponential Smoothing model.
 
-    This implementation is a wrapper over Nixtla implementation in statsforecast [1]_.
+    Direct interface to ``statsforecast.models.AutoCES``,
+    from ``statsforecast`` [1]_ by Nixtla.
 
     Automatically selects the best Complex Exponential Smoothing model using an
     information criterion. Default is Akaike Information Criterion (AICc), while
     particular models are estimated using maximum likelihood. The state-space equations
-    can be determined based on their $S$ simple, $P$ parial, $Z$ optimized or $N$
-    ommited components. The `model` string parameter defines the kind of CES model:
-    $N$ for simple CES (withous seasonality), $S$ for simple seasonality (lagged CES),
+    can be determined based on their $S$ simple, $P$ partial, $Z$ optimized or $N$
+    omitted components. The `model` string parameter defines the kind of CES model:
+    $N$ for simple CES (without seasonality), $S$ for simple seasonality (lagged CES),
     $P$ for partial seasonality (without complex part), $F$ for full seasonality
     (lagged CES with real and complex seasonal parts).
 
@@ -507,10 +557,18 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 
     References
     ----------
-    .. [1] https://nixtla.github.io/statsforecast/models.html#autoces
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autoces
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["yarnabrina"],
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -522,11 +580,17 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
-    def _instantiate_model(self):
-        """Create underlying forecaster instance."""
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
         from statsforecast.models import AutoCES
 
-        return AutoCES(season_length=self.season_length, model=self.model)
+        return AutoCES
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "model": self.model,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -550,5 +614,286 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
         params = [{}, {"season_length": 4, "model": "Z"}]
+
+        return params
+
+
+class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
+    """StatsForecast TBATS model.
+
+    Direct interface to `statsforecast.models.AutoTBATS`,
+    from `statsforecast` [1]_ by Nixtla.
+
+    Automatically selects the best TBATS model from all feasible combinations of the
+    parameters `use_boxcox`, `use_trend`, `use_damped_trend`, and `use_arma_errors`.
+    Selection is made using the AIC.
+
+    Default value for `use_arma_errors` is `True` since this enables the evaluation of
+    models with and without ARMA errors.
+
+    Parameters
+    ----------
+    seasonal_periods : int or list of int.
+        Number of observations per unit of time. Ex: 24 Hourly data.
+    use_boxcox : bool (default=None)
+        Whether or not to use a Box-Cox transformation. By default tries both.
+    bc_lower_bound : float (default=0.0)
+        Lower bound for the Box-Cox transformation.
+    bc_upper_bound : float (default=1.5)
+        Upper bound for the Box-Cox transformation.
+    use_trend : bool (default=None)
+        Whether or not to use a trend component. By default tries both.
+    use_damped_trend : bool (default=None)
+        Whether or not to dampen the trend component. By default tries both.
+    use_arma_errors : bool (default=True)
+        Whether or not to use a ARMA errors.
+        Default is True and this evaluates both models.
+
+    See Also
+    --------
+    BATS
+    TBATS
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autotbats
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["yarnabrina"],
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.7.2"],
+    }
+
+    def __init__(
+        self,
+        seasonal_periods: Union[int, List[int]],
+        use_boxcox: Optional[bool] = None,
+        use_trend: Optional[bool] = None,
+        use_damped_trend: Optional[bool] = None,
+        use_arma_errors: bool = True,
+    ):
+        self.seasonal_periods = seasonal_periods
+        self.use_boxcox = use_boxcox
+        self.use_trend = use_trend
+        self.use_damped_trend = use_damped_trend
+        self.use_arma_errors = use_arma_errors
+
+        super().__init__()
+
+    def _get_statsforecast_class(self):
+        """Create underlying forecaster instance."""
+        from statsforecast.models import AutoTBATS
+
+        return AutoTBATS
+
+    def _get_statsforecast_params(self) -> dict:
+        return {
+            "seasonal_periods": self.seasonal_periods,
+            "use_boxcox": self.use_boxcox,
+            "use_trend": self.use_trend,
+            "use_damped_trend": self.use_damped_trend,
+            "use_arma_errors": self.use_arma_errors,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        del parameter_set  # to avoid being detected as unused by `vulture` etc.
+
+        params = [{"seasonal_periods": 3}, {"seasonal_periods": [3, 12]}]
+
+        return params
+
+
+class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
+    """StatsForecast Multiple Seasonal-Trend decomposition using LOESS model.
+
+    Direct interface to ``statsforecast.models.MSTL``,
+    from ``statsforecast`` [1]_ by Nixtla, with a back-adapter that allows
+    to use ``sktime`` forecasters as trend forecasters.
+
+    The MSTL (Multiple Seasonal-Trend decomposition using LOESS) decomposes the time
+    series in multiple seasonalities using LOESS. Then forecasts the trend using
+    a custom non-seasonal model (`trend_forecaster`) and each seasonality using a
+    SeasonalNaive model. MSTL requires the input time series data to be univariate.
+
+    Parameters
+    ----------
+    season_length : Union[int, List[int]]
+        Number of observations per unit of time. For multiple seasonalities use a
+        list.
+    trend_forecaster : estimator, optional, default=StatsForecastAutoETS()
+        Sktime estimator used to make univariate forecasts. Multivariate estimators are
+        not supported.
+    stl_kwargs : dict, optional
+        Extra arguments to pass to [`statsmodels.tsa.seasonal.STL`]
+        (https://www.statsmodels.org/dev/generated/statsmodels.tsa.seasonal.STL.html#statsmodels.tsa.seasonal.STL).
+        The `period` and `seasonal` arguments are reserved.
+    pred_int_kwargs : dict, optional
+        Extra arguments to pass to [`statsforecast.utils.ConformalIntervals`].
+
+    References
+    ----------
+    .. [1]
+        https://nixtla.github.io/statsforecast/src/core/models.html#mstl
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastMSTL
+
+    >>> y = load_airline()
+    >>> model = StatsForecastMSTL(season_length=[3,12]) # doctest: +SKIP
+    >>> fitted_model = model.fit(y=y) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=[1,2,3]) # doctest: +SKIP
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": "luca-miniati",
+        "maintainers": "luca-miniati",
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+    }
+
+    def __init__(
+        self,
+        season_length: Union[int, List[int]],
+        trend_forecaster=None,
+        stl_kwargs: Optional[Dict] = None,
+        pred_int_kwargs: Optional[Dict] = None,
+    ):
+        super().__init__()
+
+        from sklearn.base import clone
+
+        self.trend_forecaster = trend_forecaster
+        self.season_length = season_length
+        if trend_forecaster:
+            self._trend_forecaster = clone(trend_forecaster)
+        else:
+            self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
+        self.stl_kwargs = stl_kwargs
+        self.pred_int_kwargs = pred_int_kwargs
+
+        # checks if trend_forecaster is already wrapped with
+        # StatsForecastBackAdapter
+        if not isinstance(self._trend_forecaster, StatsForecastBackAdapter):
+            # if trend_forecaster is sktime forecaster
+            if isinstance(self._trend_forecaster, BaseForecaster):
+                self._trend_forecaster = StatsForecastBackAdapter(
+                    self._trend_forecaster
+                )
+            else:
+                raise TypeError(
+                    "The provided forecaster is not compatible with MSTL. Please ensure"
+                    " that the forecaster you pass into the model is a sktime "
+                    "forecaster."
+                )
+
+        # check if prediction interval kwargs are passed
+        if self.pred_int_kwargs:
+            from statsforecast.utils import ConformalIntervals
+
+            self._trend_forecaster.prediction_intervals = ConformalIntervals(
+                **self.pred_int_kwargs
+            )
+
+    def _get_statsforecast_class(self):
+        from statsforecast.models import MSTL
+
+        return MSTL
+
+    def _get_statsforecast_params(self):
+        return {
+            "season_length": self.season_length,
+            "trend_forecaster": self._trend_forecaster,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance,
+            i.e., `MyClass(**params)` or `MyClass(**params[i])` creates a valid
+            test instance. `create_test_instance` uses the first (or only)
+            dictionary in `params`
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        try:
+            _check_soft_dependencies("statsmodels")
+            from sktime.forecasting.theta import ThetaForecaster
+
+            params = [
+                {
+                    "season_length": [3, 12],
+                    "trend_forecaster": ThetaForecaster(),
+                },
+                {
+                    "season_length": 4,
+                },
+                {
+                    "season_length": 4,
+                    "pred_int_kwargs": {
+                        "n_windows": 2,
+                    },
+                },
+            ]
+        except ModuleNotFoundError:
+            from sktime.forecasting.naive import NaiveForecaster
+
+            params = [
+                {
+                    "season_length": [3, 12],
+                    "trend_forecaster": NaiveForecaster(),
+                },
+                {
+                    "season_length": 4,
+                },
+            ]
 
         return params

@@ -4,7 +4,7 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ"]
 
@@ -59,6 +59,11 @@ class IndepDist(BasePairwiseTransformerPanel):
     """  # noqa: E501
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
@@ -77,10 +82,12 @@ class IndepDist(BasePairwiseTransformerPanel):
         if isinstance(dist, BasePairwiseTransformerPanel):
             missing = missing and dist.get_tag("capability:missing_values")
             unequal = unequal and dist.get_tag("capability:unequal_length")
+            pw_type = unequal = unequal and dist.get_tag("pwtrafo_type")
 
         tag_dict = {
             "capability:missing_values": missing,
             "capability:unequal_length": unequal,
+            "pwtrafo_type": pw_type,
         }
 
         self.set_tags(**tag_dict)

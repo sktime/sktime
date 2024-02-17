@@ -14,19 +14,17 @@ from sklearn.svm import SVR
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
 from sktime.datatypes._utilities import get_window
+from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import (
     ForecastingPipeline,
     TransformedTargetForecaster,
     make_reduction,
 )
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-    temporal_train_test_split,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.transformations.compose import OptionalPassthrough
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
@@ -371,11 +369,11 @@ def test_tag_handles_missing_data():
     based on bug issue #3547.
     """
     forecaster = MockForecaster()
-    # make sure that test forecaster cant handle missing data
+    # make sure that test forecaster can't handle missing data
     forecaster.set_tags(**{"handles-missing-data": False})
 
     y = _make_series()
-    y[10] = np.nan
+    y.iloc[10] = np.nan
 
     # test only TransformedTargetForecaster
     y_pipe = TransformedTargetForecaster(
@@ -441,83 +439,86 @@ def test_subset_getitem():
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency is not available",
 )
-def test_forecastx_logic():
-    """Test that ForecastX logic is as expected, compared to manual execution."""
-    from sktime.forecasting.base import ForecastingHorizon
-    from sktime.forecasting.compose import ForecastX
-    from sktime.forecasting.model_selection import temporal_train_test_split
-    from sktime.forecasting.var import VAR
+def test_featurizer_forecastingpipeline_logic():
+    """Test that ForecastingPipeline works with featurizer transformers without exog."""
+    from sktime.forecasting.sarimax import SARIMAX
+    from sktime.transformations.compose import YtoX
+    from sktime.transformations.series.impute import Imputer
+    from sktime.transformations.series.lag import Lag
 
-    # test case: using pipeline execution
     y, X = load_longley()
-    y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
-    fh = ForecastingHorizon([1, 2, 3])
-    columns = ["ARMED", "POP"]
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
-    # ForecastX
-    pipe = ForecastX(
-        forecaster_X=VAR(),
-        forecaster_y=SARIMAX(),
-        columns=columns,
+    lagged_y_trafo = YtoX() * Lag(1, index_out="original") * Imputer()
+    # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
+    forecaster = lagged_y_trafo ** SARIMAX()  # this uses lagged_y_trafo to generate X
+
+    forecaster.fit(y_train, X=X_train, fh=[1])  # try to forecast next year
+    forecaster.predict(X=X_test)  # dummy X to predict next year
+
+
+def test_exogenousx_ignore_tag_set():
+    """Tests that TransformedTargetForecaster sets X tag for feature selection.
+
+    If the forecaster ignores X, but the feature selector does not, then the
+    ignores-exogeneous-X tag should be correctly set to False, not True.
+
+    This is the failure case in bug report #5518.
+
+    More generally, the tag should be set to True iff all steps in the pipeline
+    ignore X.
+    """
+    from sktime.forecasting.compose import YfromX
+    from sktime.transformations.series.feature_selection import FeatureSelection
+
+    fcst_does_not_ignore_x = YfromX.create_test_instance()
+    fcst_ignores_x = NaiveForecaster()
+
+    trafo_ignores_x = ExponentTransformer()
+    trafo_does_not_ignore_x = FeatureSelection()
+
+    # check that ignores-exogeneous-X tag is set correctly
+    pipe1 = trafo_ignores_x * fcst_does_not_ignore_x
+    pipe2 = trafo_ignores_x * fcst_ignores_x
+    pipe3 = trafo_does_not_ignore_x * fcst_does_not_ignore_x
+    pipe4 = trafo_does_not_ignore_x * fcst_ignores_x
+    pipe5 = trafo_ignores_x * trafo_does_not_ignore_x * fcst_does_not_ignore_x
+    pipe6 = trafo_ignores_x * trafo_does_not_ignore_x * fcst_ignores_x
+    pipe7 = trafo_ignores_x * trafo_ignores_x * fcst_does_not_ignore_x
+    pipe8 = trafo_ignores_x * fcst_ignores_x * trafo_does_not_ignore_x
+    pipe9 = trafo_does_not_ignore_x * fcst_ignores_x * trafo_ignores_x
+    pipe10 = trafo_ignores_x * fcst_ignores_x * trafo_ignores_x
+
+    assert not pipe1.get_tag("ignores-exogeneous-X")
+    assert pipe2.get_tag("ignores-exogeneous-X")
+    assert not pipe3.get_tag("ignores-exogeneous-X")
+    assert not pipe4.get_tag("ignores-exogeneous-X")
+    assert not pipe5.get_tag("ignores-exogeneous-X")
+    assert not pipe6.get_tag("ignores-exogeneous-X")
+    assert not pipe7.get_tag("ignores-exogeneous-X")
+    assert not pipe8.get_tag("ignores-exogeneous-X")
+    assert not pipe9.get_tag("ignores-exogeneous-X")
+    assert pipe10.get_tag("ignores-exogeneous-X")
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_pipeline_exogenous_none():
+    """Test ForecastingPipeline works with a transformer returning None."""
+    from sktime.transformations.series.feature_selection import FeatureSelection
+
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
+
+    pipe = ForecastingPipeline(
+        [
+            ("select_X", FeatureSelection(method="none")),
+            ("arima", ARIMA()),
+        ]
     )
-    pipe = pipe.fit(y_train, X=X_train, fh=fh)
-    # dropping ["ARMED", "POP"] = columns where we expect not to have future values
-    y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))
 
-    # comparison case: manual execution
-    # fit y forecaster
-    arima = SARIMAX().fit(y_train, X=X_train)
-
-    # fit and predict X forecaster
-    var = VAR()
-    var.fit(X_train[columns])
-    var_pred = var.predict(fh)
-
-    # predict y forecaster with predictions from VAR
-    X_pred = pd.concat([X_test.drop(columns=columns), var_pred], axis=1)
-    y_pred_manual = arima.predict(fh=fh, X=X_pred)
-
-    # compare that test and comparison case results are equal
-    assert np.allclose(y_pred, y_pred_manual)
-
-
-def test_forecastx_attrib_broadcast():
-    """Test ForecastX broadcasting and forecaster attributes."""
-    from sktime.forecasting.compose import ForecastX
-    from sktime.forecasting.naive import NaiveForecaster
-
-    df = pd.DataFrame(
-        {
-            "a": ["series_1", "series_1", "series_1"],
-            "b": pd.to_datetime(["2024-01-01", "2024-01-02", "2024-01-03"]),
-            "c": [1, 2, 3],
-            "d": [4, 5, 6],
-            "e": [7, 8, 9],
-        }
-    )
-    df = df.set_index(["a", "b"])
-
-    model = ForecastX(NaiveForecaster(), NaiveForecaster())
-
-    model_1 = model.clone()
-    model_1.fit(df[["c"]], X=df[["d", "e"]], fh=[1, 2, 3])
-
-    assert hasattr(model_1, "forecaster_X_")
-    assert isinstance(model_1.forecaster_X_, NaiveForecaster)
-    assert model_1.forecaster_X_.is_fitted
-
-    assert hasattr(model_1, "forecaster_y_")
-    assert isinstance(model_1.forecaster_y_, NaiveForecaster)
-    assert model_1.forecaster_y_.is_fitted
-
-    model_2 = model.clone()
-    model_2.fit(df[["c", "d"]], X=df[["e"]], fh=[1, 2, 3])
-    assert hasattr(model_2, "forecaster_X_")
-
-    assert hasattr(model_2, "forecaster_X_")
-    assert isinstance(model_2.forecaster_X_, NaiveForecaster)
-    assert model_2.forecaster_X_.is_fitted
-
-    assert hasattr(model_2, "forecaster_y_")
-    assert isinstance(model_2.forecaster_y_, NaiveForecaster)
-    assert model_2.forecaster_y_.is_fitted
+    pipe.fit(y_train, X_train, fh=[1, 2, 3])
+    y_pred = pipe.predict(X=X_test)
+    assert np.all(y_pred.index == y_test.index)

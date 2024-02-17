@@ -29,7 +29,7 @@ class SeasonalityACF(BaseParamFitter):
         candidate sp to test, and to restrict tests to; ints must be 2 or larger
         if None, will test all integer lags between 2 and `nlags` (inclusive)
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for seasonality
+        significance threshold to apply in testing for seasonality
     adjusted : bool, optional, default=False
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
@@ -71,6 +71,7 @@ class SeasonalityACF(BaseParamFitter):
 
     Series should be stationary before applying ACF.
     To pipeline SeasonalityACF with the Differencer, use the ParamFitterPipeline:
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
@@ -86,6 +87,7 @@ class SeasonalityACF(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -226,7 +228,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         candidate sp to test, and to restrict tests to; ints must be 2 or larger
         if None, will test all integer lags between 2 and `nlags` (inclusive)
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for seasonality
+        significance threshold to apply in testing for seasonality
     p_adjust : str, optional, default="fdr_by" (Benjamini/Yekutieli)
         multiple testing correction applied to p-values of candidate sp in acf test
         multiple testing correction is applied to Ljung-Box tests on candidate_sp
@@ -272,6 +274,7 @@ class SeasonalityACFqstat(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -451,6 +454,8 @@ class SeasonalityPeriodogram(BaseParamFitter):
     """
 
     _tags = {
+        "authors": ["blazingbhavneek"],
+        "maintainers": ["blaingbhavneek"],
         "X_inner_mtype": "pd.Series",
         "scitype:X": "Series",
         "capability:missing_values": True,

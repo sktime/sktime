@@ -10,11 +10,11 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import (
+from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.utils.deep_equals import deep_equals
 
 
 class AggrDist(BasePairwiseTransformerPanel):
@@ -54,13 +54,17 @@ class AggrDist(BasePairwiseTransformerPanel):
     Examples
     --------
     Mean pairwise euclidean distance between between time series
+
     >>> from sktime.dists_kernels import AggrDist, ScipyDist
     >>> mean_euc_tsdist = AggrDist(ScipyDist())
 
     Mean pairwise Gaussian kernel between time series
+
     >>> from sklearn.gaussian_process.kernels import RBF
     >>> mean_gaussian_tskernel = AggrDist(RBF())
     """
+
+    _tags = {"authors": "fkiraly"}
 
     def __init__(
         self,
@@ -182,15 +186,18 @@ class FlatDist(BasePairwiseTransformerPanel):
     Examples
     --------
     Euclidean distance between time series of equal length, considered as vectors
+
     >>> from sktime.dists_kernels import FlatDist, ScipyDist
     >>> euc_tsdist = FlatDist(ScipyDist())
 
     Gaussian kernel between time series of equal length, considered as vectors
+
     >>> from sklearn.gaussian_process.kernels import RBF
     >>> flat_gaussian_tskernel = FlatDist(RBF())
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "numpy3D",  # which mtype is used internally in _transform?
         "capability:unequal_length": False,
     }

@@ -266,9 +266,11 @@ def get_cutoff(
     if reverse_order:
         ix = 0
         agg = min
+        agg_str = "min"
     else:
         ix = -1
         agg = max
+        agg_str = "max"
 
     def sub_idx(idx, ix, return_index=True):
         """Like sub-setting pd.index, but preserves freq attribute."""
@@ -309,7 +311,7 @@ def get_cutoff(
             .groupby(level=inst_levels, sort=False)
             .nth(ix)
             .iloc[:, -1]
-            .agg(agg)
+            .agg(agg_str)
         )
         if return_index:
             cuttoff_idx = ensure_index([cutoff])

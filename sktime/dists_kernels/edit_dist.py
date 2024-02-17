@@ -7,7 +7,7 @@ from typing import Union
 import numpy as np
 
 from sktime.distances import pairwise_distance
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class EditDist(BasePairwiseTransformerPanel):
@@ -110,13 +110,19 @@ class EditDist(BasePairwiseTransformerPanel):
     >>> distmat = d.transform(X)  # doctest: +SKIP
 
     distances are also callable, this does the same:
+
     >>> distmat = d(X)  # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["chrisholder", "TonyBagnall", "fkiraly"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
-        "python_dependencies": "numba",
     }
 
     ALLOWED_DISTANCE_STR = ["lcss", "edr", "erp", "twe"]

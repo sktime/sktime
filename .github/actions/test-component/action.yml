@@ -1,0 +1,58 @@
+name: test
+description: test
+inputs:
+  sktime-component-identifier:
+    description: name of sktime component
+    required: true
+  python-version-identifier:
+    description: python version to run tests
+    required: true
+  sub-sample-estimators:
+    description: test only subset of estimators
+    required: true
+  test-affected-estimators:
+    description: test only modified estimators
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: repository checkout step
+      uses: actions/checkout@v4
+
+    - name: update tracking reference step
+      run: git remote set-branches origin main
+      shell: bash
+
+    - name: shallow clone update step
+      run: git fetch --depth 1
+      shell: bash
+
+    - name: python environment step
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version-identifier }}
+
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+      shell: bash
+
+    - name: Install sktime and dependencies
+      run: python3 -m pip install .[${{ inputs.sktime-component-identifier }},tests]
+      shell: bash
+
+    - name: Show dependencies
+      run: python -m pip list
+      shell: bash
+
+    - name: Show available branches
+      run: git branch -a
+      shell: bash
+
+    - name: unit test step
+      run: >-
+        python3
+        -m pytest
+        sktime/${{ inputs.sktime-component-identifier }}
+        --matrixdesign ${{ inputs.sub-sample-estimators }}
+        --only_changed_modules ${{ inputs.test-affected-estimators }}
+      shell: bash

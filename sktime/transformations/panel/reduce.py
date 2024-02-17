@@ -11,6 +11,7 @@ import pandas as pd
 
 from sktime.datatypes import convert, convert_to
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.pandas import df_map
 
 
 class Tabularizer(BaseTransformer):
@@ -24,6 +25,7 @@ class Tabularizer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "kcc-lion"],
         "fit_is_empty": True,
         "univariate-only": False,
         "scitype:transform-input": "Series",
@@ -95,6 +97,8 @@ class TimeBinner(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["kcc-lion", "fkiraly"],
+        "maintainers": ["kcc-lion"],
         "fit_is_empty": True,
         "univariate-only": False,
         "scitype:transform-input": "Series",
@@ -150,7 +154,7 @@ class TimeBinner(BaseTransformer):
         transformed version of X
         """
         idx = pd.cut(X.iloc[0, 0].index, bins=self.idx, include_lowest=True)
-        Xt = X.applymap(lambda x: x.groupby(idx).apply(self._aggfunc))
+        Xt = df_map(X)(lambda x: x.groupby(idx).apply(self._aggfunc))
         Xt = convert_to(Xt, to_type="numpyflat", as_scitype="Panel")
         return Xt
 

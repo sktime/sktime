@@ -1,7 +1,7 @@
 """Delegator mixin that delegates all methods to wrapped forecaster.
 
 Useful for building estimators where all but one or a few methods are delegated. For
-that purpose, inherit from this estimator and then override only the methods     that
+that purpose, inherit from this estimator and then override only the methods that
 are not delegated.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -13,7 +13,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class _DelegatedForecaster(BaseForecaster):
-    """Delegator mixin that delegateas all methods to wrapped forecaster.
+    """Delegator mixin that delegates all methods to wrapped forecaster.
 
     Delegates inner forecaster methods to a wrapped estimator.
         Wrapped estimator is value of attribute with name self._delegate_name.
@@ -37,6 +37,57 @@ class _DelegatedForecaster(BaseForecaster):
 
     def _get_delegate(self):
         return getattr(self, self._delegate_name)
+
+    def _set_delegated_tags(self, delegate=None):
+        """Set delegated tags, only tags for boilerplate control.
+
+        Writes tags to self.
+        Can be used by descendant classes to set dependent tags.
+        Makes safe baseline assumptions about tags, which can be overwritten.
+
+        * data mtype tags are set to the most general value.
+          This is to ensure that conversion is left to the inner estimator.
+        * packaging tags such as "author" or "python_depedencies" are not cloned.
+        * other boilerplate tags are cloned.
+
+        Parameters
+        ----------
+        delegate : object, optional (default=None)
+            object to get tags from, if None, uses self._get_delegate()
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import ALL_TIME_SERIES_MTYPES
+
+        if delegate is None:
+            delegate = self._get_delegate()
+
+        TAGS_TO_DELEGATE = [
+            "requires-fh-in-fit",
+            "handles-missing-data",
+            "ignores-exogeneous-X",
+            "capability:insample",
+            "capability:pred_int",
+            "capability:pred_int:insample",
+            "handles-missing-data",
+            "requires-fh-in-fit",
+            "X-y-must-have-same-index",
+            "enforce_index_type",
+            "fit_is_empty",
+        ]
+
+        TAGS_TO_SET = {
+            "scitype:y": "both",
+            "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+            "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        }
+
+        self.clone_tags(delegate, tag_names=TAGS_TO_DELEGATE)
+        self.set_tags(**TAGS_TO_SET)
+
+        return self
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -149,9 +200,7 @@ class _DelegatedForecaster(BaseForecaster):
             y=y, fh=fh, X=X, update_params=update_params
         )
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -184,13 +233,9 @@ class _DelegatedForecaster(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         estimator = self._get_delegate()
-        return estimator.predict_quantiles(
-            fh=fh, X=X, alpha=alpha, legacy_interface=legacy_interface
-        )
+        return estimator.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh, X, coverage, legacy_interface=True):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -227,9 +272,7 @@ class _DelegatedForecaster(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         estimator = self._get_delegate()
-        return estimator.predict_interval(
-            fh=fh, X=X, coverage=coverage, legacy_interface=legacy_interface
-        )
+        return estimator.predict_interval(fh=fh, X=X, coverage=coverage)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.

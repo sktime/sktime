@@ -1,0 +1,149 @@
+name: test all
+on:
+  schedule:
+    - cron: 0 0 * * 0
+  workflow_dispatch:
+
+jobs:
+  code_quality:
+    name: code-quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: repository checkout step
+        uses: actions/checkout@v4
+      - name: python environment step
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: check missing __init__ files
+        run: build_tools/fail_on_missing_init_files.sh
+        shell: bash
+
+  test_base:
+    needs: code_quality
+    name: base
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+        operating-system:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.operating-system }}
+    steps:
+      - name: checkout pull request branch
+        uses: actions/checkout@v4
+      - name: run tests on python ${{ matrix.python-version }}
+        uses: ./.github/actions/test-base
+        with:
+          python-version-identifier: ${{ matrix.python-version }}
+          sub-sample-estimators: "False"
+          test-affected-estimators: "False"
+      - name: upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
+
+  test_module:
+    needs: code_quality
+    name: module
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+        operating-system:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        sktime-component:
+          - alignment
+          - annotation
+          - classification
+          - clustering
+          - forecasting
+          - networks
+          - param_est
+          - regression
+          - transformations
+    runs-on: ${{ matrix.operating-system }}
+    steps:
+      - name: checkout pull request branch
+        uses: actions/checkout@v4
+      - name: run tests for component ${{ matrix.sktime-component }} on python ${{ matrix.python-version }}
+        uses: ./.github/actions/test-component
+        with:
+          sktime-component-identifier: ${{ matrix.sktime-component }}
+          python-version-identifier: ${{ matrix.python-version }}
+          sub-sample-estimators: "False"
+          test-affected-estimators: "False"
+      - name: upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
+
+  test_other:
+    needs: code_quality
+    name: other
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+        operating-system:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.operating-system }}
+    steps:
+      - name: checkout pull request branch
+        uses: actions/checkout@v4
+      - name: update local git tracking reference
+        run: git remote set-branches origin main
+      - name: update local shallow clone
+        run: git fetch --depth 1
+      - name: create python virtual environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: install core, test and all soft dependencies
+        run: python3 -m pip install .[all_extras_pandas2,tests]
+      - name: run unit tests
+        run: >-
+          python3
+          -m pytest
+          sktime
+          --ignore sktime/base
+          --ignore sktime/datasets
+          --ignore sktime/alignment
+          --ignore sktime/annotation
+          --ignore sktime/classification
+          --ignore sktime/clustering
+          --ignore sktime/forecasting
+          --ignore sktime/networks
+          --ignore sktime/param_est
+          --ignore sktime/regression
+          --ignore sktime/transformations
+          --matrixdesign False
+          --only_changed_modules False
+      - name: upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},components_without_extras,complete

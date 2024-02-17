@@ -12,7 +12,9 @@ from sktime.performance_metrics.forecasting import (
     make_forecasting_scorer,
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
+from sktime.utils.parallel import _get_parallel_test_fixtures
 
 metric_classes = getmembers(_classes, isclass)
 
@@ -21,9 +23,14 @@ metric_classes = [x for x in metric_classes if not x[0].startswith(exclude_start
 
 names, metrics = zip(*metric_classes)
 
+MULTIOUTPUT = ["uniform_average", "raw_values", "numpy"]
+
+# list of parallelization backends to test
+BACKENDS = _get_parallel_test_fixtures("config")
+
 
 @pytest.mark.parametrize("n_columns", [1, 2])
-@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+@pytest.mark.parametrize("multioutput", MULTIOUTPUT)
 @pytest.mark.parametrize("metric", metrics, ids=names)
 def test_metric_output_direct(metric, multioutput, n_columns):
     """Test output is of correct type, dependent on multioutput.
@@ -32,10 +39,17 @@ def test_metric_output_direct(metric, multioutput, n_columns):
         1. using the __call__ dunder
         2. calling the evaluate method
     """
+    # create numpy weights based on n_columns
+    if multioutput == "numpy":
+        if n_columns == 1:
+            return None
+        multioutput = np.random.rand(n_columns)
+
+    # create test data
     y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
     y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
 
-    # coerce to DataFrame since _make_series does not return consisten output type
+    # coerce to DataFrame since _make_series does not return consistent output type
     y_pred = pd.DataFrame(y_pred)
     y_true = pd.DataFrame(y_true)
 
@@ -55,7 +69,7 @@ def test_metric_output_direct(metric, multioutput, n_columns):
         y_train=y_true,
     )
 
-    if multioutput == "uniform_average":
+    if isinstance(multioutput, np.ndarray) or multioutput == "uniform_average":
         assert all(isinstance(x, float) for x in res.values())
     elif multioutput == "raw_values":
         assert all(isinstance(x, np.ndarray) for x in res.values())
@@ -66,17 +80,26 @@ def test_metric_output_direct(metric, multioutput, n_columns):
     assert np.allclose(res[1], res[2])
 
 
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize(
     "multilevel", ["uniform_average", "uniform_average_time", "raw_values"]
 )
-@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
-def test_metric_hierarchical(multioutput, multilevel, n_columns):
+@pytest.mark.parametrize("multioutput", MULTIOUTPUT)
+def test_metric_hierarchical(multioutput, multilevel, n_columns, backend):
     """Test hierarchical input for metrics."""
+    # create numpy weights based on n_columns
+    if multioutput == "numpy":
+        if n_columns == 1:
+            return None
+        multioutput = np.random.rand(n_columns)
+
+    # create test data
     y_pred = _make_hierarchical(random_state=21, n_columns=n_columns)
     y_true = _make_hierarchical(random_state=42, n_columns=n_columns)
 
     metric = MeanSquaredError(multioutput=multioutput, multilevel=multilevel)
+    metric.set_config(**backend)
 
     res = metric(
         y_true=y_true,
@@ -90,11 +113,12 @@ def test_metric_hierarchical(multioutput, multilevel, n_columns):
         expected_index = y_true.index.droplevel(-1).unique()
         found_index = res.index.unique()
         assert set(expected_index) == set(found_index)
-        if multioutput == "raw_values" and isinstance(res, pd.DataFrame):
-            assert all(y_true.columns == res.columns)
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values" and isinstance(res, pd.DataFrame):
+                assert all(y_true.columns == res.columns)
     # if multilevel == "uniform_average" or "uniform_average_time"
     else:
-        if multioutput == "uniform_average":
+        if isinstance(multioutput, np.ndarray) or multioutput == "uniform_average":
             assert isinstance(res, float)
         elif multioutput == "raw_values":
             assert isinstance(res, np.ndarray)
@@ -131,14 +155,21 @@ def test_custom_metric(greater_is_better):
 
 
 @pytest.mark.parametrize("n_columns", [1, 2])
-@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+@pytest.mark.parametrize("multioutput", MULTIOUTPUT)
 @pytest.mark.parametrize("metric", metrics, ids=names)
 def test_metric_output_by_instance(metric, multioutput, n_columns):
     """Test output of evaluate_by_index is of correct type, dependent on multioutput."""
+    # create numpy weights based on n_columns
+    if multioutput == "numpy":
+        if n_columns == 1:
+            return None
+        multioutput = np.random.rand(n_columns)
+
+    # create test data
     y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
     y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
 
-    # coerce to DataFrame since _make_series does not return consisten output type
+    # coerce to DataFrame since _make_series does not return consistent output type
     y_pred = pd.DataFrame(y_pred)
     y_true = pd.DataFrame(y_true)
 
@@ -149,7 +180,7 @@ def test_metric_output_by_instance(metric, multioutput, n_columns):
         y_train=y_true,
     )
 
-    if multioutput == "raw_values":
+    if isinstance(multioutput, str) and multioutput == "raw_values":
         assert isinstance(res, pd.DataFrame)
         assert (res.columns == y_true.columns).all()
     else:
@@ -158,22 +189,31 @@ def test_metric_output_by_instance(metric, multioutput, n_columns):
     assert (res.index == y_true.index).all()
 
 
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("multilevel", ["uniform_average", "raw_values"])
-@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
-def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
+@pytest.mark.parametrize("multioutput", MULTIOUTPUT)
+def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns, backend):
     """Test hierarchical input for metrics."""
+    # create numpy weights based on n_columns
+    if multioutput == "numpy":
+        if n_columns == 1:
+            return None
+        multioutput = np.random.rand(n_columns)
+
+    # create test data
     y_pred = _make_hierarchical(random_state=21, n_columns=n_columns)
     y_true = _make_hierarchical(random_state=42, n_columns=n_columns)
 
     metric = MeanSquaredError(multioutput=multioutput, multilevel=multilevel)
+    metric.set_config(**backend)
 
     res = metric.evaluate_by_index(
         y_true=y_true,
         y_pred=y_pred,
     )
 
-    if multioutput == "raw_values":
+    if isinstance(multioutput, str) and multioutput == "raw_values":
         assert isinstance(res, pd.DataFrame)
         assert (res.columns == y_true.columns).all()
     else:
@@ -188,3 +228,31 @@ def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
 
     found_index = res.index.unique()
     assert set(expected_index) == set(found_index)
+
+
+@pytest.mark.parametrize("metric", metrics, ids=names)
+def test_uniform_average_time(metric):
+    """Tests that uniform_average_time indeed ignores index."""
+    y_true = _make_panel()
+    y_pred = _make_panel()
+
+    metric_obj = metric(multilevel="uniform_average_time")
+
+    y_true_noix = y_true.reset_index(drop=True)
+    y_pred_noix = y_pred.reset_index(drop=True)
+
+    res = metric_obj.evaluate(
+        y_true=y_true,
+        y_pred=y_pred,
+        y_pred_benchmark=y_pred,
+        y_train=y_true,
+    )
+
+    res_noix = metric_obj.evaluate(
+        y_true=y_true_noix,
+        y_pred=y_pred_noix,
+        y_pred_benchmark=y_pred_noix,
+        y_train=y_true_noix,
+    )
+
+    assert np.allclose(res, res_noix)

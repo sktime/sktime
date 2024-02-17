@@ -1,8 +1,6 @@
 """Multi Channel Deep Convolutional Neural Classifier (MCDCNN)."""
 
-__author__ = [
-    "JamesLarge",
-]
+__author__ = ["James-Large"]
 
 from copy import deepcopy
 
@@ -54,7 +52,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         The optimizer that is used for model compiltation. If left as None,
         then `keras.optimizers.SGD` is used with the following parameters -
         `learning_rate=0.01, momentum=0.9, weight_decay=0.0005`.
-    callbacks : None or list of keras.callbacks.Callback, optinal (default=None)
+    callbacks : None or list of keras.callbacks.Callback, optional (default=None)
         The callback(s) to use during training.
     random_state : int, optional (default=0)
         The seed to any random action.
@@ -80,7 +78,14 @@ class MCDCNNClassifier(BaseDeepClassifier):
     MCDCNNClassifier(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["james-large"],
+        "maintainers": ["james-large"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
@@ -215,6 +220,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self.history = self.model_.fit(
             X,
             y_onehot,
+            epochs=self.n_epochs,
             batch_size=self.batch_size,
             verbose=self.verbose,
             callbacks=self.callbacks_,

@@ -3,13 +3,9 @@
 """Implements reconciled forecasters for hierarchical data."""
 
 __all__ = ["ReconcilerForecaster"]
-__author__ = [
-    "ciaran-g",
-]
+__author__ = ["ciaran-g"]
 
 # todo: top down historical proportions? -> new _get_g_matrix_prop(self)
-
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -22,10 +18,11 @@ from sktime.transformations.hierarchical.reconcile import (
     _get_s_matrix,
     _parent_child_df,
 )
+from sktime.utils.warnings import warn
 
 
 class ReconcilerForecaster(BaseForecaster):
-    """Hierarchical reconcilation forecaster.
+    """Hierarchical reconciliation forecaster.
 
     Reconciliation is applied to make the forecasts in a hierarchy of
     time-series sum together appropriately.
@@ -72,6 +69,7 @@ class ReconcilerForecaster(BaseForecaster):
     ...     no_bottom_nodes=3,
     ...     no_levels=1,
     ...     random_seed=123,
+    ...     length=7,
     ... )
     >>> y = agg.fit_transform(y)
     >>> forecaster = NaiveForecaster(strategy="drift")
@@ -82,6 +80,12 @@ class ReconcilerForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "ciaran-g",
+        "maintainers": "ciaran-g",
+        # estimator type
+        # --------------
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -151,7 +155,7 @@ class ReconcilerForecaster(BaseForecaster):
             if _check_index_no_total(X):
                 X = self._add_totals(X)
 
-        # if transformer just fit pipline and return
+        # if transformer just fit pipeline and return
         if np.isin(self.method, self.TRFORM_LIST):
             self.forecaster_ = self.forecaster.clone() * Reconciler(method=self.method)
             self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -213,7 +217,8 @@ class ReconcilerForecaster(BaseForecaster):
         if base_fc.index.nlevels < 2:
             warn(
                 "Reconciler is intended for use with y.index.nlevels > 1. "
-                "Returning predictions unchanged."
+                "Returning predictions unchanged.",
+                obj=self,
             )
             return base_fc
 

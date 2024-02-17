@@ -4,7 +4,7 @@
 Exports
 -------
 convert_to(obj, to_type: str, as_scitype: str, store=None)
-    converts object "obj" to type "to_type", considerd as "as_scitype"
+    converts object "obj" to type "to_type", considered as "as_scitype"
 
 convert(obj, from_type: str, to_type: str, as_scitype: str, store=None)
     same as convert_to, without automatic identification of "from_type"
@@ -93,6 +93,7 @@ def convert(
     as_scitype: str = None,
     store=None,
     store_behaviour: str = None,
+    return_to_mtype: bool = False,
 ):
     """Convert objects between different machine representations, subject to scitype.
 
@@ -101,8 +102,9 @@ def convert(
     obj : object to convert - any type, should comply with mtype spec for as_scitype
     from_type : str - the type to convert "obj" to, a valid mtype string
         valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
-    to_type : str - the type to convert "obj" to, a valid mtype string
-        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
+    to_type : str - the mtype to convert "obj" to, a valid mtype string
+        or list of str, this specifies admissible types for conversion to;
+        if list, will convert to first mtype of the same scitype as from_mtype
     as_scitype : str, optional - name of scitype the object "obj" is considered as
         default = inferred from from_type
         valid scitype strings, with explanation, are in datatypes.SCITYPE_REGISTER
@@ -113,11 +115,15 @@ def convert(
         "freeze" - store is read-only, may be read/used by conversion but not changed
         "update" - store is updated from conversion and retains previous contents
         None - automatic: "update" if store is empty and not None; "freeze", otherwise
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
-    converted_obj : to_type - object obj converted to to_type
-                    if obj was None, returns None
+    converted_obj : to_type - object ``obj`` converted to mtype ``to_type``
+        if ``obj`` was ``None``, is ``None``
+    to_type : str, only returned if ``return_to_mtype=True``
+        mtype of ``converted_obj`` - useful of ``to_type`` was a list
 
     Raises
     ------
@@ -127,9 +133,14 @@ def convert(
     if obj is None:
         return None
 
+    # if to_type is a list, we do the following:
+    # if on the list, then don't do a conversion (convert to from_type)
+    # if not on the list, we find and convert to first mtype that has same scitype
+    to_type = _get_first_mtype_of_same_scitype(
+        from_mtype=from_type, to_mtypes=to_type, varname="to_type"
+    )
+
     # input type checks
-    if not isinstance(to_type, str):
-        raise TypeError("to_type must be a str")
     if not isinstance(from_type, str):
         raise TypeError("from_type must be a str")
     if as_scitype is None:
@@ -165,29 +176,34 @@ def convert(
         pass
     else:
         raise RuntimeError(
-            "bug: unrechable condition error, store_behaviour has unexpected value"
+            "bug: unreachable condition error, store_behaviour has unexpected value"
         )
 
     converted_obj = convert_dict[key](obj, store=store)
 
-    return converted_obj
+    if return_to_mtype:
+        return converted_obj, to_type
+    else:
+        return converted_obj
 
 
-# conversion based on queriable type to specified target
+# conversion based on queryable type to specified target
 def convert_to(
     obj,
     to_type: str,
     as_scitype: str = None,
     store=None,
     store_behaviour: str = None,
+    return_to_mtype: bool = False,
 ):
     """Convert object to a different machine representation, subject to scitype.
 
     Parameters
     ----------
     obj : object to convert - any type, should comply with mtype spec for as_scitype
-    to_type : str - the type to convert "obj" to, a valid mtype string
-            or list of str, this specifies admissible types for conversion to
+    to_type : str - the mtype to convert "obj" to, a valid mtype string
+        or list of str, this specifies admissible types for conversion to;
+        if list, will convert to first mtype of the same scitype as obj
         valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
     as_scitype : str, optional - name of scitype the object "obj" is considered as
         pre-specifying the scitype reduces the number of checks done in type inference
@@ -200,6 +216,8 @@ def convert_to(
         "freeze" - store is read-only, may be read/used by conversion but not changed
         "update" - store is updated from conversion and retains previous contents
         None - automatic: "update" if store is empty and not None; "freeze", otherwise
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
@@ -212,6 +230,8 @@ def convert_to(
             converted_obj is converted to the first mtype in to_type
                 that is of same scitype as obj
         case 4: if obj was None, converted_obj is also None
+    to_type : str, only returned if ``return_to_mtype=True``
+        mtype of ``converted_obj`` - useful of ``to_type`` was a list
 
     Raises
     ------
@@ -240,25 +260,6 @@ def convert_to(
     from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
     as_scitype = mtype_to_scitype(from_type)
 
-    # if to_type is a list, we do the following:
-    # if on the list, then don't do a conversion (convert to from_type)
-    # if not on the list, we find and convert to first mtype that has same scitype
-    if isinstance(to_type, list):
-        # no conversion of from_type is in the list
-        if from_type in to_type:
-            to_type = from_type
-        # otherwise convert to first element of same scitype
-        else:
-            same_scitype_mtypes = [
-                mtype for mtype in to_type if mtype_to_scitype(mtype) == as_scitype
-            ]
-            if len(same_scitype_mtypes) == 0:
-                raise TypeError(
-                    "to_type contains no mtype compatible with the scitype of obj,"
-                    f"which is {as_scitype}"
-                )
-            to_type = same_scitype_mtypes[0]
-
     converted_obj = convert(
         obj=obj,
         from_type=from_type,
@@ -266,9 +267,45 @@ def convert_to(
         as_scitype=as_scitype,
         store=store,
         store_behaviour=store_behaviour,
+        return_to_mtype=return_to_mtype,
     )
 
     return converted_obj
+
+
+def _get_first_mtype_of_same_scitype(from_mtype, to_mtypes, varname="to_mtypes"):
+    """Return first mtype in list mtypes that has same scitype as from_mtype.
+
+    Parameters
+    ----------
+    from_mtype : str - mtype of object to convert from
+    to_mtypes : list of str - mtypes to convert to
+    varname : str - name of variable to_mtypes, for error message
+
+    Returns
+    -------
+    to_type : str - first mtype in to_mtypes that has same scitype as from_mtype
+    """
+    to_mtypes = _check_str_or_list_of_str(to_mtypes, obj_name=varname)
+
+    if not isinstance(to_mtypes, list):
+        raise TypeError(f"{varname} must be a str or a list of str")
+
+    # no conversion of from_type is in the list
+    if from_mtype in to_mtypes:
+        return from_mtype
+    # otherwise convert to first element of same scitype
+    scitype = mtype_to_scitype(from_mtype)
+    same_scitype_mtypes = [
+        mtype for mtype in to_mtypes if mtype_to_scitype(mtype) == scitype
+    ]
+    if len(same_scitype_mtypes) == 0:
+        raise TypeError(
+            f"{varname} contains no mtype compatible with the scitype of obj, "
+            f"which is {scitype}. Value of {varname} is: {to_mtypes}"
+        )
+    to_type = same_scitype_mtypes[0]
+    return to_type
 
 
 def _conversions_defined(scitype: str):

@@ -3,7 +3,7 @@
 __author__ = ["fkiraly"]
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose import TransformerPipeline
 
@@ -59,6 +59,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
@@ -85,10 +86,14 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
             "capability:missing_values:removes", False
         )
 
+        # type of trafo is the same
+        trafo_type = pw_trafo.get_tag("pwtrafo_type", "distance")
+
         # set the pipeline tags to the above
         tags_to_set = {
             "capability:multivariate": multivariate,
             "capability:missing_values": missing,
+            "pwtrafo_type": trafo_type,
         }
         self.set_tags(**tags_to_set)
 

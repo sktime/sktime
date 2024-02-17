@@ -100,9 +100,14 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "python_dependencies": "numba",
     }
 
     # valid rocket strings for input validity checking

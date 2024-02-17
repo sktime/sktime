@@ -36,6 +36,7 @@ class IndexSubset(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -160,6 +161,7 @@ class ColumnSelect(BaseTransformer):
         "fit_is_empty": True,
         "univariate-only": False,
         "capability:inverse_transform": False,
+        "skip-inverse-transform": True,
     }
 
     def __init__(self, columns=None, integer_treatment="col", index_treatment="remove"):

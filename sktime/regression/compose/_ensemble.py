@@ -6,7 +6,6 @@ __author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["ComposableTimeSeriesForestRegressor"]
 
 import numbers
-from warnings import warn
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -19,11 +18,12 @@ from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
 
+from sktime.base._panel.forest._composable import BaseTimeSeriesForest
 from sktime.regression.base import BaseRegressor
-from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
+from sktime.utils.warnings import warn
 
 
 class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
@@ -364,9 +364,10 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
         if (n_predictions == 0).any():
             warn(
-                "Some inputs do not have OOB scores. "
+                "Some inputs in ComposableTimeSeriesRegressor do not have OOB scores. "
                 "This probably means too few trees were used "
-                "to compute any reliable oob estimates."
+                "to compute any reliable oob estimates.",
+                obj=self,
             )
             n_predictions[n_predictions == 0] = 1
 

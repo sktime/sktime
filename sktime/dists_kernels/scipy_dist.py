@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cdist
 
-from sktime.dists_kernels._base import BasePairwiseTransformer
+from sktime.dists_kernels.base import BasePairwiseTransformer
 
 
 class ScipyDist(BasePairwiseTransformer):
@@ -52,6 +52,7 @@ class ScipyDist(BasePairwiseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "symmetric": True,  # all the distances are symmetric
     }
 

@@ -3,10 +3,12 @@ import pandas as pd
 
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.warnings import warn
 
 __author__ = ["MatthewMiddlehurst"]
 
 
+# TODO 0.27.0: rename the class PAA to PAAlegacy
 class PAA(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
@@ -29,6 +31,7 @@ class PAA(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -41,6 +44,23 @@ class PAA(BaseTransformer):
     def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
         super().__init__()
+
+        warn(
+            "panel.dictionary_based.PAA will be renamed to PAAlegacy in sktime 0.27.0, "
+            "while sktime.transformations.series.PAA2 will be renamed to PAA. "
+            "PAA2 will become the primary PAA implementation in sktime, "
+            "while the current PAA will continue to be available as PAAlegacy. "
+            "Both estimators are also available under their future name at their "
+            "current location, and will be available under their deprecated name "
+            "until 0.28.0. "
+            "To prepare for the name change, do one of the following: "
+            "1. replace use of PAA from sktime.transformations.panel.dictionary_based "
+            "by use of PAA2 from sktime.transformations.series.paa, or "
+            "2. replace use of PAA from sktime.transformations.panel.dictionary_based "
+            "by use of PAAlegacy from sktime.transformations.panel.dictionary_based. ",
+            DeprecationWarning,
+            obj=self,
+        )
 
     def set_num_intervals(self, n):
         """Set self.num_intervals to n."""
@@ -151,3 +171,8 @@ class PAA(BaseTransformer):
                 + type(self.num_intervals).__name__
                 + "' instead."
             )
+
+
+# TODO 0.27.0: switch the line to PAA = PAAlegacy
+# TODO 0.28.0: remove this alias altogether
+PAAlegacy = PAA

@@ -8,12 +8,12 @@ import pytest
 
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.datasets import load_gun_point_segmentation
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ClaSPSegmentation),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_clasp_sparse():
     """Test ClaSP sparse segmentation.
@@ -34,8 +34,8 @@ def test_clasp_sparse():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ClaSPSegmentation),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_clasp_dense():
     """Tests ClaSP dense segmentation.

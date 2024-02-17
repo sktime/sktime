@@ -87,10 +87,16 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     >>> y_pred = pipeline.predict(X_test) # doctest: +SKIP
 
     Alternative construction via dunder method:
+
     >>> pipeline = PCATransformer() * TimeSeriesKMeans() # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "X_inner_mtype": "pd-multiindex",  # which type do _fit/_predict accept
         "capability:multivariate": False,
         "capability:unequal_length": False,
@@ -409,6 +415,7 @@ class SklearnClustererPipeline(ClustererPipeline):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = t1 * t2 * KMeans()
     """
 
@@ -618,13 +625,13 @@ class SklearnClustererPipeline(ClustererPipeline):
         # example with series-to-series transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
-        c = KMeans(random_state=42)
+        c = KMeans(random_state=42, n_init=10)
         params1 = {"transformers": [t1, t2], "clusterer": c}
 
         # example with series-to-primitive transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)
         t2 = SummaryTransformer()
-        c = KMeans(random_state=42)
+        c = KMeans(random_state=42, n_init=10)
         params2 = {"transformers": [t1, t2], "clusterer": c}
 
         # construct without names

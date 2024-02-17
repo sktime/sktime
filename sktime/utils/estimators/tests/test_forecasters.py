@@ -8,7 +8,6 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils.estimators import MockUnivariateForecasterLogger
 
 y_series = load_airline().iloc[:-5]
@@ -39,6 +38,8 @@ def test_mock_univariate_forecaster_log(y, X_train, X_pred, fh):
     - All the private methods that have logging enabled are in the log
     - the correct inner mtypes are preserved, according to the forecaster tags
     """
+    from sktime.utils.deep_equals import deep_equals
+
     forecaster = MockUnivariateForecasterLogger()
     forecaster.fit(y, X_train, fh)
     forecaster.predict(fh, X_pred)
@@ -52,12 +53,7 @@ def test_mock_univariate_forecaster_log(y, X_train, X_pred, fh):
         ("_fit", {"y": y_series, "X": _X_train, "fh": fh}),
         ("_predict", {"fh": fh, "X": _X_pred}),
         ("_update", {"y": y_series, "X": _X_train, "update_params": fh}),
-        (
-            "_predict_quantiles",
-            # todo 0.22.0: change the value of "legacy_interface" to False
-            # todo 0.23.0: remove the key "legacy_interface"
-            {"fh": fh, "X": _X_pred, "alpha": [0.1, 0.9], "legacy_interface": True},
-        ),
+        ("_predict_quantiles", {"fh": fh, "X": _X_pred, "alpha": [0.1, 0.9]}),
     ]
 
     equals, msg = deep_equals(forecaster.log, expected_log, return_msg=True)

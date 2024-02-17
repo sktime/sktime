@@ -16,7 +16,7 @@ from sklearn.pipeline import Pipeline
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
 from sktime.utils.stats import (
     _weighted_geometric_mean,
     _weighted_max,
@@ -104,6 +104,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -310,6 +311,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -364,8 +366,14 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         names, _ = self._check_forecasters()
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
-        y_pred = y_pred.groupby(level=1, axis=1).agg(
-            _aggregate, self.aggfunc, self.weights
+        y_pred = (
+            y_pred.T.groupby(level=1)
+            .agg(
+                lambda y, aggfunc, weights: _aggregate(y.T, aggfunc, weights),
+                self.aggfunc,
+                self.weights,
+            )
+            .T
         )
         return y_pred
 

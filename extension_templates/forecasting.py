@@ -136,11 +136,42 @@ class MyForecaster(BaseForecaster):
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if y or X passed contain missing data (nans)
         #
+        # capability:insample = can forecaster make in-sample forecasts?
+        "capability:insample": True,
+        # valid values: boolean True (yes), False (no)
+        # if False, exception raised if any forecast method called with in-sample fh
+        #
         # capability:pred_int = does forecaster implement probabilistic forecasts?
         "capability:pred_int": False,
         # valid values: boolean True (yes), False (no)
         # if False, exception raised if proba methods are called (predict_interval etc)
         #
+        # capability:pred_int:insample = can forecaster make in-sample proba forecasts?
+        "capability:pred_int:insample": True,
+        # valid values: boolean True (yes), False (no)
+        # only needs to be set if capability:pred_int is True
+        # if False, exception raised if proba methods are called with in-sample fh
+        #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
         #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
@@ -148,11 +179,11 @@ class MyForecaster(BaseForecaster):
         # python version requirement
         "python_version": None,
         # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python veresion is incompatible
+        # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
-        # valid values: str or list of str
+        "python_dependencies": None,
+        # valid values: str or list of str, PEP 440 valid package version specifiers
         # raises exception at construction if modules at strings cannot be imported
     }
     #  in case of inheritance, concrete class should typically set tags
@@ -161,7 +192,7 @@ class MyForecaster(BaseForecaster):
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
@@ -230,7 +261,7 @@ class MyForecaster(BaseForecaster):
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
         #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals shoudld be used or fitted if needed
+        #  the clones, not the originals should be used or fitted if needed
         #
         # Note: when interfacing a model that has fit, with parameters
         #   that are not data (y, X) or forecasting-horizon-like,
@@ -500,10 +531,10 @@ class MyForecaster(BaseForecaster):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        # import tensorflow_probability as tfp
-        # tensorflow probability import should happen inside this function
-        #
         # implement here
+        # returned BaseDistribution should have same index and columns
+        # as the predict return
+        #
         # implementing the marginal=False case is optional and can be omitted
 
     # todo: consider implementing this, optional

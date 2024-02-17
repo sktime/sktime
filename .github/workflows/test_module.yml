@@ -1,0 +1,88 @@
+name: test module
+on:
+  workflow_call:
+jobs:
+  detect:
+    name: detect
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      module_changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            alignment:
+              - pyproject.toml
+              - sktime/base/**
+              - sktime/alignment/**
+            annotation:
+              - pyproject.toml
+              - sktime/base/**
+              - sktime/annotation/**
+            classification:
+              - pyproject.toml
+              - sktime/base/**
+              - sktime/classification/**
+            clustering:
+              - pyproject.toml
+              - sktime/base/**
+              - sktime/clustering/**
+            forecasting:
+              - pyproject.toml
+              - sktime/base/**
+              - sktime/forecasting/**
+            networks:
+              - pyproject.toml
+              - sktime/base/**
+              - sktime/networks/**
+            param_est:
+              - pyproject.toml
+              - sktime/base/**
+              - sktime/param_est/**
+            regression:
+              - pyproject.toml
+              - sktime/base/**
+              - sktime/regression/**
+            transformations:
+              - pyproject.toml
+              - sktime/base/**
+              - sktime/transformations/**
+  test:
+    needs: detect
+    name:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+        operating-system:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        sktime-component: ${{ fromJSON(needs.detect.outputs.module_changes) }}
+    runs-on: ${{ matrix.operating-system }}
+    steps:
+      - name: checkout pull request branch
+        uses: actions/checkout@v4
+
+      - name: ${{ matrix.sktime-component }}, ${{ matrix.operating-system }}, ${{ matrix.python-version }}
+        uses: ./.github/actions/test-component
+        with:
+          sktime-component-identifier: ${{ matrix.sktime-component }}
+          python-version-identifier: ${{ matrix.python-version }}
+          sub-sample-estimators: "True"
+          test-affected-estimators: "True"
+
+      - name: upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},incomplete

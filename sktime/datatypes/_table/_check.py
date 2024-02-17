@@ -65,11 +65,6 @@ def check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
     if _req("has_nans", return_metadata):
         metadata["has_nans"] = obj.isna().values.any()
 
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
-        return _ret(False, msg, None, return_metadata)
-
     return _ret(True, None, metadata, return_metadata)
 
 
@@ -91,11 +86,6 @@ def check_pdseries_table(obj, return_metadata=False, var_name="obj"):
         metadata["is_univariate"] = True
     if _req("n_instances", return_metadata):
         metadata["n_instances"] = len(index)
-
-    # check that dtype is not object
-    if "object" == obj.dtypes:
-        msg = f"{var_name} should not be of 'object' dtype"
-        return _ret(False, msg, None, return_metadata)
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed

@@ -213,7 +213,7 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     # For selected cases, remove a redundant data point by making it NaN
     if window_length > sp:
         # create a trailing NaN value in the training set
-        data[window_length - 1] = np.nan
+        data.iloc[window_length - 1] = np.nan
 
     # Split into train and test data
     train_data = data[:window_length]
@@ -301,7 +301,7 @@ def test_naive_predict_var_backwards(strategy, sp, window_length, n_periods):
 
     T = len(y.dropna())
     if strategy == "last":
-        # This is trival because square root of (h) when h=1 is just 1
+        # This is trivial because square root of (h) when h=1 is just 1
         sigma_res = sigma / np.sqrt(h)
     elif strategy == "mean":
         sigma_res = sigma / np.sqrt(1 + (1 / T))
@@ -393,13 +393,11 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     y_pred_ints = forecaster.fit(y).predict_interval(fh=h, coverage=coverage)
 
     expected = pd.DataFrame(
-        columns=pd.MultiIndex.from_product(
-            [["Coverage"], [coverage], ["lower", "upper"]]
-        ),
+        columns=pd.MultiIndex.from_product([[0], [coverage], ["lower", "upper"]]),
         index=y_pred_ints.index,
     )
 
-    expected[("Coverage", coverage, "lower")] = lower
-    expected[("Coverage", coverage, "upper")] = upper
+    expected[(0, coverage, "lower")] = lower
+    expected[(0, coverage, "upper")] = upper
 
     pd.testing.assert_frame_equal(y_pred_ints, expected)

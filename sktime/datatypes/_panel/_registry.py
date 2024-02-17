@@ -3,8 +3,6 @@
 See datatypes._registry for API.
 """
 
-import pandas as pd
-
 __all__ = [
     "MTYPE_REGISTER_PANEL",
     "MTYPE_LIST_PANEL",
@@ -46,4 +44,4 @@ MTYPE_REGISTER_PANEL = [
 
 MTYPE_SOFT_DEPS_PANEL = {"xr.DataArray": "xarray", "dask_panel": "dask"}
 
-MTYPE_LIST_PANEL = pd.DataFrame(MTYPE_REGISTER_PANEL)[0].values
+MTYPE_LIST_PANEL = [x[0] for x in MTYPE_REGISTER_PANEL]

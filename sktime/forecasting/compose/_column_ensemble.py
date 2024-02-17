@@ -31,7 +31,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     ----------
     forecasters : sktime forecaster, or list of tuples (str, estimator, int or pd.index)
         if tuples, with name = str, estimator is forecaster, index as int or index
-        if last element is index, it must be int, str, or pd.Index coercable
+        if last element is index, it must be int, str, or pd.Index coercible
         if last element is int x, and is not in columns, is interpreted as x-th column
         all columns must be present in an index
 
@@ -40,43 +40,55 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
     Examples
     --------
-    >>> import pandas as pd
-    >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_longley
+    .. Doctest::
+
+        >>> import pandas as pd
+        >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
+        >>> from sktime.forecasting.naive import NaiveForecaster
+        >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+        >>> from sktime.datasets import load_longley
 
     Using integers (column iloc references) for indexing:
-    >>> y = load_longley()[1][["GNP", "UNEMP"]]
-    >>> forecasters = [
-    ...     ("trend", PolynomialTrendForecaster(), 0),
-    ...     ("naive", NaiveForecaster(), 1),
-    ... ]
-    >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y, fh=[1, 2, 3])
-    ColumnEnsembleForecaster(...)
-    >>> y_pred = forecaster.predict()
+
+    .. Doctest::
+
+        >>> y = load_longley()[1][["GNP", "UNEMP"]]
+        >>> forecasters = [
+        ...     ("trend", PolynomialTrendForecaster(), 0),
+        ...     ("naive", NaiveForecaster(), 1),
+        ... ]
+        >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
+        >>> forecaster.fit(y, fh=[1, 2, 3])
+        ColumnEnsembleForecaster(...)
+        >>> y_pred = forecaster.predict()
 
     Using strings for indexing:
-    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-    >>> fc = ColumnEnsembleForecaster(
-    ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
-    ... )
-    >>> fc.fit(df, fh=[1, 42])
-    ColumnEnsembleForecaster(...)
-    >>> y_pred = fc.predict()
+
+    .. Doctest::
+
+        >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+        >>> fc = ColumnEnsembleForecaster(
+        ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
+        ... )
+        >>> fc.fit(df, fh=[1, 42])
+        ColumnEnsembleForecaster(...)
+        >>> y_pred = fc.predict()
 
     Applying one forecaster to multiple columns, multivariate:
-    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
-    >>> fc = ColumnEnsembleForecaster(
-    ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
-    ... )
-    >>> fc.fit(df, fh=[1, 42])
-    ColumnEnsembleForecaster(...)
-    >>> y_pred = fc.predict()
+
+    .. Doctest::
+
+        >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+        >>> fc = ColumnEnsembleForecaster(
+        ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
+        ... )
+        >>> fc.fit(df, fh=[1, 42])
+        ColumnEnsembleForecaster(...)
+        >>> y_pred = fc.predict()
     """
 
     _tags = {
+        "authors": ["GuzalBulatova", "mloning", "fkiraly"],
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "y_inner_mtype": PANDAS_MTYPES,
@@ -222,9 +234,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         """
         return self._by_column("predict", fh=fh, X=X)
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh=None, X=None, alpha=None, legacy_interface=True):
+    def _predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -262,7 +272,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             X=X,
             alpha=alpha,
             col_multiindex=True,
-            legacy_interface=legacy_interface,
         )
         if len(out.columns.get_level_values(0).unique()) == 1:
             out.columns = out.columns.droplevel(level=0)
@@ -270,9 +279,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             out.columns = out.columns.droplevel(level=1)
         return out
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_interval(self, fh=None, X=None, coverage=None, legacy_interface=True):
+    def _predict_interval(self, fh=None, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -314,7 +321,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             X=X,
             coverage=coverage,
             col_multiindex=True,
-            legacy_interface=legacy_interface,
         )
         if len(out.columns.get_level_values(0).unique()) == 1:
             out.columns = out.columns.droplevel(level=0)

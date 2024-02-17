@@ -53,6 +53,7 @@ class ForecastByLevel(_DelegatedForecaster):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "scitype:y": "both",
@@ -74,7 +75,7 @@ class ForecastByLevel(_DelegatedForecaster):
 
         super().__init__()
 
-        self.clone_tags(self.forecaster_)
+        self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
 
         if groupby == "local":

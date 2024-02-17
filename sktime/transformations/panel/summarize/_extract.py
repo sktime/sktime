@@ -10,6 +10,7 @@ from joblib import Parallel, delayed
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
+from sktime.utils.pandas import df_map
 
 
 class PlateauFinder(BaseTransformer):
@@ -30,6 +31,7 @@ class PlateauFinder(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning"],
         "fit_is_empty": True,
         "univariate-only": True,
         "scitype:transform-input": "Series",
@@ -103,7 +105,7 @@ class PlateauFinder(BaseTransformer):
         Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
         Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
 
-        Xt = Xt.applymap(lambda x: pd.Series(x))
+        Xt = df_map(Xt)(lambda x: pd.Series(x))
         return Xt
 
 
@@ -140,7 +142,10 @@ class DerivativeSlopeTransformer(BaseTransformer):
         def get_der(x):
             der = []
             for i in range(1, len(x) - 1):
-                der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
+                xi = x.iloc[i]
+                xim1 = x.iloc[i - 1]
+                xip1 = x.iloc[i + 1]
+                der.append(0.5 * ((xi - xim1) + 0.5 * (xip1 - xim1)))
             return pd.Series([der[0]] + der + [der[-1]])
 
         return [get_der(x) for x in X]

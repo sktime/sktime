@@ -43,7 +43,7 @@ class GMMHMM(BaseHMMLearn):
         Parameters of the Dirichlet prior distribution for
         :attr:`weights_`.
     means_prior, means_weight : array, shape (n_mix, ), optional
-        Mean and precision of the Normal prior distribtion for
+        Mean and precision of the Normal prior distribution for
         :attr:`means_`.
     covars_prior, covars_weight : array, shape (n_mix, ), optional
         Parameters of the prior distribution for the covariance matrix
@@ -73,7 +73,7 @@ class GMMHMM(BaseHMMLearn):
     implementation: string, optional
         Determines if the forward-backward algorithm is implemented with
         logarithms ("log"), or using scaling ("scaling").  The default is
-        to use logarithms for backwards compatability.
+        to use logarithms for backwards compatibility.
 
     Attributes
     ----------
@@ -191,11 +191,18 @@ class GMMHMM(BaseHMMLearn):
         -------
         params : dict or list of dict
         """
-        params = {
+        params1 = {
             "n_components": 3,
             "covariance_type": "diag",
             "min_covar": 1e-3,
             "random_state": 7,
         }
 
-        return params
+        params2 = {
+            "n_components": 5,
+            "covariance_type": "full",
+            "min_covar": 1e-6,
+            "random_state": 42,
+        }
+
+        return [params1, params2]

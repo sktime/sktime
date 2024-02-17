@@ -70,6 +70,12 @@ class Croston(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Riyabelle25",
+        "maintainers": "Riyabelle25",
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
     }
 
@@ -171,6 +177,7 @@ class Croston(BaseForecaster):
             {},
             {"smoothing": 0},
             {"smoothing": 0.42},
+            {"smoothing": 2},
         ]
 
         return params

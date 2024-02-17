@@ -4,7 +4,7 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
@@ -44,10 +44,12 @@ class KernelFromDist(BasePairwiseTransformerPanel):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        "pwtrafo_type": "kernel",
     }
 
     def __init__(self, dist, dist_diag=None):
@@ -174,10 +176,12 @@ class DistFromKernel(BasePairwiseTransformerPanel):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        "pwtrafo_type": "distance",
     }
 
     def __init__(self, kernel):

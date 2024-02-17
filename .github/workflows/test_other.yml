@@ -1,0 +1,87 @@
+name: test other
+on:
+  workflow_call:
+jobs:
+  detect:
+    name: detect
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      other_change: ${{ steps.filter.outputs.other_change }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            other_change:
+              - pyproject.toml
+              - sktime/base/**
+              - sktime/_contrib/**
+              - sktime/benchmarking/**
+              - sktime/datatypes/**
+              - sktime/distances/**
+              - sktime/dists_kernels/**
+              - sktime/performance_metrics/**
+              - sktime/pipeline/**
+              - sktime/proba/**
+              - sktime/registry/**
+              - sktime/series_as_features/**
+              - sktime/split/**
+              - sktime/tests/**
+              - sktime/utils/**
+  test_module:
+    needs: detect
+    name:
+    if: ${{ needs.detect.outputs.other_change == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+        operating-system:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.operating-system }}
+    steps:
+      - name: checkout pull request branch
+        uses: actions/checkout@v4
+      - name: update local git tracking reference
+        run: git remote set-branches origin main
+      - name: update local shallow clone
+        run: git fetch --depth 1
+      - name: create python virtual environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: install core, test and all soft dependencies
+        run: python3 -m pip install .[all_extras_pandas2,tests]
+      - name: run unit tests
+        run: >-
+          python3
+          -m pytest
+          sktime
+          --ignore sktime/base
+          --ignore sktime/datasets
+          --ignore sktime/alignment
+          --ignore sktime/annotation
+          --ignore sktime/classification
+          --ignore sktime/clustering
+          --ignore sktime/forecasting
+          --ignore sktime/networks
+          --ignore sktime/param_est
+          --ignore sktime/regression
+          --ignore sktime/transformations
+          --matrixdesign True
+          --only_changed_modules True
+      - name: upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},components_without_extras,incomplete

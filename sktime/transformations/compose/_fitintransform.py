@@ -39,14 +39,14 @@ class FitInTransform(BaseTransformer):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.transformations.compose import FitInTransform
     >>> from sktime.transformations.series.impute import Imputer
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
     >>> # we want to fit the Imputer only on the predict (=transform) data.
-    >>> # note that NaiveForecaster cant use X data, this is just a show case.
+    >>> # note that NaiveForecaster can't use X data, this is just a show case.
     >>> pipe = ForecastingPipeline(
     ...     steps=[
     ...         ("imputer", FitInTransform(Imputer(method="mean"))),
@@ -57,6 +57,8 @@ class FitInTransform(BaseTransformer):
     ForecastingPipeline(...)
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
     """
+
+    _tags = {"authors": ["aiwalter", "fkiraly"]}
 
     def __init__(self, transformer, skip_inverse_transform=True):
         self.transformer = transformer

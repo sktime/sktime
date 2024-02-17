@@ -42,8 +42,11 @@ def test_differencer_produces_expected_results(na_handling):
 
 @pytest.mark.parametrize("y", test_cases)
 @pytest.mark.parametrize("lags", lags_to_test)
-def test_differencer_same_series(y, lags):
+@pytest.mark.parametrize("index_type", ["int", "datetime"])
+def test_differencer_same_series(y, lags, index_type):
     """Test transform against inverse_transform."""
+    if index_type == "int":
+        y = y.reset_index(drop=True)
     transformer = Differencer(lags=lags, na_handling="drop_na")
     y_transform = transformer.fit_transform(y)
     y_reconstructed = transformer.inverse_transform(y_transform)
@@ -56,8 +59,12 @@ def test_differencer_same_series(y, lags):
 @pytest.mark.parametrize("na_handling", ["keep_na", "fill_zero"])
 @pytest.mark.parametrize("y", test_cases)
 @pytest.mark.parametrize("lags", lags_to_test)
-def test_differencer_remove_missing_false(y, lags, na_handling):
+@pytest.mark.parametrize("index_type", ["int", "datetime"])
+def test_differencer_remove_missing_false(y, lags, na_handling, index_type):
     """Test transform against inverse_transform."""
+    if index_type == "int":
+        y = y.reset_index(drop=True)
+
     transformer = Differencer(lags=lags, na_handling=na_handling)
     y_transform = transformer.fit_transform(y)
 
@@ -73,8 +80,12 @@ def test_differencer_remove_missing_false(y, lags, na_handling):
 
 @pytest.mark.parametrize("y", test_cases)
 @pytest.mark.parametrize("lags", lags_to_test)
-def test_differencer_prediction(y, lags):
+@pytest.mark.parametrize("index_type", ["int", "datetime"])
+def test_differencer_prediction(y, lags, index_type):
     """Test transform against inverse_transform."""
+    if index_type == "int":
+        y = y.reset_index(drop=True)
+
     y_train = y.iloc[:-12].copy()
     y_true = y.iloc[-12:].copy()
 
@@ -110,11 +121,8 @@ def test_differencer_cutoff():
     from sktime.datasets import load_longley
     from sktime.forecasting.compose import TransformedTargetForecaster
     from sktime.forecasting.fbprophet import Prophet
-    from sktime.forecasting.model_selection import (
-        ExpandingWindowSplitter,
-        ForecastingGridSearchCV,
-        temporal_train_test_split,
-    )
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
     from sktime.transformations.series.difference import Differencer
 
     y, X = load_longley()
@@ -157,6 +165,17 @@ def test_differencer_cutoff():
     gscv.fit(train_model, X=X_train)
 
 
+@pytest.mark.parametrize("lags", lags_to_test)
+@pytest.mark.parametrize("index_type", ["int", "datetime"])
+def test_inverse_train_data_fill_zero(lags, index_type):
+    y = y_airline
+    if index_type == "int":
+        y = y.reset_index(drop=True)
+    diff = Differencer(lags).fit(y)
+    result = diff.inverse_transform(diff.transform(y))
+    _assert_array_almost_equal(result, y)
+
+
 def test_differencer_inverse_does_not_memorize():
     """Tests that differencer inverse always computes inverse via cumsum.
 
@@ -169,8 +188,8 @@ def test_differencer_inverse_does_not_memorize():
     import numpy as np
 
     from sktime.forecasting.base import ForecastingHorizon
-    from sktime.forecasting.model_selection import temporal_train_test_split
     from sktime.forecasting.naive import NaiveForecaster
+    from sktime.split import temporal_train_test_split
     from sktime.transformations.series.difference import Differencer
 
     y = load_airline()

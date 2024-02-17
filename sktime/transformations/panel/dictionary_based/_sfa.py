@@ -101,6 +101,7 @@ class SFA(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst", "patrickzib"],
         "univariate-only": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -284,7 +285,7 @@ class SFA(BaseTransformer):
         if self.save_words:
             self.words = list(words)
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             nl = [None] * len(dim)
             for i, pdict in enumerate(dim):
@@ -395,7 +396,7 @@ class SFA(BaseTransformer):
                                 skip_gram = (skip_gram << self.level_bits) | 0
                         bag[skip_gram] = bag.get(skip_gram, 0) + 1
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             pdict = dict()
             for key, val in bag.items():
@@ -658,7 +659,7 @@ class SFA(BaseTransformer):
             delayed(self._shorten_case)(word_len, i) for i in range(len(self.words))
         )
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             nl = [None] * len(dim)
             for i, pdict in enumerate(dim):
@@ -754,7 +755,7 @@ class SFA(BaseTransformer):
                                 skip_gram = (skip_gram << self.level_bits) | 0
                         new_bag[skip_gram] = new_bag.get(skip_gram, 0) + 1
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             pdict = dict()
             for key, val in new_bag.items():
