@@ -246,7 +246,6 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self.optimizer = self._instantiate_optimizer()
         early_stopper = _EarlyStopper(patience=self.patience, min_delta=self.delta)
 
-        val_loss = np.inf
         # Fit the cINN
         for epoch in range(self.num_epochs):
             if not self._run_epoch(
@@ -258,9 +257,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
                 break
         if val_data_loader_nll is not None:
             self.network = early_stopper._best_model
-        dataset = self._prepare_data(
-            y, X if X is not None else None
-        )
+        dataset = self._prepare_data(y, X if X is not None else None)
         X, y = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(dataset))))
 
         res = self.network(y, c=X.reshape((-1, self.sample_dim * self.n_cond_features)))
@@ -300,7 +297,9 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
                         val_nll = (
                             torch.mean(z**2) / 2 - torch.mean(log_j) / self.sample_dim
                         )
-                        if early_stopper.early_stop(val_nll.detach().numpy(), self.network):
+                        if early_stopper.early_stop(
+                            val_nll.detach().numpy(), self.network
+                        ):
                             return False
                     if self.verbose:
                         print(  # noqa
@@ -413,7 +412,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
                 "f_statistic": _test_function,
                 "init_param_f_statistic": [1, 1],
                 "deterministic": True,
-                "val_split":0.5,
+                "val_split": 0.5,
             },
             {
                 "f_statistic": _test_function,
