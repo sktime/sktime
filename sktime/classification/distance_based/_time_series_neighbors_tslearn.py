@@ -65,7 +65,7 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         # estimator type
         # --------------
         "capability:multivariate": True,
-        "capability:unequal_length": True,
+        "capability:unequal_length": False,
     }
 
     # defines the name of the attribute containing the tslearn estimator
