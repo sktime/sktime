@@ -1,6 +1,4 @@
 """Time series k-neighbors, from tslearn."""
-import numpy as np
-
 from sktime.base.adapters._tslearn import _TslearnAdapter
 from sktime.classification.base import BaseClassifier
 
