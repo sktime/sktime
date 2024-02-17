@@ -232,9 +232,6 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         )
         data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
 
-        z = np.random.normal(0, 1, (len(y[split_index:]), self.sample_dim))
-        z = pd.DataFrame(z, index=y[split_index:].index)
-
         val_data_loader_nll = None
         if self.val_split > 0:
             val_dataset_nll = self._prepare_data(
@@ -252,21 +249,24 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         val_loss = np.inf
         # Fit the cINN
         for epoch in range(self.num_epochs):
-            if early_stopper.early_stop(val_loss, self.network):
-                break
-            val_loss = self._run_epoch(
+            if not self._run_epoch(
                 epoch,
                 data_loader,
                 val_data_loader_nll,
-            )
+                early_stopper,
+            ):
+                break
+        if val_data_loader_nll is not None:
+            self.network = early_stopper._best_model
+        dataset = self._prepare_data(
+            y, X if X is not None else None
+        )
+        X, y = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(dataset))))
 
-        self.network = early_stopper._best_model
-        X, z = next(iter(DataLoader(val_dataset_nll, shuffle=False, batch_size=len(y))))
-
-        res = self.network(z, c=X.reshape((-1, self.sample_dim * self.n_cond_features)))
+        res = self.network(y, c=X.reshape((-1, self.sample_dim * self.n_cond_features)))
         self.z_ = res[0].detach().numpy()
-        self.z_mean_ = res[0].detach().numpy().mean(axis=0)
-        self.z_std_ = res[0].detach().numpy().std()
+        self.z_mean_ = self.z_.mean(axis=0)
+        self.z_std_ = self.z_.std()
 
     def _build_network(self, fh):
         return cINNNetwork(
@@ -276,7 +276,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             num_coupling_layers=self.n_coupling_layers,
         ).build()
 
-    def _run_epoch(self, epoch, data_loader, val_data_loader_nll):
+    def _run_epoch(self, epoch, data_loader, val_data_loader_nll, early_stopper):
         nll = None
         for i, _input in enumerate(data_loader):
             (c, x) = _input
@@ -293,18 +293,20 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
             if i % 200 == 0:
                 with torch.no_grad():
-                    c, x = next(iter(val_data_loader_nll))
-                    z, log_j = self.network(x, c)
                     val_nll = -1
                     if val_data_loader_nll is not None:
+                        c, x = next(iter(val_data_loader_nll))
+                        z, log_j = self.network(x, c)
                         val_nll = (
                             torch.mean(z**2) / 2 - torch.mean(log_j) / self.sample_dim
                         )
+                        if early_stopper.early_stop(val_nll.detach().numpy(), self.network):
+                            return False
                     if self.verbose:
                         print(  # noqa
                             epoch, i, nll.detach().numpy(), val_nll.detach().numpy()
                         )
-        return val_nll.detach().numpy()
+        return True
 
     def _predict(self, X=None, fh=None):
         """Forecast time series at future horizon.
@@ -407,10 +409,11 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
             {
                 "num_epochs": 1,
                 "window_size": 2,
-                "sample_dim": 12,
+                "sample_dim": 5,
                 "f_statistic": _test_function,
                 "init_param_f_statistic": [1, 1],
                 "deterministic": True,
+                "val_split":0.5,
             },
             {
                 "f_statistic": _test_function,
@@ -420,6 +423,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
                 "n_coupling_layers": 1,
                 "init_param_f_statistic": [0, 0],
                 "deterministic": True,
+                "val_split": 0,
             },
         ]
         return params
