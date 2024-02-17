@@ -121,7 +121,7 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         params2 = {
             "n_neighbors": 3,
             "weights": "distance",
-            "metric": "ctw",
+            "metric": "sax",
             "metric_params": None,
         }
         return [params1, params2]
