@@ -8,8 +8,8 @@ import pandas
 
 from sktime.forecasting.base import BaseForecaster
 
-__all__ = ["_GeneralisedStatsForecastAdapter"]
-__author__ = ["yarnabrina"]
+__all__ = ["_GeneralisedStatsForecastAdapter", "StatsForecastBackAdapter"]
+__author__ = ["yarnabrina", "arnaujc91", "luca-miniati"]
 
 
 class _GeneralisedStatsForecastAdapter(BaseForecaster):
@@ -18,7 +18,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["yarnabrina"],
+        "authors": ["yarnabrina", "arnaujc91"],
         "maintainers": ["yarnabrina"],
         "python_version": ">=3.8",
         "python_dependencies": ["statsforecast"],
@@ -456,6 +456,7 @@ class StatsForecastBackAdapter:
         self.prediction_intervals = None
 
     def __repr__(self):
+        """Representation dunder."""
         return "StatsForecastBackAdapter"
 
     def new(self):
@@ -545,6 +546,7 @@ class StatsForecastBackAdapter:
         return self.format_pred_int("fitted", fitted, pred_int, coverage, level)
 
     def format_pred_int(self, y_pred_name, y_pred, pred_int, coverage, level):
+        """Convert prediction intervals into a StatsForecast-format dictionary."""
         pred_int_prefix = "fitted-" if y_pred_name == "fitted" else ""
 
         pred_int_no_lev = pred_int.droplevel(0, axis=1)
