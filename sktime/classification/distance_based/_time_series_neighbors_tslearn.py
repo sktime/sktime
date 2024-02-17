@@ -96,6 +96,8 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+        super().__init__()
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
