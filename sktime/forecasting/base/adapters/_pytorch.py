@@ -126,6 +126,9 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
+        if min(fh._values) < 0:
+            raise NotImplementedError("LTSF is not supporting insample predictions.")
+
         if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
             raise ValueError(
                 f"fh of {fh} passed to {self.__class__.__name__} is not "
