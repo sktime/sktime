@@ -78,7 +78,8 @@ class TSBootstrapAdapter(BaseTransformer):
         bootstrapped_samples = [pd.DataFrame(sample) for sample in bootstrapped_samples]
 
         boostrapped_df = pd.concat(
-            bootstrapped_samples,keys=[f"synthetic_{i}" for i in range(len(bootstrapped_samples))]
+            bootstrapped_samples,
+            keys=[f"synthetic_{i}" for i in range(len(bootstrapped_samples))],
         )
 
         if self.include_actual:
