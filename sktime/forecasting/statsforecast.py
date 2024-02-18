@@ -188,6 +188,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.0.0"],
     }
 
     def __init__(
@@ -376,6 +377,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.3.0"],
     }
 
     def __init__(
@@ -457,6 +459,8 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         Controlling state-space-equations.
     damped : bool
         A parameter that 'dampens' the trend.
+    phi : float, optional (default=None)
+        Smoothing parameter for trend damping. Only used when `damped=True`.
 
     References
     ----------
@@ -480,14 +484,20 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.3.2"],
     }
 
     def __init__(
-        self, season_length: int = 1, model: str = "ZZZ", damped: Optional[bool] = None
+        self,
+        season_length: int = 1,
+        model: str = "ZZZ",
+        damped: Optional[bool] = None,
+        phi: Optional[float] = None,
     ):
         self.season_length = season_length
         self.model = model
         self.damped = damped
+        self.phi = phi
 
         super().__init__()
 
@@ -502,6 +512,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
             "season_length": self.season_length,
             "model": self.model,
             "damped": self.damped,
+            "phi": self.phi,
         }
 
     @classmethod
@@ -572,6 +583,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.1.0"],
     }
 
     def __init__(self, season_length: int = 1, model: str = "Z"):
@@ -784,8 +796,9 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         # estimator type
         # --------------
         "ignores-exogeneous-X": True,
-        "capability:pred_int": True,
-        "capability:pred_int:insample": True,
+        "capability:pred_int": False,
+        "capability:pred_int:insample": False,
+        "python_dependencies": ["statsforecast>=1.2.0"],
     }
 
     def __init__(
@@ -795,18 +808,27 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         stl_kwargs: Optional[Dict] = None,
         pred_int_kwargs: Optional[Dict] = None,
     ):
+        self.season_length = season_length
+        self.trend_forecaster = trend_forecaster
+        self.stl_kwargs = stl_kwargs
+        self.pred_int_kwargs = pred_int_kwargs
+
         super().__init__()
+
+        # adapter class sets probabilistic capability as true
+        # because level is present in statsforecast signature
+        # happens in _check_supports_pred_int method
+        # manually overriding this temporarily
+        self.set_tags(
+            **{"capability:pred_int": False, "capability:pred_int:insample": False}
+        )
 
         from sklearn.base import clone
 
-        self.trend_forecaster = trend_forecaster
-        self.season_length = season_length
         if trend_forecaster:
             self._trend_forecaster = clone(trend_forecaster)
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
-        self.stl_kwargs = stl_kwargs
-        self.pred_int_kwargs = pred_int_kwargs
 
         # checks if trend_forecaster is already wrapped with
         # StatsForecastBackAdapter
