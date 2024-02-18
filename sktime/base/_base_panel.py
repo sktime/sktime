@@ -91,7 +91,7 @@ class BasePanelMixin(BaseEstimator):
 
             y_cols = self._y_metadata["feature_names"]
 
-            if isinstance(y_pred[0], np.ndarray):
+            if isinstance(y_preds[0], np.ndarray):
                 y_preds_df = [pd.DataFrame(y_pred) for y_pred in y_preds]
                 y_pred = pd.concat(y_preds_df, axis=1, keys=y_cols)
                 if methodname == "predict":
