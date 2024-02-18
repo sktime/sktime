@@ -95,6 +95,10 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         "python_dependencies": "prophet",
     }
 
+    # TODO (release 0.28.0) - change defaults to False
+    # set yearly_seasonality = False in __init__
+    # set weekly_seasonality = False in __init__
+    # set daily_seasonality = False in __init__
     def __init__(
         self,
         changepoints=None,
@@ -131,15 +135,12 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
 
         super().__init__()
         # TODO (release 0.28.0)
-        # set yearly_seasonality = False in __init__
-        # set weekly_seasonality = False in __init__
-        # set daily_seasonality = False in __init__
         # remove the following 4 'if' checks
         # set yearly_seasonality=self.yearly_seasonality in def _instantiate_model
         # set weekly_seasonality=self.weekly_seasonality in def _instantiate_model
         # set daily_seasonality=self.daily_seasonality in def _instantiate_model
         if any(
-            setting is not False
+            setting == "changing_value"
             for setting in [
                 yearly_seasonality,
                 weekly_seasonality,
@@ -169,6 +170,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
             self._daily_seasonality = "auto"
         else:
             self._daily_seasonality = daily_seasonality
+        # end of TODO (release 0.28.0)
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
@@ -181,9 +183,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
             changepoints=self.changepoints,
             n_changepoints=self.n_changepoints,
             changepoint_range=self.changepoint_range,
-            yearly_seasonality=self._yearly_seasonality,
-            weekly_seasonality=self._weekly_seasonality,
-            daily_seasonality=self._daily_seasonality,
+            yearly_seasonality=self._yearly_seasonality,  # TODO (release 0.28.0)
+            weekly_seasonality=self._weekly_seasonality,  # TODO (release 0.28.0)
+            daily_seasonality=self._daily_seasonality,  # TODO (release 0.28.0)
             holidays=self.holidays,
             seasonality_mode=self.seasonality_mode,
             seasonality_prior_scale=float(self.seasonality_prior_scale),
