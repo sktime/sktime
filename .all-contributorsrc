@@ -2124,7 +2124,7 @@
       "name": "Roman Lutz",
       "avatar_url": "https://avatars.githubusercontent.com/u/10245648?v=4",
       "profile": "https://www.linkedin.com/in/romanlutz/",
-      "contributions":[
+      "contributions": [
         "doc"
       ]
     },
@@ -2253,7 +2253,7 @@
       "profile": "https://github.com/alan191006",
       "contributions": [
         "code"
-    ]
+      ]
     },
     {
       "login": "felipeangelimvieira",
@@ -2448,7 +2448,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/19709277?v=4",
       "profile": "https://github.com/adamkells",
       "contributions": [
-      "test"
+        "test"
       ]
     },
     {
@@ -2487,7 +2487,7 @@
       "profile": "https://github.com/rahulporuri",
       "contributions": [
         "doc"
-       ]
+      ]
     },
     {
       "login": "fspinna",
@@ -2524,6 +2524,15 @@
       "profile": "https://github.com/wayneadams",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "sanjayk0508",
+      "name": "Sanjay Kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/102804548?v=4",
+      "profile": "https://github.com/sanjayk0508",
+      "contributions": [
+        "test"
       ]
     },
     {

@@ -191,11 +191,18 @@ class GMMHMM(BaseHMMLearn):
         -------
         params : dict or list of dict
         """
-        params = {
+        params1 = {
             "n_components": 3,
             "covariance_type": "diag",
             "min_covar": 1e-3,
             "random_state": 7,
         }
 
-        return params
+        params2 = {
+            "n_components": 5,
+            "covariance_type": "full",
+            "min_covar": 1e-6,
+            "random_state": 42,
+        }
+
+        return [params1, params2]
