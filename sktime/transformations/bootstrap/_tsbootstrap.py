@@ -14,9 +14,11 @@ class TSBootstrapAdapter(BaseTransformer):
 
     Parameters
     ----------
-    tsbootstrapper : Bootstrapper from tsbootstrap
+    bootstrapper : Bootstrapper from tsbootstrap
         default = SlidingWindowSplitter(window_length=3, step_length=1)
         The splitter used for the bootstrap splitting.
+    include_actual : bool, default=True
+        Whether to include the actual data in the output.
 
     Examples
     --------
@@ -42,15 +44,17 @@ class TSBootstrapAdapter(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        "python_dependencies": "tsbootstrap",
+        "python_dependencies": ["tsbootstrap>=0.0.3"],
     }
 
     def __init__(
         self,
-        tsbootstrapper,
+        bootstrapper,
+        include_actual=True,
     ):
         super().__init__()
-        self.tsbootstrapper = tsbootstrapper
+        self.bootstrapper = bootstrapper
+        self.include_actual = include_actual
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -69,26 +73,19 @@ class TSBootstrapAdapter(BaseTransformer):
         -------
         transformed version of X
         """
-        bootstrapped_samples = self.tsbootstrapper.bootstrap(X, test_ratio=0)
+        bootstrapped_samples = self.bootstrapper.bootstrap(X, test_ratio=0)
 
-        bootstrapped_samples = np.concatenate(list(bootstrapped_samples))
-        multi_index = pd.MultiIndex.from_product(
-            [
-                [
-                    f"synthetic_{i}"
-                    for i in range(self.tsbootstrapper.config.n_bootstraps)
-                ],
-                X.index,
-            ]
+        bootstrapped_samples = [pd.DataFrame(sample) for sample in bootstrapped_samples]
+
+        boostrapped_df = pd.concat(
+            bootstrapped_samples,keys=[f"synthetic_{i}" for i in range(len(bootstrapped_samples))]
         )
 
-        boostrapped_df = pd.DataFrame(
-            bootstrapped_samples, index=multi_index, columns=X.columns
-        )
-
-        X.index = pd.MultiIndex.from_product([["original"], X.index])
-
-        return pd.concat([X, boostrapped_df], axis=0)
+        if self.include_actual:
+            X.index = pd.MultiIndex.from_product([["actual"], X.index])
+            return pd.concat([X, boostrapped_df], axis=0)
+        else:
+            return boostrapped_df
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
