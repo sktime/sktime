@@ -375,10 +375,15 @@ def test_fit_predict_change_state(method):
         assert y_pred.shape[1] == n_cl
 
 
+@pytest.mark.parametrize("y_multivariate", [True, False])
 @pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
-def test_fit_predict_cv(method):
+def test_fit_predict_cv(method, y_multivariate):
     """Test cv argument in fit_predict, fit_predict_proba."""
     X, y = make_classification_problem()
+
+    if y_multivariate:
+        y = pd.concat([y, y], axis=1)
+        y = pd.DataFrame(y)
 
     clf = KNeighborsTimeSeriesClassifier()
     clf.random_state = 42
