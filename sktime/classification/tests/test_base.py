@@ -380,6 +380,7 @@ def test_fit_predict_change_state(method):
 def test_fit_predict_cv(method, y_multivariate):
     """Test cv argument in fit_predict, fit_predict_proba."""
     X, y = make_classification_problem()
+    n_cl = len(y.unique())
 
     if y_multivariate:
         y = pd.concat([y, y], axis=1)
@@ -397,9 +398,10 @@ def test_fit_predict_cv(method, y_multivariate):
     assert -1 not in y_pred_cv_int
 
     assert len(y) == len(y_pred_cv_int)
-    if method == "fit_predict_proba":
-        n_cl = len(y.unique())
-        assert y_pred_cv_int.shape[1] == n_cl
+
+    n_var = y.shape[1] if y_multivariate else 1
+    if method == "fit_predict_proba" and not y_multivariate:
+        assert y_pred_cv_int.shape[1] == n_cl * n_var
 
     # check that state is same as self.fit(X, y) if change_state=True
     y_pred_cv_obj_fit = getattr(clf, method)(X, y, cv=cv, change_state=True)
