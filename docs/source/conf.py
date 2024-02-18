@@ -4,7 +4,6 @@
 import datetime
 import os
 import sys
-from importlib import import_module
 
 import sktime
 
@@ -325,33 +324,41 @@ def _make_estimator_overview(app):
         Multiple author names will be separated by a comma,
         with the final name always preceded by "&".
         """
-        if isinstance(author_info, list):
-            if len(author_info) > 1:
-                return ", ".join(author_info[:-1]) + " & " + author_info[-1]
-            else:
-                return author_info[0]
+        if isinstance(author_info, str) and author_info.lower() == "sktime developers":
+            link = (
+                '<a href="https://www.sktime.net/en/stable/about/team.html">'
+                "sktime developers</a>"
+            )
+            return link
+
+        if not isinstance(author_info, list):
+            author_info = [author_info]
+
+        def _add_link(github_id_str):
+            link = '<a href="https://www.github.com/{0}">{0}</a>'.format(github_id_str)
+            return link
+
+        author_info = [_add_link(author) for author in author_info]
+
+        if len(author_info) > 1:
+            return ", ".join(author_info[:-1]) + " & " + author_info[-1]
         else:
-            return author_info
+            return author_info[0]
 
     def _does_not_start_with_underscore(input_string):
         return not input_string.startswith("_")
 
     # creates dataframe as df
-    COLNAMES = ["Class Name", "Estimator Type", "Authors"]
+    COLNAMES = ["Class Name", "Estimator Type", "Authors", "Maintainers"]
 
-    df = pd.DataFrame([], columns=COLNAMES)
+    records = []
 
     for modname, modclass in all_estimators():
-        algorithm_type = "::".join(str(modclass).split(".")[1:-2])
-        try:
-            author_info = _process_author_info(modclass.__author__)
-        except AttributeError:
-            try:
-                author_info = _process_author_info(
-                    import_module(modclass.__module__).__author__
-                )
-            except AttributeError:
-                author_info = "no author info"
+        algorithm_type = modclass.get_class_tag("object_type", "object")
+        author_tag = modclass.get_class_tag("authors", "sktime developers")
+        author_info = _process_author_info(author_tag)
+        maintainer_tag = modclass.get_class_tag("maintainers", "sktime developers")
+        maintainer_info = _process_author_info(maintainer_tag)
 
         # includes part of class string
         modpath = str(modclass)[8:-2]
@@ -368,8 +375,9 @@ def _make_estimator_overview(app):
             + "</a>"
         )
 
-        record = pd.DataFrame([modname, algorithm_type, author_info], index=COLNAMES).T
-        df = pd.concat([df, record], ignore_index=True)
+        records.append([modname, algorithm_type, author_info, maintainer_info])
+
+    df = pd.DataFrame(records, columns=COLNAMES)
     with open("estimator_overview_table.md", "w") as file:
         df.to_markdown(file, index=False)
 

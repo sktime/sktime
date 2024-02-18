@@ -330,7 +330,6 @@ def evaluate(
     backend: Optional[str] = None,
     cv_X=None,
     backend_params: Optional[dict] = None,
-    **kwargs,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
 
@@ -518,18 +517,6 @@ def evaluate(
                 "running evaluate with backend='dask' requires the dask package "
                 "installed, but dask is not present in the python environment"
             )
-
-    # todo 0.26.0: remove kwargs and this warning
-    if kwargs != {}:
-        warnings.warn(
-            "in evaluate, kwargs are no longer supported. "
-            "to pass configuration arguments to the parallelization backend, "
-            "use backend_params instead. "
-            f"The following kwargs were found: {kwargs.keys()}, pass these as "
-            "dict elements to backend_params instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
