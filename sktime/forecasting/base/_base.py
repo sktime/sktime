@@ -45,6 +45,7 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
+    check_is_error_msg,
     check_is_scitype,
     convert_to,
     get_cutoff,
@@ -1343,7 +1344,11 @@ class BaseForecaster(BaseEstimator):
             elif "Series" in scitypes:
                 return "Series"
             else:
-                raise ValueError("no series scitypes supported, bug in estimator")
+                raise ValueError(
+                    f"Error in {type(self).__name__}, no series scitypes supported, "
+                    "likely a bug in estimator: scitypes arg passed to "
+                    f"_most_complex_scitype are {scitypes}"
+                )
 
         def _check_missing(metadata, obj_name):
             """Check input metadata against self's missing capability tag."""
@@ -1385,26 +1390,31 @@ class BaseForecaster(BaseEstimator):
             if not self.get_tag("handles-missing-data"):
                 y_metadata_required += ["has_nans"]
 
-            y_valid, _, y_metadata = check_is_scitype(
+            y_valid, y_msg, y_metadata = check_is_scitype(
                 y,
                 scitype=ALLOWED_SCITYPES,
                 return_metadata=y_metadata_required,
                 var_name="y",
             )
-            msg = (
-                "y must be in an sktime compatible format, "
-                f"of scitype {', '.join(ALLOWED_SCITYPES)}, "
+
+            msg_start = (
+                f"Unsupported input data type in {self.__class__.__name__}, input y"
+            )
+            allowed_msg = (
+                "Allowed scitypes for y in forecasting are "
+                f"{', '.join(ALLOWED_SCITYPES)}, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 " See the forecasting tutorial examples/01_forecasting.ipynb, or"
-                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb,"
-                "If you think y is already in an sktime supported input format, "
-                "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
-                "where mtype is the string of the type specification you want for y. "
-                "Possible mtype specification strings are as follows: "
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
             if not y_valid:
-                raise TypeError(msg + ", ".join(mtypes_messages))
+                check_is_error_msg(
+                    y_msg,
+                    var_name=msg_start,
+                    allowed_msg=allowed_msg,
+                    raise_exception=True,
+                )
 
             y_scitype = y_metadata["scitype"]
             self._y_metadata = y_metadata
@@ -1422,7 +1432,9 @@ class BaseForecaster(BaseEstimator):
                 and y_metadata["is_univariate"]
             ):
                 raise ValueError(
-                    "y must have two or more variables, but found only one"
+                    f"Unsupported input data type in {type(self).__name__}, "
+                    "this forecaster accepts only strictly multivariate data. "
+                    "y must have two or more variables, but found only one."
                 )
 
             _check_missing(y_metadata, "y")
@@ -1440,27 +1452,31 @@ class BaseForecaster(BaseEstimator):
             if not self.get_tag("handles-missing-data"):
                 X_metadata_required += ["has_nans"]
 
-            X_valid, _, X_metadata = check_is_scitype(
+            X_valid, X_msg, X_metadata = check_is_scitype(
                 X,
                 scitype=ALLOWED_SCITYPES,
                 return_metadata=X_metadata_required,
                 var_name="X",
             )
 
-            msg = (
-                "X must be either None, or in an sktime compatible format, "
-                "of scitype Series, Panel or Hierarchical, "
+            msg_start = (
+                f"Unsupported input data type in {self.__class__.__name__}, input X"
+            )
+            allowed_msg = (
+                "Allowed scitypes for X in forecasting are None, "
+                f"{', '.join(ALLOWED_SCITYPES)}, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
-                "If you think X is already in an sktime supported input format, "
-                "run sktime.datatypes.check_raise(X, mtype) to diagnose the error, "
-                "where mtype is the string of the type specification you want for X. "
-                "Possible mtype specification strings are as follows. "
             )
             if not X_valid:
-                raise TypeError(msg + ", ".join(mtypes_messages))
+                check_is_error_msg(
+                    X_msg,
+                    var_name=msg_start,
+                    allowed_msg=allowed_msg,
+                    raise_exception=True,
+                )
 
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype

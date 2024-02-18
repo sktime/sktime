@@ -128,10 +128,19 @@ class PluginParamsForecaster(_DelegatedForecaster):
         self.update_params = update_params
 
         super().__init__()
-        self.clone_tags(self.forecaster_)
+
+        self._set_delegated_tags(self.forecaster_)
+
+        # parameter estimators that are univariate do not broadcast,
+        # so broadcasting needs to be done by the composite (i.e., self)
+        if param_est.get_tags()["object_type"] == "param_est":
+            if not param_est.get_tags()["capability:multivariate"]:
+                self.set_tags(**{"scitype:y": "univariate"})
+
         self.set_tags(**{"fit_is_empty": False})
         # todo: only works for single series now
         #   think about how to deal with vectorization later
+        self.set_tags(**{"X_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"]})
         self.set_tags(**{"y_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"]})
 
     def _fit(self, y, X, fh):

@@ -38,6 +38,57 @@ class _DelegatedForecaster(BaseForecaster):
     def _get_delegate(self):
         return getattr(self, self._delegate_name)
 
+    def _set_delegated_tags(self, delegate=None):
+        """Set delegated tags, only tags for boilerplate control.
+
+        Writes tags to self.
+        Can be used by descendant classes to set dependent tags.
+        Makes safe baseline assumptions about tags, which can be overwritten.
+
+        * data mtype tags are set to the most general value.
+          This is to ensure that conversion is left to the inner estimator.
+        * packaging tags such as "author" or "python_depedencies" are not cloned.
+        * other boilerplate tags are cloned.
+
+        Parameters
+        ----------
+        delegate : object, optional (default=None)
+            object to get tags from, if None, uses self._get_delegate()
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import ALL_TIME_SERIES_MTYPES
+
+        if delegate is None:
+            delegate = self._get_delegate()
+
+        TAGS_TO_DELEGATE = [
+            "requires-fh-in-fit",
+            "handles-missing-data",
+            "ignores-exogeneous-X",
+            "capability:insample",
+            "capability:pred_int",
+            "capability:pred_int:insample",
+            "handles-missing-data",
+            "requires-fh-in-fit",
+            "X-y-must-have-same-index",
+            "enforce_index_type",
+            "fit_is_empty",
+        ]
+
+        TAGS_TO_SET = {
+            "scitype:y": "both",
+            "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+            "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        }
+
+        self.clone_tags(delegate, tag_names=TAGS_TO_DELEGATE)
+        self.set_tags(**TAGS_TO_SET)
+
+        return self
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 

@@ -10,6 +10,7 @@ jobs:
     outputs:
       base: ${{ steps.filter.outputs.base }}
     steps:
+      - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -47,6 +48,7 @@ jobs:
           test-affected-estimators: "True"
 
       - name: upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,incomplete
