@@ -43,6 +43,7 @@ jobs:
       - name: upload coverage step
         uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets
   test_external_data:
     name: downloads
@@ -82,4 +83,5 @@ jobs:
       - name: upload coverage step
         uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets
