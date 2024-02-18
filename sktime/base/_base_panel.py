@@ -81,15 +81,25 @@ class BasePanelMixin(BaseEstimator):
             return self
         else:  # methodname == "predict" or methodname == "predict_proba":
             ests_ = getattr(self, self.VECTORIZATION_ATTR)
-            y_pred = self._yvec.vectorize_est(
+            y_preds = self._yvec.vectorize_est(
                 ests_,
                 method=methodname,
                 X=X,
+                return_type="list",
                 **kwargs,
             )
-            y_pred = pd.DataFrame(
-                {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}
-            )
+
+            y_cols = self._y_metadata["feature_names"]
+
+            if isinstance(y_pred[0], np.ndarray):
+                y_preds_df = [pd.DataFrame(y_pred) for y_pred in y_preds]
+                y_pred = pd.concat(y_preds_df, axis=1, keys=y_cols)
+                if methodname == "predict":
+                    # to avoid column MultiIndex with duplicated label
+                    y_pred.columns = y_cols
+            else:  # pd.DataFrame
+                y_pred = pd.concat(y_preds, axis=1, keys=y_cols)
+
             return y_pred
 
     def _fit_predict_boilerplate(self, X, y, cv, change_state, method):
@@ -293,7 +303,7 @@ class BasePanelMixin(BaseEstimator):
         y_inner_mtype = self.get_tag("y_inner_mtype")
 
         y_valid, y_msg, y_metadata = check_is_scitype(
-            y, "Table", return_metadata=["is_univariate"]
+            y, "Table", return_metadata=["is_univariate", "feature_names"]
         )
 
         if not y_valid:
@@ -339,6 +349,22 @@ class BasePanelMixin(BaseEstimator):
             return y_inner, y_metadata, y_inner_mtype
         else:
             return y_inner, y_metadata
+
+    def _get_output_mtype(self, y):
+        """Get the mtype of the output y.
+
+        Parameters
+        ----------
+        y : np.ndarray or pd.DataFrame
+            output to convert
+
+        Returns
+        -------
+        y_mtype : str
+            mtype of y
+        """
+        y_mtype = check_is_scitype(y, "Table", return_metadata="mtype")
+        return y_mtype
 
     def _convert_output_y(self, y):
         """Convert output y to original format.
