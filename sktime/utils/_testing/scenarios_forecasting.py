@@ -330,6 +330,8 @@ forecasting_scenarios_extended = [
     ForecasterFitPredictMultivariateWithX,
     ForecasterFitPredictPanelSimple,
     ForecasterFitPredictHierarchicalSimple,
+    ForecasterFitPredictCategorical,
+    ForecasterFitPredictCategoricalExog,
 ]
 
 scenarios_forecasting = forecasting_scenarios_extended
