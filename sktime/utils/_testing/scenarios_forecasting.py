@@ -284,7 +284,7 @@ class ForecasterFitPredictCategorical(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
-X_cat = pd.DataFrame(	
+X_cat = pd.DataFrame(
     {
         "a": ["a", "b", "c", "a", "b", "c", "a", "b", "c", "c"],
         "b": [1, 2, 3, 4, 5, 6, 7, 7, 8, 9],
