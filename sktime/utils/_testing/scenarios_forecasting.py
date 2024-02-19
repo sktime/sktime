@@ -272,6 +272,49 @@ class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
+y_cat = s = pd.Series(["a", "b", "c", "a", "b", "c", "a", "b", "c"], dtype="category")
+
+
+class ForecasterFitPredictCategorical(ForecasterTestScenario):
+    """Fit/predict only, categorical y."""
+
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": True}
+
+    args = {"fit": {"y": y_cat, "fh": [1, 2, 3]}, "predict": {}}
+    default_method_sequence = ["fit", "predict"]
+
+
+X_cat = pd.DataFrame(	
+    {
+        "a": ["a", "b", "c", "a", "b", "c", "a", "b", "c", "c"],
+        "b": [1, 2, 3, 4, 5, 6, 7, 7, 8, 9],
+    },
+).astype({"a": "category", "b": "float64"})
+
+X_cat_test = pd.DataFrame(
+    {
+        "a": ["a", "b", "c"],
+        "b": [10, 11, 12],
+    },
+).astype({"a": "category", "b": "float64"})
+
+
+class ForecasterFitPredictCategoricalExog(ForecasterTestScenario):
+    """Fit/predict only, numerical y categorical X."""
+
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": True}
+
+    args = {
+        "fit": {
+            "y": _make_series(n_timepoints=10, n_columns=1, random_state=RAND_SEED),
+            "X": X_cat.copy(),
+            "fh": [1, 2, 3],
+        },
+        "predict": {"X": X_cat_test.copy()},
+    }
+    default_method_sequence = ["fit", "predict"]
+
+
 forecasting_scenarios_simple = [
     ForecasterFitPredictUnivariateNoX,
     ForecasterFitPredictMultivariateWithX,
