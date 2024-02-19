@@ -3,7 +3,6 @@
 
 __author__ = ["benheid"]
 
-import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
@@ -26,7 +25,8 @@ class TSBootstrapAdapter(BaseTransformer):
     >>> from sktime.transformations.bootstrap import TSBootstrapAdapter
     >>> from tsbootstrap import MovingBlockBootstrap, MovingBlockBootstrapConfig
     >>> y = load_airline()
-    >>> bootstrap = TSBootstrapAdapter(MovingBlockBootstrap(MovingBlockBootstrapConfig(10, n_bootstraps=10)))
+    >>> config = MovingBlockBootstrapConfig(10, n_bootstraps=10)
+    >>> bootstrap = TSBootstrapAdapter(MovingBlockBootstrap(config))
     >>> result = bootstrap.fit_transform(y)
     """
 
