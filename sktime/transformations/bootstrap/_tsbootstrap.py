@@ -107,18 +107,17 @@ class TSBootstrapAdapter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from tsbootstrap.base_bootstrap_configs import BaseSieveBootstrapConfig
         from tsbootstrap.block_bootstrap import (
+            BaseSieveBootstrapConfig,
             MovingBlockBootstrap,
             MovingBlockBootstrapConfig,
             WholeSieveBootstrap,
-            BaseSieveBootstrapConfig,
         )
 
         params = [
             {
                 "tsbootstrapper": WholeSieveBootstrap(
-                    WholeSieveBootstrap(
+                    BaseSieveBootstrapConfig(
                         10,
                         n_bootstraps=10,
                     )
