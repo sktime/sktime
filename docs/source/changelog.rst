@@ -5524,7 +5524,7 @@ Highlights
 * maintenance update for compatibility with recent ``scikit-learn 1.1.0`` release
 
 Dependency changes
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 * Added defensive upper bound ``scikit-learn<1.2.0``
 

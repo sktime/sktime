@@ -78,15 +78,18 @@ class _DelegatedTransformer(BaseTransformer):
         Returns
         -------
         transformed version of X
-        type depends on type of X and scitype:transform-output tag:
-            |          | `transform`  |                        |
-            |   `X`    |  `-output`   |     type of return     |
-            |----------|--------------|------------------------|
-            | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
-            | `Panel`  | `Primitives` | `pd.DataFrame`         |
-            | `Series` | `Series`     | `Series`               |
-            | `Panel`  | `Series`     | `Panel`                |
-            | `Series` | `Panel`      | `Panel`                |
+        type depends on type of X and scitype:transform-output tag
+
+        ======== ================== ======================
+        `X`      `transform-output` type of return
+        ======== ================== ======================
+        `Series` `Primitives`       `pd.DataFrame` (1-row)
+        `Panel`  `Primitives`       `pd.DataFrame`
+        `Series` `Series`           `Series`
+        `Panel`  `Series`           `Panel`
+        `Series` `Panel`            `Panel`
+        ======== ================== ======================
+
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
 

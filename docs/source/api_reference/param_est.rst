@@ -67,7 +67,7 @@ Seasonality estimators
     SeasonalityPeriodogram
 
 Stationarity estimators
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.stationarity
 

@@ -1,11 +1,11 @@
 .. _examples:
 
-==========
+========
 Examples
-==========
+========
 
 Forecasting
-=============
+===========
 
 .. nbgallery::
     :glob:
@@ -16,7 +16,7 @@ Forecasting
     examples/forecasting/*
 
 Classification
-=============
+==============
 
 .. nbgallery::
     :glob:
@@ -25,12 +25,12 @@ Classification
     examples/classification/*
 
 Regression
-=============
+==========
 
 To come!
 
 Clustering
-=============
+==========
 
 .. nbgallery::
     :glob:
@@ -38,7 +38,7 @@ Clustering
     examples/clustering/*
 
 Annotation
-=============
+==========
 
 .. nbgallery::
     :glob:
@@ -46,7 +46,7 @@ Annotation
     examples/annotation/*
 
 Transformation
-=============
+==============
 
 .. nbgallery::
     :glob:
@@ -54,7 +54,7 @@ Transformation
     examples/transformation/*
 
 Data
-=============
+====
 
 .. nbgallery::
     :glob:
@@ -63,7 +63,7 @@ Data
     examples/data/*
 
 Other
-=============
+=====
 
 .. nbgallery::
     :glob:
