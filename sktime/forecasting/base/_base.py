@@ -587,14 +587,14 @@ class BaseForecaster(BaseEstimator):
 
         # input checks and conversions
 
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
         # default alpha
         if alpha is None:
             alpha = [0.05, 0.95]
         # check alpha and coerce to list
         alpha = check_alpha(alpha, name="alpha")
-
-        # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        fh = self._check_fh(fh)
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
@@ -603,6 +603,7 @@ class BaseForecaster(BaseEstimator):
         if not self._is_vectorized:
             quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
         else:
+            # otherwise we call the vectorized version of predict_quantiles
             quantiles = self._vectorize(
                 "predict_quantiles",
                 fh=fh,
@@ -663,12 +664,12 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
         # input checks and conversions
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
-
-        # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        fh = self._check_fh(fh)
 
         # check and convert X
         X_inner = self._check_X(X=X)
