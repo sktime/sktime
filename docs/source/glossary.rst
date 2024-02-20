@@ -27,7 +27,7 @@ sktime.
         a given mtype using the :func:`sktime.datatypes.check_is_mtype` function;
         all mtypes can be listed in ``sktime.datatypes.MTYPE_REGISTER``.
         For more details on the general concept, see
-        `the datatypes and datasets user guide <https://www.sktime.net/en/latest/examples/AA_datatypes_and_datasets.html>`_.
+        `the datatypes and datasets user guide <https://www.sktime.net/en/stable/examples/AA_datatypes_and_datasets.html>`_.
 
     scitype
         Short for scientific type, denotes the abstract type of an ``sktime`` object,
@@ -116,7 +116,7 @@ sktime.
         An :term:`estimator` that consists of multiple other component estimators which
         can vary. An example is a pipeline consisting of a transformer and
         forecaster. The term can refer both to the class and its instance.
-        Composite estimators may have :term:`tag`s that depend on components, such as
+        For composite estimators, a :term:`tag` can depend on components, such as
         ``capability:missing_data``,
         and a :term:`scitype` that depends on the components' scitypes, e.g., the
         scitype of a pipeline being a forecaster or a classifier, depending on
