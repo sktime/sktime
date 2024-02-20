@@ -6,27 +6,81 @@ Glossary of Common Terms
 The glossary below defines common terms and API elements used throughout
 sktime.
 
-.. note::
-
-    The glossary is under development. Important terms are still missing.
-    Please create a pull request if you want to add one.
-
-
 .. glossary::
     :sorted:
 
-    Scitype
-        See :term:`scientific type`.
+    mtype
+        ``sktime`` supports multiple in-memory specifications for time series data
+        and other objects. Such an in-memory specification is called ``mtype``
+        (short for "machine type").
+        Each ``mtype`` is represented by a string - e.g., ``pd-multiindex``,
+        which defines the data format and the data structure.
+        For example, a ``pd-multiindex`` mtype is a collection of time series,
+        represented as a 2-level ``MultiIndex``-ed ``pandas.DataFrame``, with
+        columns representing variables, rows indexed by ``(instance, timepoint)``,
+        where the ``timepoint`` level must be range-like or datetime-like.
+        Each mtype implements an abstract data type, a (data) :term:`scitype`,
+        for instance ``Panel`` which refers to the abstract type of a collection
+        of time series, with instance, timepoint and variable dimensions.
+        In this terminology, the ``pd-multiindex`` mtype implements the (abstract)
+        ``Panel`` scitype. Data containers can be checked for compliance with
+        a given mtype using the :func:`sktime.datatypes.check_is_mtype` function;
+        all mtypes can be listed in ``sktime.datatypes.MTYPE_REGISTER``.
+        For more details on the general concept, see
+        `the datatypes and datasets user guide <https://www.sktime.net/en/latest/examples/AA_datatypes_and_datasets.html>`_.
+
+    scitype
+        Short for scientific type, denotes the abstract type of an ``sktime`` object,
+        data container or estimator. One example of an estimator scitype is ``"forecaster"``,
+        which denotes the abstract concept of a forecaster with (abstract) ``fit``, ``predict``,
+        ``update`` methods. An example of a data scitype is ``Panel``, denoting
+        the abstract concept of an indexed collection of time series.
+        Scitypes are represented by strings, and are implemented by concrete types.
+        For data containers, concrete types are :term:`mtype`-s (see there), for
+        estimators, concrete types are python base interfaces, such as defined
+        by ``BaseForecaster`` or ``BaseClassifier``. Valid estimator scitypes,
+        with their corresponding base classes,
+        are listed in ``sktime.registry.BASE_CLASS_SCITYPE_LIST``.
+        All estimators of a given scitype can be listed using
+        ``sktime.registry.all_estimators``, and the scitype of a given estimator
+        can be inferred by the ``sktime.registry.scitype`` utility.
+        Compliance with concrete implementations of data scitypes can be checked using
+        the ``sktime.datatypes.check_is_scitype`` utility; for estimators, compliance
+        is checked using ``sktime.utils.check_estimator``.
+        For more details on data scitpyes, see :term:`mtype`.
+        For more details on estimator scitypes, see the user guides on individual
+        learning tasks.
 
     Scientific type
-        A class or object type to denote a category of objects defined by a
-        common python class interface and data scientific purpose.
-        For example, "forecaster" or "classifier", and the interface defined in
-        ``BaseForecaster`` or ``BaseClassifier``.
+        See :term:`scitype`.
+
+    Tag
+        Tags are string keyed value fields, used to identify properties of an object,
+        or set flags for internal boilerplate. An example of a tag is
+        ``capability:multivariate``, a boolean flag, which indicates whether the object
+        offers genuine support for multivariate time series.
+        Objects with a given capability - that is, objects filtering by
+        certain tag value - can be listed or filtered using
+        ``sktime.registry.all_estimators``.
+        In ``sktime``, most objects are ``scikit-base`` objects and implement
+        the tag interface via ``get_tag`` or ``get_tags``.
+        Some tags are for internal or extender use only, e.g., ``X_inner_mtype``,
+        which allows an extender to specify the mtype of the inner data container
+        they would like to work with.
+        A list of all tags and their meaning, optinally filtered by the :term:`scitype`
+        of object they apply to, can be obtained from
+        ``sktime.registry.all_tags``. Further details on tags, for developers,
+        can be found in the specification sheet that is part of the :ref:`extension templates`.
+
+    Extension templates
+
 
     Estimator
-        An algorithm of a specific :term:`scientific type`, implementing the python
-        class interface defined by it. For example, the ``ARIMA`` class.
+        An algorithm of a specific :term:`scitype`, implementing the python
+        class interface defined by the scitype.
+        Individual estimators correspond to concrete classes, implementing the
+        interface defined by the base class for the scitype.
+        For example, the ``ARIMA`` class is an estimator of :term:`scitype` ``"forecaster"``.
 
     Composite estimator
         An :term:`estimator` that consists of multiple other component estimators which
