@@ -664,10 +664,11 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # input checks and conversions
+
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
 
-        # input checks and conversions
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
 
@@ -744,6 +745,8 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # input checks and conversions
+
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
 
@@ -806,6 +809,8 @@ class BaseForecaster(BaseEstimator):
                 "automated vectorization for predict_proba is not implemented"
             )
         self.check_is_fitted()
+
+        # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
