@@ -43,7 +43,7 @@ class TimeSeriesForestClassifier(
     for performace reasons.
 
     * for a more configurable tree based ensemble,
-      use ``sktime.classication.ensemble.ComposableTimeSeriesForestClassifier``,
+      use ``sktime.classification.ensemble.ComposableTimeSeriesForestClassifier``,
       which also allows switching the base estimator.
     * to build a a time series forest with configurable ensembling, base estimator,
       and/or feature extraction, fully from composable blocks,
