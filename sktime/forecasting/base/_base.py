@@ -496,9 +496,8 @@ class BaseForecaster(BaseEstimator):
             For further details on data format, see glossary on :term:`mtype`.
             For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
 
-                    fh : int, list, np.array or ForecastingHorizon (not optional)
+        fh : int, list, np.array or ``ForecastingHorizon`` (not optional)
             The forecasting horizon encoding the time stamps to forecast at.
-            if has not been passed in fit, must be passed, not optional
 
         X : time series in ``sktime`` compatible format, optional (default=None).
             Exogeneous time series to fit the model to.
