@@ -1685,6 +1685,11 @@ class BaseForecaster(BaseEstimator):
             fit, predict-like, update-like
 
         Reads and writes to self._fh.
+        Reads self._cutoff, self._is_fitted, self._is_vectorized.
+
+        Therefore, requires self._check_X_y(X=X, y=y) and
+        self._update_y_X(y_inner, X_inner) to have been run at least once.
+
         Writes fh to self._fh if does not exist.
         Checks equality of fh with self._fh if exists, raises error if not equal.
         Assigns the frequency inferred from self._y
