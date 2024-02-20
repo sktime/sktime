@@ -349,7 +349,7 @@ class BaseForecaster(BaseEstimator):
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
             If ``self.get_tag("requires-fh-in-fit")`` is ``True``,
-            must be passed, in ``fit``, not optional
+            must be passed in ``fit``, not optional
 
         X : time series in ``sktime`` compatible format, optional (default=None).
             Exogeneous time series to fit the model to.
