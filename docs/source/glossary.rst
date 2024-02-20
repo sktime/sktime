@@ -70,10 +70,29 @@ sktime.
         A list of all tags and their meaning, optinally filtered by the :term:`scitype`
         of object they apply to, can be obtained from
         ``sktime.registry.all_tags``. Further details on tags, for developers,
-        can be found in the specification sheet that is part of the :ref:`extension templates`.
+        can be found in the specification sheet that is part of the :term:`extension templates`.
 
     Extension templates
-
+        ``sktime`` is designed to be easily extendable, with 3rd and 1st party
+        additions in the form of API compliant objects. To facilitate this, ``sktime``
+        provides a set of extension templates for power users to implement their own
+        objects, such as forecasters, transformers, classifiers.
+        The extension templates are found in the ``extension_templates`` folder,
+        these are fill-in-the-blank templates that can be used to create new
+        objects compliant with the ``sktime`` API.
+        Each template is specific to the :term:`scitype` of the object to be implemented,
+        and there are different templates for a given :term:`scitype`, depending on
+        simplicity vs feature richness.
+        The templates instruct a power user on setting of :term:`tags`,
+        and implementation of :term:`scitype`-specific methods. The methods are usually
+        private, e.g., ``_fit``, ``_predict``, while boilerplate is taken care of
+        by the base class.
+        For further details and a step-by-step tutorial on 1st and 3rd party
+        extensions, see the guide on :ref:`developer_guide_add_estimators`.
+        For power users familiar with software engineering
+        patterns: the extension templates make use of the template pattern for
+        the extension contract, ensuring compliance with the strategy pattern for
+        the user contract, defined by the :term:`scitype` specific interface.
 
     Estimator
         An algorithm of a specific :term:`scitype`, implementing the python
@@ -81,11 +100,31 @@ sktime.
         Individual estimators correspond to concrete classes, implementing the
         interface defined by the base class for the scitype.
         For example, the ``ARIMA`` class is an estimator of :term:`scitype` ``"forecaster"``.
+        Users should distinguish the python class, which can be seen as a blueprint,
+        from an instance, which is a concrete object created from the blueprint,
+        with specific parameter settings, and which can be fitted or applied to data.
+        Somewhat confusingly, both the class (blueprint) and the instance (concrete object)
+        are often referred to as "estimator" in ``scikit-learn`` parlance.
+        Users should also take note of the distinction between "concrete class" in
+        software engineering terms, which is the ``ARIMA`` (python) class, as it implements
+        ``BaseForecaster`` (the "abstract class"), and the  "concrete object",
+        which is a python instance of a python class.
+        Estimators are objects with a ``fit`` method - not all :term:`scitype`-s
+        in ``sktime`` are estimators, e.g., performance metrics.
 
     Composite estimator
         An :term:`estimator` that consists of multiple other component estimators which
-        can vary. An example would be a pipeline consisting of a transformer and
-        forecaster.
+        can vary. An example is a pipeline consisting of a transformer and
+        forecaster. The term can refer both to the class and its instance.
+        Composite estimators may have :term:`tag`s that depend on components, such as
+        ``capability:missing_data``,
+        and a :term:`scitype` that depends on the components' scitypes, e.g., the
+        scitype of a pipeline being a forecaster or a classifier, depending on
+        whether its last element is a forecaster or a classifier.
+        Users familiar with software engineering patterns should note that this term
+        may be used in a different sense than "composite pattern":
+        in the context of ``scikit-learn``, the "composite estimator"
+        combines both the composite pattern and the strategy pattern.
 
     Hyperparameter:
         A parameter of a machine learning model that is set at construction.
