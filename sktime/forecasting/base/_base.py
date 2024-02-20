@@ -424,6 +424,8 @@ class BaseForecaster(BaseEstimator):
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
 
         # we call the ordinary _predict if no looping/vectorization needed
@@ -518,6 +520,8 @@ class BaseForecaster(BaseEstimator):
         # set internal X/y to the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
+
+        # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
 
         # apply fit and then predict
@@ -589,9 +593,11 @@ class BaseForecaster(BaseEstimator):
         # check alpha and coerce to list
         alpha = check_alpha(alpha, name="alpha")
 
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
         # input check and conversion for X
         X_inner = self._check_X(X=X)
-        fh = self._check_fh(fh)
 
         # we call the ordinary _predict_quantiles if no looping/vectorization needed
         if not self._is_vectorized:
@@ -661,9 +667,11 @@ class BaseForecaster(BaseEstimator):
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
 
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
         # check and convert X
         X_inner = self._check_X(X=X)
-        fh = self._check_fh(fh)
 
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
@@ -735,9 +743,11 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
         # check and convert X
         X_inner = self._check_X(X=X)
-        fh = self._check_fh(fh)
 
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
@@ -795,7 +805,8 @@ class BaseForecaster(BaseEstimator):
                 "automated vectorization for predict_proba is not implemented"
             )
         self.check_is_fitted()
-        # input checks
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
 
         # check and convert X
@@ -1068,9 +1079,11 @@ class BaseForecaster(BaseEstimator):
 
         self.check_is_fitted()
 
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
-        fh = self._check_fh(fh)
 
         # update internal _X/_y with the new X/y
         # this also updates cutoff from y
