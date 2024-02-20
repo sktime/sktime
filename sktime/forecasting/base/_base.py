@@ -413,7 +413,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
-            Need not be passed if has already been passed in ``fit``.
+            Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
         X : time series in ``sktime`` compatible format, optional (default=None)
@@ -421,7 +421,7 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain ``fh.index``.
+            ``X.index`` must contain ``fh`` index reference.
 
         Returns
         -------
@@ -512,7 +512,7 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain ``fh.index``.
+            ``X.index`` must contain ``fh`` index reference.
 
         Returns
         -------
@@ -575,7 +575,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
-            Need not be passed if has already been passed in ``fit``.
+            Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
         X : time series in ``sktime`` compatible format, optional (default=None)
@@ -583,7 +583,7 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain ``fh.index``.
+            ``X.index`` must contain ``fh`` index reference.
 
         alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
@@ -656,7 +656,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
-            Need not be passed if has already been passed in ``fit``.
+            Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
         X : time series in ``sktime`` compatible format, optional (default=None)
@@ -664,7 +664,7 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain ``fh.index``.
+            ``X.index`` must contain ``fh`` index reference.
 
         coverage : float or list of float of unique values, optional (default=0.90)
            nominal coverage(s) of predictive interval(s)
@@ -736,7 +736,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
-            Need not be passed if has already been passed in ``fit``.
+            Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
         X : time series in ``sktime`` compatible format, optional (default=None)
@@ -744,7 +744,7 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain ``fh.index``.
+            ``X.index`` must contain ``fh`` index reference.
 
         cov : bool, optional (default=False)
             if True, computes covariance matrix forecast.
@@ -814,7 +814,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
-            Need not be passed if has already been passed in ``fit``.
+            Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
         X : time series in ``sktime`` compatible format, optional (default=None)
@@ -822,7 +822,7 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain ``fh.index``.
+            ``X.index`` must contain ``fh`` index reference.
 
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
@@ -1019,7 +1019,7 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain ``fh.index``.
+            ``X.index`` must contain ``fh`` index reference.
 
         update_params : bool, optional (default=True)
             whether model parameters should be updated.
@@ -1127,7 +1127,7 @@ class BaseForecaster(BaseEstimator):
 
         fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
-            Need not be passed if has already been passed in ``fit``.
+            Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
         X : time series in sktime compatible format, optional (default=None)
@@ -1135,7 +1135,7 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain ``fh.index``.
+            ``X.index`` must contain ``fh`` index reference.
 
         update_params : bool, optional (default=True)
             whether model parameters should be updated.
@@ -1227,7 +1227,7 @@ class BaseForecaster(BaseEstimator):
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain both ``fh.index`` and ``y.index``.
+            ``X.index`` must contain both ``fh`` index reference and ``y.index``.
 
         Returns
         -------
