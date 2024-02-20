@@ -60,6 +60,7 @@ class BaseClassifier(BasePanelMixin):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
+        "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": False,
