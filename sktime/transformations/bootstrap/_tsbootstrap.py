@@ -6,6 +6,7 @@ __author__ = ["benheid"]
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class TSBootstrapAdapter(BaseTransformer):
@@ -107,6 +108,9 @@ class TSBootstrapAdapter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        if not _check_soft_dependencies("tsbootstrap", severity="none"):
+            return {}
+
         from tsbootstrap.block_bootstrap import (
             BaseSieveBootstrapConfig,
             MovingBlockBootstrap,
