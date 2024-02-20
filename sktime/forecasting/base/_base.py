@@ -316,7 +316,7 @@ class BaseForecaster(BaseEstimator):
             Changes state to "fitted".
 
         Writes to self:
-    
+
             * Sets fitted model attributes ending in "_", fitted attributes are
               inspectable via ``get_fitted_params``.
             * Sets ``self.is_fitted`` flag to ``True``.
@@ -876,6 +876,7 @@ class BaseForecaster(BaseEstimator):
             * ``self.cutoff``, ``self.is_fitted``
 
         Writes to self:
+
             * Updates ``self.cutoff`` to latest index seen in `y`.
             * If ``update_params=True``, updates fitted model attributes ending in "_".
 
