@@ -465,7 +465,7 @@ class BaseForecaster(BaseEstimator):
         State change:
             Changes state to "fitted".
 
-        Writes to self:                
+        Writes to self:
 
             * Sets fitted model attributes ending in "_", fitted attributes are
               inspectable via ``get_fitted_params``.
