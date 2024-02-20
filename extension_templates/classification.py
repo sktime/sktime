@@ -33,7 +33,14 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-import numpy as np
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
+
+# todo: uncomment the following line, enter authors' GitHub IDs
+# __author__ = [authorGitHubID, anotherAuthorGitHubID]
+
 
 from sktime.classification.base import BaseClassifier
 
@@ -209,7 +216,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
     # todo: consider implementing this, optional
     # if you do not implement it, then the default _predict_proba will be called.
     # the default simply calls predict and sets probas to 0 or 1.
-    def _predict_proba(self, X) -> np.ndarray:
+    def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
         private _predict_proba containing the core logic, called from predict_proba
