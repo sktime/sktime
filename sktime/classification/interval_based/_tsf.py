@@ -40,7 +40,7 @@ class TimeSeriesForestClassifier(
     refinement described in [1].
 
     This classifier is intentionally written with low configurability,
-    for performace reasons.
+    for performance reasons.
 
     * for a more configurable tree based ensemble,
       use ``sktime.classification.ensemble.ComposableTimeSeriesForestClassifier``,
