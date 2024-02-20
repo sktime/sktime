@@ -15,14 +15,24 @@ from joblib import Parallel, effective_n_jobs
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state, gen_even_slices
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.fixes import delayed
 from sklearn.utils.sparsefuncs_fast import csr_row_norms
 from sklearn.utils.validation import _num_samples
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X_y
 
+# delayed was moved from utils.fixes to utils.parallel in scikit-learn 1.3
+if _check_soft_dependencies(
+    "scikit-learn>=1.3",
+    package_import_alias={"scikit-learn": "sklearn"},
+    severity="none",
+):
+    from sklearn.utils.parallel import delayed
+else:
+    from sklearn.utils.fixes import delayed
+    
 
 class BOSSEnsemble(BaseClassifier):
     """Ensemble of Bag of Symbolic Fourier Approximation Symbols (BOSS).
