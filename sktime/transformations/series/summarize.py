@@ -897,8 +897,8 @@ class SplitterSummarizer(BaseTransformer):
                 "should be an BaseSplitter descendant with a split_series method"
             )
 
-        need_to_remember_data = (
-            fit_on.startswith("all") or transform_on.startswith("all")
+        need_to_remember_data = fit_on.startswith("all") or transform_on.startswith(
+            "all"
         )
 
         if need_to_remember_data:
