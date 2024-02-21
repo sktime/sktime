@@ -64,6 +64,23 @@ jobs:
         run: build_tools/run_blogposts.sh
         shell: bash
 
+  detect-code-change:
+    needs: code-quality
+    name: detect changes in sktime folder
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      sktime: ${{ steps.filter.outputs.sktime }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            sktime:
+              - sktime/**
+
   test-nodevdeps:
     needs: code-quality
     runs-on: ubuntu-latest
