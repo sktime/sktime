@@ -39,14 +39,11 @@ class BaseGridSearch(_DelegatedForecaster):
         "capability:pred_int:insample": True,
     }
 
-    # todo 0.27.0: remove n_jobs, pre_dispatch parameters and all related logic
     def __init__(
         self,
         forecaster,
         cv,
         strategy="refit",
-        n_jobs=None,
-        pre_dispatch=None,
         backend="loky",
         refit=False,
         scoring=None,
@@ -61,8 +58,6 @@ class BaseGridSearch(_DelegatedForecaster):
         self.forecaster = forecaster
         self.cv = cv
         self.strategy = strategy
-        self.n_jobs = n_jobs
-        self.pre_dispatch = pre_dispatch
         self.backend = backend
         self.refit = refit
         self.scoring = scoring
@@ -178,25 +173,8 @@ class BaseGridSearch(_DelegatedForecaster):
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
-        # todo 0.27.0: remove this logic and only use backend_params
         backend = self.backend
         backend_params = self.backend_params if self.backend_params else {}
-        if backend in ["threading", "multiprocessing", "loky"]:
-            n_jobs = self.n_jobs
-            pre_dispatch = self.pre_dispatch
-            if n_jobs is not None:
-                backend_params["n_jobs"] = n_jobs
-            if pre_dispatch is not None:
-                backend_params["pre_dispatch"] = pre_dispatch
-            if n_jobs is not None or pre_dispatch is not None:
-                warn(
-                    f"in {self.__class__.__name__}, n_jobs and pre_dispatch "
-                    "parameters are deprecated and will be removed in 0.27.0. "
-                    "Please use n_jobs and pre_dispatch directly in the backend_params "
-                    "argument instead.",
-                    obj=self,
-                    stacklevel=2,
-                )
 
         def evaluate_candidates(candidate_params):
             candidate_params = list(candidate_params)
@@ -446,10 +424,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
         * If None, defaults to MeanAbsolutePercentageError()
 
-    n_jobs: int, optional (default=None)
-        Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = no refitting takes place. The forecaster cannot be used to predict.
@@ -459,7 +433,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     return_n_best_forecasters : int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch : str, optional (default='2*n_jobs')
     error_score : numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score : bool, optional (default=False)
@@ -600,7 +573,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
-    ...     n_jobs=-1)  # doctest: +SKIP
+    ... )  # doctest: +SKIP
     >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
@@ -613,11 +586,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
         param_grid,
         scoring=None,
         strategy="refit",
-        n_jobs=None,
         refit=True,
         verbose=0,
         return_n_best_forecasters=1,
-        pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
@@ -628,13 +599,11 @@ class ForecastingGridSearchCV(BaseGridSearch):
         super().__init__(
             forecaster=forecaster,
             scoring=scoring,
-            n_jobs=n_jobs,
             refit=refit,
             cv=cv,
             strategy=strategy,
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
-            pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
@@ -781,10 +750,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
 
         * If None, defaults to MeanAbsolutePercentageError()
 
-    n_jobs : int, optional (default=None)
-        Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = no refitting takes place. The forecaster cannot be used to predict.
@@ -799,7 +764,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
         function calls.
-    pre_dispatch : str, optional (default='2*n_jobs')
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and `strategy` is set as "refit".
@@ -885,12 +849,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         n_iter=10,
         scoring=None,
         strategy="refit",
-        n_jobs=None,
         refit=True,
         verbose=0,
         return_n_best_forecasters=1,
         random_state=None,
-        pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
@@ -902,12 +864,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             forecaster=forecaster,
             scoring=scoring,
             strategy=strategy,
-            n_jobs=n_jobs,
             refit=refit,
             cv=cv,
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
-            pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
@@ -971,6 +931,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         return [params, params2, params3]
 
 
+# todo 0.28.0: check whether n_jobs, pre_dispatch can be removed
+# ifyes, remove n_jobs, pre_dispatch parameters and all related logic
 class ForecastingSkoptSearchCV(BaseGridSearch):
     """Bayesian search over hyperparameters for a forecaster.
 
