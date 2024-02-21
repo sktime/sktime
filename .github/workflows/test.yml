@@ -82,7 +82,8 @@ jobs:
               - sktime/**
 
   test-nodevdeps:
-    needs: code-quality
+    needs: detect-code-change
+    if: ${{ needs.detect-code-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -102,7 +103,8 @@ jobs:
           python sktime/_nopytest_tests.py
 
   test-nosoftdeps:
-    needs: code-quality
+    needs: detect-code-change
+    if: ${{ needs.detect-code-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
