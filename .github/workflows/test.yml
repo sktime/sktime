@@ -64,9 +64,9 @@ jobs:
         run: build_tools/run_blogposts.sh
         shell: bash
 
-  detect-code-change:
+  detect-package-change:
     needs: code-quality
-    name: detect changes in sktime folder
+    name: detect package changes
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -80,10 +80,11 @@ jobs:
           filters: |
             sktime:
               - sktime/**
+              - pyproject.toml
 
   test-nodevdeps:
-    needs: detect-code-change
-    if: ${{ needs.detect-code-change.outputs.sktime == 'true' }}
+    needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -103,8 +104,8 @@ jobs:
           python sktime/_nopytest_tests.py
 
   test-nosoftdeps:
-    needs: detect-code-change
-    if: ${{ needs.detect-code-change.outputs.sktime == 'true' }}
+    needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
