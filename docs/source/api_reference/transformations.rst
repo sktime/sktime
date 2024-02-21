@@ -638,6 +638,20 @@ These transformers subset `X` by time points (`pandas` index or index level) or 
     ColumnSelect
     IndexSubset
 
+Temporian
+~~~~~~~~~
+
+These transformers allow running Temporian functions on series.
+
+.. currentmodule:: sktime.transformations.series.temporian
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TemporianTransformer
+
+
 Panel transformers
 ------------------
 
