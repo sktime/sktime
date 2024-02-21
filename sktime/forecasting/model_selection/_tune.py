@@ -14,7 +14,6 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
 from sktime.datatypes import mtype_to_scitype
