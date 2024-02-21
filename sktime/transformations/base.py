@@ -583,8 +583,6 @@ class BaseTransformer(BaseEstimator):
         # check whether is fitted
         self.check_is_fitted()
 
-        print(X)
-
         # input check and conversion for X/y
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
@@ -606,8 +604,6 @@ class BaseTransformer(BaseEstimator):
             X_out = self._convert_output(Xt, metadata=metadata)
         else:
             X_out = Xt
-
-        print(X_out)
 
         return X_out
 
