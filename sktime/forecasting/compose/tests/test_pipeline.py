@@ -18,6 +18,7 @@ from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import (
     ForecastingPipeline,
     TransformedTargetForecaster,
+    YfromX,
     make_reduction,
 )
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
@@ -25,7 +26,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
-from sktime.transformations.compose import OptionalPassthrough
+from sktime.transformations.compose import OptionalPassthrough, YtoX
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import LogTransformer
@@ -522,3 +523,34 @@ def test_pipeline_exogenous_none():
     pipe.fit(y_train, X_train, fh=[1, 2, 3])
     y_pred = pipe.predict(X=X_test)
     assert np.all(y_pred.index == y_test.index)
+
+
+def test_pipeline_featurizer_noexog():
+    """Test that ForecastingPipeline works with featurizer transformers without exog
+
+    Tests for failure case in #5975.
+    Compared to test_pipeline_exogenous_none,
+    this tests that transformers are executed properly even if X=None.
+    """
+    from sktime.transformations.series.fourier import FourierFeatures
+
+    calls_per_min_low = 100 * 60
+    calls_per_min_high = 500 * 60
+    data = np.random.randint(low=calls_per_min_low, high=calls_per_min_high, size=100)
+    calls = pd.Series(data)
+
+    fh = range(1, 10)
+
+    fcst = YfromX.create_test_instance()
+
+    pipe = ForecastingPipeline([
+        YtoX(),
+        FourierFeatures(sp_list=[24, 24*7], fourier_terms_list=[10, 5]),
+        fcst,
+    ])
+
+    y_pred = pipe.fit_predict(y=calls, fh=fh)
+
+    # if the pipeline skips the FourierFeatures step,
+    # then the predictions would be all constant, we test that this is not the case
+    assert not np.allclose(y_pred.diff()[1:], np.zeros_like(y_pred[1:]))
