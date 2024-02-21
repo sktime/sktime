@@ -486,8 +486,8 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : returns an instance of self.
         """
-        # If X is not given or ignored, just passthrough the data without transformation
-        if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
+        # If X is ignored, just passthrough the data without transformation
+        if not self.get_tag("ignores-exogeneous-X"):
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
                 t = transformer.clone()
@@ -667,12 +667,10 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : an instance of self
         """
-        # If X is not given, just passthrough the data without transformation
-        if X is not None:
-            for _, _, transformer in self._iter_transformers():
-                if hasattr(transformer, "update"):
-                    transformer.update(X=X, y=y, update_params=update_params)
-                    X = transformer.transform(X=X, y=y)
+        for _, _, transformer in self._iter_transformers():
+            if hasattr(transformer, "update"):
+                transformer.update(X=X, y=y, update_params=update_params)
+                X = transformer.transform(X=X, y=y)
 
         _, forecaster = self.steps_[-1]
         forecaster.update(y=y, X=X, update_params=update_params)
@@ -680,7 +678,7 @@ class ForecastingPipeline(_Pipeline):
 
     def _transform(self, X=None, y=None):
         # If X is not given or ignored, just passthrough the data without transformation
-        if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
+        if not self.get_tag("ignores-exogeneous-X"):
             for _, _, transformer in self._iter_transformers():
                 # if y is required but not passed,
                 # we create a zero-column y from the forecasting horizon
