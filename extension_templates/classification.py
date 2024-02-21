@@ -33,6 +33,7 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+
 import numpy as np
 
 from sktime.classification.base import BaseClassifier
@@ -95,6 +96,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
+        "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
     }

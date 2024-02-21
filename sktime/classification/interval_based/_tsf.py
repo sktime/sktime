@@ -111,6 +111,7 @@ class TimeSeriesForestClassifier(
         "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
         # estimator type
         # --------------
+        "capability:feature_importance": True,
         "capability:predict_proba": True,
     }
 
