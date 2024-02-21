@@ -78,12 +78,13 @@ class TemporianTransformer(BaseTransformer):
         """
         import temporian as tp
 
-        # TODO: check function returns a single EventSet
-
         timestamps_col = X.index.name
         X_noindex = X.reset_index(drop=False)
         evset = tp.from_pandas(X_noindex, timestamps=timestamps_col)
+
+        # TODO: check function returns a single EventSet
         res = self.function(evset)
+
         res = tp.to_pandas(res).rename(columns={"timestamp": timestamps_col})
         res = res.set_index(timestamps_col).to_period()
         return res

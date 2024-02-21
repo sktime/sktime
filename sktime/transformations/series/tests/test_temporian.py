@@ -16,8 +16,8 @@ from sktime.transformations.series.temporian import TemporianTransformer
     not run_test_for_class(TemporianTransformer),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_basic_flat():
-    """Tests basic function works on non-indexed time series."""
+def test_flat_univariate():
+    """Tests basic function works on non-indexed univariate time series."""
     X = load_airline()[0:32]
 
     def function(evset):
