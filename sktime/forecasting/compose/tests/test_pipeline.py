@@ -543,11 +543,13 @@ def test_pipeline_featurizer_noexog():
 
     fcst = YfromX.create_test_instance()
 
-    pipe = ForecastingPipeline([
-        YtoX(),
-        FourierFeatures(sp_list=[24, 24*7], fourier_terms_list=[10, 5]),
-        fcst,
-    ])
+    pipe = ForecastingPipeline(
+        [
+            YtoX(),
+            FourierFeatures(sp_list=[24, 24 * 7], fourier_terms_list=[10, 5]),
+            fcst,
+        ]
+    )
 
     y_pred = pipe.fit_predict(y=calls, fh=fh)
 
