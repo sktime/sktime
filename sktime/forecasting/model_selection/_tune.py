@@ -929,8 +929,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         return [params, params2, params3]
 
 
-# todo 0.28.0: check whether n_jobs, pre_dispatch can be removed
-# ifyes, remove n_jobs, pre_dispatch parameters and all related logic
 class ForecastingSkoptSearchCV(BaseGridSearch):
     """Bayesian search over hyperparameters for a forecaster.
 
@@ -1021,11 +1019,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch : str, optional (default='2*n_jobs')
-    n_jobs : int, optional (default=None)
-        Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and `strategy` is set as "refit".
@@ -1149,11 +1142,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         scoring: Optional[List[BaseMetric]] = None,
         optimizer_kwargs: Optional[Dict] = None,
         strategy: Optional[str] = "refit",
-        n_jobs: Optional[int] = None,
         refit: bool = True,
         verbose: int = 0,
         return_n_best_forecasters: int = 1,
-        pre_dispatch: str = "2*n_jobs",
         backend: str = "loky",
         update_behaviour: str = "full_refit",
         error_score=np.nan,
@@ -1170,12 +1161,10 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             forecaster=forecaster,
             scoring=scoring,
             strategy=strategy,
-            n_jobs=n_jobs,
             refit=refit,
             cv=cv,
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
-            pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
