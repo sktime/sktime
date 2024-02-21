@@ -25,7 +25,6 @@ from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
-from sktime.utils.warnings import warn
 
 
 class BaseGridSearch(_DelegatedForecaster):
