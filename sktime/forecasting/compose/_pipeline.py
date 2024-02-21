@@ -483,7 +483,7 @@ class ForecastingPipeline(_Pipeline):
         first_trafo = self.steps_[0][1]
         cond1 = len(self.steps_) > 1 and first_trafo.get_tag("requires_X")
         cond1 = cond1 and X is None
-            
+
         # condition 2 for ignoring X: tag "ignores-exogeneous-X" is True
         # in this case the forecaster at the end ignores what comes out of the trafos
         cond2 = self.get_tag("ignores-exogeneous-X")
