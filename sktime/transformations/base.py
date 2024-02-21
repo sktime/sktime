@@ -118,6 +118,7 @@ class BaseTransformer(BaseEstimator):
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "requires_X": True,  # does X need to be passed in fit?
         "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
@@ -467,6 +468,10 @@ class BaseTransformer(BaseEstimator):
         if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
             self._is_fitted = True
             return self
+
+        # if requires_y is set, y is required in fit and update
+        if self.get_tag("requires_X") and X is None:
+            raise ValueError(f"{self.__class__.__name__} requires `X` in `fit`.")
 
         # if requires_y is set, y is required in fit and update
         if self.get_tag("requires_y") and y is None:
