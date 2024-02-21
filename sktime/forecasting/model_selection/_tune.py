@@ -14,7 +14,6 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
 from sktime.datatypes import mtype_to_scitype
@@ -1377,56 +1376,32 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         mapping : dict, optional (default=None)
             Mapping of forecaster to estimator instance.
         """
-        from skopt.utils import use_named_args
-
         # Get a list of dimension parameter space with name from optimizer
         dimensions = optimizer.space.dimensions
         test_score_name = f"test_{self._check_scoring.name}"
 
-        @use_named_args(dimensions)  # decorator to convert candidate param list to dict
-        def _fit_and_score(**params):
-            # Clone forecaster.
-            forecaster = self.forecaster.clone()
-
-            # map forecaster back to estimator instance
-            if "forecaster" in params:
-                params["forecaster"] = mapping[params["forecaster"]]
-
-            # Set parameters.
-            forecaster.set_params(**params)
-
-            # Evaluate.
-            out = evaluate(
-                forecaster=forecaster,
-                cv=self._check_cv,
-                y=y,
-                X=X,
-                strategy=self.strategy,
-                scoring=self._check_scoring,
-                error_score=self.error_score,
-            )
-
-            # Filter columns.
-            out = out.filter(
-                items=[test_score_name, "fit_time", "pred_time"],
-                axis=1,
-            )
-
-            # Aggregate results.
-            out = out.mean()
-            out = out.add_prefix("mean_")
-
-            # Add parameters to output table.
-            out["params"] = params
-
-            return out
-
-        parallel = Parallel(
-            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend=self.backend
-        )
+        # Set meta variables for parallelization.
+        meta = {}
+        meta["forecaster"] = self.forecaster
+        meta["y"] = y
+        meta["X"] = X
+        meta["mapping"] = mapping
+        meta["cv"] = self._check_cv
+        meta["strategy"] = self.strategy
+        meta["scoring"] = self._check_scoring
+        meta["error_score"] = self.error_score
+        meta["test_score_name"] = test_score_name
+        meta["dimensions"] = dimensions
 
         candidate_params = optimizer.ask(n_points=n_points)
-        out = parallel(delayed(_fit_and_score)(params) for params in candidate_params)
+
+        out = parallelize(
+            fun=_fit_and_score_skopt,
+            iter=candidate_params,
+            meta=meta,
+            backend=self.backend,
+            backend_params=self.backend_params,
+        )
 
         # fetch the mean evaluation metrics and feed them back to optimizer
         results_df = pd.DataFrame(out)
@@ -1579,3 +1554,57 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         }
 
         return [params, params2]
+
+
+def _fit_and_score_skopt(params, meta):
+    from skopt.utils import use_named_args
+
+    y = meta["y"]
+    X = meta["X"]
+    cv = meta["cv"]
+    mapping = meta["mapping"]
+    strategy = meta["strategy"]
+    scoring = meta["scoring"]
+    error_score = meta["error_score"]
+    dimensions = meta["dimensions"]
+    test_score_name = meta["test_score_name"]
+
+    @use_named_args(dimensions)  # decorator to convert candidate param list to dict
+    def _fit_and_score(**params):
+        # Clone forecaster.
+        forecaster = meta["forecaster"].clone()
+
+        # map forecaster back to estimator instance
+        if "forecaster" in params:
+            params["forecaster"] = mapping[params["forecaster"]]
+
+        # Set parameters.
+        forecaster.set_params(**params)
+
+        # Evaluate.
+        out = evaluate(
+            forecaster=forecaster,
+            cv=cv,
+            y=y,
+            X=X,
+            strategy=strategy,
+            scoring=scoring,
+            error_score=error_score,
+        )
+
+        # Filter columns.
+        out = out.filter(
+            items=[test_score_name, "fit_time", "pred_time"],
+            axis=1,
+        )
+
+        # Aggregate results.
+        out = out.mean()
+        out = out.add_prefix("mean_")
+
+        # Add parameters to output table.
+        out["params"] = params
+
+        return out
+
+    return _fit_and_score(**params)
