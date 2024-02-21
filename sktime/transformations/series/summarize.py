@@ -11,7 +11,6 @@ from joblib import Parallel, delayed
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.warnings import warn
 
 
 class WindowSummarizer(BaseTransformer):

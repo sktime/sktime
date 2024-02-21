@@ -46,8 +46,8 @@ class PAAlegacy(BaseTransformer):
 
         # todo 0.28.0: remove this warning
         warn(
-            "panel.dictionary_based.PAA has been renamed to PAAlegacy in sktime 0.27.0, "
-            "while sktime.transformations.series.PAA2 was renamed to PAA. "
+            "panel.dictionary_based.PAA has been renamed to PAAlegacy in sktime 0.27.0,"
+            " while sktime.transformations.series.PAA2 was renamed to PAA. "
             "PAA2 will become the primary PAA implementation in sktime, "
             "while the former PAA will continue to be available as PAAlegacy. "
             "Both estimators are also available under their future name at their "

@@ -88,8 +88,8 @@ class SAXlegacy(BaseTransformer):
 
         # todo 0.28.0: remove this warning
         warn(
-            "panel.dictionary_based.SAX has been renamed to SAXlegacy in sktime 0.27.0, "
-            "while sktime.transformations.series.SAX2 was renamed to SAX. "
+            "panel.dictionary_based.SAX has been renamed to SAXlegacy in sktime 0.27.0,"
+            " while sktime.transformations.series.SAX2 was renamed to SAX. "
             "SAX2 will become the primary SAX implementation in sktime, "
             "while the former SAX will continue to be available as SAXlegacy. "
             "Both estimators are also available under their future name at their "
