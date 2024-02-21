@@ -39,6 +39,9 @@ class FourierFeatures(BaseTransformer):
     The transformed series will then have columns with the following names:
     "cos_12_1", "sin_12_1", "cos_12_2", "sin_12_2", "cos_Y_1", "sin_Y_1"
 
+    If ``X`` is passed in ``transform`` and not ``None``, uses the index of ``X``
+    to calculate the Fourier terms. Otherwise, uses the index of ``y``.
+
     The implementation is based on the fourier function from the R forecast package [3]_
 
     Parameters
@@ -100,7 +103,7 @@ class FourierFeatures(BaseTransformer):
         "univariate-only": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": [
             pd.PeriodIndex,
@@ -154,6 +157,24 @@ class FourierFeatures(BaseTransformer):
 
         super().__init__()
 
+    def _get_index(self, X, y):
+        """Get the index of the data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame or pd.Series or None
+        y ; pd.DataFrame or pd.Series or None
+        
+        Returns
+        -------
+        index of X or y
+            if X is not None, returns X.index
+            else returns y.index
+        """
+        if X is not None:
+            return X.index
+        return y.index
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -193,7 +214,7 @@ class FourierFeatures(BaseTransformer):
                 else:  # periodicity sp from offset string or X column
                     self.sp_k_pairs_list_.append((sp, k))
 
-        time_index = X.index
+        time_index = self._get_index(X, y)
 
         if isinstance(time_index, pd.DatetimeIndex):
             # Chooses first non None value
@@ -231,13 +252,15 @@ class FourierFeatures(BaseTransformer):
         -------
         transformed version of X
         """
-        X_transformed = pd.DataFrame(index=X.index)
+        X_index = self._get_index(X, y)
+
+        X_transformed = pd.DataFrame(index=X_index)
         X_df = pd.DataFrame(X)
 
-        if isinstance(X.index, pd.DatetimeIndex):
-            time_index = X.index.to_period(self.freq_)
+        if isinstance(X_index, pd.DatetimeIndex):
+            time_index = X_index.to_period(self.freq_)
         else:
-            time_index = X.index
+            time_index = X_index
 
         # get the integer form of the PeriodIndex
         int_index = time_index.astype("int64") - self.min_t_
@@ -257,9 +280,9 @@ class FourierFeatures(BaseTransformer):
 
             else:  # periodicity sp from offset string
                 if isinstance(X.index, pd.PeriodIndex):
-                    datetime_index = X.index.to_timestamp()
+                    datetime_index = X_index.to_timestamp()
                 else:
-                    datetime_index = X.index
+                    datetime_index = X_index
 
                 frac_index = self._offset_frac_since_prev_offset(
                     datetime_index=datetime_index,
