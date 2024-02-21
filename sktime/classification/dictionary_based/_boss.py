@@ -32,7 +32,7 @@ if _check_soft_dependencies(
     from sklearn.utils.parallel import delayed
 else:
     from sklearn.utils.fixes import delayed
-    
+
 
 class BOSSEnsemble(BaseClassifier):
     """Ensemble of Bag of Symbolic Fourier Approximation Symbols (BOSS).
