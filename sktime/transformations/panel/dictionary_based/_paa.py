@@ -8,8 +8,7 @@ from sktime.utils.warnings import warn
 __author__ = ["MatthewMiddlehurst"]
 
 
-# TODO 0.27.0: rename the class PAA to PAAlegacy
-class PAA(BaseTransformer):
+class PAAlegacy(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
     (PAA) Piecewise Aggregate Approximation Transformer, as described in
@@ -45,17 +44,18 @@ class PAA(BaseTransformer):
         self.num_intervals = num_intervals
         super().__init__()
 
+        # todo 0.28.0: remove this warning
         warn(
-            "panel.dictionary_based.PAA will be renamed to PAAlegacy in sktime 0.27.0, "
-            "while sktime.transformations.series.PAA2 will be renamed to PAA. "
+            "panel.dictionary_based.PAA has been renamed to PAAlegacy in sktime 0.27.0, "
+            "while sktime.transformations.series.PAA2 was renamed to PAA. "
             "PAA2 will become the primary PAA implementation in sktime, "
-            "while the current PAA will continue to be available as PAAlegacy. "
+            "while the former PAA will continue to be available as PAAlegacy. "
             "Both estimators are also available under their future name at their "
             "current location, and will be available under their deprecated name "
             "until 0.28.0. "
             "To prepare for the name change, do one of the following: "
-            "1. replace use of PAA from sktime.transformations.panel.dictionary_based "
-            "by use of PAA2 from sktime.transformations.series.paa, or "
+            "1. replace use of PAA2 from sktime.transformations.panel.dictionary_based "
+            "by use of PAA from sktime.transformations.series.paa, or "
             "2. replace use of PAA from sktime.transformations.panel.dictionary_based "
             "by use of PAAlegacy from sktime.transformations.panel.dictionary_based. ",
             DeprecationWarning,
@@ -173,6 +173,5 @@ class PAA(BaseTransformer):
             )
 
 
-# TODO 0.27.0: switch the line to PAA = PAAlegacy
 # TODO 0.28.0: remove this alias altogether
-PAAlegacy = PAA
+PAA = PAAlegacy
