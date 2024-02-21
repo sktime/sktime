@@ -10,6 +10,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.registry import scitype
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
@@ -32,16 +33,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""
 
-        def est_scitype(tpl):
-            est = tpl[1]
-            if isinstance(est, BaseForecaster):
-                return "forecaster"
-            elif isinstance(est, BaseTransformer):
-                return "transformer"
-            else:
-                return "other"
-
-        return [est_scitype(x) for x in estimators]
+        return [scitype(x, raise_on_unknown=False) for x in estimators]
 
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
@@ -486,8 +478,22 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : returns an instance of self.
         """
-        # If X is ignored, just passthrough the data without transformation
-        if not self.get_tag("ignores-exogeneous-X"):
+        # skip transformers if X is ignored
+        # condition 1 for ignoring X: X is None and required in fit of 1st transformer
+        first_trafo = self.steps_[0][1]
+        cond1 = len(self.steps_) > 1 and first_trafo.get_tag("requires_X")
+        cond1 = cond1 and X is None
+            
+        # condition 2 for ignoring X: tag "ignores-exogeneous-X" is True
+        # in this case the forecaster at the end ignores what comes out of the trafos
+        cond2 = self.get_tag("ignores-exogeneous-X")
+
+        # X ignored = condition 1 or condition 2
+        skip_trafos = cond1 or cond2
+        self.skip_trafos_ = skip_trafos
+
+        # If X is ignored, just ignore the transformers and pass through to forecaster
+        if not skip_trafos:
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
                 t = transformer.clone()
@@ -497,7 +503,7 @@ class ForecastingPipeline(_Pipeline):
         # fit forecaster
         name, forecaster = self.steps_[-1]
         f = forecaster.clone()
-        f.fit(y, X, fh)
+        f.fit(y=y, X=X, fh=fh)
         self.steps_[-1] = (name, f)
 
         return self
@@ -678,7 +684,7 @@ class ForecastingPipeline(_Pipeline):
 
     def _transform(self, X=None, y=None):
         # If X is not given or ignored, just passthrough the data without transformation
-        if not self.get_tag("ignores-exogeneous-X"):
+        if not self.skip_trafos_:
             for _, _, transformer in self._iter_transformers():
                 # if y is required but not passed,
                 # we create a zero-column y from the forecasting horizon
