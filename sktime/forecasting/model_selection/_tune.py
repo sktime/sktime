@@ -24,6 +24,7 @@ from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
+from sktime.utils.warnings import warn
 
 
 class BaseGridSearch(_DelegatedForecaster):
@@ -52,6 +53,7 @@ class BaseGridSearch(_DelegatedForecaster):
         tune_by_instance=False,
         tune_by_variable=False,
         backend_params=None,
+        n_jobs="deprecated",
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -66,6 +68,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.tune_by_instance = tune_by_instance
         self.tune_by_variable = tune_by_variable
         self.backend_params = backend_params
+        self.n_jobs = n_jobs
 
         super().__init__()
 
@@ -80,6 +83,18 @@ class BaseGridSearch(_DelegatedForecaster):
         # if tune_by_variable is True
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
+
+        # todo 0.28.0: check if this is still necessary
+        # n_jobs is deprecated, left due to use in tutorials, books, blog posts
+        if n_jobs != "deprecated":
+            warn(
+                f"Parameter n_jobs of {self.__class__.__name__} has been removed "
+                "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
+                "Instead, the backend and backend_params parameters should be used "
+                "to pass n_jobs or other parallelization parameters.",
+                obj=self,
+                stacklevel=2,
+            )
 
     # attribute for _DelegatedForecaster, which then delegates
     #     all non-overridden methods are same as of getattr(self, _delegate_name)
@@ -593,6 +608,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         tune_by_instance=False,
         tune_by_variable=False,
         backend_params=None,
+        n_jobs="deprecated",
     ):
         super().__init__(
             forecaster=forecaster,
@@ -608,6 +624,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             tune_by_instance=tune_by_instance,
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
+            n_jobs=n_jobs,
         )
         self.param_grid = param_grid
 
@@ -857,6 +874,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         tune_by_instance=False,
         tune_by_variable=False,
         backend_params=None,
+        n_jobs="deprecated",
     ):
         super().__init__(
             forecaster=forecaster,
@@ -872,6 +890,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             tune_by_instance=tune_by_instance,
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
+            n_jobs=n_jobs,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -1151,6 +1170,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         tune_by_instance=False,
         tune_by_variable=False,
         backend_params=None,
+        n_jobs="deprecated",
     ):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -1171,6 +1191,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             tune_by_instance=tune_by_instance,
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
+            n_jobs=n_jobs,
         )
 
     def _fit(self, y, X=None, fh=None):
