@@ -1558,54 +1558,54 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
 
 
 def _fit_and_score_skopt(params, meta):
-        from skopt.utils import use_named_args
+    from skopt.utils import use_named_args
 
-        y = meta["y"]
-        X = meta["X"]
-        cv = meta["cv"]
-        mapping = meta["mapping"]
-        strategy = meta["strategy"]
-        scoring = meta["scoring"]
-        error_score = meta["error_score"]
-        dimensions = meta["dimensions"]
-        test_score_name = meta["test_score_name"]
+    y = meta["y"]
+    X = meta["X"]
+    cv = meta["cv"]
+    mapping = meta["mapping"]
+    strategy = meta["strategy"]
+    scoring = meta["scoring"]
+    error_score = meta["error_score"]
+    dimensions = meta["dimensions"]
+    test_score_name = meta["test_score_name"]
 
-        @use_named_args(dimensions)  # decorator to convert candidate param list to dict
-        def _fit_and_score(**params):
-            # Clone forecaster.
-            forecaster = meta["forecaster"].clone()
+    @use_named_args(dimensions)  # decorator to convert candidate param list to dict
+    def _fit_and_score(**params):
+        # Clone forecaster.
+        forecaster = meta["forecaster"].clone()
 
-            # map forecaster back to estimator instance
-            if "forecaster" in params:
-                params["forecaster"] = mapping[params["forecaster"]]
+        # map forecaster back to estimator instance
+        if "forecaster" in params:
+            params["forecaster"] = mapping[params["forecaster"]]
 
-            # Set parameters.
-            forecaster.set_params(**params)
+        # Set parameters.
+        forecaster.set_params(**params)
 
-            # Evaluate.
-            out = evaluate(
-                forecaster=forecaster,
-                cv=cv,
-                y=y,
-                X=X,
-                strategy=strategy,
-                scoring=scoring,
-                error_score=error_score,
-            )
+        # Evaluate.
+        out = evaluate(
+            forecaster=forecaster,
+            cv=cv,
+            y=y,
+            X=X,
+            strategy=strategy,
+            scoring=scoring,
+            error_score=error_score,
+        )
 
-            # Filter columns.
-            out = out.filter(
-                items=[test_score_name, "fit_time", "pred_time"],
-                axis=1,
-            )
+        # Filter columns.
+        out = out.filter(
+            items=[test_score_name, "fit_time", "pred_time"],
+            axis=1,
+        )
 
-            # Aggregate results.
-            out = out.mean()
-            out = out.add_prefix("mean_")
+        # Aggregate results.
+        out = out.mean()
+        out = out.add_prefix("mean_")
 
-            # Add parameters to output table.
-            out["params"] = params
+        # Add parameters to output table.
+        out["params"] = params
 
-            return out
+        return out
 
-        return _fit_and_score(**params)
+    return _fit_and_score(**params)
