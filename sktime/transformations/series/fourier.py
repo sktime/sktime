@@ -163,8 +163,8 @@ class FourierFeatures(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame or pd.Series or None
-        y ; pd.DataFrame or pd.Series or None
-        
+        y : pd.DataFrame or pd.Series or None
+
         Returns
         -------
         index of X or y
