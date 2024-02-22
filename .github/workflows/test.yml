@@ -80,6 +80,7 @@ jobs:
           filters: |
             sktime:
               - sktime/**
+              - examples/**
               - pyproject.toml
 
   test-nodevdeps:
