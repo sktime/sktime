@@ -2511,4 +2511,9 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         cutoffs = [cutoff[0] for cutoff in cutoffs]
         y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
 
+    if not y_pred.index.is_monotonic_increasing:
+        y_pred = y_pred.sort_index()
+    if hasattr(y_pred, "columns") and not y_pred.columns.is_monotonic_increasing:
+        y_pred = y_pred.sort_index(axis=1)
+
     return y_pred
