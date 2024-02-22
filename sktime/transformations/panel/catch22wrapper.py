@@ -181,7 +181,7 @@ class Catch22Wrapper(BaseTransformer):
             pycatch22.PD_PeriodicityWang_th0_01,
         ]
 
-        Xt =  self._transform_case(X, f_idx, features)
+        Xt = self._transform_case(X, f_idx, features)
 
         if self.replace_nans:
             Xt = Xt.fillna(0)
