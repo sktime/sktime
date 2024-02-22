@@ -676,10 +676,11 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : an instance of self
         """
-        for _, _, transformer in self._iter_transformers():
-            if hasattr(transformer, "update"):
-                transformer.update(X=X, y=y, update_params=update_params)
-                X = transformer.transform(X=X, y=y)
+        if not self.skip_trafos_:
+            for _, _, transformer in self._iter_transformers():
+                if hasattr(transformer, "update"):
+                    transformer.update(X=X, y=y, update_params=update_params)
+                    X = transformer.transform(X=X, y=y)
 
         _, forecaster = self.steps_[-1]
         forecaster.update(y=y, X=X, update_params=update_params)
