@@ -158,7 +158,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         self: "NeuralForecastRNN",
         freq: str,
         local_scaler_type: typing.Optional[
-            typing.Literal["standard", "robust", "robust-iqr", "minmax"]
+            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
         ] = None,
         futr_exog_list: typing.Optional[typing.List[str]] = None,
         verbose_fit: bool = False,
