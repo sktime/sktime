@@ -292,7 +292,7 @@ class ForecastingPipeline(_Pipeline):
         the pipeline behaves as follows:
 
     ``fit(y, X, fh)`` changes state by running ``t1.fit_transform`` with ``X=X`, ``y=y``
-        then ``t2.fit_transform`` on ``X=`` the output of ``t1.fit_transform``, ``y=y``, 
+        then ``t2.fit_transform`` on ``X=`` the output of ``t1.fit_transform``, ``y=y``,
         etc, sequentially, with ``t[i]`` receiving the output of ``t[i-1]`` as ``X``,
         then running ``f.fit`` with ``X`` being the output of ``t[N]``, and ``y=y``
 
