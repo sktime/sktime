@@ -31,7 +31,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""
-        return [scitype(x, raise_on_unknown=False) for x in estimators]
+        return [scitype(x[1], raise_on_unknown=False) for x in estimators]
 
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
