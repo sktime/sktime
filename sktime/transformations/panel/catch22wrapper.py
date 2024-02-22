@@ -73,7 +73,7 @@ class Catch22Wrapper(BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["MatthewMiddlehurst"],
+        "authors": ["MatthewMiddlehurst", "fkiraly"],
         "maintainers": "benfulcher",
         "python_dependencies": "pycatch22",
         # estimator type
@@ -81,7 +81,7 @@ class Catch22Wrapper(BaseTransformer):
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
-        "X_inner_mtype": "nested_univ",
+        "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
     }
@@ -169,21 +169,12 @@ class Catch22Wrapper(BaseTransformer):
             pycatch22.PD_PeriodicityWang_th0_01,
         ]
 
-        threads_to_use = check_n_jobs(self.n_jobs)
-
-        c22_list = Parallel(n_jobs=threads_to_use)(
-            delayed(self._transform_case)(
-                X.iloc[i],
-                f_idx,
-                features,
-            )
-            for i in range(n_instances)
-        )
+        Xt =  self._transform_case(X, f_idx, features)
 
         if self.replace_nans:
-            c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
+            Xt = Xt.fillna(0)
 
-        return pd.DataFrame(c22_list)
+        return Xt
 
     def _transform_case(self, X, f_idx, features):
         c22 = np.zeros(len(f_idx) * len(X))
