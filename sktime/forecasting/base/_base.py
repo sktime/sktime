@@ -32,7 +32,7 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
+__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8", "ciaran-g"]
 
 __all__ = ["BaseForecaster"]
 
@@ -45,6 +45,7 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
+    check_is_error_msg,
     check_is_scitype,
     convert_to,
     get_cutoff,
@@ -419,12 +420,13 @@ class BaseForecaster(BaseEstimator):
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
         # handle inputs
-
         self.check_is_fitted()
-        fh = self._check_fh(fh)
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
 
         # we call the ordinary _predict if no looping/vectorization needed
         if not self._is_vectorized:
@@ -519,6 +521,7 @@ class BaseForecaster(BaseEstimator):
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
 
+        # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
 
         # apply fit and then predict
@@ -584,7 +587,7 @@ class BaseForecaster(BaseEstimator):
 
         # input checks and conversions
 
-        # check fh and coerce to ForecastingHorizon
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
 
         # default alpha
@@ -663,8 +666,9 @@ class BaseForecaster(BaseEstimator):
 
         # input checks and conversions
 
-        # check fh and coerce to ForecastingHorizon
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
+
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
 
@@ -740,7 +744,10 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-        # input checks
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
 
         # check and convert X
@@ -802,7 +809,10 @@ class BaseForecaster(BaseEstimator):
                 "automated vectorization for predict_proba is not implemented"
             )
         self.check_is_fitted()
-        # input checks
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
 
         # check and convert X
@@ -1074,6 +1084,8 @@ class BaseForecaster(BaseEstimator):
             return self.predict(fh=fh, X=X)
 
         self.check_is_fitted()
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
 
         # input checks and minor coercions on X, y
@@ -1343,7 +1355,11 @@ class BaseForecaster(BaseEstimator):
             elif "Series" in scitypes:
                 return "Series"
             else:
-                raise ValueError("no series scitypes supported, bug in estimator")
+                raise ValueError(
+                    f"Error in {type(self).__name__}, no series scitypes supported, "
+                    "likely a bug in estimator: scitypes arg passed to "
+                    f"_most_complex_scitype are {scitypes}"
+                )
 
         def _check_missing(metadata, obj_name):
             """Check input metadata against self's missing capability tag."""
@@ -1385,26 +1401,31 @@ class BaseForecaster(BaseEstimator):
             if not self.get_tag("handles-missing-data"):
                 y_metadata_required += ["has_nans"]
 
-            y_valid, _, y_metadata = check_is_scitype(
+            y_valid, y_msg, y_metadata = check_is_scitype(
                 y,
                 scitype=ALLOWED_SCITYPES,
                 return_metadata=y_metadata_required,
                 var_name="y",
             )
-            msg = (
-                "y must be in an sktime compatible format, "
-                f"of scitype {', '.join(ALLOWED_SCITYPES)}, "
+
+            msg_start = (
+                f"Unsupported input data type in {self.__class__.__name__}, input y"
+            )
+            allowed_msg = (
+                "Allowed scitypes for y in forecasting are "
+                f"{', '.join(ALLOWED_SCITYPES)}, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 " See the forecasting tutorial examples/01_forecasting.ipynb, or"
-                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb,"
-                "If you think y is already in an sktime supported input format, "
-                "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
-                "where mtype is the string of the type specification you want for y. "
-                "Possible mtype specification strings are as follows: "
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
             if not y_valid:
-                raise TypeError(msg + ", ".join(mtypes_messages))
+                check_is_error_msg(
+                    y_msg,
+                    var_name=msg_start,
+                    allowed_msg=allowed_msg,
+                    raise_exception=True,
+                )
 
             y_scitype = y_metadata["scitype"]
             self._y_metadata = y_metadata
@@ -1422,7 +1443,9 @@ class BaseForecaster(BaseEstimator):
                 and y_metadata["is_univariate"]
             ):
                 raise ValueError(
-                    "y must have two or more variables, but found only one"
+                    f"Unsupported input data type in {type(self).__name__}, "
+                    "this forecaster accepts only strictly multivariate data. "
+                    "y must have two or more variables, but found only one."
                 )
 
             _check_missing(y_metadata, "y")
@@ -1440,27 +1463,31 @@ class BaseForecaster(BaseEstimator):
             if not self.get_tag("handles-missing-data"):
                 X_metadata_required += ["has_nans"]
 
-            X_valid, _, X_metadata = check_is_scitype(
+            X_valid, X_msg, X_metadata = check_is_scitype(
                 X,
                 scitype=ALLOWED_SCITYPES,
                 return_metadata=X_metadata_required,
                 var_name="X",
             )
 
-            msg = (
-                "X must be either None, or in an sktime compatible format, "
-                "of scitype Series, Panel or Hierarchical, "
+            msg_start = (
+                f"Unsupported input data type in {self.__class__.__name__}, input X"
+            )
+            allowed_msg = (
+                "Allowed scitypes for X in forecasting are None, "
+                f"{', '.join(ALLOWED_SCITYPES)}, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
-                "If you think X is already in an sktime supported input format, "
-                "run sktime.datatypes.check_raise(X, mtype) to diagnose the error, "
-                "where mtype is the string of the type specification you want for X. "
-                "Possible mtype specification strings are as follows. "
             )
             if not X_valid:
-                raise TypeError(msg + ", ".join(mtypes_messages))
+                check_is_error_msg(
+                    X_msg,
+                    var_name=msg_start,
+                    allowed_msg=allowed_msg,
+                    raise_exception=True,
+                )
 
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype
@@ -1663,6 +1690,11 @@ class BaseForecaster(BaseEstimator):
             fit, predict-like, update-like
 
         Reads and writes to self._fh.
+        Reads self._cutoff, self._is_fitted, self._is_vectorized.
+
+        Therefore, requires self._check_X_y(X=X, y=y) and
+        self._update_y_X(y_inner, X_inner) to have been run at least once.
+
         Writes fh to self._fh if does not exist.
         Checks equality of fh with self._fh if exists, raises error if not equal.
         Assigns the frequency inferred from self._y
@@ -1726,7 +1758,14 @@ class BaseForecaster(BaseEstimator):
         # B. fh is passed
         else:
             # If fh is passed, coerce to ForecastingHorizon and validate (all cases)
-            fh = check_fh(fh=fh, freq=self._cutoff)
+
+            # if vectorized only check freq against the inner loop cutoff (check each
+            # fcstr) since cutoff/frequency can be different for each compared to the
+            # entire panel but the same relative fh
+            if getattr(self, "_is_vectorized", False):
+                fh = check_fh(fh=fh)
+            else:
+                fh = check_fh(fh=fh, freq=self._cutoff)
 
             # fh is written to self if one of the following is true
             # - estimator has not been fitted yet (for safety from side effects)
@@ -2474,5 +2513,9 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
 
     if not y_pred.index.is_monotonic_increasing:
         y_pred = y_pred.sort_index()
+
+    if hasattr(y_pred, "columns") and not isinstance(y_pred.columns, pd.MultiIndex):
+        col_ordered = self._get_columns(method="predict")
+        y_pred = y_pred.loc[:, col_ordered]
 
     return y_pred

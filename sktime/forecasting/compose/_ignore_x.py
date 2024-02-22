@@ -45,6 +45,9 @@ class IgnoreX(_DelegatedForecaster):
 
         self.forecaster_ = forecaster.clone()
 
+        self._set_delegated_tags(self.forecaster_)
+        self.set_tags(**{"ignores-exogeneous-X": True})
+
         if not ignore_x:
             self.set_tags(**{"ignores-exogeneous-X": ignore_x})
 

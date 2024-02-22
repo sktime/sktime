@@ -5,6 +5,7 @@ __all__ = [
     "ProximityForest",
     "ProximityStump",
     "KNeighborsTimeSeriesClassifier",
+    "KNeighborsTimeSeriesClassifierPyts",
     "ShapeDTW",
 ]
 
@@ -17,4 +18,7 @@ from sktime.classification.distance_based._proximity_forest import (
 from sktime.classification.distance_based._shape_dtw import ShapeDTW
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
+)
+from sktime.classification.distance_based._time_series_neighbors_pyts import (
+    KNeighborsTimeSeriesClassifierPyts,
 )

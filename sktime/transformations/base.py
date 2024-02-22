@@ -208,6 +208,24 @@ class BaseTransformer(BaseEstimator):
         super().__init__()
         _check_estimator_deps(self)
 
+    def _is_transformer(self, other):
+        """Check whether other is a transformer - sklearn or sktime.
+
+        Returns True iff at least one of the following is True:
+
+        * ``is_sklearn_transformer(other)``
+        * ``scitype(other) == "transformer"``
+
+        Parameters
+        ----------
+        other : object
+            object to check
+        """
+        from sktime.registry import scitype
+
+        is_sktime_transformr = scitype(other, raise_on_unknown=False) == "transformer"
+        return is_sklearn_transformer(other) or is_sktime_transformr
+
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformerPipeline.
 
@@ -215,7 +233,7 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
+        other: ``sktime`` or ``sklearn`` compatible transformer
             otherwise, `NotImplemented` is returned
 
         Returns
@@ -228,11 +246,10 @@ class BaseTransformer(BaseEstimator):
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
         if (
-            isinstance(other, BaseTransformer)
+            self._is_transformer(other)
             or is_sklearn_classifier(other)
             or is_sklearn_clusterer(other)
             or is_sklearn_regressor(other)
-            or is_sklearn_transformer(other)
         ):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return self_as_pipeline * other
@@ -246,7 +263,7 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
+        other: ``sktime`` or ``sklearn`` compatible transformer
             otherwise, `NotImplemented` is returned
 
         Returns
@@ -258,7 +275,7 @@ class BaseTransformer(BaseEstimator):
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
-        if isinstance(other, BaseTransformer) or is_sklearn_transformer(other):
+        if self._is_transformer(other):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return other * self_as_pipeline
         else:
@@ -271,7 +288,8 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        other: `sktime` transformer or sktime MultiplexTransformer
+        other: ``sktime`` or ``sklearn`` compatible transformer
+            otherwise, `NotImplemented` is returned
 
         Returns
         -------
@@ -279,7 +297,7 @@ class BaseTransformer(BaseEstimator):
         """
         from sktime.transformations.compose import MultiplexTransformer
 
-        if isinstance(other, BaseTransformer):
+        if self._is_transformer(other):
             multiplex_self = MultiplexTransformer([self])
             return multiplex_self | other
         else:
@@ -292,7 +310,7 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
+        other: ``sktime`` or ``sklearn`` compatible transformer
             otherwise, `NotImplemented` is returned
 
         Returns
@@ -304,7 +322,7 @@ class BaseTransformer(BaseEstimator):
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the FeatureUnion does the rest, e.g., case distinctions on other
-        if isinstance(other, BaseTransformer):
+        if self._is_transformer(other):
             self_as_pipeline = FeatureUnion(transformer_list=[self])
             return self_as_pipeline + other
         else:
@@ -317,7 +335,7 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
+        other: ``sktime`` or ``sklearn`` compatible transformer
             otherwise, `NotImplemented` is returned
 
         Returns
@@ -329,7 +347,7 @@ class BaseTransformer(BaseEstimator):
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
-        if isinstance(other, BaseTransformer):
+        if self._is_transformer(other):
             self_as_pipeline = FeatureUnion(transformer_list=[self])
             return other + self_as_pipeline
         else:
@@ -941,7 +959,11 @@ class BaseTransformer(BaseEstimator):
             elif smaller_equal_than is not None:
                 return _most_complex_scitype(scitypes)
             else:
-                raise ValueError("no series scitypes supported, bug in estimator")
+                raise ValueError(
+                    f"Error in {type(self).__name__}, no series scitypes supported, "
+                    "likely a bug in estimator: scitypes arg passed to "
+                    f"_most_complex_scitype are {scitypes}"
+                )
 
         def _scitype_A_higher_B(scitypeA, scitypeB):
             """Compare two scitypes regarding complexity."""
@@ -959,24 +981,17 @@ class BaseTransformer(BaseEstimator):
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
 
-        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
         X_metadata_required = ["is_univariate"]
 
-        X_valid, msg, X_metadata = check_is_scitype(
+        X_valid, msg, X_metadata = check_is_mtype(
             X,
-            scitype=ALLOWED_SCITYPES,
+            mtype=ALLOWED_MTYPES,
             return_metadata=X_metadata_required,
             var_name="X",
         )
-
-        X_scitype = X_metadata["scitype"]
-        X_mtype = X_metadata["mtype"]
-        # remember these for potential back-conversion (in transform etc)
-        metadata["_X_mtype_last_seen"] = X_mtype
-        metadata["_X_input_scitype"] = X_scitype
 
         # raise informative error message if X is in wrong format
         allowed_msg = (
@@ -986,11 +1001,20 @@ class BaseTransformer(BaseEstimator):
             f"or with MultiIndex and last(-1) level an sktime compatible time index. "
             f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES} ."
         )
-        if not X_valid or X_mtype not in ALLOWED_MTYPES:
+        msg_start = f"Unsupported input data type in {self.__class__.__name__}, input "
+        msg_X = msg_start + "X"
+        if not X_valid:
             msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             check_is_error_msg(
-                msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
+                msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
             )
+
+        X_scitype = X_metadata["scitype"]
+        X_mtype = X_metadata["mtype"]
+
+        # remember these for potential back-conversion (in transform etc)
+        metadata["_X_mtype_last_seen"] = X_mtype
+        metadata["_X_input_scitype"] = X_scitype
 
         if X_scitype in X_inner_scitype:
             case = "case 1: scitype supported"
@@ -1023,8 +1047,6 @@ class BaseTransformer(BaseEstimator):
             y_valid, msg, y_metadata = check_is_scitype(
                 y, scitype=y_possible_scitypes, return_metadata=[], var_name="y"
             )
-            y_scitype = y_metadata["scitype"]
-            y_mtype = y_metadata["mtype"]
 
             # raise informative error message if y is is in wrong format
             if not y_valid:
@@ -1033,9 +1055,13 @@ class BaseTransformer(BaseEstimator):
                     f"Passed X scitype was {X_scitype}, "
                     f"so allowed scitypes for y are {y_possible_scitypes}. "
                 )
+                msg_y = msg_start + "y"
                 check_is_error_msg(
-                    msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
+                    msg, var_name=msg_y, allowed_msg=allowed_msg, raise_exception=True
                 )
+
+            y_scitype = y_metadata["scitype"]
+            y_mtype = y_metadata["mtype"]
 
         else:
             # y_scitype is used below - set to None if y is None
