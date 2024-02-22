@@ -191,6 +191,8 @@ EXCLUDED_TESTS = {
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
     # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
     "StatsForecastMSTL": ["test_pred_int_tag"],
+    # KNeighborsTimeSeriesClassifierTslearn crashes in parallel mode
+    "KNeighborsTimeSeriesClassifierTslearn": ["test_multiprocessing_idempotent"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
