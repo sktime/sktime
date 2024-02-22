@@ -13,6 +13,7 @@ from joblib import Parallel, delayed
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel import catch22
 from sktime.utils.validation import check_n_jobs
+from sktime.utils.warnings import warn
 
 
 class Catch22Wrapper(BaseTransformer):
@@ -52,9 +53,6 @@ class Catch22Wrapper(BaseTransformer):
         while to process for large values.
     replace_nans : bool, optional, default=True
         Replace NaN or inf values from the Catch22 transform with 0.
-    n_jobs : int, optional, default=1
-        The number of jobs to run in parallel for transform. Requires multiple input
-        cases. ``-1`` means using all processors.
 
     See Also
     --------
@@ -86,13 +84,14 @@ class Catch22Wrapper(BaseTransformer):
         "fit_is_empty": True,
     }
 
+    # todo 0.29.0: remove n_jobs parameter
     def __init__(
         self,
         features="all",
         catch24=False,
         outlier_norm=False,
         replace_nans=False,
-        n_jobs=1,
+        n_jobs="deprecated",
     ):
         self.features = features
         self.catch24 = catch24
@@ -123,6 +122,19 @@ class Catch22Wrapper(BaseTransformer):
         self._transform_features = None
 
         super().__init__()
+
+        # todo 0.29.0: remove this warning and logic
+        if n_jobs != "deprecated":
+            warn(
+                "In Catch22Wrapper, the parameter "
+                "n_jobs is deprecated and will be removed in v0.29.0. "
+                "Instead, use set_config with the backend and backend:params "
+                "config fields, and set backend to 'joblib' and pass n_jobs "
+                "as a parameter of backend_params. ",
+                FutureWarning,
+                obj=self,
+            )
+            self.set_config(backend="joblib", backend_params={"n_jobs": n_jobs})
 
     def _transform(self, X, y=None):
         """Transform data into the Catch22 features.
