@@ -7,12 +7,9 @@ __author__ = ["MatthewMiddlehurst"]
 __all__ = ["Catch22Wrapper"]
 
 import numpy as np
-import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel import catch22
-from sktime.utils.validation import check_n_jobs
 from sktime.utils.warnings import warn
 
 
