@@ -238,7 +238,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        fit_args = self._get_y_args(X, y, method="fit")
+        fit_args = self._get_args(X, y, method="fit")
 
         if not self._skip_fit:
             self.transformer_.fit(**fit_args)
