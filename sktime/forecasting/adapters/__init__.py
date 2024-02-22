@@ -3,8 +3,6 @@
 
 __all__ = [
     "HCrystalBallAdapter",
-    "AutoTSAdapter",
 ]
 
-from sktime.forecasting.adapters._autots import AutoTSAdapter
 from sktime.forecasting.adapters._hcrystalball import HCrystalBallAdapter

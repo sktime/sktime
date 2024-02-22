@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
+"""Implements and interface to the AutoTS library main entry point."""
 __author__ = ["MBristle"]
 
 import logging
