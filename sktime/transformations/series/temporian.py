@@ -113,7 +113,7 @@ class TemporianTransformer(BaseTransformer):
         # parameter dictionaries already require the dependency
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        deps = cls.get_class_tag()["python_dependencies"]
+        deps = cls.get_class_tag("python_dependencies")
         _check_soft_dependencies(deps, severity="error")
 
         import temporian as tp
