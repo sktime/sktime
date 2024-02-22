@@ -363,7 +363,7 @@ class SquaringResiduals(BaseForecaster):
         fh_rel_index = fh_rel.to_pandas()
         pred_var = pd.Series(index=fh_rel_index, dtype="float64")
         for el in fh_rel:
-            pred_var.at[el] = self._res_forecasters[el].predict(fh=el)[0]
+            pred_var.at[el] = self._res_forecasters[el].predict(fh=el)
         if self.strategy == "square":
             pred_var = pred_var**0.5
         pred_var.index = fh_abs.to_pandas()

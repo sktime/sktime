@@ -31,6 +31,7 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+
 import numpy as np
 
 from sktime.clustering import BaseClusterer

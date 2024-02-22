@@ -181,6 +181,9 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         # estimator type
         # --------------
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
+        # capabilities
+        # --------------
+        "capability:feature_importance": True,
     }
 
     def __init__(

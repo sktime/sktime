@@ -32,10 +32,10 @@ class CNNClassifier(BaseDeepClassifier):
         Seed for random number generation.
     verbose         : boolean, default = False
         whether to output extra information
-    loss            : string, default="mean_squared_error"
+    loss            : string, default="categorical_crossentropy"
         fit parameter for the keras model
     metrics         : list of strings, default=["accuracy"],
-    activation      : string or a tf callable, default="sigmoid"
+    activation      : string or a tf callable, default="softmax"
         Activation function used in the output linear layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
@@ -83,10 +83,10 @@ class CNNClassifier(BaseDeepClassifier):
         n_conv_layers=2,
         callbacks=None,
         verbose=False,
-        loss="mean_squared_error",
+        loss="categorical_crossentropy",
         metrics=None,
         random_state=None,
-        activation="sigmoid",
+        activation="softmax",
         use_bias=True,
         optimizer=None,
     ):

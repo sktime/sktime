@@ -981,24 +981,17 @@ class BaseTransformer(BaseEstimator):
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
 
-        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
         X_metadata_required = ["is_univariate"]
 
-        X_valid, msg, X_metadata = check_is_scitype(
+        X_valid, msg, X_metadata = check_is_mtype(
             X,
-            scitype=ALLOWED_SCITYPES,
+            mtype=ALLOWED_MTYPES,
             return_metadata=X_metadata_required,
             var_name="X",
         )
-
-        X_scitype = X_metadata["scitype"]
-        X_mtype = X_metadata["mtype"]
-        # remember these for potential back-conversion (in transform etc)
-        metadata["_X_mtype_last_seen"] = X_mtype
-        metadata["_X_input_scitype"] = X_scitype
 
         # raise informative error message if X is in wrong format
         allowed_msg = (
@@ -1010,11 +1003,18 @@ class BaseTransformer(BaseEstimator):
         )
         msg_start = f"Unsupported input data type in {self.__class__.__name__}, input "
         msg_X = msg_start + "X"
-        if not X_valid or X_mtype not in ALLOWED_MTYPES:
+        if not X_valid:
             msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             check_is_error_msg(
                 msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
             )
+
+        X_scitype = X_metadata["scitype"]
+        X_mtype = X_metadata["mtype"]
+
+        # remember these for potential back-conversion (in transform etc)
+        metadata["_X_mtype_last_seen"] = X_mtype
+        metadata["_X_input_scitype"] = X_scitype
 
         if X_scitype in X_inner_scitype:
             case = "case 1: scitype supported"
@@ -1047,8 +1047,6 @@ class BaseTransformer(BaseEstimator):
             y_valid, msg, y_metadata = check_is_scitype(
                 y, scitype=y_possible_scitypes, return_metadata=[], var_name="y"
             )
-            y_scitype = y_metadata["scitype"]
-            y_mtype = y_metadata["mtype"]
 
             # raise informative error message if y is is in wrong format
             if not y_valid:
@@ -1061,6 +1059,9 @@ class BaseTransformer(BaseEstimator):
                 check_is_error_msg(
                     msg, var_name=msg_y, allowed_msg=allowed_msg, raise_exception=True
                 )
+
+            y_scitype = y_metadata["scitype"]
+            y_mtype = y_metadata["mtype"]
 
         else:
             # y_scitype is used below - set to None if y is None

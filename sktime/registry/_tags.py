@@ -247,6 +247,12 @@ ESTIMATOR_TAG_REGISTER = [
         "i.e., not just 0/1 probabilities obtained from predict?",
     ),
     (
+        "capability:feature_importance",
+        "classifier",
+        "bool",
+        "Can the estimator provide feature importance?",
+    ),
+    (
         "capability:multivariate",
         [
             "classifier",

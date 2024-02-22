@@ -64,8 +64,27 @@ jobs:
         run: build_tools/run_blogposts.sh
         shell: bash
 
-  test-nodevdeps:
+  detect-package-change:
     needs: code-quality
+    name: detect package changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      sktime: ${{ steps.filter.outputs.sktime }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            sktime:
+              - sktime/**
+              - pyproject.toml
+
+  test-nodevdeps:
+    needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,7 +104,8 @@ jobs:
           python sktime/_nopytest_tests.py
 
   test-nosoftdeps:
-    needs: code-quality
+    needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
