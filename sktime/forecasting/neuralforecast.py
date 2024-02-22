@@ -4,6 +4,7 @@ import functools
 import typing
 
 from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["yarnabrina"]
 
@@ -313,29 +314,52 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+        try:
+            _check_soft_dependencies("neuralforecast", severity="error")
+        except ModuleNotFoundError:
+            params = [
+                {
+                    "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "max_steps": 4,
+                    "trainer_kwargs": {"logger": False},
+                },
+                {
+                    "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "max_steps": 4,
+                    "val_check_steps": 2,
+                    "trainer_kwargs": {"logger": False},
+                },
+            ]
+        else:
+            from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
 
-        params = [
-            {
-                "freq": "D",
-                "inference_input_size": 2,
-                "encoder_hidden_size": 2,
-                "decoder_hidden_size": 3,
-                "max_steps": 4,
-                "trainer_kwargs": {"logger": False},
-            },
-            {
-                "freq": "D",
-                "inference_input_size": 2,
-                "encoder_hidden_size": 2,
-                "decoder_hidden_size": 3,
-                "loss": QuantileLoss(0.5),
-                "valid_loss": SMAPE(),
-                "max_steps": 4,
-                "val_check_steps": 2,
-                "trainer_kwargs": {"logger": False},
-            },
-        ]
+            params = [
+                {
+                    "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "max_steps": 4,
+                    "trainer_kwargs": {"logger": False},
+                },
+                {
+                    "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "loss": QuantileLoss(0.5),
+                    "valid_loss": SMAPE(),
+                    "max_steps": 4,
+                    "val_check_steps": 2,
+                    "trainer_kwargs": {"logger": False},
+                },
+            ]
 
         return params
 
