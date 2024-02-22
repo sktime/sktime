@@ -108,6 +108,14 @@ class TemporianTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        # dependency check is required here, as this method is used in tests
+        # this is currently a small hack for the unusual case where all valid
+        # parameter dictionaries already require the dependency
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        deps = cls.get_class_tag("python_dependencies")
+        _check_soft_dependencies(deps, severity="error")
+
         import temporian as tp
 
         return {
