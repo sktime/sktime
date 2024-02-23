@@ -44,7 +44,7 @@ class TSBootstrapAdapter(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        "python_dependencies": ["tsbootstrap"],
+        "python_dependencies": ["tsbootstrap>=0.0.3"],
     }
 
     def __init__(
@@ -107,6 +107,11 @@ class TSBootstrapAdapter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        deps = cls.get_class_tag("python_dependencies")
+        _check_soft_dependencies(deps, severity="error")
+        
         from tsbootstrap.block_bootstrap import (
             BaseSieveBootstrapConfig,
             MovingBlockBootstrap,
