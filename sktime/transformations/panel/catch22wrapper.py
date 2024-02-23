@@ -159,6 +159,29 @@ class Catch22Wrapper(BaseTransformer):
         """
         f_idx = catch22._verify_features(self.features, self.catch24)
 
+        Xt = self._transform_case(X, f_idx)
+
+        if self.replace_nans:
+            Xt = Xt.fillna(0)
+
+        return Xt
+
+    def _get_fun_with_ix(self, ix):
+        """Returns function with index ix from the pycatch22 library.
+
+        Index 0 - 21 are the catch22 features, in the same order as in pycatch22.
+        22 is the mean and 23 is the standard deviation.
+        If self.outlier_norm is True, features 3 and 4 have outlier normalisation
+        applied to them before calculation, also from pycatch22.
+
+        Parameters
+        ----------
+        ix : int, index of the function to return.
+
+        Returns
+        -------
+        A function with the signature f(series: List[float]) -> float
+        """
         import pycatch22
 
         features = [
@@ -186,20 +209,34 @@ class Catch22Wrapper(BaseTransformer):
             pycatch22.PD_PeriodicityWang_th0_01,
         ]
 
-        Xt = self._transform_case(X, f_idx, features)
+        def _feature_with_outlier_norm(series):
+            outlier_series = np.array(series)
+            outlier_series = list(
+                catch22._normalise_series(outlier_series, np.mean(outlier_series))
+            )
+            return features[ix](outlier_series)
 
-        if self.replace_nans:
-            Xt = Xt.fillna(0)
+        if ix in [3, 4]:
+            return _feature_with_outlier_norm
+        elif ix == 22:
+            return np.mean
+        elif ix == 23:
+            return np.std
+        else:
+            return features[ix]
 
-        return Xt
+    def _transform_case(self, X, f_idx):
+        """Transform data into the Catch22/24 features.
 
-    def _transform_case(self, X, f_idx, features):
-        """Transform data into the Catch22 features.
+        Parameters
+        ----------
+        X : pd.Series, input time series.
+        f_idx : list of int, the indices of the features to extract.
 
         Returns
         -------
         c22 : np.array of size [1, n_features], where n_features is the
-             number of features requested, containing Catch22 features for X.
+             number of features requested, containing Catch22/24 features for X.
         """
         n_feat = len(f_idx)
         c22 = np.zeros((1, n_feat))
@@ -215,25 +252,13 @@ class Catch22Wrapper(BaseTransformer):
 
         series = X.to_list()
 
-        if self.outlier_norm and (3 in f_idx or 4 in f_idx):
-            outlier_series = np.array(series)
-            outlier_series = list(
-                catch22._normalise_series(outlier_series, np.mean(outlier_series))
-            )
-
         for n, feature in enumerate(f_idx):
             f_count += 1
             if not transform_feature[f_count]:
                 continue
 
-            if self.outlier_norm and feature in [3, 4]:
-                c22[0, n] = features[feature](outlier_series)
-            if feature == 22:
-                c22[0, n] = np.mean(series)
-            elif feature == 23:
-                c22[0, n] = np.std(series)
-            else:
-                c22[0, n] = features[feature](series)
+            feat_fun = self._get_fun_with_ix(feature)
+            c22[0, n] = feat_fun(series)
 
         col_names = self.col_names
 
