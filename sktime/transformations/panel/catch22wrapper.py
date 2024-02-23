@@ -196,7 +196,7 @@ class Catch22Wrapper(BaseTransformer):
 
         f_count = -1
 
-        series = X
+        series = X.to_numpy()
 
         if self.outlier_norm and (3 in f_idx or 4 in f_idx):
             outlier_series = np.array(series)
