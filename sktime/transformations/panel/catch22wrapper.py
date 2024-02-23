@@ -241,9 +241,10 @@ class Catch22Wrapper(BaseTransformer):
         n_feat = len(f_idx)
         c22 = np.zeros((1, n_feat))
 
-        if self._transform_features is not None and len(
-            self._transform_features
-        ) == n_feat:
+        if (
+            self._transform_features is not None
+            and len(self._transform_features) == n_feat
+        ):
             transform_feature = self._transform_features
         else:
             transform_feature = [True] * n_feat
