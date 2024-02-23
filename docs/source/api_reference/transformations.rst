@@ -638,10 +638,10 @@ These transformers subset `X` by time points (`pandas` index or index level) or 
     ColumnSelect
     IndexSubset
 
-Temporian
-~~~~~~~~~
+Adapters to other frameworks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These transformers allow running Temporian functions on series.
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
 
 .. currentmodule:: sktime.transformations.series.temporian
 
