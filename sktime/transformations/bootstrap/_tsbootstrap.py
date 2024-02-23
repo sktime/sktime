@@ -6,7 +6,6 @@ __author__ = ["benheid"]
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class TSBootstrapAdapter(BaseTransformer):
