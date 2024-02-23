@@ -75,6 +75,7 @@ class Catch22Wrapper(BaseTransformer):
         # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
+        "univariate-only": True,
         "scitype:instancewise": True,
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
@@ -184,7 +185,7 @@ class Catch22Wrapper(BaseTransformer):
         return Xt
 
     def _transform_case(self, X, f_idx, features):
-        c22 = np.zeros(len(f_idx) * len(X))
+        c22 = np.zeros(len(f_idx))
 
         if self._transform_features is not None and len(
             self._transform_features
@@ -194,29 +195,28 @@ class Catch22Wrapper(BaseTransformer):
             transform_feature = [True] * len(c22)
 
         f_count = -1
-        for i in range(len(X)):
-            dim = i * len(f_idx)
-            series = list(X.iloc[i])
 
-            if self.outlier_norm and (3 in f_idx or 4 in f_idx):
-                outlier_series = np.array(series)
-                outlier_series = list(
-                    catch22._normalise_series(outlier_series, np.mean(outlier_series))
-                )
+        series = X
 
-            for n, feature in enumerate(f_idx):
-                f_count += 1
-                if not transform_feature[f_count]:
-                    continue
+        if self.outlier_norm and (3 in f_idx or 4 in f_idx):
+            outlier_series = np.array(series)
+            outlier_series = list(
+                catch22._normalise_series(outlier_series, np.mean(outlier_series))
+            )
 
-                if self.outlier_norm and feature in [3, 4]:
-                    c22[dim + n] = features[feature](outlier_series)
-                if feature == 22:
-                    c22[dim + n] = np.mean(series)
-                elif feature == 23:
-                    c22[dim + n] = np.std(series)
-                else:
-                    c22[dim + n] = features[feature](series)
+        for n, feature in enumerate(f_idx):
+            f_count += 1
+            if not transform_feature[f_count]:
+                continue
+
+            if self.outlier_norm and feature in [3, 4]:
+                c22[n] = features[feature](outlier_series)
+            if feature == 22:
+                c22[n] = np.mean(series)
+            elif feature == 23:
+                c22[n] = np.std(series)
+            else:
+                c22[n] = features[feature](series)
 
         return c22
 
