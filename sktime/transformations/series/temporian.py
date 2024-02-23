@@ -116,8 +116,15 @@ class TemporianTransformer(BaseTransformer):
         deps = cls.get_class_tag("python_dependencies")
         _check_soft_dependencies(deps, severity="error")
 
-        import temporian as tp
+        return [
+            {"function": _test_function},
+            {"function": _test_function2},
+        ]
 
-        return {
-            "function": lambda evset: evset.simple_moving_average(tp.duration.days(7))
-        }
+
+def _test_function(evset):
+    return evset + 1
+
+
+def _test_function2(evset):
+    return evset.simple_moving_average(10)
