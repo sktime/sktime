@@ -109,7 +109,7 @@ class TSBootstrapAdapter(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         if not _check_soft_dependencies("tsbootstrap", severity="none"):
-            return []
+            return None
 
         from tsbootstrap.block_bootstrap import (
             BaseSieveBootstrapConfig,
