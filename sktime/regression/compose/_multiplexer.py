@@ -1,61 +1,61 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements classifier for selecting among different model classes."""
+"""Implements regressor for selecting among different model classes."""
 # based on MultiplexForecaster
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.regression._delegate import _DelegatedClassifier
-from sktime.regression.base import BaseClassifier
+from sktime.regression._delegate import _DelegatedRegressor
+from sktime.regression.base import BaseRegressor
 from sktime.datatypes import MTYPE_LIST_PANEL, MTYPE_LIST_TABLE
 
 __author__ = ["ksharma6"]
 __all__ = ["MultiplexRegressor"]
 
 
-class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
-    """MultiplexClassifier for selecting among different models.
+class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
+    """MultiplexRegressor for selecting among different models.
 
-    MultiplexClassifier facilitates a framework for performing
+    MultiplexRegressor facilitates a framework for performing
     model selection process over different model classes.
     It should be used in conjunction with GridSearchCV to get full utilization.
-    It can be used with univariate and multivariate classifiers,
-    single-output and multi-output classifiers.
+    It can be used with univariate and multivariate regressors,
+    single-output and multi-output regressors.
 
-    MultiplexClassifier is specified with a (named) list of classifiers
-    and a selected_classifier hyper-parameter, which is one of the classifier names.
-    The MultiplexClassifier then behaves precisely as the classifier with
-    name selected_classifier, ignoring functionality in the other classifiers.
+    MultiplexRegressor is specified with a (named) list of regressors
+    and a selected_regressor hyper-parameter, which is one of the regressor names.
+    The MultiplexRegressor then behaves precisely as the regressor with
+    name selected_regressor, ignoring functionality in the other regressors.
 
-    When used with GridSearchCV, MultiplexClassifier
+    When used with GridSearchCV, MultiplexRegressor
     provides an ability to tune across multiple estimators, i.e., to perform AutoML,
-    by tuning the selected_classifier hyper-parameter. This combination will then
-    select one of the passed classifiers via the tuning algorithm.
+    by tuning the selected_regressor hyper-parameter. This combination will then
+    select one of the passed regressors via the tuning algorithm.
 
     Parameters
     ----------
-    classifiers : list of sktime classifiers, or
-        list of tuples (str, estimator) of sktime classifiers
-        MultiplexClassifier can switch ("multiplex") between these classifiers.
-        These are "blueprint" classifiers, states do not change when `fit` is called.
-    selected_classifier: str or None, optional, Default=None.
-        If str, must be one of the classifier names.
+    regressors : list of sktime regressors, or
+        list of tuples (str, estimator) of sktime regressors
+        MultiplexRegressor can switch ("multiplex") between these regressors.
+        These are "blueprint" regressors, states do not change when `fit` is called.
+    selected_regressor: str or None, optional, Default=None.
+        If str, must be one of the regressor names.
             If no names are provided, must coincide with auto-generated name strings.
             To inspect auto-generated name strings, call get_params.
-        If None, behaves as if the first classifier in the list is selected.
-        Selects the classifier as which MultiplexClassifier behaves.
+        If None, behaves as if the first regressor in the list is selected.
+        Selects the regressor as which MultiplexRegressor behaves.
 
     Attributes
     ----------
-    classifier_ : sktime classifier
-        clone of the selected classifier used for fitting and classification.
-    _classifiers : list of (str, classifier) tuples
+    regressor_ : sktime regressor
+        clone of the selected regressor used for fitting and regression.
+    _regressors : list of (str, regressor) tuples
         str are identical to those passed, if passed strings are unique
         otherwise unique strings are generated from class name; if not unique,
         the string `_[i]` is appended where `[i]` is count of occurrence up until then
     """
 
     _tags = {
-        "authors": ["fkiraly"],
+        "authors": ["ksharma6"],
         "capability:multioutput": True,
         "capability:multivariate": True,
         "capability:unequal_length": True,
@@ -66,124 +66,124 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         "fit_is_empty": False,
     }
 
-    # attribute for _DelegatedClassifier, which then delegates
-    #     all non-overridden methods to those of same name in self.classifier_
-    #     see further details in _DelegatedClassifier docstring
-    _delegate_name = "classifier_"
+    # attribute for _DelegatedRegressor, which then delegates
+    #     all non-overridden methods to those of same name in self.regressor_
+    #     see further details in _DelegatedRegressor docstring
+    _delegate_name = "regressor_"
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "_classifiers"
+    _steps_attr = "_regressors"
     # if the estimator is fittable, _HeterogenousMetaEstimator also
     # provides an override for get_fitted_params for params from the fitted estimators
     # the fitted estimators should be in a different attribute, _steps_fitted_attr
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_fitted_attr = "classifiers_"
+    _steps_fitted_attr = "regressors_"
 
     def __init__(
         self,
-        classifiers: list,
-        selected_classifier=None,
+        regressors: list,
+        selected_regressor=None,
     ):
         super().__init__()
-        self.selected_classifier = selected_classifier
+        self.selected_regressor = selected_regressor
 
-        self.classifiers = classifiers
+        self.regressors = regressors
         self._check_estimators(
-            classifiers,
-            attr_name="classifiers",
-            cls_type=BaseClassifier,
+            regressors,
+            attr_name="regressors",
+            cls_type=BaseRegressor,
             clone_ests=False,
         )
-        self._set_classifier()
+        self._set_regressor()
 
-        self.clone_tags(self.classifier_)
+        self.clone_tags(self.regressor_)
         self.set_tags(**{"fit_is_empty": False})
         # this ensures that we convert in the inner estimator, not in the multiplexer
         self.set_tags(**{"X_inner_mtype": MTYPE_LIST_PANEL})
         self.set_tags(**{"y_inner_mtype": MTYPE_LIST_TABLE})
 
     @property
-    def _classifiers(self):
-        """Classifiers turned into name/est tuples."""
-        return self._get_estimator_tuples(self.classifiers, clone_ests=False)
+    def _regressors(self):
+        """Regressors turned into name/est tuples."""
+        return self._get_estimator_tuples(self.regressors, clone_ests=False)
 
-    @_classifiers.setter
-    def _classifiers(self, value):
-        self.classifiers = value
+    @_regressors.setter
+    def _regressors(self, value):
+        self.regressors = value
 
-    def _check_selected_classifier(self):
-        component_names = self._get_estimator_names(self._classifiers, make_unique=True)
-        selected = self.selected_classifier
+    def _check_selected_regressor(self):
+        component_names = self._get_estimator_names(self._regressors, make_unique=True)
+        selected = self.selected_regressor
         if selected is not None and selected not in component_names:
             raise Exception(
-                f"Invalid selected_classifier parameter value provided, "
-                f" found: {self.selected_classifier}. Must be one of these"
-                f" valid selected_classifier parameter values: {component_names}."
+                f"Invalid selected_regressor parameter value provided, "
+                f" found: {self.selected_regressor}. Must be one of these"
+                f" valid selected_regressor parameter values: {component_names}."
             )
 
     def __or__(self, other):
-        """Magic | (or) method, return (right) concatenated MultiplexClassifier.
+        """Magic | (or) method, return (right) concatenated MultiplexRegressor.
 
-        Implemented for `other` being a classifier, otherwise returns `NotImplemented`.
+        Implemented for `other` being a regressor, otherwise returns `NotImplemented`.
 
         Parameters
         ----------
-        other: `sktime` classifier, must inherit from BaseClassifier
+        other: `sktime` regressor, must inherit from BaseRegressor
             otherwise, `NotImplemented` is returned
 
         Returns
         -------
-        MultiplexClassifier object, concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-MultiplexClassifier `sktime` classifiers
+        MultiplexRegressor object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-MultiplexRegressor `sktime` regressors
 
         Raises
         ------
-        ValueError if other is not of type MultiplexClassifier or BaseClassifier.
+        ValueError if other is not of type MultiplexRegressor or BaseRegressor.
         """
         return self._dunder_concat(
             other=other,
-            base_class=BaseClassifier,
-            composite_class=MultiplexClassifier,
-            attr_name="classifiers",
+            base_class=BaseRegressor,
+            composite_class=MultiplexRegressor,
+            attr_name="regressors",
             concat_order="left",
         )
 
     def __ror__(self, other):
-        """Magic | (or) method, return (left) concatenated MultiplexClassifier.
+        """Magic | (or) method, return (left) concatenated MultiplexRegressor.
 
-        Implemented for `other` being a classifier, otherwise returns `NotImplemented`.
+        Implemented for `other` being a regressor, otherwise returns `NotImplemented`.
 
         Parameters
         ----------
-        other: `sktime` classifier, must inherit from BaseClassifier
+        other: `sktime` regressor, must inherit from BaseRegressor
             otherwise, `NotImplemented` is returned
 
         Returns
         -------
-        MultiplexClassifier object, concatenation of `self` (last) with `other` (first).
-            not nested, contains only non-MultiplexClassifier `sktime` classifiers
+        MultiplexRegressor object, concatenation of `self` (last) with `other` (first).
+            not nested, contains only non-MultiplexRegressor `sktime` regressors
         """
         return self._dunder_concat(
             other=other,
-            base_class=BaseClassifier,
-            composite_class=MultiplexClassifier,
-            attr_name="classifiers",
+            base_class=BaseRegressor,
+            composite_class=MultiplexRegressor,
+            attr_name="regressors",
             concat_order="right",
         )
 
-    def _set_classifier(self):
-        self._check_selected_classifier()
-        # clone the selected classifier to self.classifier_
-        if self.selected_classifier is not None:
-            for name, classifier in self._get_estimator_tuples(self.classifiers):
-                if self.selected_classifier == name:
-                    self.classifier_ = classifier.clone()
+    def _set_regressor(self):
+        self._check_selected_regressor()
+        # clone the selected regressor to self.regressor_
+        if self.selected_regressor is not None:
+            for name, regressor in self._get_estimator_tuples(self.regressors):
+                if self.selected_regressor == name:
+                    self.regressor_ = regressor.clone()
         else:
-            # if None, simply clone the first classifier to self.classifier_
-            self.classifier_ = self._get_estimator_list(self.classifiers)[0].clone()
+            # if None, simply clone the first regressor to self.regressor_
+            self.regressor_ = self._get_estimator_list(self.regressors)[0].clone()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -199,21 +199,21 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         -------
         params : dict or list of dict
         """
-        from sktime.classification.dummy import DummyClassifier
+        from sktime.regression.dummy import DummyRegressor
 
         params1 = {
-            "classifiers": [
-                ("Naive_maj", DummyClassifier(strategy="most_frequent")),
-                ("Naive_pri", DummyClassifier(strategy="prior")),
-                ("Naive_uni", DummyClassifier(strategy="uniform")),
+            "regressors": [
+                ("Naive_maj", DummyRegressor(strategy="most_frequent")),
+                ("Naive_pri", DummyRegressor(strategy="prior")),
+                ("Naive_uni", DummyRegressor(strategy="uniform")),
             ],
-            "selected_classifier": "Naive_maj",
+            "selected_regressor": "Naive_maj",
         }
         params2 = {
-            "classifiers": [
-                DummyClassifier(strategy="most_frequent"),
-                DummyClassifier(strategy="prior"),
-                DummyClassifier(strategy="uniform"),
+            "regressors": [
+                DummyRegressor(strategy="most_frequent"),
+                DummyRegressor(strategy="prior"),
+                DummyRegressor(strategy="uniform"),
             ],
         }
         return [params1, params2]
