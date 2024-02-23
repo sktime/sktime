@@ -147,8 +147,6 @@ class Catch22Wrapper(BaseTransformer):
         c22 : Pandas DataFrame of shape [n_instances, c*n_dimensions] where c is the
              number of features requested, containing Catch22 features for X.
         """
-        n_instances, n_dims = X.shape
-
         f_idx = catch22._verify_features(self.features, self.catch24)
 
         import pycatch22
