@@ -28,7 +28,9 @@ maintainers = [
 ]
 # sktime has a large number of contributors,
 # for full credits see contributors.md
-authors = [{ name = "sktime developers", email = "sktime.toolbox@gmail.com" }]
+authors = [
+    { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
+]
 requires-python = ">=3.8,<3.13"
 classifiers = [
   "Intended Audience :: Developers",
@@ -51,12 +53,12 @@ classifiers = [
 # core dependencies of sktime
 # this set should be kept minimal!
 dependencies = [
-  "numpy<1.27,>=1.21",         # required for framework layer and base class logic
-  "packaging",                 # for estimator specific dependency parsing
-  "pandas<2.2.0,>=1.1",        # pandas is the main in-memory data container
-  "scikit-base<0.8.0",         # base module for sklearn compatible base API
-  "scikit-learn>=0.24,<1.5.0", # required for estimators and framework layer
-  "scipy<2.0.0,>=1.2",         # required for estimators and framework layer
+  "numpy<1.27,>=1.21",  # required for framework layer and base class logic
+  "packaging",  # for estimator specific dependency parsing
+  "pandas<2.2.0,>=1.1",  # pandas is the main in-memory data container
+  "scikit-base<0.8.0",  # base module for sklearn compatible base API
+  "scikit-learn>=0.24,<1.5.0",  # required for estimators and framework layer
+  "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
 
 [project.optional-dependencies]
@@ -190,7 +192,10 @@ networks = [
   "keras-self-attention<0.52,>=0.51",
   'tensorflow<=2.14,>=2; python_version < "3.12"',
 ]
-param_est = ["seasonal<0.4,>=0.3.1", "statsmodels<0.15,>=0.12.1"]
+param_est = [
+  "seasonal<0.4,>=0.3.1",
+  "statsmodels<0.15,>=0.12.1",
+]
 regression = [
   'numba<0.59,>=0.53; python_version < "3.12"',
   'tensorflow<=2.14,>=2; python_version < "3.12"',
@@ -249,15 +254,31 @@ tests = [
 
 # CI related soft dependency sets - not for users of sktime, only for developers
 # these are for specual uses and may be changed or removed at any time
-binder = ["jupyter", "pandas<2.0.0"]
-cython_extras = ["mrseql", 'mrsqm; python_version < "3.11"', "numba<0.59"]
+binder = [
+  "jupyter",
+  "pandas<2.0.0",
+]
+cython_extras = [
+  "mrseql",
+  'mrsqm; python_version < "3.11"',
+  "numba<0.59",
+]
 dl = [
   'tensorflow<=2.14,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
 ]
-mlflow = ["mlflow"]
-mlflow_tests = ["boto3", "botocore", "mlflow", "moto"]
-pandas1 = ["pandas<2.0.0"]
+mlflow = [
+  "mlflow",
+]
+mlflow_tests = [
+  "boto3",
+  "botocore",
+  "mlflow",
+  "moto",
+]
+pandas1 = [
+  "pandas<2.0.0",
+]
 
 [project.urls]
 "API Reference" = "https://www.sktime.net/en/stable/api_reference.html"
@@ -269,10 +290,20 @@ Repository = "https://github.com/sktime/sktime"
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>61"]
+requires = [
+  "setuptools>61",
+]
 
 [tool.setuptools.package-data]
-sktime = ["*.csv", "*.csv.gz", "*.arff", "*.arff.gz", "*.txt", "*.ts", "*.tsv"]
+sktime = [
+  "*.csv",
+  "*.csv.gz",
+  "*.arff",
+  "*.arff.gz",
+  "*.txt",
+  "*.ts",
+  "*.tsv",
+]
 
 [tool.setuptools.packages.find]
 exclude = ["tests", "tests.*"]
