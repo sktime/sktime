@@ -272,7 +272,7 @@ class Catch22Wrapper(BaseTransformer):
             all_feature_names = feature_names + ["Mean", "StandardDeviation"]
             cols = [all_feature_names[i] for i in f_idx]
 
-        Xt = pd.DataFrame(Xt, columns=cols)
+        Xt = pd.DataFrame(Xt_np, columns=cols)
 
         return Xt
 
