@@ -26,6 +26,11 @@ class TemporianTransformer(BaseTransformer):
         Temporian function to apply to the input time series. The function must receive
         and return a single Temporian EventSet, and can apply an arbitrary number of
         Temporian operators to its input.
+    compile : bool, default=False
+        If True, the function will be compiled using Temporian's @tp.compile decorator,
+        which can lead to significant speedups by optimizing the graph of operations.
+        Learn more about @tp.compile
+        [here](https://temporian.readthedocs.io/en/stable/reference/temporian/compile/).
     """
 
     _tags = {
@@ -50,14 +55,15 @@ class TemporianTransformer(BaseTransformer):
         "python_version": "<3.12",
     }
 
-    def __init__(self, function):
+    def __init__(self, function, compile=False):
         self.function = function
+        self.compile = compile
 
         super().__init__()
 
         # TODO: ensure function receives a single EventSet/param with inspect module?
         #       or is failing in runtime OK?
-        # TODO: @tp.compile the function
+        # TODO: @tp.compile the function if self.compile is True
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -108,23 +114,15 @@ class TemporianTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # dependency check is required here, as this method is used in tests
-        # this is currently a small hack for the unusual case where all valid
-        # parameter dictionaries already require the dependency
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-        deps = cls.get_class_tag("python_dependencies")
-        _check_soft_dependencies(deps, severity="error")
-
         return [
-            {"function": _test_function},
-            {"function": _test_function2},
+            {"function": _test_function_single_op, "compile": False},
+            {"function": _test_function_many_ops, "compile": True},
         ]
 
 
-def _test_function(evset):
+def _test_function_single_op(evset):
     return evset + 1
 
 
-def _test_function2(evset):
-    return evset.simple_moving_average(10)
+def _test_function_many_ops(evset):
+    return evset.simple_moving_average(10).lag(10).resample(evset)
