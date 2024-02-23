@@ -3,10 +3,11 @@
 A transformer for the Catch22 features using the pycatch22 C wrapper.
 """
 
-__author__ = ["MatthewMiddlehurst"]
+__author__ = ["MatthewMiddlehurst", "fkiraly"]
 __all__ = ["Catch22Wrapper"]
 
 import numpy as np
+import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel import catch22
@@ -50,6 +51,12 @@ class Catch22Wrapper(BaseTransformer):
         while to process for large values.
     replace_nans : bool, optional, default=True
         Replace NaN or inf values from the Catch22 transform with 0.
+    col_names : str, one of {"range", "int_feat", "str_feat"}, optional, default="range"
+        The type of column names to return. If "range", column names will be
+        a regular range of integers, as in a RangeIndex.
+        If "int_feat", column names will be the integer feature indices,
+        as defined in pycatch22.
+        If "str_feat", column names will be the string feature names.
 
     See Also
     --------
@@ -90,12 +97,14 @@ class Catch22Wrapper(BaseTransformer):
         outlier_norm=False,
         replace_nans=False,
         n_jobs="deprecated",
+        col_names="range",
     ):
         self.features = features
         self.catch24 = catch24
         self.outlier_norm = outlier_norm
         self.replace_nans = replace_nans
         self.n_jobs = n_jobs
+        self.col_names = col_names
 
         self.features_arguments = (
             features
@@ -185,14 +194,22 @@ class Catch22Wrapper(BaseTransformer):
         return Xt
 
     def _transform_case(self, X, f_idx, features):
-        c22 = np.zeros(len(f_idx))
+        """Transform data into the Catch22 features.
+
+        Returns
+        -------
+        c22 : np.array of size [1, n_features], where n_features is the
+             number of features requested, containing Catch22 features for X.
+        """
+        n_feat = len(f_idx)
+        c22 = np.zeros((1, n_feat))
 
         if self._transform_features is not None and len(
             self._transform_features
-        ) == len(c22):
+        ) == n_feat:
             transform_feature = self._transform_features
         else:
-            transform_feature = [True] * len(c22)
+            transform_feature = [True] * n_feat
 
         f_count = -1
 
@@ -210,13 +227,25 @@ class Catch22Wrapper(BaseTransformer):
                 continue
 
             if self.outlier_norm and feature in [3, 4]:
-                c22[n] = features[feature](outlier_series)
+                c22[0, n] = features[feature](outlier_series)
             if feature == 22:
-                c22[n] = np.mean(series)
+                c22[0, n] = np.mean(series)
             elif feature == 23:
-                c22[n] = np.std(series)
+                c22[0, n] = np.std(series)
             else:
-                c22[n] = features[feature](series)
+                c22[0, n] = features[feature](series)
+
+        col_names = self.col_names
+
+        if col_names == "range":
+            cols = range(n_feat)
+        elif col_names == "int_feat":
+            cols = f_idx
+        elif col_names == "str_feat":
+            all_feature_names = feature_names + ["Mean", "StandardDeviation"]
+            cols = [all_feature_names[i] for i in f_idx]
+
+        Xt = pd.DataFrame(Xt, columns=cols)
 
         return c22
 
@@ -239,8 +268,10 @@ class Catch22Wrapper(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         param1 = {"catch24": True}
-        param2 = {"features": [1, 3, 7]}
-        return [param1, param2]
+        param2 = {"features": [1, 3, 7], "col_names": "int_feat"}
+        param3 = {"features": "all", "outlier_norm": True, "replace_nans": True}
+        param4 = {"features": ["CO_trev_1_num"], "col_names": "str_feat"}
+        return [param1, param2, param3, param4]
 
 
 feature_names = catch22.feature_names
