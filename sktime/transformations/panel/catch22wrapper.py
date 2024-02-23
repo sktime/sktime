@@ -167,7 +167,7 @@ class Catch22Wrapper(BaseTransformer):
         return Xt
 
     def _get_fun_with_ix(self, ix):
-        """Returns function with index ix from the pycatch22 library.
+        """Return function with index ix from the pycatch22 library.
 
         Index 0 - 21 are the catch22 features, in the same order as in pycatch22.
         22 is the mean and 23 is the standard deviation.
@@ -235,11 +235,12 @@ class Catch22Wrapper(BaseTransformer):
 
         Returns
         -------
-        c22 : np.array of size [1, n_features], where n_features is the
-             number of features requested, containing Catch22/24 features for X.
+        Xt : pd.DataFrame of size [1, n_features], where n_features is the
+            number of features requested, containing Catch22/24 features for X.
+            column index is determined by self.col_names
         """
         n_feat = len(f_idx)
-        c22 = np.zeros((1, n_feat))
+        Xt_np = np.zeros((1, n_feat))
 
         if (
             self._transform_features is not None
@@ -259,7 +260,7 @@ class Catch22Wrapper(BaseTransformer):
                 continue
 
             feat_fun = self._get_fun_with_ix(feature)
-            c22[0, n] = feat_fun(series)
+            Xt_np[0, n] = feat_fun(series)
 
         col_names = self.col_names
 
@@ -273,7 +274,7 @@ class Catch22Wrapper(BaseTransformer):
 
         Xt = pd.DataFrame(Xt, columns=cols)
 
-        return c22
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
