@@ -111,7 +111,7 @@ class TSBootstrapAdapter(BaseTransformer):
 
         deps = cls.get_class_tag("python_dependencies")
         _check_soft_dependencies(deps, severity="error")
-        
+
         from tsbootstrap.block_bootstrap import (
             BaseSieveBootstrapConfig,
             MovingBlockBootstrap,
