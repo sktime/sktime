@@ -261,7 +261,7 @@ class DistFromKernel(BasePairwiseTransformerPanel):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.dists_kernels import LuckyDtwDist, EditDist
+        from sktime.dists_kernels import EditDist, LuckyDtwDist
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         params = [{"kernel": LuckyDtwDist()}]
