@@ -217,7 +217,7 @@ class TimeSeriesDBSCAN(BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.dists_kernels import AggrDist, DtwDist, EditDist, LuckyDtwDist
+        from sktime.dists_kernels import AggrDist, DtwDist, LuckyDtwDist
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         params = [{"distance": LuckyDtwDist()}]
