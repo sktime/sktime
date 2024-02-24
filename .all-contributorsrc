@@ -2583,6 +2583,17 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Abhay-Lejith",
+      "name": "Abhay Lejith",
+      "avatar_url": "https://avatars.githubusercontent.com/u/120819228?s=96&v=4",
+      "profile": "https://github.com/Abhay-Lejith",
+      "contributions": [
+        "doc",
+        "code",
+        "bug"
+      ]
     }
   ]
 }
