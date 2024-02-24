@@ -24,7 +24,7 @@ class TSBootstrapAdapter(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.bootstrap import TSBootstrapAdapter
     >>> from tsbootstrap import (
-    ...    MovingBlockBootstrap, 
+    ...    MovingBlockBootstrap,
     ...    MovingBlockBootstrapConfig
     ... ) # doctest: +SKIP
     >>> y = load_airline()
