@@ -166,7 +166,7 @@ class IndepDist(BasePairwiseTransformerPanel):
         from sktime.dists_kernels import DtwDist, LuckyDtwDist
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params = [{"dist": LuckyDtwDist()}] 
+        params = [{"dist": LuckyDtwDist()}]
         if _check_soft_dependencies("numba", severity="none"):
             params1 = {"dist": DtwDist()}
             params2 = {"dist": DtwDist(), "aggfun": "median"}
