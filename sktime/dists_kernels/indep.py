@@ -163,13 +163,17 @@ class IndepDist(BasePairwiseTransformerPanel):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.dists_kernels.dtw import DtwDist
+        from sktime.dists_kernels import DtwDist, LuckyDtwDist
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params1 = {"dist": DtwDist()}
-        params2 = {"dist": DtwDist(), "aggfun": "median"}
-        params3 = {"dist": DtwDist(), "aggfun": _testfun}
+        params = [{"dist": LuckyDtwDist()}] 
+        if _check_soft_dependencies("numba", severity="none"):
+            params1 = {"dist": DtwDist()}
+            params2 = {"dist": DtwDist(), "aggfun": "median"}
+            params3 = {"dist": DtwDist(), "aggfun": _testfun}
+            params = params + [params1, params2, params3]
 
-        return [params1, params2, params3]
+        return params
 
 
 def _testfun(x):

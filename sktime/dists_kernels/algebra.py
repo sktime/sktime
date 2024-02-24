@@ -235,11 +235,11 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         from sktime.dists_kernels.compose_tab_to_panel import AggrDist
-        from sktime.dists_kernels.dtw import DtwDist
+        from sktime.dists_kernels import LuckyDtwDist
 
         params1 = {"pw_trafos": [AggrDist.create_test_instance()]}
         params2 = {
-            "pw_trafos": [AggrDist.create_test_instance(), DtwDist()],
+            "pw_trafos": [AggrDist.create_test_instance(), LuckyDtwDist()],
             "operation": "+",
         }
 
