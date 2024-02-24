@@ -121,11 +121,7 @@ class TSBootstrapAdapter(BaseTransformer):
         )
 
         params = [
-            {
-                "bootstrap": WholeSieveBootstrap(
-                    n_bootstraps=10
-                )
-            },
+            {"bootstrap": WholeSieveBootstrap(n_bootstraps=10)},
             {
                 "bootstrap": MovingBlockBootstrap(n_bootstraps=10, block_length=4),
             },
