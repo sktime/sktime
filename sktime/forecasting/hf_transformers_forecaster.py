@@ -177,7 +177,7 @@ class HFTransformersForecaster(BaseForecaster):
                 )
                 epoch_loss = val_pred.loss.detach().numpy()
                 if self.verbose:
-                    print( # noqa T201
+                    print(  # noqa T201
                         epoch,
                         i,
                         pred.loss.detach().numpy(),
