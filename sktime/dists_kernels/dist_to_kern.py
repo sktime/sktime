@@ -143,16 +143,16 @@ class KernelFromDist(BasePairwiseTransformerPanel):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.dists_kernels.dtw import DtwDist
+        from sktime.dists_kernels.dtw import LuckyDtwDist
         from sktime.transformations.series.adapt import PandasTransformAdaptor
         from sktime.transformations.series.summarize import SummaryTransformer
 
-        params1 = {"dist": DtwDist()}
+        params1 = {"dist": LuckyDtwDist()}
         t = SummaryTransformer("mean", None)
         # we need this since multivariate summary produces two columns
         # if one column, has no effect; if multiple, takes means by row
         t = PandasTransformAdaptor("mean", {"axis": 1}) * t
-        params2 = {"dist": DtwDist(), "dist_diag": t}
+        params2 = {"dist": LuckyDtwDist(), "dist_diag": t}
 
         return [params1, params2]
 
@@ -261,9 +261,12 @@ class DistFromKernel(BasePairwiseTransformerPanel):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.dists_kernels import DtwDist, EditDist
+        from sktime.dists_kernels import LuckyDtwDist, EditDist
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params1 = {"kernel": DtwDist()}
-        params2 = {"kernel": EditDist()}
+        params = [{"kernel": LuckyDtwDist()}]
 
-        return [params1, params2]
+        if _check_soft_dependencies("numba", severity="none"):
+            params = params + [{"kernel": EditDist()}]
+
+        return params
