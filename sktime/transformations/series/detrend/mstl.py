@@ -222,7 +222,7 @@ class MSTL(BaseTransformer):
                 "resid": resid,
             }
 
-            for column_name, column_data in mstl.seasonal.iteritems():
+            for column_name, column_data in mstl.seasonal.items():
                 ret[column_name] = column_data
 
             ret = pd.DataFrame(ret)
