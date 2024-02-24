@@ -266,6 +266,7 @@ dl = [
   'FrEIA; python_version < "3.12"',
   'tensorflow<=2.14,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
+  'transformers; python_version < "3.12"',
 ]
 mlflow = [
   "mlflow",
