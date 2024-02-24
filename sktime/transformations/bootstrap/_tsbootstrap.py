@@ -55,9 +55,9 @@ class TSBootstrapAdapter(BaseTransformer):
         bootstrap,
         include_actual=True,
     ):
-        super().__init__()
         self.bootstrap = bootstrap
         self.include_actual = include_actual
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
