@@ -35,6 +35,7 @@ __author__ = ["fkiraly"]
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.datatypes._series_as_panel import convert_Series_to_Panel
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 class BasePairwiseTransformer(BaseEstimator):
@@ -61,6 +62,7 @@ class BasePairwiseTransformer(BaseEstimator):
 
     def __init__(self):
         super().__init__()
+        _check_estimator_deps(self)
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -199,6 +201,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
     def __init__(self):
         super().__init__()
+        _check_estimator_deps(self)
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
