@@ -51,6 +51,17 @@ class HFTransformersForecaster(BaseForecaster):
     >>> y_pred = forecaster.predict(fh)
     """
 
+
+    _tags = {
+        "ignores-exogeneous-X": False,
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "handles-missing-data": False,
+        "capability:pred_int": True,
+        "python_dependencies": ["transformers", "torch"],
+    }
+
     def __init__(
         self,
         model_path: str,
