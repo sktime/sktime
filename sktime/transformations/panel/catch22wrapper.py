@@ -89,7 +89,7 @@ class Catch22Wrapper(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    # todo 0.29.0: remove n_jobs parameter
+    # todo 0.28.0: remove n_jobs parameter
     def __init__(
         self,
         features="all",
@@ -130,11 +130,11 @@ class Catch22Wrapper(BaseTransformer):
 
         super().__init__()
 
-        # todo 0.29.0: remove this warning and logic
+        # todo 0.28.0: remove this warning and logic
         if n_jobs != "deprecated":
             warn(
                 "In Catch22Wrapper, the parameter "
-                "n_jobs is deprecated and will be removed in v0.29.0. "
+                "n_jobs is deprecated and will be removed in v0.28.0. "
                 "Instead, use set_config with the backend and backend:params "
                 "config fields, and set backend to 'joblib' and pass n_jobs "
                 "as a parameter of backend_params. ",
