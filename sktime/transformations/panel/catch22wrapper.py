@@ -308,5 +308,5 @@ def _normalise_series(X):
     if std > 0:
         X_norm = (X - mean) / std
     else:
-        X_norm = X - mean
+        X_norm = X
     return list(X_norm)
