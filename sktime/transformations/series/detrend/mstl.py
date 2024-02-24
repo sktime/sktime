@@ -261,5 +261,9 @@ class MSTL(BaseTransformer):
             "iterate": 10,
             "stl_kwargs": {"trend_deg": 0},
         }
+        params3 = {
+            "periods": [3, 12],
+            "return_components": True,
+        }
 
-        return [params1, params2]
+        return [params1, params2, params3]
