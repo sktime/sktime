@@ -13,7 +13,7 @@ class TSBootstrapAdapter(BaseTransformer):
 
     Parameters
     ----------
-    bootstrapper : Bootstrapper from tsbootstrap
+    bootstrap : bootstrap from tsbootstrap
         default = SlidingWindowSplitter(window_length=3, step_length=1)
         The splitter used for the bootstrap splitting.
     include_actual : bool, default=True
@@ -49,11 +49,11 @@ class TSBootstrapAdapter(BaseTransformer):
 
     def __init__(
         self,
-        bootstrapper,
+        bootstrap,
         include_actual=True,
     ):
         super().__init__()
-        self.bootstrapper = bootstrapper
+        self.bootstrap = bootstrap
         self.include_actual = include_actual
 
     def _transform(self, X, y=None):
@@ -73,7 +73,7 @@ class TSBootstrapAdapter(BaseTransformer):
         -------
         transformed version of X
         """
-        bootstrapped_samples = self.bootstrapper.bootstrap(X, test_ratio=0)
+        bootstrapped_samples = self.bootstrap.bootstrap(X, test_ratio=0)
 
         bootstrapped_samples = [pd.DataFrame(sample) for sample in bootstrapped_samples]
 
@@ -121,7 +121,7 @@ class TSBootstrapAdapter(BaseTransformer):
 
         params = [
             {
-                "tsbootstrapper": WholeSieveBootstrap(
+                "bootstrap": WholeSieveBootstrap(
                     BaseSieveBootstrapConfig(
                         10,
                         n_bootstraps=10,
@@ -129,7 +129,7 @@ class TSBootstrapAdapter(BaseTransformer):
                 )
             },
             {
-                "tsbootstrapper": MovingBlockBootstrap(MovingBlockBootstrapConfig()),
+                "bootstrap": MovingBlockBootstrap(MovingBlockBootstrapConfig()),
             },
         ]
 
