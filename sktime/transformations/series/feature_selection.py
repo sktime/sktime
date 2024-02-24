@@ -32,7 +32,6 @@ class FeatureSelection(BaseTransformer):
         * "columns": Select features by given names.
         * "none": Remove all columns, transform returns None.
         * "all": Select all given features.
-        
     regressor : sklearn-like regressor, optional, default=None.
         Used as meta-model for the method "feature-importances". The given
         regressor must have an attribute "feature_importances_". If None,
