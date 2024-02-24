@@ -209,12 +209,9 @@ class Catch22Wrapper(BaseTransformer):
             pycatch22.PD_PeriodicityWang_th0_01,
         ]
 
-        def _feature_with_outlier_norm(series):
-            outlier_series = np.array(series)
-            outlier_series = list(
-                catch22._normalise_series(outlier_series, np.mean(outlier_series))
-            )
-            return features[ix](outlier_series)
+        def _feature_with_outlier_norm(X):
+            X = _normalise_series(X)
+            return features[ix](X)
 
         if ix in [3, 4]:
             return _feature_with_outlier_norm
@@ -302,3 +299,12 @@ class Catch22Wrapper(BaseTransformer):
 
 
 feature_names = catch22.feature_names
+
+
+def _normalise_series(X):
+    X = np.array(X)
+    std = np.std(X)
+    mean = np.mean(X)
+    if std > 0:
+        return (X - mean) / std
+    return list(X)
