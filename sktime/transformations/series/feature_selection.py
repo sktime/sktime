@@ -25,6 +25,7 @@ class FeatureSelection(BaseTransformer):
     ----------
     method : str, required
         The method of how to select the features. Implemented methods are:
+        
         * "feature-importances": Use feature_importances_ of the regressor (meta-model)
           to select n_columns with highest importance values.
           Requires parameter n_columns.
@@ -32,6 +33,7 @@ class FeatureSelection(BaseTransformer):
         * "columns": Select features by given names.
         * "none": Remove all columns, transform returns None.
         * "all": Select all given features.
+        
     regressor : sklearn-like regressor, optional, default=None.
         Used as meta-model for the method "feature-importances". The given
         regressor must have an attribute "feature_importances_". If None,
