@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 
-import padnas as pd
+import pandas as pd
 import torch
 from skpro.distributions import Normal, TDistribution
 from torch.utils.data import DataLoader, Dataset
