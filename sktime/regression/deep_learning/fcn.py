@@ -52,7 +52,7 @@ class FCNRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["James-Large", "AurumnPegasus", "nilesh05apr"],
+        "authors": ["James-Large", "AurumnPegasus"],
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         # estimator type handled by parent class
     }

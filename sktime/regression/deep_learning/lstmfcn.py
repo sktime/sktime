@@ -57,7 +57,7 @@ class LSTMFCNRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1", "solen0id", "nilesh05apr"],
+        "authors": ["jnrusson1", "solen0id"],
         "maintainers": ["jnrusson1", "solen0id", "nilesh05apr"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
