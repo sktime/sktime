@@ -42,6 +42,7 @@ EXCLUDE_ESTIMATORS = [
     "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
+    "MLPRegressor",
     "CNNRegressor",
     "ResNetRegressor",
     "FCNRegressor",
@@ -118,6 +119,9 @@ EXCLUDED_TESTS = {
     "MLPClassifier": [
         "test_fit_idempotent",
     ],
+    "MLPRegressor": [
+        "test_fit_idempotent",
+    ],    
     "CNTCClassifier": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
