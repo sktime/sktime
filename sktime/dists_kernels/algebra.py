@@ -38,17 +38,17 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     Examples
     --------
     >>> from sktime.dists_kernels.algebra import CombinedDistance
-    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>> from sktime.dists_kernels import LuckyDtwDist
     >>> from sktime.datasets import load_unit_test
     >>>
     >>> X, _ = load_unit_test()
     >>> X = X[0:3]
-    >>> sum_dist = CombinedDistance([DtwDist(), DtwDist(weighted=True)], "+")
+    >>> sum_dist = CombinedDistance([LuckyDtwDist(), LuckyDtwDist(window=42)], "+")
     >>> dist_mat = sum_dist.transform(X)
 
     the same can also be done more compactly using dunders:
 
-    >>> sum_dist = DtwDist() + DtwDist(weighted=True)
+    >>> sum_dist = LuckyDtwDist() + LuckyDtwDist(window=42)
     >>> dist_mat = sum_dist(X)
     """
 
