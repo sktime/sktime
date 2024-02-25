@@ -192,6 +192,12 @@ ESTIMATOR_TAG_REGISTER = [
         "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
+        "requires_X",
+        "transformer",
+        "bool",
+        "does this transformer require X to be passed in fit and transform?",
+    ),
+    (
         "requires_y",
         "transformer",
         "bool",
