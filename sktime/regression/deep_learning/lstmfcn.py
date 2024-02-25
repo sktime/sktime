@@ -7,7 +7,7 @@ from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
-from sktime.classification.deep_learning.base import BaseDeepRegressor
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.networks.lstmfcn import LSTMFCNNetwork
 
 
