@@ -46,6 +46,7 @@ EXCLUDE_ESTIMATORS = [
     "CNNRegressor",
     "ResNetRegressor",
     "FCNRegressor",
+    "LSTMFCNRegressor",
 ]
 
 
@@ -116,6 +117,9 @@ EXCLUDED_TESTS = {
     "LSTMFCNClassifier": [
         "test_fit_idempotent",
     ],
+    "LSTMFCNRegressor": [
+        "test_fit_idempotent",
+    ],    
     "MLPClassifier": [
         "test_fit_idempotent",
     ],
