@@ -60,7 +60,8 @@ METHODS_DICT = {
     "FC_LocalSimple_mean1_tauresrat": _FC_LocalSimple_mean1_tauresrat,
     "CO_Embed2_Dist_tau_d_expfit_meandiff": _CO_Embed2_Dist_tau_d_expfit_meandiff,
     "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-    "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
+    "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1":
+      _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
     "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
     "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
 }
@@ -225,7 +226,6 @@ class Catch22(BaseTransformer):
         return pd.DataFrame(c22_list)
 
     def _get_feature_function(self, feature: Union[int, str]):
-
         feature_name = FEATURE_NAMES[feature] if isinstance(feature, int) else feature
 
         return METHODS_DICT.get(feature_name)
@@ -284,7 +284,6 @@ class Catch22(BaseTransformer):
             return c22
 
     def _transform_single_feature(self, X: np.ndarray, feature: Union[int, str]):
-
         if isinstance(X, pd.DataFrame):
             X = convert_to(X, "numpy3D")
 
