@@ -114,13 +114,6 @@ class _DdtwDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        if not is_no_python_compiled_callable(compute_derivative):
-            raise TypeError(
-                f"The derivative callable must be no_python compiled. The name"
-                f"of the callable that must be compiled is "
-                f"{compute_derivative.__name__}"
-            )
-
         if return_cost_matrix is True:
 
             @njit(cache=True)
@@ -215,13 +208,6 @@ class _DdtwDistance(NumbaDistance):
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
-
-        if not is_no_python_compiled_callable(compute_derivative):
-            raise TypeError(
-                f"The derivative callable must be no_python compiled. The name"
-                f"of the callable that must be compiled is "
-                f"{compute_derivative.__name__}"
-            )
 
         @njit(cache=True)
         def numba_ddtw_distance(

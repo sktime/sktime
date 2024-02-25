@@ -118,7 +118,8 @@ class EditDist(BasePairwiseTransformerPanel):
         # packaging info
         # --------------
         "authors": ["chrisholder", "TonyBagnall", "fkiraly"],
-        "python_dependencies": "numba",
+        # "python_dependencies": "numba",  optional backend
+        #
         # estimator type
         # --------------
         "symmetric": True,  # all the distances are symmetric
@@ -150,6 +151,10 @@ class EditDist(BasePairwiseTransformerPanel):
         self.p = p
 
         super().__init__()
+
+        from sktime.utils.numba.warning import _check_numba_warning
+
+        _check_numba_warning(self, category=UserWarning)
 
         kwargs = {
             "window": window,

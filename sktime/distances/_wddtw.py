@@ -100,13 +100,6 @@ class _WddtwDistance(NumbaDistance):
                 f"The value of g must be a float. The current value is {g}"
             )
 
-        if not is_no_python_compiled_callable(compute_derivative):
-            raise ValueError(
-                f"The derivative callable must be no_python compiled. The name"
-                f"of the callable that must be compiled is "
-                f"{compute_derivative.__name__}"
-            )
-
         if return_cost_matrix is True:
 
             @njit(cache=True)
@@ -211,13 +204,6 @@ class _WddtwDistance(NumbaDistance):
         if not isinstance(g, float):
             raise ValueError(
                 f"The value of g must be a float. The current value is {g}"
-            )
-
-        if not is_no_python_compiled_callable(compute_derivative):
-            raise ValueError(
-                f"The derivative callable must be no_python compiled. The name"
-                f"of the callable that must be compiled is "
-                f"{compute_derivative.__name__}"
             )
 
         @njit(cache=True)
