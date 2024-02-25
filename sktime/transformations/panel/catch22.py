@@ -6,7 +6,7 @@ A transformer for the Catch22 features.
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["Catch22"]
 
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -71,8 +71,8 @@ CATCH24_FEATURE_NAMES = ["Mean", "StandardDeviation"]
 
 
 def _verify_features(
-    features: Union[int, str, list[Union[int, str]]], catch24: bool
-) -> list[int]:
+    features: Union[int, str, List[Union[int, str]]], catch24: bool
+) -> List[int]:
 
     feature_names = FEATURE_NAMES + CATCH24_FEATURE_NAMES if catch24 else FEATURE_NAMES
 
@@ -171,7 +171,7 @@ class Catch22(BaseTransformer):
 
     def __init__(
         self,
-        features: Union[int, str, list[Union[int, str]]] = "all",
+        features: Union[int, str, List[Union[int, str]]] = "all",
         catch24: bool = False,
         outlier_norm: bool = False,
         replace_nans: bool = False,
@@ -230,7 +230,7 @@ class Catch22(BaseTransformer):
 
         return METHODS_DICT.get(feature_name)
 
-    def _transform_case(self, X: np.ndarray, f_idx: list[int]):
+    def _transform_case(self, X: np.ndarray, f_idx: List[int]):
         from sktime.transformations.panel._catch22_numba import (
             _ac_first_zero,
             _autocorr,
