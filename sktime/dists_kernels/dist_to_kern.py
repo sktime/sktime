@@ -143,7 +143,7 @@ class KernelFromDist(BasePairwiseTransformerPanel):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.dists_kernels.dtw import LuckyDtwDist
+        from sktime.dists_kernels import LuckyDtwDist
         from sktime.transformations.series.adapt import PandasTransformAdaptor
         from sktime.transformations.series.summarize import SummaryTransformer
 
