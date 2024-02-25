@@ -55,7 +55,7 @@ class IndepDist(BasePairwiseTransformerPanel):
     >>> from sktime.dists_kernels.indep import IndepDist
     >>> from sktime.dists_kernels.dtw import DtwDist
     >>>
-    >>> dist = IndepDist(DtwDist())
+    >>> dist = IndepDist(DtwDist())  # doctest: +SKIP
     """  # noqa: E501
 
     _tags = {

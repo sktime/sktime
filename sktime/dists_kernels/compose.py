@@ -13,48 +13,52 @@ SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel):
     """Pipeline of transformers and a pairwise panel transformer.
 
-    `PwTrafoPanelPipeline` chains transformers and a pairwise transformer at the end.
+    ``PwTrafoPanelPipeline`` chains transformers and a pairwise transformer at the end.
+
     The pipeline is constructed with a list of sktime transformers (BaseTransformer),
-        plus a pairwise panel transformer, following BasePairwiseTransformerPanel.
+    plus a pairwise panel transformer, following BasePairwiseTransformerPanel.
+
     The transformer list can be unnamed - a simple list of transformers -
-        or string named - a list of pairs of string, estimator.
+    or string named - a list of pairs of string, estimator.
 
-    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN` and an estimator `est`,
-        the pipeline behaves as follows:
-    `transform(X)` - running `trafo1.fit_transform` on `X`,
-        them `trafo2.fit_transform` on the output of `trafo1.fit_transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`.
-        Then passes output of `trafo[N]` to `pw_trafo.transform`, as `X`.
-        Same chain of transformers is run on `X2` and passed, if not `None`.
+    For a list of transformers ``trafo1``, ``trafo2``, ..., ``trafoN``,
+        and an estimator ``est``, the pipeline behaves as follows:
 
-    `PwTrafoPanelPipeline` can also be created by using the magic multiplication
-        on any parameter estimator: if `pw_t` is `BasePairwiseTransformerPanel`,
-            and `my_trafo1`, `my_trafo2` inherit from `BaseTransformer`, then,
-            for instance, `my_trafo1 * my_trafo2 * pw_t`
-            will result in the same object as  obtained from the constructor
-            `PwTrafoPanelPipeline(pw_trafo=pw_t, transformers=[my_trafo1, my_trafo2])`
-        magic multiplication can also be used with (str, transformer) pairs,
-            as long as one element in the chain is a transformer
+    ``transform(X)`` - running ``trafo1.fit_transform`` on ``X``,
+        them ``trafo2.fit_transform`` on the output of ``trafo1.fit_transform``, etc
+        sequentially, with ``trafo[i]`` receiving the output of ``trafo[i-1]``.
+        Then passes output of ``trafo[N]`` to ``pw_trafo.transform``, as ``X``.
+        Same chain of transformers is run on ``X2`` and passed, if not ``None``.
+
+    ``PwTrafoPanelPipeline`` can also be created by using the magic multiplication
+        on any parameter estimator: if ``pw_t`` is ``BasePairwiseTransformerPanel``,
+        and ``my_trafo1``, ``my_trafo2`` inherit from ``BaseTransformer``, then,
+        for instance, ``my_trafo1 * my_trafo2 * pw_t``
+        will result in the same object as  obtained from the constructor
+        ``PwTrafoPanelPipeline(pw_trafo=pw_t, transformers=[my_trafo1, my_trafo2])``.
+
+        Magic multiplication can also be used with (str, transformer) pairs,
+        as long as one element in the chain is a transformer
 
     Parameters
     ----------
     pw_trafo : pairwise panel transformer,
-        i.e., estimator inheriting from BasePairwiseTransformerPanel
-        this is a "blueprint" estimator, state does not change when `fit` is called
-    transformers : list of sktime transformers, or
-        list of tuples (str, transformer) of sktime transformers
-        these are "blueprint" transformers, states do not change when `fit` is called
+        i.e., estimator inheriting from ``BasePairwiseTransformerPanel``
+        this is a "blueprint" estimator, state does not change when ``fit`` is called
+    transformers : list of ``sktime`` transformers, or
+        list of tuples (str, transformer) of ``sktime`` transformers
+        these are "blueprint" transformers, states do not change when ``fit`` is called
 
     Examples
     --------
     >>> from sktime.dists_kernels.compose import PwTrafoPanelPipeline
-    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>> from sktime.dists_kernels import LuckyDtwDist
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> from sktime.datasets import load_unit_test
     >>>
     >>> X, _ = load_unit_test()
     >>> X = X[0:3]
-    >>> pipeline = PwTrafoPanelPipeline(DtwDist(), [ExponentTransformer()])
+    >>> pipeline = PwTrafoPanelPipeline(LuckyDtwDist(), [ExponentTransformer()])
     >>> dist_mat = pipeline.transform(X)
     """
 

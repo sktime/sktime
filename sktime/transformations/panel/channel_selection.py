@@ -168,9 +168,9 @@ class ElbowClassSum(BaseTransformer):
 
     Any sktime compatible distance can be used, e.g., DTW distance:
 
-    >>> from sktime.dists_kernels import DtwDist
+    >>> from sktime.dists_kernels import LuckyDtwDist
     >>>
-    >>> cs = ElbowClassSum(distance=DtwDist())
+    >>> cs = ElbowClassSum(distance=LuckyDtwDist())
     >>> cs.fit(X, y)
     ElbowClassSum(...)
     >>> Xt = cs.transform(X)

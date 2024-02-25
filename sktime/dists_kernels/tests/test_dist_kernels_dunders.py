@@ -7,7 +7,7 @@ import pytest
 
 from sktime.dists_kernels.algebra import CombinedDistance
 from sktime.dists_kernels.compose import PwTrafoPanelPipeline
-from sktime.dists_kernels.edit_dist import EditDist
+from sktime.dists_kernels.lucky import LuckyDtwDist
 from sktime.utils._testing.panel import _make_panel_X
 
 X1 = _make_panel_X(
@@ -20,9 +20,9 @@ X2 = _make_panel_X(
 
 def test_mul_algebra_dunder():
     """Test multiplication dunder, algebraic case (two panel distances)."""
-    t1 = EditDist()
-    t2 = EditDist(distance="edr")
-    t3 = EditDist(distance="erp")
+    t1 = LuckyDtwDist()
+    t2 = LuckyDtwDist(window=2)
+    t3 = LuckyDtwDist(window=3)
 
     m1 = t1.transform(X1, X2)
     m2 = t2.transform(X1, X2)
@@ -55,9 +55,9 @@ def test_mul_algebra_dunder():
 
 def test_add_algebra_dunder():
     """Test addition dunder, algebraic case (two panel distances)."""
-    t1 = EditDist()
-    t2 = EditDist(distance="edr")
-    t3 = EditDist(distance="erp")
+    t1 = LuckyDtwDist()
+    t2 = LuckyDtwDist(window=2)
+    t3 = LuckyDtwDist(window=3)
 
     m1 = t1.transform(X1, X2)
     m2 = t2.transform(X1, X2)
@@ -90,9 +90,9 @@ def test_add_algebra_dunder():
 
 def test_mixed_algebra_dunders():
     """Test mix of algebraic dunders."""
-    t1 = EditDist()
-    t2 = EditDist(distance="edr")
-    t3 = EditDist(distance="erp")
+    t1 = LuckyDtwDist()
+    t2 = LuckyDtwDist(window=2)
+    t3 = LuckyDtwDist(window=3)
 
     m1 = t1.transform(X1, X2)
     m2 = t2.transform(X1, X2)
@@ -115,7 +115,7 @@ def test_pw_trafo_pipeline_mul_dunder():
     """Tests creation of pairwise panel trafo pipelines using mul dunder."""
     from sktime.transformations.series.exponent import ExponentTransformer
 
-    t3 = EditDist()
+    t3 = LuckyDtwDist()
     t1 = ExponentTransformer(2)
     t2 = ExponentTransformer(0.5)
 
@@ -143,7 +143,7 @@ def test_pw_trafo_pipeline_mul_dunder():
 @pytest.mark.parametrize("constant", [0, 1, -0.25])
 def test_dunders_with_constants(constant):
     """Tests creation of pairwise panel trafo pipelines using mul dunder."""
-    t = EditDist()
+    t = LuckyDtwDist()
 
     m = t.transform(X1, X2)
 
@@ -168,7 +168,7 @@ def test_dunders_with_constants(constant):
 
 def test_getitem_dunder():
     """Tests creation of pairwise panel trafo pipelines using mul dunder."""
-    t = EditDist()
+    t = LuckyDtwDist()
 
     idx_sub = ["var_1", "var_2"]
 
