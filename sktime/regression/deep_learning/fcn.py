@@ -7,8 +7,8 @@ from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
-from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.networks.fcn import FCNNetwork
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
@@ -69,7 +69,6 @@ class FCNRegressor(BaseDeepRegressor):
         activation="sigmoid",
         use_bias=True,
         optimizer=None,
-
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
@@ -133,7 +132,7 @@ class FCNRegressor(BaseDeepRegressor):
             metrics=metrics,
         )
         return model
-    
+
     def _fit(self, X, y):
         """Fit the regressor on the training set (X, y).
 

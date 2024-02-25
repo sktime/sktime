@@ -119,13 +119,13 @@ EXCLUDED_TESTS = {
     ],
     "LSTMFCNRegressor": [
         "test_fit_idempotent",
-    ],    
+    ],
     "MLPClassifier": [
         "test_fit_idempotent",
     ],
     "MLPRegressor": [
         "test_fit_idempotent",
-    ],    
+    ],
     "CNTCClassifier": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
