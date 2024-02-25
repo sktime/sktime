@@ -142,6 +142,8 @@ def check_n_jobs(n_jobs: int) -> int:
         return 1
     elif not is_int(n_jobs):
         raise ValueError(f"`n_jobs` must be None or an integer, but found: {n_jobs}")
+    elif n_jobs == -1:
+        return os.cpu_count()
     elif n_jobs < 0:
         return os.cpu_count() - n_jobs + 1
     else:
