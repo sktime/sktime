@@ -206,7 +206,7 @@ class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
                 ("Naive_mean", DummyRegressor(strategy="mean")),
                 ("Naive_median", DummyRegressor(strategy="median")),
                 ("Naive_quantile", DummyRegressor(strategy="quantile")),
-                ("Naive_constant", DummyRefressor(strategey="constant")),
+                ("Naive_constant", DummyRegressor(strategey="constant")),
             ],
             "selected_regressor": "Naive_mean",
         }
@@ -215,7 +215,7 @@ class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
                 DummyRegressor(strategy="mean"),
                 DummyRegressor(strategy="median"),
                 DummyRegressor(strategy="quantile"),
-                DummyRefressor(strategey="constant"),
+                DummyRegressor(strategey="constant"),
             ],
         }
         return [params1, params2]
