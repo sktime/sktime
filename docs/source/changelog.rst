@@ -100,6 +100,11 @@ Time series classification
 * [ENH] adapter to ``tslearn`` ``KNeighborsTimeSeriesClassifier`` (:pr:`5952`) :user:`fkiraly`
 * [ENH] Feature importance capability tag for classifiers (:pr:`5969`) :user:`sanjayk0508`
 
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Migrate DL regressors from ``sktime-dl``: FCN, LSTMFCN, MLP (:pr:`6001`) :user:`nilesh05apr`
+
 Transformations
 ^^^^^^^^^^^^^^^
 
