@@ -6,6 +6,15 @@ Welcome to sktime
 
 A unified framework for machine learning with time series.
 
+.. topic:: Join the sktime summer programme 2024 with Google Summer of Code!
+
+    Apply for paid internships and/or mentoring:
+    `GSoC and internships <https://github.com/sktime/mentoring>`_
+
+    Sponsor a project, or join coordinated workstreams:
+    `Register here <https://forms.gle/98XBxgxN6XfQYMBB6>`_
+
+
 .. topic:: Register as a user, or voter for sktime committees!
 
     Prioritized bugfixes, shape the tech roadmap and governance policy.
