@@ -203,17 +203,19 @@ class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
 
         params1 = {
             "regressors": [
-                ("Naive_maj", DummyRegressor(strategy="most_frequent")),
-                ("Naive_pri", DummyRegressor(strategy="prior")),
-                ("Naive_uni", DummyRegressor(strategy="uniform")),
+                ("Naive_mean", DummyRegressor(strategy="mean")),
+                ("Naive_median", DummyRegressor(strategy="median")),
+                ("Naive_quantile", DummyRegressor(strategy="quantile")),
+                ("Naive_constant", DummyRefressor(strategey="constant")),
             ],
-            "selected_regressor": "Naive_maj",
+            "selected_regressor": "Naive_mean",
         }
         params2 = {
             "regressors": [
-                DummyRegressor(strategy="most_frequent"),
-                DummyRegressor(strategy="prior"),
-                DummyRegressor(strategy="uniform"),
+                DummyRegressor(strategy="mean"),
+                DummyRegressor(strategy="median"),
+                DummyRegressor(strategy="quantile"),
+                DummyRefressor(strategey="constant"),
             ],
         }
         return [params1, params2]
