@@ -158,6 +158,7 @@ class ColumnEnsembleTransformer(
         if isinstance(transformers, BaseTransformer):
             tags_to_clone = [
                 "fit_is_empty",
+                "requires_X",
                 "requires_y",
                 "X-y-must-have-same-index",
                 "transform-returns-same-time-index",
@@ -172,6 +173,7 @@ class ColumnEnsembleTransformer(
         else:
             l_transformers = [(x[0], x[1]) for x in transformers]
             # self._anytagis_then_set("fit_is_empty", False, True, l_transformers)
+            self._anytagis_then_set("requires_X", True, False, l_transformers)
             self._anytagis_then_set("requires_y", True, False, l_transformers)
             self._anytagis_then_set(
                 "X-y-must-have-same-index", True, False, l_transformers
