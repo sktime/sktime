@@ -2585,13 +2585,22 @@
       ]
     },
     {
+      "login": "Cyril-Meyer",
+      "name": "Cyril Meyer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/69190238?v=4",
+      "profile": "https://cyrilmeyer.eu/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "Abhay-Lejith",
       "name": "Abhay Lejith",
       "avatar_url": "https://avatars.githubusercontent.com/u/120819228?s=96&v=4",
       "profile": "https://github.com/Abhay-Lejith",
       "contributions": [
-        "code",
-        "bug"
+        "bug",
+        "code"
       ]
     }
   ]

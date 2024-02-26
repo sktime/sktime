@@ -42,8 +42,11 @@ EXCLUDE_ESTIMATORS = [
     "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
+    "MLPRegressor",
     "CNNRegressor",
     "ResNetRegressor",
+    "FCNRegressor",
+    "LSTMFCNRegressor",
 ]
 
 
@@ -114,7 +117,13 @@ EXCLUDED_TESTS = {
     "LSTMFCNClassifier": [
         "test_fit_idempotent",
     ],
+    "LSTMFCNRegressor": [
+        "test_fit_idempotent",
+    ],
     "MLPClassifier": [
+        "test_fit_idempotent",
+    ],
+    "MLPRegressor": [
         "test_fit_idempotent",
     ],
     "CNTCClassifier": [
@@ -142,6 +151,9 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "MACNNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "FCNRegressor": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
