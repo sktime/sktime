@@ -27,8 +27,11 @@ Highlights
 
 * Conditional Invertible Neural Network forecaster - from 2022 BigDEAL challenge (:pr:`5339`) :user:`benHeid`
 * ``neuralforecast`` adapter and rnn forecaster (:pr:`5962`) :user:`yarnabrina`
-* nan policy handler for ``FallbackForecaster`` (:pr:`5924`) :user:`ninedigits`
+* ``FallbackForecaster`` now supports probabilistic forecasters and setting of nan handling policy (:pr:`5847`, :pr:`5924`) :user:`ninedigits`
+* ``statsforecast`` ``AutoTBATS`` interface (:pr:`5908`) :user:`yarnabrina`
 * k-nearest neighbor classifiers from ``pyts`` and ``tslearn`` (:pr:`5939`, :pr:`5952`) :user:`fkiraly`
+* ``pyts`` ``ROCKET`` transformation (:pr:`5851`) :user:`fkiraly`
+* deep learning regressors from ``sktime-dl`` migrated: FCN, LSTMFCN, MLP (:pr:`6001`) :user:`nilesh05apr`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -64,6 +67,11 @@ Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] efficient ``_evaluate_by_index`` for ``MeanAbsolutePercentageError`` (:pr:`5842`) :user:`fkiraly`
+
+Data loaders
+^^^^^^^^^^^^
+
+* [ENH] add encoding parameter in data loaders (:pr:`6000`) :user:`Cyril-Meyer`
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -129,6 +137,7 @@ Forecasting
 
 * [BUG] Remove duplicative setting of ``_fh`` and ``_y`` in _fit of ``_pytorch.py`` (:pr:`5889`) :user:`benHeid`
 * [BUG] ``BaseForecaster`` - move ``check_fh`` to inner loop if vectorized (:pr:`5900`) :user:`ciaran-g`
+* [BUG] fix sporadic failure of ``ConformalIntervals`` if ``sample_frac`` is too low (:pr:`59/2`) :user:`fkiraly`
 
 Pipelines
 ^^^^^^^^^
@@ -180,7 +189,7 @@ Documentation
 
 * [DOC] recipes for simple parameter change and deprecation management (:pr:`5875`) :user:`fkiraly`
 * [DOC] improved deprecation recipes (:pr:`5890`) :user:`fkiraly`
-* [BUG] fixing broken link to ``DropNA`` in API reference (:pr:`5899`) :user:`sbuse`
+* [DOC] fixing broken link to ``DropNA`` in API reference (:pr:`5899`) :user:`sbuse`
 * [DOC] remove obsolete request for contribution (python 3.10 compatibility) in install docs (:pr:`5901`) :user:`fkiraly`
 * [DOC] use tags for estimator overview (:pr:`5906`) :user:`fkiraly`
 * [DOC] add "maintainers" column to estimator overview (:pr:`5911`) :user:`fkiraly`
@@ -204,6 +213,7 @@ Contributors
 :user:`arnaujc91`,
 :user:`benHeid`,
 :user:`ciaran-g`,
+:user:`Cyril-Meyer`,
 :user:`eduardojp26`,
 :user:`fkiraly`,
 :user:`ivarzap`,
