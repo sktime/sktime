@@ -371,6 +371,14 @@ Deep learning based forecasters
 
     CINNForecaster
 
+.. currentmodule:: sktime.forecasting.neuralforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    NeuralForecastRNN
+
 
 Intermittent time series forecasters
 ------------------------------------
