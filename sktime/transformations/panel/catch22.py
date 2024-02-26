@@ -60,8 +60,7 @@ METHODS_DICT = {
     "FC_LocalSimple_mean1_tauresrat": _FC_LocalSimple_mean1_tauresrat,
     "CO_Embed2_Dist_tau_d_expfit_meandiff": _CO_Embed2_Dist_tau_d_expfit_meandiff,
     "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-    "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1":
-      _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
+    "SC_FluctAnal_2_rsrangefit_50_1_logi": _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
     "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
     "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
 }
@@ -74,11 +73,9 @@ CATCH24_FEATURE_NAMES = ["Mean", "StandardDeviation"]
 def _verify_features(
     features: Union[int, str, List[Union[int, str]]], catch24: bool
 ) -> List[int]:
-
     feature_names = FEATURE_NAMES + CATCH24_FEATURE_NAMES if catch24 else FEATURE_NAMES
 
     f_idx = []
-
     if isinstance(features, str):
         if features == "all":
             f_idx = list(range(len(feature_names)))
