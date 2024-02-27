@@ -485,7 +485,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             summarizer
         ):
             feat = (
-                Z.rolling(window=window_length,min_periods=1)
+                Z.rolling(window=window_length, min_periods=1)
                 .apply(summarizer, raw=True)
                 .shift(lag)
             )
@@ -493,9 +493,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             summarizer
         ):
             feat = Z.apply(
-                lambda x: x.rolling(
-                    window=window_length, min_periods=1
-                )
+                lambda x: x.rolling(window=window_length, min_periods=1)
                 .apply(summarizer, raw=True)
                 .shift(lag)
             )
