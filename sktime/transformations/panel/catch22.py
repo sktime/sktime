@@ -362,7 +362,7 @@ class Catch22(BaseTransformer):
             raise KeyError(f"Incorrect col_names type: {col_names}")
 
         for n, feature in enumerate(f_idx):
-            Xt_np[0, n] = self._get_feature_function(feature)(**variable_dict)
+            Xt_np[0, n] = self._get_feature_function(feature)(variable_dict)
 
         return pd.DataFrame(Xt_np, columns=cols)
 
