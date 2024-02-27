@@ -220,10 +220,11 @@ class Catch22(BaseTransformer):
         self.catch24 = catch24
         self.outlier_norm = outlier_norm
         self.replace_nans = replace_nans
-        self.col_names = col_names
-        self.n_jobs = n_jobs
+        self.col_names = self._set_col_names(col_names)
         self.f_idx = _verify_features(self.features, self.catch24)
         super().__init__()
+
+        self.n_jobs = n_jobs
 
         # todo 0.28.0: remove this warning and logic
         if n_jobs != "deprecated":
@@ -237,6 +238,30 @@ class Catch22(BaseTransformer):
                 obj=self,
             )
             self.set_config(backend="joblib", backend_params={"n_jobs": n_jobs})
+
+    def _set_col_names(self, col_names: str) -> str:
+        """Checks and returns col_names if one of:
+        ["range", "int_feat", "str_feat", "short_str_feat"].
+
+        Parameters
+        ----------
+        col_names : str with type of desired col_names
+
+        Returns
+        -------
+        col_names string which should be one of acceptable types.
+
+        Raises
+        -------
+        KeyError if not in accepted col_names types.
+        """
+        accepted_col_names = ["range", "int_feat", "str_feat", "short_str_feat"]
+        if col_names in accepted_col_names:
+            return col_names
+        else:
+            raise KeyError(
+                f"col_names type: {col_names} must be one of {accepted_col_names}"
+            )
 
     def _transform(self, X: pd.Series, y=None) -> pd.DataFrame:
         """Transform data into the Catch22 features.
@@ -258,20 +283,19 @@ class Catch22(BaseTransformer):
         return Xt
 
     def _get_feature_function(self, feature: Union[int, str]):
-        match feature:
-            case int():
-                return (
-                    METHODS_DICT.get(FEATURE_NAMES[feature])
-                    if feature < 22
-                    else CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
-                )
-            case str():
-                if feature in FEATURE_NAMES:
-                    return METHODS_DICT.get(feature)
-                if feature in CATCH24_FEATURE_NAMES:
-                    return CATCH24_METHODS_DICT.get(feature)
-            case _:
-                raise KeyError(f"No feature with name: {feature}")
+        if isinstance(feature, int):
+            return (
+                METHODS_DICT.get(FEATURE_NAMES[feature])
+                if feature < 22
+                else CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
+            )
+        elif isinstance(feature, str):
+            if feature in FEATURE_NAMES:
+                return METHODS_DICT.get(feature)
+            if feature in CATCH24_FEATURE_NAMES:
+                return CATCH24_METHODS_DICT.get(feature)
+        else:
+            raise KeyError(f"No feature with name: {feature}")
 
     def _transform_case(self, X: pd.Series, f_idx: List[int]) -> pd.DataFrame:
         """Transform data into the Catch22/24 features.
@@ -315,25 +339,24 @@ class Catch22(BaseTransformer):
         }
         col_names = self.col_names
 
-        match col_names:
-            case "range":
-                cols = range(n_features)
-            case "int_feat":
-                cols = f_idx
-            case "str_feat":
-                all_feature_names = (
-                    FEATURE_NAMES + CATCH24_FEATURE_NAMES
-                    if self.catch24
-                    else FEATURE_NAMES
-                )
-                cols = [all_feature_names[i] for i in f_idx]
-            case "short_str_feat":
-                all_short_feature_names = (
-                    SHORT_FEATURE_NAMES + CATCH24_SHORT_FEATURE_NAMES
-                    if self.catch24
-                    else SHORT_FEATURE_NAMES
-                )
-                cols = [all_short_feature_names[i] for i in f_idx]
+        if col_names == "range":
+            cols = range(n_features)
+        elif col_names == "int_feat":
+            cols = f_idx
+        elif col_names == "str_feat":
+            all_feature_names = (
+                FEATURE_NAMES + CATCH24_FEATURE_NAMES if self.catch24 else FEATURE_NAMES
+            )
+            cols = [all_feature_names[i] for i in f_idx]
+        elif col_names == "short_str_feat":
+            all_short_feature_names = (
+                SHORT_FEATURE_NAMES + CATCH24_SHORT_FEATURE_NAMES
+                if self.catch24
+                else SHORT_FEATURE_NAMES
+            )
+            cols = [all_short_feature_names[i] for i in f_idx]
+        else:
+            raise KeyError(f"Incorrect col_names type: {col_names}")
 
         for n, feature in enumerate(f_idx):
             Xt_np[0, n] = self._get_feature_function(feature)(variable_dict)
