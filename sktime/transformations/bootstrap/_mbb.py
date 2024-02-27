@@ -148,7 +148,7 @@ class STLBootstrapTransformer(BaseTransformer):
     >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     >>> series_list = []  # doctest: +SKIP
     >>> names = []  # doctest: +SKIP
-    >>> for group, series in y_hat.groupby(level=[0], as_index=False):
+    >>> for group, series in y_hat.groupby(level=0, as_index=False):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
     ...     names.append(group)  # doctest: +SKIP

@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.26.0"
+version = "0.26.1"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -80,7 +80,7 @@ all_extras = [
   "arch>=5.6,<6.4.0",
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.2.1",
+  "dask<2024.2.2",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
   'filterpy>=1.4.5; python_version < "3.11"',
@@ -114,11 +114,13 @@ all_extras = [
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
 ]
+
+# all soft dependencies compatible with pandas 2
 all_extras_pandas2 = [
   "arch>=5.6,<6.4.0",
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.2.1",
+  "dask<2024.2.2",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
   'filterpy>=1.4.5; python_version < "3.11"',
@@ -264,6 +266,8 @@ cython_extras = [
   "numba<0.59",
 ]
 dl = [
+  'FrEIA; python_version < "3.12"',
+  'neuralforecast<1.7.0,>=1.6.4; python_version < "3.11"',
   'tensorflow<=2.14,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
 ]
