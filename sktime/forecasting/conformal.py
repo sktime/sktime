@@ -300,6 +300,15 @@ class ConformalIntervals(BaseForecaster):
         for fh_ind, offset in zip(fh_absolute, fh_relative):
             resids = np.diagonal(residuals_matrix, offset=offset)
             resids = resids[~np.isnan(resids)]
+            if len(resids) < 1:
+                resids = np.array([0], dtype=float)
+                warn(
+                    "In ConformalIntervals, sample fraction too low for "
+                    "computing residuals matrix, using zero residuals. "
+                    "Try setting sample_frac to a higher value.",
+                    obj=self,
+                    stacklevel=2,
+                )
             abs_resids = np.abs(resids)
             coverage2 = np.repeat(coverage, 2)
             if self.method == "empirical":

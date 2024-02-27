@@ -30,6 +30,7 @@ class YtoX(BaseTransformer):
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "both",
         "fit_is_empty": True,
+        "requires_X": False,
         "requires_y": True,
     }
 

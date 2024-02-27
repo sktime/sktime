@@ -30,7 +30,10 @@ Deep learning
     :template: class.rst
 
     CNNRegressor
+    FCNRegressor
+    LSTMRegressor
     MCDCNNRegressor
+    MLPRegressor
     SimpleRNNRegressor
     ResNetRegressor
     TapNetRegressor
