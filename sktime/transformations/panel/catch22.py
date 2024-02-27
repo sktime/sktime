@@ -10,10 +10,7 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
-
-import numba.typed as typed
-from sktime.utils.numba.njit import njit
-
+from numba import typed
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel._catch22_numba import (
@@ -45,6 +42,7 @@ from sktime.transformations.panel._catch22_numba import (
     _SP_Summaries_welch_rect_area_5_1,
     _SP_Summaries_welch_rect_centroid,
 )
+from sktime.utils.numba.njit import njit
 from sktime.utils.warnings import warn
 
 METHODS_DICT = {
