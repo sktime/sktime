@@ -13,11 +13,9 @@ from sktime.transformations.base import BaseTransformer
 class TemporianTransformer(BaseTransformer):
     """Applies a Temporian function to the input time series.
 
-    This transformer applies a [Temporian](https://temporian.readthedocs.io/en/stable/)
-    function to the input time series.
+    This transformer applies a Temporian [1]_ function to the input time series.
 
-    The conversion from sktime's internal representation to Temporian's
-    [EventSet](https://temporian.readthedocs.io/en/stable/reference/temporian/EventSet/)
+    The conversion from sktime's internal representation to Temporian's EventSet [2]_
     and back is handled automatically by the transformer.
 
     Parameters
@@ -27,10 +25,15 @@ class TemporianTransformer(BaseTransformer):
         and return a single Temporian EventSet, and can apply an arbitrary number of
         Temporian operators to its input.
     compile : bool, default=False
-        If True, the function will be compiled using Temporian's @tp.compile decorator,
-        which can lead to significant speedups by optimizing the graph of operations.
-        Learn more about @tp.compile
-        [here](https://temporian.readthedocs.io/en/stable/reference/temporian/compile/).
+        If True, the function will be compiled using Temporian's @tp.compile [3]_
+        decorator, which can lead to significant speedups by optimizing the graph of
+        operations.
+
+    References
+    ----------
+    .. [1] https://temporian.readthedocs.io/en/stable/
+    .. [2] https://temporian.readthedocs.io/en/stable/reference/temporian/EventSet/
+    .. [3] https://temporian.readthedocs.io/en/stable/reference/temporian/compile/
     """
 
     _tags = {

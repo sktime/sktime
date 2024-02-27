@@ -28,6 +28,8 @@ def test_flat_univariate():
 
     pd.testing.assert_series_equal(X_transformed, X + 1)
 
+    raise
+
 
 # TODO: add more tests (non-exhaustive, off the top of my mind)
 # - add support for pd-multiindex and test
