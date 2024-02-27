@@ -350,7 +350,7 @@ class Catch22(BaseTransformer):
 
     def _prepare_output_col_names(
         self, n_features: int
-    ) -> Union[range | List[int] | List[str] | None]:
+    ) -> Union[range, List[int], List[str]]:
         """Prepare output column names.
 
         It selects the naming style according to self.col_names.
@@ -367,7 +367,7 @@ class Catch22(BaseTransformer):
 
         Returns
         -------
-        Union[range | List[int] | List[str] | None]
+        Union[range, List[int], List[str]]
             Column labels for ouput DataFrame.
         """
         if self.col_names == "range":
