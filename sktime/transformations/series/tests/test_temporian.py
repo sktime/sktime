@@ -17,7 +17,7 @@ from sktime.transformations.series.temporian import TemporianTransformer
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_flat_univariate():
-    """Tests basic function works on non-indexed univariate time series."""
+    """Tests basic function works on flat (non-indexed) univariate time series."""
     X = load_airline()[0:32]
 
     def function(evset):
@@ -27,8 +27,6 @@ def test_flat_univariate():
     X_transformed = transformer.fit_transform(X=X)
 
     pd.testing.assert_series_equal(X_transformed, X + 1)
-
-    raise
 
 
 # TODO: add more tests (non-exhaustive, off the top of my mind)
