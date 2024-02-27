@@ -17,7 +17,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     from ``neuralforecast`` [3]_ by Nixtla.
 
     Multi Layer Elman RNN (RNN), with MLP decoder.
-    The network has `tanh` or `relu` non-linearities, it is trained using
+    The network has ``tanh`` or ``relu`` non-linearities, it is trained using
     ADAM stochastic gradient descent.
 
     Parameters
@@ -54,7 +54,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     encoder_hidden_size : int (default=200)
         units for the RNN's hidden state size
     encoder_activation : str (default="tanh")
-        type of RNN activation from `tanh` or `relu`
+        type of RNN activation from ``tanh`` or ``relu``
     encoder_bias : bool (default=True)
         whether or not to use biases b_ih, b_hh within RNN units
     encoder_dropout : float (default=0.0)
@@ -88,9 +88,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     random_seed : int (default=1)
         random_seed for pytorch initializer and numpy generators
     num_workers_loader : int (default=0)
-        workers to be used by `TimeSeriesDataLoader`
+        workers to be used by ``TimeSeriesDataLoader``
     drop_last_loader : bool (default=False)
-        whether `TimeSeriesDataLoader` drops last non-full batch
+        whether ``TimeSeriesDataLoader`` drops last non-full batch
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
 
@@ -119,12 +119,14 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     >>> # fitting the model
     >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
     Seed set to 1
-    Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589, train_loss_epoc
+    Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589,
+    train_loss_epoc
     NeuralForecastRNN(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
     >>>
     >>> # getting point predictions
     >>> model.predict(X=X_test)  # doctest: +SKIP
-    Predicting DataLoader 0: 100%|██████████████████████████████████| 1/1 [00:00<00:00, 198.64it/s]
+    Predicting DataLoader 0: 100%|██████████████████████████████████| 1/1 [00:00<00:00,
+    198.64it/s]
     1959    66241.984375
     1960    66700.125000
     1961    66550.195312
@@ -137,9 +139,11 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     .. [1] https://nixtlaverse.nixtla.io/neuralforecast/models.rnn.html#rnn
     .. [2] https://nixtlaverse.nixtla.io/neuralforecast/core.html#neuralforecast
     .. [3] https://github.com/Nixtla/neuralforecast/
-    .. [4] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+    .. [4]
+    https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
-    .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [6]
+    https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     """  # noqa: E501
 
     _tags = {
@@ -301,7 +305,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -309,8 +313,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 

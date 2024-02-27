@@ -13,7 +13,7 @@ class AutoARIMA(_PmdArimaAdapter):
 
     Includes automated fitting of (S)ARIMA(X) hyper-parameters (p, d, q, P, D, Q).
 
-    Exposes `pmdarima.arima.AutoARIMA` [1]_ under the `sktime` interface.
+    Exposes ``pmdarima.arima.AutoARIMA`` [1]_ under the ``sktime`` interface.
     Seasonal ARIMA models and exogeneous input is supported, hence this estimator is
     capable of fitting auto-SARIMA, auto-ARIMAX, and auto-SARIMAX.
 
@@ -252,14 +252,16 @@ class AutoARIMA(_PmdArimaAdapter):
 
     References
     ----------
-    .. [1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
+    .. [1]
+    https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import AutoARIMA
     >>> y = load_airline()
-    >>> forecaster = AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True)  # doctest: +SKIP
+    >>> forecaster = AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True) # doctest:
+    +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     AutoARIMA(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
@@ -463,7 +465,7 @@ class AutoARIMA(_PmdArimaAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
@@ -490,10 +492,10 @@ class AutoARIMA(_PmdArimaAdapter):
 class ARIMA(_PmdArimaAdapter):
     """(S)ARIMA(X) forecaster, from pmdarima package.
 
-    Exposes `pmdarima.arima.ARIMA` [1]_ under the `sktime` interface.
+    Exposes ``pmdarima.arima.ARIMA`` [1]_ under the ``sktime`` interface.
     Seasonal ARIMA models and exogeneous input is supported, hence this estimator is
     capable of fitting SARIMA, ARIMAX, and SARIMAX.
-    To additionally fit (S)ARIMA(X) hyper-parameters, use the `AutoARIMA` estimator.
+    To additionally fit (S)ARIMA(X) hyper-parameters, use the ``AutoARIMA`` estimator.
 
     An ARIMA, or autoregressive integrated moving average model, is a
     generalization of an autoregressive moving average (ARMA) model, and is fitted to
@@ -655,7 +657,8 @@ class ARIMA(_PmdArimaAdapter):
     ----------
     .. [1] https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html
 
-    .. [2] https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.sarimax.SARIMAX.html
+    .. [2]
+    https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.sarimax.SARIMAX.html
 
     Examples
     --------
@@ -755,7 +758,7 @@ class ARIMA(_PmdArimaAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

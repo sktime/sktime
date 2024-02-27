@@ -31,12 +31,14 @@ class WindowSummarizer(BaseTransformer):
         ``None`` will target the first column
     lag_feature: dict of str and list, optional (default = dict containing first lag)
         Dictionary specifying as key the type of function to be used and as value
-        the argument `window`.
-        For the function `lag`, the argument `window` is an integer or a list of
-        integers giving the `lag` values to be used.
-        For all other functions, the argument `window` is a list with the arguments
-        `lag` and `window length`. `lag` defines how far back in the past the window
-        starts, `window length` gives the length of the window across which to apply the
+        the argument ``window``.
+        For the function ``lag``, the argument ``window`` is an integer or a list of
+        integers giving the ``lag`` values to be used.
+        For all other functions, the argument ``window`` is a list with the arguments
+        ``lag`` and ``window length``. ``lag`` defines how far back in the past the
+        window
+        starts, ``window length`` gives the length of the window across which to apply
+        the
         function. For multiple different windows, provide a list of lists.
 
         Please see below a graphical representation of the logic using the following
@@ -44,7 +46,7 @@ class WindowSummarizer(BaseTransformer):
 
         ``z`` = time stamp that the window is summarized *to*.
 
-        Part of the window if `lag` is between 0 and `1-window_length`, otherwise
+        Part of the window if ``lag`` is between 0 and ``1-window_length``, otherwise
         not part of the window.
 
         ``x`` = (other) time stamps in the window which is summarized
@@ -54,16 +56,16 @@ class WindowSummarizer(BaseTransformer):
         The summarization function is applied to the window consisting of x and
         potentially z.
 
-        For `window = [1, 3]`, we have a `lag` of 1 and
-        `window_length` of 3 to target the three last days (exclusive z) that were
+        For ``window = [1, 3]``, we have a ``lag`` of 1 and
+        ``window_length`` of 3 to target the three last days (exclusive z) that were
         observed. Summarization is done across windows like this::
 
         |---------------------------|
         | * * * * * * * * x x x z * |
         |---------------------------|
 
-        For `window = [0, 3]`, we have a `lag` of 0 and
-        `window_length` of 3 to target the three last days (inclusive z) that
+        For ``window = [0, 3]``, we have a ``lag`` of 0 and
+        ``window_length`` of 3 to target the three last days (inclusive z) that
         were observed. Summarization is done across windows like this::
 
         |---------------------------|
@@ -72,14 +74,14 @@ class WindowSummarizer(BaseTransformer):
 
 
         Special case ``lag``: Since lags are frequently used and window length is
-        redundant, you only need to provide a list of `lag` values.
-        So `window = [1]` will result in the first lag::
+        redundant, you only need to provide a list of ``lag`` values.
+        So ``window = [1]`` will result in the first lag::
 
         |---------------------------|
         | * * * * * * * * * * x z * |
         |---------------------------|
 
-        And `window = [1, 4]` will result in the first and fourth lag::
+        And ``window = [1, 4]`` will result in the first and fourth lag::
 
         |---------------------------|
         | * * * * * * * x * * x z * |
@@ -354,15 +356,16 @@ class WindowSummarizer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {
             "lag_feature": {
@@ -427,7 +430,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
 
     Z: pandas Dataframe with a single column.
     name : str, base string of the derived features, will be appended by
-        `lag` and window length parameters defined in window.
+        ``lag`` and window length parameters defined in window.
     summarizer: either str corresponding to pandas window function, currently
             * "sum",
             * "mean",
@@ -560,7 +563,7 @@ def _check_summary_function(summary_function):
     summary_function : list or tuple
         The summary functions that will be used to summarize the dataset.
     """
-    msg = f"""`summary_function` must be None, or str or a list or tuple made up of
+    msg = f"""``summary_function`` must be None, or str or a list or tuple made up of
           {ALLOWED_SUM_FUNCS}.
           """
     if isinstance(summary_function, str):
@@ -591,7 +594,7 @@ def _check_quantiles(quantiles):
     quantiles : list or tuple
         The validated quantiles that will be used to summarize the dataset.
     """
-    msg = """`quantiles` must be None, int, float or a list or tuple made up of
+    msg = """``quantiles`` must be None, int, float or a list or tuple made up of
           int and float values that are between 0 and 1.
           """
     if isinstance(quantiles, (int, float)):
@@ -695,7 +698,7 @@ class SummaryTransformer(BaseTransformer):
         Returns
         -------
         summary_value : scalar or pd.Series
-            If `series_or_df` is univariate then a scalar is returned. Otherwise,
+            If ``series_or_df`` is univariate then a scalar is returned. Otherwise,
             a pd.Series is returned.
         """
         if self.summary_function is None and self.quantiles is None:
@@ -757,15 +760,16 @@ class SummaryTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"summary_function": ["mean", "mad", "skew"], "quantiles": None}
@@ -792,12 +796,13 @@ class SplitterSummarizer(BaseTransformer):
 
     Parameters
     ----------
-    transformer : `sktime` transformer inheriting from `BaseTransformer`
+    transformer : ``sktime`` transformer inheriting from ``BaseTransformer``
         series-to-primitives transformer used to convert series to primitives.
 
-    splitter : `sktime` splitter inheriting from `BaseSplitter`, optional (default=None)
+    splitter : ``sktime`` splitter inheriting from ``BaseSplitter``, optional
+    (default=None)
         splitter used to divide the series.
-        If None, it takes `ExpandingWindowSplitter` with `start_with_window=False`
+        If None, it takes ``ExpandingWindowSplitter`` with ``start_with_window=False``
         and otherwise default parameters.
 
     index : str, optional (default="last")
@@ -998,15 +1003,16 @@ class SplitterSummarizer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {
             "transformer": SummaryTransformer(),

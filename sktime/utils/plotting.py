@@ -31,17 +31,17 @@ def plot_series(
     """Plot one or more time series.
 
     This function allows you to plot one or more
-    time series on a single figure via `series`.
+    time series on a single figure via ``series``.
     Used for making comparisons between different series.
 
     The resulting figure includes the time series data plotted on a graph with
-    x-axis as time by default and can be changed via `x_label` and
-    y-axis as value of time series can be renamed via `y_label` and
-    labels explaining the meaning of each series via `labels`,
-    markers for data points via `markers`.
-    You can also specify custom colors via `colors` for each series and
-    add a title to the figure via `title`.
-    If prediction intervals are available add them using `pred_interval`,
+    x-axis as time by default and can be changed via ``x_label`` and
+    y-axis as value of time series can be renamed via ``y_label`` and
+    labels explaining the meaning of each series via ``labels``,
+    markers for data points via ``markers``.
+    You can also specify custom colors via ``colors`` for each series and
+    add a title to the figure via ``title``.
+    If prediction intervals are available add them using ``pred_interval``,
     they can be overlaid on the plot to visualize uncertainty.
 
     Parameters
@@ -58,7 +58,7 @@ def plot_series(
     title: str, default = None
         The text to use as the figure's suptitle
     pred_interval: pd.DataFrame, default = None
-        Output of `forecaster.predict_interval()`. Contains columns for lower
+        Output of ``forecaster.predict_interval()``. Contains columns for lower
         and upper boundaries of confidence interval.
     ax : matplotlib axes, optional
         Axes to plot on, if None, a new figure is created and returned
@@ -414,7 +414,7 @@ def plot_windows(cv, y, title="", ax=None):
     Plots the training and test windows for each split of a time series,
     subject to an sktime time series splitter.
 
-    x-axis: time, ranging from start to end of `y`
+    x-axis: time, ranging from start to end of ``y``
     y-axis: window number, starting at 0
     plot elements: training split (orange) and test split (blue)
         dots indicate index in the training or test split
