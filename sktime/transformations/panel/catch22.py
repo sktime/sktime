@@ -15,6 +15,8 @@ from joblib import Parallel, delayed
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel._catch22_numba import (
+    _ac_first_zero,
+    _autocorr,
     _CO_Embed2_Dist_tau_d_expfit_meandiff,
     _CO_f1ecac,
     _CO_FirstMin_ac,
@@ -28,6 +30,7 @@ from sktime.transformations.panel._catch22_numba import (
     _FC_LocalSimple_mean3_stderr,
     _IN_AutoMutualInfoStats_40_gaussian_fmmi,
     _MD_hrv_classic_pnn40,
+    _normalise_series,
     _PD_PeriodicityWang_th0_01,
     _SB_BinaryStats_diff_longstretch0,
     _SB_BinaryStats_mean_longstretch1,
@@ -37,8 +40,11 @@ from sktime.transformations.panel._catch22_numba import (
     _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
     _SP_Summaries_welch_rect_area_5_1,
     _SP_Summaries_welch_rect_centroid,
+    _catch24_mean,
+    _catch24_std,
 )
 from sktime.utils.validation import check_n_jobs
+from sktime.utils.warnings import warn
 
 METHODS_DICT = {
     "DN_HistogramMode_5": _DN_HistogramMode_5,
@@ -60,14 +66,14 @@ METHODS_DICT = {
     "FC_LocalSimple_mean1_tauresrat": _FC_LocalSimple_mean1_tauresrat,
     "CO_Embed2_Dist_tau_d_expfit_meandiff": _CO_Embed2_Dist_tau_d_expfit_meandiff,
     "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-    "SC_FluctAnal_2_rsrangefit_50_1_logi": _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
+    "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
     "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
     "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
 }
+CATCH24_METHODS_DICT = {"Mean": _catch24_mean, "StandardDeviation": _catch24_std}
 
 FEATURE_NAMES = list(METHODS_DICT.keys())
-
-CATCH24_FEATURE_NAMES = ["Mean", "StandardDeviation"]
+CATCH24_FEATURE_NAMES = list(CATCH24_METHODS_DICT.keys())
 
 
 def _verify_features(
@@ -130,9 +136,14 @@ class Catch22(BaseTransformer):
         while to process for large values.
     replace_nans : bool, optional, default=True
         Replace NaN or inf values from the Catch22 transform with 0.
-    n_jobs : int, optional, default=1
-        The number of jobs to run in parallel for transform. Requires multiple input
-        cases. A value of -1 uses all CPU cores.
+    col_names : str, one of {"range", "int_feat", "str_feat", "short_str_feat"}, optional, default="range"
+        The type of column names to return. If "range", column names will be
+        a regular range of integers, as in a RangeIndex.
+        If "int_feat", column names will be the integer feature indices,
+        as defined in pycatch22.
+        If "str_feat", column names will be the string feature names.
+        # If "short_str_feat", column names will be the short string feature names
+        # as defined in pycatch22.
 
     See Also
     --------
@@ -160,8 +171,9 @@ class Catch22(BaseTransformer):
     _tags = {
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
+        "univariate-only": True,
         "scitype:instancewise": True,
-        "X_inner_mtype": "nested_univ",
+        "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
         "python_dependencies": "numba",
@@ -173,31 +185,38 @@ class Catch22(BaseTransformer):
         catch24: bool = False,
         outlier_norm: bool = False,
         replace_nans: bool = False,
-        n_jobs: int = 1,
+        col_names: str = "range",
+        n_jobs="deprecated",
     ):
         self.features = features
         self.catch24 = catch24
         self.outlier_norm = outlier_norm
         self.replace_nans = replace_nans
+        self.col_names = col_names
         self.n_jobs = n_jobs
-
-        self.features_arguments = (
-            features
-            if features != "all"
-            else (FEATURE_NAMES + CATCH24_FEATURE_NAMES if catch24 else FEATURE_NAMES)
-        )
         self.f_idx = _verify_features(self.features, self.catch24)
-        self.n_transformed_features = len(self.f_idx)
+
+        # todo 0.28.0: remove this warning and logic
+        if n_jobs != "deprecated":
+            warn(
+                "In Catch22Wrapper, the parameter "
+                "n_jobs is deprecated and will be removed in v0.28.0. "
+                "Instead, use set_config with the backend and backend:params "
+                "config fields, and set backend to 'joblib' and pass n_jobs "
+                "as a parameter of backend_params. ",
+                FutureWarning,
+                obj=self,
+            )
+            self.set_config(backend="joblib", backend_params={"n_jobs": n_jobs})
 
         super().__init__()
 
-    def _transform(self, X: np.ndarray, y=None):
+    def _transform(self, X: pd.Series, y=None) -> pd.DataFrame:
         """Transform data into the Catch22 features.
 
         Parameters
         ----------
-        X : 3D numpy array of shape [n_instances, n_dimensions, n_features],
-            input time series panel.
+        X : pd.Series with input univariate time series panel.
         y : ignored.
 
         Returns
@@ -205,151 +224,84 @@ class Catch22(BaseTransformer):
         c22 : Pandas DataFrame of shape [n_instances, c*n_dimensions] where c is the
              number of features requested, containing Catch22 features for X.
         """
-        n_instances = X.shape[0]
-
-        threads_to_use = check_n_jobs(self.n_jobs)
-
-        c22_list = Parallel(n_jobs=threads_to_use)(
-            delayed(self._transform_case)(
-                X.iloc[i],
-                self.f_idx,
-            )
-            for i in range(n_instances)
-        )
-
+        Xt = self._transform_case(X, self.f_idx)
         if self.replace_nans:
-            c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
+            Xt = Xt.fillna(0)
 
-        return pd.DataFrame(c22_list)
+        return Xt
 
     def _get_feature_function(self, feature: Union[int, str]):
-        feature_name = FEATURE_NAMES[feature] if isinstance(feature, int) else feature
-
-        return METHODS_DICT.get(feature_name)
-
-    def _transform_case(self, X: np.ndarray, f_idx: List[int]):
-        from sktime.transformations.panel._catch22_numba import (
-            _ac_first_zero,
-            _autocorr,
-            _normalise_series,
-        )
-
-        c22 = np.zeros(len(f_idx) * len(X))
-
-        for i, series in enumerate(X):
-            series = np.array(series)
-            dim = i * len(f_idx)
-            smin = np.min(series)
-            smax = np.max(series)
-            smean = np.mean(series)
-            std = np.std(series)
-            outlier_series = (
-                _normalise_series(series, smean) if self.outlier_norm else series
-            )
-            nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-            fft = np.fft.fft(series - smean, n=nfft)
-            ac = _autocorr(series, fft)
-            acfz = _ac_first_zero(ac)
-            feature_args = {
-                0: (series, smin, smax),
-                1: (series, smin, smax),
-                11: (series, smin, smax),
-                2: (series, smean),
-                22: (series, smean),
-                3: (outlier_series,),
-                4: (outlier_series,),
-                7: (series, fft),
-                8: (series, fft),
-                5: (ac,),
-                6: (ac,),
-                12: (ac,),
-                16: (series, acfz),
-                17: (series, acfz),
-                20: (series, acfz),
-            }
-
-            for n, feature in enumerate(f_idx):
-                args = feature_args.get(feature, (series,))
-
-                if feature == 22:
-                    c22[dim + n] = smean
-                elif feature == 23:
-                    c22[dim + n] = std
-                else:
-                    c22[dim + n] = self._get_feature_function(feature)(*args)
-
-            return c22
-
-    def _transform_single_feature(self, X: np.ndarray, feature: Union[int, str]):
-        if isinstance(X, pd.DataFrame):
-            X = convert_to(X, "numpy3D")
-
-        if len(X.shape) > 2:
-            n_instances, n_dims, _ = X.shape
-
-            if n_dims > 1:
-                raise ValueError(
-                    "transform_single_feature can only handle univariate series "
-                    "currently."
+        match feature:
+            case int():
+                return (
+                    METHODS_DICT.get(FEATURE_NAMES[feature])
+                    if feature < 22
+                    else CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
                 )
+            case str():
+                if feature in FEATURE_NAMES:
+                    return METHODS_DICT.get(feature)
+                if feature in CATCH24_FEATURE_NAMES:
+                    return CATCH24_METHODS_DICT.get(feature)
+            case _:
+                raise KeyError(f"No feature with name: {feature}")
 
-            X = np.reshape(X, (n_instances, -1))
-        else:
-            n_instances, _ = X.shape
+    def _transform_case(self, X: pd.Series, f_idx: List[int]) -> pd.DataFrame:
+        """Transform data into the Catch22/24 features.
 
-        threads_to_use = check_n_jobs(self.n_jobs)
+        Parameters
+        ----------
+        X : pd.Series, input time series.
+        f_idx : list of int, the indices of the features to extract.
 
-        c22_list = Parallel(n_jobs=threads_to_use)(
-            delayed(self._transform_case_single)(
-                X.iloc[i],
-                feature,
-            )
-            for i in range(n_instances)
-        )
+        Returns
+        -------
+        Xt : pd.DataFrame of size [1, n_features], where n_features is the
+            number of features requested, containing Catch22/24 features for X.
+            column index is determined by self.col_names
+        """
+        n_features = len(f_idx)
+        Xt_np = np.zeros((1, n_features))
 
-        if self.replace_nans:
-            c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
-
-        return np.asarray(c22_list)
-
-    def _transform_case_single(self, series, feature):
-        from sktime.transformations.panel._catch22_numba import (
-            _ac_first_zero,
-            _autocorr,
-        )
-
+        series = X.to_list()
         smin = np.min(series)
         smax = np.max(series)
         smean = np.mean(series)
-        if self.outlier_norm:
-            std = np.std(series)
-            if std > 0:
-                series = (series - np.mean(series)) / std
+        std = np.std(series)
+        outlier_series = (
+            _normalise_series(series, smean) if self.outlier_norm else series
+        )
         nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
         fft = np.fft.fft(series - smean, n=nfft)
         ac = _autocorr(series, fft)
         acfz = _ac_first_zero(ac)
-        args = [series]
-
-        feature_args = {
-            0: (series, smin, smax),
-            1: (series, smin, smax),
-            11: (series, smin, smax),
-            2: (series, smean),
-            3: (series,),
-            4: (series,),
-            7: (series, fft),
-            8: (series, fft),
-            5: (ac,),
-            6: (ac,),
-            12: (ac,),
-            16: (series, acfz),
-            17: (series, acfz),
-            20: (series, acfz),
+        variable_dict = {
+            "series": series,
+            "smin": smin,
+            "smax": smax,
+            "smean": smean,
+            "std": std,
+            "outlier_series": outlier_series,
+            "fft": fft,
+            "ac": ac,
+            "acfz": acfz,
         }
-        args = feature_args.get(feature, (series,))
+        col_names = self.col_names
 
-        return self._get_feature_function(feature)(*args)
+        if col_names == "range":
+            cols = range(n_features)
+        elif col_names == "int_feat":
+            cols = f_idx
+        elif col_names == "str_feat":
+            all_feature_names = (
+                FEATURE_NAMES + CATCH24_FEATURE_NAMES if self.catch24 else FEATURE_NAMES
+            )
+            cols = [all_feature_names[i] for i in f_idx]
+
+        for n, feature in enumerate(f_idx):
+            Xt_np[0, n] = self._get_feature_function(feature)(variable_dict)
+
+        return pd.DataFrame(Xt_np, columns=cols)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
