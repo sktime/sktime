@@ -449,6 +449,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     """
     lag = window[0]
     window_length = window[1]
+    feat = None
 
     if summarizer in pd_rolling:
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
