@@ -70,10 +70,40 @@ METHODS_DICT = {
     "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
     "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
 }
-CATCH24_METHODS_DICT = {"Mean": _catch24_mean, "StandardDeviation": _catch24_std}
-
 FEATURE_NAMES = list(METHODS_DICT.keys())
+SHORT_FEATURE_NAMES_DICT = {
+    "DN_HistogramMode_5": "mode_5",
+    "DN_HistogramMode_10": "mode_10",
+    "SB_BinaryStats_diff_longstretch0": "stretch_decreasing",
+    "DN_OutlierInclude_p_001_mdrmd": "outlier_timing_pos",
+    "DN_OutlierInclude_n_001_mdrmd": "outlier_timing_neg",
+    "CO_f1ecac": "acf_timescale",
+    "CO_FirstMin_ac": "acf_first_min",
+    "SP_Summaries_welch_rect_area_5_1": "centroid_freq",
+    "SP_Summaries_welch_rect_centroid": "low_freq_power",
+    "FC_LocalSimple_mean3_stderr": "forecast_error",
+    "CO_trev_1_num": "trev",
+    "CO_HistogramAMI_even_2_5": "ami2",
+    "IN_AutoMutualInfoStats_40_gaussian_fmmi": "ami_timescale",
+    "MD_hrv_classic_pnn40": "high_fluctuation",
+    "SB_BinaryStats_mean_longstretch1": "stretch_high",
+    "SB_MotifThree_quantile_hh": "rs_range",
+    "FC_LocalSimple_mean1_tauresrat": "whiten_timescale",
+    "CO_Embed2_Dist_tau_d_expfit_meandiff": "embedding_dist",
+    "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": "dfa",
+    "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": "rs_range",
+    "SB_TransitionMatrix_3ac_sumdiagcov": "transition_matrix",
+    "PD_PeriodicityWang_th0_01": "periodicity",
+}
+SHORT_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.values())
+
+CATCH24_METHODS_DICT = {"Mean": _catch24_mean, "StandardDeviation": _catch24_std}
 CATCH24_FEATURE_NAMES = list(CATCH24_METHODS_DICT.keys())
+CATCH24_SHORT_FEATURE_NAMES_DICT = {
+    "Mean": "mean",
+    "StandardDeviation": "std",
+}
+CATCH24_SHORT_FEATURE_NAMES = list(CATCH24_SHORT_FEATURE_NAMES_DICT.values())
 
 
 def _verify_features(
@@ -142,8 +172,8 @@ class Catch22(BaseTransformer):
         If "int_feat", column names will be the integer feature indices,
         as defined in pycatch22.
         If "str_feat", column names will be the string feature names.
-        # If "short_str_feat", column names will be the short string feature names
-        # as defined in pycatch22.
+        If "short_str_feat", column names will be the short string feature names
+        as defined in pycatch22.
 
     See Also
     --------
@@ -288,15 +318,25 @@ class Catch22(BaseTransformer):
         }
         col_names = self.col_names
 
-        if col_names == "range":
-            cols = range(n_features)
-        elif col_names == "int_feat":
-            cols = f_idx
-        elif col_names == "str_feat":
-            all_feature_names = (
-                FEATURE_NAMES + CATCH24_FEATURE_NAMES if self.catch24 else FEATURE_NAMES
-            )
-            cols = [all_feature_names[i] for i in f_idx]
+        match col_names:
+            case "range":
+                cols = range(n_features)
+            case "int_feat":
+                cols = f_idx
+            case "str_feat":
+                all_feature_names = (
+                    FEATURE_NAMES + CATCH24_FEATURE_NAMES
+                    if self.catch24
+                    else FEATURE_NAMES
+                )
+                cols = [all_feature_names[i] for i in f_idx]
+            case "short_str_feat":
+                all_short_feature_names = (
+                    SHORT_FEATURE_NAMES + CATCH24_SHORT_FEATURE_NAMES
+                    if self.catch24
+                    else SHORT_FEATURE_NAMES
+                )
+                cols = [all_short_feature_names[i] for i in f_idx]
 
         for n, feature in enumerate(f_idx):
             Xt_np[0, n] = self._get_feature_function(feature)(variable_dict)
