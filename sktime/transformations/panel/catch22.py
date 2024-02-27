@@ -11,6 +11,10 @@ from typing import List, Union
 import numpy as np
 import pandas as pd
 
+import numba.typed as typed
+from sktime.utils.numba.njit import njit
+
+
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel._catch22_numba import (
     _ac_first_zero,
@@ -317,7 +321,7 @@ class Catch22(BaseTransformer):
         n_features = len(f_idx)
         Xt_np = np.zeros((1, n_features))
 
-        series = X.to_list()
+        series = X.to_numpy()
         smin = np.min(series)
         smax = np.max(series)
         smean = np.mean(series)
@@ -329,17 +333,9 @@ class Catch22(BaseTransformer):
         fft = np.fft.fft(series - smean, n=nfft)
         ac = _autocorr(series, fft)
         acfz = _ac_first_zero(ac)
-        variable_dict = {
-            "series": series,
-            "smin": smin,
-            "smax": smax,
-            "smean": smean,
-            "std": std,
-            "outlier_series": outlier_series,
-            "fft": fft,
-            "ac": ac,
-            "acfz": acfz,
-        }
+        variable_dict = self._create_numba_dict(
+            series, smin, smax, smean, std, outlier_series, ac, acfz
+        )
 
         for n, feature in enumerate(f_idx):
             Xt_np[0, n] = self._get_feature_function(feature)(variable_dict)
@@ -347,6 +343,29 @@ class Catch22(BaseTransformer):
         cols = self._prepare_output_col_names(n_features)
 
         return pd.DataFrame(Xt_np, columns=cols)
+
+    @staticmethod
+    @njit
+    def _create_numba_dict(
+        series: np.ndarray,
+        smin: float,
+        smax: float,
+        smean: float,
+        std: float,
+        outlier_series: np.ndarray,
+        ac: np.ndarray,
+        acfz: int,
+    ):
+        numba_dict = typed.Dict()
+        numba_dict["series"] = series
+        numba_dict["smin"] = np.array([smin], dtype=np.float64)
+        numba_dict["smax"] = np.array([smax], dtype=np.float64)
+        numba_dict["smean"] = np.array([smean], dtype=np.float64)
+        numba_dict["std"] = np.array([std], dtype=np.float64)
+        numba_dict["outlier_series"] = outlier_series
+        numba_dict["ac"] = ac
+        numba_dict["acfz"] = np.array([acfz], dtype=np.float64)
+        return numba_dict
 
     def _prepare_output_col_names(
         self, n_features: int
