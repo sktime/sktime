@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.26.0"
+version = "0.26.1"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -264,6 +264,7 @@ cython_extras = [
 ]
 dl = [
   'FrEIA; python_version < "3.12"',
+  'neuralforecast<1.7.0,>=1.6.4; python_version < "3.11"',
   'tensorflow<=2.14,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
 ]

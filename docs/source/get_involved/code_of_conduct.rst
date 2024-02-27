@@ -53,7 +53,7 @@ of Conduct. This Code of Conduct applies to all spaces managed by the
 sktime project including, but not limited to, in-person focus groups and
 workshops, and communications online via GitHub.
 
-The lead investigator of the sktime - Dr Franz Király - is responsible
+The lead investigator of the sktime project - Dr Franz Király - is responsible
 for enforcing the Code of Conduct. He can be contacted by emailing
 sktime.toolbox@gmail.com.
 
@@ -77,7 +77,7 @@ such, we do not tolerate:
   restriction of fair opportunities based on protected characteristics
 * stifling of free speech on topics within the project scope (science and open community operations)
 
-In the rare cases where our ideals are in conflict, we strive to protect,
+In a rare case where our ideals are in conflict, we strive to protect,
 in the context of power dynamics, the less powerful party or parties.
 
 'Protected characteristics' as referred to above include, but are not limited to:
@@ -207,7 +207,13 @@ GitHub.
 3.1 Contact points
 ~~~~~~~~~~~~~~~~~~
 
-Please contact the current chair of the Code of Conduct Committee directly by email, see 4.1.
+Please contact any member of the Code of Conduct Committee directly by email, see 4.1.
+Optimally, the email is sent to all members of the committee to ensure swift response.
+
+Alternatively, members of committee can be privately contacted on the sktime discord,
+under their clear names. This may be faster during events and conferences.
+To avoid name spoofing, ensure to verify the account as having
+the ``code-of-conduct-committee`` role.
 
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -241,7 +247,9 @@ respectful and not include any harassing behaviours.
 
 The sktime Code of Conduct committee currently consists of:
 
-Dr Franz Király (f.kiraly@ucl.ac.uk)
+Dr Franz Király (franz.kiraly@sktime.net)
+
+Marc Rovira (marc.rovira@sktime.net)
 
 We encourage community members to step up to become a member of the committee.
 
@@ -497,7 +505,7 @@ Examples for in-scope:
 * hiring decisions for roles that are advertised with a primary ``sktime`` branding
 * spending decisions from ``sktime`` community administered accounts
 * decisions arising from academic collaboration or commercial requests directed to the ``sktime`` community,
-  e.g., via official email, or via digital ``sktime`` discussion tools (slack, discord, GitHub discussion etc)
+  e.g., via official email, or via digital ``sktime`` discussion tools (slack, discord, GitHub discussions etc)
 
 "resources" in the above context are to be interpreted in the usual sense of the word,
 i.e., valuable possessions, opportunities, qualities, that can be accessed and allocated.
@@ -525,7 +533,7 @@ To ensure decision making in line with the code of conduct, decision making must
 Adherence to widely accepted guidelines of anti-corruption and anti-bribery practice
 (e.g., United Nations Anti-Corruption Guidelines) is strictly expected,
 especially for resource allocation decisions of major magnitude, e.g., in hiring processes,
-or decisions in the 5-digit dollar range and upwards.
+or decisions in the 5-digit dollar range and upwards (inflation corrected, purchase power parity, 2020 reference).
 
 This strict requirement for best practice remains unchanged even if a local context may require less,
 e.g., university administrations,
