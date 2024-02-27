@@ -3,20 +3,20 @@
 A transformer for the Catch22 features.
 """
 
-__author__ = ["MatthewMiddlehurst"]
+__author__ = ["MatthewMiddlehurst", "julnow"]
 __all__ = ["Catch22"]
 
 from typing import List, Union
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
-from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel._catch22_numba import (
     _ac_first_zero,
     _autocorr,
+    _catch24_mean,
+    _catch24_std,
     _CO_Embed2_Dist_tau_d_expfit_meandiff,
     _CO_f1ecac,
     _CO_FirstMin_ac,
@@ -37,13 +37,10 @@ from sktime.transformations.panel._catch22_numba import (
     _SB_MotifThree_quantile_hh,
     _SB_TransitionMatrix_3ac_sumdiagcov,
     _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-    _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
+    _SC_FluctAnal_2_rsrangefit_50_1_logi,
     _SP_Summaries_welch_rect_area_5_1,
     _SP_Summaries_welch_rect_centroid,
-    _catch24_mean,
-    _catch24_std,
 )
-from sktime.utils.validation import check_n_jobs
 from sktime.utils.warnings import warn
 
 METHODS_DICT = {
@@ -66,7 +63,7 @@ METHODS_DICT = {
     "FC_LocalSimple_mean1_tauresrat": _FC_LocalSimple_mean1_tauresrat,
     "CO_Embed2_Dist_tau_d_expfit_meandiff": _CO_Embed2_Dist_tau_d_expfit_meandiff,
     "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-    "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
+    "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi,
     "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
     "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
 }
@@ -166,7 +163,8 @@ class Catch22(BaseTransformer):
         while to process for large values.
     replace_nans : bool, optional, default=True
         Replace NaN or inf values from the Catch22 transform with 0.
-    col_names : str, one of {"range", "int_feat", "str_feat", "short_str_feat"}, optional, default="range"
+    col_names : str, one of {"range", "int_feat", "str_feat", "short_str_feat"},
+    optional, default="range"
         The type of column names to return. If "range", column names will be
         a regular range of integers, as in a RangeIndex.
         If "int_feat", column names will be the integer feature indices,
@@ -225,6 +223,7 @@ class Catch22(BaseTransformer):
         self.col_names = col_names
         self.n_jobs = n_jobs
         self.f_idx = _verify_features(self.features, self.catch24)
+        super().__init__()
 
         # todo 0.28.0: remove this warning and logic
         if n_jobs != "deprecated":
@@ -238,8 +237,6 @@ class Catch22(BaseTransformer):
                 obj=self,
             )
             self.set_config(backend="joblib", backend_params={"n_jobs": n_jobs})
-
-        super().__init__()
 
     def _transform(self, X: pd.Series, y=None) -> pd.DataFrame:
         """Transform data into the Catch22 features.

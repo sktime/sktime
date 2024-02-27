@@ -809,7 +809,7 @@ def _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(**kwargs):
 
 
 @njit(fastmath=True, cache=True)
-def _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(**kwargs):
+def _SC_FluctAnal_2_rsrangefit_50_1_logi(**kwargs):
     # Proportion of slower timescale fluctuations that scale with linearly rescaled
     X = kwargs.get("series")
     # range fits.
