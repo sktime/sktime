@@ -53,7 +53,7 @@ class TSBootstrapAdapter(BaseTransformer):
     def __init__(
         self,
         bootstrap,
-        include_actual=True,
+        include_actual=False,
     ):
         self.bootstrap = bootstrap
         self.include_actual = include_actual
@@ -85,9 +85,10 @@ class TSBootstrapAdapter(BaseTransformer):
             keys=[f"synthetic_{i}" for i in range(len(bootstrapped_samples))],
         )
 
+        _X = X.copy()
         if self.include_actual:
-            X.index = pd.MultiIndex.from_product([["actual"], X.index])
-            return pd.concat([X, boostrapped_df], axis=0)
+            _X.index = pd.MultiIndex.from_product([["actual"], range(len(X))])
+            return pd.concat([_X, boostrapped_df], axis=0)
         else:
             return boostrapped_df
 
@@ -121,6 +122,7 @@ class TSBootstrapAdapter(BaseTransformer):
             {"bootstrap": BlockBootstrap(n_bootstraps=10)},
             {
                 "bootstrap": MovingBlockBootstrap(n_bootstraps=10, block_length=4),
+                "include_actual": True,
             },
         ]
 
