@@ -4,8 +4,8 @@ __author__ = ["MatthewMiddlehurst"]
 
 import math
 
+import numba.typed as typed
 import numpy as np
-from numba import typed
 
 from sktime.utils.numba.njit import njit
 
