@@ -474,7 +474,9 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             else:
                 feat = Z.apply(
                     lambda x: getattr(
-                        x.rolling(window=window_length, min_periods=1).shift(lag).bfill(),
+                        x.rolling(window=window_length, min_periods=1)
+                        .shift(lag)
+                        .bfill(),
                         summarizer,
                     )()
                 )
@@ -482,14 +484,20 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
-            feat = Z.rolling(window=window_length,min_periods=1).apply(summarizer, raw=True).shift(lag)
+            feat = (
+                Z.rolling(window=window_length,min_periods=1)
+                .apply(summarizer, raw=True)
+                .shift(lag)
+            )
         elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
             feat = Z.apply(
                 lambda x: x.rolling(
                     window=window_length, min_periods=1
-                ).apply(summarizer, raw=True).shift(lag)
+                )
+                .apply(summarizer, raw=True)
+                .shift(lag)
             )
         if bfill is True:
             feat = feat.bfill()
