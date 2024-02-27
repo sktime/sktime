@@ -340,31 +340,52 @@ class Catch22(BaseTransformer):
             "ac": ac,
             "acfz": acfz,
         }
-        col_names = self.col_names
 
-        if col_names == "range":
-            cols = range(n_features)
-        elif col_names == "int_feat":
-            cols = f_idx
-        elif col_names == "str_feat":
+        for n, feature in enumerate(f_idx):
+            Xt_np[0, n] = self._get_feature_function(feature)(variable_dict)
+
+        cols = self._prepare_output_col_names(n_features)
+
+        return pd.DataFrame(Xt_np, columns=cols)
+
+    def _prepare_output_col_names(
+        self, n_features: int
+    ) -> Union[range | List[int] | List[str] | None]:
+        """Prepare output column names.
+
+        It selects the naming style according to self.col_names.
+        If "int_feat", column names will be the integer feature indices,
+        as defined in pycatch22.
+        If "str_feat", column names will be the string feature names.
+        If "short_str_feat", column names will be the short string feature names
+        as defined in pycatch22.
+
+        Parameters
+        ----------
+        n_features : int
+            Number of features in f_idx.
+
+        Returns
+        -------
+        Union[range | List[int] | List[str] | None]
+            Column labels for ouput DataFrame.
+        """
+        if self.col_names == "range":
+            return range(n_features)
+        elif self.col_names == "int_feat":
+            return self.f_idx
+        elif self.col_names == "str_feat":
             all_feature_names = (
                 FEATURE_NAMES + CATCH24_FEATURE_NAMES if self.catch24 else FEATURE_NAMES
             )
-            cols = [all_feature_names[i] for i in f_idx]
-        elif col_names == "short_str_feat":
+            return [all_feature_names[i] for i in self.f_idx]
+        elif self.col_names == "short_str_feat":
             all_short_feature_names = (
                 SHORT_FEATURE_NAMES + CATCH24_SHORT_FEATURE_NAMES
                 if self.catch24
                 else SHORT_FEATURE_NAMES
             )
-            cols = [all_short_feature_names[i] for i in f_idx]
-        else:
-            raise KeyError(f"Incorrect col_names type: {col_names}")
-
-        for n, feature in enumerate(f_idx):
-            Xt_np[0, n] = self._get_feature_function(feature)(variable_dict)
-
-        return pd.DataFrame(Xt_np, columns=cols)
+            return [all_short_feature_names[i] for i in self.f_idx]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
