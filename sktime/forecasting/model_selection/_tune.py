@@ -267,7 +267,10 @@ class BaseGridSearch(_DelegatedForecaster):
         # Select n best forecaster
         self.n_best_forecasters_ = []
         self.n_best_scores_ = []
-        for i in range(self.return_n_best_forecasters):
+        n = self.return_n_best_forecasters
+        if n == -1:
+            n = len(results.index)
+        for i in range(n):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
