@@ -54,7 +54,6 @@ class BaseGridSearch(_DelegatedForecaster):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
-        scoring_list = None
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -70,7 +69,6 @@ class BaseGridSearch(_DelegatedForecaster):
         self.tune_by_variable = tune_by_variable
         self.backend_params = backend_params
         self.n_jobs = n_jobs
-        self.scoring_list = scoring_list
 
         super().__init__()
 
@@ -185,26 +183,17 @@ class BaseGridSearch(_DelegatedForecaster):
         """
         cv = check_cv(self.cv)
         
-        if self.scoring_list is not None:
+        if isinstance(self.scoring, list):
             scoring = []
             scoring_name = []
-            scoring_ranker = check_scoring(self.scoring, obj=self)
-            scoring.append(scoring_ranker)
-            if scoring_ranker.name == 'DynamicForecastingErrorMetric' and hasattr(scoring_ranker, '__name__'):
-                scoring_name.append(f"test_{scoring_ranker.__name__}")
-            else:
-                scoring_name.append(f"test_{scoring_ranker.name}")
-            for metric in self.scoring_list:
+            for metric in self.scoring:
                 k = check_scoring(metric, obj=self)
                 kname = k.name
                 if k.name == 'DynamicForecastingErrorMetric' and hasattr(k, '__name__'):
                     kname = k.__name__
                 kname = f"test_{kname}"
-                if (kname == scoring_name[0]):
-                    continue
-                else:
-                    scoring.append(k)
-                    scoring_name.append(kname)
+                scoring.append(k)
+                scoring_name.append(kname)
         else:
                 scoring = check_scoring(self.scoring, obj=self)
                 scoring_name = f"test_{scoring.name}"
@@ -235,7 +224,7 @@ class BaseGridSearch(_DelegatedForecaster):
             meta["scoring"] = scoring
             meta["error_score"] = self.error_score
             meta["scoring_name"] = scoring_name
-            if self.scoring_list is not None:
+            if isinstance(self.scoring, list):
                 meta["list_flag"] = True
             else:
                 meta["list_flag"] = False
@@ -265,7 +254,7 @@ class BaseGridSearch(_DelegatedForecaster):
         # Rank results, according to whether greater is better for the given scoring.
         ranker = None
         ranker_name = None
-        if self.scoring_list is not None:
+        if isinstance(self.scoring, list):
             ranker = scoring[0]
             ranker_name = scoring_name[0]
         else:
@@ -420,7 +409,7 @@ def _fit_and_score(params, meta):
     return out
 
 
-class ForecastingGridSearchCV(BaseGridSearch):
+class ForecastingGridSearch(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
@@ -647,7 +636,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
-        scoring_list = None
     ):
         super().__init__(
             forecaster=forecaster,
@@ -664,7 +652,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
-            scoring_list = scoring_list
         )
         self.param_grid = param_grid
 
@@ -915,7 +902,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
-        scoring_list = None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -932,7 +918,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
-            scoring_list = scoring_list
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
