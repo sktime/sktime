@@ -54,6 +54,7 @@ class BaseGridSearch(_DelegatedForecaster):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        scoring_list = None
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -69,6 +70,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.tune_by_variable = tune_by_variable
         self.backend_params = backend_params
         self.n_jobs = n_jobs
+        self.scoring_list = scoring_list
 
         super().__init__()
 
@@ -182,9 +184,30 @@ class BaseGridSearch(_DelegatedForecaster):
         self : returns an instance of self.
         """
         cv = check_cv(self.cv)
-
-        scoring = check_scoring(self.scoring, obj=self)
-        scoring_name = f"test_{scoring.name}"
+        
+        if self.scoring_list is not None:
+            scoring = []
+            scoring_name = []
+            scoring_ranker = check_scoring(self.scoring, obj=self)
+            scoring.append(scoring_ranker)
+            if scoring_ranker.name == 'DynamicForecastingErrorMetric' and hasattr(scoring_ranker, '__name__'):
+                scoring_name.append(f"test_{scoring_ranker.__name__}")
+            else:
+                scoring_name.append(f"test_{scoring_ranker.name}")
+            for metric in self.scoring_list:
+                k = check_scoring(metric, obj=self)
+                kname = k.name
+                if k.name == 'DynamicForecastingErrorMetric' and hasattr(k, '__name__'):
+                    kname = k.__name__
+                kname = f"test_{kname}"
+                if (kname == scoring_name[0]):
+                    continue
+                else:
+                    scoring.append(k)
+                    scoring_name.append(kname)
+        else:
+                scoring = check_scoring(self.scoring, obj=self)
+                scoring_name = f"test_{scoring.name}"
 
         backend = self.backend
         backend_params = self.backend_params if self.backend_params else {}
@@ -212,6 +235,10 @@ class BaseGridSearch(_DelegatedForecaster):
             meta["scoring"] = scoring
             meta["error_score"] = self.error_score
             meta["scoring_name"] = scoring_name
+            if self.scoring_list is not None:
+                meta["list_flag"] = True
+            else:
+                meta["list_flag"] = False
 
             out = parallelize(
                 fun=_fit_and_score,
@@ -236,14 +263,21 @@ class BaseGridSearch(_DelegatedForecaster):
         results = pd.DataFrame(results)
 
         # Rank results, according to whether greater is better for the given scoring.
-        results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
-            ascending=scoring.get_tag("lower_is_better")
-        )
+        ranker = None
+        ranker_name = None
+        if self.scoring_list is not None:
+            ranker = scoring[0]
+            ranker_name = scoring_name[0]
+        else:
+            ranker = scoring
+            ranker_name = scoring_name
+        results[f"rank_{ranker_name}"] = results.loc[:, f"mean_{ranker_name}"].rank(
+        ascending=ranker.get_tag("lower_is_better"))
 
         self.cv_results_ = results
 
         # Select best parameters.
-        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
+        self.best_index_ = results.loc[:, f"rank_{ranker_name}"].argmin()
         # Raise error if all fits in evaluate failed because all score values are NaN.
         if self.best_index_ == -1:
             raise NotFittedError(
@@ -251,7 +285,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
-        self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
+        self.best_score_ = results.loc[self.best_index_, f"mean_{ranker_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
 
@@ -261,7 +295,7 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Sort values according to rank
         results = results.sort_values(
-            by=f"rank_{scoring_name}",
+            by=f"rank_{ranker_name}",
             ascending=True,
         )
         # Select n best forecaster
@@ -269,7 +303,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.n_best_scores_ = []
         for i in range(self.return_n_best_forecasters):
             params = results["params"].iloc[i]
-            rank = results[f"rank_{scoring_name}"].iloc[i]
+            rank = results[f"rank_{ranker_name}"].iloc[i]
             rank = str(int(rank))
             forecaster = self.forecaster.clone().set_params(**params)
             # Refit model with best parameters.
@@ -277,7 +311,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 forecaster.fit(y=y, X=X, fh=fh)
             self.n_best_forecasters_.append((rank, forecaster))
             # Save score
-            score = results[f"mean_{scoring_name}"].iloc[i]
+            score = results[f"mean_{ranker_name}"].iloc[i]
             self.n_best_scores_.append(score)
 
         return self
@@ -360,6 +394,7 @@ def _fit_and_score(params, meta):
     BaseGridSearchCV._fit, evaluate_candidates, within parallelize.
     """
     meta = meta.copy()
+    list_flag = meta.pop("list_flag")
     scoring_name = meta.pop("scoring_name")
 
     # Set parameters.
@@ -370,7 +405,10 @@ def _fit_and_score(params, meta):
     out = evaluate(forecaster, **meta)
 
     # Filter columns.
-    out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
+    if list_flag:
+        out = out.filter(items=[*scoring_name, "fit_time", "pred_time"], axis=1)
+    else:
+        out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
 
     # Aggregate results.
     out = out.mean()
@@ -382,7 +420,7 @@ def _fit_and_score(params, meta):
     return out
 
 
-class ForecastingGridSearchCV(BaseGridSearch):
+class ForecastingGridSearch(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
@@ -609,6 +647,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        scoring_list = None
     ):
         super().__init__(
             forecaster=forecaster,
@@ -625,6 +664,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
+            scoring_list = scoring_list
         )
         self.param_grid = param_grid
 
@@ -875,6 +915,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        scoring_list = None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -891,6 +932,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
+            scoring_list = scoring_list
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
