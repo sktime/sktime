@@ -37,7 +37,7 @@ return ForecastingGridSearchCV(
     },
     ],
     cv=cv,
-    n_jobs=-1)
+    )
 """
 
 dunder_spec = "Detrender(ExponentialSmoothing(sp=12)) * ARIMA()"
