@@ -77,6 +77,9 @@ class TestAllRegressors(RegressorFixtureGenerator, QuickTester):
 
         # run fit and predict
         y_pred = scenario.run(estimator_instance, method_sequence=["fit", "predict"])
+        # check score
+        score = estimator_instance.score(X_new, y_pred)
+        assert np.issubdtype(score.dtype, np.floating)
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
