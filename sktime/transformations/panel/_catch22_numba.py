@@ -499,7 +499,6 @@ def _normalise_series(X, mean):
     return X
 
 
-@njit(fastmath=True, cache=True)
 def _perform_fft(series, smean):
     nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
     return np.fft.fft(series - smean, n=nfft)
@@ -574,14 +573,14 @@ def _CO_FirstMin_ac(args_dict):
 def _SP_Summaries_welch_rect_area_5_1(args_dict):
     # Total power in lowest fifth of frequencies in the Fourier power spectrum.
     X = args_dict.get("series")
-    X_fft = _perform_fft(args_dict.get("series"), args_dict.get("smean"))
+    X_fft = _perform_fft(args_dict.get("series"), args_dict.get("smean")[0])
     return _summaries_welch_rect(X, False, X_fft)
 
 
 def _SP_Summaries_welch_rect_centroid(args_dict):
     # Centroid of the Fourier power spectrum.
     X = args_dict.get("series")
-    X_fft = _perform_fft(args_dict.get("series"), args_dict.get("smean"))
+    X_fft = _perform_fft(args_dict.get("series"), args_dict.get("smean")[0])
     return _summaries_welch_rect(X, True, X_fft)
 
 
@@ -739,7 +738,6 @@ def _SB_MotifThree_quantile_hh(args_dict):
     return -nsum
 
 
-@njit(fastmath=True, cache=True)
 def _FC_LocalSimple_mean1_tauresrat(args_dict):
     # Change in correlation length after iterative differencing.
     X = args_dict.get("series")
@@ -761,7 +759,7 @@ def _CO_Embed2_Dist_tau_d_expfit_meandiff(args_dict):
     # Exponential fit to successive distances in 2-d embedding space.
     X = args_dict.get("series")
     acfz = args_dict.get("acfz")[0]
-    tau = acfz
+    tau = int(acfz)
     if tau > len(X) / 10:
         tau = int(len(X) / 10)
 
