@@ -41,7 +41,6 @@ from sktime.transformations.panel._catch22_numba import (
     _SP_Summaries_welch_rect_area_5_1,
     _SP_Summaries_welch_rect_centroid,
 )
-from sktime.utils.numba.njit import njit
 from sktime.utils.warnings import warn
 
 METHODS_DICT = {
@@ -315,6 +314,8 @@ class Catch22(BaseTransformer):
             number of features requested, containing Catch22/24 features for X.
             column index is determined by self.col_names
         """
+        from sktime.transformations.panel._catch22_numba import _create_numba_dict
+
         n_features = len(f_idx)
         Xt_np = np.zeros((1, n_features))
 
@@ -330,7 +331,7 @@ class Catch22(BaseTransformer):
         fft = np.fft.fft(series - smean, n=nfft)
         ac = _autocorr(series, fft)
         acfz = _ac_first_zero(ac)
-        variable_dict = self._create_numba_dict(
+        variable_dict = _create_numba_dict(
             series, smin, smax, smean, std, outlier_series, ac, acfz
         )
 
@@ -340,32 +341,6 @@ class Catch22(BaseTransformer):
         cols = self._prepare_output_col_names(n_features)
 
         return pd.DataFrame(Xt_np, columns=cols)
-
-    @staticmethod
-    @njit
-    def _create_numba_dict(
-        series: np.ndarray,
-        smin: float,
-        smax: float,
-        smean: float,
-        std: float,
-        outlier_series: np.ndarray,
-        ac: np.ndarray,
-        acfz: int,
-    ):
-        from numba import types
-        from numba.typed import Dict
-
-        numba_dict = Dict()
-        numba_dict["series"] = series
-        numba_dict["smin"] = np.array([smin], dtype=types.float64)
-        numba_dict["smax"] = np.array([smax], dtype=types.float64)
-        numba_dict["smean"] = np.array([smean], dtype=types.float64)
-        numba_dict["std"] = np.array([std], dtype=types.float64)
-        numba_dict["outlier_series"] = outlier_series
-        numba_dict["ac"] = ac
-        numba_dict["acfz"] = np.array([acfz], dtype=types.float64)
-        return numba_dict
 
     def _prepare_output_col_names(
         self, n_features: int

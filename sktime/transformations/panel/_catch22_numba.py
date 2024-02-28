@@ -7,10 +7,6 @@ import math
 import numpy as np
 
 from sktime.utils.numba.njit import njit
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("numba", severity="none"):
-    import numba.typed as typed
 
 
 @njit(fastmath=True, cache=True)
@@ -505,7 +501,7 @@ def _perform_fft(series, smean):
 
 
 @njit(fastmath=True, cache=True)
-def _DN_HistogramMode_5(args_dict: typed.Dict):
+def _DN_HistogramMode_5(args_dict):
     # Mode of z-scored distribution (5-bin histogram).
     X = args_dict.get("series")
     smin = args_dict.get("smin")[0]
@@ -514,7 +510,7 @@ def _DN_HistogramMode_5(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _DN_HistogramMode_10(args_dict: typed.Dict):
+def _DN_HistogramMode_10(args_dict):
     # Mode of z-scored distribution (10-bin histogram).
     X = args_dict.get("series")
     smin = args_dict.get("smin")[0]
@@ -523,7 +519,7 @@ def _DN_HistogramMode_10(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _SB_BinaryStats_diff_longstretch0(args_dict: typed.Dict):
+def _SB_BinaryStats_diff_longstretch0(args_dict):
     # Longest period of consecutive values above the mean.
     X = args_dict.get("series")
     smean = args_dict.get("smean")[0]
@@ -536,21 +532,21 @@ def _SB_BinaryStats_diff_longstretch0(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _DN_OutlierInclude_p_001_mdrmd(args_dict: typed.Dict):
+def _DN_OutlierInclude_p_001_mdrmd(args_dict):
     # Time intervals between successive extreme events above the mean.
     X = args_dict.get("outlier_series")
     return _outlier_include(X)
 
 
 @njit(fastmath=True, cache=True)
-def _DN_OutlierInclude_n_001_mdrmd(args_dict: typed.Dict):
+def _DN_OutlierInclude_n_001_mdrmd(args_dict):
     # Time intervals between successive extreme events below the mean.
     X = args_dict.get("outlier_series")
     return _outlier_include(-X)
 
 
 @njit(fastmath=True, cache=True)
-def _CO_f1ecac(args_dict: typed.Dict):
+def _CO_f1ecac(args_dict):
     # First 1/e crossing of autocorrelation function.
     X_ac = args_dict.get("ac")
     threshold = 0.36787944117144233  # 1 / np.exp(1)
@@ -561,7 +557,7 @@ def _CO_f1ecac(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _CO_FirstMin_ac(args_dict: typed.Dict):
+def _CO_FirstMin_ac(args_dict):
     # First minimum of autocorrelation function.
     X_ac = args_dict.get("ac")
     for i in range(1, len(X_ac) - 1):
@@ -570,14 +566,14 @@ def _CO_FirstMin_ac(args_dict: typed.Dict):
     return len(X_ac)
 
 
-def _SP_Summaries_welch_rect_area_5_1(args_dict: typed.Dict):
+def _SP_Summaries_welch_rect_area_5_1(args_dict):
     # Total power in lowest fifth of frequencies in the Fourier power spectrum.
     X = args_dict.get("series")
     X_fft = _perform_fft(args_dict.get("series"), args_dict.get("smean"))
     return _summaries_welch_rect(X, False, X_fft)
 
 
-def _SP_Summaries_welch_rect_centroid(args_dict: typed.Dict):
+def _SP_Summaries_welch_rect_centroid(args_dict):
     # Centroid of the Fourier power spectrum.
     X = args_dict.get("series")
     X_fft = _perform_fft(args_dict.get("series"), args_dict.get("smean"))
@@ -585,7 +581,7 @@ def _SP_Summaries_welch_rect_centroid(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _FC_LocalSimple_mean3_stderr(args_dict: typed.Dict):
+def _FC_LocalSimple_mean3_stderr(args_dict):
     # Mean error from a rolling 3-sample mean forecasting.
     X = args_dict.get("series")
     if len(X) - 3 < 3:
@@ -595,7 +591,7 @@ def _FC_LocalSimple_mean3_stderr(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _CO_trev_1_num(args_dict: typed.Dict):
+def _CO_trev_1_num(args_dict):
     # Time-reversibility statistic, ((x_t+1 − x_t)^3)_t.
     X = args_dict.get("series")
     y = np.zeros(len(X) - 1)
@@ -605,7 +601,7 @@ def _CO_trev_1_num(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _CO_HistogramAMI_even_2_5(args_dict: typed.Dict):
+def _CO_HistogramAMI_even_2_5(args_dict):
     X = args_dict.get("series")
     smin = args_dict.get("smin")[0]
     smax = args_dict.get("smax")[0]
@@ -636,7 +632,7 @@ def _CO_HistogramAMI_even_2_5(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _IN_AutoMutualInfoStats_40_gaussian_fmmi(args_dict: typed.Dict):
+def _IN_AutoMutualInfoStats_40_gaussian_fmmi(args_dict):
     # First minimum of the automutual information function.
     X_ac = args_dict.get("ac")
     tau = int(min(40, np.ceil(len(X_ac) / 2)))
@@ -656,7 +652,7 @@ def _IN_AutoMutualInfoStats_40_gaussian_fmmi(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _MD_hrv_classic_pnn40(args_dict: typed.Dict):
+def _MD_hrv_classic_pnn40(args_dict):
     # Proportion of successive differences exceeding 0.04σ (Mietus 2002).
     X = args_dict.get("series")
     diffs = np.zeros(len(X) - 1)
@@ -672,7 +668,7 @@ def _MD_hrv_classic_pnn40(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _SB_BinaryStats_mean_longstretch1(args_dict: typed.Dict):
+def _SB_BinaryStats_mean_longstretch1(args_dict):
     # Longest period of successive incremental decreases.
     X = args_dict.get("series")
     diff_binary = np.zeros(len(X) - 1)
@@ -684,7 +680,7 @@ def _SB_BinaryStats_mean_longstretch1(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _SB_MotifThree_quantile_hh(args_dict: typed.Dict):
+def _SB_MotifThree_quantile_hh(args_dict):
     # Shannon entropy of two successive letters in equiprobable 3-letter
     # symbolization.
     X = args_dict.get("series")
@@ -739,7 +735,7 @@ def _SB_MotifThree_quantile_hh(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _FC_LocalSimple_mean1_tauresrat(args_dict: typed.Dict):
+def _FC_LocalSimple_mean1_tauresrat(args_dict):
     # Change in correlation length after iterative differencing.
     X = args_dict.get("series")
     acfz = args_dict.get("acfz")[0]
@@ -756,7 +752,7 @@ def _FC_LocalSimple_mean1_tauresrat(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _CO_Embed2_Dist_tau_d_expfit_meandiff(args_dict: typed.Dict):
+def _CO_Embed2_Dist_tau_d_expfit_meandiff(args_dict):
     # Exponential fit to successive distances in 2-d embedding space.
     X = args_dict.get("series")
     acfz = args_dict.get("acfz")[0]
@@ -810,7 +806,7 @@ def _CO_Embed2_Dist_tau_d_expfit_meandiff(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(args_dict: typed.Dict):
+def _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(args_dict):
     # Proportion of slower timescale fluctuations that scale with DFA (50%
     # sampling).
     X = args_dict.get("series")
@@ -823,7 +819,7 @@ def _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _SC_FluctAnal_2_rsrangefit_50_1_logi(args_dict: typed.Dict):
+def _SC_FluctAnal_2_rsrangefit_50_1_logi(args_dict):
     # Proportion of slower timescale fluctuations that scale with linearly rescaled
     X = args_dict.get("series")
     # range fits.
@@ -836,7 +832,7 @@ def _SC_FluctAnal_2_rsrangefit_50_1_logi(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _SB_TransitionMatrix_3ac_sumdiagcov(args_dict: typed.Dict):
+def _SB_TransitionMatrix_3ac_sumdiagcov(args_dict):
     # Trace of covariance of transition matrix between symbols in 3-letter
     # alphabet.
     X = args_dict.get("series")
@@ -882,7 +878,7 @@ def _SB_TransitionMatrix_3ac_sumdiagcov(args_dict: typed.Dict):
 
 
 @njit(fastmath=True, cache=True)
-def _PD_PeriodicityWang_th0_01(args_dict: typed.Dict):
+def _PD_PeriodicityWang_th0_01(args_dict):
     # Periodicity measure of (Wang et al. 2007).
     X = args_dict.get("series")
     y_spline = _spline_fit(X)
@@ -929,11 +925,37 @@ def _PD_PeriodicityWang_th0_01(args_dict: typed.Dict):
     return out
 
 
-def _catch24_mean(args_dict: typed.Dict):
+def _catch24_mean(args_dict):
     # Catch24 mean method
     return args_dict.get("smean")[0]
 
 
-def _catch24_std(args_dict: typed.Dict):
+def _catch24_std(args_dict):
     # Catch24 standard deviation method.
     return args_dict.get("std")[0]
+
+
+@njit
+def _create_numba_dict(
+    series: np.ndarray,
+    smin: float,
+    smax: float,
+    smean: float,
+    std: float,
+    outlier_series: np.ndarray,
+    ac: np.ndarray,
+    acfz: int,
+):
+    from numba import types
+    from numba.typed import Dict
+
+    numba_dict = Dict()
+    numba_dict["series"] = series
+    numba_dict["smin"] = np.array([smin], dtype=types.float64)
+    numba_dict["smax"] = np.array([smax], dtype=types.float64)
+    numba_dict["smean"] = np.array([smean], dtype=types.float64)
+    numba_dict["std"] = np.array([std], dtype=types.float64)
+    numba_dict["outlier_series"] = outlier_series
+    numba_dict["ac"] = ac
+    numba_dict["acfz"] = np.array([acfz], dtype=types.float64)
+    return numba_dict
