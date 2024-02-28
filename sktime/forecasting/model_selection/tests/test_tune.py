@@ -4,6 +4,9 @@
 
 __author__ = ["mloning", "fkiraly"]
 
+
+from functools import reduce
+
 import numpy as np
 import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler
@@ -348,3 +351,22 @@ def test_gscv_backends(backend_set):
         backend_params=backend_params,
     )
     gscv.fit(y, X)
+
+
+@pytest.mark.parametrize("return_n_best_forecasters", [-1, 0, 1, 2])
+def test_return_n_best_forecasters(return_n_best_forecasters):
+    y, X = load_longley()
+    gscv = ForecastingGridSearchCV(
+        forecaster=PIPE,
+        param_grid=PIPE_GRID,
+        cv=CVs[0],
+        return_n_best_forecasters=return_n_best_forecasters,
+    )
+    gscv.fit(y, X)
+    if return_n_best_forecasters == -1:
+        total_compinations = reduce(
+            lambda x, y: x * y, [len(x) for x in PIPE_GRID.values()]
+        )
+        assert len(gscv.n_best_forecasters_) == total_compinations
+    else:
+        assert len(gscv.n_best_forecasters_) == return_n_best_forecasters
