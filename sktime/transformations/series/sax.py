@@ -8,8 +8,7 @@ from sktime.transformations.series.paa import PAA
 from sktime.utils.warnings import warn
 
 
-# TODO 0.27.0: rename the class SAX2 to SAX
-class SAX2(BaseTransformer):
+class SAX(BaseTransformer):
     """Symbolic Aggregate approXimation Transformer (SAX).
 
     SAX [2]_ is a dimensionality reduction technique that z-normalises a time
@@ -82,8 +81,8 @@ class SAX2(BaseTransformer):
         super().__init__()
 
         warn(
-            "In sktime 0.27.0, SAX2 will become the primary SAX implementation in "
-            "sktime, and will be renamed to SAX. "
+            "Since sktime 0.27.0, SAX2 is the primary SAX implementation in "
+            "sktime, and has been renamed to SAX. "
             "SAX2 is available under both its current and future name at its "
             "current location, imports under the deprecated name SAX2 will be possible"
             "until 0.28.0. "
@@ -158,6 +157,5 @@ class SAX2(BaseTransformer):
             raise ValueError("frame_size must be at least 0.")
 
 
-# TODO 0.27.0: switch to SAX2 = SAX
 # TODO 0.28.0: remove the alias line altogether
-SAX = SAX2
+SAX2 = SAX
