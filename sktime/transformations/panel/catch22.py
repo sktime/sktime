@@ -323,7 +323,7 @@ class Catch22(BaseTransformer):
         n_features = len(f_idx)
         Xt_np = np.zeros((1, n_features))
 
-        series = X if isinstance(np.ndarray, X) else X.to_numpy()
+        series = X if isinstance(X, np.ndarray) else X.to_numpy()
         smin = np.min(series)
         smax = np.max(series)
         smean = np.mean(series)
