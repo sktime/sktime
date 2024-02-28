@@ -182,21 +182,21 @@ class BaseGridSearch(_DelegatedForecaster):
         self : returns an instance of self.
         """
         cv = check_cv(self.cv)
-        
+
         if isinstance(self.scoring, list):
             scoring = []
-            scoring_name = []
+            scoring_names = []
             for metric in self.scoring:
-                k = check_scoring(metric, obj=self)
-                kname = k.name
-                if k.name == 'DynamicForecastingErrorMetric' and hasattr(k, '__name__'):
-                    kname = k.__name__
-                kname = f"test_{kname}"
-                scoring.append(k)
-                scoring_name.append(kname)
+                metric = check_scoring(metric, obj=self)
+                metric_name = metric.name
+                if metric_name == 'DynamicForecastingErrorMetric' and hasattr(metric, '__name__'):
+                    metric_name = metric.__name__
+                metric_name = f"test_{metric_name}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
         else:
-                scoring = check_scoring(self.scoring, obj=self)
-                scoring_name = f"test_{scoring.name}"
+            scoring = check_scoring(self.scoring, obj=self)
+            scoring_name = f"test_{scoring.name}"
 
         backend = self.backend
         backend_params = self.backend_params if self.backend_params else {}
@@ -223,10 +223,11 @@ class BaseGridSearch(_DelegatedForecaster):
             meta["strategy"] = self.strategy
             meta["scoring"] = scoring
             meta["error_score"] = self.error_score
-            meta["scoring_name"] = scoring_name
             if isinstance(self.scoring, list):
+                meta["scoring_names"] = scoring_names
                 meta["list_flag"] = True
             else:
+                meta["scoring_name"] = scoring_name
                 meta["list_flag"] = False
 
             out = parallelize(
@@ -252,21 +253,21 @@ class BaseGridSearch(_DelegatedForecaster):
         results = pd.DataFrame(results)
 
         # Rank results, according to whether greater is better for the given scoring.
-        ranker = None
-        ranker_name = None
+        ranking_metric = None
+        ranking_metric_name = None
         if isinstance(self.scoring, list):
-            ranker = scoring[0]
-            ranker_name = scoring_name[0]
+            ranking_metric = scoring[0]
+            ranking_metric_name = scoring_names[0]
         else:
-            ranker = scoring
-            ranker_name = scoring_name
-        results[f"rank_{ranker_name}"] = results.loc[:, f"mean_{ranker_name}"].rank(
-        ascending=ranker.get_tag("lower_is_better"))
+            ranking_metric = scoring
+            ranking_metric_name = scoring_name
+        results[f"rank_{ranking_metric_name}"] = results.loc[:, f"mean_{ranking_metric_name}"].rank(
+        ascending=ranking_metric.get_tag("lower_is_better"))
 
         self.cv_results_ = results
 
         # Select best parameters.
-        self.best_index_ = results.loc[:, f"rank_{ranker_name}"].argmin()
+        self.best_index_ = results.loc[:, f"rank_{ranking_metric_name}"].argmin()
         # Raise error if all fits in evaluate failed because all score values are NaN.
         if self.best_index_ == -1:
             raise NotFittedError(
@@ -274,7 +275,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
-        self.best_score_ = results.loc[self.best_index_, f"mean_{ranker_name}"]
+        self.best_score_ = results.loc[self.best_index_, f"mean_{ranking_metric_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
 
@@ -284,7 +285,7 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Sort values according to rank
         results = results.sort_values(
-            by=f"rank_{ranker_name}",
+            by=f"rank_{ranking_metric_name}",
             ascending=True,
         )
         # Select n best forecaster
@@ -292,7 +293,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.n_best_scores_ = []
         for i in range(self.return_n_best_forecasters):
             params = results["params"].iloc[i]
-            rank = results[f"rank_{ranker_name}"].iloc[i]
+            rank = results[f"rank_{ranking_metric_name}"].iloc[i]
             rank = str(int(rank))
             forecaster = self.forecaster.clone().set_params(**params)
             # Refit model with best parameters.
@@ -300,7 +301,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 forecaster.fit(y=y, X=X, fh=fh)
             self.n_best_forecasters_.append((rank, forecaster))
             # Save score
-            score = results[f"mean_{ranker_name}"].iloc[i]
+            score = results[f"mean_{ranking_metric_name}"].iloc[i]
             self.n_best_scores_.append(score)
 
         return self
@@ -384,7 +385,10 @@ def _fit_and_score(params, meta):
     """
     meta = meta.copy()
     list_flag = meta.pop("list_flag")
-    scoring_name = meta.pop("scoring_name")
+    if list_flag:
+        scoring_names = meta.pop("scoring_names")
+    else:
+        scoring_name = meta.pop("scoring_name")
 
     # Set parameters.
     forecaster = meta.pop("forecaster").clone()
@@ -395,7 +399,7 @@ def _fit_and_score(params, meta):
 
     # Filter columns.
     if list_flag:
-        out = out.filter(items=[*scoring_name, "fit_time", "pred_time"], axis=1)
+        out = out.filter(items=[*scoring_names, "fit_time", "pred_time"], axis=1)
     else:
         out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
 
