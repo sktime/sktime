@@ -95,6 +95,9 @@ class TestAllRegressors(RegressorFixtureGenerator, QuickTester):
 
         estimator_instance.fit(X, y_mult)
         y_pred = estimator_instance.predict(X)
+        # check score
+        score = estimator_instance.score(X, y_mult)
+        assert np.issubdtype(score.dtype, np.floating)
 
         assert isinstance(y_pred, pd.DataFrame)
         assert y_pred.shape == y_mult.shape
