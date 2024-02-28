@@ -741,7 +741,7 @@ def _SB_MotifThree_quantile_hh(args_dict):
 def _FC_LocalSimple_mean1_tauresrat(args_dict):
     # Change in correlation length after iterative differencing.
     X = args_dict.get("series")
-    acfz = args_dict.get("acfz")[0]
+    acfz = int(args_dict.get("acfz")[0])
     if len(X) < 2:
         return 0
     res = _local_simple_mean(X, 1)
@@ -839,7 +839,7 @@ def _SB_TransitionMatrix_3ac_sumdiagcov(args_dict):
     # Trace of covariance of transition matrix between symbols in 3-letter
     # alphabet.
     X = args_dict.get("series")
-    acfz = args_dict.get("acfz")[0]
+    acfz = int(args_dict.get("acfz")[0])
     ds = np.zeros(int((len(X) - 1) / acfz + 1))
     for i in range(len(ds)):
         ds[i] = X[i * acfz]

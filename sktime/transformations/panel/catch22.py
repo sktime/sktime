@@ -222,11 +222,11 @@ class Catch22(BaseTransformer):
         self.replace_nans = replace_nans
         self.col_names = self._set_col_names(col_names)
         self.f_idx = _verify_features(self.features, self.catch24)
-        super().__init__()
 
-        self.n_jobs = n_jobs
-
+        # todo: remove this unimplemented logic
+        self._transform_features = None
         # todo 0.28.0: remove this warning and logic
+        self.n_jobs = n_jobs
         if n_jobs != "deprecated":
             warn(
                 "In Catch22Wrapper, the parameter "
@@ -238,6 +238,8 @@ class Catch22(BaseTransformer):
                 obj=self,
             )
             self.set_config(backend="joblib", backend_params={"n_jobs": n_jobs})
+
+        super().__init__()
 
     def _set_col_names(self, col_names: str) -> str:
         """Set valid column names type.
@@ -335,7 +337,19 @@ class Catch22(BaseTransformer):
             series, smin, smax, smean, std, outlier_series, ac, acfz
         )
 
+        # todo: remove unimplemented logic
+        if (
+            self._transform_features is not None
+            and len(self._transform_features) == n_features
+        ):
+            transform_feature = self._transform_features
+        else:
+            transform_feature = [True] * n_features
+
         for n, feature in enumerate(f_idx):
+            # todo: remove unimplemented logic
+            if not transform_feature[n]:
+                continue
             Xt_np[0, n] = self._get_feature_function(feature)(variable_dict)
 
         cols = self._prepare_output_col_names(n_features)
