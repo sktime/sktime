@@ -117,7 +117,6 @@ def _autocorr(X, X_fft):
     return _get_acf(X, ca)
 
 
-@njit(fastmath=True, cache=True)
 def _multiply_complex_arr(X_fft):
     c = np.zeros(len(X_fft), dtype=np.complex128)
     for i, n in enumerate(X_fft):
