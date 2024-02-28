@@ -7,6 +7,11 @@ import math
 import numpy as np
 
 from sktime.utils.numba.njit import njit
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("numba", severity="none"):
+    from numba.core import types
+    from numba.typed import Dict
 
 
 @njit(fastmath=True, cache=True)
@@ -946,9 +951,6 @@ def _create_numba_dict(
     ac: np.ndarray,
     acfz: int,
 ):
-    from numba import types
-    from numba.typed import Dict
-
     numba_dict = Dict()
     numba_dict["series"] = series
     numba_dict["smin"] = np.array([smin], dtype=types.float64)
