@@ -506,19 +506,22 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     else:
         name = summarizer
 
-    if name == "lag":
-        feat.rename(
-            columns={feat.columns[0]: name + "_" + str(window[0])},
-            inplace=True,
-        )
-    else:
-        feat.rename(
-            columns={
-                feat.columns[0]: name + "_" + "_".join([str(item) for item in window])
-            },
-            inplace=True,
-        )
-    return feat
+    if feat is not None:
+        if name == "lag":
+            feat.rename(
+                columns={feat.columns[0]: name + "_" + str(window[0])},
+                inplace=True,
+            )
+        else:
+            feat.rename(
+                columns={
+                    feat.columns[0]: name
+                    + "_"
+                    + "_".join([str(item) for item in window])
+                },
+                inplace=True,
+            )
+        return feat
 
 
 ALLOWED_SUM_FUNCS = [
