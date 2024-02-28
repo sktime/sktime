@@ -287,20 +287,22 @@ class Catch22(BaseTransformer):
 
         return Xt
 
-    def _get_feature_function(self, feature: Union[int, str]):
-        if isinstance(feature, int):
-            return (
-                METHODS_DICT.get(FEATURE_NAMES[feature])
-                if feature < 22
-                else CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
+    # todo: remove case_id
+    def _transform_single_feature(
+        self, X: pd.Series, feature: Union[int, str], case_id="deprecated"
+    ):
+        if case_id != "deprecated":
+            warn(
+                "In Catch22._transform_single_feature, the argument "
+                "case_id is deprecated and will be removed in the future.",
+                FutureWarning,
+                obj=self,
             )
-        elif isinstance(feature, str):
-            if feature in FEATURE_NAMES:
-                return METHODS_DICT.get(feature)
-            if feature in CATCH24_FEATURE_NAMES:
-                return CATCH24_METHODS_DICT.get(feature)
-        else:
-            raise KeyError(f"No feature with name: {feature}")
+        Xt = self._transform_case(X, [feature])
+        if self.replace_nans:
+            Xt = Xt.fillna(0)
+
+        return Xt
 
     def _transform_case(self, X: pd.Series, f_idx: List[int]) -> pd.DataFrame:
         """Transform data into the Catch22/24 features.
@@ -321,7 +323,7 @@ class Catch22(BaseTransformer):
         n_features = len(f_idx)
         Xt_np = np.zeros((1, n_features))
 
-        series = X.to_numpy()
+        series = X if isinstance(np.ndarray, X) else X.to_numpy()
         smin = np.min(series)
         smax = np.max(series)
         smean = np.mean(series)
@@ -355,6 +357,21 @@ class Catch22(BaseTransformer):
         cols = self._prepare_output_col_names(n_features)
 
         return pd.DataFrame(Xt_np, columns=cols)
+
+    def _get_feature_function(self, feature: Union[int, str]):
+        if isinstance(feature, int):
+            return (
+                METHODS_DICT.get(FEATURE_NAMES[feature])
+                if feature < 22
+                else CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
+            )
+        elif isinstance(feature, str):
+            if feature in FEATURE_NAMES:
+                return METHODS_DICT.get(feature)
+            if feature in CATCH24_FEATURE_NAMES:
+                return CATCH24_METHODS_DICT.get(feature)
+        else:
+            raise KeyError(f"No feature with name: {feature}")
 
     def _prepare_output_col_names(
         self, n_features: int
@@ -394,23 +411,6 @@ class Catch22(BaseTransformer):
                 else SHORT_FEATURE_NAMES
             )
             return [all_short_feature_names[i] for i in self.f_idx]
-
-    # todo: remove case_id
-    def _transform_single_feature(
-        self, X: pd.Series, feature: Union[int, str], case_id="deprecated"
-    ):
-        if case_id != "deprecated":
-            warn(
-                "In Catch22._transform_single_feature, the argument "
-                "case_id is deprecated and will be removed in the future.",
-                FutureWarning,
-                obj=self,
-            )
-        Xt = self._transform_case(X, [feature])
-        if self.replace_nans:
-            Xt = Xt.fillna(0)
-
-        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
