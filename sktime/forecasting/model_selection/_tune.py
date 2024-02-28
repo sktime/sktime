@@ -420,7 +420,7 @@ def _fit_and_score(params, meta):
     return out
 
 
-class ForecastingGridSearch(BaseGridSearch):
+class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
