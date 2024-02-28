@@ -581,7 +581,9 @@ def evaluate(
 
             genx = cv_X.split_series(X)
 
-            for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
+            for (y_train, y_test), (X_train, _) in zip(geny, genx):
+                fh = cv.fh
+                X_test = X[-(fh[-1]) :]
                 yield y_train, y_test, X_train, X_test
 
     # generator for y and X splits to iterate over below
