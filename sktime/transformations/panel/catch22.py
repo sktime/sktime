@@ -229,7 +229,7 @@ class Catch22(BaseTransformer):
         self.n_jobs = n_jobs
         if n_jobs != "deprecated":
             warn(
-                "In Catch22Wrapper, the parameter "
+                "In Catch22, the parameter "
                 "n_jobs is deprecated and will be removed in v0.28.0. "
                 "Instead, use set_config with the backend and backend:params "
                 "config fields, and set backend to 'joblib' and pass n_jobs "
@@ -394,6 +394,23 @@ class Catch22(BaseTransformer):
                 else SHORT_FEATURE_NAMES
             )
             return [all_short_feature_names[i] for i in self.f_idx]
+
+    # todo: remove case_id
+    def _transform_single_feature(
+        self, X: pd.Series, feature: Union[int, str], case_id="deprecated"
+    ):
+        if case_id != "deprecated":
+            warn(
+                "In Catch22._transform_single_feature, the argument "
+                "case_id is deprecated and will be removed in the future.",
+                FutureWarning,
+                obj=self,
+            )
+        Xt = self._transform_case(X, [feature])
+        if self.replace_nans:
+            Xt = Xt.fillna(0)
+
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
