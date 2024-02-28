@@ -48,9 +48,7 @@ def test_optionalpassthrough():
         "scaler__passthrough": [True, False],
         "forecaster__strategy": ["drift", "mean", "last"],
     }
-    gscv = ForecastingGridSearchCV(
-        forecaster=pipe, param_grid=param_grid, cv=cv, n_jobs=-1
-    )
+    gscv = ForecastingGridSearchCV(forecaster=pipe, param_grid=param_grid, cv=cv)
     gscv.fit(load_airline())
 
 
