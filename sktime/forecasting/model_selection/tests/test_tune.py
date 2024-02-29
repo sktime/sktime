@@ -364,9 +364,9 @@ def test_return_n_best_forecasters(return_n_best_forecasters):
     )
     gscv.fit(y, X)
     if return_n_best_forecasters == -1:
-        total_compinations = reduce(
+        total_combinations = reduce(
             lambda x, y: x * y, [len(x) for x in PIPE_GRID.values()]
         )
-        assert len(gscv.n_best_forecasters_) == total_compinations
+        assert len(gscv.n_best_forecasters_) == total_combinations
     else:
         assert len(gscv.n_best_forecasters_) == return_n_best_forecasters
