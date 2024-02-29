@@ -433,7 +433,7 @@ Parameter estimation and hypothesis testing
 
 * Parameter plugin or estimation based parameter tuning estimators can now be quickly constructed
   with the ``*`` dunder, which will construct a ``PluginParamsForecaster`` or ``PluginParamsTransformer``
-  with all fitted paramters (``get_fitted_params``) of the left element plugged in into the right element
+  with all fitted parameters (``get_fitted_params``) of the left element plugged in into the right element
   (``set_params``), where parameter names match.
   For instance, ``SeasonalityACF() * Deseasonalizer()`` will construct
   a ``Deseasonalizer`` whose ``sp`` (seasonality period) parameter is tuned
@@ -831,7 +831,7 @@ Forecasting
   are now supported. To use a custom ``joblib`` backend, use ``set_config`` to
   set the ``backend:parallel`` configuration flag to ``"joblib"``,
   and set the ``backend`` parameter in the ``dict`` set via ``backend:parallel:params``
-  to the name of the custom ``joblib`` backend. Further bakcend parameters
+  to the name of the custom ``joblib`` backend. Further backend parameters
   can be passed in the same ``dict``. See docstring of ``set_config`` for details.
 
 Time series classification
@@ -857,7 +857,7 @@ Transformations
   are now supported. To use a custom ``joblib`` backend, use ``set_config`` to
   set the ``backend:parallel`` configuration flag to ``"joblib"``,
   and set the ``backend`` parameter in the ``dict`` set via ``backend:parallel:params``
-  to the name of the custom ``joblib`` backend. Further bakcend parameters
+  to the name of the custom ``joblib`` backend. Further backend parameters
   can be passed in the same ``dict``. See docstring of ``set_config`` for details.
 
 Enhancements
@@ -2307,7 +2307,7 @@ Maintenance
 * [MNT] [Dependabot](deps): Bump actions/upload-artifact from 2 to 3 (:pr:`4856`) :user:`dependabot[bot]`
 * [MNT] fix remaining ``sklearn 1.3.0`` compatibility issues (:pr:`4860`) :user:`fkiraly`, :user:`hazrulakmal`
 * [MNT] remove forgotten ``deprecated`` import from 0.13.0 (:pr:`4824`) :user:`fkiraly`
-* [MNT] Extend softdep error message tests support for packages with version speciefier and alias (:pr:`4867`) :user:`hazrulakmal`, :user:`fkiraly`
+* [MNT] Extend softdep error message tests support for packages with version specifier and alias (:pr:`4867`) :user:`hazrulakmal`, :user:`fkiraly`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -3495,7 +3495,7 @@ Highlights
 
 * ``HierarchyEnsembleForecaster`` for level- or node-wise application of forecasters on panel/hierarchical data (:pr:`3905`) :user:`VyomkeshVyas`
 * new transformer: ``BKFilter``, Baxter-King filter, interfaced from ``statsmodels`` (:pr:`4127`) :user:`klam-data`, :user:`pyyim``
-* ``get_fitted_params`` of pipelines and other heterogenous meta-estimators now supports parameter nesting (:pr:`4110`) :user:`fkiraly`
+* ``get_fitted_params`` of pipelines and other heterogeneous meta-estimators now supports parameter nesting (:pr:`4110`) :user:`fkiraly`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -3561,7 +3561,7 @@ Enhancements
 BaseEstimator
 ^^^^^^^^^^^^^
 
-* [ENH] ``get_fitted_params`` for pipelines and other heterogenous meta-estimators (:pr:`4110`) :user:`fkiraly`
+* [ENH] ``get_fitted_params`` for pipelines and other heterogeneous meta-estimators (:pr:`4110`) :user:`fkiraly`
 * [ENH] ``deep`` argument for ``get_fitted_params`` (:pr:`4113`) :user:`fkiraly`
 
 Data types, checks, conversions
@@ -7214,7 +7214,7 @@ Fixed
 
 * [MNT] Fix appveyor failure (:pr:`1541`) :user:`freddyaboulton`
 * [MNT] Fix macOS CI (:pr:`1511`) :user:`mloning`
-* [MNT] Depcrecate manylinux2010 (:pr:`1379`) :user:`mloning`
+* [MNT] Deprecate manylinux2010 (:pr:`1379`) :user:`mloning`
 * [MNT] Added pre-commit hook to sort imports (:pr:`1465`) :user:`aiwalter`
 * [MNT] add :code:`max_requirements`, bound statsmodels (:pr:`1479`) :user:`fkiraly`
 * [MNT] Hotfix tag scitype:y typo (:pr:`1449`) :user:`aiwalter`
