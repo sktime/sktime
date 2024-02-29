@@ -10,7 +10,6 @@ from sktime.utils.numba.njit import njit
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("numba", severity="none"):
-    from numba.core import types
     from numba.typed import Dict
 
 
@@ -950,11 +949,11 @@ def _create_numba_dict(
 ):
     numba_dict = Dict()
     numba_dict["series"] = series
-    numba_dict["smin"] = np.array([smin], dtype=types.float64)
-    numba_dict["smax"] = np.array([smax], dtype=types.float64)
-    numba_dict["smean"] = np.array([smean], dtype=types.float64)
-    numba_dict["std"] = np.array([std], dtype=types.float64)
+    numba_dict["smin"] = np.array([smin], dtype=np.float64)
+    numba_dict["smax"] = np.array([smax], dtype=np.float64)
+    numba_dict["smean"] = np.array([smean], dtype=np.float64)
+    numba_dict["std"] = np.array([std], dtype=np.float64)
     numba_dict["outlier_series"] = outlier_series
     numba_dict["ac"] = ac
-    numba_dict["acfz"] = np.array([acfz], dtype=types.float64)
+    numba_dict["acfz"] = np.array([acfz], dtype=np.float64)
     return numba_dict

@@ -10,7 +10,9 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 
+from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel._catch22_numba import (
     _ac_first_zero,
@@ -279,12 +281,15 @@ class Catch22(BaseTransformer):
         Returns
         -------
         c22 : Pandas DataFrame of shape [n_instances, c*n_dimensions] where c is the
-             number of features requested, containing Catch22 features for X.
+            number of features requested, containing Catch22 features for X.
+            column index is determined by self.col_names
         """
-        Xt = self._transform_case(X, self.f_idx)
+        Xt_np = self._transform_case(X, self.f_idx)
+        cols = self._prepare_output_col_names(len(self.f_idx))
+
+        Xt = pd.DataFrame(Xt_np, columns=cols)
         if self.replace_nans:
             Xt = Xt.fillna(0)
-
         return Xt
 
     # todo: remove case_id
@@ -298,13 +303,35 @@ class Catch22(BaseTransformer):
                 FutureWarning,
                 obj=self,
             )
-        Xt = self._transform_case(X, [feature])
+        if isinstance(X, pd.DataFrame):
+            X = convert_to(X, "numpy3D")
+
+        if len(X.shape) > 2:
+            n_instances, n_dims, series_length = X.shape
+
+            if n_dims > 1:
+                raise ValueError(
+                    "transform_single_feature can only handle univariate series "
+                    "currently."
+                )
+
+            X = np.reshape(X, (n_instances, -1))
+        else:
+            n_instances, series_length = X.shape
+
+        # todo: remove Parallel in future versions, left for
+        # compatibility with `CanonicalIntervalForest`
+        n_jobs = self.n_jobs if isinstance(self.n_jobs, int) else 1
+        c22_list = Parallel(n_jobs=n_jobs)(
+            delayed(self._transform_case)(X[i], [feature]) for i in range(n_instances)
+        )
+
         if self.replace_nans:
-            Xt = Xt.fillna(0)
+            c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
 
-        return Xt
+        return np.asarray(c22_list)[:, 0, 0]
 
-    def _transform_case(self, X: pd.Series, f_idx: List[int]) -> pd.DataFrame:
+    def _transform_case(self, X: pd.Series, f_idx: List[int]) -> np.ndarray:
         """Transform data into the Catch22/24 features.
 
         Parameters
@@ -314,9 +341,8 @@ class Catch22(BaseTransformer):
 
         Returns
         -------
-        Xt : pd.DataFrame of size [1, n_features], where n_features is the
+        Xt : np.ndarray of size [1, n_features], where n_features is the
             number of features requested, containing Catch22/24 features for X.
-            column index is determined by self.col_names
         """
         from sktime.transformations.panel._catch22_numba import _create_numba_dict
 
@@ -352,26 +378,31 @@ class Catch22(BaseTransformer):
             # todo: remove unimplemented logic
             if not transform_feature[n]:
                 continue
-            Xt_np[0, n] = self._get_feature_function(feature)(variable_dict)
+            Xt_np[0, n] = self._get_feature_function(feature)(variable_dict) or None
 
-        cols = self._prepare_output_col_names(n_features)
-
-        return pd.DataFrame(Xt_np, columns=cols)
+        return Xt_np
 
     def _get_feature_function(self, feature: Union[int, str]):
         if isinstance(feature, int):
-            return (
-                METHODS_DICT.get(FEATURE_NAMES[feature])
-                if feature < 22
-                else CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
-            )
+            return self.__get_feature_function_int(feature)
         elif isinstance(feature, str):
-            if feature in FEATURE_NAMES:
-                return METHODS_DICT.get(feature)
-            if feature in CATCH24_FEATURE_NAMES:
-                return CATCH24_METHODS_DICT.get(feature)
+            return self.__get_feature_function_str(feature)
+
+    def __get_feature_function_int(self, feature: int):
+        if feature < 22:
+            return METHODS_DICT.get(FEATURE_NAMES[feature])
+        if 22 <= feature < 24:
+            CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
         else:
             raise KeyError(f"No feature with name: {feature}")
+
+    def __get_feature_function_str(self, feature: str):
+        if feature in FEATURE_NAMES:
+            return METHODS_DICT.get(feature)
+        if feature in CATCH24_FEATURE_NAMES:
+            return CATCH24_METHODS_DICT.get(feature)
+        else:
+            self.__get_feature_function_int(int(str))
 
     def _prepare_output_col_names(
         self, n_features: int
