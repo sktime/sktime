@@ -18,7 +18,7 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
-Version 0.27.0 - 2023-02-28
+Version 0.27.0 - 2024-02-28
 ---------------------------
 
 Maintenance release:
@@ -27,7 +27,7 @@ Maintenance release:
 * support for soft dependency ``numba 0.59`` and ``numba`` under ``python 3.12``
 * minor documentation updates, website updates for GSoC 2024
 
-For last non-maintenance content updates, see 0.25.1.
+For last non-maintenance content updates, see 0.26.1.
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -103,7 +103,7 @@ Maintenance
 
 Contributors
 
-Version 0.26.1 - 2023-02-26
+Version 0.26.1 - 2024-02-26
 ---------------------------
 
 Highlights
@@ -309,7 +309,7 @@ Contributors
 :user:`yarnabrina`
 
 
-Version 0.26.0 - 2023-01-27
+Version 0.26.0 - 2024-01-27
 ---------------------------
 
 Maintenance release:
@@ -375,7 +375,7 @@ Contents
 * [BUG] fix tag handling in ``IgnoreX`` (:pr:`5843`) :user:`tpvasconcelos`, :user:`fkiraly`
 
 
-Version 0.25.1 - 2023-01-24
+Version 0.25.1 - 2024-01-24
 ---------------------------
 
 Highlights
