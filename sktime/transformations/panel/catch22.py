@@ -383,10 +383,17 @@ class Catch22(BaseTransformer):
         return Xt_np
 
     def _get_feature_function(self, feature: Union[int, str]):
-        if isinstance(feature, int):
-            return self.__get_feature_function_int(feature)
-        elif isinstance(feature, str):
+        if isinstance(feature, str):
             return self.__get_feature_function_str(feature)
+        return self.__get_feature_function_int(feature)
+
+    def __get_feature_function_str(self, feature: str):
+        if feature in FEATURE_NAMES:
+            return METHODS_DICT.get(feature)
+        if feature in CATCH24_FEATURE_NAMES:
+            return CATCH24_METHODS_DICT.get(feature)
+        else:
+            return self.__get_feature_function_int(int(str))
 
     def __get_feature_function_int(self, feature: int):
         if feature < 22:
@@ -395,14 +402,6 @@ class Catch22(BaseTransformer):
             CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
         else:
             raise KeyError(f"No feature with name: {feature}")
-
-    def __get_feature_function_str(self, feature: str):
-        if feature in FEATURE_NAMES:
-            return METHODS_DICT.get(feature)
-        if feature in CATCH24_FEATURE_NAMES:
-            return CATCH24_METHODS_DICT.get(feature)
-        else:
-            self.__get_feature_function_int(int(str))
 
     def _prepare_output_col_names(
         self, n_features: int
