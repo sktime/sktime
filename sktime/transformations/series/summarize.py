@@ -7,6 +7,7 @@ __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 
 import pandas as pd
 from joblib import Parallel, delayed
+import numpy as np
 
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
@@ -424,7 +425,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     Apply summarizer passed over a certain window
     of past observations, e.g. the mean of a window of length 7 days, lagged by 14 days.
 
-    Z: pandas Dataframe with a single column.
+    Z: pandas Dataframe with a single column or a pandas Series.
     name : str, base string of the derived features, will be appended by
         `lag` and window length parameters defined in window.
     summarizer: either str corresponding to pandas window function, currently
@@ -453,43 +454,35 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
             if bfill is False:
                 feat = getattr(
-                    Z.shift(lag).rolling(
+                    Z.rolling(
                         window=window_length, min_periods=window_length
                     ),
                     summarizer,
-                )()
+                )().shift(lag)
             else:
                 feat = getattr(
-                    Z.shift(lag)
-                    .bfill()
-                    .rolling(window=window_length, min_periods=window_length),
+                    Z.rolling(window=window_length, min_periods=window_length),
                     summarizer,
-                )()
+                )().shift(lag).bfill()
             feat = pd.DataFrame(feat)
         else:
             if bfill is False:
                 feat = Z.apply(
                     lambda x: getattr(
-                        x.shift(lag).rolling(
+                        x.rolling(
                             window=window_length, min_periods=window_length
                         ),
                         summarizer,
-                    )()
+                    )().shift(lag)
                 )
             else:
                 feat = Z.apply(
                     lambda x: getattr(
-                        x.shift(lag)
-                        .bfill()
-                        .rolling(window=window_length, min_periods=window_length),
+                        x.rolling(window=window_length, min_periods=window_length),
                         summarizer,
-                    )()
+                    )().shift(lag).bfill()
                 )
     else:
-        if bfill is False:
-            feat = Z.shift(lag)
-        else:
-            feat = Z.shift(lag).bfill()
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
@@ -502,6 +495,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                     window=window_length, min_periods=window_length
                 ).apply(summarizer, raw=True)
             )
+        if bfill is False:
+            feat = Z.shift(lag)
+        else:
+            feat = Z.shift(lag).bfill()
+            
         feat = pd.DataFrame(feat)
     if bfill is True:
         feat = feat.bfill()
@@ -524,6 +522,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             inplace=True,
         )
     return feat
+
 
 
 ALLOWED_SUM_FUNCS = [
