@@ -44,6 +44,7 @@ import pandas as pd
 
 from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._series._base import BaseSeries
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types
 
@@ -53,66 +54,134 @@ VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 FREQ_SET_CHECK = False
 
 
-check_dict = dict()
+class SeriesDataFrame(BaseSeries):
+    """Base class for Series data types.
 
+    Parameters are inferred by check.
+    
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff series has one variable
+    is_equally_spaced: bool
+        True iff series index is equally spaced
+    is_empty: bool
+        True iff series has no variables or no instances
+    has_nans: bool
+        True iff the series contains NaN values
+    n_features: int
+        number of variables in series
+    feature_names: list of int or object
+        names of variables in series  
+    """
 
-def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
-    metadata = dict()
+    _tags = {
+        "scitype": "Series",
+        "name": "pd.DataFrame",  # any string
+        "name_python": "series_pd_df",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "pandas",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
 
-    if not isinstance(obj, pd.DataFrame):
-        msg = f"{var_name} must be a pandas.DataFrame, found {type(obj)}"
-        return ret(False, msg, None, return_metadata)
-
-    # we now know obj is a pd.DataFrame
-    index = obj.index
-    if _req("is_empty", return_metadata):
-        metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
-    if _req("is_univariate", return_metadata):
-        metadata["is_univariate"] = len(obj.columns) < 2
-    if _req("n_features", return_metadata):
-        metadata["n_features"] = len(obj.columns)
-    if _req("feature_names", return_metadata):
-        metadata["feature_names"] = obj.columns.to_list()
-
-    # check that columns are unique
-    if not obj.columns.is_unique:
-        msg = f"{var_name} must have unique column indices, but found {obj.columns}"
-        return ret(False, msg, None, return_metadata)
-
-    # check whether the time index is of valid type
-    if not is_in_valid_index_types(index):
-        msg = (
-            f"{type(index)} is not supported for {var_name}, use "
-            f"one of {VALID_INDEX_TYPES} or integer index instead."
+    def __init__(
+        self,
+        is_univariate=None,
+        is_equally_spaced=None,
+        is_empty=None,
+        has_nans=None,
+        n_features=None,
+        feature_names=None,
+    ):
+        super().__init__(
+            is_univariate=is_univariate,
+            is_equally_spaced=is_equally_spaced,
+            is_empty=is_empty,
+            has_nans=has_nans,
+            n_features=n_features,
+            feature_names=feature_names,
         )
-        return ret(False, msg, None, return_metadata)
 
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
-        return ret(False, msg, None, return_metadata)
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
 
-    # Check time index is ordered in time
-    if not index.is_monotonic_increasing:
-        msg = (
-            f"The (time) index of {var_name} must be sorted monotonically increasing, "
-            f"but found: {index}"
-        )
-        return ret(False, msg, None, return_metadata)
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
 
-    if FREQ_SET_CHECK and isinstance(index, pd.DatetimeIndex):
-        if index.freq is None:
-            msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary. 
+        """
+        metadata = dict()
+
+        if not isinstance(obj, pd.DataFrame):
+            msg = f"{var_name} must be a pandas.DataFrame, found {type(obj)}"
             return ret(False, msg, None, return_metadata)
 
-    # check whether index is equally spaced or if there are any nans
-    #   compute only if needed
-    if _req("is_equally_spaced", return_metadata):
-        metadata["is_equally_spaced"] = _index_equally_spaced(index)
-    if _req("has_nans", return_metadata):
-        metadata["has_nans"] = obj.isna().values.any()
+        # we now know obj is a pd.DataFrame
+        index = obj.index
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
+        if _req("is_univariate", return_metadata):
+            metadata["is_univariate"] = len(obj.columns) < 2
+        if _req("n_features", return_metadata):
+            metadata["n_features"] = len(obj.columns)
+        if _req("feature_names", return_metadata):
+            metadata["feature_names"] = obj.columns.to_list()
 
-    return ret(True, None, metadata, return_metadata)
+        # check that columns are unique
+        if not obj.columns.is_unique:
+            msg = f"{var_name} must have unique column indices, but found {obj.columns}"
+            return ret(False, msg, None, return_metadata)
+
+        # check whether the time index is of valid type
+        if not is_in_valid_index_types(index):
+            msg = (
+                f"{type(index)} is not supported for {var_name}, use "
+                f"one of {VALID_INDEX_TYPES} or integer index instead."
+            )
+            return ret(False, msg, None, return_metadata)
+
+        # check that no dtype is object
+        if "object" in obj.dtypes.values:
+            msg = f"{var_name} should not have column of 'object' dtype"
+            return ret(False, msg, None, return_metadata)
+
+        # Check time index is ordered in time
+        if not index.is_monotonic_increasing:
+            msg = (
+                f"The (time) index of {var_name} must be sorted monotonically increasing, "
+                f"but found: {index}"
+            )
+            return ret(False, msg, None, return_metadata)
+
+        if FREQ_SET_CHECK and isinstance(index, pd.DatetimeIndex):
+            if index.freq is None:
+                msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
+                return ret(False, msg, None, return_metadata)
+
+        # check whether index is equally spaced or if there are any nans
+        #   compute only if needed
+        if _req("is_equally_spaced", return_metadata):
+            metadata["is_equally_spaced"] = _index_equally_spaced(index)
+        if _req("has_nans", return_metadata):
+            metadata["has_nans"] = obj.isna().values.any()
+
+        return ret(True, None, metadata, return_metadata)
 
 
 check_dict[("pd.DataFrame", "Series")] = check_pddataframe_series
