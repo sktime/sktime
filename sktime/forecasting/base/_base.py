@@ -2456,7 +2456,7 @@ class BaseForecaster(BaseEstimator):
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]
             X_new = X.iloc[new_window]
-            s
+            
             # we use `update_predict_single` here
             #  this updates the forecasting horizon
             y_pred = self_copy.update_predict_single(
