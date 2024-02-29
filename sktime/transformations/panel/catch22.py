@@ -244,8 +244,11 @@ class Catch22(BaseTransformer):
         super().__init__()
 
     def _set_col_names(self, col_names: str) -> str:
-        """Checks and returns col_names if one of:
+        """Set valid column names type.
+
+        Check and return col_names if one of:
         ["range", "int_feat", "str_feat", "short_str_feat"].
+
 
         Parameters
         ----------
@@ -256,7 +259,7 @@ class Catch22(BaseTransformer):
         col_names string which should be one of acceptable types.
 
         Raises
-        -------
+        ------
         KeyError if not in accepted col_names types.
         """
         accepted_col_names = ["range", "int_feat", "str_feat", "short_str_feat"]
