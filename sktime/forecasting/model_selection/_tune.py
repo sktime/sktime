@@ -188,16 +188,27 @@ class BaseGridSearch(_DelegatedForecaster):
         if isinstance(self.scoring, dict):
             scoring = []
             scoring_names = []
-            if self.ranking_metric is not None:
+            if self.ranking_metric is not None and isinstance(self.ranking_metric, str) and self.ranking_metric in self.scoring.keys():
                 metric = self.scoring.pop(self.ranking_metric)
                 metric = check_scoring(metric, obj=self)
                 metric.name = self.ranking_metric
                 metric_name = f"test_{self.ranking_metric}"
                 scoring.append(metric)
                 scoring_names.append(metric_name)
+            elif(len(self.scoring) > 1):
+                warn(
+                    f"The parameter ranking_metric of {self.__class__.__name__} must be specified correctly. By default, it has selected the first argument of the dict. "
+                    "Either the parameter has not been specified, it is not a string or it is not present in the dict passed to the scoring parameter.",
+                    obj=self,
+                    stacklevel=2,
+                )
             for name, metric in self.scoring.items():
                 metric = check_scoring(metric, obj=self)
                 metric.name = name
+                if not isinstance(name, str):
+                    raise TypeError(
+                        "The keys of the dict passed to the scoring parameter are not strings. Please specify them properly"
+                    )
                 metric_name = f"test_{name}"
                 scoring.append(metric)
                 scoring_names.append(metric_name)
@@ -207,6 +218,13 @@ class BaseGridSearch(_DelegatedForecaster):
             if self.ranking_metric is not None and isinstance(self.ranking_metric, int):
                 if self.ranking_metric not in range(len(self.scoring)):
                     self.ranking_metric = 0
+                    warn(
+                        f"The parameter ranking_metric of {self.__class__.__name__} must be specified correctly. "
+                        "By default, it has selected the first argument of the list. "
+                        "The parameter has not been not specified as a valid integer value from 0 to len(scoring)-1, both inclusive.",
+                        obj=self,
+                        stacklevel=2,
+                    )
                 metric = self.scoring.pop(self.ranking_metric)
                 temp_metric = metric
                 metric = check_scoring(metric, obj=self)
@@ -217,6 +235,14 @@ class BaseGridSearch(_DelegatedForecaster):
                 metric_name = f"test_{metric_name}"
                 scoring.append(metric)
                 scoring_names.append(metric_name)
+            elif (len(self.scoring) > 1):
+                warn(
+                    f"The parameter ranking_metric of {self.__class__.__name__} must be specified correctly. "
+                    "By default, it has selected the first argument of the list. "
+                    "Either the parameter has not been not specified or is not an integer value",
+                    obj=self,
+                    stacklevel=2,
+                )
             for metric in self.scoring:
                 temp_metric = metric
                 metric = check_scoring(metric, obj=self)
