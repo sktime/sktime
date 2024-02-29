@@ -126,6 +126,8 @@ class Catch22Wrapper(BaseTransformer):
         else:
             raise ValueError("features must be a str, list or tuple")
 
+        self._transform_features = None
+
         super().__init__()
 
         # todo 0.28.0: remove this warning and logic
@@ -146,7 +148,8 @@ class Catch22Wrapper(BaseTransformer):
 
         Parameters
         ----------
-        X : pd.Series with input univariate time series panel.
+        X : 3D numpy array of shape [n_instances, n_dimensions, n_features],
+            input time series panel.
         y : ignored.
 
         Returns
@@ -236,12 +239,23 @@ class Catch22Wrapper(BaseTransformer):
         n_feat = len(f_idx)
         Xt_np = np.zeros((1, n_feat))
 
+        if (
+            self._transform_features is not None
+            and len(self._transform_features) == n_feat
+        ):
+            transform_feature = self._transform_features
+        else:
+            transform_feature = [True] * n_feat
+
         f_count = -1
 
         series = X.to_list()
 
         for n, feature in enumerate(f_idx):
             f_count += 1
+            if not transform_feature[f_count]:
+                continue
+
             feat_fun = self._get_fun_with_ix(feature)
             Xt_np[0, n] = feat_fun(series)
 
