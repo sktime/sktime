@@ -1817,6 +1817,7 @@ class BaseForecaster(BaseEstimator):
         if fh is None:
             # A. strategy fitted (call of predict or similar)
             if self._is_fitted:
+
                 # in case C. fh is optional in fit:
                 # if there is none from before, there is none overall - raise error
                 if not requires_fh and self._fh is None:
