@@ -118,7 +118,7 @@ def _autocorr(X, X_fft):
 
 
 def _multiply_complex_arr(X_fft):
-    c = np.zeros_like(len(X_fft), dtype=np.complex128)
+    c = np.zeros(len(X_fft), dtype=np.complex128)
     for i, n in enumerate(X_fft):
         c[i] = n * (n.real + 1j * -n.imag)
     return c
