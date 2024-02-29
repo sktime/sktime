@@ -8,6 +8,7 @@ import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
+from sktime.utils.warnings import warn
 
 
 class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
@@ -51,6 +52,18 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         automatic changepoint selection. Large values will allow many
         changepoints, small values will allow few changepoints.
         Recommended to take values within [0.001,0.5].
+    yearly_seasonality: str or bool or int, default="auto"
+        Include yearly seasonality in the model. "auto" for automatic determination,
+        True to enable, False to disable, or an integer specifying the number of terms
+        to include in the Fourier series.
+    weekly_seasonality: str or bool or int, default="auto"
+        Include weekly seasonality in the model. "auto" for automatic determination,
+        True to enable, False to disable, or an integer specifying the number of terms
+        to include in the Fourier series.
+    daily_seasonality: str or bool or int, default="auto"
+        Include weekly seasonality in the model. "auto" for automatic determination,
+        True to enable, False to disable, or an integer specifying the number of terms
+        to include in the Fourier series.
 
     References
     ----------
@@ -82,6 +95,10 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         "python_dependencies": "prophet",
     }
 
+    # TODO (release 0.28.0) - change defaults to False
+    # set yearly_seasonality = False in __init__
+    # set weekly_seasonality = False in __init__
+    # set daily_seasonality = False in __init__
     def __init__(
         self,
         changepoints=None,
@@ -89,6 +106,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         changepoint_range=0.8,
         changepoint_prior_scale=0.05,
         verbose=0,
+        yearly_seasonality="changing_value",
+        weekly_seasonality="changing_value",
+        daily_seasonality="changing_value",
     ):
         self.freq = None
         self.add_seasonality = None
@@ -99,9 +119,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         self.changepoints = changepoints
         self.n_changepoints = n_changepoints
         self.changepoint_range = changepoint_range
-        self.yearly_seasonality = "auto"
-        self.weekly_seasonality = "auto"
-        self.daily_seasonality = "auto"
+        self.yearly_seasonality = yearly_seasonality
+        self.weekly_seasonality = weekly_seasonality
+        self.daily_seasonality = daily_seasonality
         self.holidays = None
         self.seasonality_mode = "additive"
         self.seasonality_prior_scale = 10.0
@@ -114,6 +134,43 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         self.verbose = verbose
 
         super().__init__()
+        # TODO (release 0.28.0)
+        # remove the following 4 'if' checks
+        # set yearly_seasonality=self.yearly_seasonality in def _instantiate_model
+        # set weekly_seasonality=self.weekly_seasonality in def _instantiate_model
+        # set daily_seasonality=self.daily_seasonality in def _instantiate_model
+        if any(
+            setting == "changing_value"
+            for setting in [
+                yearly_seasonality,
+                weekly_seasonality,
+                daily_seasonality,
+            ]
+        ):
+            warn(
+                "Warning: In sktime 0.28.0, the default value for all seasonality "
+                "parameters in ProphetPiecewiseLinearTrendForecaster will change from "
+                "'auto' to 'False'. To retain the prior behavior, set all seasonality "
+                "parameters to 'auto' explicitly.",
+                category=DeprecationWarning,
+                stacklevel=3,
+            )
+
+        if yearly_seasonality == "changing_value":
+            self._yearly_seasonality = "auto"
+        else:
+            self._yearly_seasonality = yearly_seasonality
+
+        if weekly_seasonality == "changing_value":
+            self._weekly_seasonality = "auto"
+        else:
+            self._weekly_seasonality = weekly_seasonality
+
+        if daily_seasonality == "changing_value":
+            self._daily_seasonality = "auto"
+        else:
+            self._daily_seasonality = daily_seasonality
+        # end of TODO (release 0.28.0)
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
@@ -126,9 +183,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
             changepoints=self.changepoints,
             n_changepoints=self.n_changepoints,
             changepoint_range=self.changepoint_range,
-            yearly_seasonality=self.yearly_seasonality,
-            weekly_seasonality=self.weekly_seasonality,
-            daily_seasonality=self.daily_seasonality,
+            yearly_seasonality=self._yearly_seasonality,  # TODO (release 0.28.0)
+            weekly_seasonality=self._weekly_seasonality,  # TODO (release 0.28.0)
+            daily_seasonality=self._daily_seasonality,  # TODO (release 0.28.0)
             holidays=self.holidays,
             seasonality_mode=self.seasonality_mode,
             seasonality_prior_scale=float(self.seasonality_prior_scale),

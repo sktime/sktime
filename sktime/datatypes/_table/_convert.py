@@ -35,6 +35,7 @@ import pandas as pd
 
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._table._registry import MTYPE_LIST_TABLE
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 ##############################################################
 # methods to convert one machine type to another machine type
@@ -234,3 +235,68 @@ _extend_conversions(
 _extend_conversions(
     "list_of_dict", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
 )
+
+
+if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
+    import polars as pl
+
+    def convert_polars_to_pandas(obj, store=None):
+        if not isinstance(obj, (pl.LazyFrame, pl.DataFrame)):
+            raise TypeError("input is not a polars frame")
+
+        if isinstance(obj, pl.LazyFrame):
+            obj = obj.collect()
+
+        return obj.to_pandas()
+
+    def convert_pandas_to_polars_eager(obj: pd.DataFrame, store=None):
+        if not isinstance(obj, pd.DataFrame):
+            raise TypeError("input is not a pd.DataFrame")
+
+        return pl.DataFrame(obj)
+
+    def convert_pandas_to_polars_lazy(obj: pd.DataFrame, store=None):
+        if not isinstance(obj, pd.DataFrame):
+            raise TypeError("input is not a pd.DataFrame")
+
+        return pl.LazyFrame(obj)
+
+    def convert_polars_eager_to_lazy(obj: pl.DataFrame, store=None) -> pl.LazyFrame:
+        if not isinstance(obj, pl.DataFrame):
+            raise TypeError("input is not a pl.DataFrame")
+
+        return obj.lazy()
+
+    def convert_polars_lazy_to_eager(obj: pl.LazyFrame, store=None) -> pl.DataFrame:
+        if not isinstance(obj, pl.LazyFrame):
+            raise TypeError("input is not a pl.LazyFrame")
+
+        return obj.collect()
+
+    convert_dict[
+        ("pd_DataFrame_Table", "polars_eager_table", "Table")
+    ] = convert_pandas_to_polars_eager
+    convert_dict[
+        ("pd_DataFrame_Table", "polars_lazy_table", "Table")
+    ] = convert_pandas_to_polars_lazy
+
+    convert_dict[
+        ("polars_eager_table", "pd_DataFrame_Table", "Table")
+    ] = convert_polars_to_pandas
+    convert_dict[
+        ("polars_lazy_table", "pd_DataFrame_Table", "Table")
+    ] = convert_polars_to_pandas
+
+    convert_dict[
+        ("polars_lazy_table", "polars_eager_table", "Table")
+    ] = convert_polars_lazy_to_eager
+    convert_dict[
+        ("polars_eager_table", "polars_lazy_table", "Table")
+    ] = convert_polars_eager_to_lazy
+
+    _extend_conversions(
+        "polars_eager_table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
+    )
+    _extend_conversions(
+        "polars_lazy_table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
+    )

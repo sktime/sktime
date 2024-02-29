@@ -10,7 +10,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.transformations.base import BaseTransformer
+from sktime.registry import scitype
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
 
@@ -31,17 +31,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""
-
-        def est_scitype(tpl):
-            est = tpl[1]
-            if isinstance(est, BaseForecaster):
-                return "forecaster"
-            elif isinstance(est, BaseTransformer):
-                return "transformer"
-            else:
-                return "other"
-
-        return [est_scitype(x) for x in estimators]
+        return [scitype(x[1], raise_on_unknown=False) for x in estimators]
 
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
@@ -170,7 +160,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.27.0 - check why this cannot be easily removed
+                        # todo 0.28.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -297,56 +287,60 @@ class ForecastingPipeline(_Pipeline):
     to X. The forecaster can also be a TransformedTargetForecaster containing
     transformers to transform y.
 
-    For a list `t1`, `t2`, ..., `tN`, `f`
-        where `t[i]` are transformers, and `f` is an sktime forecaster,
+    For a list ``t1``, ``t2``, ..., ``tN``, ``f``
+        where ``t[i]`` are transformers, and ``f`` is an ``sktime`` forecaster,
         the pipeline behaves as follows:
 
-    `fit(y, X, fh)` - changes state by running `t1.fit_transform` with `X=X`, `y=y`
-        then `t2.fit_transform` on `X=` the output of `t1.fit_transform`, `y=y`, etc
-        sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
-        then running `f.fit` with `X` being the output of `t[N]`, and `y=y`
-    `predict(X, fh)` - result is of executing `f.predict`, with `fh=fh`, and `X`
+    ``fit(y, X, fh)`` changes state by running ``t1.fit_transform`` with ``X=X`, ``y=y``
+        then ``t2.fit_transform`` on ``X=`` the output of ``t1.fit_transform``, ``y=y``,
+        etc, sequentially, with ``t[i]`` receiving the output of ``t[i-1]`` as ``X``,
+        then running ``f.fit`` with ``X`` being the output of ``t[N]``, and ``y=y``
+
+    ``predict(X, fh)`` - result is of executing ``f.predict``, with ``fh=fh``, and ``X``
         being the result of the following process:
-        running `t1.fit_transform` with `X=X`,
-        then `t2.fit_transform` on `X=` the output of `t1.fit_transform`, etc
-        sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
-        and returning th output of `tN` to pass to `f.predict` as `X`.
-    `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`,
-        with `predict_interval` or `predict_quantiles` substituted for `predict`
-    `predict_var`, `predict_proba` - uses base class default to obtain
-        crude estimates from `predict_quantiles`.
+        running ``t1.fit_transform`` with ``X=X``,
+        then ``t2.fit_transform`` on ``X=`` the output of ``t1.fit_transform``, etc
+        sequentially, with ``t[i]`` receiving the output of ``t[i-1]`` as ``X``,
+        and returning th output of ``tN`` to pass to ``f.predict`` as ``X``.
 
-    `get_params`, `set_params` uses `sklearn` compatible nesting interface
-        if list is unnamed, names are generated as names of classes
-        if names are non-unique, `f"_{str(i)}"` is appended to each name string
-            where `i` is the total count of occurrence of a non-unique string
-            inside the list of names leading up to it (inclusive)
+    ``predict_interval(X, fh)``, ``predict_quantiles(X, fh)`` - as ``predict(X, fh)``,
+        with ``predict_interval`` or ``predict_quantiles`` substituted for ``predict``
 
-    `ForecastingPipeline` can also be created by using the magic multiplication
-        on any forecaster, i.e., if `my_forecaster` inherits from `BaseForecaster`,
-            and `my_t1`, `my_t2`, inherit from `BaseTransformer`,
-            then, for instance, `my_t1 ** my_t2 ** my_forecaster`
-            will result in the same object as  obtained from the constructor
-            `ForecastingPipeline([my_t1, my_t2, my_forecaster])`
-        magic multiplication can also be used with (str, transformer) pairs,
-            as long as one element in the chain is a transformer
+    ``predict_var``, ``predict_proba`` - uses base class default to obtain
+        crude normal estimates from ``predict_quantiles``.
+
+    ``get_params``, ``set_params`` uses ``sklearn`` compatible nesting interface:
+
+        * if list is unnamed, names are generated as names of classes
+        * if names are non-unique, ``f"_{str(i)}"`` is appended to each name string
+          where ``i`` is the total count of occurrence of a non-unique string
+          inside the list of names leading up to it (inclusive)
+
+    ``ForecastingPipeline`` can also be created by using the magic multiplication
+        on any forecaster, i.e., if ``my_forecaster`` inherits from ``BaseForecaster``,
+        and ``my_t1``, ``my_t2``, inherit from ``BaseTransformer``,
+        then, for instance, ``my_t1 ** my_t2 ** my_forecaster``
+        will result in the same object as  obtained from the constructor
+        ``ForecastingPipeline([my_t1, my_t2, my_forecaster])``.
+        Magic multiplication can also be used with (str, transformer) pairs,
+        as long as one element in the chain is a transformer.
 
     Parameters
     ----------
     steps : list of sktime transformers and forecasters, or
-        list of tuples (str, estimator) of sktime transformers or forecasters
-            the list must contain exactly one forecaster
-        these are "blueprint" transformers resp forecasters,
-            forecaster/transformer states do not change when `fit` is called
+        list of tuples (str, estimator) of ``sktime`` transformers or forecasters.
+        The list must contain exactly one forecaster.
+        These are "blueprint" transformers resp forecasters,
+        forecaster/transformer states do not change when ``fit`` is called.
 
     Attributes
     ----------
-    steps_ : list of tuples (str, estimator) of sktime transformers or forecasters
+    steps_ : list of tuples (str, estimator) of ``sktime`` transformers or forecasters
         clones of estimators in `steps` which are fitted in the pipeline
-        is always in (str, estimator) format, even if `steps` is just a list
-        strings not passed in `steps` are replaced by unique generated strings
-        i-th transformer in `steps_` is clone of i-th in `steps`
-    forecaster_ : estimator, reference to the unique forecaster in steps_
+        is always in (str, estimator) format, even if ``steps`` is just a list
+        strings not passed in ``steps`` are replaced by unique generated strings
+        i-th transformer in ``steps_`` is clone of i-th in ``steps``
+    forecaster_ : estimator, reference to the unique forecaster in ``steps_``
 
     Examples
     --------
@@ -430,17 +424,18 @@ class ForecastingPipeline(_Pipeline):
     def __rpow__(self, other):
         """Magic ** method, return (left) concatenated ForecastingPipeline.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer,
+        otherwise returns ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from ``BaseTransformer``
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
         ForecastingPipeline object,
-            concatenation of `other` (first) with `self` (last).
+            concatenation of ``other`` (first) with ``self`` (last).
             not nested, contains only non-TransformerPipeline `sktime` steps
         """
         from sktime.transformations.base import BaseTransformer
@@ -486,8 +481,22 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : returns an instance of self.
         """
-        # If X is not given or ignored, just passthrough the data without transformation
-        if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
+        # skip transformers if X is ignored
+        # condition 1 for ignoring X: X is None and required in fit of 1st transformer
+        first_trafo = self.steps_[0][1]
+        cond1 = len(self.steps_) > 1 and first_trafo.get_tag("requires_X")
+        cond1 = cond1 and X is None
+
+        # condition 2 for ignoring X: tag "ignores-exogeneous-X" is True
+        # in this case the forecaster at the end ignores what comes out of the trafos
+        cond2 = self.get_tag("ignores-exogeneous-X")
+
+        # X ignored = condition 1 or condition 2
+        skip_trafos = cond1 or cond2
+        self.skip_trafos_ = skip_trafos
+
+        # If X is ignored, just ignore the transformers and pass through to forecaster
+        if not skip_trafos:
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
                 t = transformer.clone()
@@ -497,7 +506,7 @@ class ForecastingPipeline(_Pipeline):
         # fit forecaster
         name, forecaster = self.steps_[-1]
         f = forecaster.clone()
-        f.fit(y, X, fh)
+        f.fit(y=y, X=X, fh=fh)
         self.steps_[-1] = (name, f)
 
         return self
@@ -667,8 +676,7 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : an instance of self
         """
-        # If X is not given, just passthrough the data without transformation
-        if X is not None:
+        if not self.skip_trafos_:
             for _, _, transformer in self._iter_transformers():
                 if hasattr(transformer, "update"):
                     transformer.update(X=X, y=y, update_params=update_params)
@@ -680,7 +688,7 @@ class ForecastingPipeline(_Pipeline):
 
     def _transform(self, X=None, y=None):
         # If X is not given or ignored, just passthrough the data without transformation
-        if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
+        if not self.skip_trafos_:
             for _, _, transformer in self._iter_transformers():
                 # if y is required but not passed,
                 # we create a zero-column y from the forecasting horizon
@@ -714,68 +722,76 @@ class ForecastingPipeline(_Pipeline):
 class TransformedTargetForecaster(_Pipeline):
     """Meta-estimator for forecasting transformed time series.
 
-    Pipeline functionality to apply transformers to the target series. The
-    X data is not transformed. If you want to transform X, please use the
-    ForecastingPipeline.
+    Pipeline functionality to apply transformers to endogeneous time series, ``y``.
+    The exogeneous data, ``X``, is not transformed.
+    To transform ``X``, the ``ForecastingPipeline`` can be used.
 
-    For a list `t1`, `t2`, ..., `tN`, `f`, `tp1`, `tp2`, ..., `tpM`
-        where `t[i]` and `tp[i]` are transformers (`t` to pre-, `tp` to post-process),
-        and `f` is an sktime forecaster,
+    For a list ``t1``, ``t2``, ..., ``tN``, ``f``, ``tp1``, ``tp2``, ..., ``tpM``,
+        where ``t[i]`` and ``tp[i]`` are transformers
+        (``t`` to pre-, ``tp`` to post-process),
+        and ``f`` is an sktime forecaster,
         the pipeline behaves as follows:
-    `fit(y, X, fh)` - changes state by running `t1.fit_transform` with `X=y`, `y=X`
-        then `t2.fit_transform` on `X=` the output of `t1.fit_transform`, `y=X`, etc
-        sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
-        then running `f.fit` with `y` being the output of `t[N]`, and `X=X`,
-        then running `tp1.fit_transform`  with `X=y`, `y=X`,
-        then `tp2.fit_transform` on `X=` the output of `tp1.fit_transform`, etc
-        sequentially, with `tp[i]` receiving the output of `tp[i-1]`,
-    `predict(X, fh)` - result is of executing `f.predict`, with `X=X`, `fh=fh`,
-        then running `tp1.inverse_transform` with `X=` the output of `f`, `y=X`,
-        then `t2.inverse_transform` on `X=` the output of `t1.inverse_transform`, etc
-        sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
-        then running `tp1.fit_transform` with `X=` the output of `t[N]s`, `y=X`,
-        then `tp2.fit_transform` on `X=` the output of `tp1.fit_transform`, etc
-        sequentially, with `tp[i]` receiving the output of `tp[i-1]`,
-    `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`,
-        with `predict_interval` or `predict_quantiles` substituted for `predict`
-    `predict_var`, `predict_proba` - uses base class default to obtain
-        crude estimates from `predict_quantiles`.
 
-    `get_params`, `set_params` uses `sklearn` compatible nesting interface
-        if list is unnamed, names are generated as names of classes
-        if names are non-unique, `f"_{str(i)}"` is appended to each name string
-            where `i` is the total count of occurrence of a non-unique string
-            inside the list of names leading up to it (inclusive)
+    ``fit(y, X, fh)`` - changes state by running ``t1.fit_transform``
+        with ``X=y``, ``y=X``,
+        then ``t2.fit_transform`` on ``X=`` the output of ``t1.fit_transform``, ``y=X``,
+        etc, sequentially, with ``t[i]`` receiving the output of ``t[i-1]`` as ``X``,
+        then running ``f.fit`` with ``y`` being the output of ``t[N]``, and ``X=X``,
+        then running ``tp1.fit_transform``  with ``X=y``, ``y=X``,
+        then ``tp2.fit_transform`` on ``X=`` the output of ``tp1.fit_transform``, etc
+        sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``,
 
-    `TransformedTargetForecaster` can also be created by using the magic multiplication
-        on any forecaster, i.e., if `my_forecaster` inherits from `BaseForecaster`,
-            and `my_t1`, `my_t2`, `my_tp` inherit from `BaseTransformer`,
-            then, for instance, `my_t1 * my_t2 * my_forecaster * my_tp`
-            will result in the same object as  obtained from the constructor
-            `TransformedTargetForecaster([my_t1, my_t2, my_forecaster, my_tp])`
-        magic multiplication can also be used with (str, transformer) pairs,
-            as long as one element in the chain is a transformer
+    ``predict(X, fh)`` - result is of executing ``f.predict``, with ``X=X``, ``fh=fh``,
+        then running ``tp1.inverse_transform`` with ``X=`` the output of ``f``, ``y=X``,
+        then ``t2.inverse_transform`` on ``X=`` the output of ``t1.inverse_transform``,
+        etc, sequentially, with ``t[i]`` receiving the output of ``t[i-1]`` as ``X``,
+        then running ``tp1.fit_transform`` with ``X=`` the output of ``t[N]s``, ``y=X``,
+        then ``tp2.fit_transform`` on ``X=`` the output of ``tp1.fit_transform``, etc,
+        sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``,
+
+    ``predict_interval(X, fh)``, ``predict_quantiles(X, fh)`` - as ``predict(X, fh)``,
+        with ``predict_interval`` or ``predict_quantiles`` substituted for ``predict``
+
+    ``predict_var``, ``predict_proba`` - uses base class default to obtain
+        crude normal estimates from ``predict_quantiles``.
+
+    ``get_params``, ``set_params`` uses ``sklearn`` compatible nesting interface:
+
+        * if list is unnamed, names are generated as names of classes
+        * if names are non-unique, ``f"_{str(i)}"`` is appended to each name string
+          where ``i`` is the total count of occurrence of a non-unique string
+          inside the list of names leading up to it (inclusive)
+
+    ``TransformedTargetForecaster`` can also be created by using the magic
+        multiplication
+        on any forecaster, i.e., if ``my_forecaster`` inherits from ``BaseForecaster``,
+        and ``my_t1``, ``my_t2``, ``my_tp`` inherit from ``BaseTransformer``,
+        then, for instance, ``my_t1 * my_t2 * my_forecaster * my_tp``
+        will result in the same object as  obtained from the constructor
+        ``TransformedTargetForecaster([my_t1, my_t2, my_forecaster, my_tp])``.
+        Magic multiplication can also be used with (str, transformer) pairs,
+        as long as one element in the chain is a transformer.
 
     Parameters
     ----------
-    steps : list of sktime transformers and forecasters, or
-        list of tuples (str, estimator) of sktime transformers or forecasters
-            the list must contain exactly one forecaster
-        these are "blueprint" transformers resp forecasters,
-            forecaster/transformer states do not change when `fit` is called
+    steps : list of ``sktime`` transformers and forecasters, or
+        list of tuples (str, estimator) of ``sktime`` transformers or forecasters.
+        The list must contain exactly one forecaster.
+        These are "blueprint" transformers resp forecasters,
+        forecaster/transformer states do not change when ``fit`` is called.
 
     Attributes
     ----------
-    steps_ : list of tuples (str, estimator) of sktime transformers or forecasters
-        clones of estimators in `steps` which are fitted in the pipeline
-        is always in (str, estimator) format, even if `steps` is just a list
-        strings not passed in `steps` are replaced by unique generated strings
-        i-th transformer in `steps_` is clone of i-th in `steps`
-    forecaster_ : estimator, reference to the unique forecaster in steps_
+    steps_ : list of tuples (str, estimator) of ``sktime`` transformers or forecasters
+        clones of estimators in ``steps`` which are fitted in the pipeline
+        is always in (str, estimator) format, even if ``steps`` is just a list
+        strings not passed in ``steps`` are replaced by unique generated strings
+        i-th transformer in ``steps_`` is clone of i-th in ``steps``
+    forecaster_ : estimator, reference to the unique forecaster in ``steps_``
     transformers_pre_ : list of tuples (str, transformer) of sktime transformers
-        reference to pairs in steps_ that precede forecaster_
+        reference to pairs in ``steps_`` that precede ``forecaster_``
     transformers_ost_ : list of tuples (str, transformer) of sktime transformers
-        reference to pairs in steps_ that succeed forecaster_
+        reference to pairs in ``steps_`` that succeed ``forecaster_``
 
     Examples
     --------
@@ -1210,29 +1226,47 @@ class ForecastX(BaseForecaster):
     ----------
     forecaster_y : BaseForecaster
         sktime forecaster to use for endogeneous data ``y``
-    forecaster_X : BaseForecaster
-        sktime forecaster to use for exogeneous data ``X``
+
+    forecaster_X : BaseForecaster, optional
+        sktime forecaster to use for exogeneous data ``X``,
+        default = None = same as ``forecaster_y``
+
     fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
         optional, default = None = same as used for ``y`` in any instance.
         valid inputs to construct ``ForecastingHorizon`` are:
         int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
+
     behaviour : str, one of "update" or "refit", optional, default = "update"
-        if "update", ``forecaster_X`` is fit to the data batch seen in ``fit``,
-            and updated with any ``X`` seen in calls of ``update``.
-            Forecast added to ``X`` in ``predict`` is obtained from this state.
-        if "refit", then ``forecaster_X`` is fit to ``X`` in ``predict`` only,
-            Forecast added to ``X`` in ``predict`` is obtained from this state.
+
+        * if "update", ``forecaster_X`` is fit to the data batch seen in ``fit``,
+        and updated with any ``X`` seen in calls of ``update``.
+        Forecast added to ``X`` in ``predict`` is obtained from this state.
+
+        * if "refit", then ``forecaster_X`` is fit to ``X`` in ``predict`` only,
+        Forecast added to ``X`` in ``predict`` is obtained from this state.
+
     columns : None, or pandas compatible index iterator (e.g., list of str), optional
         default = None = all columns in ``X`` are used for forecast columns to which
         ``forecaster_X`` is applied.
         If not ``None``, must be a non-empty list of valid column names.
         Note that ``[]`` and ``None`` do not imply the same.
-    fit_behaviour : str, one of "use_actual", "use_forecast", optional,
-        default = "use_actual"
-        if "use_actual", then ``forecaster_y`` uses the actual ``X`` as
-            exogenous features in `fit`
-        if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
-            ``forecaster_X`` as exogenous features in ``fit``
+
+    fit_behaviour : str, one of "use_actual" (default), "use_forecast", optional,
+
+        * if "use_actual", then ``forecaster_y`` uses the actual ``X`` as
+        exogenous features in `fit`
+        * if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
+        ``forecaster_X`` as exogenous features in ``fit``
+
+    forecaster_X_exogeneous : optional, str, one of "None" (default), or "complement",
+        or ``pandas.Index`` coercible
+
+        * if "None", then ``forecaster_X`` uses no exogenous data
+        * if "complement", then ``forecaster_X`` uses the complement of the
+        ``columns`` as exogenous data to forecast. This is typically useful
+        if the complement of ``columns`` is known to be available in the future.
+        * if a ``pandas.Index`` coercible, then uses columns indexed by the index
+        after coercion, in ``X`` passed (converted to pandas)
 
     Attributes
     ----------
@@ -1291,11 +1325,12 @@ class ForecastX(BaseForecaster):
     def __init__(
         self,
         forecaster_y,
-        forecaster_X,
+        forecaster_X=None,
         fh_X=None,
         behaviour="update",
         columns=None,
         fit_behaviour="use_actual",
+        forecaster_X_exogeneous="None",
     ):
         if fit_behaviour not in ["use_actual", "use_forecast"]:
             raise ValueError(
@@ -1316,6 +1351,13 @@ class ForecastX(BaseForecaster):
         self.fh_X = fh_X
         self.behaviour = behaviour
         self.columns = columns
+        self.forecaster_X_exogeneous = forecaster_X_exogeneous
+        if isinstance(forecaster_X_exogeneous, str):
+            if forecaster_X_exogeneous not in ["None", "complement"]:
+                raise ValueError(
+                    'forecaster_X_exogeneous must be one of "None", "complement",'
+                    "or a pandas.Index coercible"
+                )
 
         super().__init__()
 
@@ -1358,21 +1400,31 @@ class ForecastX(BaseForecaster):
         # remember if X seen was None
         self.X_was_None_ = X is None
 
-        if self.behaviour == "update" and X is not None:
-            self.forecaster_X_ = self.forecaster_X_c.clone()
-            self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X)
-
+        # initialize forecaster_X_ and forecaster_y_
         self.forecaster_y_ = self.forecaster_y.clone()
-        if self.fit_behaviour == "use_actual":
-            self.forecaster_y_.fit(y=y, X=X, fh=fh)
+        if X is not None:
+            self.forecaster_X_ = self.forecaster_X_c.clone()
+
+        if self.behaviour == "update" and X is not None:
+            X_for_fcX = self._get_X_for_fcX(X)
+            self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X, X=X_for_fcX)
+
+        if X is None or self.fit_behaviour == "use_actual":
+            X_for_fcy = X
         elif self.fit_behaviour == "use_forecast":
             if not self.forecaster_X_.get_tag("capability:insample"):
                 raise ValueError(
                     "forecaster_X does not have `capability:insample`. "
                     "Thus, it is not valid with `fit_behaviour=use_forecast`."
                 )
-            x_insample = self.forecaster_X_.predict(fh=X.index, X=X)
-            self.forecaster_y_.fit(y=y, X=x_insample, fh=fh)
+            if isinstance(X.index, pd.MultiIndex):
+                X_times = X.index.get_level_values(-1).unique()
+            else:
+                X_times = X.index
+            fh_for_fcst = ForecastingHorizon(X_times, is_relative=False)
+            X_for_fcy = self.forecaster_X_.predict(fh=fh_for_fcst, X=X)
+
+        self.forecaster_y_.fit(y=y, X=X_for_fcy, fh=fh)
 
         return self
 
@@ -1405,15 +1457,19 @@ class ForecastX(BaseForecaster):
         """
         if self.X_was_None_:
             return None
+        if isinstance(self.columns, (list, pd.Index)) and len(self.columns) == 0:
+            return X
         if self.behaviour == "update":
             forecaster = self.forecaster_X_
         elif self.behaviour == "refit":
             if self.fh_X_ is not None:
                 fh = self.fh_X_
             forecaster = self.forecaster_X_c.clone()
-            forecaster.fit(y=self._get_Xcols(self._X), fh=fh)
+            X_for_fcX = self._get_X_for_fcX(self._X)
+            forecaster.fit(y=self._get_Xcols(self._X), fh=fh, X=X_for_fcX)
 
-        X_pred = getattr(forecaster, method)(fh=fh)
+        X_for_fcX = self._get_X_for_fcX(X)
+        X_pred = getattr(forecaster, method)(fh=fh, X=X_for_fcX)
         if X is not None:
             X_pred = X_pred.combine_first(X)
 
@@ -1422,6 +1478,30 @@ class ForecastX(BaseForecaster):
         X_pred = X_pred[X_cols_ordered]
 
         return X_pred
+
+    def _get_X_for_fcX(self, X):
+        """Shorthand to obtain X for forecaster_X, depending on parameters."""
+        ixx = self.forecaster_X_exogeneous
+        if X is None or ixx is None or ixx == "None":
+            return None
+
+        # if columns is None, then we use all columns
+        # so there is no complement
+        if self.columns is None and ixx == "complement":
+            return None
+
+        # if ixx is iterable and is empty, then we use no columns
+        if isinstance(ixx, (pd.Index, list)) and len(ixx) == 0:
+            return None
+
+        if ixx == "complement":
+            X_for_fcX = X.drop(columns=self.columns)
+            if X_for_fcX.shape[1] < 1:
+                return None
+            return X_for_fcX
+
+        ixx_pd = pd.Index(ixx)
+        return X.loc[:, ixx_pd]
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
@@ -1615,12 +1695,12 @@ class ForecastX(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.compose import DirectTabularRegressionForecaster
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
 
-        fx = DirectReductionForecaster.create_test_instance()
-        fy = DirectTabularRegressionForecaster.create_test_instance()
+        fs, _ = YfromX.create_test_instances_and_names()
+        fx = fs[0]
+        fy = fs[1]
 
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
@@ -1635,7 +1715,13 @@ class ForecastX(BaseForecaster):
 
         params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
 
-        return [params1, params2]
+        params3 = {
+            "forecaster_y": fy,
+            "fit_behaviour": "use_forecast",
+            "forecaster_X_exogeneous": "complement",
+        }
+
+        return [params1, params2, params3]
 
 
 class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
@@ -1730,17 +1816,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self.steps_arg = steps_arg
 
         super().__init__()
-        tags_to_clone = [
-            "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
-            "capability:insample",
-            "capability:pred_int",  # can the estimator produce prediction intervals?
-            "capability:pred_int:insample",
-            "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "enforce_index_type",  # index type that needs to be enforced in X/y
-            "fit_is_empty",
-        ]
 
-        self.clone_tags(self.estimator, tags_to_clone)
+        self._set_delegated_tags(estimator)
 
         self._set_permuted_estimator()
 

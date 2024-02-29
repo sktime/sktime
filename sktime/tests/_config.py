@@ -42,8 +42,11 @@ EXCLUDE_ESTIMATORS = [
     "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
+    "MLPRegressor",
     "CNNRegressor",
     "ResNetRegressor",
+    "FCNRegressor",
+    "LSTMFCNRegressor",
 ]
 
 
@@ -114,7 +117,13 @@ EXCLUDED_TESTS = {
     "LSTMFCNClassifier": [
         "test_fit_idempotent",
     ],
+    "LSTMFCNRegressor": [
+        "test_fit_idempotent",
+    ],
     "MLPClassifier": [
+        "test_fit_idempotent",
+    ],
+    "MLPRegressor": [
         "test_fit_idempotent",
     ],
     "CNTCClassifier": [
@@ -142,6 +151,9 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "MACNNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "FCNRegressor": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
@@ -173,7 +185,7 @@ EXCLUDED_TESTS = {
     ],
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
-    "SAX": "test_fit_transform_output",
+    "SAXlegacy": "test_fit_transform_output",
     "DynamicFactor": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
@@ -189,6 +201,10 @@ EXCLUDED_TESTS = {
     "LTSFDLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
+    # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
+    "StatsForecastMSTL": ["test_pred_int_tag"],
+    # KNeighborsTimeSeriesClassifierTslearn crashes in parallel mode
+    "KNeighborsTimeSeriesClassifierTslearn": ["test_multiprocessing_idempotent"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

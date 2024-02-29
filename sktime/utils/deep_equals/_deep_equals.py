@@ -61,6 +61,7 @@ def deep_equals(x, y, return_msg=False, plugins=None):
         _csr_matrix_equals_plugin,
         _dask_dataframe_equals_plugin,
         _fh_equals_plugin,
+        _polars_equals_plugin,
     ]
 
     if plugins is not None:
@@ -185,3 +186,49 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     y = y.compute()
 
     return deep_equals(x, y, return_msg=return_msg)
+
+
+def _polars_equals_plugin(x, y, return_msg=False):
+    """Test two polars dataframes for equality.
+
+    Correct if both x and y are polars.DataFrame or polars.LazyFrame.
+
+    Parameters
+    ----------
+    x: polars.DataFrame or polars.LazyFrame
+    y: polars.DataFrame or polars.LazyFrame
+    return_msg : bool, optional, default=False
+        whether to return informative message about what is not equal
+
+    Returns
+    -------
+    is_equal: bool - True if x and y are equal in value
+        x and y do not need to be equal in reference
+    msg : str, only returned if return_msg = True
+        indication of what is the reason for not being equal
+        if unequal, returns string
+    returns None if this function does not apply, i.e., x is not polars
+    """
+    from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+    polars_available = _check_soft_dependencies("polars", severity="none")
+
+    if not polars_available:
+        return None
+
+    import polars as pl
+
+    if not isinstance(x, (pl.DataFrame, pl.LazyFrame)):
+        return None
+
+    ret = _make_ret(return_msg)
+
+    # compare pl.DataFrame
+    if isinstance(x, pl.DataFrame):
+        return ret(x.equals(y), ".polars_equals")
+
+    # compare pl.LazyFrame
+    if isinstance(x, pl.LazyFrame):
+        return ret(x.collect().equals(y.collect()), ".polars_equals")
+
+    return None
