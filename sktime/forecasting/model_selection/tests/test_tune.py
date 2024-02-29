@@ -354,19 +354,43 @@ def test_gscv_backends(backend_set):
 
 
 @pytest.mark.parametrize("return_n_best_forecasters", [-1, 0, 1, 2])
-def test_return_n_best_forecasters(return_n_best_forecasters):
+@pytest.mark.parametrize(
+    "param_grid",
+    [
+        PIPE_GRID,
+        [
+            {
+                "forecaster__strategy": ["last", "mean"],
+                "transformer__forecaster__degree": [3, 4],
+            },
+            {
+                "forecaster__strategy": ["mean"],
+                "transformer__forecaster__degree": [5, 6, 7],
+            },
+        ],
+    ],
+)
+def test_return_n_best_forecasters(return_n_best_forecasters, param_grid):
     y, X = load_longley()
     gscv = ForecastingGridSearchCV(
         forecaster=PIPE,
-        param_grid=PIPE_GRID,
+        param_grid=param_grid,
         cv=CVs[0],
         return_n_best_forecasters=return_n_best_forecasters,
     )
     gscv.fit(y, X)
     if return_n_best_forecasters == -1:
-        total_combinations = reduce(
-            lambda x, y: x * y, [len(x) for x in PIPE_GRID.values()]
-        )
+
+        def calculate_total_combinations(param_grid: dict | list[dict]) -> int:
+            if isinstance(param_grid, dict):
+                return reduce(lambda x, y: x * y, [len(x) for x in param_grid.values()])
+            elif isinstance(param_grid, list):
+                return sum(calculate_total_combinations(i) for i in param_grid)
+            else:
+                error_message = "`param_grid` must be a dict or a list[dict]"
+                raise ValueError(error_message)
+
+        total_combinations = calculate_total_combinations(param_grid)
         assert len(gscv.n_best_forecasters_) == total_combinations
     else:
         assert len(gscv.n_best_forecasters_) == return_n_best_forecasters
