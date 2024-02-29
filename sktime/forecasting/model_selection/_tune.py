@@ -54,6 +54,7 @@ class BaseGridSearch(_DelegatedForecaster):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        ranking_metric = None
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -69,6 +70,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.tune_by_variable = tune_by_variable
         self.backend_params = backend_params
         self.n_jobs = n_jobs
+        self.ranking_metric = ranking_metric
 
         super().__init__()
 
@@ -183,14 +185,45 @@ class BaseGridSearch(_DelegatedForecaster):
         """
         cv = check_cv(self.cv)
 
-        if isinstance(self.scoring, list):
+        if isinstance(self.scoring, dict):
             scoring = []
             scoring_names = []
-            for metric in self.scoring:
+            if self.ranking_metric is not None:
+                metric = self.scoring.pop(self.ranking_metric)
+                metric = check_scoring(metric, obj=self)
+                metric.name = self.ranking_metric
+                metric_name = f"test_{self.ranking_metric}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+            for name, metric in self.scoring.items():
+                metric = check_scoring(metric, obj=self)
+                metric.name = name
+                metric_name = f"test_{name}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+        elif isinstance(self.scoring, list):
+            scoring = []
+            scoring_names = []
+            if self.ranking_metric is not None and isinstance(self.ranking_metric, int):
+                if self.ranking_metric not in range(len(self.scoring)):
+                    self.ranking_metric = 0
+                metric = self.scoring.pop(self.ranking_metric)
+                temp_metric = metric
                 metric = check_scoring(metric, obj=self)
                 metric_name = metric.name
-                if metric_name == 'DynamicForecastingErrorMetric' and hasattr(metric, '__name__'):
-                    metric_name = metric.__name__
+                if metric_name == '_DynamicForecastingErrorMetric' and hasattr(temp_metric, '__name__'):
+                    metric_name = temp_metric.__name__
+                metric.name = metric_name
+                metric_name = f"test_{metric_name}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+            for metric in self.scoring:
+                temp_metric = metric
+                metric = check_scoring(metric, obj=self)
+                metric_name = metric.name
+                if metric_name == '_DynamicForecastingErrorMetric' and hasattr(temp_metric, '__name__'):
+                    metric_name = temp_metric.__name__
+                metric.name = metric_name
                 metric_name = f"test_{metric_name}"
                 scoring.append(metric)
                 scoring_names.append(metric_name)
@@ -223,7 +256,7 @@ class BaseGridSearch(_DelegatedForecaster):
             meta["strategy"] = self.strategy
             meta["scoring"] = scoring
             meta["error_score"] = self.error_score
-            if isinstance(self.scoring, list):
+            if isinstance(self.scoring, list) or isinstance(self.scoring, dict):
                 meta["scoring_names"] = scoring_names
                 meta["list_flag"] = True
             else:
@@ -255,7 +288,7 @@ class BaseGridSearch(_DelegatedForecaster):
         # Rank results, according to whether greater is better for the given scoring.
         ranking_metric = None
         ranking_metric_name = None
-        if isinstance(self.scoring, list):
+        if isinstance(self.scoring, list) or isinstance(self.scoring, dict):
             ranking_metric = scoring[0]
             ranking_metric_name = scoring_names[0]
         else:
@@ -409,11 +442,10 @@ def _fit_and_score(params, meta):
 
     # Add parameters to output table.
     out["params"] = params
-
     return out
 
 
-class ForecastingGridSearch(BaseGridSearch):
+class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
@@ -640,6 +672,7 @@ class ForecastingGridSearch(BaseGridSearch):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        ranking_metric=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -656,6 +689,7 @@ class ForecastingGridSearch(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
+            ranking_metric=ranking_metric
         )
         self.param_grid = param_grid
 
@@ -906,6 +940,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        ranking_metric=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -922,6 +957,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
+            ranking_metric=ranking_metric
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
