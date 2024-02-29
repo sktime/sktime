@@ -745,7 +745,7 @@ def _SB_MotifThree_quantile_hh(
 
     return -nsum
 
-
+@njit(fastmath=True, cache=True)
 def _FC_LocalSimple_mean1_tauresrat(
     series, smin, smax, smean, std, outlier_series, ac, acfz
 ):
@@ -755,10 +755,6 @@ def _FC_LocalSimple_mean1_tauresrat(
         return 0
     res = _local_simple_mean(X, 1)
     mean = np.mean(res)
-
-    nfft = int(np.power(2, np.ceil(np.log(len(res)) / np.log(2))))
-    fft = np.fft.fft(res - mean, n=nfft)
-    ac = _autocorr(res, fft)
 
     return _ac_first_zero(ac) / acfz
 
