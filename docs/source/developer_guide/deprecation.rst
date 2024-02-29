@@ -230,7 +230,7 @@ and ensure to use ``self._<param_name>`` in the rest of the code instead of
 ``self.<param_name>``.
 
 3. add a warning, using ``sktime.utils.warnings.warn``, if any of the position changing
-paramters are called with a non-default. This warning should always include
+parameters are called with a non-default. This warning should always include
 the name of the estimator/function, the version of change, and a clear instruction
 on how to change the code to retain prior behaviour. The instruction
 should direct the user to use ``kwargs`` calls instead of positional calls, for
