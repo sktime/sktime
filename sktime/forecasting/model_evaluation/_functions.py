@@ -575,16 +575,14 @@ def evaluate(
                 yield y_train, y_test, None, None
         else:
             if cv_X is None:
-                from sktime.split import SameLocSplitter, TestPlusTrainSplitter
+                from sktime.split.base._common import _split_by_fh
 
-                cv_X = SameLocSplitter(TestPlusTrainSplitter(cv), y)
-
-            genx = cv_X.split_series(X)
-
-            for (y_train, y_test), (X_train, _) in zip(geny, genx):
-                fh = cv.fh
-                X_test = X[-(fh[-1]) :]
-                yield y_train, y_test, X_train, X_test
+                # return same split as temporal_train_test_split
+                yield _split_by_fh(y, cv.fh, X=X)
+            else:
+                genx = cv_X.split_series(X)
+                for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
+                    yield y_train, y_test, X_train, X_test
 
     # generator for y and X splits to iterate over below
     yx_splits = gen_y_X_train_test(y, X, cv, cv_X)
