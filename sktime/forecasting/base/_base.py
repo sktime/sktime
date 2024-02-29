@@ -1817,7 +1817,6 @@ class BaseForecaster(BaseEstimator):
         if fh is None:
             # A. strategy fitted (call of predict or similar)
             if self._is_fitted:
-
                 # in case C. fh is optional in fit:
                 # if there is none from before, there is none overall - raise error
                 if not requires_fh and self._fh is None:
@@ -2457,6 +2456,7 @@ class BaseForecaster(BaseEstimator):
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]
             X_new = X.iloc[new_window]
+            s
             # we use `update_predict_single` here
             #  this updates the forecasting horizon
             y_pred = self_copy.update_predict_single(
