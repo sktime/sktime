@@ -69,7 +69,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         # --------------
         "authors": ["luca-miniati"],
         "maintainers": ["luca-miniati"],
-        # "python_dependencis": "pytorch" - inherited from BaseDeepNetworkPyTorch
+        # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
     }
 

@@ -47,7 +47,7 @@ class TimeSeriesForestClassifier(
       which also allows switching the base estimator.
     * to build a a time series forest with configurable ensembling, base estimator,
       and/or feature extraction, fully from composable blocks,
-      combine ``sktime.classication.ensemble.BaggingClassifier`` with
+      combine ``sktime.classification.ensemble.BaggingClassifier`` with
       any classifier pipeline, e.g., pipelining any ``sklearn`` classifier
       with any time series feature extraction, e.g., ``Summarizer``
 
