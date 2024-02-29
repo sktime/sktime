@@ -29,6 +29,11 @@ class BaseDatatype(BaseObject):
     def check(self, obj, return_metadata=False, var_name="obj"):
         """Check if obj is of this data type.
 
+        If self has parameters set, the check will in addition
+        check whether metadata of obj is equal to self's parameters.
+        In this case, ``return_metadata`` will always include the
+        metadata fields required to check the parameters.
+
         Parameters
         ----------
         obj : any
@@ -44,8 +49,8 @@ class BaseDatatype(BaseObject):
             Whether obj is of this data type.
         msg : str, only returned if return_metadata is True.
             Error message if obj is not of this data type.
-        metadata : dict, only returned if return_metadata is True.
-            Metadata dictionary. 
+        metadata : instance of self only returned if return_metadata is True.
+            Metadata dictionary.
         """
         self_params = self.get_params()
 
@@ -88,7 +93,7 @@ class BaseDatatype(BaseObject):
 
         # now we know the check is valid, but we need to compare fields
         metadata_sub = {k: metadata[k] for k in self_dict}
-        eqs, msg = deep_equals(self_dict, metadata, return_msg=True)
+        eqs, msg = deep_equals(self_dict, metadata_sub, return_msg=True)
         if not eqs:
             msg = f"metadata of type unequal, {msg}"
             return _ret(False, msg, None, return_metadata_orig)
