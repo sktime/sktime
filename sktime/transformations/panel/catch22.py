@@ -341,8 +341,6 @@ class Catch22(BaseTransformer):
         Xt : np.ndarray of size [1, n_features], where n_features is the
             number of features requested, containing Catch22/24 features for X.
         """
-        from sktime.transformations.panel._catch22_numba import _create_numba_dict
-
         n_features = len(f_idx)
         Xt_np = np.zeros((1, n_features))
 
@@ -358,10 +356,6 @@ class Catch22(BaseTransformer):
         fft = np.fft.fft(series - smean, n=nfft)
         ac = _autocorr(series, fft)
         acfz = _ac_first_zero(ac)
-        variable_dict = _create_numba_dict(
-            series, smin, smax, smean, std, outlier_series, ac, acfz
-        )
-
         # todo: remove unimplemented logic
         if (
             self._transform_features is not None
@@ -375,7 +369,12 @@ class Catch22(BaseTransformer):
             # todo: remove unimplemented logic
             if not transform_feature[n]:
                 continue
-            Xt_np[0, n] = self._get_feature_function(feature)(variable_dict) or None
+            Xt_np[0, n] = (
+                self._get_feature_function(feature)(
+                    series, smin, smax, smean, std, outlier_series, ac, acfz
+                )
+                or None
+            )
 
         return Xt_np
 
@@ -396,7 +395,7 @@ class Catch22(BaseTransformer):
         if feature < 22:
             return METHODS_DICT.get(FEATURE_NAMES[feature])
         if 22 <= feature < 24:
-            CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
+            return CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
         else:
             raise KeyError(f"No feature with name: {feature}")
 
