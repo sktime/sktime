@@ -745,7 +745,7 @@ def _SB_MotifThree_quantile_hh(
 
     return -nsum
 
-@njit(fastmath=True, cache=True)
+
 def _FC_LocalSimple_mean1_tauresrat(
     series, smin, smax, smean, std, outlier_series, ac, acfz
 ):

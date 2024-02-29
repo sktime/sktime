@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/julnow/Desktop/kod/sktime/examples/mlruns/0/48aafdbab2c843279623aa4aa07fc02e/artifacts
+end_time: 1709219879102
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 48aafdbab2c843279623aa4aa07fc02e
+run_name: casual-roo-195
+run_uuid: 48aafdbab2c843279623aa4aa07fc02e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1709219878195
+status: 3
+tags: []
+user_id: julnow

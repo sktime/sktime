@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/julnow/Desktop/kod/sktime/examples/mlruns/687855606588225990/19c1cd6595414374800edcfd9c05cc2a/artifacts
+end_time: 1709219879328
+entry_point_name: ''
+experiment_id: '687855606588225990'
+lifecycle_stage: active
+run_id: 19c1cd6595414374800edcfd9c05cc2a
+run_name: serious-shad-799
+run_uuid: 19c1cd6595414374800edcfd9c05cc2a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1709219879305
+status: 3
+tags: []
+user_id: julnow
