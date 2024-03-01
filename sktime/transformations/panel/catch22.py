@@ -109,19 +109,29 @@ def _verify_features(
     features: Union[int, str, List[Union[int, str]]], catch24: bool
 ) -> List[int]:
     feature_names = FEATURE_NAMES + CATCH24_FEATURE_NAMES if catch24 else FEATURE_NAMES
-
+    short_feature_names = (
+        SHORT_FEATURE_NAMES + CATCH24_SHORT_FEATURE_NAMES
+        if catch24
+        else SHORT_FEATURE_NAMES
+    )
     f_idx = []
     if isinstance(features, str):
         if features == "all":
             f_idx = list(range(len(feature_names)))
         elif features in feature_names:
             f_idx = [feature_names.index(features)]
+        elif features in short_feature_names:
+            f_idx = [short_feature_names.index(features)]
     elif isinstance(features, int) and 0 <= features < (24 if catch24 else 22):
         f_idx = [features]
     elif isinstance(features, (list, tuple)):
         for f in features:
-            if isinstance(f, str) and f in feature_names:
-                f_idx.append(feature_names.index(f))
+            if isinstance(f, str):
+                if f in feature_names:
+                    f_idx.append(feature_names.index(f))
+                elif f in short_feature_names:
+                    f_idx.append(short_feature_names.index(f))
+
             elif isinstance(f, int) and 0 <= f < (24 if catch24 else 22):
                 f_idx.append(f)
 
