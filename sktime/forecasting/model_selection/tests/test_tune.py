@@ -6,6 +6,7 @@ __author__ = ["mloning", "fkiraly"]
 
 
 from functools import reduce
+from typing import Dict, List, Union
 
 import numpy as np
 import pytest
@@ -353,72 +354,43 @@ def test_gscv_backends(backend_set):
     gscv.fit(y, X)
 
 
-def test_BaseGridSearch(
-    Forecaster,
-    *,
-    as_distribution=False,
-    **kwargs,
-):
-    if "param_distributions" not in kwargs and "param_grid" not in kwargs:
-        params = (
-            [
-                {
-                    "window_length": [1, 2, 3],
-                    "strategy": ["last", "mean"],
-                    "transformer__degree": [1, 2, 3],
-                    "forecaster__strategy": ["last", "mean", "seasonal_last"],
-                },
-                {
-                    "window_length": [4, 5, 6],
-                    "forecaster__strategy": ["last", "mean"],
-                },
-            ],
-        )
-        kwargs.setdefault(
-            "param_distributions" if as_distribution else "param_grid", params
-        )
-    return Forecaster, {
-        **kwargs,
-    }
+TEST_PARAMS_DICT = PIPE_GRID
+
+TEST_PARAMS_LIST = [
+    {
+        "window_length": [1, 2, 3],
+        "strategy": ["last", "mean"],
+        "transformer__degree": [1, 2, 3],
+        "forecaster__strategy": ["last", "mean", "seasonal_last"],
+    },
+    {
+        "window_length": [4, 5, 6],
+        "forecaster__strategy": ["last", "mean"],
+    },
+]
 
 
-def test_ForecastingGridSearchCV(**kwargs):
-    return test_BaseGridSearch(ForecastingGridSearchCV, **kwargs)
-
-
-def test_ForecastingRandomizedSearchCV(**kwargs):
-    return test_BaseGridSearch(
-        ForecastingRandomizedSearchCV, as_distribution=True, **kwargs
-    )
-
-
-def test_ForecastingSkoptSearchCV(**kwargs):
-    return test_BaseGridSearch(ForecastingSkoptSearchCV, as_distribution=True, **kwargs)
-
-
-@pytest.mark.parametrize("return_n_best_forecasters", [-1, 0, 1, 2])
+@pytest.mark.parametrize("return_n_best_forecasters", [-1, 0, 3])
 @pytest.mark.parametrize(
     "Forecaster, kwargs",
     [
-        test_ForecastingGridSearchCV(),
-        test_ForecastingRandomizedSearchCV(),
-        test_ForecastingRandomizedSearchCV(n_iter=3),
-        test_ForecastingRandomizedSearchCV(n_iter=5),
-        # test_ForecastingSkoptSearchCV(n_iter=5),  # Not working
+        (ForecastingGridSearchCV, {"param_grid": TEST_PARAMS_DICT}),
+        (ForecastingGridSearchCV, {"param_grid": TEST_PARAMS_LIST}),
+        (ForecastingRandomizedSearchCV, {"param_distributions": TEST_PARAMS_LIST}),
     ],
 )
 def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs):
     y, X = load_longley()
-    gscv = Forecaster(
-        **kwargs,
+    searchCV = Forecaster(
         forecaster=PIPE,
         cv=CVs[0],
+        **kwargs,
         return_n_best_forecasters=return_n_best_forecasters,
     )
-    gscv.fit(y, X)
+    searchCV.fit(y, X)
     if return_n_best_forecasters == -1:
 
-        def calculate_total_combinations(param_grid):
+        def calculate_total_combinations(param_grid: Union[List[Dict], Dict]):
             if isinstance(param_grid, dict):
                 return reduce(lambda x, y: x * y, [len(x) for x in param_grid.values()])
             elif isinstance(param_grid, list):
@@ -429,9 +401,8 @@ def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs
 
         if "param_grid" in kwargs:
             total_combinations = calculate_total_combinations(kwargs["param_grid"])
-            assert len(gscv.n_best_forecasters_) == total_combinations
+            assert len(searchCV.n_best_forecasters_) == total_combinations
         else:
-            assert hasattr(gscv, "n_iter")
-            assert len(gscv.n_best_forecasters_) == gscv.n_iter
+            assert len(searchCV.n_best_forecasters_) == searchCV.n_iter
     else:
-        assert len(gscv.n_best_forecasters_) == return_n_best_forecasters
+        assert len(searchCV.n_best_forecasters_) == return_n_best_forecasters
