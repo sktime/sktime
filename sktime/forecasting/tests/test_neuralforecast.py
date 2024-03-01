@@ -4,7 +4,7 @@ import pandas
 import pytest
 
 from sktime.datasets import load_longley
-from sktime.forecasting.neuralforecast import NeuralForecastRNN
+from sktime.forecasting.neuralforecast import NeuralForecastRNN, NeuralForecastLSTM
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 
@@ -148,3 +148,37 @@ def test_neural_forecast_rnn_fail_with_multiple_predictions() -> None:
         NotImplementedError, match="Multiple prediction columns are not supported."
     ):
         model.predict()
+
+@pytest.mark.skipif(
+    not run_test_for_class(NeuralForecastLSTM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_lstm_with_non_default_loss() -> None:
+    """Test NeuralForecastLSTM with multiple endogenous without exogenous."""
+    # import non-default pytorch losses
+    from neuralforecast.losses.pytorch import MASE, HuberQLoss
+
+    # define model
+    model = NeuralForecastLSTM(
+        "A-DEC",
+        loss=HuberQLoss(0.5),
+        valid_loss=MASE(1),
+        max_steps=5,
+        trainer_kwargs={"logger": False},
+    )
+
+    # train model
+    model.fit(X_train, fh=[1, 2, 3, 4])
+
+    # predict with trained model
+    X_pred = model.predict()
+
+    # check prediction index
+    pandas.testing.assert_index_equal(X_pred.index, X_test.index, check_names=False)
+
+@pytest.mark.skipif(
+    not run_test_for_class(NeuralForecastLSTM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+
+

@@ -8,6 +8,11 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["yarnabrina"]
 
+__all__ = [
+    "NeuralForecastRNN",
+    "NeuralForecastLSTM",
+]
+
 
 class NeuralForecastRNN(_NeuralForecastAdapter):
     """StatsForecast RNN model.
@@ -364,4 +369,211 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         return params
 
 
-__all__ = ["NeuralForecastRNN"]
+class NeuralForecastLSTM(_NeuralForecastAdapter):
+    def __init__(
+        self: "NeuralForecastLSTM",
+        freq: str,
+        local_scaler_type: typing.Optional[
+            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
+        ] = None,
+        futr_exog_list: typing.Optional[typing.List[str]] = None,
+        verbose_fit: bool = False,
+        verbose_predict: bool = False,
+        input_size: int = -1,
+        inference_input_size: int = -1,
+        encoder_n_layers: int = 2,
+        encoder_hidden_size: int = 200,
+        encoder_bias: bool = True,
+        encoder_dropout: float = 0.0,
+        context_size: int = 10,
+        decoder_hidden_size: int = 200,
+        decoder_layers: int = 2,
+        loss=None,
+        valid_loss=None,
+        max_steps: int = 1000,
+        learning_rate: float = 0.001,
+        num_lr_decays: int = -1,
+        early_stop_patience_steps: int = -1,
+        val_check_steps: int = 100,
+        batch_size=32,
+        valid_batch_size: typing.Optional[int] = None,
+        scaler_type: str = "robust",
+        random_seed=1,
+        num_workers_loader=0,
+        drop_last_loader=False,
+        trainer_kwargs: typing.Optional[dict] = None,
+    ):
+
+        self.input_size = input_size
+        self.inference_input_size = inference_input_size
+        self.encoder_n_layers = encoder_n_layers
+        self.encoder_hidden_size = encoder_hidden_size
+        self.encoder_bias = encoder_bias
+        self.encoder_dropout = encoder_dropout
+        self.context_size = context_size
+        self.decoder_hidden_size = decoder_hidden_size
+        self.decoder_layers = decoder_layers
+        self.loss = loss
+        self.valid_loss = valid_loss
+        self.max_steps = max_steps
+        self.learning_rate = learning_rate
+        self.num_lr_decays = num_lr_decays
+        self.early_stop_patience_steps = early_stop_patience_steps
+        self.val_check_steps = val_check_steps
+        self.batch_size = batch_size
+        self.valid_batch_size = valid_batch_size
+        self.scaler_type = scaler_type
+        self.random_seed = random_seed
+        self.num_workers_loader = num_workers_loader
+        self.drop_last_loader = drop_last_loader
+        self.trainer_kwargs = trainer_kwargs
+
+        super().__init__(
+            freq,
+            local_scaler_type=local_scaler_type,
+            futr_exog_list=futr_exog_list,
+            verbose_fit=verbose_fit,
+            verbose_predict=verbose_predict,
+        )
+
+        self._trainer_kwargs = None
+        self._loss = None
+        self._valid_loss = None
+
+    @functools.cached_property
+    def algorithm_exogenous_support(self: "NeuralForecastLSTM") -> bool:
+        """Set support for exogenous features."""
+        return True
+
+    @functools.cached_property
+    def algorithm_name(self: "NeuralForecastLSTM") -> str:
+        """Set custom model name."""
+        return "LSTM"
+
+    @functools.cached_property
+    def algorithm_class(self: "NeuralForecastLSTM"):
+        """Import underlying NeuralForecast algorithm class."""
+        from neuralforecast.models import LSTM
+
+        return LSTM
+
+    @functools.cached_property
+    def algorithm_parameters(self: "NeuralForecastLSTM") -> dict:
+        """Get keyword parameters for the underlying NeuralForecast algorithm class.
+
+        Returns
+        -------
+        dict
+            keyword arguments for the underlying algorithm class
+        """
+        self._trainer_kwargs = (
+            {} if self.trainer_kwargs is None else self.trainer_kwargs
+        )
+
+        if self.loss:
+            self._loss = self.loss
+        else:
+            from neuralforecast.losses.pytorch import MAE
+
+            self._loss = MAE()
+
+        if self.valid_loss:
+            self._valid_loss = self.valid_loss
+
+        return {
+            "input_size": self.input_size,
+            "inference_input_size": self.inference_input_size,
+            "encoder_n_layers": self.encoder_n_layers,
+            "encoder_hidden_size": self.encoder_hidden_size,
+            "encoder_bias": self.encoder_bias,
+            "encoder_dropout": self.encoder_dropout,
+            "context_size": self.context_size,
+            "decoder_hidden_size": self.decoder_hidden_size,
+            "decoder_layers": self.decoder_layers,
+            "loss": self._loss,
+            "valid_loss": self._valid_loss,
+            "max_steps": self.max_steps,
+            "learning_rate": self.learning_rate,
+            "num_lr_decays": self.num_lr_decays,
+            "early_stop_patience_steps": self.early_stop_patience_steps,
+            "val_check_steps": self.val_check_steps,
+            "batch_size": self.batch_size,
+            "valid_batch_size": self.valid_batch_size,
+            "scaler_type": self.scaler_type,
+            "random_seed": self.random_seed,
+            "num_workers_loader": self.num_workers_loader,
+            "drop_last_loader": self.drop_last_loader,
+            **self._trainer_kwargs,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+
+        """
+        del parameter_set
+
+        try:
+            _check_soft_dependencies("neuralforecast", severity="error")
+        except ModuleNotFoundError:
+
+            params = [
+                {
+                    "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "max_steps": 4,
+                    "trainer_kwargs": {"logger": False},
+                },
+                {
+                    "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "encode_bias": False,
+                    "decoder_hidden_size": 3,
+                    "max_steps": 4,
+                    "trainer_kwargs": {"logger": False},
+                },
+            ]
+        else:
+            from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+
+            params = [
+                {
+                    "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "max_steps": 4,
+                    "trainer_kwargs": {"logger": False},
+                },
+                {
+                    "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "loss": QuantileLoss(0.5),
+                    "valid_loss": SMAPE(),
+                    "max_steps": 4,
+                    "val_check_steps": 2,
+                    "trainer_kwargs": {"logger": False},
+                },
+            ]
+
+        return params
+
+
+
+
