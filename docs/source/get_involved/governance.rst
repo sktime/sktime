@@ -673,7 +673,7 @@ We have the following guidelines:
 Note that an algorithm need not be in sktime to be fully compatible with
 sktime interfaces. You can implement your favorite algorithm in a sktime
 compatible way in a third party codebase - open or closed - following
-the guide for implmenting compatible estimators (see :ref:`developer_guide_add_estimators:`).
+the guide for implementing compatible estimators (see :ref:`developer_guide_add_estimators:`).
 
 We are happy to list any compatible open source project under `related
 software <https://github.com/sktime/sktime/wiki/related-software>`__.
