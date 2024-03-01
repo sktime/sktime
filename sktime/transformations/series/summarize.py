@@ -323,27 +323,33 @@ class WindowSummarizer(BaseTransformer):
             bfill = True
         else:
             bfill = False
+        concat_flag = False
         for cols in target_cols:
             if isinstance(X.index, pd.MultiIndex):
-                hier_levels = list(range(X.index.nlevels - 1))
-                X_grouped = X.groupby(level=hier_levels)[cols]
-                df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
-                    for index, kwargs in func_dict.iterrows()
-                )
+                pass
+                # hier_levels = list(range(X.index.nlevels - 1))
+                # X_grouped = X.groupby(level=hier_levels)[cols]
+                # df = Parallel(n_jobs=self.n_jobs)(
+                #     delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
+                #     for index, kwargs in func_dict.iterrows()
+                # )
             else:
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X.loc[:, [cols]], **kwargs, bfill=bfill)
                     for _index, kwargs in func_dict.iterrows()
                 )
-            Xt = pd.concat(df, axis=1)
-            Xt = Xt.add_prefix(str(cols) + "_")
-            Xt_out.append(Xt)
-        Xt_out_df = pd.concat(Xt_out, axis=1)
-        Xt_return = pd.concat([Xt_out_df, X.drop(target_cols, axis=1)], axis=1)
+                Xt = pd.concat(df, axis=1)
+                Xt = Xt.add_prefix(str(cols) + "_")
+                Xt_out.append(Xt)
+                concat_flag = True
+        if concat_flag is True:
+            Xt_out_df = pd.concat(Xt_out, axis=1)
+            Xt_return = pd.concat([Xt_out_df, X.drop(target_cols, axis=1)], axis=1)
 
-        Xt_return = Xt_return.loc[idx]
-        return Xt_return
+            Xt_return = Xt_return.loc[idx]
+            return Xt_return
+        else:
+            return X
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -487,11 +493,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
-            feat = feat.rolling(window_length).apply(summarizer, raw=True)
+            feat = Z.rolling(window_length).apply(summarizer, raw=True)
         elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
-            feat = feat.apply(
+            feat = Z.apply(
                 lambda x: x.rolling(
                     window=window_length, min_periods=window_length
                 ).apply(summarizer, raw=True)
