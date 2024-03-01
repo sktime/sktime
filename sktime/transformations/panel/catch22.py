@@ -86,7 +86,7 @@ SHORT_FEATURE_NAMES_DICT = {
     "IN_AutoMutualInfoStats_40_gaussian_fmmi": "ami_timescale",
     "MD_hrv_classic_pnn40": "high_fluctuation",
     "SB_BinaryStats_mean_longstretch1": "stretch_high",
-    "SB_MotifThree_quantile_hh": "rs_range",
+    "SB_MotifThree_quantile_hh": "entropy_pairs",
     "FC_LocalSimple_mean1_tauresrat": "whiten_timescale",
     "CO_Embed2_Dist_tau_d_expfit_meandiff": "embedding_dist",
     "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": "dfa",
