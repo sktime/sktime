@@ -2599,7 +2599,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/69190238?v=4",
       "profile": "https://cyrilmeyer.eu/",
       "contributions": [
-        "code"
+        "bug",
+        "code",
+        "test"
       ]
     },
     {
