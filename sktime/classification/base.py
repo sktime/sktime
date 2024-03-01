@@ -329,7 +329,9 @@ class BaseClassifier(BasePanelMixin):
         # call internal _predict_proba
         return self._predict_proba(X)
 
-    def fit_predict(self, X, y, cv=None, change_state=True):
+    def fit_predict(
+            self, X, y, cv=None, change_state=True, return_type="single_y_pred"
+        ):
         """Fit and predict labels for sequences in X.
 
         Convenience method to produce in-sample predictions and
@@ -370,23 +372,44 @@ class BaseClassifier(BasePanelMixin):
                 random_state x is taken from self if exists, otherwise x=None
         change_state : bool, optional (default=True)
             if False, will not change the state of the classifier,
-                i.e., fit/predict sequence is run with a copy, self does not change
+            i.e., fit/predict sequence is run with a copy, self does not change
             if True, will fit self to the full X and y,
-                end state will be equivalent to running fit(X, y)
+            end state will be equivalent to running fit(X, y)
+        return_type : str, optional (default="single_y_pred")
+            one of "single_y_pred", "pd_multiindex", "list_y_pred"
+            "single_y_pred" : y_pred is same type as ``predict`` return
+            "pd_multiindex" : y_pred is ``pd.DataFrame`` with ``pd.MultiIndex``,
+            index levels are fold index, instance index
+            "list_y_pred" : y_pred is list of predictions from cv splits
 
         Returns
         -------
-        y_pred : sktime compatible tabular data container, Table scitype
-            1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
-            predicted class labels
-            0-th indices correspond to instance indices in X
-            1-st indices (if applicable) correspond to multioutput vector indices in X
-            1D np.npdarray, if y univariate (one dimension)
-            otherwise, same type as y passed in fit
+        y_pred : type depends on ``return_type``
+            predictions by fold
+
+            * if ``return_type == "single_y_pred"``:
+              sktime compatible tabular data container, Table scitype
+              1D iterable, of shape [n_instances]
+              or 2D iterable, of shape [n_instances, n_dimensions]
+              predicted class labels
+              0-th indices correspond to instance indices in X
+              1-st indices (if applicable) correspond to multioutput vector indices in X
+              1D np.npdarray, if y univariate (one dimension)
+              otherwise, same type as y passed in fit
+            * if ``return_type == "pd_multiindex"``:
+              ``pd.DataFrame`` with ``pd.MultiIndex``,
+              index levels are fold index, instance index
+              entries are predicted class labels for that fold and instance
+            * if ``return_type == "list_y_pred"``:
+              list of predictions from cv splits, same type as ``predict`` return
         """
         return self._fit_predict_boilerplate(
-            X=X, y=y, cv=cv, change_state=change_state, method="predict"
+            X=X,
+            y=y,
+            cv=cv,
+            change_state=change_state,
+            method="predict",
+            return_type="single_y_pred",
         )
 
     def _fit_predict_boilerplate(
@@ -438,6 +461,7 @@ class BaseClassifier(BasePanelMixin):
                 as_scitype="Panel",
                 store_behaviour="freeze",
             )
+            inst_ixx = pd.RangeIndex(X.shape[0])
         else:
             X = convert(
                 X,
@@ -446,6 +470,7 @@ class BaseClassifier(BasePanelMixin):
                 as_scitype="Panel",
                 store_behaviour="freeze",
             )
+            inst_ixx = X.index.droplevel(-1).unique()
 
         y_preds = []
         tt_ixx = []
@@ -460,6 +485,16 @@ class BaseClassifier(BasePanelMixin):
 
         if return_type == "single_y_pred":
             return self._pool(y_preds, tt_ixx, y)
+        elif return_type == "pd_multiindex":
+            fold_ix = pd.RangeIndex(len(y_preds))
+            if isinstance(y_preds[0], (pd.DataFrame, pd.Series)):
+                y_preds = pd.concat(y_preds, axis=0, keys=fold_ix)
+            else:
+                pd_tt_ixx = [inst_ixx[ix] for ix in tt_ixx]
+                y_df = [
+                    pd.DataFrame(yp, index=ixx) for yp, ixx in zip(y_preds, pd_tt_ixx)
+                ]
+                y_preds = pd.concat(y_df, axis=0, keys=fold_ix)
         else:
             return y_preds
 
