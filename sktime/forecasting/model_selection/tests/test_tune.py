@@ -275,7 +275,6 @@ def test_skoptcv(forecaster, param_grid, cv, scoring, error_score, n_iter):
         error_score=error_score,
         n_iter=n_iter,
         random_state=42,
-        n_jobs=-1,
     )
     for y, X in datasets:
         sscv.fit(y, X)
@@ -316,7 +315,6 @@ def test_skoptcv_multiple_forecaster():
         forecaster=pipe,
         param_distributions=params_distributions,
         cv=cv,
-        n_jobs=-1,
         random_state=123,
         n_points=2,
         n_iter=2,

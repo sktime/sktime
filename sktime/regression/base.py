@@ -300,7 +300,7 @@ class BaseRegressor(BasePanelMixin):
 
         self.check_is_fitted()
 
-        return r2_score(y, self.predict(X), normalize=True, multioutput=multioutput)
+        return r2_score(y, self.predict(X), multioutput=multioutput)
 
     def _fit(self, X, y):
         """Fit time series regressor to training data.

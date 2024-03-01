@@ -8,8 +8,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.warnings import warn
 
 
-# TODO 0.27.0: rename the class PAA2 to PAA
-class PAA2(BaseTransformer):
+class PAA(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
     PAA [1]_ is a dimensionality reduction technique that divides a time series
@@ -71,9 +70,10 @@ class PAA2(BaseTransformer):
 
         super().__init__()
 
+        # TODO 0.28.0: remove the deprecation warning
         warn(
-            "In sktime 0.27.0, PAA2 will become the primary PAA implementation in "
-            "sktime, and will be renamed to PAA. "
+            "Since sktime 0.27.0, PAA2 is the primary PAA implementation in "
+            "sktime, and has been renamed to PAA. "
             "PAA2 is available under both its current and future name at its "
             "current location, imports under the deprecated name PAA2 will be possible"
             "until 0.28.0. "
@@ -169,6 +169,5 @@ class PAA2(BaseTransformer):
             raise ValueError("frames must be at least 1.")
 
 
-# TODO 0.27.0: switch to PAA2 = PAA
 # TODO 0.28.0: remove the alias line altogether
-PAA = PAA2
+PAA2 = PAA

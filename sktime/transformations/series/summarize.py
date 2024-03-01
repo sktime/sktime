@@ -11,7 +11,6 @@ from joblib import Parallel, delayed
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.warnings import warn
 
 
 class WindowSummarizer(BaseTransformer):
@@ -779,7 +778,6 @@ class SummaryTransformer(BaseTransformer):
         return [params1, params2, params3, params4]
 
 
-# TODO 0.27.0: remove remember_data from docstring and __init__
 class SplitterSummarizer(BaseTransformer):
     """Create summary values of a time series' splits.
 
@@ -787,9 +785,9 @@ class SplitterSummarizer(BaseTransformer):
     ``transformer`` to each train split created using the splitter ``splitter``.
 
     The i-th row of the resulting series is equivalent to
-    ``transformer.fit_transform(splitter.split_series(X)[i][0])``,
-    where ``X`` is the data seen in ``transform``, if ``remember_data=False``; or
-    where ``X`` is all data seen in ``fit``, ``transform``, if ``remember_data=True``
+    ``transformer.fit(X_fit).transform(X_trafo)``,
+    where ``X_fit`` and ``X_transform`` are obtained from the ``i-th`` split of
+    ``splitter``, as determined by the ``fit_on`` and ``transform_on`` parameters.
 
     The output series aims to provide a summarization of the input series based on the
     given transformer and splitter.
@@ -831,13 +829,6 @@ class SplitterSummarizer(BaseTransformer):
         What data to transform with ``transformer``, for the ``i``-th row
         of the resulting series.
         Values and meaning same as for ``fit_on``.
-
-    remember_data : bool, optional (default=False)
-        deprecated, will be removed in 0.27.0.
-        If set, overrides ``fit_on`` and ``transform_on``:
-
-        * True: ``fit_on="all_train"``, ``transform_on="all_train"``
-        * False: ``fit_on="transform_train"``, ``transform_on="transform_train"``
 
     Methods
     -------
@@ -883,14 +874,12 @@ class SplitterSummarizer(BaseTransformer):
         transformer,
         splitter=None,
         index="last",
-        remember_data=None,
         fit_on="transform_train",
         transform_on="transform_train",
     ):
         self.transformer = transformer
         self.index = index
         self.splitter = splitter
-        self.remember_data = remember_data
         self.fit_on = fit_on
         self.transform_on = transform_on
 
@@ -912,30 +901,12 @@ class SplitterSummarizer(BaseTransformer):
                 "should be an BaseSplitter descendant with a split_series method"
             )
 
-        # TODO 0.27.0: remove remember_data and related logic
-        # remove next lie
-        need_to_remember_data = remember_data is not None and remember_data
-        # replace next two lines by
-        # need_to_remember_data = fit_on.startswith("all")
-        # or transform_on.startswith("all")
-        need_to_remember_data = need_to_remember_data or fit_on.startswith("all")
-        need_to_remember_data = need_to_remember_data or transform_on.startswith("all")
+        need_to_remember_data = fit_on.startswith("all") or transform_on.startswith(
+            "all"
+        )
 
         if need_to_remember_data:
             self.set_tags(**{"remember_data": True, "fit_is_empty": False})
-
-        # TODO 0.27.0: remove remember_data and related logic
-        if remember_data is not None:
-            warn(
-                "remember_data is deprecated and will be removed in 0.27.0. "
-                "Use fit_on and transform_on instead. "
-                "Replace remember_data=True with fit_on='all_train' and "
-                "transform_on='all_train'. Replace remember_data=False with "
-                "fit_on='transform_train' and transform_on='transform_train'.",
-                DeprecationWarning,
-                obj=self,
-                stacklevel=2,
-            )
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -956,14 +927,6 @@ class SplitterSummarizer(BaseTransformer):
         """
         fit_on = self.fit_on
         transform_on = self.transform_on
-
-        if self.remember_data is not None:
-            if self.remember_data:
-                fit_on = "all_train"
-                transform_on = "all_train"
-            else:
-                fit_on = "transform_train"
-                transform_on = "transform_train"
 
         X_dict = {"transform": X}
 

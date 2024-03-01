@@ -26,33 +26,33 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     Node can only be a tuple of strings or list of tuples.
 
     Behaviour in ``fit``, ``predict``:
-    For level pairs f_i, l_i passed, applies forecaster f_i to level l_i.
-    For node pairs f_i, n_i passed, applies forecaster f_i on each node of n_i.
-    if "default" argument passed, applies "default" forecaster on the
-    remaining levels/nodes which are not mentioned in argument 'forecasters'.
-    ``predict`` results are concatenated to one container with same columns as in
-    ``fit``.
-
+    For level pairs ``f_i, l_i`` passed, applies forecaster ``f_i`` to level ``l_i``.
+    For node pairs ``f_i, n_i`` passed,
+    applies forecaster ``f_i`` on each node of ``n_i``.
+    If ``default`` argument is passed, applies ``default`` forecaster on the
+    remaining levels/nodes which are not mentioned in argument ``forecasters``.
+    ``predict`` results are concatenated to one container with
+    same columns as in ``fit``.
 
     Parameters
     ----------
     forecasters : sktime forecaster, or list of tuples
-                (str, estimator, int or list of tuple/s)
-        if forecaster, clones of forecaster are applied to all aggregated levels.
+        (str, estimator, int or list of tuple/s)
+        if forecaster, clones of ``forecaster`` are applied to all aggregated levels.
         if list of tuples, with name = str, estimator is forecaster, level/node
         as int/tuples respectively.
-        all levels/nodes must be present in 'forecasters' attribute if 'default'
+        all levels/nodes must be present in ``forecasters`` attribute if ``default``
         attribute is None
 
     by : {'node', 'level', default='level'}
-        if 'level', applies a univariate forecaster on all the hierarchical
+        if ``'level'``, applies a univariate forecaster on all the hierarchical
         nodes within a level of aggregation
-        if 'node', applies separate univariate forecaster for each
+        if ``'node'``, applies separate univariate forecaster for each
         hierarchical node.
 
     default : sktime forecaster {default = None}
-        if passed, applies 'default' forecaster on the nodes/levels
-        not mentioned in the 'forecaster' argument.
+        if passed, applies ``default`` forecaster on the nodes/levels
+        not mentioned in the ``forecaster`` argument.
 
     Examples
     --------
