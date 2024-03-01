@@ -471,4 +471,6 @@ class Catch22(BaseTransformer):
         """
         param1 = {}
         param2 = {"features": "DN_HistogramMode_5"}
-        return [param1, param2]
+        param3 = {"features": [1, 12, 21]}
+        param4 = {"features": ["forecast_error", "centroid_freq"]}
+        return [param1, param2, param3, param4]
