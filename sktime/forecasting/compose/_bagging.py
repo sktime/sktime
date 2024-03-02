@@ -170,7 +170,7 @@ class BaggingForecaster(BaseForecaster):
         else:
             from sklearn import clone
 
-            return clone(transformer)       
+            return clone(transformer)
 
     def _check_forecaster(self, forecaster):
         """Check if the forecaster is a valid transformer for BaggingForecaster.
