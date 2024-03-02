@@ -831,10 +831,15 @@ class ProximityStump(BaseClassifier):
     def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
         """Find distance between a given instance and the exemplar instances.
 
-        :param exemplars: the exemplars to use
-        :param instance: the instance to compare to each exemplar
-        :param distance_measure: the distance measure to provide similarity values
-        :returns: list of distances to each exemplar
+        Parameters
+        ----------
+        param exemplars: the exemplars to use
+        param instance: the instance to compare to each exemplar
+        param distance_measure: the distance measure to provide similarity values
+
+        Returns
+        -------
+        list of distances to each exemplar
         """
         n_exemplars = len(exemplars)
         distances = np.empty(n_exemplars)
@@ -926,14 +931,14 @@ class ProximityStump(BaseClassifier):
             parallel = Parallel(self._threads_to_use)
             distances = parallel(
                 delayed(self._distance_to_exemplars_inst)(
-                    self.X_exemplar, X.iloc[index, :], self._distance_measure
+                    self.X_exemplar, X.iloc[index, :], self.distance_measure
                 )
                 for index in range(X.shape[0])
             )
         else:
             distances = [
                 self._distance_to_exemplars_inst(
-                    self.X_exemplar, X.iloc[index, :], self._distance_measure
+                    self.X_exemplar, X.iloc[index, :], self.distance_measure
                 )
                 for index in range(X.shape[0])
             ]
