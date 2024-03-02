@@ -15,7 +15,7 @@ __all__ = [
 
 
 class NeuralForecastRNN(_NeuralForecastAdapter):
-    """StatsForecast RNN model.
+    """NeuralForecast RNN model.
 
     Interface to ``neuralforecast.models.RNN`` [1]_
     through ``neuralforecast.NeuralForecast`` [2]_,
@@ -370,6 +370,147 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
 
 
 class NeuralForecastLSTM(_NeuralForecastAdapter):
+    """NeuralForecast LSTM model.
+
+     Interface to ``neuralforecast.models.LSMT`` [1]_
+     through ``neuralforecast.NeuralForecast`` [2]_,
+     from ``neuralforecast`` [3]_ by Nixtla.
+
+    The Long Short-Term Memory Recurrent Neural Network (LSTM), uses a
+    multilayer LSTM encoder and an MLP decoder
+
+     Parameters
+     ----------
+     freq : str
+         frequency of the data, see available frequencies [4]_ from ``pandas``
+     local_scaler_type : str (default=None)
+         scaler to apply per-series to all features before fitting, which is inverted
+         after predicting
+
+         can be one of the following:
+
+         - 'standard'
+         - 'robust'
+         - 'robust-iqr'
+         - 'minmax'
+         - 'boxcox'
+     futr_exog_list : str list, (default=None)
+         future exogenous variables
+     verbose_fit : bool (default=False)
+         print processing steps during fit
+     verbose_predict : bool (default=False)
+         print processing steps during predict
+     input_size : int (default=-1)
+         maximum sequence length for truncated train backpropagation
+
+         default (-1) uses all history
+     inference_input_size : int (default=-1)
+         maximum sequence length for truncated inference
+
+         default (-1) uses all history
+     encoder_n_layers : int (default=2)
+         number of layers for the LSTM
+     encoder_hidden_size : int (default=200)
+         units for the LSTM hidden state size
+     encoder_bias : bool (default=True)
+         whether or not to use biases b_ih, b_hh within LSTM units
+     encoder_dropout : float (default=0.0)
+         dropout regularization applied to LSTM outputs
+     context_size : int (default=10)
+         size of context vector for each timestamp on the forecasting window
+     decoder_hidden_size : int (default=200)
+         size of hidden layer for the MLP decoder
+     decoder_layers : int (default=2)
+         number of layers for the MLP decoder
+     loss : pytorch module (default=None)
+         instantiated train loss class from losses collection [5]_
+     valid_loss : pytorch module (default=None)
+         instantiated validation loss class from losses collection [5]_
+     max_steps : int (default=1000)
+         maximum number of training steps
+     learning_rate : float (default=1e-3)
+         learning rate between (0, 1)
+     num_lr_decays : int (default=-1)
+         number of learning rate decays, evenly distributed across max_steps
+     early_stop_patience_steps : int (default=-1)
+         number of validation iterations before early stopping
+     val_check_steps : int (default=100)
+         number of training steps between every validation loss check
+     batch_size : int (default=32)
+         number of different series in each batch
+     valid_batch_size : typing.Optional[int] (default=None)
+         number of different series in each validation and test batch
+     scaler_type : str (default="robust")
+         type of scaler for temporal inputs normalization
+     random_seed : int (default=1)
+         random_seed for pytorch initializer and numpy generators
+     num_workers_loader : int (default=0)
+         workers to be used by `TimeSeriesDataLoader`
+     drop_last_loader : bool (default=False)
+         whether `TimeSeriesDataLoader` drops last non-full batch
+     trainer_kwargs : dict (default=None)
+         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
+
+     Notes
+     -----
+     * If ``loss`` is unspecified, MAE is used as the loss function for training.
+     * Only ``futr_exog_list`` will be considered as exogenous variables.
+
+     Examples
+     --------
+     >>>
+     >>> # importing necessary libraries
+     >>> from sktime.datasets import load_longley
+     >>> from sktime.forecasting.neuralforecast import NeuralForecastLSTM
+     >>> from sktime.split import temporal_train_test_split
+     >>>
+     >>> # loading the Longley dataset and splitting it into train and test subsets
+     >>> y, X = load_longley()
+     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
+     >>>
+     >>> # creating model instance configuring the hyperparameters
+     >>> model = NeuralForecastLSTM(  # doctest: +SKIP
+     ...     "A-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
+     ... )
+     >>>
+     >>> # fitting the model
+     >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+     Seed set to 1
+     Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589, train_loss_epoc
+     NeuralForecastLSTM(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
+     >>>
+     >>> # getting point predictions
+     >>> model.predict(X=X_test)  # doctest: +SKIP
+     Predicting DataLoader 0: 100%|██████████████████████████████████| 1/1 [00:00<00:00, 198.64it/s]
+     1959    64083.226562
+     1960    64426.304688
+     1961    64754.886719
+     1962    64889.496094
+     Freq: A-DEC, Name: TOTEMP, dtype: float64
+     >>>
+
+     References
+     ----------
+     .. [1] https://nixtlaverse.nixtla.io/neuralforecast/models.lstm.html#lstm
+     .. [2] https://nixtlaverse.nixtla.io/neuralforecast/core.html#neuralforecast
+     .. [3] https://github.com/Nixtla/neuralforecast/
+     .. [4] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
+     .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    """  # noqa: E501
+
+    _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["pranavvp16"],
+        # "maintainers": ["yarnabrina", "pranavvp16"],
+        # "python_dependencies": "neuralforecast"
+        # inherited from _NeuralForecastAdapter
+        # estimator type
+        # --------------
+        "python_dependencies": ["neuralforecast>=1.6.4"],
+    }
+
     def __init__(
         self: "NeuralForecastLSTM",
         freq: str,
@@ -573,7 +714,3 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             ]
 
         return params
-
-
-
-

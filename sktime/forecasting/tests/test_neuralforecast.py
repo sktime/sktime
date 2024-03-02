@@ -149,6 +149,69 @@ def test_neural_forecast_rnn_fail_with_multiple_predictions() -> None:
     ):
         model.predict()
 
+
+@pytest.mark.skipif(
+    not run_test_for_class(NeuralForecastLSTM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_lstm_univariate_y_without_X() -> None:
+    """Test NeuralForecastLSTM with single endogenous without exogenous."""
+    # define model
+    model = NeuralForecastLSTM("A-DEC", max_steps=5, trainer_kwargs={"logger": False})
+
+    # attempt fit with negative fh
+    with pytest.raises(
+        NotImplementedError, match="in-sample prediction is currently not supported"
+    ):
+        model.fit(y_train, fh=[-2, -1, 0, 1, 2])
+
+    # train model
+    model.fit(y_train, fh=[1, 2, 3, 4])
+
+    # predict with trained model
+    y_pred = model.predict()
+
+    # check prediction index
+    pandas.testing.assert_index_equal(y_pred.index, y_test.index, check_names=False)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NeuralForecastLSTM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_lstm_univariate_y_with_X() -> None:
+    """Test NeuralForecastLSTM with single endogenous with exogenous."""
+    # select feature columns
+    exog_list = ["GNPDEFL", "GNP", "UNEMP"]
+
+    # define model
+    model = NeuralForecastLSTM(
+        "A-DEC", futr_exog_list=exog_list, max_steps=5, trainer_kwargs={"logger": False}
+    )
+
+    # attempt fit without X
+    with pytest.raises(
+        ValueError, match="Missing exogeneous data, 'futr_exog_list' is non-empty."
+    ):
+        model.fit(y_train, fh=[1, 2, 3, 4])
+
+    # train model with all X columns
+    model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])
+
+    # attempt predict without X
+    with pytest.raises(
+        ValueError, match="Missing exogeneous data, 'futr_exog_list' is non-empty."
+    ):
+        model.predict()
+
+    # predict with only selected columns
+    # checking that rest are not used
+    y_pred = model.predict(X=X_test[exog_list])
+
+    # check prediction index
+    pandas.testing.assert_index_equal(y_pred.index, y_test.index, check_names=False)
+
+
 @pytest.mark.skipif(
     not run_test_for_class(NeuralForecastLSTM),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -175,10 +238,3 @@ def test_neural_forecast_lstm_with_non_default_loss() -> None:
 
     # check prediction index
     pandas.testing.assert_index_equal(X_pred.index, X_test.index, check_names=False)
-
-@pytest.mark.skipif(
-    not run_test_for_class(NeuralForecastLSTM),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-
-
