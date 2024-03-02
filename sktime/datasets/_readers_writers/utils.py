@@ -269,3 +269,26 @@ def write_results_to_uea_format(
                     file.write("," + str(j))
             file.write("\n")
     file.close()
+
+
+def file_has_extension(path, suffix):
+    """
+    Check if the filename contains the file extension
+
+    Parameters
+    ----------
+    path - str
+        path or filename.
+    
+    suffix - str
+        the expected file extension.
+
+    Returns
+    -------
+    Filename with required extension
+
+    """
+    if not path.endswith(suffix):
+        path+=suffix
+
+    return path

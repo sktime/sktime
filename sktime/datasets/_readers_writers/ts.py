@@ -19,6 +19,8 @@ from sktime.datasets._readers_writers.utils import _alias_mtype_check, _write_he
 from sktime.datatypes import MTYPE_LIST_PANEL, check_is_scitype, convert, convert_to
 from sktime.utils.validation.panel import check_X, check_X_y
 
+from utils.py import file_has_extension
+
 # ==================================================================================================
 # Function to read  .ts file
 # ==================================================================================================
@@ -75,6 +77,9 @@ def load_from_tsfile_to_dataframe(
     instance_list = []
     class_val_list = []
     line_num = 0
+
+    full_file_path_and_name = file_has_extension(full_file_path_and_name,".ts")
+
     # Parse the file
     with open(full_file_path_and_name, encoding=encoding) as file:
         for line in file:
