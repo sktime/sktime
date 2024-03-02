@@ -28,10 +28,3 @@ comment: false
 # enable codecov to report to GitHub status checks
 github_checks:
   annotations: false
-
-# group coverage reports
-flags:
-  complete:
-    paths:
-      - ".*"
-    carryforward: true
