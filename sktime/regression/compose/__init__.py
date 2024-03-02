@@ -4,6 +4,7 @@ __all__ = [
     "ComposableTimeSeriesForestRegressor",
     "RegressorPipeline",
     "SklearnRegressorPipeline",
+    "MultiplexRegressor",
 ]
 
 from sktime.regression.compose._ensemble import ComposableTimeSeriesForestRegressor
@@ -11,3 +12,4 @@ from sktime.regression.compose._pipeline import (
     RegressorPipeline,
     SklearnRegressorPipeline,
 )
+from sktime.regression.compose._multiplexer import MultiplexRegressor
