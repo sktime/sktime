@@ -726,7 +726,7 @@ def best_of_n_stumps(n):
             stump = ProximityStump(
                 random_state=proximity.random_state,
                 distance_measure=proximity.distance_measure,
-                get_gain=proximity.get_gain,
+                gain_name=proximity.gain_name,
                 verbosity=proximity.verbosity,
                 n_jobs=proximity.n_jobs,
             )
@@ -741,6 +741,30 @@ def best_of_n_stumps(n):
     return find_best_stump
 
 
+def _gain_getter(proximity):
+    """Get the gain function. Given the object, return the gain function.
+
+    Parameters
+    ----------
+    proximity : Proximity like object.
+        the proximity object to split data from.
+
+    Returns
+    -------
+    gain_function : function
+        the function to score the quality of a split
+    """
+    # maintain a dictionary of gain functions
+    # in case there are more gain functions in the future
+    gain_getters = {
+        "gini": gini_gain,
+    }
+    if proximity.gain_name is None:
+        return gain_getters["gini"]
+    else:
+        return gain_getters[proximity.gain_name]
+
+
 class ProximityStump(BaseClassifier):
     """Proximity Stump class.
 
@@ -750,7 +774,7 @@ class ProximityStump(BaseClassifier):
     ----------
     random_state: integer, the random state
     distance_measure: distance measures
-    get_gain: function to score the quality of a split
+    gain_name: function name to score the quality of a split, if None, gini_gain is used
     verbosity: logging verbosity
     n_jobs: number of jobs to run in parallel *across threads"
 
@@ -781,13 +805,13 @@ class ProximityStump(BaseClassifier):
         self,
         random_state=None,
         distance_measure=None,
-        get_gain=gini_gain,
+        gain_name=None,
         verbosity=0,
         n_jobs=1,
     ):
         self.random_state = random_state
         self.distance_measure = distance_measure
-        self.get_gain = get_gain
+        self.gain_name = gain_name
         self.verbosity = verbosity
         self.n_jobs = n_jobs
 
@@ -871,6 +895,20 @@ class ProximityStump(BaseClassifier):
         One exemplar per class
         """
         return get_one_exemplar_per_class_proximity(self)
+
+    def get_gain(self):
+        """Get the gain function.
+
+        Parameters
+        ----------
+        self : ProximityStump
+            the proximity stump object.
+
+        Returns
+        -------
+        gain function
+        """
+        return _gain_getter(self)
 
     def distance_to_exemplars(self, X):
         """Find distance to exemplars.
@@ -1045,8 +1083,7 @@ class ProximityTree(BaseClassifier):
         "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
         distance measure to use
         if None, selects distances randomly from the list of available distances
-    get_gain: function, default=gini_gain
-        method to find the gain of a data split
+    gain_name: function name to score the quality of a split, if None, gini_gain is used
     max_depth: int or math.inf, default=math.inf
         maximum depth of the tree
     is_leaf : function, default=pure
@@ -1087,7 +1124,7 @@ class ProximityTree(BaseClassifier):
         self,
         random_state=None,
         distance_measure=None,
-        get_gain=gini_gain,
+        gain_name=None,
         max_depth=math.inf,
         is_leaf=pure,
         verbosity=0,
@@ -1100,7 +1137,7 @@ class ProximityTree(BaseClassifier):
         self.random_state = random_state
         self.is_leaf = is_leaf
         self.distance_measure = distance_measure
-        self.get_gain = get_gain
+        self.gain_name = gain_name
         self.n_jobs = n_jobs
         self.depth = 0
 
@@ -1146,7 +1183,7 @@ class ProximityTree(BaseClassifier):
                     sub_tree = ProximityTree(
                         random_state=self.random_state,
                         distance_measure=self._distance_measure,
-                        get_gain=self.get_gain,
+                        gain_name=self.gain_name,
                         is_leaf=self.is_leaf,
                         verbosity=self.verbosity,
                         max_depth=self.max_depth,
@@ -1253,6 +1290,20 @@ class ProximityTree(BaseClassifier):
         """
         return get_one_exemplar_per_class_proximity(self)
 
+    def get_gain(self):
+        """Get the gain function.
+
+        Parameters
+        ----------
+        self : ProximityTree
+            the proximity tree object.
+
+        Returns
+        -------
+        gain function
+        """
+        return _gain_getter(self)
+
     def setup_distance_measure(self):
         """Setups the distance measure getter from the datafram and class value list.
 
@@ -1328,7 +1379,7 @@ class ProximityForest(BaseClassifier):
         "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
         distance measure to use
         if None, selects distances randomly from the list of available distances
-    get_gain: function, default=gini_gain
+    gain_name: function name to score the quality of a split, if None, gini_gain is used
         method to find the gain of a data split
     verbosity: 0 or 1
         number reflecting the verbosity of logging
@@ -1387,7 +1438,7 @@ class ProximityForest(BaseClassifier):
         random_state=None,
         n_estimators=100,
         distance_measure=None,
-        get_gain=gini_gain,
+        gain_name=None,
         verbosity=0,
         max_depth=math.inf,
         is_leaf=pure,
@@ -1397,7 +1448,7 @@ class ProximityForest(BaseClassifier):
         self.is_leaf = is_leaf
         self.verbosity = verbosity
         self.max_depth = max_depth
-        self.get_gain = get_gain
+        self.gain_name = gain_name
         self.random_state = random_state
         self.n_estimators = n_estimators
         self.n_jobs = n_jobs
@@ -1436,7 +1487,7 @@ class ProximityForest(BaseClassifier):
         tree = ProximityTree(
             random_state=random_state,
             verbosity=self.verbosity,
-            get_gain=self.get_gain,
+            gain_name=self.gain_name,
             distance_measure=self._distance_measure,
             max_depth=self.max_depth,
             is_leaf=self.is_leaf,
@@ -1610,6 +1661,20 @@ class ProximityForest(BaseClassifier):
             return self.setup_distance_measure(self)
         else:
             return self.distance_measure
+
+    def get_gain(self):
+        """Get the gain function.
+
+        Parameters
+        ----------
+        self : ProximityForest
+            the proximity forest object.
+
+        Returns
+        -------
+        gain function
+        """
+        return _gain_getter(self)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
