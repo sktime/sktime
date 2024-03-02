@@ -618,6 +618,7 @@ class BaseEstimator(BaseObject):
                     c_f_params = {
                         f"{_rm_underscore(c)}__{k}": v for k, v in c_f_params.items()
                     }
+                    new_params.update(c_f_params)
             fitted_params.update(new_params)
             old_new_params = new_params.copy()
             n_new_params = len(new_params)
