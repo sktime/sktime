@@ -725,7 +725,6 @@ def best_of_n_stumps(n):
             # duplicate tree configuration
             stump = ProximityStump(
                 random_state=proximity.random_state,
-                get_exemplars=proximity.get_exemplars,
                 distance_measure=proximity.distance_measure,
                 get_gain=proximity.get_gain,
                 verbosity=proximity.verbosity,
@@ -750,8 +749,6 @@ class ProximityStump(BaseClassifier):
     Parameters
     ----------
     random_state: integer, the random state
-    get_exemplars: function
-        extract exemplars from a dataframe and class value list
     distance_measure: distance measures
     get_gain: function to score the quality of a split
     verbosity: logging verbosity
@@ -783,7 +780,6 @@ class ProximityStump(BaseClassifier):
     def __init__(
         self,
         random_state=None,
-        get_exemplars=get_one_exemplar_per_class_proximity,
         distance_measure=None,
         get_gain=gini_gain,
         verbosity=0,
@@ -791,7 +787,6 @@ class ProximityStump(BaseClassifier):
     ):
         self.random_state = random_state
         self.distance_measure = distance_measure
-        self.get_exemplars = get_exemplars
         self.get_gain = get_gain
         self.verbosity = verbosity
         self.n_jobs = n_jobs
@@ -863,6 +858,20 @@ class ProximityStump(BaseClassifier):
         else:
             return self.distance_measure
 
+    def get_exemplars(self):
+        """Extract exemplars from a dataframe and class value list.
+
+        Parameters
+        ----------
+        self : ProximityStump
+            the proximity stump object.
+
+        Returns
+        -------
+        One exemplar per class
+        """
+        return get_one_exemplar_per_class_proximity(self)
+
     def distance_to_exemplars(self, X):
         """Find distance to exemplars.
 
@@ -911,7 +920,7 @@ class ProximityStump(BaseClassifier):
         self.X = _positive_dataframe_indices(X)
         self._random_object = check_random_state(self.random_state)
         self.y = y
-        self.X_exemplar, self.y_exemplar = self.get_exemplars(self)
+        self.X_exemplar, self.y_exemplar = self.get_exemplars()
 
         return self
 
@@ -1032,8 +1041,6 @@ class ProximityTree(BaseClassifier):
     ----------
     random_state: int or np.RandomState, default=0
         random seed for the random number generator
-    get_exemplars: function, default=get_one_exemplar_per_class_proximity
-        algorithm to get the exemplars from a given dataframe and list of class labels
     distance_measure: None (default) or str; if str, one of
         "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
         distance measure to use
@@ -1082,7 +1089,6 @@ class ProximityTree(BaseClassifier):
     def __init__(
         self,
         random_state=None,
-        get_exemplars=get_one_exemplar_per_class_proximity,
         distance_measure=None,
         get_gain=gini_gain,
         max_depth=math.inf,
@@ -1099,7 +1105,6 @@ class ProximityTree(BaseClassifier):
         self.random_state = random_state
         self.is_leaf = is_leaf
         self.distance_measure = distance_measure
-        self.get_exemplars = get_exemplars
         self.get_gain = get_gain
         self.n_jobs = n_jobs
         self.depth = 0
@@ -1147,7 +1152,6 @@ class ProximityTree(BaseClassifier):
                 if not self.is_leaf(sub_y):
                     sub_tree = ProximityTree(
                         random_state=self.random_state,
-                        get_exemplars=self.get_exemplars,
                         distance_measure=self._distance_measure,
                         get_gain=self.get_gain,
                         is_leaf=self.is_leaf,
@@ -1231,6 +1235,20 @@ class ProximityTree(BaseClassifier):
         normalize(distribution, copy=False, norm="l1")
         return distribution
 
+    def get_exemplars(self):
+        """Extract exemplars from a dataframe and class value list.
+
+        Parameters
+        ----------
+        self : ProximityTree
+            the proximity tree object.
+
+        Returns
+        -------
+        One exemplar per class
+        """
+        return get_one_exemplar_per_class_proximity(self)
+
     def setup_distance_measure(self):
         """Setups the distance measure getter from the datafram and class value list.
 
@@ -1306,8 +1324,6 @@ class ProximityForest(BaseClassifier):
         "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
         distance measure to use
         if None, selects distances randomly from the list of available distances
-    get_exemplars: function, default=get_one_exemplar_per_class_proximity
-        algorithm to get the exemplars from a given dataframe and list of class labels
     get_gain: function, default=gini_gain
         method to find the gain of a data split
     verbosity: 0 or 1
@@ -1369,7 +1385,6 @@ class ProximityForest(BaseClassifier):
         random_state=None,
         n_estimators=100,
         distance_measure=None,
-        get_exemplars=get_one_exemplar_per_class_proximity,
         get_gain=gini_gain,
         verbosity=0,
         max_depth=math.inf,
@@ -1381,7 +1396,6 @@ class ProximityForest(BaseClassifier):
         self.is_leaf = is_leaf
         self.verbosity = verbosity
         self.max_depth = max_depth
-        self.get_exemplars = get_exemplars
         self.get_gain = get_gain
         self.random_state = random_state
         self.n_estimators = n_estimators
@@ -1422,7 +1436,6 @@ class ProximityForest(BaseClassifier):
         tree = ProximityTree(
             random_state=random_state,
             verbosity=self.verbosity,
-            get_exemplars=self.get_exemplars,
             get_gain=self.get_gain,
             distance_measure=self._distance_measure,
             max_depth=self.max_depth,
@@ -1552,6 +1565,20 @@ class ProximityForest(BaseClassifier):
         distributions = np.sum(distributions, axis=0)
         normalize(distributions, copy=False, norm="l1")
         return distributions
+
+    def get_exemplars(self):
+        """Extract exemplars from a dataframe and class value list.
+
+        Parameters
+        ----------
+        self : ProximityForest
+            the proximity forest object.
+
+        Returns
+        -------
+        One exemplar per class
+        """
+        return get_one_exemplar_per_class_proximity(self)
 
     def setup_distance_measure(self):
         """Setups the distance measure getter from the datafram and class value list.
