@@ -14,7 +14,6 @@ from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
 from sktime.transformations.base import BaseTransformer
 
-
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
 
@@ -307,7 +306,7 @@ class BaggingForecaster(BaseForecaster):
         X_inner = self._gen_X_bootstraps(X)
 
         # compute bootstrapped forecasts
-        y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=None)
+        y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=X_inner)
 
         # aggregate bootstrapped forecasts
         y_pred = y_bootstraps_pred.groupby(level=-1).mean().iloc[:, 0]
