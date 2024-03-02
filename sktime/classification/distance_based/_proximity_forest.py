@@ -741,6 +741,7 @@ def best_of_n_stumps(n):
 
     return find_best_stump
 
+
 class ProximityStump(BaseClassifier):
     """Proximity Stump class.
 
@@ -831,7 +832,7 @@ class ProximityStump(BaseClassifier):
         return distances
 
     def setup_distance_measure(self):
-        """Setup the distance measure getter from the datafram and class value list.
+        """Setups the distance measure getter from the datafram and class value list.
 
         Parameters
         ----------
@@ -843,7 +844,7 @@ class ProximityStump(BaseClassifier):
         A list of distance measure getters.
         """
         return _setup_all_distance_measure_getter(self)
-    
+
     @classmethod
     def get_distance_measure(self):
         """Get the distance measure.
@@ -852,7 +853,7 @@ class ProximityStump(BaseClassifier):
         ----------
         self : ProximityStump
             the proximity stump object.
-        
+
         Returns
         -------
         distance measure
@@ -1231,19 +1232,19 @@ class ProximityTree(BaseClassifier):
         return distribution
 
     def setup_distance_measure(self):
-        """Setup the distance measure getter from the datafram and class value list.
+        """Setups the distance measure getter from the datafram and class value list.
 
         Parameters
         ----------
-        self : ProximityStump
-            the proximity stump object.
+        self : ProximityTree
+            the proximity tree object.
 
         Returns
         -------
         A list of distance measure getters.
         """
         return _setup_all_distance_measure_getter(self)
-    
+
     @classmethod
     def get_distance_measure(self):
         """Get the distance measure.
@@ -1251,8 +1252,8 @@ class ProximityTree(BaseClassifier):
         Parameters
         ----------
         self : ProximityStump
-            the proximity stump object.
-        
+            the proximity tree object.
+
         Returns
         -------
         distance measure
@@ -1553,12 +1554,12 @@ class ProximityForest(BaseClassifier):
         return distributions
 
     def setup_distance_measure(self):
-        """Setup the distance measure getter from the datafram and class value list.
+        """Setups the distance measure getter from the datafram and class value list.
 
         Parameters
         ----------
-        self : ProximityStump
-            the proximity stump object.
+        self : ProximityForest
+            the proximity forest object.
 
         Returns
         -------
@@ -1572,9 +1573,9 @@ class ProximityForest(BaseClassifier):
 
         Parameters
         ----------
-        self : ProximityStump
-            the proximity stump object.
-        
+        self : ProximityForest
+            the proximity forest object.
+
         Returns
         -------
         distance measure
