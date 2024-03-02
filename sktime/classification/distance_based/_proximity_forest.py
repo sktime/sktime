@@ -727,8 +727,6 @@ def best_of_n_stumps(n):
                 random_state=proximity.random_state,
                 get_exemplars=proximity.get_exemplars,
                 distance_measure=proximity.distance_measure,
-                setup_distance_measure=proximity.setup_distance_measure,
-                get_distance_measure=proximity.get_distance_measure,
                 get_gain=proximity.get_gain,
                 verbosity=proximity.verbosity,
                 n_jobs=proximity.n_jobs,
@@ -743,22 +741,6 @@ def best_of_n_stumps(n):
 
     return find_best_stump
 
-
-def _check_distance_measure(obj_self):
-    """Check the distance measure, return default if distance measure is None."""
-    self = obj_self
-    distance_measure = self.distance_measure
-    if distance_measure is None or isinstance(distance_measure, str):
-        if self.get_distance_measure is None:
-            if hasattr(self, "setup_distance_measure"):
-                self.get_distance_measure = self.setup_distance_measure(self)
-            else:
-                self.get_distance_measure = self.setup_distance_measure_getter(self)
-        return self.get_distance_measure(self)
-    else:
-        return self.distance_measure
-
-
 class ProximityStump(BaseClassifier):
     """Proximity Stump class.
 
@@ -769,7 +751,6 @@ class ProximityStump(BaseClassifier):
     random_state: integer, the random state
     get_exemplars: function
         extract exemplars from a dataframe and class value list
-    get_distance_measure: distance measure getters
     distance_measure: distance measures
     get_gain: function to score the quality of a split
     verbosity: logging verbosity
@@ -802,14 +783,12 @@ class ProximityStump(BaseClassifier):
         self,
         random_state=None,
         get_exemplars=get_one_exemplar_per_class_proximity,
-        get_distance_measure=None,
         distance_measure=None,
         get_gain=gini_gain,
         verbosity=0,
         n_jobs=1,
     ):
         self.random_state = random_state
-        self.get_distance_measure = get_distance_measure
         self.distance_measure = distance_measure
         self.get_exemplars = get_exemplars
         self.get_gain = get_gain
@@ -826,7 +805,6 @@ class ProximityStump(BaseClassifier):
         self.y = None
         self.entropy = None
         self._random_object = None
-        self._get_distance_measure = None
         super().__init__()
 
     @staticmethod
@@ -865,6 +843,24 @@ class ProximityStump(BaseClassifier):
         A list of distance measure getters.
         """
         return _setup_all_distance_measure_getter(self)
+    
+    @classmethod
+    def get_distance_measure(self):
+        """Get the distance measure.
+
+        Parameters
+        ----------
+        self : ProximityStump
+            the proximity stump object.
+        
+        Returns
+        -------
+        distance measure
+        """
+        if self.distance_measure is None:
+            return self.setup_distance_measure()
+        else:
+            return self.distance_measure
 
     def distance_to_exemplars(self, X):
         """Find distance to exemplars.
@@ -914,9 +910,6 @@ class ProximityStump(BaseClassifier):
         self.X = _positive_dataframe_indices(X)
         self._random_object = check_random_state(self.random_state)
         self.y = y
-
-        self._distance_measure = _check_distance_measure(self)
-
         self.X_exemplar, self.y_exemplar = self.get_exemplars(self)
 
         return self
@@ -1044,10 +1037,6 @@ class ProximityTree(BaseClassifier):
         "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
         distance measure to use
         if None, selects distances randomly from the list of available distances
-    get_distance_measure: function or None, default=None
-        method to get the distance measure
-    setup_distance_measure: function, default=setup_all_distance_measure_getter
-        method to setup the distance measures based upon the dataset given
     get_gain: function, default=gini_gain
         method to find the gain of a data split
     max_depth: int or math.inf, default=math.inf
@@ -1094,8 +1083,6 @@ class ProximityTree(BaseClassifier):
         random_state=None,
         get_exemplars=get_one_exemplar_per_class_proximity,
         distance_measure=None,
-        get_distance_measure=None,
-        setup_distance_measure=setup_all_distance_measure_getter,
         get_gain=gini_gain,
         max_depth=math.inf,
         is_leaf=pure,
@@ -1108,12 +1095,9 @@ class ProximityTree(BaseClassifier):
         self.n_stump_evaluations = n_stump_evaluations
         self.find_stump = find_stump
         self.max_depth = max_depth
-        self.get_distance_measure = distance_measure
         self.random_state = random_state
         self.is_leaf = is_leaf
         self.distance_measure = distance_measure
-        self.get_distance_measure = get_distance_measure
-        self.setup_distance_measure = setup_distance_measure
         self.get_exemplars = get_exemplars
         self.get_gain = get_gain
         self.n_jobs = n_jobs
@@ -1126,6 +1110,7 @@ class ProximityTree(BaseClassifier):
         self.X = None
         self.y = None
         self._random_object = None
+        self._distance_measure = None
 
         super().__init__()
 
@@ -1150,7 +1135,7 @@ class ProximityTree(BaseClassifier):
             self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
         self.y = y
 
-        self._distance_measure = _check_distance_measure(self)
+        self._distance_measure = self.get_distance_measure()
 
         self.stump = self.find_stump(self)
         n_branches = len(self.stump.y_exemplar)
@@ -1163,8 +1148,6 @@ class ProximityTree(BaseClassifier):
                         random_state=self.random_state,
                         get_exemplars=self.get_exemplars,
                         distance_measure=self._distance_measure,
-                        setup_distance_measure=self.setup_distance_measure,
-                        get_distance_measure=self.get_distance_measure,
                         get_gain=self.get_gain,
                         is_leaf=self.is_leaf,
                         verbosity=self.verbosity,
@@ -1247,6 +1230,38 @@ class ProximityTree(BaseClassifier):
         normalize(distribution, copy=False, norm="l1")
         return distribution
 
+    def setup_distance_measure(self):
+        """Setup the distance measure getter from the datafram and class value list.
+
+        Parameters
+        ----------
+        self : ProximityStump
+            the proximity stump object.
+
+        Returns
+        -------
+        A list of distance measure getters.
+        """
+        return _setup_all_distance_measure_getter(self)
+    
+    @classmethod
+    def get_distance_measure(self):
+        """Get the distance measure.
+
+        Parameters
+        ----------
+        self : ProximityStump
+            the proximity stump object.
+        
+        Returns
+        -------
+        distance measure
+        """
+        if self.distance_measure is None:
+            return self.setup_distance_measure(self)
+        else:
+            return self.distance_measure
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -1307,8 +1322,6 @@ class ProximityForest(BaseClassifier):
         number of stump evaluations to do if find_stump method is None
     find_stump: function, default=None
         function to find the best split of data
-    setup_distance_measure: function, default=setup_all_distance_measure_getter
-        method to setup the distance measures based upon the dataset given
 
     References
     ----------
@@ -1355,7 +1368,6 @@ class ProximityForest(BaseClassifier):
         random_state=None,
         n_estimators=100,
         distance_measure=None,
-        get_distance_measure=None,
         get_exemplars=get_one_exemplar_per_class_proximity,
         get_gain=gini_gain,
         verbosity=0,
@@ -1364,7 +1376,6 @@ class ProximityForest(BaseClassifier):
         n_jobs=1,
         n_stump_evaluations=5,
         find_stump=None,
-        setup_distance_measure_getter=setup_all_distance_measure_getter,
     ):
         self.is_leaf = is_leaf
         self.verbosity = verbosity
@@ -1375,8 +1386,6 @@ class ProximityForest(BaseClassifier):
         self.n_estimators = n_estimators
         self.n_jobs = n_jobs
         self.n_stump_evaluations = n_stump_evaluations
-        self.get_distance_measure = get_distance_measure
-        self.setup_distance_measure_getter = setup_distance_measure_getter
         self.distance_measure = distance_measure
         self.find_stump = find_stump
 
@@ -1386,6 +1395,7 @@ class ProximityForest(BaseClassifier):
         self.X = None
         self.y = None
         self._random_object = None
+        self._distance_measure = None
 
         super().__init__()
 
@@ -1414,8 +1424,6 @@ class ProximityForest(BaseClassifier):
             get_exemplars=self.get_exemplars,
             get_gain=self.get_gain,
             distance_measure=self._distance_measure,
-            setup_distance_measure=self.setup_distance_measure_getter,
-            get_distance_measure=self.get_distance_measure,
             max_depth=self.max_depth,
             is_leaf=self.is_leaf,
             n_jobs=1,
@@ -1444,7 +1452,7 @@ class ProximityForest(BaseClassifier):
         self._random_object = check_random_state(self.random_state)
         self.y = y
 
-        self._distance_measure = _check_distance_measure(self)
+        self._distance_measure = self.get_distance_measure()
 
         if self._threads_to_use > 1:
             parallel = Parallel(self._threads_to_use)
@@ -1543,6 +1551,38 @@ class ProximityForest(BaseClassifier):
         distributions = np.sum(distributions, axis=0)
         normalize(distributions, copy=False, norm="l1")
         return distributions
+
+    def setup_distance_measure(self):
+        """Setup the distance measure getter from the datafram and class value list.
+
+        Parameters
+        ----------
+        self : ProximityStump
+            the proximity stump object.
+
+        Returns
+        -------
+        A list of distance measure getters.
+        """
+        return _setup_all_distance_measure_getter(self)
+
+    @classmethod
+    def get_distance_measure(self):
+        """Get the distance measure.
+
+        Parameters
+        ----------
+        self : ProximityStump
+            the proximity stump object.
+        
+        Returns
+        -------
+        distance measure
+        """
+        if self.distance_measure is None:
+            return self.setup_distance_measure(self)
+        else:
+            return self.distance_measure
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
