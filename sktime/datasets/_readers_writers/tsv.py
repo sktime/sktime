@@ -5,7 +5,7 @@ __all__ = ["load_from_ucr_tsv_to_dataframe"]
 
 import pandas as pd
 
-from utils.py import file_has_extension
+from sktime.datasets._readers_writers.utils import file_has_extension
 
 # TODO: original author didn't add test for this function
 def load_from_ucr_tsv_to_dataframe(

@@ -19,7 +19,7 @@ from sktime.datasets._readers_writers.utils import _alias_mtype_check, _write_he
 from sktime.datatypes import MTYPE_LIST_PANEL, check_is_scitype, convert, convert_to
 from sktime.utils.validation.panel import check_X, check_X_y
 
-from utils.py import file_has_extension
+from sktime.datasets._readers_writers.utils import file_has_extension
 
 # ==================================================================================================
 # Function to read  .ts file

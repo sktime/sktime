@@ -271,16 +271,16 @@ def write_results_to_uea_format(
     file.close()
 
 
-def file_has_extension(path, suffix):
+def file_has_extension(path:str, suffix:str) -> str:
     """
     Check if the filename contains the file extension
 
     Parameters
     ----------
-    path - str
+    path: str
         path or filename.
     
-    suffix - str
+    suffix: str
         the expected file extension.
 
     Returns

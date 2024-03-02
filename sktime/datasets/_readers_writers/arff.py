@@ -12,7 +12,7 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 
-from utils.py import file_has_extension
+from sktime.datasets._readers_writers.utils import file_has_extension
 
 # ==================================================================================================
 # Utils function to read  arff file

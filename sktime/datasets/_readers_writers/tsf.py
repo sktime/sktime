@@ -12,7 +12,7 @@ import pandas as pd
 from sktime.datatypes import MTYPE_LIST_HIERARCHICAL, convert
 from sktime.utils.strtobool import strtobool
 
-from utils.py import file_has_extension
+from sktime.datasets._readers_writers.utils import file_has_extension
 
 def _convert_tsf_to_hierarchical(
     data: pd.DataFrame,
