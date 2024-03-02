@@ -564,7 +564,7 @@ def setup_ddtw_distance_measure_getter(transformer):
     return getter
 
 
-def setup_all_distance_measure_getter(proximity):
+def _setup_all_distance_measure_getter(proximity):
     """All distance measure getter functions from a proximity object.
 
     :param proximity: a PT / PF / PS
@@ -769,8 +769,6 @@ class ProximityStump(BaseClassifier):
     random_state: integer, the random state
     get_exemplars: function
         extract exemplars from a dataframe and class value list
-    setup_distance_measure: function
-        setup the distance measure getters from dataframe and class value list
     get_distance_measure: distance measure getters
     distance_measure: distance measures
     get_gain: function to score the quality of a split
@@ -804,14 +802,12 @@ class ProximityStump(BaseClassifier):
         self,
         random_state=None,
         get_exemplars=get_one_exemplar_per_class_proximity,
-        setup_distance_measure=setup_all_distance_measure_getter,
         get_distance_measure=None,
         distance_measure=None,
         get_gain=gini_gain,
         verbosity=0,
         n_jobs=1,
     ):
-        self.setup_distance_measure = setup_distance_measure
         self.random_state = random_state
         self.get_distance_measure = get_distance_measure
         self.distance_measure = distance_measure
@@ -855,6 +851,20 @@ class ProximityStump(BaseClassifier):
                 min_distance = distance
             distances[exemplar_index] = distance
         return distances
+
+    def setup_distance_measure(self):
+        """Setup the distance measure getter from the datafram and class value list.
+
+        Parameters
+        ----------
+        self : ProximityStump
+            the proximity stump object.
+
+        Returns
+        -------
+        A list of distance measure getters.
+        """
+        return _setup_all_distance_measure_getter(self)
 
     def distance_to_exemplars(self, X):
         """Find distance to exemplars.
