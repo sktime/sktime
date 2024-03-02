@@ -2604,6 +2604,15 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "fnhirwa",
+      "name": "Felix Hirwa Nshuti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67042527?s=64&v=4",
+      "profile": "https://github.com/fnhirwa",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ]
 }
