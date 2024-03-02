@@ -8,11 +8,6 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["yarnabrina"]
 
-__all__ = [
-    "NeuralForecastRNN",
-    "NeuralForecastLSTM",
-]
-
 
 class NeuralForecastRNN(_NeuralForecastAdapter):
     """NeuralForecast RNN model.
@@ -382,18 +377,18 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     Parameters
     ----------
     freq : str
-    frequency of the data, see available frequencies [4]_ from ``pandas``
+        frequency of the data, see available frequencies [4]_ from ``pandas``
     local_scaler_type : str (default=None)
-    scaler to apply per-series to all features before fitting, which is inverted
-    after predicting
+        scaler to apply per-series to all features before fitting, which is inverted
+        after predicting
 
-    can be one of the following:
+        can be one of the following:
 
-    - 'standard'
-    - 'robust'
-    - 'robust-iqr'
-    - 'minmax'
-    - 'boxcox'
+        - 'standard'
+        - 'robust'
+        - 'robust-iqr'
+        - 'minmax'
+        - 'boxcox'
     futr_exog_list : str list, (default=None)
         future exogenous variables
     verbose_fit : bool (default=False)
@@ -712,3 +707,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             ]
 
         return params
+
+
+__all__ = [
+    "NeuralForecastRNN",
+    "NeuralForecastLSTM",
+]
