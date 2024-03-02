@@ -187,7 +187,7 @@ class BaggingForecaster(BaseForecaster):
         fresh clone of the forecaster to set to self.forecaster_
         """
         from sktime.registry import scitype
-        
+
         if not scitype(forecaster) == "forecaster":
             raise TypeError(
                 "Error in BaggingForecaster: "
