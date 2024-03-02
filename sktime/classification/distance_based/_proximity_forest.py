@@ -131,9 +131,14 @@ def _derivative_distance(distance_measure, transformer):
 def distance_predefined_params(distance_measure, **params):
     """Conduct distance measurement with a predefined set of parameters.
 
-    :param distance_measure: the distance measure to use
-    :param params: the parameters to use in the distance measure
-    :returns: a distance measure with no parameters
+    Parameters
+    ----------
+    distance_measure: the distance measure to use
+    params: the parameters to use in the distance measure
+
+    Returns
+    -------
+    ret: a distance measure with no parameters
     """
 
     def distance(instance_a, instance_b):
@@ -147,8 +152,14 @@ def numba_wrapper(distance_measure):
 
     Converts to 1 column per dimension format. Really would be better if the whole thing
     worked directly with numpy arrays.
-    :param distance_measure: distance measure to wrap
-    :returns: a distance measure which automatically formats data for numba distance
+
+    Parameters
+    ----------
+    distance_measure: distance measure to wrap
+
+    Returns
+    -------
+    ret: a distance measure which automatically formats data for numba distance
         measures
     """
 
@@ -243,7 +254,7 @@ def gini(y):
     n_instances = y.shape[0]
     if n_instances > 0:
         # count each class
-        unique_class_labels, class_counts = np.unique(y, return_counts=True)
+        _, class_counts = np.unique(y, return_counts=True)
         # subtract class entropy from current score for each class
         class_counts = np.divide(class_counts, n_instances)
         class_counts = np.power(class_counts, 2)
@@ -254,71 +265,16 @@ def gini(y):
         raise ValueError(" y empty")
 
 
-def get_one_exemplar_per_class_proximity(proximity):
-    """Unpack proximity object into X, y and random_state for picking exemplars.
-
-    Parameters
-    ----------
-    proximity : Proximity object
-        Proximity like object containing the X, y and random_state variables
-        required for picking exemplars.
-
-    Returns
-    -------
-    result : function
-        function choosing one exemplar per class
-    """
-    return get_one_exemplar_per_class(
-        proximity.X, proximity.y, proximity._random_object
-    )
-
-
-def get_one_exemplar_per_class(X, y, random_state):
-    """Pick one exemplar instance per class in the dataset.
-
-    Parameters
-    ----------
-    X : array-like or sparse matrix of shape = [n_instances, n_columns]
-            The training input samples.  If a Pandas data frame is passed,
-            the column _dim_to_use is extracted
-    y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-        The class labels.
-    random_state : numpy RandomState
-        a random state for sampling random numbers
-
-    Returns
-    -------
-    chosen_instances : list
-        list of the chosen exemplar instances.
-    chosen_class_labels : array
-        list of corresponding class labels for each of the chosen exemplar
-        instances.
-    """
-    # find unique class labels
-    unique_class_labels = np.unique(y)
-    n_unique_class_labels = len(unique_class_labels)
-    chosen_instances = [None] * n_unique_class_labels
-    # for each class randomly choose and instance
-    for class_label_index in range(n_unique_class_labels):
-        class_label = unique_class_labels[class_label_index]
-        # filter class labels for desired class and get indices
-        indices = np.argwhere(y == class_label)
-        # flatten numpy output
-        indices = np.ravel(indices)
-        # random choice
-        index = random_state.choice(indices)
-        # record exemplar instance and class label
-        instance = X.iloc[index, :]
-        chosen_instances[class_label_index] = instance
-    # convert lists to numpy arrays
-    return chosen_instances, unique_class_labels
-
-
 def dtw_distance_measure_getter(X):
     """Generate the dtw distance measure.
 
-    :param X: dataset to derive parameter ranges from
-    :returns: distance measure and parameter range dictionary
+    Parameters
+    ----------
+    X: dataset to derive parameter ranges from
+
+    Returns
+    -------
+    ret: distance measure and parameter range dictionary
     """
     return {
         "distance_measure": [numba_wrapper(dtw_distance)],
@@ -329,8 +285,13 @@ def dtw_distance_measure_getter(X):
 def msm_distance_measure_getter(X):
     """Generate the msm distance measure.
 
-    :param X: dataset to derive parameter ranges from
-    :returns: distance measure and parameter range dictionary
+    Parameters
+    ----------
+    X: dataset to derive parameter ranges from
+
+    Returns
+    -------
+    ret: distance measure and parameter range dictionary
     """
     n_dimensions = 1  # todo use other dimensions
     return {
@@ -444,8 +405,10 @@ def msm_distance_measure_getter(X):
 def erp_distance_measure_getter(X):
     """Generate the erp distance measure.
 
-    :param X: dataset to derive parameter ranges from
-    :returns: distance measure and parameter range dictionary
+    Parameters
+    ----------
+    X: dataset to derive parameter ranges from
+    ret: distance measure and parameter range dictionary
     """
     stdp = _stdp(X)
     instance_length = _max_instance_length(X)  # todo should this use the max instance
@@ -464,8 +427,13 @@ def erp_distance_measure_getter(X):
 def lcss_distance_measure_getter(X):
     """Generate the lcss distance measure.
 
-    :param X: dataset to derive parameter ranges from
-    :returns: distance measure and parameter range dictionary
+    Parameters
+    ----------
+    X: dataset to derive parameter ranges from
+
+    Returns
+    -------
+    ret: distance measure and parameter range dictionary
     """
     stdp = _stdp(X)
     instance_length = _max_instance_length(X)  # todo should this use the max instance
@@ -508,8 +476,13 @@ def lcss_distance_measure_getter(X):
 def wdtw_distance_measure_getter(X):
     """Generate the wdtw distance measure.
 
-    :param X: dataset to derive parameter ranges from
-    :returns: distance measure and parameter range dictionary
+    Parameters
+    ----------
+    X: dataset to derive parameter ranges from
+
+    Returns
+    -------
+    ret: distance measure and parameter range dictionary
     """
     return {
         "distance_measure": [numba_wrapper(wdtw_distance)],
@@ -520,8 +493,13 @@ def wdtw_distance_measure_getter(X):
 def euclidean_distance_measure_getter(X):
     """Generate the ed distance measure.
 
-    :param X: dataset to derive parameter ranges from
-    :returns: distance measure and parameter range dictionary
+    Parameters
+    ----------
+    X: dataset to derive parameter ranges from
+
+    Returns
+    -------
+    ret: distance measure and parameter range dictionary
     """
     return {"distance_measure": [numba_wrapper(dtw_distance)], "w": [0]}
 
@@ -530,8 +508,14 @@ def setup_wddtw_distance_measure_getter(transformer):
     """Generate the wddtw distance measure.
 
     Bakes the derivative transformer into the dtw distance measure
-    :param transformer: the transformer to use
-    :returns: a getter to produce the distance measure
+
+    Parameters
+    ----------
+    transformer: the transformer to use
+
+    Returns
+    -------
+    ret: a getter to produce the distance measure
     """
 
     def getter(X):
@@ -549,8 +533,14 @@ def setup_ddtw_distance_measure_getter(transformer):
     """Generate the ddtw distance measure.
 
     Bakes the derivative transformer into the dtw distance measure
-    :param transformer: the transformer to use
-    :returns: a getter to produce the distance measure
+
+    Parameters
+    ----------
+    transformer: the transformer to use
+
+    Returns
+    -------
+    ret: a getter to produce the distance measure
     """
 
     def getter(X):
@@ -562,53 +552,6 @@ def setup_ddtw_distance_measure_getter(transformer):
         }
 
     return getter
-
-
-def _setup_all_distance_measure_getter(proximity):
-    """All distance measure getter functions from a proximity object.
-
-    :param proximity: a PT / PF / PS
-    :returns: a list of distance measure getters
-    """
-    transformer = _CachedTransformer(DerivativeSlopeTransformer())
-    distance_measure_getters = {
-        "euclidean": euclidean_distance_measure_getter,
-        "dtw": dtw_distance_measure_getter,
-        "ddtw": setup_ddtw_distance_measure_getter(transformer),
-        "wdtw": wdtw_distance_measure_getter,
-        "wddtw": setup_wddtw_distance_measure_getter(transformer),
-        "msm": msm_distance_measure_getter,
-        "lcss": lcss_distance_measure_getter,
-        "erp": erp_distance_measure_getter,
-        #        twe_distance_measure_getter,
-    }
-
-    def pick_distance_measure(proximity):
-        """Generate a distance measure from a range of parameters.
-
-        :param proximity: proximity object containing distance measures, ranges and
-            dataset
-        :returns: a distance measure with no parameters
-        """
-        self = proximity
-        distance_measure = self.distance_measure
-
-        random_state = check_random_state(proximity.random_state)
-        X = proximity.X
-        distance_measure_getter_list = list(distance_measure_getters.values())
-
-        if distance_measure is None:
-            distance_measure_getter = random_state.choice(distance_measure_getter_list)
-        else:  # is string
-            distance_measure_getter = distance_measure_getters[distance_measure]
-
-        distance_measure_perm = distance_measure_getter(X)
-        param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
-        distance_measure = param_perm["distance_measure"]
-        del param_perm["distance_measure"]
-        return distance_predefined_params(distance_measure, **param_perm)
-
-    return pick_distance_measure
 
 
 def pick_rand_param_perm_from_dict(param_pool, random_state):
@@ -689,82 +632,6 @@ def pick_rand_param_perm_from_list(params, random_state):
     return permutation
 
 
-def best_of_n_stumps(n):
-    """Generate the function to pick the best of n stump evaluations.
-
-    Parameters
-    ----------
-    n : int
-        the number of stumps to evaluate before picking the best. Must be 1
-        or more.
-
-    Returns
-    -------
-    find_best_stump : func
-        function to find the best of n stumps.
-    """
-    if n < 1:
-        raise ValueError("n cannot be less than 1")
-
-    def find_best_stump(proximity):
-        """Pick the best of n stump evaluations.
-
-        Parameters
-        ----------
-        proximity : Proximity like object
-            the proximity object to split data from.
-
-        Returns
-        -------
-        stump : ProximityStump
-            the best stump / split of data of the n attempts.
-        """
-        stumps = []
-        # for n stumps
-        for _ in range(n):
-            # duplicate tree configuration
-            stump = ProximityStump(
-                random_state=proximity.random_state,
-                distance_measure=proximity.distance_measure,
-                gain_name=proximity.gain_name,
-                verbosity=proximity.verbosity,
-                n_jobs=proximity.n_jobs,
-            )
-            # grow the stump
-            stump.fit(proximity.X, proximity.y)
-            stump.grow()
-            stumps.append(stump)
-        # pick the best stump based upon gain
-        stump = _max(stumps, proximity._random_object, lambda stump: stump.entropy)
-        return stump
-
-    return find_best_stump
-
-
-def _gain_getter(proximity):
-    """Get the gain function. Given the object, return the gain function.
-
-    Parameters
-    ----------
-    proximity : Proximity like object.
-        the proximity object to split data from.
-
-    Returns
-    -------
-    gain_function : function
-        the function to score the quality of a split
-    """
-    # maintain a dictionary of gain functions
-    # in case there are more gain functions in the future
-    gain_getters = {
-        "gini": gini_gain,
-    }
-    if proximity.gain_name is None:
-        return gain_getters["gini"]
-    else:
-        return gain_getters[proximity.gain_name]
-
-
 class ProximityStump(BaseClassifier):
     """Proximity Stump class.
 
@@ -827,15 +694,65 @@ class ProximityStump(BaseClassifier):
         self._random_object = None
         super().__init__()
 
+        # for distance measure
+        self._transformer = _CachedTransformer(DerivativeSlopeTransformer())
+        self._distance_measure_getters = {
+            "euclidean": euclidean_distance_measure_getter,
+            "dtw": dtw_distance_measure_getter,
+            "ddtw": self._setup_ddtw_distance_measure_getter(),
+            "wdtw": wdtw_distance_measure_getter,
+            "wddtw": self._setup_wddtw_distance_measure_getter(),
+            "msm": msm_distance_measure_getter,
+            "lcss": lcss_distance_measure_getter,
+            "erp": erp_distance_measure_getter,
+        }
+        # for gain function
+        self._gain_getters = {
+            "gini": gini_gain,
+        }
+
+    def _setup_ddtw_distance_measure_getter(self):
+        return setup_ddtw_distance_measure_getter(self._transformer)
+
+    def _setup_wddtw_distance_measure_getter(self):
+        return setup_wddtw_distance_measure_getter(self._transformer)
+
+    def pick_distance_measure(self):
+        """Pick a distance measure.
+
+        Parameters
+        ----------
+        self : ProximityStump object.
+
+        Returns
+        -------
+        ret: distance measure
+        """
+        random_state = check_random_state(self.random_state)
+
+        if self.distance_measure is None:
+            distance_measure_getter = random_state.choice(
+                list(self._distance_measure_getters.values())
+            )
+        else:
+            distance_measure_getter = self._distance_measure_getters[
+                self.distance_measure
+            ]
+
+        distance_measure_perm = distance_measure_getter(self.X)
+        param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
+        distance_measure = param_perm.pop("distance_measure")
+        return distance_predefined_params(distance_measure, **param_perm)
+
     @staticmethod
     def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
         """Find distance between a given instance and the exemplar instances.
 
         Parameters
         ----------
-        param exemplars: the exemplars to use
-        param instance: the instance to compare to each exemplar
-        param distance_measure: the distance measure to provide similarity values
+        exemplars: the exemplars to use
+        instance: the instance to compare to each exemplar
+        distance_measure: the distance measure to provide similarity values
 
         Returns
         -------
@@ -855,51 +772,35 @@ class ProximityStump(BaseClassifier):
             distances[exemplar_index] = distance
         return distances
 
-    def setup_distance_measure(self):
-        """Setups the distance measure getter from the datafram and class value list.
-
-        Parameters
-        ----------
-        self : ProximityStump
-            the proximity stump object.
-
-        Returns
-        -------
-        A list of distance measure getters.
-        """
-        return _setup_all_distance_measure_getter(self)
-
-    @classmethod
-    def get_distance_measure(self):
-        """Get the distance measure.
-
-        Parameters
-        ----------
-        self : ProximityStump
-            the proximity stump object.
-
-        Returns
-        -------
-        distance measure
-        """
-        if self.distance_measure is None:
-            return self.setup_distance_measure()
-        else:
-            return self.distance_measure
-
     def get_exemplars(self):
         """Extract exemplars from a dataframe and class value list.
 
         Parameters
         ----------
-        self : ProximityStump
-            the proximity stump object.
+        self : ProximityStump, the proximity stump object.
 
         Returns
         -------
-        One exemplar per class
+        ret: One exemplar per class
         """
-        return get_one_exemplar_per_class_proximity(self)
+        # find unique class labels
+        unique_class_labels = np.unique(self.y)
+        n_unique_class_labels = len(unique_class_labels)
+        chosen_instances = [None] * n_unique_class_labels
+        # for each class randomly choose and instance
+        for class_label_index in range(n_unique_class_labels):
+            class_label = unique_class_labels[class_label_index]
+            # filter class labels for desired class and get indices
+            indices = np.argwhere(self.y == class_label)
+            # flatten numpy output
+            indices = np.ravel(indices)
+            # random choice
+            index = self._random_object.choice(indices)
+            # record exemplar instance and class label
+            instance = self.X.iloc[index, :]
+            chosen_instances[class_label_index] = instance
+        # convert lists to numpy arrays
+        return chosen_instances, unique_class_labels
 
     def get_gain(self):
         """Get the gain function.
@@ -911,9 +812,26 @@ class ProximityStump(BaseClassifier):
 
         Returns
         -------
-        gain function
+        ret: gain function
         """
-        return _gain_getter(self)
+        if self.gain_name is None:
+            return self._gain_getters["gini"]
+        else:
+            return self._gain_getters[self.gain_name]
+
+    def _distance_measure(self):
+        """Get the distance measure.
+
+        Parameters
+        ----------
+        self : ProximityStump
+            the proximity stump object.
+
+        Returns
+        -------
+        ret: distance measure
+        """
+        return self.pick_distance_measure()
 
     def distance_to_exemplars(self, X):
         """Find distance to exemplars.
@@ -924,21 +842,21 @@ class ProximityStump(BaseClassifier):
 
         Returns
         -------
-        2d numpy array of distances from each instance to each
-        exemplar (instance by exemplar)
+        ret: 2d numpy array of distances from each instance to each
+            exemplar (instance by exemplar)
         """
         if self._threads_to_use > 1:
             parallel = Parallel(self._threads_to_use)
             distances = parallel(
                 delayed(self._distance_to_exemplars_inst)(
-                    self.X_exemplar, X.iloc[index, :], self.distance_measure
+                    self.X_exemplar, X.iloc[index, :], self._distance_measure()
                 )
                 for index in range(X.shape[0])
             )
         else:
             distances = [
                 self._distance_to_exemplars_inst(
-                    self.X_exemplar, X.iloc[index, :], self.distance_measure
+                    self.X_exemplar, X.iloc[index, :], self._distance_measure()
                 )
                 for index in range(X.shape[0])
             ]
@@ -976,8 +894,8 @@ class ProximityStump(BaseClassifier):
 
         Returns
         -------
-        1d numpy array of indices, one for each instance,
-        reflecting the index of the closest exemplar
+        ret: 1d numpy array of indices, one for each instance,
+            reflecting the index of the closest exemplar
         """
         n_instances = X.shape[0]
         distances = self.distance_to_exemplars(X)
@@ -1157,6 +1075,56 @@ class ProximityTree(BaseClassifier):
 
         super().__init__()
 
+        # for distance measure
+        self._transformer = _CachedTransformer(DerivativeSlopeTransformer())
+        self._distance_measure_getters = {
+            "euclidean": euclidean_distance_measure_getter,
+            "dtw": dtw_distance_measure_getter,
+            "ddtw": self._setup_ddtw_distance_measure_getter(),
+            "wdtw": wdtw_distance_measure_getter,
+            "wddtw": self._setup_wddtw_distance_measure_getter(),
+            "msm": msm_distance_measure_getter,
+            "lcss": lcss_distance_measure_getter,
+            "erp": erp_distance_measure_getter,
+        }
+        # for gain function
+        self._gain_getters = {
+            "gini": gini_gain,
+        }
+
+    def _setup_ddtw_distance_measure_getter(self):
+        return setup_ddtw_distance_measure_getter(self._transformer)
+
+    def _setup_wddtw_distance_measure_getter(self):
+        return setup_wddtw_distance_measure_getter(self._transformer)
+
+    def pick_distance_measure(self):
+        """Pick a distance measure.
+
+        Parameters
+        ----------
+        self : ProximityStump object.
+
+        Returns
+        -------
+        distance measure
+        """
+        random_state = check_random_state(self.random_state)
+
+        if self.distance_measure is None:
+            distance_measure_getter = random_state.choice(
+                list(self._distance_measure_getters.values())
+            )
+        else:
+            distance_measure_getter = self._distance_measure_getters[
+                self.distance_measure
+            ]
+
+        distance_measure_perm = distance_measure_getter(self.X)
+        param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
+        distance_measure = param_perm.pop("distance_measure")
+        return distance_predefined_params(distance_measure, **param_perm)
+
     def _fit(self, X, y):
         """Build the classifier on the training set (X, y).
 
@@ -1176,7 +1144,7 @@ class ProximityTree(BaseClassifier):
         self._random_object = check_random_state(self.random_state)
         self.y = y
 
-        self._distance_measure = self.get_distance_measure()
+        distance_measure = self._distance_measure()
 
         self.stump = self.find_stump()
         n_branches = len(self.stump.y_exemplar)
@@ -1187,7 +1155,7 @@ class ProximityTree(BaseClassifier):
                 if not self.is_leaf(sub_y):
                     sub_tree = ProximityTree(
                         random_state=self.random_state,
-                        distance_measure=self._distance_measure,
+                        distance_measure=distance_measure,
                         gain_name=self.gain_name,
                         is_leaf=self.is_leaf,
                         verbosity=self.verbosity,
@@ -1278,8 +1246,22 @@ class ProximityTree(BaseClassifier):
         stump : ProximityStump
             the best stump / split of data of the n attempts.
         """
-        stump_function = best_of_n_stumps(self.n_stump_evaluations)
-        return stump_function(self)
+        if self.n_stump_evaluations < 1:
+            raise ValueError("n_stump_evaluations cannot be less than 1")
+        distance_measure = self._distance_measure()
+        stumps = []
+        for _ in range(self.n_stump_evaluations):
+            stump = ProximityStump(
+                random_state=self.random_state,
+                distance_measure=distance_measure,
+                gain_name=self.gain_name,
+                verbosity=self.verbosity,
+                n_jobs=self.n_jobs,
+            )
+            stump.fit(self.X, self.y)
+            stump.grow()
+            stumps.append(stump)
+        return _max(stumps, self._random_object, lambda stump: stump.entropy)
 
     def get_exemplars(self):
         """Extract exemplars from a dataframe and class value list.
@@ -1291,9 +1273,26 @@ class ProximityTree(BaseClassifier):
 
         Returns
         -------
-        One exemplar per class
+        ret: One exemplar per class
         """
-        return get_one_exemplar_per_class_proximity(self)
+        # find unique class labels
+        unique_class_labels = np.unique(self.y)
+        n_unique_class_labels = len(unique_class_labels)
+        chosen_instances = [None] * n_unique_class_labels
+        # for each class randomly choose and instance
+        for class_label_index in range(n_unique_class_labels):
+            class_label = unique_class_labels[class_label_index]
+            # filter class labels for desired class and get indices
+            indices = np.argwhere(self.y == class_label)
+            # flatten numpy output
+            indices = np.ravel(indices)
+            # random choice
+            index = self._random_object.choice(indices)
+            # record exemplar instance and class label
+            instance = self.X.iloc[index, :]
+            chosen_instances[class_label_index] = instance
+        # convert lists to numpy arrays
+        return chosen_instances, unique_class_labels
 
     def get_gain(self):
         """Get the gain function.
@@ -1305,26 +1304,14 @@ class ProximityTree(BaseClassifier):
 
         Returns
         -------
-        gain function
+        ret: gain function
         """
-        return _gain_getter(self)
+        if self.gain_name is None:
+            return self._gain_getters["gini"]
+        else:
+            return self._gain_getters[self.gain_name]
 
-    def setup_distance_measure(self):
-        """Setups the distance measure getter from the datafram and class value list.
-
-        Parameters
-        ----------
-        self : ProximityTree
-            the proximity tree object.
-
-        Returns
-        -------
-        A list of distance measure getters.
-        """
-        return _setup_all_distance_measure_getter(self)
-
-    @classmethod
-    def get_distance_measure(self):
+    def _distance_measure(self):
         """Get the distance measure.
 
         Parameters
@@ -1334,12 +1321,9 @@ class ProximityTree(BaseClassifier):
 
         Returns
         -------
-        distance measure
+        ret: distance measure
         """
-        if self.distance_measure is None:
-            return self.setup_distance_measure(self)
-        else:
-            return self.distance_measure
+        return self.pick_distance_measure()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1469,6 +1453,56 @@ class ProximityForest(BaseClassifier):
         self._distance_measure = None
 
         super().__init__()
+        # for distance measure
+        self._transformer = _CachedTransformer(DerivativeSlopeTransformer())
+        self._distance_measure_getters = {
+            "euclidean": euclidean_distance_measure_getter,
+            "dtw": dtw_distance_measure_getter,
+            "ddtw": self._setup_ddtw_distance_measure_getter(),
+            "wdtw": wdtw_distance_measure_getter,
+            "wddtw": self._setup_wddtw_distance_measure_getter(),
+            "msm": msm_distance_measure_getter,
+            "lcss": lcss_distance_measure_getter,
+            "erp": erp_distance_measure_getter,
+        }
+
+        # for gain function
+        self._gain_getters = {
+            "gini": gini_gain,
+        }
+
+    def _setup_ddtw_distance_measure_getter(self):
+        return setup_ddtw_distance_measure_getter(self._transformer)
+
+    def _setup_wddtw_distance_measure_getter(self):
+        return setup_wddtw_distance_measure_getter(self._transformer)
+
+    def pick_distance_measure(self):
+        """Pick a distance measure.
+
+        Parameters
+        ----------
+        self : ProximityStump object.
+
+        Returns
+        -------
+        ret: distance measure
+        """
+        random_state = check_random_state(self.random_state)
+
+        if self.distance_measure is None:
+            distance_measure_getter = random_state.choice(
+                list(self._distance_measure_getters.values())
+            )
+        else:
+            distance_measure_getter = self._distance_measure_getters[
+                self.distance_measure
+            ]
+
+        distance_measure_perm = distance_measure_getter(self.X)
+        param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
+        distance_measure = param_perm.pop("distance_measure")
+        return distance_predefined_params(distance_measure, **param_perm)
 
     def _fit_tree(self, X, y, index, random_state):
         """Build the classifierr on the training set (X, y).
@@ -1487,13 +1521,14 @@ class ProximityForest(BaseClassifier):
         -------
         self : object
         """
+        distance_measure = self._distance_measure()
         if self.verbosity > 0:
             print("tree " + str(index) + " building")  # noqa
         tree = ProximityTree(
             random_state=random_state,
             verbosity=self.verbosity,
             gain_name=self.gain_name,
-            distance_measure=self._distance_measure,
+            distance_measure=distance_measure,
             max_depth=self.max_depth,
             is_leaf=self.is_leaf,
             n_jobs=1,
@@ -1521,7 +1556,7 @@ class ProximityForest(BaseClassifier):
         self._random_object = check_random_state(self.random_state)
         self.y = y
 
-        self._distance_measure = self.get_distance_measure()
+        self.distance_measure = self._distance_measure()
 
         if self._threads_to_use > 1:
             parallel = Parallel(self._threads_to_use)
@@ -1631,26 +1666,28 @@ class ProximityForest(BaseClassifier):
 
         Returns
         -------
-        One exemplar per class
+        ret: One exemplar per class
         """
-        return get_one_exemplar_per_class_proximity(self)
+        # find unique class labels
+        unique_class_labels = np.unique(self.y)
+        n_unique_class_labels = len(unique_class_labels)
+        chosen_instances = [None] * n_unique_class_labels
+        # for each class randomly choose and instance
+        for class_label_index in range(n_unique_class_labels):
+            class_label = unique_class_labels[class_label_index]
+            # filter class labels for desired class and get indices
+            indices = np.argwhere(self.y == class_label)
+            # flatten numpy output
+            indices = np.ravel(indices)
+            # random choice
+            index = self._random_object.choice(indices)
+            # record exemplar instance and class label
+            instance = self.X.iloc[index, :]
+            chosen_instances[class_label_index] = instance
+        # convert lists to numpy arrays
+        return chosen_instances, unique_class_labels
 
-    def setup_distance_measure(self):
-        """Setups the distance measure getter from the datafram and class value list.
-
-        Parameters
-        ----------
-        self : ProximityForest
-            the proximity forest object.
-
-        Returns
-        -------
-        A list of distance measure getters.
-        """
-        return _setup_all_distance_measure_getter(self)
-
-    @classmethod
-    def get_distance_measure(self):
+    def _distance_measure(self):
         """Get the distance measure.
 
         Parameters
@@ -1660,12 +1697,9 @@ class ProximityForest(BaseClassifier):
 
         Returns
         -------
-        distance measure
+        ret: distance measure
         """
-        if self.distance_measure is None:
-            return self.setup_distance_measure(self)
-        else:
-            return self.distance_measure
+        return self.pick_distance_measure()
 
     def get_gain(self):
         """Get the gain function.
@@ -1677,9 +1711,12 @@ class ProximityForest(BaseClassifier):
 
         Returns
         -------
-        gain function
+        ret: gain function
         """
-        return _gain_getter(self)
+        if self.gain_name is None:
+            return self._gain_getters["gini"]
+        else:
+            return self._gain_getters[self.gain_name]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
