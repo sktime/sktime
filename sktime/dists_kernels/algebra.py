@@ -38,17 +38,17 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     Examples
     --------
     >>> from sktime.dists_kernels.algebra import CombinedDistance
-    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>> from sktime.dists_kernels import LuckyDtwDist
     >>> from sktime.datasets import load_unit_test
     >>>
     >>> X, _ = load_unit_test()
     >>> X = X[0:3]
-    >>> sum_dist = CombinedDistance([DtwDist(), DtwDist(weighted=True)], "+")
+    >>> sum_dist = CombinedDistance([LuckyDtwDist(), LuckyDtwDist(window=42)], "+")
     >>> dist_mat = sum_dist.transform(X)
 
     the same can also be done more compactly using dunders:
 
-    >>> sum_dist = DtwDist() + DtwDist(weighted=True)
+    >>> sum_dist = LuckyDtwDist() + LuckyDtwDist(window=42)
     >>> dist_mat = sum_dist(X)
     """
 
@@ -234,12 +234,11 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
-        from sktime.dists_kernels.dtw import DtwDist
+        from sktime.dists_kernels import AggrDist, LuckyDtwDist
 
         params1 = {"pw_trafos": [AggrDist.create_test_instance()]}
         params2 = {
-            "pw_trafos": [AggrDist.create_test_instance(), DtwDist()],
+            "pw_trafos": [AggrDist.create_test_instance(), LuckyDtwDist()],
             "operation": "+",
         }
 
