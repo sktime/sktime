@@ -1056,10 +1056,7 @@ class ProximityTree(BaseClassifier):
         0 = no logging, 1 = verbose logging
     n_jobs: int or None, default=1
         number of parallel threads to use while building
-    find_stump: method to find the best split of data / stump at a node
     n_stump_evaluations: number of stump evaluations to do if find_stump method is None
-    find_stump: function, default=None
-        algorithm to find the best split of data
 
     Examples
     --------
@@ -1096,11 +1093,9 @@ class ProximityTree(BaseClassifier):
         verbosity=0,
         n_jobs=1,
         n_stump_evaluations=5,
-        find_stump=None,
     ):
         self.verbosity = verbosity
         self.n_stump_evaluations = n_stump_evaluations
-        self.find_stump = find_stump
         self.max_depth = max_depth
         self.random_state = random_state
         self.is_leaf = is_leaf
@@ -1137,13 +1132,11 @@ class ProximityTree(BaseClassifier):
         """
         self.X = _positive_dataframe_indices(X)
         self._random_object = check_random_state(self.random_state)
-        if self.find_stump is None:
-            self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
         self.y = y
 
         self._distance_measure = self.get_distance_measure()
 
-        self.stump = self.find_stump(self)
+        self.stump = self.find_stump()
         n_branches = len(self.stump.y_exemplar)
         self.branches = [None] * n_branches
         if self.depth < self.max_depth:
@@ -1234,6 +1227,17 @@ class ProximityTree(BaseClassifier):
                 np.add.at(distribution, indices, sub_distribution)
         normalize(distribution, copy=False, norm="l1")
         return distribution
+
+    def find_stump(self):
+        """Find the best stump.
+
+        Returns
+        -------
+        stump : ProximityStump
+            the best stump / split of data of the n attempts.
+        """
+        stump_function = best_of_n_stumps(self.n_stump_evaluations)
+        return stump_function(self)
 
     def get_exemplars(self):
         """Extract exemplars from a dataframe and class value list.
@@ -1337,8 +1341,6 @@ class ProximityForest(BaseClassifier):
         number of jobs to run in parallel *across threads"
     n_stump_evaluations: int, default=5
         number of stump evaluations to do if find_stump method is None
-    find_stump: function, default=None
-        function to find the best split of data
 
     References
     ----------
@@ -1391,7 +1393,6 @@ class ProximityForest(BaseClassifier):
         is_leaf=pure,
         n_jobs=1,
         n_stump_evaluations=5,
-        find_stump=None,
     ):
         self.is_leaf = is_leaf
         self.verbosity = verbosity
@@ -1402,7 +1403,6 @@ class ProximityForest(BaseClassifier):
         self.n_jobs = n_jobs
         self.n_stump_evaluations = n_stump_evaluations
         self.distance_measure = distance_measure
-        self.find_stump = find_stump
 
         # set in fit method
         self.label_encoder = None
@@ -1441,7 +1441,6 @@ class ProximityForest(BaseClassifier):
             max_depth=self.max_depth,
             is_leaf=self.is_leaf,
             n_jobs=1,
-            find_stump=self.find_stump,
             n_stump_evaluations=self.n_stump_evaluations,
         )
         tree.fit(X, y)
