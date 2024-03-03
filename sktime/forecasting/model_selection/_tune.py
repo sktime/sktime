@@ -54,7 +54,7 @@ class BaseGridSearch(_DelegatedForecaster):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
-        ranking_metric = None
+        ranking_metric = None,
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -188,17 +188,23 @@ class BaseGridSearch(_DelegatedForecaster):
         if isinstance(self.scoring, dict):
             scoring = []
             scoring_names = []
-            if self.ranking_metric is not None and isinstance(self.ranking_metric, str) and self.ranking_metric in self.scoring.keys():
+            if (
+                self.ranking_metric is not None
+                and isinstance(self.ranking_metric, str)
+                and self.ranking_metric in self.scoring.keys()
+            ):
                 metric = self.scoring.pop(self.ranking_metric)
                 metric = check_scoring(metric, obj=self)
                 metric.name = self.ranking_metric
                 metric_name = f"test_{self.ranking_metric}"
                 scoring.append(metric)
                 scoring_names.append(metric_name)
-            elif(len(self.scoring) > 1):
+            elif len(self.scoring) > 1:
                 warn(
-                    f"The parameter ranking_metric of {self.__class__.__name__} must be specified correctly. By default, it has selected the first argument of the dict. "
-                    "Either the parameter has not been specified, it is not a string or it is not present in the dict passed to the scoring parameter.",
+                    f"The parameter ranking_metric of {self.__class__.__name__} must be specified "
+                    "correctly. By default, it has selected the first argument of the dict. "
+                    "Either the parameter has not been specified, it is not a string "
+                    "or it is not present in the dict passed to the scoring parameter.",
                     obj=self,
                     stacklevel=2,
                 )
@@ -207,7 +213,8 @@ class BaseGridSearch(_DelegatedForecaster):
                 metric.name = name
                 if not isinstance(name, str):
                     raise TypeError(
-                        "The keys of the dict passed to the scoring parameter are not strings. Please specify them properly"
+                        "The keys of the dict passed to the scoring parameter are not strings. "
+                        "Please specify them properly."
                     )
                 metric_name = f"test_{name}"
                 scoring.append(metric)
@@ -215,13 +222,17 @@ class BaseGridSearch(_DelegatedForecaster):
         elif isinstance(self.scoring, list):
             scoring = []
             scoring_names = []
-            if self.ranking_metric is not None and isinstance(self.ranking_metric, int):
+            if (
+                self.ranking_metric is not None
+                and isinstance(self.ranking_metric, int)
+            ):
                 if self.ranking_metric not in range(len(self.scoring)):
                     self.ranking_metric = 0
                     warn(
-                        f"The parameter ranking_metric of {self.__class__.__name__} must be specified correctly. "
-                        "By default, it has selected the first argument of the list. "
-                        "The parameter has not been not specified as a valid integer value from 0 to len(scoring)-1, both inclusive.",
+                        f"The parameter ranking_metric of {self.__class__.__name__} must be "
+                        "specified correctly. By default, it has selected the first argument of the list. "
+                        "The parameter has not been not specified as a valid integer value from 0 "
+                        "to len(scoring)-1, both inclusive.",
                         obj=self,
                         stacklevel=2,
                     )
@@ -229,16 +240,19 @@ class BaseGridSearch(_DelegatedForecaster):
                 temp_metric = metric
                 metric = check_scoring(metric, obj=self)
                 metric_name = metric.name
-                if metric_name == '_DynamicForecastingErrorMetric' and hasattr(temp_metric, '__name__'):
+                if (
+                    metric_name == '_DynamicForecastingErrorMetric'
+                    and hasattr(temp_metric, '__name__')
+                ):
                     metric_name = temp_metric.__name__
                 metric.name = metric_name
                 metric_name = f"test_{metric_name}"
                 scoring.append(metric)
                 scoring_names.append(metric_name)
-            elif (len(self.scoring) > 1):
+            elif len(self.scoring) > 1:
                 warn(
-                    f"The parameter ranking_metric of {self.__class__.__name__} must be specified correctly. "
-                    "By default, it has selected the first argument of the list. "
+                    f"The parameter ranking_metric of {self.__class__.__name__} must be "
+                    "specified correctly. By default, it has selected the first argument of the list. "
                     "Either the parameter has not been not specified or is not an integer value",
                     obj=self,
                     stacklevel=2,
@@ -247,7 +261,10 @@ class BaseGridSearch(_DelegatedForecaster):
                 temp_metric = metric
                 metric = check_scoring(metric, obj=self)
                 metric_name = metric.name
-                if metric_name == '_DynamicForecastingErrorMetric' and hasattr(temp_metric, '__name__'):
+                if (
+                    metric_name == '_DynamicForecastingErrorMetric'
+                    and hasattr(temp_metric, '__name__')
+                ):
                     metric_name = temp_metric.__name__
                 metric.name = metric_name
                 metric_name = f"test_{metric_name}"
@@ -320,8 +337,9 @@ class BaseGridSearch(_DelegatedForecaster):
         else:
             ranking_metric = scoring
             ranking_metric_name = scoring_name
-        results[f"rank_{ranking_metric_name}"] = results.loc[:, f"mean_{ranking_metric_name}"].rank(
-        ascending=ranking_metric.get_tag("lower_is_better"))
+        results[f"rank_{ranking_metric_name}"] = results.loc[
+            :,f"mean_{ranking_metric_name}"
+            ].rank(ascending=ranking_metric.get_tag("lower_is_better"))
 
         self.cv_results_ = results
 
@@ -715,7 +733,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
-            ranking_metric=ranking_metric
+            ranking_metric=ranking_metric,
         )
         self.param_grid = param_grid
 
@@ -983,7 +1001,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
-            ranking_metric=ranking_metric
+            ranking_metric=ranking_metric,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
