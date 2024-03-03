@@ -148,3 +148,52 @@ def test_neural_forecast_rnn_fail_with_multiple_predictions() -> None:
         NotImplementedError, match="Multiple prediction columns are not supported."
     ):
         model.predict()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NeuralForecastRNN),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_rnn_with_auto_freq() -> None:
+    """Test NeuralForecastRNN with freq set to 'auto'."""
+    # define model
+    model = NeuralForecastRNN("auto", max_steps=5, trainer_kwargs={"logger": False})
+
+    # train model
+    model.fit(y_train, fh=[1, 2, 3, 4])
+
+    # predict with trained model
+    y_pred = model.predict()
+
+    # check interpreted freq
+    assert y_pred.index.freq == "A-DEC", "The interpreted frequency was incorrect"
+
+    # check prediction index
+    pandas.testing.assert_index_equal(y_pred.index, y_test.index, check_names=False)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NeuralForecastRNN),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_rnn_with_auto_freq_on_range_index() -> None:
+    """Test NeuralForecastRNN with freq set to 'auto' on pd.RangeIndex."""
+    # prepare data
+    y = pandas.Series(data=range(10), index=pandas.RangeIndex(start=0, stop=10))
+
+    # should fail to interpret auto freq
+    with pytest.raises(
+        ValueError,
+        match="could not interpret freq, try passing freq in model initialization",
+    ):
+        # define model
+        model = NeuralForecastRNN("auto", max_steps=5, trainer_kwargs={"logger": False})
+
+        # attempt train
+        model.fit(y, fh=[1, 2, 3, 4])
+
+    # should work with freq passed as param
+    model = NeuralForecastRNN("W", max_steps=5, trainer_kwargs={"logger": False})
+
+    # attempt train
+    model.fit(y, fh=[1, 2, 3, 4])
