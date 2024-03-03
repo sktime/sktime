@@ -188,18 +188,18 @@ class BaggingForecaster(BaseForecaster):
         """
         from sktime.registry import scitype
 
+        if forecaster is None:
+            from sktime.forecasting.ets import AutoETS
+
+            return AutoETS(sp=self.sp)
+
         if not scitype(forecaster) == "forecaster":
             raise TypeError(
                 "Error in BaggingForecaster: "
                 "forecaster in BaggingForecaster should be an sktime forecaster"
             )
 
-        if forecaster is None:
-            from sktime.forecasting.ets import AutoETS
-
-            return AutoETS(sp=self.sp)
-        else:
-            return forecaster.clone()
+        return forecaster.clone()
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
