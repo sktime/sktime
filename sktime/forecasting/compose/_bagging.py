@@ -245,15 +245,15 @@ class BaggingForecaster(BaseForecaster):
 
         return self
 
-    def _gen_X_bootstraps(self, X, y_bootstraps):
+    def _gen_X_bootstraps(self, X):
         """Generate replicates of exogenous data for bootstrap.
+
+        Accesses self._y_bs_ix to obtain the index of the bootstrapped time series.        
 
         Parameters
         ----------
         X : pd.DataFrame
             Exogenous time series, non-hierarchical
-        y_bootstraps : pd.DataFrame in pd-multiindex format
-            Bootstrapped endogenous data
 
         Returns
         -------
