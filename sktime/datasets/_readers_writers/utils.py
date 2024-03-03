@@ -10,9 +10,9 @@ __all__ = [
 ]
 
 import os
-import textwrap
-
 import pathlib
+import textwrap
+from typing import Union
 
 
 def _alias_mtype_check(return_type):
@@ -272,9 +272,13 @@ def write_results_to_uea_format(
             file.write("\n")
     file.close()
 
-def get_path(p:str or pathlib.Path, ext:str) -> str:
 
-    """Automatic inference of file ending in data loaders for single file types
+def get_path(path: Union[str, pathlib.Path], suffix: str) -> str:
+    """Automatic inference of file ending in data loaders for single file types.
+
+    This function checks if the provided path has a specified suffix. If not,
+    it checks if a file with the same name exists. If not, it adds the specified
+    suffix to the path.
 
     Parameters
     ----------
@@ -285,18 +289,16 @@ def get_path(p:str or pathlib.Path, ext:str) -> str:
 
     Returns
     -------
-    path: str
+    resolved_path: str
         The filename with required extension
     """
-    
-    p_ = pathlib.Path(p).expanduser().resolve()
-    
-    path = str(p_)
+    p_ = pathlib.Path(path).expanduser().resolve()
+    resolved_path = str(p_)
 
     # Checks if the path has any extension
     if not p_.suffix:
         # Checks if a file with the same name exists
-        if not os.path.exists(path):
+        if not os.path.exists(resolved_path):
             # adds the specified extention to the path
-            path += ext
-    return path
+            resolved_path += suffix
+    return resolved_path
