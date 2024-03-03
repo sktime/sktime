@@ -1450,7 +1450,6 @@ class ProximityForest(BaseClassifier):
         self.X = None
         self.y = None
         self._random_object = None
-        self._distance_measure = None
 
         super().__init__()
         # for distance measure
