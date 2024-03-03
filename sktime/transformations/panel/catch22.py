@@ -154,18 +154,31 @@ class Catch22(BaseTransformer):
         The Catch22 features to extract by feature index, feature name as a str or as a
         list of names or indices for multiple features. If "all", all features are
         extracted.
-        Valid features are as follows:
-            ["DN_HistogramMode_5", "DN_HistogramMode_10",
-            "SB_BinaryStats_diff_longstretch0", "DN_OutlierInclude_p_001_mdrmd",
-            "DN_OutlierInclude_n_001_mdrmd", "CO_f1ecac", "CO_FirstMin_ac",
-            "SP_Summaries_welch_rect_area_5_1", "SP_Summaries_welch_rect_centroid",
-            "FC_LocalSimple_mean3_stderr", "CO_trev_1_num", "CO_HistogramAMI_even_2_5",
-            "IN_AutoMutualInfoStats_40_gaussian_fmmi", "MD_hrv_classic_pnn40",
-            "SB_BinaryStats_mean_longstretch1", "SB_MotifThree_quantile_hh",
-            "FC_LocalSimple_mean1_tauresrat", "CO_Embed2_Dist_tau_d_expfit_meandiff",
-            "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1",
-            "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1",
-            "SB_TransitionMatrix_3ac_sumdiagcov", "PD_PeriodicityWang_th0_01"]
+        Valid features and their corresponding short feature names are as follows:
+            {
+            "DN_HistogramMode_5": "mode_5",
+            "DN_HistogramMode_10": "mode_10",
+            "SB_BinaryStats_diff_longstretch0": "stretch_decreasing",
+            "DN_OutlierInclude_p_001_mdrmd": "outlier_timing_pos",
+            "DN_OutlierInclude_n_001_mdrmd": "outlier_timing_neg",
+            "CO_f1ecac": "acf_timescale",
+            "CO_FirstMin_ac": "acf_first_min",
+            "SP_Summaries_welch_rect_area_5_1": "centroid_freq",
+            "SP_Summaries_welch_rect_centroid": "low_freq_power",
+            "FC_LocalSimple_mean3_stderr": "forecast_error",
+            "CO_trev_1_num": "trev",
+            "CO_HistogramAMI_even_2_5": "ami2",
+            "IN_AutoMutualInfoStats_40_gaussian_fmmi": "ami_timescale",
+            "MD_hrv_classic_pnn40": "high_fluctuation",
+            "SB_BinaryStats_mean_longstretch1": "stretch_high",
+            "SB_MotifThree_quantile_hh": "entropy_pairs",
+            "FC_LocalSimple_mean1_tauresrat": "whiten_timescale",
+            "CO_Embed2_Dist_tau_d_expfit_meandiff": "embedding_dist",
+            "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": "dfa",
+            "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": "rs_range",
+            "SB_TransitionMatrix_3ac_sumdiagcov": "transition_matrix",
+            "PD_PeriodicityWang_th0_01": "periodicity",
+        }
     catch24 : bool, optional, default=False
         Extract the mean and standard deviation as well as the 22 Catch22 features if
         true. If a List of specific features to extract is provided, "Mean" and/or
@@ -175,7 +188,7 @@ class Catch22(BaseTransformer):
         while to process for large values.
     replace_nans : bool, optional, default=True
         Replace NaN or inf values from the Catch22 transform with 0.
-    col_names : str, one of {"range", "int_feat", "str_feat", "short_str_feat"},
+    col_names : str, one of {"range", "int_feat", "str_feat", "short_str_feat", "auto"},
     optional, default="range"
         The type of column names to return. If "range", column names will be
         a regular range of integers, as in a RangeIndex.
@@ -184,6 +197,7 @@ class Catch22(BaseTransformer):
         If "str_feat", column names will be the string feature names.
         If "short_str_feat", column names will be the short string feature names
         as defined in pycatch22.
+        If "auto", column names will be the same as defined in features.
 
     See Also
     --------
@@ -272,7 +286,7 @@ class Catch22(BaseTransformer):
         ------
         KeyError if not in accepted col_names types.
         """
-        accepted_col_names = ["range", "int_feat", "str_feat", "short_str_feat"]
+        accepted_col_names = ["range", "int_feat", "str_feat", "short_str_feat", "auto"]
         if col_names in accepted_col_names:
             return col_names
         else:
@@ -450,6 +464,8 @@ class Catch22(BaseTransformer):
                 else SHORT_FEATURE_NAMES
             )
             return [all_short_feature_names[i] for i in self.f_idx]
+        elif self.col_names == "auto":
+            return self.f_idx
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -473,4 +489,5 @@ class Catch22(BaseTransformer):
         param2 = {"features": "DN_HistogramMode_5"}
         param3 = {"features": [1, 12, 21]}
         param4 = {"features": ["forecast_error", "centroid_freq"]}
-        return [param1, param2, param3, param4]
+        param5 = {"features": [11, "DN_HistogramMode_5", "forecast_error"]}
+        return [param1, param2, param3, param4, param5]
