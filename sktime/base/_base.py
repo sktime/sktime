@@ -582,11 +582,23 @@ class BaseEstimator(BaseObject):
         return fitted_params
 
     def _gfp_non_nested_plugin(self):
-        """Plugin to get fitted non-nested parameters."""
+        """Plugin to get fitted non-nested parameters.
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
         return self._get_fitted_params()
 
     def _gfp_nested_skbase_plugin(self):
-        """Plugin to get fitted nested skbase parameters."""
+        """Plugin to get fitted nested skbase parameters.
+
+        Returns
+        -------
+        nested_params: dict with str keys
+            fitted parameters for skbase components
+        """
         nested_params = {}
 
         # Add all skbase objects
@@ -602,7 +614,16 @@ class BaseEstimator(BaseObject):
         return nested_params
 
     def _gfp_nested_sklearn_plugin(self):
-        """Plugin to get fitted nested sklearn parameters."""
+        """Plugin to get fitted nested sklearn parameters.
+
+        This doesn't include `sklearn.Pipeline` which is handled separtely in
+        `_gfp_sklearn_pipeline_plugin()`.
+
+        Returns
+        -------
+        fitted_params: dict with str keys
+            fitted parameters for sklearn components
+        """
         fitted_params = self._gfp_non_nested_plugin()
 
         # Add all nested parameters from components that are sklearn estimators
@@ -626,25 +647,74 @@ class BaseEstimator(BaseObject):
         return fitted_params
 
     def _gfp_sklearn_pipeline_plugin(self):
-        """Plugin to get fitted nested sklearn parameters."""
-        from sklearn.pipeline import Pipeline
+        """Plugin to get fitted nested `sklearn.Pipeline` parameters.
+
+        Returns
+        -------
+        fitted_params: dict with str keys
+            fitted parameters for sklearn Pipeline & its components
+        """
+        from sklearn.pipeline import Pipeline as skPipeline
+
+        def _get_params_for_sklearn_base_estimator(component, name):
+            """Get fitted params for sklearn's BaseEstimators.
+
+            Parameters
+            ----------
+            component: a `sklearn.BaseEstimator` instance
+            name: str
+                The name of the parent component under which `component` is present.
+
+            Returns
+            -------
+            _fitted_params: dict with str keys
+            """
+            return {
+                f"{name}__{attr[:-1]}": getattr(component, attr)
+                for attr in dir(component)
+                if attr.endswith("_")
+                and not attr.startswith("_")
+                and hasattr(component, attr)
+            }
+
+        def _get_params_for_sklearn_pipeline(component, name):
+            """Get fitted params for an `sklearn.Pipeline` instance.
+
+            This function can recurse if any child component is also an
+            `sklearn.Pipeline` instance.
+
+            Parameters
+            ----------
+            component: a `sklearn.Pipeline` instance
+            name: str
+                The name of the component. In case the Pipeline has no parent,
+                then name is '' to avoid repetition of parent name for child components
+
+            Returns
+            -------
+            _fitted_params: dict
+                fitted parameters, keyed by names of fitted parameter
+            """
+            _fitted_params = {}
+            for step_name, step in component.named_steps.items():
+                fname = f"{name}__{step_name}" if name != "" else step_name
+                if isinstance(step, skPipeline):
+                    _fitted_params.update(_get_params_for_sklearn_pipeline(step, fname))
+                if isinstance(step, _BaseEstimator):
+                    # `sklearn.Pipeline` is a child of `_BaseEstimator`, so base
+                    # params needs to be pulled separately.
+                    _fitted_params.update(
+                        _get_params_for_sklearn_base_estimator(step, fname)
+                    )
+
+            return _fitted_params
 
         _fitted_params = self._gfp_non_nested_plugin()
         fitted_params = {}
 
         for _, entity in _fitted_params.items():
-            if isinstance(entity, Pipeline):
-                for name, step in entity.named_steps.items():
-                    if isinstance(step, _BaseEstimator):
-                        step_params = {
-                            f"{name}__{attr[:-1]}": getattr(step, attr)
-                            for attr in dir(step)
-                            if attr.endswith("_")
-                            and not attr.startswith("_")
-                            and hasattr(step, attr)
-                        }
-
-                        fitted_params.update(step_params)
+            if isinstance(entity, skPipeline):
+                fitted_params.update(_get_params_for_sklearn_pipeline(entity, ""))
 
         return fitted_params
 
