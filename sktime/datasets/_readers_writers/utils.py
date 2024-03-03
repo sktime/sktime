@@ -274,7 +274,7 @@ def write_results_to_uea_format(
 
 def get_path(p:str or pathlib.Path, ext:str) -> str:
 
-    """ Automatic inference of file ending in data loaders for single file types
+    """Automatic inference of file ending in data loaders for single file types
 
     Parameters
     ----------
