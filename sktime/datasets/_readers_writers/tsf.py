@@ -12,7 +12,7 @@ import pandas as pd
 from sktime.datatypes import MTYPE_LIST_HIERARCHICAL, convert
 from sktime.utils.strtobool import strtobool
 
-from sktime.datasets._readers_writers.utils import file_has_extension
+from sktime.datasets._readers_writers.utils import get_path
 
 def _convert_tsf_to_hierarchical(
     data: pd.DataFrame,
@@ -136,7 +136,7 @@ def load_tsf_to_dataframe(
     found_data_section = False
     started_reading_data_section = False
 
-    full_file_path_and_name = file_has_extension(full_file_path_and_name,".tsf")
+    full_file_path_and_name = get_path(full_file_path_and_name,".tsf")
 
     with open(full_file_path_and_name, encoding="cp1252") as file:
         for line in file:

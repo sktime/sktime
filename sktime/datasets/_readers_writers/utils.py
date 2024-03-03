@@ -12,6 +12,8 @@ __all__ = [
 import os
 import textwrap
 
+import pathlib
+
 
 def _alias_mtype_check(return_type):
     """Return appropriate return_type in case an alias was used."""
@@ -270,25 +272,31 @@ def write_results_to_uea_format(
             file.write("\n")
     file.close()
 
+def get_path(p:str or pathlib.Path, ext:str) -> str:
 
-def file_has_extension(path:str, suffix:str) -> str:
-    """
-    Check if the filename contains the file extension
+    """ Automatic inference of file ending in data loaders for single file types
 
     Parameters
     ----------
-    path: str
-        path or filename.
-    
+    path: str or pathlib.Path
+        The full pathname or filename.
     suffix: str
-        the expected file extension.
+        The expected file extension.
 
     Returns
     -------
-    Filename with required extension
-
+    path: str
+        The filename with required extension
     """
-    if not path.endswith(suffix):
-        path+=suffix
+    
+    p_ = pathlib.Path(p).expanduser().resolve()
+    
+    path = str(p_)
 
+    # Checks if the path has any extension
+    if not p_.suffix:
+        # Checks if a file with the same name exists
+        if not os.path.exists(path):
+            # adds the specified extention to the path
+            path += ext
     return path
