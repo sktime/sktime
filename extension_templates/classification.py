@@ -119,7 +119,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         self.paramc = paramc
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._parama
-        # for estimators, initialize a clone, e.g., self.est_ = clone(est)
+        # for estimators, initialize a clone, e.g., self.est_ = est.clone()
 
         # leave this as is
         super().__init__()
