@@ -181,15 +181,17 @@ class _NeuralForecastAdapter(BaseForecaster):
         if not fh.is_all_out_of_sample(cutoff=self.cutoff):
             raise NotImplementedError("in-sample prediction is currently not supported")
 
+        if self.freq == "auto" and fh.freq is None:
+            # when freq cannot be interpreted from ForecastingHorizon
+            raise ValueError(
+                f"Error in {self.__class__.__name__}, "
+                f"could not interpret freq, "
+                f"try passing freq in model initialization"
+            )
+
         if self.freq == "auto":
-            if fh.freq:
-                # interpret freq from ForecastingHorizon
-                self.freq = fh.freq
-            else:
-                # when freq is not interpreted from ForecastingHorizon
-                raise ValueError(
-                    "Could not interpret freq, try passing freq in model initialization"
-                )
+            # interpret freq from ForecastingHorizon
+            self.freq = fh.freq
 
         train_indices = y.index
         if isinstance(train_indices, pandas.PeriodIndex):

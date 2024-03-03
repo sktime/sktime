@@ -26,6 +26,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         frequency of the data, see available frequencies [4]_ from ``pandas``
 
         default ("auto") interprets freq from ForecastingHorizon in ``fit``
+        raises ValueError if freq cannot be interpreted
     local_scaler_type : str (default=None)
         scaler to apply per-series to all features before fitting, which is inverted
         after predicting
