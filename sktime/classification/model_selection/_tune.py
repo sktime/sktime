@@ -53,7 +53,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
     refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
-        dataset. If ``False``, the ``predict`` and ``predict_probab`` will not work.
+        dataset. If ``False``, the ``predict`` and ``predict_proba`` will not work.
 
         For multiple metric evaluation, this needs to be a `str` denoting the
         scorer that would be used to find the best parameters for refitting

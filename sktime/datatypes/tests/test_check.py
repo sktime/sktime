@@ -270,9 +270,11 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
             f"returned: {metadata}; expected: {expected_metadata}"
         )
 
-        assert metadata == expected_metadata, msg
+        for k, v in metadata.items():
+            if v != "NA":  # NA means "cannot be determined", e.g., for lazy containers
+                assert v == expected_metadata[k], msg
 
-    # check fixtures that exist against checks that exist
+    # check fixtures that exist against checks that exist, partial metadata query
     if fixture is not None and check_is_defined and metadata_provided:
         for metadata_key in subset_keys:
             check_result = check_is_mtype(
@@ -298,7 +300,9 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
                 f"expected: {expected_metadata[metadata_key]}"
             )
 
-            assert metadata[metadata_key] == expected_metadata[metadata_key], msg
+            # NA means "cannot be determined", e.g., for lazy containers
+            if metadata[metadata_key] != "NA":
+                assert metadata[metadata_key] == expected_metadata[metadata_key], msg
 
 
 def test_check_negative(scitype, mtype):

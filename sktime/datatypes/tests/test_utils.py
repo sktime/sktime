@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes import update_data
 from sktime.datatypes._check import check_is_mtype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._utilities import (
@@ -382,3 +383,27 @@ def test_get_slice_expected_result():
 
     X_np = get_examples(mtype="numpy3D")[0]
     assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
+
+
+def test_retain_series_freq_on_update():
+    """Tests that the frequency of a series is retained after updating it"""
+    from sktime.datasets import load_airline
+    from sktime.forecasting.model_selection import temporal_train_test_split
+
+    y = load_airline()
+
+    # create dummy index with hourly timestamps and panel data by hour of day
+    ind = pd.date_range(
+        start="1960-01-01 10:00:00", periods=len(y.index), freq="24H", name="datetime"
+    )
+    y = pd.Series(y.values, index=ind, name="passengers")
+    y_train, y_test = temporal_train_test_split(y, test_size=2)
+
+    # update the series with the test data
+    y_new = update_data(y_train, y_test)
+
+    assert y_new.equals(y)
+    assert y_new.index.equals(y.index)
+    assert y_new.index.freq == y.index.freq
+    assert y_new.index.freqstr == y.index.freqstr
+    assert y.index.equals(y_new.index.to_period().to_timestamp())
