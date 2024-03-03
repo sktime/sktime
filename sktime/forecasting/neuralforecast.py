@@ -367,12 +367,12 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
 class NeuralForecastLSTM(_NeuralForecastAdapter):
     """NeuralForecast LSTM model.
 
-    Interface to ``neuralforecast.models.LSMT`` [1]_
+    Interface to ``neuralforecast.models.LSTM`` [1]_
     through ``neuralforecast.NeuralForecast`` [2]_,
     from ``neuralforecast`` [3]_ by Nixtla.
 
     The Long Short-Term Memory Recurrent Neural Network (LSTM), uses a
-    multilayer LSTM encoder and an MLP decoder
+    multilayer LSTM encoder and an MLP decoder.
 
     Parameters
     ----------
@@ -497,8 +497,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["pranavvp16"],
-        # "maintainers": ["yarnabrina", "pranavvp16"],
+        "authors": ["pranavvp16"],
+        "maintainers": ["pranavvp16"],
         # "python_dependencies": "neuralforecast"
         # inherited from _NeuralForecastAdapter
         # estimator type
