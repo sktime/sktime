@@ -334,7 +334,7 @@ def _get_expected_freqstr(freqstr):
     if freqstr == "H":
         return "h"
     if freqstr == "M":
-        return "MS"
+        return "ME"
     return freqstr
 
 
