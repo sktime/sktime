@@ -38,7 +38,7 @@ class InstanceSplitter(BaseSplitter):
     >>> from sklearn.model_selection import KFold
 
     >>> y = _make_hierarchical()
-    >>> cv = InstanceSplitter(KFold(n_splits=3))
+    >>> splitter = InstanceSplitter(KFold(n_splits=3))
     >>> list(splitter.split(y))
     """
 
