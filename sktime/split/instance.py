@@ -111,4 +111,4 @@ class InstanceSplitter(BaseSplitter):
 
         params1 = {"cv": KFold(n_splits=3)}
         params2 = {"cv": ShuffleSplit(n_splits=3)}
-        return [params1, params]
+        return [params1, params2]
