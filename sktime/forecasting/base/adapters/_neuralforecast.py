@@ -21,6 +21,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         frequency of the data, see available frequencies [1]_ from ``pandas``
 
         default ("auto") interprets freq from ForecastingHorizon in ``fit``
+        raises ValueError if freq cannot be interpreted
     local_scaler_type : str (default=None)
         scaler to apply per-series to all features before fitting, which is inverted
         after predicting
@@ -86,6 +87,9 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         super().__init__()
 
+        # initiate internal variables to avoid AttributeError in future
+        self._freq = None
+
         self.id_col = "unique_id"
         self.time_col = "ds"
         self.target_col = "y"
@@ -145,7 +149,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         from neuralforecast import NeuralForecast
 
         model = NeuralForecast(
-            [algorithm_instance], self.freq, local_scaler_type=self.local_scaler_type
+            [algorithm_instance], self._freq, local_scaler_type=self.local_scaler_type
         )
 
         return model
@@ -191,11 +195,13 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         if self.freq == "auto":
             # interpret freq from ForecastingHorizon
-            self.freq = fh.freq
+            self._freq = fh.freq
+        else:
+            self._freq = self.freq
 
         train_indices = y.index
         if isinstance(train_indices, pandas.PeriodIndex):
-            train_indices = train_indices.to_timestamp(freq=self.freq)
+            train_indices = train_indices.to_timestamp(freq=self._freq)
 
         train_data = {
             self.id_col: 1,
@@ -266,7 +272,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         if self.futr_exog_list:
             predict_indices = X.index
             if isinstance(predict_indices, pandas.PeriodIndex):
-                predict_indices = predict_indices.to_timestamp(freq=self.freq)
+                predict_indices = predict_indices.to_timestamp(freq=self._freq)
 
             predict_data = {self.id_col: 1, self.time_col: predict_indices.to_numpy()}
 
