@@ -632,6 +632,20 @@ def pick_rand_param_perm_from_list(params, random_state):
     return permutation
 
 
+# for distance measure getters
+TRANSFORMER = _CachedTransformer(DerivativeSlopeTransformer())
+DISTANCE_MEASURE_GETTERS = {
+    "euclidean": euclidean_distance_measure_getter,
+    "dtw": dtw_distance_measure_getter,
+    "ddtw": setup_ddtw_distance_measure_getter(TRANSFORMER),
+    "wdtw": wdtw_distance_measure_getter,
+    "wddtw": setup_wddtw_distance_measure_getter(TRANSFORMER),
+    "msm": msm_distance_measure_getter,
+    "lcss": lcss_distance_measure_getter,
+    "erp": erp_distance_measure_getter,
+}
+
+
 class ProximityStump(BaseClassifier):
     """Proximity Stump class.
 
@@ -694,28 +708,10 @@ class ProximityStump(BaseClassifier):
         self._random_object = None
         super().__init__()
 
-        # for distance measure
-        self._transformer = _CachedTransformer(DerivativeSlopeTransformer())
-        self._distance_measure_getters = {
-            "euclidean": euclidean_distance_measure_getter,
-            "dtw": dtw_distance_measure_getter,
-            "ddtw": self._setup_ddtw_distance_measure_getter(),
-            "wdtw": wdtw_distance_measure_getter,
-            "wddtw": self._setup_wddtw_distance_measure_getter(),
-            "msm": msm_distance_measure_getter,
-            "lcss": lcss_distance_measure_getter,
-            "erp": erp_distance_measure_getter,
-        }
         # for gain function
         self._gain_getters = {
             "gini": gini_gain,
         }
-
-    def _setup_ddtw_distance_measure_getter(self):
-        return setup_ddtw_distance_measure_getter(self._transformer)
-
-    def _setup_wddtw_distance_measure_getter(self):
-        return setup_wddtw_distance_measure_getter(self._transformer)
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -732,12 +728,10 @@ class ProximityStump(BaseClassifier):
 
         if self.distance_measure is None:
             distance_measure_getter = random_state.choice(
-                list(self._distance_measure_getters.values())
+                list(DISTANCE_MEASURE_GETTERS.values())
             )
         else:
-            distance_measure_getter = self._distance_measure_getters[
-                self.distance_measure
-            ]
+            distance_measure_getter = DISTANCE_MEASURE_GETTERS[self.distance_measure]
 
         distance_measure_perm = distance_measure_getter(self.X)
         param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
@@ -918,7 +912,7 @@ class ProximityStump(BaseClassifier):
             self.X_branches[index] = self.X.iloc[instance_indices, :]
             y = np.take(self.y, instance_indices)
             self.y_branches[index] = y
-        self.entropy = self.get_gain(self.y, self.y_branches)
+        self.entropy = self.get_gain()(self.y, self.y_branches)
         return self
 
     def _predict(self, X) -> np.ndarray:
@@ -1074,28 +1068,10 @@ class ProximityTree(BaseClassifier):
 
         super().__init__()
 
-        # for distance measure
-        self._transformer = _CachedTransformer(DerivativeSlopeTransformer())
-        self._distance_measure_getters = {
-            "euclidean": euclidean_distance_measure_getter,
-            "dtw": dtw_distance_measure_getter,
-            "ddtw": self._setup_ddtw_distance_measure_getter(),
-            "wdtw": wdtw_distance_measure_getter,
-            "wddtw": self._setup_wddtw_distance_measure_getter(),
-            "msm": msm_distance_measure_getter,
-            "lcss": lcss_distance_measure_getter,
-            "erp": erp_distance_measure_getter,
-        }
         # for gain function
         self._gain_getters = {
             "gini": gini_gain,
         }
-
-    def _setup_ddtw_distance_measure_getter(self):
-        return setup_ddtw_distance_measure_getter(self._transformer)
-
-    def _setup_wddtw_distance_measure_getter(self):
-        return setup_wddtw_distance_measure_getter(self._transformer)
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1112,12 +1088,10 @@ class ProximityTree(BaseClassifier):
 
         if self.distance_measure is None:
             distance_measure_getter = random_state.choice(
-                list(self._distance_measure_getters.values())
+                list(DISTANCE_MEASURE_GETTERS.values())
             )
         else:
-            distance_measure_getter = self._distance_measure_getters[
-                self.distance_measure
-            ]
+            distance_measure_getter = DISTANCE_MEASURE_GETTERS[self.distance_measure]
 
         distance_measure_perm = distance_measure_getter(self.X)
         param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
@@ -1448,29 +1422,11 @@ class ProximityForest(BaseClassifier):
         self._random_object = None
 
         super().__init__()
-        # for distance measure
-        self._transformer = _CachedTransformer(DerivativeSlopeTransformer())
-        self._distance_measure_getters = {
-            "euclidean": euclidean_distance_measure_getter,
-            "dtw": dtw_distance_measure_getter,
-            "ddtw": self._setup_ddtw_distance_measure_getter(),
-            "wdtw": wdtw_distance_measure_getter,
-            "wddtw": self._setup_wddtw_distance_measure_getter(),
-            "msm": msm_distance_measure_getter,
-            "lcss": lcss_distance_measure_getter,
-            "erp": erp_distance_measure_getter,
-        }
 
         # for gain function
         self._gain_getters = {
             "gini": gini_gain,
         }
-
-    def _setup_ddtw_distance_measure_getter(self):
-        return setup_ddtw_distance_measure_getter(self._transformer)
-
-    def _setup_wddtw_distance_measure_getter(self):
-        return setup_wddtw_distance_measure_getter(self._transformer)
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1487,12 +1443,10 @@ class ProximityForest(BaseClassifier):
 
         if self.distance_measure is None:
             distance_measure_getter = random_state.choice(
-                list(self._distance_measure_getters.values())
+                list(DISTANCE_MEASURE_GETTERS.values())
             )
         else:
-            distance_measure_getter = self._distance_measure_getters[
-                self.distance_measure
-            ]
+            distance_measure_getter = DISTANCE_MEASURE_GETTERS[self.distance_measure]
 
         distance_measure_perm = distance_measure_getter(self.X)
         param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
