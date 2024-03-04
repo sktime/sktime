@@ -606,9 +606,8 @@ class BaseEstimator(BaseObject):
         for c, comp in c_dict.items():
             if isinstance(comp, BaseEstimator) and comp._is_fitted:
                 c_f_params = comp.get_fitted_params()
-                c_f_params = {
-                    f"{_rm_underscore(c)}__{k}": v for k, v in c_f_params.items()
-                }
+                c = c.rstrip("_")
+                c_f_params = {f"{c}__{k}": v for k, v in c_f_params.items()}
                 nested_params.update(c_f_params)
 
         return nested_params
@@ -636,9 +635,8 @@ class BaseEstimator(BaseObject):
             for c, comp in old_new_params.items():
                 if isinstance(comp, _BaseEstimator):
                     c_f_params = self._get_fitted_params_default(comp)
-                    c_f_params = {
-                        f"{_rm_underscore(c)}__{k}": v for k, v in c_f_params.items()
-                    }
+                    c = c.rstrip("_")
+                    c_f_params = {f"{c}__{k}": v for k, v in c_f_params.items()}
                     new_params.update(c_f_params)
             fitted_params.update(new_params)
             old_new_params = new_params.copy()
@@ -783,14 +781,6 @@ def deepcopy_func(f, name=None):
         f.__defaults__,
         f.__closure__,
     )
-
-
-def _rm_underscore(x):
-    """Remove all underscores at end of a string."""
-    if x.endswith("_"):
-        return _rm_underscore(x[:-1])
-    else:
-        return x
 
 
 # initialize dynamic docstrings
