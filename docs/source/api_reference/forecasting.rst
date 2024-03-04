@@ -378,6 +378,7 @@ Deep learning based forecasters
     :template: class.rst
 
     NeuralForecastRNN
+    NeuralForecastLSTM
 
 
 Intermittent time series forecasters
