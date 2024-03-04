@@ -179,6 +179,11 @@ class Catch22(BaseTransformer):
             "SB_TransitionMatrix_3ac_sumdiagcov": "transition_matrix",
             "PD_PeriodicityWang_th0_01": "periodicity",
         }
+        Additionally, if catch24 is true, two additional features are available:
+        {
+            "Mean": "mean",
+            "StandardDeviation": "std",
+        }
     catch24 : bool, optional, default=False
         Extract the mean and standard deviation as well as the 22 Catch22 features if
         true. If a List of specific features to extract is provided, "Mean" and/or
