@@ -19,7 +19,8 @@ import pytest
 from sklearn.linear_model import LinearRegression
 
 from sktime.datasets import load_airline, load_longley
-from sktime.exceptions import FitFailedWarning
+# from sktime.exceptions import FitFailedWarning
+# commented out until bugs are resolved, see test_evaluate_error_score
 from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
