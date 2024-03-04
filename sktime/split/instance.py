@@ -35,7 +35,7 @@ class InstanceSplitter(BaseSplitter):
     --------
     >>> from sktime.split import InstanceSplitter
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sklearn.split import KFold
+    >>> from sklearn.model_selection import KFold
 
     >>> y = _make_hierarchical()
     >>> cv = InstanceSplitter(KFold(n_splits=3))
@@ -107,7 +107,7 @@ class InstanceSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sklearn.split import KFold, ShuffleSplit
+        from sklearn.model_selection import KFold, ShuffleSplit
 
         params1 = {"cv": KFold(n_splits=3)}
         params2 = {"cv": ShuffleSplit(n_splits=3)}
