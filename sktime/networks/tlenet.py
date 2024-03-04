@@ -1,4 +1,4 @@
-"""Time Le-Net (TLENET)"""
+"""Time Le-Net (TLENET)."""
 __author__ = ["JamesLarge", "Withington"]
 
 from sktime.networks.base import BaseDeepNetwork
@@ -9,6 +9,7 @@ class TLENetNetwork(BaseDeepNetwork):
     """Time Le-Net (TLENET).
 
     Adapted from the implementation used in [1]
+
     Parameters
     ----------
     random_state    : int, default = 0
@@ -162,7 +163,7 @@ class TLENetNetwork(BaseDeepNetwork):
         return warped_series
 
     def build_network(self, input_shape, **kwargs):
-        """Construct a network and return its input and output layers
+        """Construct a network and return its input and output layers.
 
         Arguments
         ----------
