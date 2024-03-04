@@ -52,6 +52,28 @@ class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
         str are identical to those passed, if passed strings are unique
         otherwise unique strings are generated from class name; if not unique,
         the string `_[i]` is appended where `[i]` is count of occurrence up until then
+    
+    Examples
+    --------
+    >>> from sktime.regression.compose import MultiplexRegressor
+    >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+    >>> from sktime.regression.interval_based import TimeSeriesForestRegressor
+    >>> from sktime.regression.kernel_based import RocketRegressor
+    >>> from sktime.regression.model_selection import TSRGridSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> regressor = MultiplexRegressor(regressors=[
+    ...     ("knn", KNeighborsTimeSeriesRegressor()),
+    ...     ("forest", TimeSeriesForestRegressor()),
+    ...     ("rocket", RocketRegressor())])
+    >>> cv = ExpandingWindowSplitter(step_length=12)  # doctest: +SKIP
+    >>> gscv = TSRGridSearchCV(
+    ...     #cv=cv,
+    ...     param_grid={"selected_regressor":["knn", "forest", "rocket"]},
+    ...     estimator=regressor)  # doctest: +SKIP
+    >>> gscv.fit(X=X_train, y=y_train)  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     """
 
     _tags = {
