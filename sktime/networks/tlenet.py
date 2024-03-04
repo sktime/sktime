@@ -4,6 +4,7 @@ __author__ = ["JamesLarge", "Withington"]
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
+
 class TLENetNetwork(BaseDeepNetwork):
     """Time Le-Net (TLENET).
 
@@ -37,7 +38,7 @@ class TLENetNetwork(BaseDeepNetwork):
         self.warping_ratios = [0.5, 1, 2]
         self.slice_ratio = 0.1
         self.random_state = random_state
-    
+
     @staticmethod
     def slice_data(self, X, y=None, length_sliced=1):
         """
@@ -49,7 +50,7 @@ class TLENetNetwork(BaseDeepNetwork):
         slice from a test time series is classified using the learned
         classifier and a majority vote is performed to decide a predicted
         label." Le Guennec et al. (2016)
-        
+
         This method performs window slicing on input time series to generate additional data samples.
 
         Parameters
@@ -80,7 +81,7 @@ class TLENetNetwork(BaseDeepNetwork):
         n_dim = X.shape[2]  # for MTS
 
         increase_num = (
-                length - length_sliced + 1
+            length - length_sliced + 1
         )  # if increase_num =5, it means one ori becomes 5 new instances.
         if increase_num < 0:
             raise Exception(
@@ -99,9 +100,7 @@ class TLENetNetwork(BaseDeepNetwork):
 
         for i in range(n):
             for j in range(increase_num):
-                new_x[i * increase_num + j, :, :] = X[
-                                                    i, j: j + length_sliced, :
-                                                    ]
+                new_x[i * increase_num + j, :, :] = X[i, j : j + length_sliced, :]
 
         # transform y, if present.
         new_y = None
@@ -169,7 +168,7 @@ class TLENetNetwork(BaseDeepNetwork):
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer
-        
+
         Returns
         -------
         input_layer : a keras layer
@@ -179,10 +178,14 @@ class TLENetNetwork(BaseDeepNetwork):
 
         input_layer = keras.layers.Input(input_shape)
 
-        conv_1 = keras.layers.Conv1D(filters=5, kernel_size=5, activation="relu", padding="same")(input_layer)
+        conv_1 = keras.layers.Conv1D(
+            filters=5, kernel_size=5, activation="relu", padding="same"
+        )(input_layer)
         conv_1 = keras.layers.MaxPool1D(pool_size=2)(conv_1)
 
-        conv_2 = keras.layers.Conv1D(filters=20, kernel_size=5, activation="relu", padding="same")(conv_1)
+        conv_2 = keras.layers.Conv1D(
+            filters=20, kernel_size=5, activation="relu", padding="same"
+        )(conv_1)
         conv_2 = keras.layers.MaxPool1D(pool_size=4)(conv_2)
 
         # they did not mention the number of hidden units in the
@@ -248,10 +251,11 @@ class TLENetNetwork(BaseDeepNetwork):
             Total number of augmented samples generated.
         """
         import numpy as np
+
         length_ratio = int(self.slice_ratio * X.shape[1])
-        
+
         # list of the augmented as well as the original data
-        x_augmented = []  
+        x_augmented = []
 
         if y is not None:
             y_augmented = []
@@ -280,18 +284,16 @@ class TLENetNetwork(BaseDeepNetwork):
 
         tot_increase_num = np.array(increase_nums).sum()
 
-        new_x = np.zeros(
-            (X.shape[0] * tot_increase_num, length_ratio, X.shape[2])
-        )
+        new_x = np.zeros((X.shape[0] * tot_increase_num, length_ratio, X.shape[2]))
 
         # merge the list of augmented data
         idx = 0
         for i in range(X.shape[0]):
             for j in range(len(increase_nums)):
                 increase_num = increase_nums[j]
-                new_x[idx: idx + increase_num, :, :] = \
-                    x_augmented[j][i *
-                                   increase_num: (i + 1) * increase_num, :, :]
+                new_x[idx : idx + increase_num, :, :] = x_augmented[j][
+                    i * increase_num : (i + 1) * increase_num, :, :
+                ]
                 idx += increase_num
 
         # merge y if its not None.
@@ -306,9 +308,9 @@ class TLENetNetwork(BaseDeepNetwork):
             for i in range(X.shape[0]):
                 for j in range(len(increase_nums)):
                     increase_num = increase_nums[j]
-                    new_y[idx: idx + increase_num] = \
-                        y_augmented[j][i *
-                                       increase_num: (i + 1) * increase_num]
+                    new_y[idx : idx + increase_num] = y_augmented[j][
+                        i * increase_num : (i + 1) * increase_num
+                    ]
                     idx += increase_num
 
-        return new_x, new_y, tot_increase_num                
+        return new_x, new_y, tot_increase_num
