@@ -330,6 +330,7 @@ def _get_expected_freqstr(freqstr):
     if _check_soft_dependencies("pandas<2.2.0", severity="none"):
         if freqstr == "10min":
             return "10T"
+        return freqstr
     # on more recent pandas versions, >=2.2.0
     if freqstr == "H":
         return "h"
