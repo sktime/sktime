@@ -260,8 +260,9 @@ class AutoARIMA(_PmdArimaAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import AutoARIMA
     >>> y = load_airline()
-    >>> forecaster = AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True) # doctest:
-    +SKIP
+    >>> forecaster = AutoARIMA(
+    ...     sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True
+    ... ) # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     AutoARIMA(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
