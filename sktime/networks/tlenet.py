@@ -4,7 +4,7 @@ __author__ = ["JamesLarge", "Withington"]
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-class TLENET(BaseDeepNetwork):
+class TLENetNetwork(BaseDeepNetwork):
     """Time Le-Net (TLENET).
 
     Adapted from the implementation used in [1]
