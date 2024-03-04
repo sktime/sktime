@@ -176,6 +176,61 @@ def test_neural_forecast_rnn_with_auto_freq() -> None:
     not run_test_for_class(NeuralForecastRNN),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+def test_neural_forecast_rnn_with_auto_freq_on_all_freq() -> None:
+    """Test NeuralForecastRNN with freq set to 'auto' on all freqs."""
+    # define all supported frequencies
+    freqs = [
+        "B",
+        "C",
+        "D",
+        "M",
+        "Q",
+        "W",
+        "W-FRI",
+        "W-MON",
+        "W-SAT",
+        "W-SUN",
+        "W-THU",
+        "W-TUE",
+        "W-WED",
+        "Y",
+        "h",
+        "min",
+        "ms",
+        "ns",
+        "s",
+        "us",
+    ]
+
+    for freq in freqs:
+        # prepare data
+        y = pandas.Series(
+            data=range(10),
+            index=pandas.date_range(start="2024-01-01", periods=10, freq=freq),
+        )
+
+        # define model
+        model = NeuralForecastRNN(freq, max_steps=1, trainer_kwargs={"logger": False})
+        model_auto = NeuralForecastRNN(
+            "auto", max_steps=1, trainer_kwargs={"logger": False}
+        )
+
+        # attempt train
+        model.fit(y, fh=[1, 2, 3, 4])
+        model_auto.fit(y, fh=[1, 2, 3, 4])
+
+        # predict with trained model
+        pred = model.predict()
+        pred_auto = model_auto.predict()
+
+        # check prediction
+        pandas.testing.assert_series_equal(pred, pred_auto)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NeuralForecastRNN),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_neural_forecast_rnn_with_auto_freq_on_range_index() -> None:
     """Test NeuralForecastRNN with freq set to 'auto' on pd.RangeIndex."""
     # prepare data
