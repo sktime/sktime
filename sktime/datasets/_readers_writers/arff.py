@@ -10,9 +10,8 @@ import textwrap
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import BaseTransformer
-
 from sktime.datasets._readers_writers.utils import get_path
+from sktime.transformations.base import BaseTransformer
 
 # ==================================================================================================
 # Utils function to read  arff file
@@ -62,8 +61,8 @@ def load_from_arff_to_dataframe(
     is_multi_variate = False
     is_first_case = True
 
-    full_file_path_and_name = get_path(full_file_path_and_name,".arff")
-    
+    full_file_path_and_name = get_path(full_file_path_and_name, ".arff")
+
     # Parse the file
     # print(full_file_path_and_name)
     with open(full_file_path_and_name, encoding="utf-8") as f:
