@@ -191,7 +191,7 @@ class Catch22(BaseTransformer):
     outlier_norm : bool, optional, default=False
         Normalise each series during the two outlier Catch22 features:
         `_DN_OutlierInclude_p_001_mdrmd` and `_DN_OutlierInclude_n_001_mdrmd`,
-        which can take a while to process for large values. 
+        which can take a while to process for large values.
     replace_nans : bool, optional, default=True
         Replace NaN or inf values from the Catch22 transform with 0.
     col_names : str, one of {"range", "int_feat", "str_feat", "short_str_feat", "auto"},
