@@ -1071,7 +1071,6 @@ class ProximityTree(BaseClassifier):
         self.X = None
         self.y = None
         self._random_object = None
-        self._distance_measure = None
 
         super().__init__()
 
@@ -1144,8 +1143,6 @@ class ProximityTree(BaseClassifier):
         self._random_object = check_random_state(self.random_state)
         self.y = y
 
-        distance_measure = self._distance_measure()
-
         self.stump = self.find_stump()
         n_branches = len(self.stump.y_exemplar)
         self.branches = [None] * n_branches
@@ -1155,7 +1152,7 @@ class ProximityTree(BaseClassifier):
                 if not self.is_leaf(sub_y):
                     sub_tree = ProximityTree(
                         random_state=self.random_state,
-                        distance_measure=distance_measure,
+                        distance_measure=self.distance_measure,
                         gain_name=self.gain_name,
                         is_leaf=self.is_leaf,
                         verbosity=self.verbosity,
@@ -1248,12 +1245,11 @@ class ProximityTree(BaseClassifier):
         """
         if self.n_stump_evaluations < 1:
             raise ValueError("n_stump_evaluations cannot be less than 1")
-        distance_measure = self._distance_measure()
         stumps = []
         for _ in range(self.n_stump_evaluations):
             stump = ProximityStump(
                 random_state=self.random_state,
-                distance_measure=distance_measure,
+                distance_measure=self.distance_measure,
                 gain_name=self.gain_name,
                 verbosity=self.verbosity,
                 n_jobs=self.n_jobs,
@@ -1520,14 +1516,13 @@ class ProximityForest(BaseClassifier):
         -------
         self : object
         """
-        distance_measure = self._distance_measure()
         if self.verbosity > 0:
             print("tree " + str(index) + " building")  # noqa
         tree = ProximityTree(
             random_state=random_state,
             verbosity=self.verbosity,
             gain_name=self.gain_name,
-            distance_measure=distance_measure,
+            distance_measure=self.distance_measure,
             max_depth=self.max_depth,
             is_leaf=self.is_leaf,
             n_jobs=1,
@@ -1554,8 +1549,6 @@ class ProximityForest(BaseClassifier):
         self.X = _positive_dataframe_indices(X)
         self._random_object = check_random_state(self.random_state)
         self.y = y
-
-        self.distance_measure = self._distance_measure()
 
         if self._threads_to_use > 1:
             parallel = Parallel(self._threads_to_use)
