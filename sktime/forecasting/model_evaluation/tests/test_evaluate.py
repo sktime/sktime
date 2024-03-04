@@ -246,9 +246,9 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend, score
     if error_score in [np.nan, 1000]:
         # known bug - loky backend does not pass on warnings, #5307
         # known bug - warnings are sporadically not raised otherwise, #5959
-        #
+
         # commented out until bugs are resolved
-        #
+
         # if backend["backend"] not in ["loky", "multiprocessing"]:
         #     with pytest.warns(FitFailedWarning):
         #         results = evaluate(**args)
