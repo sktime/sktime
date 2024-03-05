@@ -692,8 +692,7 @@ class ForecastingPipeline(_Pipeline):
             for _, _, transformer in self._iter_transformers():
                 # if y is required but not passed,
                 # we create a zero-column y from the forecasting horizon
-                requires_y = transformer.get_tag("requires_y", False)
-                if isinstance(y, ForecastingHorizon) and requires_y:
+                if isinstance(y, ForecastingHorizon):
                     y = y.to_absolute_index(self.cutoff)
                     y = pd.DataFrame(index=y)
                 else:
