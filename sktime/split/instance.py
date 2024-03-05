@@ -61,7 +61,7 @@ class InstanceSplitter(BaseSplitter):
             y = pd.MultiIndex.from_arrays([zeros, y])
 
         inst_ix = y.droplevel(-1).unique()
-        iloc_ixer = pd.DataFrame(pd.RangeIndex(len(y)), index=y.index)
+        iloc_ixer = pd.DataFrame(pd.RangeIndex(len(y)), index=y)
 
         for y_train_inst_iloc, y_test_inst_iloc in self.cv.split(inst_ix):
             y_train_inst_loc = inst_ix[y_train_inst_iloc]
