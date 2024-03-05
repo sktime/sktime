@@ -149,10 +149,15 @@ class MyTransformer(BaseTransformer):
         # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
         #
+        # requires_X = does X need to be passed in fit?
+        "requires_X": True,
+        # valid values: False (no), True = exception is raised if no X is seen in _fit
+        #   requires_y setting is independent of requires_X
+        #
         # requires_y = does y need to be passed in fit?
         "requires_y": False,
         # valid values: False (no), True = exception is raised if no y is seen in _fit
-        #   y can be passed or not in _transform for either value of requires_y
+        #   requires_X setting is independent of requires_y
         #
         # remember_data = whether all data seen is remembered as self._X
         "remember_data": False,
@@ -287,6 +292,9 @@ class MyTransformer(BaseTransformer):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
+        # for estimators, initialize a clone, e.g., self.est_ = est.clone()
 
         # leave this as is
         super().__init__()

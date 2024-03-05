@@ -117,7 +117,8 @@ Time Series Regression
 
     >>> X_train, y_train = load_covid_3month(split="train")
     >>> y_train = y_train.astype("float")
-    >>> X_test, _ = load_covid_3month(split="test")
+    >>> X_test, y_test = load_covid_3month(split="test")
+    >>> y_test = y_test.astype("float")
     >>> regressor = KNeighborsTimeSeriesRegressor()
     >>> regressor.fit(X_train, y_train)
     >>> y_pred = regressor.predict(X_test)

@@ -29,7 +29,8 @@ Our current deprecation policy is as follows:
 
 Example timeline:
 
-1. developer A resolves, at current state v0.9.3, to remove functionality X at some point in the near future.
+1. developer A resolves, at current state v0.9.3, to remove functionality X
+at some point in the near future.
 
 2. therefore, by the above, we should introduce a deprecation message, visible from next release (e.g., v0.9.4),
 which says that functionality will be removed at v0.11.0
@@ -40,7 +41,8 @@ The pull request is reviewed by core developers, with the suggestion by develope
 4. If accepted and merged before v0.10.0 release, the PR goes in the next release, with a deprecation note in the release notes.
 If PR acceptance takes until after v0.10.0 but before v0.11.0, the planned removal moves to v0.12.0 and the warning needs to be updated.
 
-5. an additional PR to remove deprecation warning and functionality X is prepared by developer A, for v0.12.0 but not merged
+5. an additional PR to remove deprecation warning and functionality X is prepared by
+developer A, for v0.12.0 but not merged
 
 6. a release manager merges the PR in part 5 as part of the release v0.12.0, effecting the removal.
 Release notes of v0.12.0 includes a removal note.
@@ -228,7 +230,7 @@ and ensure to use ``self._<param_name>`` in the rest of the code instead of
 ``self.<param_name>``.
 
 3. add a warning, using ``sktime.utils.warnings.warn``, if any of the position changing
-paramters are called with a non-default. This warning should always include
+parameters are called with a non-default. This warning should always include
 the name of the estimator/function, the version of change, and a clear instruction
 on how to change the code to retain prior behaviour. The instruction
 should direct the user to use ``kwargs`` calls instead of positional calls, for
