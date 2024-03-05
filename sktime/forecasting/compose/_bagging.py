@@ -94,8 +94,8 @@ class BaggingForecaster(BaseForecaster):
         "requires-fh-in-fit": False,  # like AutoETS overwritten if forecaster not None
         "enforce_index_type": None,  # like AutoETS overwritten if forecaster not None
         "capability:insample": True,  # can the estimator make in-sample predictions?
-        "capability:pred_int": True,  # can the estimator produce prediction intervals?
-        "capability:pred_int:insample": True,  # ... for in-sample horizons?
+        "capability:pred_int": False,  # can the estimator produce prediction intervals?
+        "capability:pred_int:insample": False,  # ... for in-sample horizons?
     }
 
     def __init__(
@@ -211,13 +211,8 @@ class BaggingForecaster(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : pd.DataFrame
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
@@ -230,6 +225,8 @@ class BaggingForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._y_ix_names = y.index.names
+
         # random state handling passed into input estimators
         self.random_state_ = check_random_state(self.random_state)
 
@@ -299,7 +296,7 @@ class BaggingForecaster(BaseForecaster):
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : pd.DataFrame
             Point predictions
         """
         # generate replicates of exogenous data for bootstrap
@@ -309,7 +306,14 @@ class BaggingForecaster(BaseForecaster):
         y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=X_inner)
 
         # aggregate bootstrapped forecasts
-        y_pred = y_bootstraps_pred.groupby(level=-1).mean().iloc[:, 0]
+        # the bootstrap index ends up at level -2, so we have to groupby the rest
+        n_ist_lv = y_bootstraps_pred.index.nlevels - 2
+        gb_lvls = [-1]
+        if n_ist_lv > 0:
+            gb_lvls = list(range(n_ist_lv)) + gb_lvls
+
+        y_pred = y_bootstraps_pred.groupby(level=gb_lvls).mean()
+        y_pred.index.names = self._y_ix_names
         return y_pred
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -394,12 +398,8 @@ class BaggingForecaster(BaseForecaster):
         from sktime.utils.estimators import MockForecaster
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params = [
-            {
-                "bootstrap_transformer": MovingBlockBootstrapTransformer(),
-                "forecaster": MockForecaster(),
-            },
-        ]
+        mbb = MovingBlockBootstrapTransformer(block_length=3)
+        params = [{"bootstrap_transformer": mbb, "forecaster": MockForecaster()}]
 
         # the default param set causes a statsmodels based estimator
         # to be created as bootstrap_transformer
