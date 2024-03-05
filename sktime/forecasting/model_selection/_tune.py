@@ -54,7 +54,7 @@ class BaseGridSearch(_DelegatedForecaster):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
-        ranking_metric = None,
+        ranking_metric=None,
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -222,10 +222,7 @@ class BaseGridSearch(_DelegatedForecaster):
         elif isinstance(self.scoring, list):
             scoring = []
             scoring_names = []
-            if (
-                self.ranking_metric is not None
-                and isinstance(self.ranking_metric, int)
-            ):
+            if self.ranking_metric is not None and isinstance(self.ranking_metric, int):
                 if self.ranking_metric not in range(len(self.scoring)):
                     self.ranking_metric = 0
                     warn(
@@ -240,10 +237,9 @@ class BaseGridSearch(_DelegatedForecaster):
                 temp_metric = metric
                 metric = check_scoring(metric, obj=self)
                 metric_name = metric.name
-                if (
-                    metric_name == '_DynamicForecastingErrorMetric'
-                    and hasattr(temp_metric, '__name__')
-                ):
+                if metric_name == "_DynamicForecastingErrorMetric" and hasattr(
+                    temp_metric, "__name__"
+                 ):
                     metric_name = temp_metric.__name__
                 metric.name = metric_name
                 metric_name = f"test_{metric_name}"
@@ -261,10 +257,9 @@ class BaseGridSearch(_DelegatedForecaster):
                 temp_metric = metric
                 metric = check_scoring(metric, obj=self)
                 metric_name = metric.name
-                if (
-                    metric_name == '_DynamicForecastingErrorMetric'
-                    and hasattr(temp_metric, '__name__')
-                ):
+                if metric_name == "_DynamicForecastingErrorMetric" and hasattr(
+                    temp_metric, "__name__"
+                 ):
                     metric_name = temp_metric.__name__
                 metric.name = metric_name
                 metric_name = f"test_{metric_name}"
@@ -338,8 +333,8 @@ class BaseGridSearch(_DelegatedForecaster):
             ranking_metric = scoring
             ranking_metric_name = scoring_name
         results[f"rank_{ranking_metric_name}"] = results.loc[
-            :,f"mean_{ranking_metric_name}"
-            ].rank(ascending=ranking_metric.get_tag("lower_is_better"))
+            :, f"mean_{ranking_metric_name}"
+        ].rank(ascending=ranking_metric.get_tag("lower_is_better"))
 
         self.cv_results_ = results
 
