@@ -260,16 +260,10 @@ class BaggingForecaster(BaseForecaster):
         if X is None:
             return None
 
-        if isinstance(X.index, pd.MultiIndex):
-            X_nlv = X.index.nlevels
-        else:
-            X_nlv = 1
-
-        levels_to_drop = list(range(-X_nlv, 0))
-
         y_bs_ix = self._y_bs_ix
 
-        inst_ix = y_bs_ix.droplevel(levels_to_drop).unique()
+        # bootstrap instance index ends up at level -2
+        inst_ix = y_bs_ix.get_level_values(-2).unique()
         X_repl = [X] * len(inst_ix)
         X_bootstraps = pd.concat(X_repl, keys=inst_ix)
         return X_bootstraps
