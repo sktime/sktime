@@ -252,8 +252,8 @@ class Catch22(BaseTransformer):
         catch24: bool = False,
         outlier_norm: bool = False,
         replace_nans: bool = False,
-        col_names: str = "range",
         n_jobs="deprecated",
+        col_names: str = "range",
     ):
         self.features = features
         self.catch24 = catch24
