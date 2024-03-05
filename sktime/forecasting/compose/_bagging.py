@@ -376,10 +376,7 @@ class BaggingForecaster(BaseForecaster):
         # generate replicates of exogenous data for bootstrap
         X_inner = self._gen_X_bootstraps(X)
 
-        self.forecaster_.update(
-            y=y_bootstraps, fh=self.fh, X=X_inner, update_params=update_params
-        )
-
+        self.forecaster_.update(y=y_bootstraps, X=X_inner, update_params=update_params)
         return self
 
     @classmethod
@@ -398,7 +395,7 @@ class BaggingForecaster(BaseForecaster):
         from sktime.utils.estimators import MockForecaster
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        mbb = MovingBlockBootstrapTransformer(block_length=3)
+        mbb = MovingBlockBootstrapTransformer(block_length=6)
         params = [{"bootstrap_transformer": mbb, "forecaster": MockForecaster()}]
 
         # the default param set causes a statsmodels based estimator
