@@ -6,7 +6,7 @@ __author__ = ["mloning", "fkiraly", "aiwalter"]
 __all__ = [
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
-    "ForecastingSkoptSearchCV",
+    "ForecastingSkoptSearrchCV",
 ]
 
 from collections.abc import Sequence
@@ -201,10 +201,11 @@ class BaseGridSearch(_DelegatedForecaster):
                 scoring_names.append(metric_name)
             elif len(self.scoring) > 1:
                 warn(
-                    f"The parameter ranking_metric of {self.__class__.__name__} must be specified "
-                    "correctly. By default, it has selected the first argument of the dict. "
-                    "Either the parameter has not been specified, it is not a string "
-                    "or it is not present in the dict passed to the scoring parameter.",
+                    f"The parameter ranking_metric of {self.__class__.__name__} "
+                    "must be specified correctly. By default, it has selected"
+                    "the first argument of the dict. Either the parameter has "
+                    "not been specified, it is not a string or it is not present in "
+                    "the dict passed to the scoring parameter.",
                     obj=self,
                     stacklevel=2,
                 )
@@ -213,8 +214,8 @@ class BaseGridSearch(_DelegatedForecaster):
                 metric.name = name
                 if not isinstance(name, str):
                     raise TypeError(
-                        "The keys of the dict passed to the scoring parameter are not strings. "
-                        "Please specify them properly."
+                        "The keys of the dict passed to the scoring parameter are "
+                        "not strings. Please specify them properly."
                     )
                 metric_name = f"test_{name}"
                 scoring.append(metric)
@@ -226,10 +227,11 @@ class BaseGridSearch(_DelegatedForecaster):
                 if self.ranking_metric not in range(len(self.scoring)):
                     self.ranking_metric = 0
                     warn(
-                        f"The parameter ranking_metric of {self.__class__.__name__} must be "
-                        "specified correctly. By default, it has selected the first argument of the list. "
-                        "The parameter has not been not specified as a valid integer value from 0 "
-                        "to len(scoring)-1, both inclusive.",
+                        f"The parameter ranking_metric of {self.__class__.__name__} "
+                        "must be specified correctly. By default, it has selected the "
+                        "first argument of the list. The parameter has not been not "
+                        "specified as a valid integer value from 0 to len(scoring)-1, "
+                        "both inclusive.",
                         obj=self,
                         stacklevel=2,
                     )
@@ -239,7 +241,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 metric_name = metric.name
                 if metric_name == "_DynamicForecastingErrorMetric" and hasattr(
                     temp_metric, "__name__"
-                 ):
+                ):
                     metric_name = temp_metric.__name__
                 metric.name = metric_name
                 metric_name = f"test_{metric_name}"
@@ -247,9 +249,10 @@ class BaseGridSearch(_DelegatedForecaster):
                 scoring_names.append(metric_name)
             elif len(self.scoring) > 1:
                 warn(
-                    f"The parameter ranking_metric of {self.__class__.__name__} must be "
-                    "specified correctly. By default, it has selected the first argument of the list. "
-                    "Either the parameter has not been not specified or is not an integer value",
+                    f"The parameter ranking_metric of {self.__class__.__name__} must "
+                    "be specified correctly. By default, it has selected the first "
+                    "argument of the list. Either the parameter has not been not "
+                    "specified or is not an integer value.",
                     obj=self,
                     stacklevel=2,
                 )
@@ -259,7 +262,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 metric_name = metric.name
                 if metric_name == "_DynamicForecastingErrorMetric" and hasattr(
                     temp_metric, "__name__"
-                 ):
+                ):
                     metric_name = temp_metric.__name__
                 metric.name = metric_name
                 metric_name = f"test_{metric_name}"
