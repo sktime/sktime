@@ -6,7 +6,7 @@ __author__ = ["mloning", "fkiraly", "aiwalter"]
 __all__ = [
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
-    "ForecastingSkoptSearrchCV",
+    "ForecastingSkoptSearchCV",
 ]
 
 from collections.abc import Sequence
