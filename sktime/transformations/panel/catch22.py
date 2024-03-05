@@ -96,11 +96,11 @@ SHORT_FEATURE_NAMES_DICT = {
 }
 SHORT_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.values())
 
-CATCH24_METHODS_DICT = {"Mean": _catch24_mean, "StandardDeviation": _catch24_std}
+CATCH24_METHODS_DICT = {"DN_Mean": _catch24_mean, "DN_Spread_Std": _catch24_std}
 CATCH24_FEATURE_NAMES = list(CATCH24_METHODS_DICT.keys())
 CATCH24_SHORT_FEATURE_NAMES_DICT = {
-    "Mean": "mean",
-    "StandardDeviation": "std",
+    "DN_Mean": "mean",
+    "DN_Spread_Std": "std",
 }
 CATCH24_SHORT_FEATURE_NAMES = list(CATCH24_SHORT_FEATURE_NAMES_DICT.values())
 
@@ -181,9 +181,11 @@ class Catch22(BaseTransformer):
         }
         Additionally, if catch24 is true, two additional features are available:
         {
-            "Mean": "mean",
-            "StandardDeviation": "std",
+            "DN_Mean": "mean",
+            "DN_Spread_Std": "std",
         }
+        The overview of these features is available at:
+        https://time-series-features.gitbook.io/catch22-features/feature-overview-table
     catch24 : bool, optional, default=False
         Extract the mean and standard deviation as well as the 22 Catch22 features if
         true. If a List of specific features to extract is provided, "Mean" and/or
