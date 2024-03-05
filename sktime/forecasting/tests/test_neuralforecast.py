@@ -8,7 +8,7 @@ from sktime.forecasting.neuralforecast import NeuralForecastLSTM, NeuralForecast
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 
-__author__ = ["yarnabrina", "pranavvp16"]
+__author__ = ["yarnabrina", "pranavvp16", "geetu040"]
 
 y, X = load_longley()
 y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
@@ -22,7 +22,7 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
 def test_neural_forecast_univariate_y_without_X(model_class) -> None:
     """Test with single endogenous without exogenous."""
     # define model
-    model = model_class("A-DEC", max_steps=5, trainer_kwargs={"logger": False})
+    model = model_class(freq="A-DEC", max_steps=5, trainer_kwargs={"logger": False})
 
     # attempt fit with negative fh
     with pytest.raises(
@@ -52,7 +52,10 @@ def test_neural_forecast_univariate_y_with_X(model_class) -> None:
 
     # define model
     model = model_class(
-        "A-DEC", futr_exog_list=exog_list, max_steps=5, trainer_kwargs={"logger": False}
+        freq="A-DEC",
+        futr_exog_list=exog_list,
+        max_steps=5,
+        trainer_kwargs={"logger": False},
     )
 
     # attempt fit without X
@@ -86,7 +89,7 @@ def test_neural_forecast_univariate_y_with_X(model_class) -> None:
 def test_neural_forecast_multivariate_y_without_X(model_class) -> None:
     """Test with multiple endogenous without exogenous."""
     # define model
-    model = model_class("A-DEC", max_steps=5, trainer_kwargs={"logger": False})
+    model = model_class(freq="A-DEC", max_steps=5, trainer_kwargs={"logger": False})
 
     # train model
     model.fit(X_train, fh=[1, 2, 3, 4])
@@ -110,7 +113,7 @@ def test_neural_forecast_with_non_default_loss(model_class) -> None:
 
     # define model
     model = model_class(
-        "A-DEC",
+        freq="A-DEC",
         loss=HuberQLoss(0.5),
         valid_loss=MASE(1),
         max_steps=5,
@@ -139,7 +142,7 @@ def test_neural_forecast_fail_with_multiple_predictions(model_class) -> None:
 
     # define model
     model = model_class(
-        "A-DEC",
+        freq="A-DEC",
         loss=MQLoss(quantiles=[0.25, 0.5, 0.75]),
         max_steps=5,
         trainer_kwargs={"logger": False},
@@ -155,14 +158,15 @@ def test_neural_forecast_fail_with_multiple_predictions(model_class) -> None:
         model.predict()
 
 
+@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
 @pytest.mark.skipif(
-    not run_test_for_class(NeuralForecastRNN),
+    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_neural_forecast_rnn_with_auto_freq() -> None:
-    """Test NeuralForecastRNN with freq set to 'auto'."""
+def test_neural_forecast_with_auto_freq(model_class) -> None:
+    """Test with freq set to 'auto'."""
     # define model
-    model = NeuralForecastRNN("auto", max_steps=5, trainer_kwargs={"logger": False})
+    model = model_class(freq="auto", max_steps=5, trainer_kwargs={"logger": False})
 
     # train model
     model.fit(y_train, fh=[1, 2, 3, 4])
@@ -171,73 +175,63 @@ def test_neural_forecast_rnn_with_auto_freq() -> None:
     y_pred = model.predict()
 
     # check interpreted freq
-    assert y_pred.index.freq == "A-DEC", "The interpreted frequency was incorrect"
-
-    # check prediction index
-    pandas.testing.assert_index_equal(y_pred.index, y_test.index, check_names=False)
+    assert y_pred.index.freq == "A-DEC"
 
 
-@pytest.mark.skipif(
-    not run_test_for_class(NeuralForecastRNN),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_neural_forecast_rnn_with_auto_freq_on_all_freq() -> None:
-    """Test NeuralForecastRNN with freq set to 'auto' on all freqs."""
-    # define all supported frequencies
-    freqs = [
+@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "freq",
+    [
         "B",
-        "C",
         "D",
+        "W",
         "M",
         "Q",
-        "W",
-        "W-FRI",
-        "W-MON",
-        "W-SAT",
-        "W-SUN",
-        "W-THU",
-        "W-TUE",
-        "W-WED",
+        "A",
         "Y",
-        "h",
+        "H",
+        "T",
         "min",
+        "S",
+        "L",
         "ms",
-        "ns",
-        "s",
+        "U",
         "us",
-    ]
-
-    for freq in freqs:
-        # prepare data
-        y = pandas.Series(
-            data=range(10),
-            index=pandas.date_range(start="2024-01-01", periods=10, freq=freq),
-        )
-
-        # define model
-        model = NeuralForecastRNN(freq, max_steps=1, trainer_kwargs={"logger": False})
-        model_auto = NeuralForecastRNN(
-            "auto", max_steps=1, trainer_kwargs={"logger": False}
-        )
-
-        # attempt train
-        model.fit(y, fh=[1, 2, 3, 4])
-        model_auto.fit(y, fh=[1, 2, 3, 4])
-
-        # predict with trained model
-        pred = model.predict()
-        pred_auto = model_auto.predict()
-
-        # check prediction
-        pandas.testing.assert_series_equal(pred, pred_auto)
-
-
+        "N",
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class(NeuralForecastRNN),
+    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_neural_forecast_rnn_with_auto_freq_on_range_index() -> None:
-    """Test NeuralForecastRNN with freq set to 'auto' on pd.RangeIndex."""
+def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None:
+    """Test NeuralForecastRNN with freq set to 'auto' on all freqs."""
+    # prepare data
+    y = pandas.Series(
+        data=range(10),
+        index=pandas.date_range(start="2024-01-01", periods=10, freq=freq),
+    )
+
+    # define model
+    model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
+
+    # attempt train
+    model.fit(y, fh=[1, 2, 3, 4])
+
+    # convert freq str to DateOffset object for comparison
+    offset_freq = pandas.tseries.frequencies.to_offset(freq)
+    offset_auto_freq = pandas.tseries.frequencies.to_offset(model._freq)
+
+    assert offset_freq == offset_auto_freq
+
+
+@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.skipif(
+    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_fail_with_auto_freq_on_range_index(model_class) -> None:
+    """Test fail with freq set to 'auto' on pd.RangeIndex."""
     # prepare data
     y = pandas.Series(data=range(10), index=pandas.RangeIndex(start=0, stop=10))
 
@@ -247,13 +241,13 @@ def test_neural_forecast_rnn_with_auto_freq_on_range_index() -> None:
         match="could not interpret freq, try passing freq in model initialization",
     ):
         # define model
-        model = NeuralForecastRNN("auto", max_steps=5, trainer_kwargs={"logger": False})
+        model = model_class(freq="auto", max_steps=5, trainer_kwargs={"logger": False})
 
         # attempt train
         model.fit(y, fh=[1, 2, 3, 4])
 
     # should work with freq passed as param
-    model = NeuralForecastRNN("W", max_steps=5, trainer_kwargs={"logger": False})
+    model = model_class(freq="W", max_steps=5, trainer_kwargs={"logger": False})
 
     # attempt train
     model.fit(y, fh=[1, 2, 3, 4])

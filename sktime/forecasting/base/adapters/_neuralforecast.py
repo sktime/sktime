@@ -21,7 +21,6 @@ class _NeuralForecastAdapter(BaseForecaster):
         frequency of the data, see available frequencies [1]_ from ``pandas``
 
         default ("auto") interprets freq from ForecastingHorizon in ``fit``
-        raises ValueError if freq cannot be interpreted
     local_scaler_type : str (default=None)
         scaler to apply per-series to all features before fitting, which is inverted
         after predicting
@@ -181,6 +180,11 @@ class _NeuralForecastAdapter(BaseForecaster):
         -------
         self : _NeuralForecastAdapter
             reference to self
+
+        Raises
+        ------
+        ValueError
+            When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
         if not fh.is_all_out_of_sample(cutoff=self.cutoff):
             raise NotImplementedError("in-sample prediction is currently not supported")
@@ -193,11 +197,7 @@ class _NeuralForecastAdapter(BaseForecaster):
                 f"try passing freq in model initialization"
             )
 
-        if self.freq == "auto":
-            # interpret freq from ForecastingHorizon
-            self._freq = fh.freq
-        else:
-            self._freq = self.freq
+        self._freq = fh.freq if self.freq == "auto" else self.freq
 
         train_indices = y.index
         if isinstance(train_indices, pandas.PeriodIndex):
