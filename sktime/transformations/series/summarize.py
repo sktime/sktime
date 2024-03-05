@@ -456,16 +456,18 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
             if bfill is False:
                 feat = getattr(
-                    Z.shift(lag).rolling(window=window_length, min_periods=window_length),
+                    Z.shift(lag).rolling(
+                        window=window_length, min_periods=window_length
+                    ),
                     summarizer,
                 )()
             else:
-                feat = (
-                    getattr(
-                        Z.shift(lag).bfill().rolling(window=window_length, min_periods=window_length),
-                        summarizer,
-                    )()
-                )
+                feat = getattr(
+                    Z.shift(lag)
+                    .bfill()
+                    .rolling(window=window_length, min_periods=window_length),
+                    summarizer,
+                )()
             feat = pd.DataFrame(feat)
         else:
             if bfill is False:
