@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements Bagging Forecaster."""
 
-__author__ = ["ltsaprounis"]
+__author__ = ["fkiraly", "ltsaprounis"]
 
 from typing import List, Union
 
@@ -12,6 +12,7 @@ from sklearn.utils import check_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
+from sktime.proba.empirical import Empirical
 from sktime.transformations.base import BaseTransformer
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
@@ -82,7 +83,7 @@ class BaggingForecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["ltsaprounis", "fkiraly"],
+        "authors": ["fkiraly", "ltsaprounis"],
         "scitype:y": "both",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": True,  # can estimator handle missing data?
@@ -94,8 +95,8 @@ class BaggingForecaster(BaseForecaster):
         "requires-fh-in-fit": False,  # like AutoETS overwritten if forecaster not None
         "enforce_index_type": None,  # like AutoETS overwritten if forecaster not None
         "capability:insample": True,  # can the estimator make in-sample predictions?
-        "capability:pred_int": False,  # can the estimator produce prediction intervals?
-        "capability:pred_int:insample": False,  # ... for in-sample horizons?
+        "capability:pred_int": True,  # can the estimator produce prediction intervals?
+        "capability:pred_int:insample": True,  # ... for in-sample horizons?
     }
 
     def __init__(
@@ -310,40 +311,46 @@ class BaggingForecaster(BaseForecaster):
         y_pred.index.names = self._y_ix_names
         return y_pred
 
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast.
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
 
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
+        private _predict_proba containing the core logic, called from predict_proba
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
 
         Returns
         -------
-        pred_quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the quantile forecasts for each alpha.
-                Quantile forecasts are calculated for each a in alpha.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
-                at quantile probability in second-level col index, for each row index.
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
         """
-        # X is ignored
-        y_pred = self.forecaster_.predict(fh=fh, X=None)
-        return self._calculate_data_quantiles(y_pred, alpha)
+        # generate replicates of exogenous data for bootstrap
+        X_inner = self._gen_X_bootstraps(X)
+
+        # compute bootstrapped forecasts
+        y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=X_inner)
+
+        # aggregate bootstrapped forecasts
+        # the bootstrap index ends up at level -2,
+        # while Empirical assumes bootstrap index as level
+        # so we have to reorder if -2 is not the same as 0
+        n_ist_lv = y_bootstraps_pred.index.nlevels - 2
+        if n_ist_lv > 0:
+            y_bootstraps_pred = y_bootstraps_pred.reorder_levels(
+                [-2] + list(range(n_ist_lv)) + [-1], axis=0
+            )
+
+        pred_dist = Empirical(y_bootstraps_pred, time_indep=marginal)
+        return pred_dist
 
     def _update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
