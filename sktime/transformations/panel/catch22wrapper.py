@@ -298,7 +298,7 @@ class Catch22Wrapper(BaseTransformer):
         return [param1, param2, param3, param4]
 
 
-feature_names = catch22.feature_names
+feature_names = catch22.FEATURE_NAMES
 
 
 def _normalise_series(X):
