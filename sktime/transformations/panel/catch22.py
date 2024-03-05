@@ -499,8 +499,20 @@ class Catch22(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         param1 = {}
-        param2 = {"features": "DN_HistogramMode_5"}
-        param3 = {"features": [1, 12, 21]}
-        param4 = {"features": ["forecast_error", "centroid_freq"]}
-        param5 = {"features": [11, "DN_HistogramMode_5", "forecast_error"]}
+        param2 = {"features": "DN_HistogramMode_5", "col_names": "int_feat"}
+        param3 = {
+            "features": [1, 12, 23],
+            "catch24": True,
+            "replace_nans": True,
+            "col_names": "str_feat",
+        }
+        param4 = {
+            "features": ["forecast_error", "_DN_OutlierInclude_p_001_mdrmd"],
+            "outlier_norm": True,
+            "col_names": "short_str_feat",
+        }
+        param5 = {
+            "features": [11, "DN_HistogramMode_5", "forecast_error"],
+            "col_names": "auto",
+        }
         return [param1, param2, param3, param4, param5]
