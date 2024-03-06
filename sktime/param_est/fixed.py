@@ -14,14 +14,14 @@ class FixedParams(BaseParamFitter):
     This can be used as a dummy/mock, or as a pipeline element, e.g.,
     to set parameters to certain values, or in model selection as the "fixed" option.
 
-    Takes a dictionary `param_dict` of name/value pairs to write to self in `fit`.
-    In `fit`, for each key-value pair in `param_dict`,
-    writes `value` to attribute `str(key) + "_"` in `self`
+    Takes a dictionary ``param_dict`` of name/value pairs to write to self in ``fit``.
+    In ``fit``, for each key-value pair in ``param_dict``,
+    writes ``value`` to attribute ``str(key) + "_"`` in ``self``
 
     Parameters
     ----------
     param_dict : dict
-        fixed parameter values written to `self`
+        fixed parameter values written to ``self``
     """
 
     _tags = {
@@ -71,7 +71,7 @@ class FixedParams(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -79,8 +79,9 @@ class FixedParams(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"param_dict": {1: 2}}
         params2 = {"param_dict": {"foo": "bar", "bar": "foo"}}

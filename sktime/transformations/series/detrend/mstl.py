@@ -17,11 +17,12 @@ class MSTL(BaseTransformer):
     Direct interface for ``statsmodels.tsa.seasonal.MSTL``.
     ``MSTL`` can be used to perform deseasonalization or decomposition:
 
-    `fit` stores the decomposed values in self.trend_, self.seasonal_, and self.resid_.
-    If `return_components=False`, then `transform` returns a pd.Series of the
+    ``fit`` stores the decomposed values in self.trend_, self.seasonal_, and
+    self.resid_.
+    If ``return_components=False``, then ``transform`` returns a pd.Series of the
     deseasonalized values. The seasonal and residual components can be found in
     self.trend_ and self.resid_.
-    If `return_components=True`, then `transform` returns the transformed series, as
+    If ``return_components=True``, then ``transform`` returns the transformed series, as
     well as three components as variables in the returned multivariate series
     (DataFrame cols)
         "transformed" - the transformed series
@@ -52,7 +53,7 @@ class MSTL(BaseTransformer):
         components.
     lmbda : {float, str, None}, optional
         The lambda parameter for the Box-Cox transform to be applied to endog prior to
-        decomposition. If None, no transform is applied. If `auto`, a value will be
+        decomposition. If None, no transform is applied. If ``auto``, a value will be
         estimated that maximizes the log-likelihood function.
     iterate : int, optional
         Number of iterations to use to refine the seasonal component.
@@ -72,9 +73,9 @@ class MSTL(BaseTransformer):
     trend_ : pd.Series
         Trend component of series seen in fit.
     seasonal_ : pd.Series or list of pd.Series
-        If `periods` is a single value, this contains the seasonal component of the
+        If ``periods`` is a single value, this contains the seasonal component of the
         series observed during fitting.
-        If `periods` is a list of values, this can contain multiple pd.Series, each
+        If ``periods`` is a list of values, this can contain multiple pd.Series, each
         corresponding to a different period.
     resid_ : pd.Series
         Residuals component of series seen in fit.
@@ -239,7 +240,7 @@ class MSTL(BaseTransformer):
         ----------
         parameter_set : str , default = "default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -247,8 +248,9 @@ class MSTL(BaseTransformer):
         params : dict or list of dict , default = {}
             parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in `params
         """
         params1 = {
             "periods": 3,
