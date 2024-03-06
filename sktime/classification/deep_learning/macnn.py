@@ -47,16 +47,16 @@ class MACNNClassifier(BaseDeepClassifier):
         Whether bias should be included in the output layer.
     metrics : None or string, optional (default=None)
         The string which will be used during model compilation. If left as None,
-        then "accuracy" is passed to `model.compile()`.
+        then "accuracy" is passed to ``model.compile()``.
     optimizer: None or keras.optimizers.Optimizer instance, optional (default=None)
         The optimizer that is used for model compiltation. If left as None,
-        then `keras.optimizers.Adam(learning_rate=0.0001)` is used.
+        then ``keras.optimizers.Adam(learning_rate=0.0001)`` is used.
     callbacks : None or list of keras.callbacks.Callback, optional (default=None)
         The callback(s) to use during training.
     random_state : int, optional (default=0)
         The seed to any random action.
     verbose : bool, optional (default=False)
-        Verbosity during model training, making it `True` will
+        Verbosity during model training, making it ``True`` will
         print model summary, training information etc.
 
     References
@@ -229,7 +229,7 @@ class MACNNClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, optional (default="default")
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -240,8 +240,9 @@ class MACNNClassifier(BaseDeepClassifier):
         params : dict or list of dict
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         params1 = {
             "n_epochs": 5,

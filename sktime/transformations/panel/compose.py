@@ -42,7 +42,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             its parameters to be set using ``set_params`` and searched in grid
             search.
         transformer : estimator or {"passthrough", "drop"}
-            Estimator must support `fit` and `transform`. Special-cased
+            Estimator must support ``fit`` and ``transform``. Special-cased
             strings "drop" and "passthrough" are accepted as well, to
             indicate to drop the columns or to pass them through untransformed,
             respectively.
@@ -53,19 +53,19 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             by name.  A scalar string or int should be used where
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
-            A callable is passed the input data `X` and can return any of the
+            A callable is passed the input data ``X`` and can return any of the
             above.
     remainder : {"drop", "passthrough"} or estimator, default "drop"
-        By default, only the specified columns in `transformations` are
+        By default, only the specified columns in ``transformations`` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``"drop"``).
         By specifying ``remainder="passthrough"``, all remaining columns that
-        were not specified in `transformations` will be automatically passed
+        were not specified in ``transformations`` will be automatically passed
         through. This subset of columns is concatenated with the output of
         the transformations.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support ``fit`` and ``transform``.
     sparse_threshold : float, default = 0.3
         If the output of the different transformations contains sparse matrices,
         these will be stacked as a sparse matrix if the overall density is
@@ -88,7 +88,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
     ----------
     transformers_ : list
         The collection of fitted transformations as tuples of
-        (name, fitted_transformer, column). `fitted_transformer` can be an
+        (name, fitted_transformer, column). ``fitted_transformer`` can be an
         estimator, "drop", or "passthrough". In case there were no columns
         selected, this will be the unfitted transformer.
         If there are remaining columns, the final element is a tuple of the
@@ -104,7 +104,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
     sparse_output_ : bool
         Boolean flag indicating whether the output of ``transform`` is a
         sparse matrix or a dense numpy array, which depends on the output
-        of the individual transformations and the `sparse_threshold` keyword.
+        of the individual transformations and the ``sparse_threshold`` keyword.
     """
 
     _tags = {
@@ -206,8 +206,9 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.transformations.series.exponent import ExponentTransformer
 

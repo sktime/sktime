@@ -759,9 +759,9 @@ class LogLoss(_BaseDistrForecastingMetric):
     and a ground truth value :math:`y`, the logarithmic loss is
     defined as :math:`L(y, d) := -\log p_d(y)`.
 
-    `evaluate` computes the average test sample loss.
-    `evaluate_by_index` produces the loss sample by test data point
-    `multivariate` controls averaging over variables.
+    ``evaluate`` computes the average test sample loss.
+    ``evaluate_by_index`` produces the loss sample by test data point
+    ``multivariate`` controls averaging over variables.
 
     Parameters
     ----------
@@ -814,9 +814,9 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
     defined as :math:`L(y, d) := -2 p_d(y) + \|p_d\|^2`,
     where :math:`\|p_d\|^2` is the (function) L2-norm of :math:`p_d`.
 
-    `evaluate` computes the average test sample loss.
-    `evaluate_by_index` produces the loss sample by test data point
-    `multivariate` controls averaging over variables.
+    ``evaluate`` computes the average test sample loss.
+    ``evaluate_by_index`` produces the loss sample by test data point
+    ``multivariate`` controls averaging over variables.
 
     Parameters
     ----------
@@ -865,11 +865,12 @@ class CRPS(_BaseDistrForecastingMetric):
 
     For a predictive distribution :math:`d` and a ground truth value :math:`y`,
     the CRPS is defined as
-    :math:`L(y, d) := \mathbb{E}_{Y \sim d}|Y-y| - \frac{1}{2} \mathbb{E}_{X,Y \sim d}|X-Y|`.  # noqa: E501
+    :math:`L(y, d) := \mathbb{E}_{Y \sim d}|Y-y| - \frac{1}{2} \mathbb{E}_{X,Y \sim d}|X-Y|`. # noqa:
+    E501
 
-    `evaluate` computes the average test sample loss.
-    `evaluate_by_index` produces the loss sample by test data point
-    `multivariate` controls averaging over variables.
+    ``evaluate`` computes the average test sample loss.
+    ``evaluate_by_index`` produces the loss sample by test data point
+    ``multivariate`` controls averaging over variables.
 
     Parameters
     ----------
