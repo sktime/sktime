@@ -5,7 +5,9 @@ from numpy import testing
 
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
+from sktime.transformations.panel.shapelet_transform._shapelet_transform import (
+    RandomShapeletTransform,
+)
 
 
 @pytest.mark.skipif(
