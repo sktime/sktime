@@ -8,7 +8,7 @@ If the active forecaster fails during prediction, it proceeds to the next. This 
 a robust forecasting mechanism by providing fallback options.
 """
 
-__author__ = ["ninedigits"]
+__author__ = ["ninedigits", "RikStarmans"]
 __all__ = ["FallbackForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -107,7 +107,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
-        "authors": ["ninedigits"],
+        "authors": ["ninedigits", "RikStarmans"],
         "maintainers": ["ninedigits"],
         "handles-missing-data": True,
         "scitype:y": "both",
