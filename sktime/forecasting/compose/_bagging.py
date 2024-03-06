@@ -192,7 +192,7 @@ class BaggingForecaster(BaseForecaster):
         if forecaster is None:
             from sktime.forecasting.ets import AutoETS
 
-            return AutoETS(sp=self.sp)
+            return AutoETS(sp=self.sp, random_state=self.random_state)
 
         if not scitype(forecaster) == "forecaster":
             raise TypeError(
@@ -392,12 +392,13 @@ class BaggingForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.forecasting.compose import YfromX
         from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
-        from sktime.utils.estimators import MockForecaster
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         mbb = MovingBlockBootstrapTransformer(block_length=6)
-        params = [{"bootstrap_transformer": mbb, "forecaster": MockForecaster()}]
+        fcst = YfromX.create_test_instance()
+        params = [{"bootstrap_transformer": mbb, "forecaster": fcst}]
 
         # the default param set causes a statsmodels based estimator
         # to be created as bootstrap_transformer
