@@ -854,7 +854,7 @@ class ProximityStump(BaseClassifier):
                 )
                 for index in range(X.shape[0])
             ]
-        distances = np.vstack(np.array(distances))
+        distances = np.nan_to_num(np.vstack(np.array(distances)))
         return distances
 
     def _fit(self, X, y):
@@ -964,7 +964,7 @@ class ProximityStump(BaseClassifier):
         distances = self.distance_to_exemplars(X)
         ones = np.ones(distances.shape)
         distances = np.add(distances, ones)
-        distributions = np.divide(ones, distances)
+        distributions = np.reciprocal(distances)
         normalize(distributions, copy=False, norm="l1")
         return distributions
 
