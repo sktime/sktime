@@ -10,6 +10,7 @@ __all__ = [
 
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
@@ -36,7 +37,7 @@ class InstanceSplitter(BaseSplitter):
     >>> from sktime.split import InstanceSplitter
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sklearn.model_selection import KFold
-
+    >>>
     >>> y = _make_hierarchical()
     >>> splitter = InstanceSplitter(KFold(n_splits=3))
     >>> list(splitter.split(y))
@@ -64,10 +65,12 @@ class InstanceSplitter(BaseSplitter):
         iloc_ixer = pd.DataFrame(pd.RangeIndex(len(y)), index=y)
 
         for y_train_inst_iloc, y_test_inst_iloc in self.cv.split(inst_ix):
-            y_train_inst_loc = inst_ix[y_train_inst_iloc]
-            y_test_inst_loc = inst_ix[y_test_inst_iloc]
-            y_train_iloc = iloc_ixer.loc[y_train_inst_loc].to_numpy().flatten()
-            y_test_iloc = iloc_ixer.loc[y_test_inst_loc].to_numpy().flatten()
+            y_train_inst_loc = inst_ix[np.array(y_train_inst_iloc)]
+            y_test_inst_loc = inst_ix[np.array(y_test_inst_iloc)]
+            y_train_iloc = pd.concat([iloc_ixer.loc[x] for x in y_train_inst_loc])
+            y_test_iloc = pd.concat([iloc_ixer.loc[x] for x in y_test_inst_loc])
+            y_train_iloc = y_train_iloc.to_numpy().flatten()
+            y_test_iloc = y_test_iloc.to_numpy().flatten()
             yield y_train_iloc, y_test_iloc
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
