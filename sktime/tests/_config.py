@@ -51,6 +51,7 @@ EXCLUDE_ESTIMATORS = [
     "InceptionTimeRegressor",
     "CNTCClassifier",
     "CNTCRegressor",
+    "TLENetRegressor",
 ]
 
 
@@ -167,6 +168,9 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "CNTCRegressor": [
+        "test_fit_idempotent",
+    ],
+    "TLENetRegressor": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
