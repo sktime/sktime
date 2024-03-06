@@ -76,6 +76,14 @@ kwargs_custom = {
         count_gt100: [[3, 2]],
     }
 }
+
+kwargs_series = {
+    "lag_feature" : {
+        "mean": [[-1, 1], [-1, 2]],
+    }
+}
+y_series = pd.DataFrame(np.arange(10))
+
 # Generate named and unnamed y
 y_train.name = None
 y_train_named = y_train.copy()
@@ -94,6 +102,13 @@ Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
 @pytest.mark.parametrize(
     "kwargs, column_names, y, target_cols, truncate",
     [
+        (
+            kwargs_series,
+            ['0_mean_-1_1', '0_mean_-2_4'],
+            y_series,
+            None,
+            None,
+        ),
         (
             kwargs,
             ["y_lag_1", "y_mean_1_3", "y_mean_1_12", "y_std_1_4"],
