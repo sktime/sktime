@@ -34,7 +34,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     regressors on various sub-samples of a transformed dataset and uses
     averaging to improve the predictive accuracy and control over-fitting.
     The sub-sample size is always the same as the original input sample size
-    but the samples are drawn with replacement if `bootstrap=True` (default).
+    but the samples are drawn with replacement if ``bootstrap=True`` (default).
 
     Parameters
     ----------
@@ -57,9 +57,9 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         min_samples_split samples.
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
-          `ceil(min_samples_split * n_samples)` are the minimum
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
+          ``ceil(min_samples_split * n_samples)`` are the minimum
           number of samples for each split.
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
@@ -67,9 +67,9 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         least ``min_samples_leaf`` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
-          `ceil(min_samples_leaf * n_samples)` are the minimum
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
+          ``ceil(min_samples_leaf * n_samples)`` are the minimum
           number of samples for each node.
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -77,14 +77,14 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         equal weight when sample_weight is not provided.
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-        - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+        - If int, then consider ``max_features`` features at each split.
+        - If float, then ``max_features`` is a fraction and
+          ``int(max_features * n_features)`` features are considered at each
           split.
-        - If "auto", then `max_features=sqrt(n_features)`.
-        - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
-        - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
+        - If "auto", then ``max_features=sqrt(n_features)``.
+        - If "sqrt", then ``max_features=sqrt(n_features)`` (same as "auto").
+        - If "log2", then ``max_features=log2(n_features)``.
+        - If None, then ``max_features=n_features``.
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
@@ -109,14 +109,14 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         Whether to use out-of-bag samples to estimate
         the generalization accuracy.
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
     verbose : int, optional (default=0)
         Controls the verbosity when fitting and predicting.
     warm_start : bool, optional (default=False)
@@ -159,7 +159,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_decision_function_` might contain NaN.
+        ``oob_decision_function_`` might contain NaN.
     class_weight: dict, list of dicts, "balanced", "balanced_subsample" or \
         None, optional (default=None)
         Not needed here, added in the constructor to align with base class \
@@ -401,14 +401,15 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {"n_estimators": 3}

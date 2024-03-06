@@ -2320,6 +2320,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/MBristle",
       "profile": "https://github.com/MBristle",
       "contributions": [
+        "bug",
+        "test",
         "doc"
       ]
     },
@@ -2611,7 +2613,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/90601662?s=96&v=4",
       "profile": "https://github.com/geetu040",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "maintenance"
       ]
     }
   ]

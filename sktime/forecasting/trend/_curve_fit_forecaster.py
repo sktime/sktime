@@ -19,25 +19,25 @@ class CurveFitForecaster(BaseForecaster):
     parameters for a given function.
 
     If the index is an integer index, it directly uses the index values.
-    If the index is a `pd.DatetimeIndex` or a `pd.PeriodIndex`, the index values
+    If the index is a ``pd.DatetimeIndex`` or a ``pd.PeriodIndex``, the index values
     are transformed into floats using two distinct approaches:
 
-    1. For a `pd.DatetimeIndex`, it calculates the number of days since 1970-01-01.
-       For a `pd.PeriodIndex`, it computes the number of (full) periods since
+    1. For a ``pd.DatetimeIndex``, it calculates the number of days since 1970-01-01.
+       For a ``pd.PeriodIndex``, it computes the number of (full) periods since
         1970-01-01.
 
-    2. For a `pd.DatetimeIndex`, it calculates the number of days since the first
+    2. For a ``pd.DatetimeIndex``, it calculates the number of days since the first
        index value.
-       For a  `pd.PeriodIndex`, it calculates or the number of (dull) periods since
+       For a  ``pd.PeriodIndex``, it calculates or the number of (dull) periods since
        the first index value.
     Furthermore, the difference between the index values can be normalised by
     setting the difference between the first and the second index value to one.
 
-    In `fit`
+    In ``fit``
     1. The index of the input time series is transformed to a list of floats.
     2. The scipy curve_fit is called using the list of floats as x values,
        and the time series values as y values.
-    In `predict`
+    In ``predict``
     1. The ForecastingHorizon is transformed to a list of floats.
     2. The list of floats is passed together with the fitted parameters to the
        function to provide the forecast.
@@ -46,7 +46,7 @@ class CurveFitForecaster(BaseForecaster):
     ----------
     function: Callable[[Iterable[float], ...], Iterable[float]]
         The function that should be fitted and used to make forecasts.
-        The signature of the functions is `function(x, ...)`.
+        The signature of the functions is ``function(x, ...)``.
         It takes the independent variables as first argument and the parameters
         to fit as separate remaining arguments.
         See scipy.optimize.curve_fit for more information.
@@ -182,7 +182,7 @@ class CurveFitForecaster(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns

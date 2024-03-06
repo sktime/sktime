@@ -36,13 +36,13 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
 
     max_iter_barycenter : int (default: 100)
         Number of iterations for the barycenter computation process. Only used
-        if `metric="dtw"` or `metric="softdtw"`.
+        if ``metric="dtw"`` or ``metric="softdtw"``.
 
     metric_params : dict or None (default: None)
         Parameter values for the chosen metric.
         For metrics that accept parallelization of the cross-distance matrix
-        computations, `n_jobs` key passed in `metric_params` is overridden by
-        the `n_jobs` argument.
+        computations, ``n_jobs`` key passed in ``metric_params`` is overridden by
+        the ``n_jobs`` argument.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for cross-distance matrix
@@ -51,7 +51,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
         parallelization.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See scikit-learns'
-        `Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>`_
+        ``Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>``_
         for more details.
 
     dtw_inertia: bool (default: False)
@@ -83,7 +83,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
 
     cluster_centers_ : numpy.ndarray of shape (n_clusters, sz, d)
         Cluster centers.
-        `sz` is the size of the time series used at fit time if the init method
+        ``sz`` is the size of the time series used at fit time if the init method
         is 'k-means++' or 'random', and the size of the longest initial
         centroid if those are provided as a numpy array through init parameter.
 
@@ -95,7 +95,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
 
     Notes
     -----
-        If `metric` is set to `"euclidean"`, the algorithm expects a dataset of
+        If ``metric`` is set to ``"euclidean"``, the algorithm expects a dataset of
         equal-sized time series.
     """
 
@@ -165,7 +165,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -173,8 +173,9 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # commented since k-means++ does not properly work
         # errors out with

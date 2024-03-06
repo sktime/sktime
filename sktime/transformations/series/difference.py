@@ -50,11 +50,11 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
 
     Returns
     -------
-    `X` differenced at lags `lags`, always a copy (no reference)
-    if `lags` is int, applies diff to X at period `lags`
+    ``X`` differenced at lags ``lags``, always a copy (no reference)
+    if ``lags`` is int, applies diff to X at period ``lags``
         returns X.diff(periods=lag)
-    if `lags` is list of int, loops over elements from start to end
-        and applies diff to X at period lags[value], for value in the list `lags`
+    if ``lags`` is list of int, loops over elements from start to end
+        and applies diff to X at period lags[value], for value in the list ``lags``
     """
     if isinstance(lags, int):
         lags = [lags]
@@ -116,12 +116,13 @@ def _inverse_diff(X, lags, X_diff_seq=None):
 
     Returns
     -------
-    `X` inverse differenced at lags `lags`, always a copy (no reference)
-    if `lags` is int, applies cumsum to X at period `lag`
+    ``X`` inverse differenced at lags ``lags``, always a copy (no reference)
+    if ``lags`` is int, applies cumsum to X at period ``lag``
         for i in range(lag), X.iloc[i::lag] = X.iloc[i::lag].cumsum()
-    if `lags` is list of int, loops over elements from start to end
-        and applies cumsum to X at period lag[value], for value in the list `lag`
-    if `X_diff_seq` is provided, uses values stored for indices outside `X` to invert
+    if ``lags`` is list of int, loops over elements from start to end
+        and applies cumsum to X at period lag[value], for value in the list ``lag``
+    if ``X_diff_seq`` is provided, uses values stored for indices outside ``X`` to
+    invert
     """
     if isinstance(lags, int):
         lags = [lags]
@@ -204,7 +205,7 @@ class Differencer(BaseTransformer):
     ----------
     lags : int or array-like, default = 1
         The lags used to difference the data.
-        If a single `int` value is
+        If a single ``int`` value is
 
     na_handling : str, optional, default = "fill_zero"
         How to handle the NaNs that appear at the start of the series from differencing
@@ -359,7 +360,7 @@ class Differencer(BaseTransformer):
         return Xt
 
     def _inverse_transform(self, X, y=None):
-        """Logic used by `inverse_transform` to reverse transformation on `X`.
+        """Logic used by ``inverse_transform`` to reverse transformation on ``X``.
 
         Parameters
         ----------
@@ -396,8 +397,9 @@ class Differencer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [{"na_handling": x} for x in cls.VALID_NA_HANDLING_STR]
         # we're testing that inverse_transform is inverse to transform
