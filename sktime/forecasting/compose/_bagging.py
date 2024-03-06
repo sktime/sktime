@@ -150,7 +150,7 @@ class BaggingForecaster(BaseForecaster):
         if transformer is None:
             from sktime.transformations.bootstrap import STLBootstrapTransformer
 
-            return STLBootstrapTransformer(sp=self.sp)
+            return STLBootstrapTransformer(sp=self.sp, random_state=self.random_state)
 
         msg = (
             "Error in BaggingForecaster: "
