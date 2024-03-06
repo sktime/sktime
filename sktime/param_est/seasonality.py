@@ -12,7 +12,7 @@ from sktime.param_est.base import BaseParamFitter
 class SeasonalityACF(BaseParamFitter):
     """Find candidate seasonality parameter using autocorrelation function CI.
 
-    Uses `statsmodels.tsa.stattools.act` for computing the autocorrelation function,
+    Uses ``statsmodels.tsa.stattools.act`` for computing the autocorrelation function,
     and uses its testing functionality to determine candidate seasonality parameters.
     ("seasonality parameter" are integer lags, and abbreviated by sp, below)
 
@@ -27,15 +27,15 @@ class SeasonalityACF(BaseParamFitter):
     ----------
     candidate_sp : None, int or list of int, optional, default = None
         candidate sp to test, and to restrict tests to; ints must be 2 or larger
-        if None, will test all integer lags between 2 and `nlags` (inclusive)
+        if None, will test all integer lags between 2 and ``nlags`` (inclusive)
     p_threshold : float, optional, default=0.05
         significance threshold to apply in testing for seasonality
     adjusted : bool, optional, default=False
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
         Number of lags to compute autocorrelations for and select from.
-        At default None, uses `min(10 * np.log10(nobs), nobs - 1)`.
-        Will be ignored if `candidate_sp` is provided.
+        At default None, uses ``min(10 * np.log10(nobs), nobs - 1)``.
+        Will be ignored if ``candidate_sp`` is provided.
     fft : bool, optional, default=True
         If True, computes the ACF via FFT.
     missing : str, ["none", "raise", "conservative", "drop"], optional, default="none"
@@ -51,7 +51,7 @@ class SeasonalityACF(BaseParamFitter):
     Attributes
     ----------
     sp_ : int, seasonality period at lowest p-level, if any sub-threshold, else 1
-        if `candidate_sp` is passed, will be in `candidate_sp` or 1
+        if ``candidate_sp`` is passed, will be in ``candidate_sp`` or 1
     sp_significant_ : list of int, seasonality periods with sub-threshold p-levels
         ordered increasingly by p-level. Empty list, not [1], if none are sub-threshold
 
@@ -187,7 +187,7 @@ class SeasonalityACF(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -195,8 +195,9 @@ class SeasonalityACF(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
@@ -208,13 +209,14 @@ class SeasonalityACF(BaseParamFitter):
 class SeasonalityACFqstat(BaseParamFitter):
     """Find candidate seasonality parameter using autocorrelation function LB q-stat.
 
-    Uses `statsmodels.tsa.stattools.act` for computing the autocorrelation function,
+    Uses ``statsmodels.tsa.stattools.act`` for computing the autocorrelation function,
     and uses its testing functionality to determine candidate seasonality parameters.
     ("seasonality parameter" are integer lags, and abbreviated by sp, below)
 
-    Obtains Ljung-Box q-statistic to test for candidate sp at `candidate_sp`.
+    Obtains Ljung-Box q-statistic to test for candidate sp at ``candidate_sp``.
 
-    Then applies `statsmodels.stats.multitest.multipletests` to correct multiple tests.
+    Then applies ``statsmodels.stats.multitest.multipletests`` to correct multiple
+    tests.
     Fitted attributes returned are significant sp and the most significant sp.
     These can be used in conditional or unconditional deseasonalization.
 
@@ -226,22 +228,22 @@ class SeasonalityACFqstat(BaseParamFitter):
     ----------
     candidate_sp : None, int or list of int, optional, default = None
         candidate sp to test, and to restrict tests to; ints must be 2 or larger
-        if None, will test all integer lags between 2 and `nlags` (inclusive)
+        if None, will test all integer lags between 2 and ``nlags`` (inclusive)
     p_threshold : float, optional, default=0.05
         significance threshold to apply in testing for seasonality
     p_adjust : str, optional, default="fdr_by" (Benjamini/Yekutieli)
         multiple testing correction applied to p-values of candidate sp in acf test
         multiple testing correction is applied to Ljung-Box tests on candidate_sp
-        values can be "none" or strings accepted by `statsmodels` `multipletests`
+        values can be "none" or strings accepted by ``statsmodels`` ``multipletests``
         "none" = no multiple testim correction is applied, raw p-values are used
         "fdr_by" = Benjamini-Yekutieli FDR control procedure
-        for other possible strings, see `statsmodels.stats.multitest.multipletests`
+        for other possible strings, see ``statsmodels.stats.multitest.multipletests``
     adjusted : bool, optional, default=False
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
         Number of lags to compute autocorrelations for and select from.
-        At default None, uses `min(10 * np.log10(nobs), nobs - 1)`.
-        Will be ignored if `candidate_sp` is provided.
+        At default None, uses ``min(10 * np.log10(nobs), nobs - 1)``.
+        Will be ignored if ``candidate_sp`` is provided.
     fft : bool, optional, default=True
         If True, computes the ACF via FFT.
     missing : str, ["none", "raise", "conservative", "drop"], optional, default="none"
@@ -257,7 +259,7 @@ class SeasonalityACFqstat(BaseParamFitter):
     Attributes
     ----------
     sp_ : int, seasonality period at lowest p-level, if any sub-threshold, else 1
-        if `candidate_sp` is passed, will be in `candidate_sp` or 1
+        if ``candidate_sp`` is passed, will be in ``candidate_sp`` or 1
     sp_significant_ : list of int, seasonality periods with sub-threshold p-levels
         ordered increasingly by p-level. Empty list, not [1], if none are sub-threshold
 
@@ -399,7 +401,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -407,8 +409,9 @@ class SeasonalityACFqstat(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
@@ -420,7 +423,7 @@ class SeasonalityACFqstat(BaseParamFitter):
 class SeasonalityPeriodogram(BaseParamFitter):
     """Score periodicities by their spectral power.
 
-    Interfacing `seasonal.periodogram` to determine candidate seasonality parameters.
+    Interfacing ``seasonal.periodogram`` to determine candidate seasonality parameters.
 
     Parameters
     ----------
@@ -514,7 +517,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -522,8 +525,9 @@ class SeasonalityPeriodogram(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"min_period": 5, "max_period": 24, "thresh": 0.1}

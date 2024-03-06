@@ -122,17 +122,19 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     def __add__(self, other):
         """Magic + method, return (right) concatenated FeatureUnion.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        TransformerPipeline object, concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-FeatureUnion `sktime` transformers
+        TransformerPipeline object, concatenation of ``self`` (first) with ``other``
+        (last).
+            not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
         other = _coerce_to_sktime(other)
         return self._dunder_concat(
@@ -146,17 +148,19 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     def __radd__(self, other):
         """Magic + method, return (left) concatenated FeatureUnion.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        TransformerPipeline object, concatenation of `self` (last) with `other` (first).
-            not nested, contains only non-FeatureUnion `sktime` transformers
+        TransformerPipeline object, concatenation of ``self`` (last) with ``other``
+        (first).
+            not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
         other = _coerce_to_sktime(other)
         return self._dunder_concat(
