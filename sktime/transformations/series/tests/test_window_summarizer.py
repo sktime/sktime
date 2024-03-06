@@ -104,7 +104,7 @@ Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
     [
         (
             kwargs_series,
-            ['0_mean_-1_1', '0_mean_-2_4'],
+            ['0_mean_-1_1', '0_mean_-1_2'],
             y_series,
             None,
             None,
