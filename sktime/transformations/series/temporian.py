@@ -2,7 +2,7 @@
 
 """Implementation of TemporianTransformer. Contributed by the Temporian team."""
 
-__author__ = ["ianspektor"]  # TODO: add other Temporian devs who contributed to this
+__author__ = ["ianspektor", "javiber"]
 
 from sktime.transformations.base import BaseTransformer
 
@@ -38,12 +38,8 @@ class TemporianTransformer(BaseTransformer):
 
     _tags = {
         "univariate-only": False,
-        "authors": [
-            "ianspektor"
-        ],  # TODO: add other Temporian devs who contributed to this
-        "maintainers": [
-            "ianspektor"
-        ],  # TODO: add other Temporian devs who will maintain this
+        "authors": ["ianspektor", "javiber"],
+        "maintainers": ["ianspektor", "javiber"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
@@ -59,14 +55,17 @@ class TemporianTransformer(BaseTransformer):
     }
 
     def __init__(self, function, compile=False):
+        import temporian as tp
+
         self.function = function
         self.compile = compile
+        if compile:
+            self.function = tp.compile(self.function)
 
         super().__init__()
 
         # TODO: ensure function receives a single EventSet/param with inspect module?
         #       or is failing in runtime OK?
-        # TODO: @tp.compile the function if self.compile is True
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
