@@ -77,12 +77,12 @@ kwargs_custom = {
     }
 }
 
-kwargs_series = {
+kwargs_negative_lags = {
     "lag_feature": {
         "mean": [[-1, 1], [-1, 2]],
     }
 }
-y_series = pd.DataFrame(np.arange(10))
+y_pd = pd.DataFrame(np.arange(10))
 
 # Generate named and unnamed y
 y_train.name = None
@@ -103,9 +103,9 @@ Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
     "kwargs, column_names, y, target_cols, truncate",
     [
         (
-            kwargs_series,
+            kwargs_negative_lags,
             ["0_mean_-1_1", "0_mean_-1_2"],
-            y_series,
+            y_pd,
             None,
             None,
         ),
