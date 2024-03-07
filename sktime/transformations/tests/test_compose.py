@@ -188,6 +188,7 @@ def test_featureunion_primitives():
     assert Xt.shape[1] == 2 * 9  # 9-feature summary statistics
     assert Xt.columns[0] == "SummaryTransformer_1__mean"  # unique naming
 
+
 def test_sklearn_after_primitives():
     """Test that sklearn transformer after primitives is correctly applied."""
     t = SummaryTransformer() * StandardScaler()
