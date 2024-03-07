@@ -998,7 +998,7 @@ class RandomShapeletTransform(BaseTransformer):
     contract_max_n_shapelet_samples : int, default=np.inf
         Max number of shapelets to extract when time_limit_in_minutes is set.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `transform`.
+        The number of jobs to run in parallel for both ``fit`` and ``transform``.
         ``-1`` means using all processors.
     parallel_backend : str, ParallelBackendBase instance or None, default=None
         Specify the parallelisation backend implementation in joblib, if None a 'prefer'
@@ -1330,15 +1330,16 @@ class RandomShapeletTransform(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {"max_shapelets": 5, "n_shapelet_samples": 50, "batch_size": 20}
 

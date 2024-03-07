@@ -61,7 +61,7 @@ class Repeat(BaseSplitter):
         self.clone_tags(splitter, tags_to_clone)
 
     def _split(self, y):
-        """Get iloc references to train/test splits of `y`.
+        """Get iloc references to train/test splits of ``y``.
 
         private _split containing the core logic, called from split
 
@@ -80,7 +80,7 @@ class Repeat(BaseSplitter):
         yield from self._repeat(y, method="split")
 
     def _split_loc(self, y):
-        """Get loc references to train/test splits of `y`.
+        """Get loc references to train/test splits of ``y``.
 
         private _split containing the core logic, called from split_loc
 
@@ -165,15 +165,16 @@ class Repeat(BaseSplitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.split import ExpandingWindowSplitter
 
