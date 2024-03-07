@@ -37,9 +37,7 @@ from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.transformations.panel.catch22wrapper import Catch22Wrapper
 from sktime.transformations.panel.random_intervals import RandomIntervals
-from sktime.transformations.panel.shapelet_transform._shapelet_transform import (
-    RandomShapeletTransform,
-)
+from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.supervised_intervals import SupervisedIntervals
 from sktime.transformations.series.summarize import SummaryTransformer
 
