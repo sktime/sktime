@@ -110,6 +110,13 @@ Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
             None,
         ),
         (
+            kwargs_negative_lags,
+            ["y_mean_-1_1", "y_mean_-1_2"],
+            y_hierarchical,
+            None,
+            None,
+        ),
+        (
             kwargs,
             ["y_lag_1", "y_mean_1_3", "y_mean_1_12", "y_std_1_4"],
             y_train_named,
