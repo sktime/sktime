@@ -91,14 +91,18 @@ class TemporianTransformer(BaseTransformer):
         timestamps_col = X_noindex.columns[0]
         evset = tp.from_pandas(X_noindex, timestamps=timestamps_col)
 
-        # TODO: check function returns a single EventSet
         # TODO: check res has same sampling as evset
         res = self.function(evset)
+        if not isinstance(res, tp.EventSet):
+            raise TypeError(
+                f"Expected return type to be an EventSet but received a {type(res)}"
+            )
+
+        # Test that the sampling was not modified, otherwise the conversion back to
+        # pandas and the set_index would not work as expected
+        res.check_same_sampling(evset)
 
         res = tp.to_pandas(res, timestamps=False)
-
-        # TODO: ensure that if res has same sampling as evset this assignment
-        # is always correct (timestamps and rows correspond)
         res = res.set_index(X.index)
 
         return res
