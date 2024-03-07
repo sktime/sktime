@@ -427,7 +427,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     Apply summarizer passed over a certain window
     of past observations, e.g. the mean of a window of length 7 days, lagged by 14 days.
 
-    Z: pandas Dataframe with a single column.
+    Z: pandas Dataframe with a single column or a pandas Series.
     name : str, base string of the derived features, will be appended by
         ``lag`` and window length parameters defined in window.
     summarizer: either str corresponding to pandas window function, currently
@@ -473,38 +473,37 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             if bfill is False:
                 feat = Z.apply(
                     lambda x: getattr(
-                        x.shift(lag).rolling(
-                            window=window_length, min_periods=window_length
-                        ),
+                        x.rolling(window=window_length, min_periods=window_length),
                         summarizer,
-                    )()
+                    )().shift(lag)
                 )
             else:
                 feat = Z.apply(
                     lambda x: getattr(
-                        x.shift(lag)
-                        .bfill()
-                        .rolling(window=window_length, min_periods=window_length),
+                        x.rolling(window=window_length, min_periods=window_length),
                         summarizer,
                     )()
+                    .shift(lag)
+                    .bfill()
                 )
     else:
-        if bfill is False:
-            feat = Z.shift(lag)
-        else:
-            feat = Z.shift(lag).bfill()
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
-            feat = feat.rolling(window_length).apply(summarizer, raw=True)
+            feat = Z.rolling(window_length).apply(summarizer, raw=True)
         elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
-            feat = feat.apply(
+            feat = Z.apply(
                 lambda x: x.rolling(
                     window=window_length, min_periods=window_length
                 ).apply(summarizer, raw=True)
             )
+        if bfill is False:
+            feat = Z.shift(lag)
+        else:
+            feat = Z.shift(lag).bfill()
+
         feat = pd.DataFrame(feat)
     if bfill is True:
         feat = feat.bfill()
