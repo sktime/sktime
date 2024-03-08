@@ -347,9 +347,6 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             params = [
                 {
                     "freq": "D",
-                    "inference_input_size": 2,
-                    "encoder_hidden_size": 2,
-                    "decoder_hidden_size": 3,
                     "max_steps": 4,
                     "trainer_kwargs": {"logger": False},
                 },
@@ -670,9 +667,6 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             params = [
                 {
                     "freq": "D",
-                    "inference_input_size": 2,
-                    "encoder_hidden_size": 2,
-                    "decoder_hidden_size": 3,
                     "max_steps": 4,
                     "trainer_kwargs": {"logger": False},
                 },
@@ -692,9 +686,6 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             params = [
                 {
                     "freq": "D",
-                    "inference_input_size": 2,
-                    "encoder_hidden_size": 2,
-                    "decoder_hidden_size": 3,
                     "max_steps": 4,
                     "trainer_kwargs": {"logger": False},
                 },
@@ -712,6 +703,159 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             ]
 
         return params
+
+
+class NeuralForecastAutoLSTM(_NeuralForecastAdapter):
+    def __init__(
+            self: "NeuralForecastLSTM",
+            freq: str,
+            local_scaler_type: typing.Optional[
+                typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
+            ] = None,
+            futr_exog_list: typing.Optional[typing.List[str]] = None,
+            verbose_fit: bool = False,
+            verbose_predict: bool = False,
+            loss=None,
+            valid_loss=None,
+            config: dict=None,
+            search_alg= None,
+            num_samples: int = 10,
+            backend: str = "ray",
+            verbose: bool = False,
+    ):
+        self.loss = loss
+        self.valid_loss = valid_loss
+        self.config = config
+        self.search_alg = search_alg
+        self.num_samples = num_samples
+        self.backend = backend
+        self.verbose = verbose
+
+        super().__init__(
+            freq,
+            local_scaler_type=local_scaler_type,
+            futr_exog_list=futr_exog_list,
+            verbose_fit=verbose_fit,
+            verbose_predict=verbose_predict,
+        )
+
+        self._loss = None
+        self._valid_loss = None
+        self._config = None
+        self._search_alg = None
+
+    @functools.cached_property
+    def algorithm_exogenous_support(self: "NeuralForecastAutoLSTM") -> bool:
+        """Set support for exogenous features."""
+        return True
+
+    @functools.cached_property
+    def algorithm_name(self: "NeuralForecastAutoLSTM") -> str:
+        """Set custom model name."""
+        return "AutoLSTM"
+
+    @functools.cached_property
+    def algorithm_class(self: "NeuralForecastAutoLSTM"):
+        """Import underlying NeuralForecast algorithm class."""
+        from neuralforecast.auto import AutoLSTM
+
+        return AutoLSTM
+
+    @functools.cached_property
+    def algorithm_parameters(self: "NeuralForecastAutoLSTM") -> dict:
+        """Get keyword parameters for the underlying NeuralForecast algorithm class.
+
+        Returns
+        -------
+        dict
+            keyword arguments for the underlying algorithm class
+        """
+        if self.loss:
+            self._loss = self.loss
+        else:
+            from neuralforecast.losses.pytorch import MAE
+
+            self._loss = MAE()
+
+        if self.valid_loss:
+            self._valid_loss = self.valid_loss
+
+        if self.config:
+            self._config = self.config
+
+        if self.search_alg:
+            self._search_alg = self.search_alg
+        else:
+            from ray.tune.search.basic_variant import BasicVariantGenerator
+
+            self._search_alg = BasicVariantGenerator(random_state=1)
+
+        # if self.callbacks:
+        #     self._callbacks = self.callbacks
+
+        return {
+            "loss": self._loss,
+            "valid_loss": self._valid_loss,
+            "config": self._config,
+            "search_alg": self._search_alg,
+            "num_samples": self.num_samples,
+            "backend": self.backend,
+            "verbose": self.verbose,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """ Return testing parameter settings for the estimator.
+
+
+            Parameters
+            ----------
+            parameter_set : str, default="default"
+                Name of the set of test parameters to return, for use in tests. If no
+                special parameters are defined for a value, will return `"default"` set.
+                There are currently no reserved values for forecasters.
+
+            Returns
+            -------
+            params : dict or list of dict, default = {}
+
+            """
+        del parameter_set
+
+        try:
+            _check_soft_dependencies("neuralforecast", severity="error")
+        except ModuleNotFoundError:
+            params = [
+                {
+                    "num_samples": 10,
+                    "backend": "ray",
+                },
+                {
+                    "num_samples": 10,
+                    "backend": "ray",
+                    "callbacks": None,
+                },
+            ]
+        else:
+            from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+
+            params = [
+                {
+                    "num_samples": 10,
+                    "backend": "ray",
+                },
+                {
+                    "num_samples": 10,
+                    "backend": "ray",
+                    "callbacks": None,
+                    "loss": QuantileLoss(0.5),
+                    "valid_loss": SMAPE()
+                },
+            ]
+
+        return params
+
+
 
 
 __all__ = [
