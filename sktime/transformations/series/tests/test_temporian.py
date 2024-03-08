@@ -199,10 +199,3 @@ def test_complex_function():
     result = transformer.fit_transform(X=X)
     assert result.iloc[0] == X.iloc[0]
     assert result.iloc[-1] == X.iloc[-3:].mean()
-
-
-# TODO: add more tests (non-exhaustive, off the top of my mind)
-# - test dtypes are preserved?
-# - error cases:
-#   - function raises
-#   - function is not callable

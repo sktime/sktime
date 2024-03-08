@@ -7,9 +7,6 @@ __author__ = ["ianspektor", "javiber"]
 from sktime.transformations.base import BaseTransformer
 
 
-# TODO: add usage example to docstring
-# see https://www.sktime.net/en/latest/developer_guide/dependencies.html#dependencies
-# for how to handle soft deps (temporian) there (need to not run doc tests on it)
 class TemporianTransformer(BaseTransformer):
     """Applies a Temporian function to the input time series.
 
@@ -29,6 +26,19 @@ class TemporianTransformer(BaseTransformer):
         decorator, which can lead to significant speedups by optimizing the graph of
         operations.
 
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.temporian import TemporianTransformer
+    >>> import temporian as tp  # doctest: +SKIP
+    >>>
+    >>> def function(evset):  # doctest: +SKIP
+    >>>    return evset.simple_moving_average(tp.duration.days(3 * 365))  \
+        # doctest: +SKIP
+    >>> transformer = TemporianTransformer(function=function)  # doctest: +SKIP
+    >>> X = load_airline()  # doctest: +SKIP
+    >>> X_averaged = transformer.fit_transform(X)  # doctest: +SKIP
+
     References
     ----------
     .. [1] https://temporian.readthedocs.io/en/stable/
@@ -44,7 +54,6 @@ class TemporianTransformer(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
-        # TODO: extend to pd-multiindex and pd_multiindex_hier
         "X_inner_mtype": "pd.DataFrame",
         "fit_is_empty": True,
         "capability:inverse_transform": False,
@@ -63,9 +72,6 @@ class TemporianTransformer(BaseTransformer):
             self.function = tp.compile(self.function)
 
         super().__init__()
-
-        # TODO: ensure function receives a single EventSet/param with inspect module?
-        #       or is failing in runtime OK?
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
