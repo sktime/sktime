@@ -91,7 +91,6 @@ class TemporianTransformer(BaseTransformer):
         timestamps_col = X_noindex.columns[0]
         evset = tp.from_pandas(X_noindex, timestamps=timestamps_col)
 
-        # TODO: check res has same sampling as evset
         res = self.function(evset)
         if not isinstance(res, tp.EventSet):
             raise TypeError(

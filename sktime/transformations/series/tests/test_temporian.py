@@ -6,6 +6,7 @@ __author__ = ["ianspektor", "javiber"]
 
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -74,17 +75,52 @@ def test_hier():
     not run_test_for_class(TemporianTransformer),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+def test_dtypes():
+    """Tests basic function works on all dtypes."""
+
+    def function(evset):
+        return evset + 1
+
+    X = pd.DataFrame(
+        {
+            str(dtype): np.zeros(10).astype(dtype)
+            for dtype in [
+                np.int32,
+                np.int64,
+                np.float32,
+                np.float64,
+                np.bool_,
+            ]
+        }
+    )
+    transformer = TemporianTransformer(function=function)
+    X_transformed = transformer.fit_transform(X=X)
+    pd.testing.assert_frame_equal(X_transformed, X + 1)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TemporianTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_compiled():
     """Tests function already compiled."""
     import temporian as tp
 
-    @tp.compile
     def function(evset):
         return evset + 1
 
     X = get_examples("pd.Series", as_scitype="Series")[0]
 
     transformer = TemporianTransformer(function=function, compile=True)
+    # assert the function was compiled
+    assert transformer.function.is_tp_compiled
+
+    X_transformed = transformer.fit_transform(X=X)
+    pd.testing.assert_series_equal(X_transformed, X + 1)
+
+    # test that an already compiled function down't cause errors
+    transformer = TemporianTransformer(function=tp.compile(function), compile=True)
+    assert transformer.function.is_tp_compiled
     X_transformed = transformer.fit_transform(X=X)
     pd.testing.assert_series_equal(X_transformed, X + 1)
 
@@ -94,7 +130,7 @@ def test_compiled():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_multiple_output():
-    """Tests function already compiled."""
+    """Tests errors when functions return incorrect types."""
 
     def function(evset):
         split = datetime(1950, 7, 16)
@@ -103,7 +139,9 @@ def test_multiple_output():
     X = load_airline()
 
     transformer = TemporianTransformer(function=function)
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError, match="Expected return type to be an EventSet but received"
+    ):
         _ = transformer.fit_transform(X=X)
 
 
@@ -112,7 +150,7 @@ def test_multiple_output():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_multiple_input():
-    """Tests function already compiled."""
+    """Tests errors on incorrectly defined functions."""
 
     def function(evset, incorrect_param):
         return evset + 1
@@ -120,7 +158,7 @@ def test_multiple_input():
     X = load_airline()
 
     transformer = TemporianTransformer(function=function)
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="missing 1 required positional"):
         _ = transformer.fit_transform(X=X)
 
 
@@ -129,7 +167,7 @@ def test_multiple_input():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_change_sampling():
-    """Tests function already compiled."""
+    """Tests error when changing the sampling."""
     import temporian as tp
 
     # in this dataset each row is a period of 1 year,
