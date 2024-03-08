@@ -82,7 +82,6 @@ kwargs_negative_lags = {
         "mean": [[-1, 1], [-1, 2]],
     }
 }
-y_pd = pd.DataFrame(np.arange(10))
 
 # Generate named and unnamed y
 y_train.name = None
@@ -104,7 +103,7 @@ Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
     [
         (
             kwargs_negative_lags,
-            ["0_mean_-1_1", "0_mean_-1_2"],
+            ["a_mean_-1_1", "a_mean_-1_2"],
             y_pd,
             None,
             None,
