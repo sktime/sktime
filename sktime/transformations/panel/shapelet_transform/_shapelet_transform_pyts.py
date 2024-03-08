@@ -110,9 +110,14 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.shapelet_transform
-    ... import ShapeletTransformPyts
-
+    >>> from sktime.transformations.panel.shapelet_transform import (
+    ...     ShapeletTransformPyts
+    ... )
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> stp = ShapeletTransformPyts()
+    >>> stp.fit(X_train,y_train)
+    >>> stp.transform(X_train)
     """
 
     _tags = {
@@ -127,8 +132,7 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": False,
         "fit_is_empty": False,
-        "x_inner_mtype": "nested_univ",
-        "y_inner_mtype": "np.ndarray",
+        "y_inner_mtype": "numpy1D",
         "requires_y": True,
     }
 
@@ -177,4 +181,16 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        params1 = {"criterion": "anova", "n_shapelets": 10}
+        params2 = {"window_sizes": [3]}
+        return [params1, params2]
