@@ -20,6 +20,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.parallel import parallelize
 from sktime.utils.validation import check_n_jobs
 
 
@@ -38,9 +39,35 @@ class Shapelet:
         The calculated information gain of this shapelet
     data: array-like
         The (z-normalised) data of this shapelet.
+    backend : str, optional
+        backend to use for parallelization, one of
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as ``"dask"``, but returns delayed object instead of list
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Valid keys depend on the value of ``backend``:
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
     """
 
-    def __init__(self, series_id, start_pos, length, info_gain, data):
+    def __init__(
+        self, series_id, start_pos, length, info_gain, data, backend, backend_params
+    ):
         self.series_id = series_id
         self.start_pos = start_pos
         self.length = length
@@ -1191,17 +1218,23 @@ class RandomShapeletTransform(BaseTransformer):
                 fit_time < time_limit
                 and n_shapelets_extracted < self.contract_max_n_shapelet_samples
             ):
-                candidate_shapelets = Parallel(
-                    n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
-                )(
-                    delayed(self._extract_random_shapelet)(
-                        X,
-                        y,
-                        n_shapelets_extracted + i,
-                        shapelets,
-                        max_shapelets_per_class,
-                    )
-                    for i in range(self._batch_size)
+                candidate_shapelets = parallelize(
+                    fun=self._extract_random_shapelet,
+                    iter=range(
+                        n_shapelets_extracted, n_shapelets_extracted + self._batch_size
+                    ),
+                    meta={
+                        "X": X,
+                        "y": y,
+                        "shapelets": shapelets,
+                        "max_shapelets_per_class": max_shapelets_per_class,
+                    },
+                    backend="joblib",
+                    backend_params={
+                        "n_jobs": self._n_jobs,
+                        "backend": self.parallel_backend,
+                        "prefer": "threads",
+                    },
                 )
 
                 for i, heap in enumerate(shapelets):
@@ -1228,17 +1261,24 @@ class RandomShapeletTransform(BaseTransformer):
                     else self._n_shapelet_samples - n_shapelets_extracted
                 )
 
-                candidate_shapelets = Parallel(
-                    n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
-                )(
-                    delayed(self._extract_random_shapelet)(
-                        X,
-                        y,
-                        n_shapelets_extracted + i,
-                        shapelets,
-                        max_shapelets_per_class,
-                    )
-                    for i in range(n_shapelets_to_extract)
+                candidate_shapelets = parallelize(
+                    fun=self._extract_random_shapelet,
+                    iter=range(
+                        n_shapelets_extracted,
+                        n_shapelets_extracted + n_shapelets_to_extract,
+                    ),
+                    meta={
+                        "X": X,
+                        "y": y,
+                        "shapelets": shapelets,
+                        "max_shapelets_per_class": max_shapelets_per_class,
+                    },
+                    backend="joblib",
+                    backend_params={
+                        "n_jobs": self._n_jobs,
+                        "backend": self.parallel_backend,
+                        "prefer": "threads",
+                    },
                 )
 
                 for i, heap in enumerate(shapelets):
