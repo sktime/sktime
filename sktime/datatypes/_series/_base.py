@@ -10,7 +10,7 @@ class BaseSeries(BaseDatatype):
     """Base class for Series data types.
 
     Parameters are inferred by check.
-    
+
     Parameters
     ----------
     is_univariate: bool
@@ -24,8 +24,9 @@ class BaseSeries(BaseDatatype):
     n_features: int
         number of variables in series
     feature_names: list of int or object
-        names of variables in series  
+        names of variables in series
     """
+
     _tags = {
         "scitype": "Series",
         "name": None,  # any string

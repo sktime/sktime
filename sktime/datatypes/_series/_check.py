@@ -58,7 +58,7 @@ class SeriesDataFrame(BaseSeries):
     """Base class for Series data types.
 
     Parameters are inferred by check.
-    
+
     Parameters
     ----------
     is_univariate: bool
@@ -72,7 +72,7 @@ class SeriesDataFrame(BaseSeries):
     n_features: int
         number of variables in series
     feature_names: list of int or object
-        names of variables in series  
+        names of variables in series
     """
 
     _tags = {
@@ -124,7 +124,7 @@ class SeriesDataFrame(BaseSeries):
         msg : str, only returned if return_metadata is True.
             Error message if obj is not of this data type.
         metadata : dict, only returned if return_metadata is True.
-            Metadata dictionary. 
+            Metadata dictionary.
         """
         metadata = dict()
 

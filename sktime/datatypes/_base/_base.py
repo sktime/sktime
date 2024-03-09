@@ -13,6 +13,7 @@ class BaseDatatype(BaseObject):
 
     This class is the base class for all data types in sktime.
     """
+
     _tags = {
         "obj_type": "mtype",
         "scitype": None,
@@ -162,6 +163,7 @@ class BaseConverter(BaseObject):
 
     This class is the base class for all data type converters in sktime.
     """
+
     _tags = {
         "scitype": None,
         "mtype_from": None,  # equal to name field
