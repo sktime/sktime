@@ -247,7 +247,7 @@ tests = [
   "pytest>=7.4,<8.1",
   "pytest-cov<4.2,>=4.1",
   "pytest-randomly<3.16,>=3.15",
-  "pytest-timeout>=2.1,<2.3",
+  "pytest-timeout>=2.1,<2.4",
   "pytest-xdist>=3.3,<3.6",
 ]
 
