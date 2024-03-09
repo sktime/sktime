@@ -572,7 +572,7 @@ class BaseEstimator(BaseObject):
             )
 
         if not deep:
-            return self._gfp_non_nested_plugin()
+            return _gfp_non_nested_plugin()
 
         fitted_params = {}
         get_fitted_params_from_plugins = [
