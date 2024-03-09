@@ -22,6 +22,7 @@ The standard conventions for defining new plugins are as follows:
 
 __author__ = ["achieveordie", "fkiraly"]
 __all__ = [
+    "_gfp_default",
     "_gfp_non_nested_plugin",
     "_gfp_nested_skbase_plugin",
     "_gfp_nested_sklearn_plugin",
@@ -31,6 +32,41 @@ __all__ = [
 from sklearn.base import BaseEstimator as _BaseEstimator
 
 from sktime.base import BaseEstimator
+
+
+def _gfp_default(obj, pname=""):
+    """Obtain fitted params of object, per sklearn convention.
+
+    Extracts a dict with {paramstr : paramvalue} contents,
+    where paramstr are all string names of "fitted parameters".
+
+    A "fitted attribute" of obj is one that ends in "_" but does not start with "_".
+    "fitted parameters" are names of fitted attributes, minus the "_" at the end.
+
+    Parameters
+    ----------
+    obj : any object, optional, default=self
+    pname: str, default=''
+        The name of the parent component of `obj`, used to append as
+        "name__{component_name}". If parent name is not required then
+        key will only be "{component_name}".
+
+    Returns
+    -------
+    fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+    """
+    # append '__' in case parent name is present
+    pname = f"{pname}__" if pname != "" else ""
+
+    # default retrieves all self attributes ending in "_"
+    # and returns them with keys that have the "_" removed
+    fitted_params = {
+        f"{pname}{attr[:-1]}": getattr(obj, attr)
+        for attr in dir(obj)
+        if attr.endswith("_") and not attr.startswith("_") and hasattr(obj, attr)
+    }
+    return fitted_params
 
 
 def _gfp_non_nested_plugin(obj, pname=""):
@@ -47,7 +83,7 @@ def _gfp_non_nested_plugin(obj, pname=""):
     fitted_params : dict with str keys
         fitted parameters, keyed by names of fitted parameter
     """
-    return obj._get_fitted_params_default(pname=pname)
+    return _gfp_default(obj=obj, pname=pname)
 
 
 def _gfp_nested_skbase_plugin(obj):

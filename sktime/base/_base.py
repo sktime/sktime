@@ -62,12 +62,6 @@ from copy import deepcopy
 from skbase.base import BaseObject as _BaseObject
 from sklearn import clone
 
-from sktime.base._base_gfp_plugins import (
-    _gfp_nested_skbase_plugin,
-    _gfp_nested_sklearn_plugin,
-    _gfp_non_nested_plugin,
-    _gfp_sklearn_pipeline_plugin,
-)
 from sktime.exceptions import NotFittedError
 from sktime.utils.random_state import set_random_state
 
@@ -564,6 +558,13 @@ class BaseEstimator(BaseObject):
             * if `deep=True`, also contains arbitrary levels of component recursion,
               e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
+        from sktime.base._base_gfp_plugins import (
+            _gfp_nested_skbase_plugin,
+            _gfp_nested_sklearn_plugin,
+            _gfp_non_nested_plugin,
+            _gfp_sklearn_pipeline_plugin,
+        )
+
         if not self.is_fitted:
             raise NotFittedError(
                 f"estimator of type {type(self).__name__} has not been "
@@ -608,19 +609,10 @@ class BaseEstimator(BaseObject):
         fitted_params : dict with str keys
             fitted parameters, keyed by names of fitted parameter
         """
+        from sktime.base._base_gfp_plugins import _gfp_default
+
         obj = obj if obj else self
-
-        # append '__' in case parent name is present
-        pname = f"{pname}__" if pname != "" else ""
-
-        # default retrieves all self attributes ending in "_"
-        # and returns them with keys that have the "_" removed
-        fitted_params = {
-            f"{pname}{attr[:-1]}": getattr(obj, attr)
-            for attr in dir(obj)
-            if attr.endswith("_") and not attr.startswith("_") and hasattr(obj, attr)
-        }
-        return fitted_params
+        return _gfp_default(obj, pname)
 
     def _get_fitted_params(self):
         """Get fitted parameters.
