@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sktime.datasets import load_airline
-from sktime.transformations.series.detrend import MSTL
+from sktime.transformations.series.detrend.mstl import MSTL
 
 def test_transform_returns_correct_components():
     # TODO: See if we need to create a fresh time series dataset?
