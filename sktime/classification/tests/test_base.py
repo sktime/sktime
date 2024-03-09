@@ -501,7 +501,7 @@ def test_deep_estimator_full(optimizer):
 
         # assert weights of optimizers are same
         assert (
-            full_dummy.optimizer.variables() == deserialized_full.optimizer.variables()
+            full_dummy.optimizer.variables == deserialized_full.optimizer.variables
         )
 
         # remove optimizers from both to do full dict check,
