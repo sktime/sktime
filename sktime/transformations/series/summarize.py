@@ -427,7 +427,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     Apply summarizer passed over a certain window
     of past observations, e.g. the mean of a window of length 7 days, lagged by 14 days.
 
-    Z: pandas Dataframe with a single column or a pandas Series.
+    Z: pandas Dataframe with a single column.
     name : str, base string of the derived features, will be appended by
         ``lag`` and window length parameters defined in window.
     summarizer: either str corresponding to pandas window function, currently
