@@ -327,7 +327,10 @@ class BaseDeepClassifier(BaseClassifier, ABC):
                 _check_soft_dependencies("tensorflow>=2.16.0", severity="none")
                 or not legacy_save
             ):
-                self.model_.save(path / "keras.keras")
+                if str(path).endswith(".keras"):
+                    self.model_.save(path)
+                else:
+                    self.model_.save(path.with_suffix(".keras"))
             else:
                 from warnings import warn
 
@@ -425,8 +428,11 @@ class BaseDeepClassifier(BaseClassifier, ABC):
                     continue
                 zip_file.extract(file, temp_unzip_loc)
 
-        keras_location = temp_unzip_loc / "keras"
+        keras_location_legacy = temp_unzip_loc / "keras"
+        keras_location = serial.with_suffix(".keras")
         if keras_location.exists():
+            cls.model_ = keras.models.load_model(keras_location)
+        elif keras_location_legacy.exists():
             cls.model_ = keras.models.load_model(keras_location)
         else:
             cls.model_ = None
