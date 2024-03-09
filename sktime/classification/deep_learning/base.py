@@ -211,17 +211,19 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         if hasattr(self, "history"):
             self.__dict__["history"] = self.history
 
-    def save(self, path=None, serialization_format="pickle"):
+    def save(self, path=None, serialization_format="pickle", legacy_save=False):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
         if ``path`` is None, returns an in-memory serialized self
-        if ``path`` is a file, stores the zip with that name at the location.
+        if ``path`` is a file and legacy_save=False, stores the zip
+        with that name at the location.
         The contents of the zip file are:
         _metadata - contains class of self, i.e., type(self).
         _obj - serialized self. This class uses the default serialization (pickle).
         keras/ - model, optimizer and state stored inside this directory.
         history - serialized history object.
+        For legacy_save=True, the ending needs to be ".keras" or ".h5"
 
 
         Parameters
@@ -239,11 +241,19 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             ``sktime.base._base.SERIALIZATION_FORMATS``. Note that non-default formats
             might require installation of other soft dependencies.
 
+        legacy_save     : bool, default = True
+            whether to use the legacy saving method for the model. If
+            tensorflow >= 2.16.0 is installed, this is ignored.
+            The default will switch to False in sktime 0.28.0, and the
+            legacy saving method will be removed in sktime 0.29.0.
+
         Returns
         -------
         if ``path`` is None - in-memory serialized self
         if ``path`` is file location - ZipFile with reference to the file
         """
+        # TODO - remove the legacy_save parameter in sktime 0.29.0
+        # TODO - change the default value of legacy_save to False in sktime 0.28.0
         import pickle
         from pathlib import Path
 
@@ -272,6 +282,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
                 path=path,
                 dump=cloudpickle.dump,
                 dumps=cloudpickle.dumps,
+                legacy_save=legacy_save,
             )
 
         elif serialization_format == "pickle":
@@ -279,9 +290,10 @@ class BaseDeepClassifier(BaseClassifier, ABC):
                 path=path,
                 dump=pickle.dump,
                 dumps=pickle.dumps,
+                legacy_save=legacy_save,
             )
 
-    def _serialize_using_dump_func(self, path, dump, dumps):
+    def _serialize_using_dump_func(self, path, dump, dumps, legacy_save=False):
         """Serialize & return DL Estimator using ``dump`` and ``dumps`` functions."""
         import shutil
         from zipfile import ZipFile
@@ -311,10 +323,19 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             )
 
         if self.model_ is not None:
-            if _check_soft_dependencies("tensorflow>=2.16.0", severity="none"):
+            if (
+                _check_soft_dependencies("tensorflow>=2.16.0", severity="none")
+                or not legacy_save
+            ):
                 self.model_.save(path / "keras.keras")
             else:
-                # Legacy save
+                from warnings import warn
+
+                warn(
+                    "WARNING: The default value of legacy_warning switches to False",
+                    "in sktime 0.28.0, and the",
+                    "legacy saving method will be removed in sktime 0.29.0.",
+                )
                 self.model_.save(path / "keras/")
 
         with open(path / "history", "wb") as history_writer:
