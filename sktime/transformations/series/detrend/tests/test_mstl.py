@@ -1,7 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests MSTL functionality."""
 
-__all__ = ["test-MSTL"]
 __authors__ = ["krishna-t"]
 
 import numpy as np
