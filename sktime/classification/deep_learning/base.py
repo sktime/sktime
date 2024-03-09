@@ -311,7 +311,11 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             )
 
         if self.model_ is not None:
-            self.model_.save(path / "keras/")
+            if _check_soft_dependencies("tensorflow>=2.16.0", severity="none"):
+                self.model_.save(path / "keras.keras")
+            else:
+                # Legacy save
+                self.model_.save(path / "keras/")
 
         with open(path / "history", "wb") as history_writer:
             dump(history, history_writer)
