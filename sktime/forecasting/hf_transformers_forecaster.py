@@ -3,10 +3,12 @@
 from copy import deepcopy
 
 import pandas as pd
+import numpy as np
 import torch
 from skpro.distributions import Normal, TDistribution
 from torch.utils.data import DataLoader, Dataset
-from transformers import AutoformerForPrediction
+from transformers import InformerForPrediction, Trainer, TrainingArguments, AutoformerForPrediction
+from sktime.forecasting.base import ForecastingHorizon
 
 from sktime.forecasting.base import BaseForecaster
 
@@ -23,18 +25,13 @@ class HFTransformersForecaster(BaseForecaster):
         Path to the huggingface model to use for forecasting
     fit_strategy : str, default="minimal"
         Strategy to use for fitting the model. Can be "minimal" or "full"
-    patience : int, default=5
-        Number of epochs to wait before early stopping
-    delta : float, default=0.0001
-        Minimum change in validation loss to be considered an improvement
     validation_split : float, default=0.2
         Fraction of the data to use for validation
-    batch_size : int, default=32
-        Batch size to use for training
-    epochs : int, default=10
-        Number of epochs to train the model
-    verbose : bool, default=False
-        Whether to print training information
+    config : dict, default={}
+        Configuration to use for the model.
+    training_args : dict, default={}
+        Training arguments to use for the model. See `transformers.TrainingArguments` for details.
+        Note that the `output_dir` argument is required.
 
     Examples
     --------
@@ -58,7 +55,7 @@ class HFTransformersForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "handles-missing-data": False,
-        "capability:pred_int": True,
+        "capability:pred_int": False,
         "python_dependencies": ["transformers", "torch"],
     }
 
@@ -66,35 +63,41 @@ class HFTransformersForecaster(BaseForecaster):
         self,
         model_path: str,
         fit_strategy="minimal",
-        patience=5,
-        delta=0.0001,
         validation_split=0.2,
-        batch_size=32,
-        epochs=10,
-        verbose=True,
+        config={},
+        training_args={},
+        compute_metrics=None,
     ):
         super().__init__()
         self.model_path = model_path
         self.fit_strategy = fit_strategy
-        self.patience = patience
-        self.delta = delta
         self.validation_split = validation_split
-        self.batch_size = batch_size
-        self.epochs = epochs
-        self.verbose = verbose
+        self.config = config
+        self.training_args = training_args
+        self.compute_metrics = compute_metrics 
+        self._compute_metrics = compute_metrics if compute_metrics is not None else []
 
     def _fit(self, y, X, fh):
         # Load model and extract config
-        config = AutoformerForPrediction.from_pretrained(self.model_path).config
+        config = InformerForPrediction.from_pretrained(self.model_path).config
 
         # Update config with user provided config
         _config = config.to_dict()
         _config.update(self.config)
-        _config["num_dynamic_real_features"] = X.shape[-1]
+        _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
+        _config["num_static_real_features"] = 0
+        _config["num_static_categorical_features"] = 0
+        _config["num_time_features"] = 0
+        # TODO set prediction length here by using the fh. If not the user has to provide at least at much data as the prediction length is long...
+        # It must be at length due to the batch normalisation..
+        #_config["prediction_length"] = max(fh.to_relative(self._cutoff)._values)
+        del _config["feature_size"]
+
+
         config = config.from_dict(_config)
 
         # Load model with the updated config
-        self.model, info = AutoformerForPrediction.from_pretrained(
+        self.model, info = InformerForPrediction.from_pretrained(
             self.model_path,
             config=config,
             output_loading_info=True,
@@ -118,127 +121,117 @@ class HFTransformersForecaster(BaseForecaster):
                 _model.weight.masked_fill(_model.weight.isnan(), 0.001),
                 requires_grad=True,
             )
+        
+        if self.validation_split is not None:
+            split = int(len(y) * (1 - self.validation_split))
 
-        split = int(len(y) * (1 - self.validation_split))
+            train_dataset = PyTorchDataset(
+                y[:split],
+                config.context_length + max(config.lags_sequence),
+                X=X[:split] if X is not None else None,
+                fh=config.prediction_length,
+            )
 
-        dataset = PyTorchDataset(
-            y[:split],
-            config.context_length + max(config.lags_sequence),
-            X=X[:split],
-            fh=config.prediction_length,
-        )
-        data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+            eval_dataset = PyTorchDataset(
+                y[split:],
+                config.context_length + max(config.lags_sequence),
+                X=X[split:] if X is not None else None,
+                fh=config.prediction_length,
+            )
+        else:
+            train_dataset = PyTorchDataset(
+                y,
+                config.context_length + max(config.lags_sequence),
+                X=X if X is not None else None,
+                fh=config.prediction_length,
+            )
 
-        val_dataset = PyTorchDataset(
-            y[split:],
-            config.context_length + max(config.lags_sequence),
-            X=X[split:],
-            fh=config.prediction_length,
-        )
-        val_data_loader = DataLoader(
-            val_dataset, batch_size=len(val_dataset), shuffle=False
-        )
+            eval_dataset = None
 
-        self.model.model.train()
+        
+        training_args = TrainingArguments(
+            **self.training_args
+            )
 
-        early_stopper = EarlyStopper(patience=self.patience, min_delta=self.delta)
-        self.optim = torch.optim.Adam(self.model.parameters())
 
         if self.fit_strategy == "minimal":
             if len(info["mismatched_keys"]) == 0:
                 return  # No need to fit
-            val_loss = float("inf")
-            for epoch in range(self.epochs):
-                if not early_stopper.early_stop(val_loss, self.model):
-                    val_loss = self._run_epoch(data_loader, val_data_loader, epoch)
         elif self.fit_strategy == "full":
             for param in self.model.parameters():
                 param.requires_grad = True
-            val_loss = float("inf")
-            for epoch in self.epochs:
-                if not early_stopper.early_stop(val_loss, self.model):
-                    val_loss = self._run_epoch(data_loader, val_data_loader, epoch)
         else:
             raise Exception("Unknown fit strategy")
 
-        self.model = early_stopper._best_model
+        trainer = Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            compute_metrics=self._compute_metrics,
+        )
+        trainer.train()
 
-    def _run_epoch(self, data_loader, val_data_loader, epoch):
-        epoch_loss = 0
-        for i, _input in enumerate(data_loader):
-            (hist, hist_x, x_, y_) = _input
-            pred = self.model(
-                past_values=hist,
-                past_time_features=hist_x,
-                future_time_features=x_,
-                past_observed_mask=None,
-                future_values=y_,
-            )
-            self.optim.zero_grad()
-            pred.loss.backward()
-            self.optim.step()
-            if i % 100 == 0:
-                hist, hist_x, x_, y_ = next(iter(val_data_loader))
-                val_pred = self.model(
-                    past_values=hist,
-                    past_time_features=hist_x,
-                    future_time_features=x_,
-                    past_observed_mask=None,
-                    future_values=y_,
-                )
-                epoch_loss = val_pred.loss.detach().numpy()
-                if self.verbose:
-                    print(  # noqa T201
-                        epoch,
-                        i,
-                        pred.loss.detach().numpy(),
-                        val_pred.loss.detach().numpy(),
-                    )
-
-        return epoch_loss
 
     def _predict(self, fh, X=None):
-        hist = self.y_.values.reshape((1, -1))
-        hist_x = self.X_.values.reshape((1, -1, self.X_.shape[-1]))
-        x_ = X.values.reshape((1, -1, self.X_.shape[-1]))
+        self.model.eval()
+        from torch import from_numpy, tensor
+        hist = self._y.values.reshape((1, -1))
+        if X is not None:
+            hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
+            x_ = X.values.reshape((1, -1, self._X.shape[-1]))
+            if x_.shape[1] < self.model.config.prediction_length:
+                x_ = np.resize(x_, (1, self.model.config.prediction_length, x_.shape[-1]))
+        else:
+            hist_x = tensor([[]] * self.model.config.context_length + max(self.model.config.lags_sequence))
+            x_ = tensor([[]] * self.model.config.prediction_length)
         pred = self.model.generate(
-            past_values=hist,
-            past_time_features=hist_x,
-            future_time_features=x_,
-            past_observed_mask=None,
+            past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
+            past_time_features=from_numpy(hist_x[:, -self.model.config.context_length-max(self.model.config.lags_sequence):]).to(self.model.dtype).to(self.model.device),
+            future_time_features=from_numpy(x_).to(self.model.dtype).to(self.model.device),
+            past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(self.model.device)
         )
 
-        pred = pred.mean(dim=1).detach().numpy()
+        pred = pred.sequences.mean(dim=1).detach().cpu().numpy().T
 
-        pred = pd.Series(pred, index=X.index)
-        return pred[fh.to_relative(self.cutoff)]
+        pred = pd.DataFrame(pred, index=ForecastingHorizon(range(len(pred))).to_absolute(self._cutoff)._values)
+        return pred.loc[fh.to_absolute(self.cutoff)._values]
 
     def _predict_proba(self, fh, X=None):
-        hist = self.y_.values.reshape((1, -1))
-        hist_x = self.X_.values.reshape((1, -1, self.X_.shape[-1]))
-        x_ = X.values.reshape((1, -1, self.X_.shape[-1]))
+        self.model.eval()
+        from torch import from_numpy, tensor
+        hist = self._y.values.reshape((1, -1))
+        hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
+        x_ = X.values.reshape((1, -1, self._X.shape[-1]))
+
+        if x_.shape[1] < self.model.config.prediction_length:
+            x_ = np.resize(x_, (1, self.model.config.prediction_length, x_.shape[-1]))
         pred = self.model(
-            past_values=hist,
-            past_time_features=hist_x,
-            future_time_features=x_,
-            past_observed_mask=None,
+            past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
+            past_time_features=from_numpy(hist_x[:, -self.model.config.context_length-max(self.model.config.lags_sequence):]).to(self.model.dtype).to(self.model.device),
+            future_time_features=from_numpy(x_).to(self.model.dtype).to(self.model.device),
+            past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(self.model.device)
         )
 
-        if self.model.config.distribution == "normal":
+        dist_attrs = ["distribution", "distribution_output"]
+        dist_name = list(filter(lambda x: hasattr(self.model.config, x), dist_attrs))[0]
+
+        if getattr(self.model.config, dist_name) == "normal":
             return Normal(
                 pred.params[0].detach().numpy(), pred.params[1].detach().numpy()
             )
-        elif self.model.config.distribution == "student_t":
+        elif getattr(self.model.config, dist_name)== "student_t":
             return TDistribution(
                 pred.params[0].detach().numpy(),
                 pred.params[1].detach().numpy(),
                 pred.params[2].detach().numpy(),
             )
-        elif self.model.config.distribution == "negative_binomial":
+        elif getattr(self.model.config, dist_name)== "negative_binomial":
             raise Exception("Not implemented yet")
         else:
             raise Exception("Unknown distribution")
 
+    @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
@@ -258,9 +251,18 @@ class HFTransformersForecaster(BaseForecaster):
         """
         return [
             {
-                "model_path": "huggingface/autoformer-tourism-monthly",
+                "model_path": "huggingface/informer-tourism-monthly",
                 "fit_strategy": "minimal",
-                "epochs": 1,
+                "training_args": {
+                    "num_train_epochs": 1,
+                    "output_dir": "test_output",
+                },
+                "config" : {
+                    "lags_sequence": [1, 2, 3],
+                    "context_length": 2,
+                    "prediction_length": 4,
+                    "use_cpu": True,
+                }
             }
         ]
 
@@ -289,57 +291,14 @@ class PyTorchDataset(Dataset):
             ).float()
             hist_exog = tensor(self.X[i : i + self.seq_len]).float()
         else:
-            exog_data = tensor([])
-            hist_exog = tensor([])
+            exog_data = tensor([[]] * self.seq_len)
+            hist_exog = tensor([[]] * self.fh)
         return (
-            hist_y,
-            hist_exog,
-            exog_data,
-            from_numpy(self.y[i + self.seq_len : i + self.seq_len + self.fh]).float(),
+{            "past_values" :hist_y,
+            "past_time_features" : hist_exog,
+            "future_time_features" : exog_data,
+            "past_observed_mask": (~hist_y.isnan()).to(int),
+            "future_values" : from_numpy(self.y[i + self.seq_len : i + self.seq_len + self.fh]).float(),}
         )
 
 
-class EarlyStopper:
-    """
-    Early stopping for training deep learning models.
-
-    Parameters
-    ----------
-    patience : int, default=1
-        Number of epochs to wait before early stopping
-    min_delta : float, default=0
-        Minimum change in validation loss to be considered an improvement
-    """
-
-    def __init__(self, patience=1, min_delta=0):
-        self.patience = patience
-        self.min_delta = min_delta
-        self.counter = 0
-        self.min_validation_loss = float("inf")
-
-    def early_stop(self, validation_loss, model):
-        """
-        Check if early stopping should be performed.
-
-        Paramters
-        ---------
-        validation_loss : float
-            Current validation loss
-        model : object
-            Current model
-
-        Returns
-        -------
-        early_stop : bool
-            Whether to perform early stopping
-
-        """
-        if validation_loss < self.min_validation_loss:
-            self.min_validation_loss = validation_loss
-            self.counter = 0
-            self._best_model = deepcopy(model)
-        elif validation_loss > (self.min_validation_loss + self.min_delta):
-            self.counter += 1
-            if self.counter >= self.patience:
-                return True
-        return False
