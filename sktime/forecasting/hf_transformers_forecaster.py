@@ -57,6 +57,10 @@ class HFTransformersForecaster(BaseForecaster):
         "handles-missing-data": False,
         "capability:pred_int": False,
         "python_dependencies": ["transformers", "torch"],
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.Series",
+        "capability:insample": False,
+
     }
 
     def __init__(
@@ -88,9 +92,7 @@ class HFTransformersForecaster(BaseForecaster):
         _config["num_static_real_features"] = 0
         _config["num_static_categorical_features"] = 0
         _config["num_time_features"] = 0
-        # TODO set prediction length here by using the fh. If not the user has to provide at least at much data as the prediction length is long...
-        # It must be at length due to the batch normalisation..
-        #_config["prediction_length"] = max(fh.to_relative(self._cutoff)._values)
+
         del _config["feature_size"]
 
 
@@ -177,14 +179,16 @@ class HFTransformersForecaster(BaseForecaster):
         self.model.eval()
         from torch import from_numpy, tensor
         hist = self._y.values.reshape((1, -1))
+        self.model.config.prediction_length = max(fh.to_relative(self._cutoff)._values)
         if X is not None:
             hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
             x_ = X.values.reshape((1, -1, self._X.shape[-1]))
             if x_.shape[1] < self.model.config.prediction_length:
                 x_ = np.resize(x_, (1, self.model.config.prediction_length, x_.shape[-1]))
         else:
-            hist_x = tensor([[]] * self.model.config.context_length + max(self.model.config.lags_sequence))
-            x_ = tensor([[]] * self.model.config.prediction_length)
+            hist_x = np.array([[[]] * (self.model.config.context_length + max(self.model.config.lags_sequence))])
+            x_ = np.array([[[]] * self.model.config.prediction_length])
+
         pred = self.model.generate(
             past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
             past_time_features=from_numpy(hist_x[:, -self.model.config.context_length-max(self.model.config.lags_sequence):]).to(self.model.dtype).to(self.model.device),
@@ -194,42 +198,46 @@ class HFTransformersForecaster(BaseForecaster):
 
         pred = pred.sequences.mean(dim=1).detach().cpu().numpy().T
 
-        pred = pd.DataFrame(pred, index=ForecastingHorizon(range(len(pred))).to_absolute(self._cutoff)._values)
+        pred = pd.Series(pred.reshape((-1,)), 
+                            index=ForecastingHorizon(range(1, len(pred) + 1)).to_absolute(self._cutoff)._values,
+                            #columns=self._y.columns
+                            name = self._y.name
+                            )
         return pred.loc[fh.to_absolute(self.cutoff)._values]
 
-    def _predict_proba(self, fh, X=None):
-        self.model.eval()
-        from torch import from_numpy, tensor
-        hist = self._y.values.reshape((1, -1))
-        hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
-        x_ = X.values.reshape((1, -1, self._X.shape[-1]))
+    # def _predict_proba(self, fh, X=None):
+    #     self.model.eval()
+    #     from torch import from_numpy, tensor
+    #     hist = self._y.values.reshape((1, -1))
+    #     hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
+    #     x_ = X.values.reshape((1, -1, self._X.shape[-1]))
 
-        if x_.shape[1] < self.model.config.prediction_length:
-            x_ = np.resize(x_, (1, self.model.config.prediction_length, x_.shape[-1]))
-        pred = self.model(
-            past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
-            past_time_features=from_numpy(hist_x[:, -self.model.config.context_length-max(self.model.config.lags_sequence):]).to(self.model.dtype).to(self.model.device),
-            future_time_features=from_numpy(x_).to(self.model.dtype).to(self.model.device),
-            past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(self.model.device)
-        )
+    #     if x_.shape[1] < self.model.config.prediction_length:
+    #         x_ = np.resize(x_, (1, self.model.config.prediction_length, x_.shape[-1]))
+    #     pred = self.model(
+    #         past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
+    #         past_time_features=from_numpy(hist_x[:, -self.model.config.context_length-max(self.model.config.lags_sequence):]).to(self.model.dtype).to(self.model.device),
+    #         future_time_features=from_numpy(x_).to(self.model.dtype).to(self.model.device),
+    #         past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(self.model.device)
+    #     )
 
-        dist_attrs = ["distribution", "distribution_output"]
-        dist_name = list(filter(lambda x: hasattr(self.model.config, x), dist_attrs))[0]
+    #     dist_attrs = ["distribution", "distribution_output"]
+    #     dist_name = list(filter(lambda x: hasattr(self.model.config, x), dist_attrs))[0]
 
-        if getattr(self.model.config, dist_name) == "normal":
-            return Normal(
-                pred.params[0].detach().numpy(), pred.params[1].detach().numpy()
-            )
-        elif getattr(self.model.config, dist_name)== "student_t":
-            return TDistribution(
-                pred.params[0].detach().numpy(),
-                pred.params[1].detach().numpy(),
-                pred.params[2].detach().numpy(),
-            )
-        elif getattr(self.model.config, dist_name)== "negative_binomial":
-            raise Exception("Not implemented yet")
-        else:
-            raise Exception("Unknown distribution")
+    #     if getattr(self.model.config, dist_name) == "normal":
+    #         return Normal(
+    #             pred.params[0].detach().numpy(), pred.params[1].detach().numpy()
+    #         )
+    #     elif getattr(self.model.config, dist_name)== "student_t":
+    #         return TDistribution(
+    #             pred.params[0].detach().numpy(),
+    #             pred.params[1].detach().numpy(),
+    #             pred.params[2].detach().numpy(),
+    #         )
+    #     elif getattr(self.model.config, dist_name)== "negative_binomial":
+    #         raise Exception("Not implemented yet")
+    #     else:
+    #         raise Exception("Unknown distribution")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -256,6 +264,7 @@ class HFTransformersForecaster(BaseForecaster):
                 "training_args": {
                     "num_train_epochs": 1,
                     "output_dir": "test_output",
+                    "per_device_train_batch_size" : 32, # TODO create a bug report in HF if len(data) % batch_size == 1 -> BatchNorm is
                 },
                 "config" : {
                     "lags_sequence": [1, 2, 3],
