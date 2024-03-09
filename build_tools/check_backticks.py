@@ -6,46 +6,54 @@
 __author__ = ["geetu040"]
 
 import ast
-import os
+import glob
 import re
 
 
 def find_py_files(folder_path):
     """Find all Python files in a given folder path."""
-    py_files = []
-    for root, _, files in os.walk(folder_path):
-        for file in files:
-            if file.endswith(".py"):
-                py_files.append(os.path.join(root, file))
-    return py_files
+    return glob.glob(f"{folder_path}/**/*.py", recursive=True)
 
 
 def extract_docstrings(filename):
     """Extract docstrings from a Python file."""
-    with open(filename) as file:
-        tree = ast.parse(file.read(), filename=filename)
+    # create abstract syntax tree from the file
+    with open(filename) as f:
+        tree = ast.parse(f.read())
 
+    # walk through all nodes in the tree
     docstrings = {}
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.Module)):
-            if (
-                node.body
-                and isinstance(node.body[0], ast.Expr)
-                and isinstance(node.body[0].value, ast.Str)
-            ):
-                lineno = 0 if isinstance(node, ast.Module) else node.lineno
-                docstring = node.body[0].value.s
-                docstrings[lineno] = docstring
+        if (
+            isinstance(node, ast.Expr)
+            and isinstance(node.value, ast.Constant)
+            and isinstance(node.value.value, str)
+        ):
+            # if the node is an expression and
+            # its value is a constant and
+            # constant's value is a string
+            # the node represents a docstring
+            # See https://docs.python.org/3/library/ast.html#abstract-grammar
+            docstring = node.value.value
+            lineno = node.value.lineno
+            docstrings[lineno] = docstring
+
     return docstrings
 
 
 def find_invalid_backtick_text(docstring):
     """Find invalid backtick text in a docstring."""
-    # remove all the double-backticks
-    doc = docstring.replace("``", "")
+    # remove all the code blocks to avoid interference
+    # they are allowed to use backticks in any way
+    docstring = re.sub(r"```.*?```", "", docstring, flags=re.DOTALL)
 
-    all_backtick_text = re.findall(r"`.*?`", doc)
-    valid_backtick_text = re.findall(r":.*?:(`.*?`)", doc)
+    # remove all double-backticks to avoid interference
+    # we are looking only for invalid single-backtick
+    docstring = re.sub(r"``.*?``", "", docstring)
+
+    all_backtick_text = re.findall(r"`.*?`", docstring)
+    # expressions like :math:`d(x, y):= (x-y)^2` are valid cases
+    valid_backtick_text = re.findall(r":.*?:(`.*?`)", docstring)
 
     # find all the invalid backtick code snippets
     invalid_backtick_text = []
