@@ -10,15 +10,15 @@ from sktime.transformations.base import BaseTransformer
 class YtoX(BaseTransformer):
     """Create exogeneous features which are a copy of the endogenous data.
 
-    Replaces exogeneous features (`X`) by endogeneous data (`y`).
+    Replaces exogeneous features (``X``) by endogeneous data (``y``).
 
-    To *add* instead of *replace*, use `FeatureUnion`.
+    To *add* instead of *replace*, use ``FeatureUnion``.
 
     Parameters
     ----------
     subset_index : boolean, optional, default=False
-        if True, subsets the output of `transform` to `X.index`,
-        i.e., outputs `y.loc[X.index]`
+        if True, subsets the output of ``transform`` to ``X.index``,
+        i.e., outputs ``y.loc[X.index]``
     """
 
     _tags = {

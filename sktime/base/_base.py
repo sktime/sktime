@@ -209,8 +209,8 @@ class BaseObject(_BaseObject):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
-        if `path` is None, returns an in-memory serialized self
-        if `path` is a file location, stores self at that location as a zip file
+        if ``path`` is None, returns an in-memory serialized self
+        if ``path`` is a file location, stores self at that location as a zip file
 
         saved files are zip files with following contents:
         _metadata - contains class of self, i.e., type(self)
@@ -221,9 +221,9 @@ class BaseObject(_BaseObject):
         path : None or file location (str or Path)
             if None, self is saved to an in-memory object
             if file location, self is saved to that file location. If:
-                path="estimator" then a zip file `estimator.zip` will be made at cwd.
-                path="/home/stored/estimator" then a zip file `estimator.zip` will be
-                stored in `/home/stored/`.
+                path="estimator" then a zip file ``estimator.zip`` will be made at cwd.
+                path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
+                stored in ``/home/stored/``.
 
         serialization_format: str, default = "pickle"
             Module to use for serialization.
@@ -233,8 +233,8 @@ class BaseObject(_BaseObject):
 
         Returns
         -------
-        if `path` is None - in-memory serialized self
-        if `path` is file location - ZipFile with reference to the file
+        if ``path`` is None - in-memory serialized self
+        if ``path`` is file location - ZipFile with reference to the file
         """
         import pickle
         import shutil
@@ -290,11 +290,11 @@ class BaseObject(_BaseObject):
 
         Parameters
         ----------
-        serial : 1st element of output of `cls.save(None)`
+        serial : 1st element of output of ``cls.save(None)``
 
         Returns
         -------
-        deserialized self resulting in output `serial`, of `cls.save(None)`
+        deserialized self resulting in output ``serial``, of ``cls.save(None)``
         """
         import pickle
 
@@ -310,7 +310,7 @@ class BaseObject(_BaseObject):
 
         Returns
         -------
-        deserialized self resulting in output at `path`, of `cls.save(path)`
+        deserialized self resulting in output at ``path``, of ``cls.save(path)``
         """
         import pickle
         from zipfile import ZipFile
@@ -371,8 +371,8 @@ class TagAliaserMixin:
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns
-            `tag_value_default`.
+            Value of the ``tag_name`` tag in self. If not found, returns
+            ``tag_value_default``.
         """
         cls._deprecate_tag_warn([tag_name])
         return super().get_class_tag(
@@ -408,8 +408,8 @@ class TagAliaserMixin:
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns an error if
-            raise_error is True, otherwise it returns `tag_value_default`.
+            Value of the ``tag_name`` tag in self. If not found, returns an error if
+            raise_error is True, otherwise it returns ``tag_value_default``.
 
         Raises
         ------
@@ -511,7 +511,7 @@ class BaseEstimator(BaseObject):
 
     @property
     def is_fitted(self):
-        """Whether `fit` has been called."""
+        """Whether ``fit`` has been called."""
         return self._is_fitted
 
     def check_is_fitted(self):
@@ -551,13 +551,13 @@ class BaseEstimator(BaseObject):
             Dictionary of fitted parameters, paramname : paramvalue
             keys-value pairs include:
 
-            * always: all fitted parameters of this object, as via `get_param_names`
+            * always: all fitted parameters of this object, as via ``get_param_names``
               values are fitted parameter value for that key, of this object
-            * if `deep=True`, also contains keys/value pairs of component parameters
-              parameters of components are indexed as `[componentname]__[paramname]`
-              all parameters of `componentname` appear as `paramname` with its value
-            * if `deep=True`, also contains arbitrary levels of component recursion,
-              e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
+            * if ``deep=True``, also contains keys/value pairs of component parameters
+              parameters of components are indexed as ``[componentname]__[paramname]``
+              all parameters of ``componentname`` appear as ``paramname`` with its value
+            * if ``deep=True``, also contains arbitrary levels of component recursion,
+              e.g., ``[componentname]__[componentcomponentname]__[paramname]``, etc
         """
         if not self.is_fitted:
             raise NotFittedError(

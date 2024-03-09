@@ -164,8 +164,8 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
-        if `path` is None, returns an in-memory serialized self
-        if `path` is a file, stores the zip with that name at the location.
+        if ``path`` is None, returns an in-memory serialized self
+        if ``path`` is a file, stores the zip with that name at the location.
         The contents of the zip file are:
         _metadata - contains class of self, i.e., type(self).
         _obj - serialized self. This class uses the default serialization (pickle).
@@ -178,14 +178,14 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         path : None or file location (str or Path)
             if None, self is saved to an in-memory object
             if file location, self is saved to that file location. For eg:
-                path="estimator" then a zip file `estimator.zip` will be made at cwd.
-                path="/home/stored/estimator" then a zip file `estimator.zip` will be
-                stored in `/home/stored/`.
+                path="estimator" then a zip file ``estimator.zip`` will be made at cwd.
+                path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
+                stored in ``/home/stored/``.
 
         Returns
         -------
-        if `path` is None - in-memory serialized self
-        if `path` is file location - ZipFile with reference to the file
+        if ``path`` is None - in-memory serialized self
+        if ``path`` is file location - ZipFile with reference to the file
         """
         import pickle
         import shutil
@@ -244,15 +244,15 @@ class BaseDeepRegressor(BaseRegressor, ABC):
 
         Parameters
         ----------
-        serial: 1st element of output of `cls.save(None)`
+        serial: 1st element of output of ``cls.save(None)``
                 This is a tuple of size 3.
                 The first element represents pickle-serialized instance.
-                The second element represents h5py-serialized `keras` model.
-                The third element represent pickle-serialized history of `.fit()`.
+                The second element represents h5py-serialized ``keras`` model.
+                The third element represent pickle-serialized history of ``.fit()``.
 
         Returns
         -------
-        Deserialized self resulting in output `serial`, of `cls.save(None)`
+        Deserialized self resulting in output ``serial``, of ``cls.save(None)``
         """
         _check_soft_dependencies("h5py")
         import pickle
@@ -297,7 +297,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
 
         Returns
         -------
-        deserialized self resulting in output at `path`, of `cls.save(path)`
+        deserialized self resulting in output at ``path``, of ``cls.save(path)``
         """
         import pickle
         from shutil import rmtree
