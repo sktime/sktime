@@ -10,8 +10,8 @@ from sktime.datasets import load_airline
 from sktime.transformations.series.detrend.mstl import MSTL
 
 def test_transform_returns_correct_components():
-    """Tests whether expected components are returned when *return_components* 
-    parameter is switched on."""
+    """Tests whether expected components are returned when 
+    *return_components* parameter is switched on."""
     # Load our default test dataset
     series = load_airline()
     series.index = series.index.to_timestamp()
